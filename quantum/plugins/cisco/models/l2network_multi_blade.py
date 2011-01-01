@@ -108,10 +108,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
     def create_network(self, args):
         """Support for the Quantum core API call"""
         output = []
-        output.extend(self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                       self._func_name(), args))
-        output.extend(self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                       self._func_name(), args))
+        ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                       self._func_name(), args)
+        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
+        output.extend(ucs_output or [])
+        output.extend(nexus_output or [])
+        return output
 
     def delete_network(self, args):
         """Support for the Quantum core API call"""

@@ -51,8 +51,11 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
     _inventory = {}
 
     def setUp(self):
+        # Initialize cdb and credentials
         cdb.initialize()
         creds.Store.initialize()
+
+        # Set some data to use in tests
         self.tenant_id = "shubh"
         self.net_name = "TestNetwork1"
         self.profile_name = "test_tenant_port_profile"
@@ -63,35 +66,38 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 102
         self.new_net_name="New_test_network"
+
+
         self._l2network_multiblade = l2network_multi_blade.\
                      L2NetworkMultiBlade()
         self.plugin_key = "quantum.plugins.cisco.ucs.cisco_ucs_plugin"+\
                             ".UCSVICPlugin"
         self.test_device_ip =  "172.18.117.45"
 
+        for key in conf.PLUGINS[const.PLUGINS].keys():
+            self._inventory[key] = utils.import_object(
+                conf.PLUGINS[const.INVENTORY][key])
+
+        self.ucs_count = self._inventory['ucs_plugin'].\
+                             _inventory.__len__()
+        print 'asdfasdfasdfasdfasdf'
+        print self._inventory['ucs_plugin']._inventory
+      
     def test_create_network(self):
         """Support for the Quantum core API call"""
         LOG.debug("test_create_network - START")
-        network = self._l2network_multiblade.create_network([self.tenant_id,
+        networks = self._l2network_multiblade.create_network([self.tenant_id,
                                                    self.net_name,
                                                    self.net_id,
                                                    self.vlan_name,
                                                    self.vlan_id])
 
-        #device_params = self._l2network_multiblade._invoke_inventory(
-        #                      self.plugin_key,
-        #                      self._l2network_multiblade.create_network,
-        #                      [self.tenant_id,
-        #                      self.net_name,
-        #                      self.net_id,
-        #                      self.vlan_name,
-        #                      self.vlan_id])
+        self.assertEqual(networks.__len__(), self.ucs_count)
+        
+        for network in networks:
+            self.assertEqual(network[const.NET_ID], self.net_id)
+            self.assertEqual(network[const.NET_NAME], self.net_name)
 
-        #device_ips = device_params[const.DEVICE_IP]
-        #for device_ip in device_ips:
-        #    new_device_params[const.DEVICE_IP] = device_ip
-        #    self.assertEqual(self.test_device_ip,
-        #                               new_device_params[const.DEVICE_IP])
         self.tearDownNetwork(self.tenant_id, self.net_id)
         LOG.debug("test_create_network - END")
 
