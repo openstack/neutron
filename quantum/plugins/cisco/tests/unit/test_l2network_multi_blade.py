@@ -61,7 +61,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         self.profile_name = "test_tenant_port_profile"
         self.port_state = const.PORT_UP
         self.net_id = '44'
-        self.net_id_DNE = '45'
+        self.net_id_DNE = '458'
         self.port_id = 'p0005'
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 102
@@ -98,7 +98,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.tearDownNetwork(self.tenant_id, self.net_id)
         LOG.debug("test_create_network - END")
-
+    
     def test_get_all_networks(self):
         """Not implemented for this model"""
         pass
@@ -119,7 +119,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         for network in networks:
             self.assertEqual(network[const.NET_ID], self.net_id)
             self.assertEqual(network[const.NET_NAME], self.net_name)
-           LOG.debug("test_delete_network - END")
+        LOG.debug("test_delete_network - END")
 
     def test_delete_networkDNE(self):
         """Support for the Quantum core API call"""
@@ -160,30 +160,92 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
     def test_get_network_details(self):
         """Not implemented for this model"""
         pass
-        
-    def test_create_port(self):
-        """Support for the Quantum core API call"""
-        LOG.debug("test_create_port - START")
-        port = db.port_create(self.net_id, self.port_state)
-        port_id= port[const.UUID]
-        ports = self._l2network_multiblade.create_port([self.tenant_id,
-                                                   self.net_id,
-                                                   self.port_state,
-                                                   port_id])
-        print 'asdfasdfasdfasdfasdfasdfasdfasdf'
-        print ports
-        #self.assertEqual(networks.__len__(), self.ucs_count)
-        
-        #for network in networks:
-        #    self.assertEqual(network[const.NET_ID], self.net_id)
-        #    self.assertEqual(network[const.NET_NAME], self.net_name)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
-        LOG.debug("test_create_network - END")
 
+    def test_create_port(self):
+        LOG.debug("test_create_port - START")
+        self._l2network_multiblade.create_network([self.tenant_id,
+                                               self.net_name, 
+                                               self.net_id,
+                                               self.vlan_name, 
+                                               self.vlan_id])
+                                               
+        port = self._l2network_multiblade.create_port([self.tenant_id,
+                                                self.net_name, self.net_id, 
+                                                self.port_state])
+        print 'testingtestingtest'
+        print port
+        self.tearDownNetworkPort(self, self.tenant_id, self.network_dict_id,
+                                 self.port_id)
+        self.tearDownNetwork(self.tenant_id, self.net_id)
+        LOG.debug("test_create_port - END")
+        
+    def test_delete_port(self):
+        LOG.debug("test_delete_port - START")
+        self._l2network_multiblade.create_network([self.tenant_id,
+                                                   self.net_name,
+                                                   self.net_id,
+                                                   self.vlan_name,
+                                                   self.vlan_id])
+        self._l2network_multiblade.create_port([self.tenant_id,
+                                                self.net_name, self.net_id, 
+                                                self.port_state])
+                                                
+        self._l2network_multiblade.delete_port([self.tenant_id,
+                                                self.net_id, 
+                                                self.port_id])
+
+        self.tearDownNetworkPort(self, self.tenant_id, self.network_dict_id,
+                                 self.port_id)
+        self.tearDownNetwork(self.tenant_id, self.net_id)
+        LOG.debug("test_delete_port - END")
+
+    def test_create_port_networkDNE(self):
+        LOG.debug("test_create_port_networkDNE - START")
+        self.assertRaises(exc.NetworkNotFound,
+                        self._l2network_multiblade.create_port,
+                        [self.tenant_id, self.net_name, self.net_id_DNE, self.port_state])
+        LOG.debug("test_create_port_networkDNE - END")
+    
+    def test_delete_port_networkDNE(self):
+        LOG.debug("test_delete_port_networkDNE - START")
+        self.assertRaises(exc.NetworkNotFound,
+                          self._l2network_multiblade.delete_port,
+                          [self.tenant_id, self.net_id_DNE, self.port_id])
+        LOG.debug("test_delete_port_networkDNE - END")
+		
+    def test_delete_portDNE(self):
+        LOG.debug("test_delete_portDNE - START")
+        self.assertRaises(exc.PortNotFound,
+                          self._l2network_multiblade.delete_port,
+                          [self.tenant_id, self.net_id, self.port_id])
+        LOG.debug("test_delete_portDNE - END")
+
+    def test_delete_portInUse(self):
+        LOG.debug("test_delete_portInUse - START")
+        self.assertRaises(exc.PortInUse,
+                          self._l2network_multiblade.delete_port,
+                          [self.tenant_id, self.net_id_DNE, self.port_id])
+        LOG.debug("test_delete_portInUse - END")
+
+    def test_update_port_networkDNE(self):
+        """Not implemented for this model"""
+        pass
+	
+    def test_get_all_ports(self):
+        """Not implemented for this model"""
+        pass
+
+    def test_update_port(self):
+        """Not implemented for this model"""
+        pass
+		
+    def test_port_details(self):
+        """Not implemented for this model"""
+        pass
+        
     def tearDownNetwork(self , tenant_id, net_id ):
         self._l2network_multiblade.delete_network([tenant_id, net_id])
 
-
-
-
-
+    def tearDownNetworkPort(self, tenant_id, network_dict_id, port_id):	
+		    self._l2network_plugin.delete_port(tenant_id, network_dict_id, 
+										   port_id)
