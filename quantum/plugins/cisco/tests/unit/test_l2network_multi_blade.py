@@ -163,6 +163,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
     def test_create_port(self):
         LOG.debug("test_create_port - START")
+        port = db.port_create(self.net_id, self.port_state)
         self._l2network_multiblade.create_network([self.tenant_id,
                                                self.net_name, 
                                                self.net_id,
@@ -170,12 +171,13 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                                                self.vlan_id])
                                                
         port = self._l2network_multiblade.create_port([self.tenant_id,
-                                                self.net_name, self.net_id, 
-                                                self.port_state])
+                                                self.net_id, 
+                                                self.port_state,
+                                                port[const.UUID]])[0]
         print 'testingtestingtest'
         print port
-        self.tearDownNetworkPort(self, self.tenant_id, self.network_dict_id,
-                                 self.port_id)
+        self.tearDownNetworkPort(self.tenant_id, self.net_id,
+                                 port.port_id)
         self.tearDownNetwork(self.tenant_id, self.net_id)
         LOG.debug("test_create_port - END")
         
@@ -246,6 +248,5 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
     def tearDownNetwork(self , tenant_id, net_id ):
         self._l2network_multiblade.delete_network([tenant_id, net_id])
 
-    def tearDownNetworkPort(self, tenant_id, network_dict_id, port_id):	
-		    self._l2network_plugin.delete_port(tenant_id, network_dict_id, 
-										   port_id)
+    def tearDownNetworkPort(self, tenant_id, net_id, port_id):
+        self._l2network_multiblade.delete_port([tenant_id, net_id, port_id])
