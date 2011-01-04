@@ -246,15 +246,6 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                         [tenant_id, net_id, self.port_state, port_id])
         LOG.debug("test_create_port_networkDNE - END")
     
-    #def test_delete_port_networkDNE(self):
-    #    LOG.debug("test_delete_port_networkDNE - START")
-    #    self.assertRaises(exc.NetworkNotFound,
-    #                      self._l2network_multiblade.delete_port,
-    #                      [tenant_id, net_id, port_id])
-    #    LOG.debug("test_delete_port_networkDNE - END")
-		
-    def test_delete_portDNE(self):
-        LOG.debug("test_delete_portDNE - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
@@ -267,31 +258,6 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                           [tenant_id, self.net_id, port_id])
         LOG.debug("test_delete_portDNE - END")
 
-    #def test_delete_portInUse(self):
-    #    LOG.debug("test_delete_portInUse - START")
-    #    self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
-    #    self._l2network_multiblade.create_network([tenant_id,
-    #                                               net_name,
-    #                                               self.net_id,
-    #                                               vlan_name(self.net_id),
-    #                                               vlan_id])
-    #    cdb.add_vlan_binding(vlan_id, vlan_name(self.net_id), self.net_id)
-
-    #    self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
-    #    self._l2network_multiblade.create_port([tenant_id,
-    #                                            self.net_id, 
-    #                                            port_state,self.port_id])
-
-    #    int = self._l2network_multiblade.plug_interface([tenant_id, self.net_id,
-    #                                              self.port_id, interface_id])
-    #    db.port_set_attachment(self.net_id, self.port_id, interface_id)
-    #    port = db.port_get(self.net_id, self.port_id)
-    #    self._l2network_multiblade.delete_port([tenant_id,self.net_id,self.port_id])
-        #self.assertRaises(exc.PortInUse,
-        #                  self._l2network_multiblade.delete_port,
-        #                  [tenant_id, self.net_id, self.port_id])
-    #    LOG.debug("test_delete_portInUse - END")
-	
     def test_get_all_ports(self):
         """Not implemented for this model"""
         pass
