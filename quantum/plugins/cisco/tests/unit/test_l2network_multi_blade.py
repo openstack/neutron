@@ -239,25 +239,6 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         self.assertEqual(self.port_id, port[0][const.PORTID])
         LOG.debug("test_delete_port - END")
 
-    def test_create_port_networkDNE(self):
-        LOG.debug("test_create_port_networkDNE - START")
-        self.assertRaises(exc.NetworkNotFound,
-                        self._l2network_multiblade.create_port,
-                        [tenant_id, net_id, self.port_state, port_id])
-        LOG.debug("test_create_port_networkDNE - END")
-    
-        self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
-        self._l2network_multiblade.create_network([tenant_id,
-                                                   net_name,
-                                                   self.net_id,
-                                                   vlan_name(self.net_id),
-                                                   vlan_id])
-
-        self.assertRaises(exc.PortNotFound,
-                          self._l2network_multiblade.delete_port,
-                          [tenant_id, self.net_id, port_id])
-        LOG.debug("test_delete_portDNE - END")
-
     def test_get_all_ports(self):
         """Not implemented for this model"""
         pass
