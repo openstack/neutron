@@ -62,8 +62,7 @@ class build_py(_build_py):
 print "config_path: %s" % config_path
 DataFiles = [
     (config_path,
-    ['etc/quantum.conf', 'etc/quantum.conf.sample',
-     'etc/quantum.conf.test', 'etc/plugins.ini']),
+        ['etc/quantum.conf', 'etc/quantum.conf.test', 'etc/plugins.ini']),
     (init_path, ['etc/init.d/quantum-server'])
 ]
 
