@@ -23,10 +23,7 @@
 """
 
 import unittest
-#from copy import deepcopy
-#import inspect
 import logging as LOG
-#import platform
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
@@ -51,7 +48,6 @@ net_id = "44"
 port_id = "p0005"
 port_state = const.PORT_UP
 interface_id = "vif-01"
-#vlan_name = "q-%svlan" % net_id
 vlan_id = "102"
 
 def vlan_name(id):
