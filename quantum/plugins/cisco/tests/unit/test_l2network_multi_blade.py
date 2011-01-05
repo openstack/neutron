@@ -27,10 +27,10 @@ import logging as LOG
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
-from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
+#from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
+#from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.models import l2network_multi_blade
 from quantum.plugins.cisco.db import api as db
@@ -50,10 +50,12 @@ port_state = const.PORT_UP
 interface_id = "vif-01"
 vlan_id = "102"
 
+
 def vlan_name(id):
     return "q-%svlan" % id
 
-class Test_L2NetworkMultiBlade(unittest.TestCase):
+
+class TestMultiBlade(unittest.TestCase):
     """
     Implements the L2NetworkModelBase
     This implementation works with UCS and Nexus plugin for the
@@ -65,20 +67,20 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
     _inventory = {}
 
     def setUp(self):
+        """Setup our tests"""
         # Initialize cdb and credentials
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         cdb.initialize()
         creds.Store.initialize()
-
 
         # Create a place a store net and port ids for the druation of the test
         self.net_id = 0
         self.port_id = 0
 
         # Create the multiblade object
-        self._l2network_multiblade = l2network_multi_blade.\
+        self._l2network_multiblade = l2network_multi_blade. \
                      L2NetworkMultiBlade()
-        self.plugin_key = "quantum.plugins.cisco.ucs.cisco_ucs_plugin"+\
+        self.plugin_key = "quantum.plugins.cisco.ucs.cisco_ucs_plugin" + \
                             ".UCSVICPlugin"
 
         # Get UCS inventory to make sure all UCSs are affected by tests
@@ -90,6 +92,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                              _inventory.__len__()
 
     def tearDown(self):
+        """Tear down our tests"""
         try:
             self._l2network_multiblade.delete_port([tenant_id, self.net_id,
                                                 self.port_id])
@@ -116,13 +119,13 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                                                    vlan_name(self.net_id),
                                                    vlan_id])
 
-        self.assertEqual(networks.__len__(), self.ucs_count)        
+        self.assertEqual(networks.__len__(), self.ucs_count)
         for network in networks:
             self.assertEqual(network[const.NET_ID], self.net_id)
             self.assertEqual(network[const.NET_NAME], net_name)
 
         LOG.debug("test_create_network - END")
- 
+
     def test_create_networkDNE(self):
         """Support for the Quantum core API call"""
         LOG.debug("test_create_networkDNE - START")
@@ -206,6 +209,7 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         pass
 
     def test_create_port(self):
+        """Support for the Quantum core API call"""
         LOG.debug("test_create_port - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
@@ -216,14 +220,15 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
         port = self._l2network_multiblade.create_port([tenant_id,
-                                                self.net_id, 
+                                                self.net_id,
                                                 port_state,
                                                 self.port_id])
 
         self.assertEqual(self.port_id, port[0][const.PORTID])
         LOG.debug("test_create_port - END")
-        
+
     def test_delete_port(self):
+        """Support for the Quantum core API call"""
         LOG.debug("test_delete_port - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
@@ -234,11 +239,11 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
         self._l2network_multiblade.create_port([tenant_id,
-                                                self.net_id, 
-                                                port_state,self.port_id])
-                                                
+                                                self.net_id,
+                                                port_state, self.port_id])
+
         port = self._l2network_multiblade.delete_port([tenant_id,
-                                                self.net_id, 
+                                                self.net_id,
                                                 self.port_id])
 
         self.assertEqual(self.port_id, port[0][const.PORTID])
@@ -259,13 +264,14 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
     def test_update_port_networkDNE(self):
         """Not implemented for this model"""
         pass
-		
+
     def test_port_details(self):
         """Not implemented for this model"""
         pass
 
     def test_plug_interface(self):
-        LOG.debug("test_plug_interface - START") 
+        """Support for the Quantum core API call"""
+        LOG.debug("test_plug_interface - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
@@ -276,19 +282,20 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
         self._l2network_multiblade.create_port([tenant_id,
-                                                self.net_id, 
-                                                port_state,self.port_id])
+                                                self.net_id,
+                                                port_state, self.port_id])
 
-        int = self._l2network_multiblade.plug_interface([tenant_id,self.net_id,
-                                                  self.port_id, interface_id])
+        interface = self._l2network_multiblade.plug_interface([tenant_id,
+                              self.net_id, self.port_id, interface_id])
         port = db.port_set_attachment(self.net_id, self.port_id, interface_id)
 
-        self.assertEqual(self.port_id, int[0][const.PORTID])
+        self.assertEqual(self.port_id, interface[0][const.PORTID])
         self.assertEqual(port[const.INTERFACEID], interface_id)
         LOG.debug("test_plug_interface - END")
 
     def test_plug_interface_networkDNE(self):
-        LOG.debug("test_plug_interface_networkDNE - START") 
+        """Support for the Quantum core API call"""
+        LOG.debug("test_plug_interface_networkDNE - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
@@ -299,8 +306,8 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
         self._l2network_multiblade.create_port([tenant_id,
-                                                self.net_id, 
-                                                port_state,self.port_id])
+                                                self.net_id,
+                                                port_state, self.port_id])
 
         self.assertRaises(exc.NetworkNotFound,
                           self._l2network_multiblade.plug_interface,
@@ -309,7 +316,8 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         LOG.debug("test_plug_interface_networkDNE - END")
 
     def test_plug_interface_portDNE(self):
-        LOG.debug("test_plug_interface_portDNE - START") 
+        """Support for the Quantum core API call"""
+        LOG.debug("test_plug_interface_portDNE - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
@@ -322,10 +330,11 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                           self._l2network_multiblade.plug_interface,
                           [tenant_id, self.net_id, port_id, interface_id])
 
-        LOG.debug("test_plug_interface_portDNE - START") 
+        LOG.debug("test_plug_interface_portDNE - START")
 
     def test_unplug_interface(self):
-        LOG.debug("test_unplug_interface - START") 
+        """Support for the Quantum core API call"""
+        LOG.debug("test_unplug_interface - START")
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
@@ -336,15 +345,14 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
         self._l2network_multiblade.create_port([tenant_id,
-                                                self.net_id, 
-                                                port_state,self.port_id])
+                                                self.net_id,
+                                                port_state, self.port_id])
 
         self._l2network_multiblade.plug_interface([tenant_id, self.net_id,
                                                   self.port_id, interface_id])
-        port = db.port_set_attachment(self.net_id, self.port_id, interface_id)
-        int = self._l2network_multiblade.unplug_interface([tenant_id,
+        db.port_set_attachment(self.net_id, self.port_id, interface_id)
+        interface = self._l2network_multiblade.unplug_interface([tenant_id,
                                             self.net_id, self.port_id])
 
-        self.assertEqual(self.port_id, int[0][const.PORTID])
+        self.assertEqual(self.port_id, interface[0][const.PORTID])
         LOG.debug("test_unplug_interface - END")
-
