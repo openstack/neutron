@@ -36,6 +36,7 @@ import subprocess
 
 from optparse import OptionParser
 
+sys.path.append(os.getcwd())
 import quantum.client.cli as qcli
 
 POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
@@ -153,7 +154,7 @@ COMMANDS = {
     "args": ["tenant-id", "instance-id"]}, }
 
 
-if __name__ == "__main__":
+def main():
     import cli
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     PARSER = OptionParser(usage=usagestr)
@@ -207,3 +208,7 @@ if __name__ == "__main__":
 
     LOG.info("Command execution completed")
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

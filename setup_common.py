@@ -44,7 +44,7 @@ PackageData = {
 
 exclude = ['quantum.client', 'quantum.client.*', 'quantum.server',
     'quantum.server.*', 'quantum.tests', 'quantum.tests.*',
-    'quantum.plugins.*']
+    'quantum.plugins.*', 'quantum.plugins']
 pkgs = find_packages('.', exclude=exclude)
 pkgs = filter(lambda x: x.startswith("quantum"), pkgs)
 

@@ -66,4 +66,9 @@ setup(
     package_data=PackageData,
     data_files=DataFiles,
     eager_resources=EagerResources,
+    entry_points={
+        'console_scripts': [
+            'cisco-quantum = quantum.plugins.cisco.client.cli:main'
+        ]
+    },
 )
