@@ -27,10 +27,8 @@ import logging as LOG
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
-#from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
-#from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.models import l2network_multi_blade
 from quantum.plugins.cisco.db import api as db
