@@ -55,11 +55,7 @@ def vlan_name(id):
 
 class TestMultiBlade(unittest.TestCase):
     """
-    Implements the L2NetworkModelBase
-    This implementation works with UCS and Nexus plugin for the
-    following topology:
-    One or more UCSM (each with one or more chasses connected)
-    All UCSM connected to a single Nexus Switch
+    Tests for the multi-blade model for the L2Network plugin
     """
     _plugins = {}
     _inventory = {}
@@ -83,8 +79,9 @@ class TestMultiBlade(unittest.TestCase):
 
         # Get UCS inventory to make sure all UCSs are affected by tests
         for key in conf.PLUGINS[const.PLUGINS].keys():
-            self._inventory[key] = utils.import_object(
-                conf.PLUGINS[const.INVENTORY][key])
+            if key in conf.PLUGINS[const.INVENTORY].keys():
+                self._inventory[key] = utils.import_object(
+                    conf.PLUGINS[const.INVENTORY][key])
 
         self.ucs_count = self._inventory['ucs_plugin'].\
                              _inventory.__len__()
@@ -92,13 +89,18 @@ class TestMultiBlade(unittest.TestCase):
     def tearDown(self):
         """Tear down our tests"""
         try:
+            port = db.port_get(self.net_id, self.port_id)
             self._l2network_multiblade.delete_port([tenant_id, self.net_id,
                                                 self.port_id])
+        except exc.NetworkNotFound:
+            # We won't always have a port to remove
+            pass
         except exc.PortNotFound:
             # We won't always have a port to remove
             pass
 
         try:
+            net = db.network_get(self.net_id)
             self._l2network_multiblade.delete_network([tenant_id, self.net_id])
         except exc.NetworkNotFound:
             # We won't always have a network to remove
@@ -245,6 +247,13 @@ class TestMultiBlade(unittest.TestCase):
                                                 self.port_id])
 
         self.assertEqual(self.port_id, port[0][const.PORTID])
+
+        # Recreating port so tear down doesn't cause an error
+        self.port_id = db.port_create(self.net_id, port_state)[const.UUID]
+        self._l2network_multiblade.create_port([tenant_id,
+                                                self.net_id,
+                                                port_state, self.port_id])
+
         LOG.debug("test_delete_port - END")
 
     def test_get_all_ports(self):

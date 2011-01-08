@@ -104,6 +104,7 @@ class TestUCSInventory(unittest.TestCase):
         self._l2network.delete_port(tenant,
             net[const.NET_ID], port[const.PORT_ID])
         self._l2network.delete_network(tenant, net[const.NET_ID])
+        db.clear_db()
 
         LOG.debug("test_%s - END", cmd)
 
