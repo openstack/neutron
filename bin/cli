@@ -126,6 +126,8 @@ if __name__ == "__main__":
       action="store_true", default=False, help="turn on verbose logging")
     parser.add_option("-f", "--logfile", dest="logfile",
       type="string", default="syslog", help="log file path")
+    parser.add_option("-t", "--token", dest="token",
+      type="string", default=None, help="authentication token")
     options, args = parser.parse_args()
 
     if options.verbose:
@@ -158,7 +160,8 @@ if __name__ == "__main__":
     LOG.info("Executing command \"%s\" with args: %s" % (cmd, args))
 
     client = Client(options.host, options.port, options.ssl,
-                    args[0], FORMAT)
+                    args[0], FORMAT,
+                    auth_token=options.token)
     commands[cmd]["func"](client, *args)
 
     LOG.info("Command execution completed")

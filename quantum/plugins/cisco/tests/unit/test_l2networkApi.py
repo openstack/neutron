@@ -506,13 +506,14 @@ class CoreAPITestFunc(unittest.TestCase):
         """
 
         LOG.debug("test_plug_interface_portInUse - START")
+        current_interface = "current_interface"
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                         tenant_id, new_net_dict[const.NET_ID], self.port_state)
         self._l2network_plugin.plug_interface(
                         tenant_id, new_net_dict[const.NET_ID],
-                        port_dict[const.PORT_ID], remote_interface)
+                        port_dict[const.PORT_ID], current_interface)
         self.assertRaises(exc.PortInUse,
                               self._l2network_plugin.plug_interface, tenant_id,
                               new_net_dict[const.NET_ID],

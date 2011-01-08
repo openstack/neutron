@@ -296,3 +296,36 @@ class UCSVICPlugin(L2DevicePluginBase):
         self._ucsm_ip = ucsm_ip
         self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
         self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
+
+    def create_multiport(self, tenant_id, net_id_list, ports_num, port_id_list,
+                     **kwargs):
+        """
+        Creates a port on the specified Virtual Network.
+        """
+        LOG.debug("UCSVICPlugin:create_multiport() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        qos = None
+        ucs_inventory = kwargs[const.UCS_INVENTORY]
+        least_rsvd_blade_dict = kwargs[const.LEAST_RSVD_BLADE_DICT]
+        chassis_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_CHASSIS]
+        blade_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_ID]
+        blade_data_dict = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_DATA]
+        port_binding_list = []
+        for port_id, net_id in zip(port_id_list, net_id_list):
+            new_port_profile = \
+                    self._create_port_profile(tenant_id, net_id, port_id,
+                                              conf.DEFAULT_VLAN_NAME,
+                                              conf.DEFAULT_VLAN_ID)
+            profile_name = new_port_profile[const.PROFILE_NAME]
+            rsvd_nic_dict = ucs_inventory.\
+                    reserve_blade_interface(self._ucsm_ip, chassis_id,
+                                            blade_id, blade_data_dict,
+                                            tenant_id, port_id,
+                                            profile_name)
+            port_binding = udb.update_portbinding(port_id,
+                                           portprofile_name=profile_name,
+                                           vlan_name=conf.DEFAULT_VLAN_NAME,
+                                           vlan_id=conf.DEFAULT_VLAN_ID,
+                                           qos=qos)
+            port_binding_list.append(port_binding)
+        return port_binding_list

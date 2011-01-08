@@ -116,7 +116,10 @@ class Controller(common.QuantumController):
                                             request_params['state'])
             builder = ports_view.get_view_builder(request)
             result = builder.build(port)['port']
-            return dict(port=result)
+            # Wsgi middleware allows us to build the response
+            # before returning the call.
+            # This will allow us to return a 202 status code.
+            return self._build_response(request, dict(port=result), 202)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.StateInvalid as e:

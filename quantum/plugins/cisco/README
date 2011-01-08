@@ -40,8 +40,7 @@ If you plan to just leverage the plugin framework, you do not need these.)
 * One or more UCS B200 series blade servers with M81KR VIC (aka 
   Palo adapters) installed.
 * UCSM 2.0 (Capitola) Build 230 or above.
-* OpenStack Cactus release installation (additional patch is required,
-  details follow in this document)
+* OpenStack Diablo D3 or later (should have VIF-driver support)
 * RHEL 6.1 (as of this writing, UCS only officially supports RHEL, but
   it should be noted that Ubuntu support is planned in coming releases as well)
   ** Package: python-configobj-4.6.0-3.el6.noarch (or newer)
@@ -84,11 +83,13 @@ Then run "yum install python-routes".
 Module Structure:
 -----------------
 * quantum/plugins/cisco/       - Contains the L2-Network Plugin Framework
+                       /client - CLI module for core and extensions API
                        /common - Modules common to the entire plugin
                        /conf   - All configuration files
                        /db     - Persistence framework
                        /models - Class(es) which tie the logical abstractions
                                  to the physical topology
+                       /nova   - Scheduler and VIF-driver to be used by Nova
                        /nexus  - Nexus-specific modules
                        /segmentation - Implementation of segmentation manager,
                                        e.g. VLAN Manager
@@ -109,20 +110,37 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
     Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
     following entries:
 
---scheduler_driver=quantum.plugins.cisco.nova.quantum_aware_scheduler.QuantumScheduler
+--scheduler_driver=quantum.plugins.cisco.nova.quantum_port_aware_scheduler.QuantumPortAwareScheduler
 --quantum_host=127.0.0.1
 --quantum_port=9696
 --libvirt_vif_driver=quantum.plugins.cisco.nova.vifdirect.Libvirt802dot1QbhDriver
 --libvirt_vif_type=802.1Qbh
- 
 
-4.  If you want to turn on support for Cisco Nexus switches:
-    4a.  Uncomment the nexus_plugin property in 
+    Note: To be able to bring up a VM on a UCS blade, you should first create a
+          port for that VM using the Quantum create port API. VM creation will
+          fail if an unused port is not available. If you have configured your
+          Nova project with more than one network, Nova will attempt to instantiate
+          the VM with one network interface (VIF) per configured network. To provide
+          plugin points for each of these VIFs, you will need to create multiple
+          Quantum ports, one for each of the networks, prior to starting the VM.
+          However, in this case you will need to use the Cisco multiport extension
+          API instead of the Quantum create port API. More details on using the
+          multiport extension follow in the section on multi NIC support.
+
+4.  To support the above configuration, you will need some Quantum modules. It's easiest
+    to copy the entire quantum directory from your quantum installation into:
+
+/usr/lib/python2.6/site-packages/
+
+    This needs to be done for each nova compute node.
+
+5.  If you want to turn on support for Cisco Nexus switches:
+    5a.  Uncomment the nexus_plugin property in 
          quantum/plugins/cisco/conf/plugins.ini to read:
 
 nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 
-    4b.  Enter the relevant configuration in the 
+    5b.  Enter the relevant configuration in the 
          quantum/plugins/cisco/conf/nexus.ini file.  Example:
 
 [SWITCH]
@@ -141,7 +159,7 @@ nexus_ssh_port=22
 [DRIVER]
 name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 
-    4c.  Make sure that SSH host key of the Nexus switch is known to the
+    5c.  Make sure that SSH host key of the Nexus switch is known to the
          host on which you are running the Quantum service.  You can do
          this simply by logging in to your Quantum host as the user that
          Quantum runs as and SSHing to the switch at least once.  If the
@@ -149,35 +167,29 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
          clearing of the SSH config on the switch), you may need to repeat
          this step and remove the old hostkey from ~/.ssh/known_hosts.
          
-5.  Plugin Persistence framework setup:
-	5a.  Create quantum_l2network database in mysql with the following command -
+6.  Plugin Persistence framework setup:
+    6a.  Create quantum_l2network database in mysql with the following command -
 	
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-	5b.  Enter the quantum_l2network database configuration info in the 
+    6b.  Enter the quantum_l2network database configuration info in the 
          quantum/plugins/cisco/conf/db_conn.ini file.
          
-    5c.  If there is a change in the plugin configuration, service would need 
+    6c.  If there is a change in the plugin configuration, service would need 
          to be restarted after dropping and re-creating the database using
          the following commands -
 
 mysql -u<mysqlusername> -p<mysqlpassword> -e "drop database quantum_l2network"
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-6.  Verify that you have the correct credentials for each IP address listed
+7.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
 
-# Provide the UCSM credentials
+# Provide the UCSM credentials, create a separte entry for each UCSM used in your system
 # UCSM IP address, username and password.
 [10.0.0.2]
 username=admin
 password=mySecretPasswordForUCSM
-
-# Provide the Nova DB credentials.
-# The IP address should be the same as in nova.ini.
-[10.0.0.3]
-username=nova
-password=mySecretPasswordForNova
 
 # Provide the Nexus credentials, if you are using Nexus switches.
 # If not this will be ignored.
@@ -185,11 +197,15 @@ password=mySecretPasswordForNova
 username=admin
 password=mySecretPasswordForNexus
 
-7.  Configure the UCS systems' information in your deployment by editing the
+    In general, make sure that every UCSM and Nexus switch  used in your system,
+    has a credential entry in the above file. This is required for the system to
+    be able to communicate with those switches.
+
+8.  Configure the UCS systems' information in your deployment by editing the
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
-    UCSMs per deployment, multiple chasses per UCSM, and multiple blades per
+    UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
     chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
-    typically numbers like 1, 2, 3, etc.
+    typically be numbers like 1, 2, 3, etc.)
 
 [ucsm-1]
 ip_address = <put_ucsm_ip_address_here>
@@ -217,9 +233,130 @@ blade_id = <put_blade_id_here>
 host_name = <put_hostname_here>
 
 
-8.  Start the Quantum service.  If something doesn't work, verify that
+9.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
+
+
+Multi NIC support for VMs
+-------------------------
+As indicated earlier, if your Nova setup has a project with more than one network,
+Nova will try to create a vritual network interface (VIF) on the VM for each of those
+networks. That implies that,
+
+    (1) You should create the same number of networks in Quantum as in your Nova
+        project.
+
+    (2) Before each VM is instantiated, you should create Quantum ports on each of those
+        networks. These ports need to be created using the following rest call:
+
+POST /v1.0/extensions/csco/tenants/{tenant_id}/multiport/
+
+with request body:
+
+{'multiport': 
+ {'status': 'ACTIVE',
+  'net_id_list': net_id_list,
+  'ports_desc': {'key': 'value'}}}
+
+where,
+
+net_id_list is a list of network IDs: [netid1, netid2, ...]. The "ports_desc" dictionary
+is reserved for later use. For now, the same structure in terms of the dictionary name, key
+and value should be used.
+
+The corresponding CLI for this operation is as follows:
+
+PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport <tenant_id> <net_id1,net_id2,...>
+    
+    (Note that you should not be using the create port core API in the above case.)
+
+
+Using the Command Line Client to work with this Plugin
+------------------------------------------------------
+A command line client is packaged with this plugin. This module can be used
+to invoke the core API as well as the extensions API, so that you don't have
+to switch between different CLI modules (it internally invokes the Quantum
+CLI module for the core APIs to ensure consistency when using either). This
+command line client can be invoked as follows:
+
+PYTHONPATH=. python quantum/plugins/cisco/client/cli.py 
+
+1.  Creating the network
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_net -H 10.10.2.6 demo net1
+Created a new Virtual Network with ID: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant demo
+
+
+2.  Listing the networks
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py list_nets -H 10.10.2.6 demo
+Virtual Networks for Tenant demo
+    Network ID: 0e85e924-6ef6-40c1-9f7a-3520ac6888b3
+    Network ID: c4a2bea7-a528-4caf-b16e-80397cd1663a
+    
+
+3.  Creating one port on each of the networks
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a,0e85e924-6ef6-40c1-9f7a-3520ac6888b3
+Created ports: {u'ports': [{u'id': u'118ac473-294d-480e-8f6d-425acbbe81ae'}, {u'id': u'996e84b8-2ed3-40cf-be75-de17ff1214c4'}]}
+
+
+4.  List all the ports on a network
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py list_ports -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a
+Ports on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant: demo
+    Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae
+
+
+5.  Show the details of a port
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py show_port -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+Logical Port ID: 118ac473-294d-480e-8f6d-425acbbe81ae
+administrative State: ACTIVE
+interface: <none>
+on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant: demo
+
+
+6.  Start the VM instance using Nova
+    Note that when using UCS and the 802.1Qbh features, the association of the
+    VIF-ID (also referred to as interface ID) on the VM's NIC with a port will
+    happen automatically when the VM is instantiated. At this point, doing a
+    show_port will reveal the VIF-ID associated with the port.
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py show_port demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+Logical Port ID: 118ac473-294d-480e-8f6d-425acbbe81ae
+administrative State: ACTIVE
+interface: b73e3585-d074-4379-8dde-931c0fc4db0e
+on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant: demo
+
+
+7.  Plug interface and port into the network
+    Use the interface information obtained in step 6 to plug the interface into
+    the network.
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py plug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae b73e3585-d074-4379-8dde-931c0fc4db0e
+Plugged interface b73e3585-d074-4379-8dde-931c0fc4db0e
+into Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae 
+on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant: demo
+
+
+8.  Unplug an interface and port from the network
+    Note: Before unplugging, make a note of the interface ID (you can use the
+    show_port CLI as before). While the VM, which has a VIF  with this interface
+    ID still exists, you can only plug that same interface back into this port.
+    So the subsequent plug interface operation on this port will have to make
+    use of the same interface ID.
+
+# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py unplug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+Unplugged interface from Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae
+on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
+for Tenant: demo
 
 
 How to test the installation

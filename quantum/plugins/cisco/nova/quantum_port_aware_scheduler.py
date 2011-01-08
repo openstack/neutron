@@ -43,7 +43,7 @@ CSCO_EXT_NAME = 'Cisco Nova Tenant'
 ACTION = '/schedule_host'
 
 
-class QuantumScheduler(driver.Scheduler):
+class QuantumPortAwareScheduler(driver.Scheduler):
     """
     Quantum network service dependent scheduler
     Obtains the hostname from Quantum using an extension API

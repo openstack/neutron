@@ -149,3 +149,7 @@ LEAST_RSVD_BLADE_DICT = 'least_rsvd_blade_dict'
 UCSM_IP = 'ucsm_ip_address'
 
 NETWORK_ADMIN = 'network_admin'
+
+NETID_LIST = 'net_id_list'
+
+DELIMITERS = "[,;:\b\s]"
