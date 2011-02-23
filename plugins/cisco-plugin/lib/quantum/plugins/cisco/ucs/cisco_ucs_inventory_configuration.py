@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 Nicira Neworks, Inc.
-# All Rights Reserved.
+#
+# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -15,12 +14,16 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Sumit Naiksatam, Cisco Systems, Inc.
+#
+"""
 
-# If ../quantum/__init__.py exists, add ../ to Python search path, so that
-# it will override what happens to be installed in /usr/(local/)lib/python...
+import os
+from quantum.common.config import find_config_file
+from quantum.plugins.cisco.common import cisco_configparser as confp
 
-import __init__
-import source_environment
-from quantum.cli import main as cli
+CP = confp.CiscoConfigParser(find_config_file({}, [],
+                             'plugins/cisco/ucs_inventory.ini'))
 
-cli()
+INVENTORY = CP.walk(CP.dummy)

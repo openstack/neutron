@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2010 United States Government as represented by the
@@ -28,7 +29,8 @@ import sys
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-VENV = os.path.join(ROOT, '.quantum-venv')
+VENV = os.path.expanduser('~/.quantum-venv')
+VENV_EXISTS = bool(os.path.exists(VENV))
 PIP_REQUIRES = os.path.join(ROOT, 'tools', 'pip-requires')
 
 
@@ -46,11 +48,10 @@ def run_command(cmd, redirect_output=True, check_exit_code=True):
         stdout = subprocess.PIPE
     else:
         stdout = None
-
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=stdout)
     output = proc.communicate()[0]
     if check_exit_code and proc.returncode != 0:
-        die('Command "%s" failed.\n%s', ' '.join(cmd), output)
+        raise Exception('Command "%s" failed.\n%s' % (' '.join(cmd), output))
     return output
 
 
@@ -64,27 +65,24 @@ def check_dependencies():
     """Make sure virtualenv is in the path."""
 
     if not HAS_VIRTUALENV:
-        print 'not found.'
-        # Try installing it via easy_install...
-        if HAS_EASY_INSTALL:
-            print 'Installing virtualenv via easy_install...',
-            if not run_command(['which', 'easy_install']):
-                die('ERROR: virtualenv not found.\n\n'
-                    'Quantum requires virtualenv, please install'
-                    ' it using your favorite package management tool')
-            print 'done.'
+        raise Exception('Virtualenv not found. ' + \
+                         'Try installing python-virtualenv')
     print 'done.'
 
 
-def create_virtualenv(venv=VENV):
+def create_virtualenv(venv=VENV, install_pip=False):
     """Creates the virtual environment and installs PIP only into the
     virtual environment
     """
     print 'Creating venv...',
-    run_command(['virtualenv', '-q', '--no-site-packages', VENV])
+
+    install = ['virtualenv', '-q', venv]
+    run_command(install)
+
     print 'done.'
     print 'Installing pip in virtualenv...',
-    if not run_command(['tools/with_venv.sh', 'easy_install', 'pip']).strip():
+    if install_pip and \
+            not run_command(['tools/with_venv.sh', 'easy_install', 'pip']):
         die("Failed to install pip.")
     print 'done.'
 
@@ -94,9 +92,8 @@ def install_dependencies(venv=VENV):
 
     # Install greenlet by hand - just listing it in the requires file does not
     # get it in stalled in the right order
-    venv_tool = 'tools/with_venv.sh'
-    run_command([venv_tool, 'pip', 'install', '-E', venv, '-r', PIP_REQUIRES],
-                redirect_output=False)
+    run_command(['tools/with_venv.sh', 'pip', 'install', '-E', venv,
+        '-r', PIP_REQUIRES], redirect_output=False)
 
     # Tell the virtual env how to "import quantum"
     pthfile = os.path.join(venv, "lib", "python2.6", "site-packages",

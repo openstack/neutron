@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Nicira Neworks, Inc.
+# Copyright 2011 OpenStack LLC.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,11 +15,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# If ../quantum/__init__.py exists, add ../ to Python search path, so that
-# it will override what happens to be installed in /usr/(local/)lib/python...
-
-import __init__
-import source_environment
-from quantum.cli import main as cli
-
-cli()
+import logging
+logging.basicConfig()

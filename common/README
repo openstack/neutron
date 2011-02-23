@@ -58,7 +58,7 @@ this)
 
   bin/quantum-server      #Server
   bin/quantum             #CLI
-  sh run_tests.sh         #Tests
+  python run_tests.py     #Tests
 
 # -- Installing from the source code
 

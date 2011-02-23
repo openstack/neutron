@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Nicira Neworks, Inc.
+# Copyright 2011 OpenStack LLC.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,11 +15,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# If ../quantum/__init__.py exists, add ../ to Python search path, so that
-# it will override what happens to be installed in /usr/(local/)lib/python...
+# See http://code.google.com/p/python-nose/issues/detail?id=373
+# The code below enables nosetests to work with i18n _() blocks
+try:
+    __import__('pkg_resources').declare_namespace(__name__)
+except ImportError:
+    from pkgutil import extend_path
+    __path__ = extend_path(__path__, __name__)
 
-import __init__
-import source_environment
-from quantum.cli import main as cli
+import __builtin__
+import unittest
+setattr(__builtin__, '_', lambda x: x)
 
-cli()
+
+class BaseTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+
+def setUp():
+    pass

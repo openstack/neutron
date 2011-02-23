@@ -1,0 +1,24 @@
+[DEFAULT]
+# Show more verbose log output (sets INFO log level output)
+verbose = True
+
+# Show debugging output in logs (sets DEBUG log level output)
+debug = False
+
+# Address to bind the API server
+bind_host = 0.0.0.0
+
+# Port the bind the API server to
+bind_port = 9696
+
+# Path to the extensions
+api_extensions_path = unit/extensions
+
+[pipeline:extensions_app_with_filter]
+pipeline = extensions extensions_test_app
+
+[filter:extensions]
+paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
+
+[app:extensions_test_app]
+paste.app_factory = quantum.tests.unit.test_extensions:app_factory

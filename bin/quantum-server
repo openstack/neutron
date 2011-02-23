@@ -21,6 +21,6 @@
 
 import __init__
 import source_environment
-from quantum.cli import main as cli
+from quantum.server import main as server
 
-cli()
+server()

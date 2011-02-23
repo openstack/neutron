@@ -1,0 +1,68 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          quantum-server
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: quantum-server
+# Description:       Provides the Quantum networking service
+### END INIT INFO
+
+set -e
+
+PIDFILE=/var/run/quantum/quantum-server.pid
+LOGFILE=/var/log/quantum/quantum-server.log
+
+DAEMON=/usr/bin/quantum-server
+DAEMON_ARGS="--log-file=$LOGFILE"
+DAEMON_DIR=/var/run
+
+ENABLED=true
+
+if test -f /etc/default/quantum-server; then
+  . /etc/default/quantum-server
+fi
+
+mkdir -p /var/run/quantum
+mkdir -p /var/log/quantum
+
+. /lib/lsb/init-functions
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+export TMPDIR=/var/lib/quantum/tmp
+
+if [ ! -x ${DAEMON} ] ; then
+	exit 0
+fi
+
+case "$1" in
+  start)
+    test "$ENABLED" = "true" || exit 0
+    log_daemon_msg "Starting quantum server" "quantum-server"
+    start-stop-daemon -Sbmv --pidfile $PIDFILE --chdir $DAEMON_DIR --exec $DAEMON -- $DAEMON_ARGS
+    log_end_msg $?
+    ;;
+  stop)
+    test "$ENABLED" = "true" || exit 0
+    log_daemon_msg "Stopping quantum server" "quantum-server"
+    start-stop-daemon --stop --oknodo --pidfile ${PIDFILE}
+    log_end_msg $?
+    ;;
+  restart|force-reload)
+    test "$ENABLED" = "true" || exit 1
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  status)
+    test "$ENABLED" = "true" || exit 0
+    status_of_proc -p $PIDFILE $DAEMON quantum-server && exit 0 || exit $?
+    ;;
+  *)
+    log_action_msg "Usage: /etc/init.d/quantum-server {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0

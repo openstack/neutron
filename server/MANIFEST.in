@@ -1,0 +1,2 @@
+include etc/*
+include etc/init.d/*

@@ -102,7 +102,7 @@ fi
 #
 PEP8_EXCLUDE=vcsversion.py
 PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
-PEP8_INCLUDE="bin/* quantum tests tools run_tests.py"
+PEP8_INCLUDE="bin/* quantum server client common plugins tools run_tests.py setup.py"
 RV=0
 run_tests && pep8 $PEP8_OPTIONS $PEP8_INCLUDE || RV=1
 
