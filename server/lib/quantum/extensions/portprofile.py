@@ -21,7 +21,7 @@
 
 from webob import exc
 
-from extensions import _pprofiles as pprofiles_view
+from quantum.extensions import _pprofiles as pprofiles_view
 from quantum.api import api_common as common
 from quantum.common import exceptions as qexception
 from quantum.common import extensions

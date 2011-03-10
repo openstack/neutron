@@ -20,7 +20,7 @@
 """
 import webob.dec
 
-from quantum.common import wsgi
+from quantum import wsgi
 
 
 class Fault(webob.exc.HTTPException):

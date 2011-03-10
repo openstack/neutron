@@ -24,25 +24,24 @@ import json
 import os.path
 import routes
 from webtest import TestApp
-from extensions import credential
-from extensions import portprofile
-from extensions import novatenant
-from extensions import qos
-from extensions import multiport
+from quantum.extensions import credential
+from quantum.extensions import portprofile
+from quantum.extensions import novatenant
+from quantum.extensions import qos
+from quantum.extensions import multiport
 from quantum.plugins.cisco.db import api as db
-from quantum.common import wsgi
+from quantum import wsgi
 from quantum.common import config
 from quantum.common import extensions
 from quantum import api as server
 from quantum.plugins.cisco.l2network_plugin import L2Network
-from tests.unit.extension_stubs import StubBaseAppController
+from quantum.tests.unit.extension_stubs import StubBaseAppController
 from quantum.common.extensions import (PluginAwareExtensionManager,
                                        ExtensionMiddleware)
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco import l2network_plugin
 
-TEST_CONF_FILE = os.path.join(os.path.dirname(__file__), os.pardir,
-                              os.pardir, 'conf', 'quantum.conf.ciscoext')
+TEST_CONF_FILE = config.find_config_file({}, None, 'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
                                os.pardir, os.pardir, os.pardir, "extensions")
 

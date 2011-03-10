@@ -311,7 +311,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                             tenant_id, new_net_dict[const.NET_ID],
-                            state=state)
+                            state)
         delete_port_dict = self._l2network_plugin.delete_port(
                                 tenant_id, new_net_dict[const.NET_ID],
                                 port_dict[const.PORT_ID])
@@ -412,7 +412,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_update_port_networkDNE - START")
         self.assertRaises(exc.NetworkNotFound,
                           self._l2network_plugin.update_port, tenant_id,
-                          net_id, port_id, const.PORT_UP, state=const.PORT_UP)
+                          net_id, port_id, state=const.PORT_UP)
         LOG.debug("test_update_port_networkDNE - END")
 
     def test_update_portDNE(self, tenant_id='test_tenant', port_id='p0005'):
@@ -942,26 +942,26 @@ class CoreAPITestFunc(unittest.TestCase):
         self.assertEqual(result_vlan_name, expected_output)
         LOG.debug("test_get_vlan_name - END")
 
-    def test_validate_state(self, state=const.PORT_UP):
+    def test_validate_port_state(self, state=const.PORT_UP):
         """
         Tests validate port state
         """
 
-        LOG.debug("test_validate_state - START")
-        result = self._l2network_plugin._validate_state(state)
+        LOG.debug("test_validate_port_state - START")
+        result = self._l2network_plugin._validate_port_state(state)
         self.assertEqual(result, True)
-        LOG.debug("test_validate_state - END")
+        LOG.debug("test_validate_port_state - END")
 
-    def test_invalid_state(self, state="BADSTATE"):
+    def test_invalid_port_state(self, state="BADSTATE"):
         """
         Tests invalidate port state
         """
 
-        LOG.debug("test_validate_state - START")
+        LOG.debug("test_validate_port_state - START")
         self.assertRaises(exc.StateInvalid,
-                          self._l2network_plugin._validate_state,
+                          self._l2network_plugin._validate_port_state,
                           state)
-        LOG.debug("test_validate_state - END")
+        LOG.debug("test_validate_port_state - END")
 
     def setUp(self):
         """
@@ -976,8 +976,6 @@ class CoreAPITestFunc(unittest.TestCase):
         self.port_id = 'p0005'
         self.remote_interface = 'new_interface'
         self._l2network_plugin = l2network_plugin.L2Network()
-        LOG.debug(self._l2network_plugin)
-        LOG.debug("asdfasdfasdfasdfasdf")
 
     """
         Clean up functions after the tests

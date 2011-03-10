@@ -22,7 +22,7 @@ import logging
 
 from webob import exc
 
-from extensions import _credential_view as credential_view
+from quantum.extensions import _credential_view as credential_view
 from quantum.api import api_common as common
 from quantum.common import extensions
 from quantum.manager import QuantumManager

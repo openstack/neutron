@@ -24,12 +24,10 @@ from the nexus.ini file
 """
 import os
 
+from quantum.common.config import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
-CONF_FILE = "../conf/nexus.ini"
-
-CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                             + "/" + CONF_FILE)
+CP = confp.CiscoConfigParser(find_config_file({}, None, "nexus.ini"))
 
 SECTION = CP['SWITCH']
 NEXUS_IP_ADDRESS = SECTION['nexus_ip_address']

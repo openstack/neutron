@@ -200,7 +200,7 @@ class TestNexusPlugin(unittest.TestCase):
         new_net_dict = self._cisco_nexus_plugin.create_network(
                            tenant_id, self.net_name, network_created["net-id"],
                            self.vlan_name, self.vlan_id)
-        rename_net_dict = self._cisco_nexus_plugin.rename_network(
+        rename_net_dict = self._cisco_nexus_plugin.update_network(
                         tenant_id, new_net_dict[const.NET_ID], name=new_name)
         self.assertEqual(rename_net_dict[const.NET_NAME], new_name)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
