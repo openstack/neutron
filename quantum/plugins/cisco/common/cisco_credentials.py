@@ -31,7 +31,8 @@ from quantum.plugins.cisco.db import l2network_db as cdb
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
-CREDENTIALS_FILE = find_config_file({}, None, "credentials.ini")
+CREDENTIALS_FILE = find_config_file({'plugin': 'cisco'}, None,
+                                     "credentials.ini")
 TENANT = const.NETWORK_ADMIN
 
 cp = confp.CiscoConfigParser(CREDENTIALS_FILE)

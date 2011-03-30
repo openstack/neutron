@@ -207,19 +207,23 @@ def find_config_file(options, args, config_file='quantum.conf'):
     dir_to_common = os.path.dirname(os.path.abspath(__file__))
     root = os.path.join(dir_to_common, '..', '..', '..', '..')
     # Handle standard directory search for the config file
-    config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'server', 'etc')),
+    config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'etc')),
                         fix_path(os.path.join('~', '.quantum-venv', 'etc',
                                  'quantum')),
                         fix_path('~'),
                         os.path.join(FLAGS.state_path, 'etc'),
                         os.path.join(FLAGS.state_path, 'etc', 'quantum'),
-                        os.path.join(root, 'server', 'etc'),
                         fix_path(os.path.join('~', '.local',
                                               'etc', 'quantum')),
                         '/usr/etc/quantum',
                         '/usr/local/etc/quantum',
                         '/etc/quantum/',
                         '/etc']
+
+    if 'plugin' in options:
+        config_file_dirs = [os.path.join(x, 'quantum', 'plugins',
+                                             options['plugin'])
+                            for x in config_file_dirs]
 
     if os.path.exists(os.path.join(root, 'plugins')):
         plugins = [fix_path(os.path.join(root, 'plugins', p, 'etc'))

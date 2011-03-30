@@ -41,7 +41,8 @@ from quantum.common.extensions import (PluginAwareExtensionManager,
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco import l2network_plugin
 
-TEST_CONF_FILE = config.find_config_file({}, None, 'quantum.conf.ciscoext')
+TEST_CONF_FILE = config.find_config_file({'plugin': 'cisco'}, None,
+                                         'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
                                os.pardir, os.pardir, os.pardir, "extensions")
 
