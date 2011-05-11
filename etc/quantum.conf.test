@@ -1,0 +1,15 @@
+[DEFAULT]
+# Show more verbose log output (sets INFO log level output)
+verbose = True
+
+# Show debugging output in logs (sets DEBUG log level output)
+debug = False
+
+[app:quantum]
+paste.app_factory = quantum.l2Network.service:app_factory
+
+# Address to bind the API server
+bind_host = 0.0.0.0
+
+# Port the bind the API server to
+bind_port = 9696
