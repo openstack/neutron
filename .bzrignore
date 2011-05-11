@@ -1,0 +1,11 @@
+*.pyc
+quantum.egg-info
+quantum_tests.sqlite
+quantum.sqlite
+*.quantum-venv
+dist/
+ChangeLog
+*.pid
+*.log
+quantum/vcsversion.py
+.ropeproject
