@@ -24,6 +24,7 @@ methods that needs to be implemented by a Quantum Plug-in.
 
 from abc import ABCMeta, abstractmethod
 
+
 class QuantumPluginBase(object):
 
     __metaclass__ = ABCMeta
@@ -33,10 +34,10 @@ class QuantumPluginBase(object):
         """
         Returns a dictionary containing all
         <network_uuid, network_name> for
-        the specified tenant. 
+        the specified tenant.
         """
         pass
-    
+
     @abstractmethod
     def create_network(self, tenant_id, net_name):
         """
@@ -44,7 +45,7 @@ class QuantumPluginBase(object):
         a symbolic name.
         """
         pass
-    
+
     @abstractmethod
     def delete_network(self, tenant_id, net_id):
         """
@@ -60,7 +61,7 @@ class QuantumPluginBase(object):
         spec
         """
         pass
-    
+
     @abstractmethod
     def rename_network(self, tenant_id, net_id, new_name):
         """
@@ -68,7 +69,7 @@ class QuantumPluginBase(object):
         Virtual Network.
         """
         pass
-    
+
     @abstractmethod
     def get_all_ports(self, tenant_id, net_id):
         """
@@ -76,14 +77,14 @@ class QuantumPluginBase(object):
         specified Virtual Network.
         """
         pass
-    
+
     @abstractmethod
     def create_port(self, tenant_id, net_id):
         """
         Creates a port on the specified Virtual Network.
         """
         pass
-    
+
     @abstractmethod
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -93,7 +94,7 @@ class QuantumPluginBase(object):
         is deleted.
         """
         pass
-    
+
     @abstractmethod
     def get_port_details(self, tenant_id, net_id, port_id):
         """
@@ -101,7 +102,7 @@ class QuantumPluginBase(object):
         that is attached to this particular port.
         """
         pass
-    
+
     @abstractmethod
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
         """
@@ -109,7 +110,7 @@ class QuantumPluginBase(object):
         specified Virtual Network.
         """
         pass
-    
+
     @abstractmethod
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
@@ -117,7 +118,7 @@ class QuantumPluginBase(object):
         specified Virtual Network.
         """
         pass
-    
+
     @abstractmethod
     def get_interface_details(self, tenant_id, net_id, port_id):
         """
@@ -125,7 +126,7 @@ class QuantumPluginBase(object):
         particular port.
         """
         pass
-    
+
     @abstractmethod
     def get_all_attached_interfaces(self, tenant_id, net_id):
         """

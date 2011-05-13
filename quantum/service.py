@@ -17,25 +17,28 @@
 
 import json
 import routes
+from common import wsgi
 from webob import Response
 
-from common import wsgi
 
 class NetworkController(wsgi.Controller):
-        
-    def version(self,request):
+
+    def version(self, request):
         return "Quantum version 0.1"
 
-class API(wsgi.Router):                                                                
-    def __init__(self, options):                                                       
+
+class API(wsgi.Router):
+    def __init__(self, options):
         self.options = options
-        mapper = routes.Mapper()                                                       
+        mapper = routes.Mapper()
         network_controller = NetworkController()
-        mapper.resource("net_controller", "/network", controller=network_controller)
+        mapper.resource("net_controller", "/network",
+                        controller=network_controller)
         mapper.connect("/", controller=network_controller, action="version")
         super(API, self).__init__(mapper)
-                                                                                      
-def app_factory(global_conf, **local_conf):                                            
-    conf = global_conf.copy()                                                          
+
+
+def app_factory(global_conf, **local_conf):
+    conf = global_conf.copy()
     conf.update(local_conf)
     return API(conf)
