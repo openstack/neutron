@@ -37,12 +37,12 @@ class QuantumManager(object):
         # configuration file as opposed to hard-coding the location
         #
         #plugin_location = get_plugin_location(configuration_file)
-        plugin_location = "plugins.SamplePlugin.QuantumEchoPlugin"
+        plugin_location = "plugins.SamplePlugin.DummyDataPlugin"
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
-            raise Exception("Imported plugin didn't pass compatibility test")
+            raise Exception("Configured Quantum plug-in didn't pass compatibility test")
         else:
-            print("Imported plugin passed compatibility test\n") 
+            print("Successfully imported Quantum plug-in. All compatibility tests passed\n") 
         self.plugin = plugin_klass()
         
    def get_manager(self):

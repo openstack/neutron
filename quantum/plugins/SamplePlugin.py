@@ -129,3 +129,134 @@ class QuantumEchoPlugin(object):
         a particular Virtual Network.
         """
         print("get_all_attached_interfaces() called\n")
+
+class DummyDataPlugin(object):
+
+    """
+    DummyDataPlugin is a demo plugin that provides
+    hard-coded data structures to aid in quantum
+    client/cli development
+    """
+    
+    def get_all_networks(self, tenant_id):
+        """
+        Returns a dictionary containing all
+        <network_uuid, network_name> for
+        the specified tenant. 
+        """
+        nets = {"001": "lNet1", "002": "lNet2" , "003": "lNet3"}
+        print("get_all_networks() called\n")
+        return nets
+    
+    
+    def create_network(self, tenant_id, net_name):
+        """
+        Creates a new Virtual Network, and assigns it
+        a symbolic name.
+        """
+        print("create_network() called\n")
+        # return network_id of the created network
+        return 101
+    
+    
+    def delete_network(self, tenant_id, net_id):
+        """
+        Deletes the network with the specified network identifier
+        belonging to the specified tenant.
+        """
+        print("delete_network() called\n")
+
+    
+    def get_network_details(self, tenant_id, net_id):
+        """
+        retrieved a list of all the remote vifs that
+        are attached to the network
+        """
+        print("get_network_details() called\n")
+        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0", "/tenant1/networks/10/121/vif1.1"]
+        return vifs_on_net
+    
+    
+    def rename_network(self, tenant_id, net_id, new_name):
+        """
+        Updates the symbolic name belonging to a particular
+        Virtual Network.
+        """
+        print("rename_network() called\n")
+    
+    
+    def get_all_ports(self, tenant_id, net_id):
+        """
+        Retrieves all port identifiers belonging to the
+        specified Virtual Network.
+        """
+        print("get_all_ports() called\n")
+        port_ids_on_net = ["2", "3", "4"]
+        return port_ids_on_net
+    
+    
+    def create_port(self, tenant_id, net_id):
+        """
+        Creates a port on the specified Virtual Network.
+        """
+        print("create_port() called\n")
+        #return the port id
+        return 201
+    
+    
+    def delete_port(self, tenant_id, net_id, port_id):
+        """
+        Deletes a port on a specified Virtual Network,
+        if the port contains a remote interface attachment,
+        the remote interface is first un-plugged and then the port
+        is deleted.
+        """
+        print("delete_port() called\n")
+    
+    
+    def get_port_details(self, tenant_id, net_id, port_id):
+        """
+        This method allows the user to retrieve a remote interface
+        that is attached to this particular port.
+        """
+        print("get_port_details() called\n")
+        #returns the remote interface UUID
+        return "/tenant1/networks/net_id/portid/vif2.1"
+    
+    
+    def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
+        """
+        Attaches a remote interface to the specified port on the
+        specified Virtual Network.
+        """
+        print("plug_interface() called\n")
+    
+    
+    def unplug_interface(self, tenant_id, net_id, port_id):
+        """
+        Detaches a remote interface from the specified port on the
+        specified Virtual Network.
+        """
+        print("unplug_interface() called\n")
+    
+    
+    def get_interface_details(self, tenant_id, net_id, port_id):
+        """
+        Retrieves the remote interface that is attached at this
+        particular port.
+        """
+        print("get_interface_details() called\n")
+        #returns the remote interface UUID
+        return "/tenant1/networks/net_id/portid/vif2.0"
+    
+    
+    def get_all_attached_interfaces(self, tenant_id, net_id):
+        """
+        Retrieves all remote interfaces that are attached to
+        a particular Virtual Network.
+        """
+        print("get_all_attached_interfaces() called\n")
+        # returns a list of all attached remote interfaces
+        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0", "/tenant1/networks/10/121/vif1.1"]
+        return vifs_on_net
+        

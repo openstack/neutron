@@ -57,8 +57,8 @@ class QuantumPluginBase(object):
     @abstractmethod
     def get_network_details(self, tenant_id, net_id):
         """
-        Deletes the Virtual Network belonging to a the
-        spec
+        retrieved a list of all the remote vifs that
+        are attached to the network
         """
         pass
 
