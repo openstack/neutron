@@ -27,9 +27,10 @@ import random
 import subprocess
 import socket
 import sys
+import ConfigParser
 
-from quantum.common import exception
-from quantum.common.exception import ProcessExecutionError
+from common import exceptions
+from exceptions import ProcessExecutionError
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -183,6 +184,11 @@ def isotime(at=None):
 
 def parse_isotime(timestr):
     return datetime.datetime.strptime(timestr, TIME_FORMAT)
+
+def getPluginFromConfig(file="config.ini"):
+        Config = ConfigParser.ConfigParser()
+        Config.read(file)
+        return Config.get("PLUGIN", "provider")
 
 
 class LazyPluggable(object):

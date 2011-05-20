@@ -24,20 +24,16 @@ plugin that concretely implement quantum_plugin_base class
 The caller should make sure that QuantumManager is a singleton.
 """
 
-import utils
+from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
-CONFIG_FILE = "quantum_plugin.conf"
+CONFIG_FILE = "plugins.ini"
 
 class QuantumManager(object):
     
    def __init__(self,config=CONFIG_FILE):
         self.configuration_file = CONFIG_FILE
-        #TODO(somik): plugin location should be grabbed from a
-        # configuration file as opposed to hard-coding the location
-        #
-        #plugin_location = get_plugin_location(configuration_file)
-        plugin_location = "plugins.SamplePlugin.DummyDataPlugin"
+        plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
             raise Exception("Configured Quantum plug-in didn't pass compatibility test")
