@@ -37,9 +37,9 @@ from quantum.common import wsgi
 from quantum.common import config
 
 def create_options(parser):
-    """                             
+    """
     Sets up the CLI and config-file options that may be
-    parsed and program commands.                                                        
+    parsed and program commands.
     :param parser: The option parser
     """
     config.add_common_options(parser)
@@ -53,10 +53,9 @@ if __name__ == '__main__':
 
     try:
         conf, app = config.load_paste_app('quantum', options, args)
-        
-    server = wsgi.Server()
-    server.start(app, int(conf['bind_port']), conf['bind_host'])
-    server.wait()
+        server = wsgi.Server()
+        server.start(app, int(conf['bind_port']), conf['bind_host'])
+        server.wait()
     except RuntimeError, e:
-    sys.exit("ERROR: %s" % e)
+        sys.exit("ERROR: %s" % e)
 

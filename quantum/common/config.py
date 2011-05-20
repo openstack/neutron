@@ -31,7 +31,7 @@ import sys
 
 from paste import deploy
 
-import quantum.common.exception as exception
+import quantum.common.exceptions as exception
 
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
