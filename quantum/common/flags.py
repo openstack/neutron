@@ -23,6 +23,7 @@ Global flags should be defined here, the rest are defined where they're used.
 """
 
 import getopt
+import os 
 import string
 import sys
 
@@ -245,3 +246,7 @@ def DECLARE(name, module_string, flag_values=FLAGS):
 # __GLOBAL FLAGS ONLY__
 # Define any app-specific flags in their own files, docs at:
 # http://code.google.com/p/python-gflags/source/browse/trunk/gflags.py#a9
+
+DEFINE_string('state_path', os.path.join(os.path.dirname(__file__), '../../'),
+              "Top-level directory for maintaining quantum's state")
+

@@ -69,6 +69,10 @@ class Invalid(Error):
     pass
 
 
+class InvalidContentType(Invalid):
+    message = _("Invalid content type %(content_type)s.")
+
+
 class BadInputError(Exception):
     """Error resulting from a client sending bad input to a server"""
     pass

@@ -31,10 +31,14 @@ import sys
 
 from paste import deploy
 
-import quantum.common.exception as exception
+from quantum.common import flags
+from quantum.common import exceptions as exception
 
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+FLAGS = flags.FLAGS
+LOG = logging.getLogger('quantum.common.wsgi')
 
 
 def parse_options(parser, cli_args=None):
@@ -186,8 +190,8 @@ def find_config_file(options, args):
         * .
         * ~.quantum/
         * ~
-        * /etc/quantum
-        * /etc
+        * $FLAGS.state_path/etc/quantum
+        * $FLAGS.state_path/etc
 
     :retval Full path to config file, or None if no config file found
     """
@@ -204,9 +208,10 @@ def find_config_file(options, args):
     config_file_dirs = [fix_path(os.getcwd()),
                         fix_path(os.path.join('~', '.quantum')),
                         fix_path('~'),
+                        os.path.join(FLAGS.state_path, 'etc'),
+                        os.path.join(FLAGS.state_path, 'etc','quantum'),
                         '/etc/quantum/',
                         '/etc']
-
     for cfg_dir in config_file_dirs:
         cfg_file = os.path.join(cfg_dir, 'quantum.conf')
         if os.path.exists(cfg_file):
@@ -276,6 +281,8 @@ def load_paste_app(app_name, options, args):
     try:
         # Setup logging early, supplying both the CLI options and the
         # configuration mapping from the config file
+        print "OPTIONS:%s" %options
+        print "CONF:%s" %conf
         setup_logging(options, conf)
 
         # We only update the conf dict for the verbose and debug
@@ -288,17 +295,15 @@ def load_paste_app(app_name, options, args):
         conf['verbose'] = verbose
 
         # Log the options used when starting if we're in debug mode...
-        if debug:
-            logger = logging.getLogger(app_name)
-            logger.debug("*" * 80)
-            logger.debug("Configuration options gathered from config file:")
-            logger.debug(conf_file)
-            logger.debug("================================================")
-            items = dict([(k, v) for k, v in conf.items()
-                          if k not in ('__file__', 'here')])
-            for key, value in sorted(items.items()):
-                logger.debug("%(key)-30s %(value)s" % locals())
-            logger.debug("*" * 80)
+        LOG.debug("*" * 80)
+        LOG.debug("Configuration options gathered from config file:")
+        LOG.debug(conf_file)
+        LOG.debug("================================================")
+        items = dict([(k, v) for k, v in conf.items()
+                      if k not in ('__file__', 'here')])
+        for key, value in sorted(items.items()):
+            LOG.debug("%(key)-30s %(value)s" % locals())
+        LOG.debug("*" * 80)
         app = deploy.loadapp("config:%s" % conf_file, name=app_name)
     except (LookupError, ImportError), e:
         raise RuntimeError("Unable to load %(app_name)s from "

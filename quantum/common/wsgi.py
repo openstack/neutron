@@ -32,6 +32,9 @@ import routes.middleware
 import webob.dec
 import webob.exc
 
+from quantum.common import exceptions as exception
+
+LOG = logging.getLogger('quantum.common.wsgi')
 
 class WritableLogger(object):
     """A thin wrapper that responds to `write` and logs."""
@@ -108,6 +111,104 @@ class Middleware(object):
             return response
         response = req.get_response(self.application)
         return self.process_response(response)
+
+
+class Request(webob.Request):
+
+    def best_match_content_type(self):
+        """Determine the most acceptable content-type.
+
+        Based on the query extension then the Accept header.
+
+        """
+        parts = self.path.rsplit('.', 1)
+
+        if len(parts) > 1:
+            format = parts[1]
+            if format in ['json', 'xml']:
+                return 'application/{0}'.format(parts[1])
+
+        ctypes = ['application/json', 'application/xml']
+        bm = self.accept.best_match(ctypes)
+
+        return bm or 'application/json'
+
+    def get_content_type(self):
+        allowed_types = ("application/xml", "application/json")
+        if not "Content-Type" in self.headers:
+            msg = _("Missing Content-Type")
+            LOG.debug(msg)
+            raise webob.exc.HTTPBadRequest(msg)
+        type = self.content_type
+        if type in allowed_types:
+            return type
+        LOG.debug(_("Wrong Content-Type: %s") % type)
+        raise webob.exc.HTTPBadRequest("Invalid content type")
+
+
+class Application(object):
+    """Base WSGI application wrapper. Subclasses need to implement __call__."""
+
+    @classmethod
+    def factory(cls, global_config, **local_config):
+        """Used for paste app factories in paste.deploy config files.
+
+        Any local configuration (that is, values under the [app:APPNAME]
+        section of the paste config) will be passed into the `__init__` method
+        as kwargs.
+
+        A hypothetical configuration would look like:
+
+            [app:wadl]
+            latest_version = 1.3
+            paste.app_factory = nova.api.fancy_api:Wadl.factory
+
+        which would result in a call to the `Wadl` class as
+
+            import quantum.api.fancy_api
+            fancy_api.Wadl(latest_version='1.3')
+
+        You could of course re-implement the `factory` method in subclasses,
+        but using the kwarg passing it shouldn't be necessary.
+
+        """
+        return cls(**local_config)
+
+    def __call__(self, environ, start_response):
+        r"""Subclasses will probably want to implement __call__ like this:
+
+        @webob.dec.wsgify(RequestClass=Request)
+        def __call__(self, req):
+          # Any of the following objects work as responses:
+
+          # Option 1: simple string
+          res = 'message\n'
+
+          # Option 2: a nicely formatted HTTP exception page
+          res = exc.HTTPForbidden(detail='Nice try')
+
+          # Option 3: a webob Response object (in case you need to play with
+          # headers, or you want to be treated like an iterable, or or or)
+          res = Response();
+          res.app_iter = open('somefile')
+
+          # Option 4: any wsgi app to be run next
+          res = self.application
+
+          # Option 5: you can get a Response object for a wsgi app, too, to
+          # play with headers etc
+          res = req.get_response(self.application)
+
+          # You can then just return your response...
+          return res
+          # ... or set req.response and return None.
+          req.response = res
+
+        See the end of http://pythonpaste.org/webob/modules/dec.html
+        for more info.
+
+        """
+        raise NotImplementedError(_('You must implement __call__'))
 
 
 class Debug(Middleware):
@@ -240,35 +341,58 @@ class Controller(object):
         return serializer.to_content_type(data)
 
 
+
+
 class Serializer(object):
     """
     Serializes a dictionary to a Content Type specified by a WSGI environment.
     """
 
-    def __init__(self, environ, metadata=None):
+    def __init__(self,metadata=None):
         """
         Create a serializer based on the given WSGI environment.
         'metadata' is an optional dict mapping MIME types to information
         needed to serialize a dictionary to that type.
         """
-        self.environ = environ
         self.metadata = metadata or {}
         self._methods = {
             'application/json': self._to_json,
             'application/xml': self._to_xml}
 
-    def to_content_type(self, data):
-        """
-        Serialize a dictionary into a string.  The format of the string
-        will be decided based on the Content Type requested in self.environ:
-        by Accept: header, or by URL suffix.
-        """
-        # FIXME(sirp): for now, supporting json only
-        #mimetype = 'application/xml'
-        mimetype = 'application/json'
-        # TODO(gundlach): determine mimetype from request
-        return self._methods.get(mimetype, repr)(data)
 
+    def _get_serialize_handler(self, content_type):
+        handlers = {
+            'application/json': self._to_json,
+            'application/xml': self._to_xml,
+        }
+        try:
+            return handlers[content_type]
+        except Exception:
+            raise exception.InvalidContentType(content_type=content_type)
+
+    def serialize(self, data, content_type):
+        """Serialize a dictionary into the specified content type."""
+        return self._get_serialize_handler(content_type)(data)
+
+    def get_deserialize_handler(self, content_type):
+        handlers = {
+            'application/json': self._from_json,
+            'application/xml': self._from_xml,
+        }
+
+        try:
+            return handlers[content_type]
+        except Exception:
+            raise exception.InvalidContentType(content_type=content_type)
+    
+    def deserialize(self, datastring, content_type):
+        """Deserialize a string to a dictionary.
+
+        The string must be in the format of a supported MIME type.
+
+        """
+        return self.get_deserialize_handler(content_type)(datastring)
+    
     def _to_json(self, data):
         def sanitizer(obj):
             if isinstance(obj, datetime.datetime):
@@ -302,6 +426,7 @@ class Serializer(object):
         elif type(data) is dict:
             attrs = metadata.get('attributes', {}).get(nodename, {})
             for k, v in data.items():
+                LOG.debug("K:%s - V:%s",k,v)
                 if k in attrs:
                     result.setAttribute(k, str(v))
                 else:
