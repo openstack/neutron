@@ -35,6 +35,7 @@ if os.path.exists(os.path.join(possible_topdir, 'quantum', '__init__.py')):
 
 gettext.install('quantum', unicode=1)
 
+from quantum import service 
 from quantum.common import wsgi
 from quantum.common import config
 
@@ -54,10 +55,18 @@ if __name__ == '__main__':
     (options, args) = config.parse_options(oparser)
 
     try:
-        conf, app = config.load_paste_app('quantumversionapp', options, args)
-        server = wsgi.Server()
-        server.start(app, int(conf['bind_port']), conf['bind_host'])
-        server.wait()
+        print "HERE-1"
+        service = service.serve_wsgi(service.QuantumApiService,
+                                     options=options,
+                                     args=args)
+        #version_conf, version_app = config.load_paste_app('quantumversion', options, args)
+        print "HERE-2"
+        service.wait()
+        #api_conf, api_app = config.load_paste_app('quantum', options, args)
+        #server = wsgi.Server()
+        #server.start(version_app, int(version_conf['bind_port']), version_conf['bind_host'])
+        #server.start(api_app, int(api_conf['bind_port']), api_conf['bind_host'])
+        #server.wait()
     except RuntimeError, e:
         sys.exit("ERROR: %s" % e)
 

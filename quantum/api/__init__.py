@@ -13,4 +13,69 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-# @author: Somik Behera, Nicira Networks, Inc.
+# @author: Salvatore Orlando, Citrix Systems
+
+"""
+Quantum API controllers.
+"""
+
+import logging
+import routes
+import webob.dec
+import webob.exc
+
+from quantum.api import faults
+from quantum.api import networks
+from quantum.common import flags
+from quantum.common import wsgi
+
+
+LOG = logging.getLogger('quantum.api')
+FLAGS = flags.FLAGS
+
+class FaultWrapper(wsgi.Middleware):
+    """Calls down the middleware stack, making exceptions into faults."""
+
+    @webob.dec.wsgify(RequestClass=wsgi.Request)
+    def __call__(self, req):
+        try:
+            return req.get_response(self.application)
+        except Exception as ex:
+            LOG.exception(_("Caught error: %s"), unicode(ex))
+            exc = webob.exc.HTTPInternalServerError(explanation=unicode(ex))
+            return faults.Fault(exc)
+
+
+class APIRouterV01(wsgi.Router):
+    """
+    Routes requests on the Quantum API to the appropriate controller
+    """
+
+    def __init__(self, ext_mgr=None):
+        mapper = routes.Mapper()
+        self._setup_routes(mapper)
+        super(APIRouterV01, self).__init__(mapper)
+
+    def _setup_routes(self, mapper):
+        #server_members = self.server_members
+        #server_members['action'] = 'POST'
+
+        #server_members['pause'] = 'POST'
+        #server_members['unpause'] = 'POST'
+        #server_members['diagnostics'] = 'GET'
+        #server_members['actions'] = 'GET'
+        #server_members['suspend'] = 'POST'
+        #server_members['resume'] = 'POST'
+        #server_members['rescue'] = 'POST'
+        #server_members['unrescue'] = 'POST'
+        #server_members['reset_network'] = 'POST'
+        #server_members['inject_network_info'] = 'POST'
+
+        mapper.resource("network", "networks", controller=networks.Controller(),
+                    collection={'detail': 'GET'})
+        print mapper            
+        #mapper.resource("port", "ports", controller=ports.Controller(),
+        #        collection=dict(public='GET', private='GET'),
+        #        parent_resource=dict(member_name='network',
+        #                             collection_name='networks'))
+

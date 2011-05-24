@@ -29,7 +29,7 @@ import socket
 import sys
 import ConfigParser
 
-from common import exceptions
+from quantum.common import exceptions
 from exceptions import ProcessExecutionError
 
 

@@ -1,3 +1,4 @@
+
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011, Nicira Networks, Inc.
@@ -253,6 +254,13 @@ class Router(object):
     WSGI middleware that maps incoming requests to WSGI apps.
     """
 
+    @classmethod
+    def factory(cls, global_config, **local_config):
+        """
+        Returns an instance of the WSGI Router class
+        """
+        return cls()
+
     def __init__(self, mapper):
         """
         Create a router for the given routes.Mapper.
@@ -337,7 +345,7 @@ class Controller(object):
         MIME types to information needed to serialize to that type.
         """
         _metadata = getattr(type(self), "_serialization_metadata", {})
-        serializer = Serializer(request.environ, _metadata)
+        serializer = Serializer(_metadata)
         return serializer.to_content_type(data)
 
 
