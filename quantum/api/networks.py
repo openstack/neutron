@@ -56,12 +56,12 @@ class Controller(wsgi.Controller):
         },
     }
 
-    def index(self, request):
+    def index(self, req):
         """ Returns a list of network names and ids """
         #TODO: this should be for a given tenant!!!
         print "PIPPO"
         LOG.debug("HERE - index")
-        return self._items(request, is_detail=False)
+        return self._items(req, is_detail=False)
 
     def _items(self, req, is_detail):
         """ Returns a list of networks. """

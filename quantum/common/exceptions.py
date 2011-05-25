@@ -53,6 +53,10 @@ class NotFound(Error):
     pass
 
 
+class ClassNotFound(NotFound):
+    message = _("Class %(class_name)s could not be found")
+
+
 class Duplicate(Error):
     pass
 

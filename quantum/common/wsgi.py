@@ -25,6 +25,8 @@ import logging
 import sys
 import datetime
 
+from xml.dom import minidom
+
 import eventlet
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
@@ -33,6 +35,7 @@ import routes.middleware
 import webob.dec
 import webob.exc
 
+from quantum import utils
 from quantum.common import exceptions as exception
 
 LOG = logging.getLogger('quantum.common.wsgi')
@@ -313,66 +316,95 @@ class Router(object):
 
 
 class Controller(object):
-    """
+    """WSGI app that dispatched to methods.
+
     WSGI app that reads routing information supplied by RoutesMiddleware
     and calls the requested action method upon itself.  All action methods
     must, in addition to their normal parameters, accept a 'req' argument
-    which is the incoming webob.Request.  They raise a webob.exc exception,
+    which is the incoming wsgi.Request.  They raise a webob.exc exception,
     or return a dict which will be serialized by requested content type.
+
     """
 
-    @webob.dec.wsgify
+    @webob.dec.wsgify(RequestClass=Request)
     def __call__(self, req):
-        """
-        Call the method specified in req.environ by RoutesMiddleware.
-        """
+        """Call the method specified in req.environ by RoutesMiddleware."""
         arg_dict = req.environ['wsgiorg.routing_args'][1]
         action = arg_dict['action']
         method = getattr(self, action)
+        LOG.debug("%s %s" % (req.method, req.url))
         del arg_dict['controller']
         del arg_dict['action']
-        arg_dict['request'] = req
+        if 'format' in arg_dict:
+            del arg_dict['format']
+        arg_dict['req'] = req
         result = method(**arg_dict)
+
         if type(result) is dict:
-            return self._serialize(result, req)
+            content_type = req.best_match_content_type()
+            default_xmlns = self.get_default_xmlns(req)
+            body = self._serialize(result, content_type, default_xmlns)
+
+            response = webob.Response()
+            response.headers['Content-Type'] = content_type
+            response.body = body
+            msg_dict = dict(url=req.url, status=response.status_int)
+            msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
+            LOG.debug(msg)
+            return response
         else:
             return result
 
-    def _serialize(self, data, request):
-        """
-        Serialize the given dict to the response type requested in request.
+    def _serialize(self, data, content_type, default_xmlns):
+        """Serialize the given dict to the provided content_type.
+
         Uses self._serialization_metadata if it exists, which is a dict mapping
         MIME types to information needed to serialize to that type.
+
         """
-        _metadata = getattr(type(self), "_serialization_metadata", {})
+        _metadata = getattr(type(self), '_serialization_metadata', {})
+
+        serializer = Serializer(_metadata, default_xmlns)
+        try:
+            return serializer.serialize(data, content_type)
+        except exception.InvalidContentType:
+            raise webob.exc.HTTPNotAcceptable()
+
+    def _deserialize(self, data, content_type):
+        """Deserialize the request body to the specefied content type.
+
+        Uses self._serialization_metadata if it exists, which is a dict mapping
+        MIME types to information needed to serialize to that type.
+
+        """
+        _metadata = getattr(type(self), '_serialization_metadata', {})
         serializer = Serializer(_metadata)
-        return serializer.to_content_type(data)
+        return serializer.deserialize(data, content_type)
 
-
+    def get_default_xmlns(self, req):
+        """Provide the XML namespace to use if none is otherwise specified."""
+        return None
 
 
 class Serializer(object):
-    """
-    Serializes a dictionary to a Content Type specified by a WSGI environment.
-    """
+    """Serializes and deserializes dictionaries to certain MIME types."""
 
-    def __init__(self,metadata=None):
-        """
-        Create a serializer based on the given WSGI environment.
+    def __init__(self, metadata=None, default_xmlns=None):
+        """Create a serializer based on the given WSGI environment.
+
         'metadata' is an optional dict mapping MIME types to information
         needed to serialize a dictionary to that type.
+
         """
         self.metadata = metadata or {}
-        self._methods = {
-            'application/json': self._to_json,
-            'application/xml': self._to_xml}
-
+        self.default_xmlns = default_xmlns
 
     def _get_serialize_handler(self, content_type):
         handlers = {
             'application/json': self._to_json,
             'application/xml': self._to_xml,
         }
+
         try:
             return handlers[content_type]
         except Exception:
@@ -381,6 +413,14 @@ class Serializer(object):
     def serialize(self, data, content_type):
         """Serialize a dictionary into the specified content type."""
         return self._get_serialize_handler(content_type)(data)
+
+    def deserialize(self, datastring, content_type):
+        """Deserialize a string to a dictionary.
+
+        The string must be in the format of a supported MIME type.
+
+        """
+        return self.get_deserialize_handler(content_type)(datastring)
 
     def get_deserialize_handler(self, content_type):
         handlers = {
@@ -392,36 +432,72 @@ class Serializer(object):
             return handlers[content_type]
         except Exception:
             raise exception.InvalidContentType(content_type=content_type)
-    
-    def deserialize(self, datastring, content_type):
-        """Deserialize a string to a dictionary.
 
-        The string must be in the format of a supported MIME type.
+    def _from_json(self, datastring):
+        return utils.loads(datastring)
+
+    def _from_xml(self, datastring):
+        xmldata = self.metadata.get('application/xml', {})
+        plurals = set(xmldata.get('plurals', {}))
+        node = minidom.parseString(datastring).childNodes[0]
+        return {node.nodeName: self._from_xml_node(node, plurals)}
+
+    def _from_xml_node(self, node, listnames):
+        """Convert a minidom node to a simple Python type.
+
+        listnames is a collection of names of XML nodes whose subnodes should
+        be considered list items.
 
         """
-        return self.get_deserialize_handler(content_type)(datastring)
-    
-    def _to_json(self, data):
-        def sanitizer(obj):
-            if isinstance(obj, datetime.datetime):
-                return obj.isoformat()
-            return obj
+        if len(node.childNodes) == 1 and node.childNodes[0].nodeType == 3:
+            return node.childNodes[0].nodeValue
+        elif node.nodeName in listnames:
+            return [self._from_xml_node(n, listnames) for n in node.childNodes]
+        else:
+            result = dict()
+            for attr in node.attributes.keys():
+                result[attr] = node.attributes[attr].nodeValue
+            for child in node.childNodes:
+                if child.nodeType != node.TEXT_NODE:
+                    result[child.nodeName] = self._from_xml_node(child,
+                                                                 listnames)
+            return result
 
-        return json.dumps(data, default=sanitizer)
+    def _to_json(self, data):
+        return utils.dumps(data)
 
     def _to_xml(self, data):
         metadata = self.metadata.get('application/xml', {})
         # We expect data to contain a single key which is the XML root.
         root_key = data.keys()[0]
-        from xml.dom import minidom
         doc = minidom.Document()
         node = self._to_xml_node(doc, metadata, root_key, data[root_key])
+
+        xmlns = node.getAttribute('xmlns')
+        if not xmlns and self.default_xmlns:
+            node.setAttribute('xmlns', self.default_xmlns)
+
         return node.toprettyxml(indent='    ')
 
     def _to_xml_node(self, doc, metadata, nodename, data):
         """Recursive method to convert data members to XML nodes."""
         result = doc.createElement(nodename)
+
+        # Set the xml namespace if one is specified
+        # TODO(justinsb): We could also use prefixes on the keys
+        xmlns = metadata.get('xmlns', None)
+        if xmlns:
+            result.setAttribute('xmlns', xmlns)
+
         if type(data) is list:
+            collections = metadata.get('list_collections', {})
+            if nodename in collections:
+                metadata = collections[nodename]
+                for item in data:
+                    node = doc.createElement(metadata['item_name'])
+                    node.setAttribute(metadata['item_key'], str(item))
+                    result.appendChild(node)
+                return result
             singular = metadata.get('plurals', {}).get(nodename, None)
             if singular is None:
                 if nodename.endswith('s'):
@@ -432,15 +508,26 @@ class Serializer(object):
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
         elif type(data) is dict:
+            collections = metadata.get('dict_collections', {})
+            if nodename in collections:
+                metadata = collections[nodename]
+                for k, v in data.items():
+                    node = doc.createElement(metadata['item_name'])
+                    node.setAttribute(metadata['item_key'], str(k))
+                    text = doc.createTextNode(str(v))
+                    node.appendChild(text)
+                    result.appendChild(node)
+                return result
             attrs = metadata.get('attributes', {}).get(nodename, {})
             for k, v in data.items():
-                LOG.debug("K:%s - V:%s",k,v)
                 if k in attrs:
                     result.setAttribute(k, str(v))
                 else:
                     node = self._to_xml_node(doc, metadata, k, v)
                     result.appendChild(node)
-        else:  # atom
+        else:
+            # Type is atom
             node = doc.createTextNode(str(data))
             result.appendChild(node)
         return result
+
