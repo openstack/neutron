@@ -23,7 +23,9 @@ plugin that concretely implement quantum_plugin_base class
 
 The caller should make sure that QuantumManager is a singleton.
 """
-
+import gettext
+gettext.install('quantum', unicode=1)
+    
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
@@ -44,6 +46,9 @@ class QuantumManager(object):
         
    def get_manager(self):
        return self.plugin
+
+
+
 
 # TODO(somik): rmove the main class
 # Added for temporary testing purposes

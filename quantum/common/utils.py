@@ -29,8 +29,8 @@ import socket
 import sys
 import ConfigParser
 
-from quantum.common import exceptions as exception
-from quantum.common import flags
+import exceptions as exception
+import flags
 from exceptions import ProcessExecutionError
 
 
@@ -76,7 +76,7 @@ def import_class(import_str):
         #mod_str = os.path.join(FLAGS.state_path, mod_str)
         print "MODULE PATH:%s" %mod_str
         print "CUR DIR:%s" %os.getcwd()
-        __import__(mod_str)
+        __import__(mod_str, level=2)
         print "IO SONO QUI"
         return getattr(sys.modules[mod_str], class_str)
     except (ImportError, ValueError, AttributeError) as e:
@@ -194,6 +194,7 @@ def parse_isotime(timestr):
 
 def getPluginFromConfig(file="config.ini"):
         print "FILE:%s" %os.path.join(FLAGS.state_path, file)
+        print "Globals:%s" %globals()
         Config = ConfigParser.ConfigParser()
         Config.read(os.path.join(FLAGS.state_path, file))
         return Config.get("PLUGIN", "provider")

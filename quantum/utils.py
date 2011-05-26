@@ -35,7 +35,7 @@ import sys
 import time
 import types
 
-from quantum.common import exceptions as exception
+from common import exceptions as exception
 
 
 def import_class(import_str):
