@@ -56,28 +56,32 @@ class Controller(wsgi.Controller):
         },
     }
 
-    def index(self, req):
+    def __init__(self):
+        self._setup_network_manager()
+        super(Controller, self).__init__()
+
+    def _setup_network_manager(self):
+        self.network_manager=manager.QuantumManager().get_manager()
+    
+    def index(self, req, tenant_id):
         """ Returns a list of network names and ids """
         #TODO: this should be for a given tenant!!!
-        print "PIPPO"
-        LOG.debug("HERE - index")
-        return self._items(req, is_detail=False)
+        LOG.debug("HERE - Controller.index")
+        return self._items(req, tenant_id, is_detail=False)
 
-    def _items(self, req, is_detail):
+    def _items(self, req, tenant_id, is_detail):
         """ Returns a list of networks. """
-        #TODO: we should return networks for a given tenant only
-        #TODO: network controller should be retrieved here!!!
-        test = { 'ciao':'bello','porco':'mondo' }
+        test = self.network_manager.get_all_networks(tenant_id)
         #builder = self._get_view_builder(req)
         #servers = [builder.build(inst, is_detail)['server']
         #        for inst in limited_list]
         #return dict(servers=servers)
         return test
     
-    def show(self, req, id):
+    def show(self, req, tenant_id, id):
         """ Returns network details by network id """
         try:
-            return "TEST NETWORK DETAILS"
+            return "SHOW NETWORK %s FOR TENANT %s" %(id,tenant_id)
         except exception.NotFound:
             return faults.Fault(exc.HTTPNotFound())
 

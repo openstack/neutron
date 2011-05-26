@@ -70,10 +70,11 @@ class APIRouterV01(wsgi.Router):
         #server_members['unrescue'] = 'POST'
         #server_members['reset_network'] = 'POST'
         #server_members['inject_network_info'] = 'POST'
-
-        mapper.resource("network", "networks", controller=networks.Controller(),
-                    collection={'detail': 'GET'})
-        print mapper            
+        mapper.resource("/tenants/{tenant_id}/network", "/tenants/{tenant_id}/networks", controller=networks.Controller())
+        print "AFTER MAPPING"
+        print mapper
+        for route in mapper.matchlist:
+            print "Found route:%s %s" %(route.defaults,route.conditions)            
         #mapper.resource("port", "ports", controller=ports.Controller(),
         #        collection=dict(public='GET', private='GET'),
         #        parent_resource=dict(member_name='network',

@@ -29,12 +29,13 @@ import socket
 import sys
 import ConfigParser
 
-from quantum.common import exceptions
+from quantum.common import exceptions as exception
+from quantum.common import flags
 from exceptions import ProcessExecutionError
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
+FLAGS = flags.FLAGS
 
 def int_from_bool_as_string(subject):
     """
@@ -70,10 +71,16 @@ def bool_from_string(subject):
 def import_class(import_str):
     """Returns a class from a string including module and class"""
     mod_str, _sep, class_str = import_str.rpartition('.')
+    print "MOD_STR:%s SEP:%s CLASS_STR:%s" %(mod_str, _sep, class_str)
     try:
+        #mod_str = os.path.join(FLAGS.state_path, mod_str)
+        print "MODULE PATH:%s" %mod_str
+        print "CUR DIR:%s" %os.getcwd()
         __import__(mod_str)
+        print "IO SONO QUI"
         return getattr(sys.modules[mod_str], class_str)
-    except (ImportError, ValueError, AttributeError):
+    except (ImportError, ValueError, AttributeError) as e:
+        print e
         raise exception.NotFound('Class %s cannot be found' % class_str)
 
 
@@ -186,8 +193,9 @@ def parse_isotime(timestr):
     return datetime.datetime.strptime(timestr, TIME_FORMAT)
 
 def getPluginFromConfig(file="config.ini"):
+        print "FILE:%s" %os.path.join(FLAGS.state_path, file)
         Config = ConfigParser.ConfigParser()
-        Config.read(file)
+        Config.read(os.path.join(FLAGS.state_path, file))
         return Config.get("PLUGIN", "provider")
 
 

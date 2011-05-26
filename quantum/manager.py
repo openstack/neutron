@@ -27,13 +27,14 @@ The caller should make sure that QuantumManager is a singleton.
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
-CONFIG_FILE = "plugins.ini"
+CONFIG_FILE = "quantum/plugins.ini"
 
 class QuantumManager(object):
     
    def __init__(self,config=CONFIG_FILE):
         self.configuration_file = CONFIG_FILE
         plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
+        print "PLUGIN LOCATION:%s" %plugin_location 
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
             raise Exception("Configured Quantum plug-in didn't pass compatibility test")
