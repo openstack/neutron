@@ -71,13 +71,9 @@ def bool_from_string(subject):
 def import_class(import_str):
     """Returns a class from a string including module and class"""
     mod_str, _sep, class_str = import_str.rpartition('.')
-    print "MOD_STR:%s SEP:%s CLASS_STR:%s" %(mod_str, _sep, class_str)
     try:
         #mod_str = os.path.join(FLAGS.state_path, mod_str)
-        print "MODULE PATH:%s" %mod_str
-        print "CUR DIR:%s" %os.getcwd()
-        __import__(mod_str, level=2)
-        print "IO SONO QUI"
+        __import__(mod_str)
         return getattr(sys.modules[mod_str], class_str)
     except (ImportError, ValueError, AttributeError) as e:
         print e
@@ -193,8 +189,6 @@ def parse_isotime(timestr):
     return datetime.datetime.strptime(timestr, TIME_FORMAT)
 
 def getPluginFromConfig(file="config.ini"):
-        print "FILE:%s" %os.path.join(FLAGS.state_path, file)
-        print "Globals:%s" %globals()
         Config = ConfigParser.ConfigParser()
         Config.read(os.path.join(FLAGS.state_path, file))
         return Config.get("PLUGIN", "provider")
