@@ -79,12 +79,20 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def create_port(self, tenant_id, net_id):
+    def create_port(self, tenant_id, net_id, port_state=None):
         """
         Creates a port on the specified Virtual Network.
         """
         pass
 
+    @abstractmethod
+    def update_port(self, tenant_id, net_id, port_id, port_state):
+        """
+        Updates the state of a specific port on the 
+        specified Virtual Network
+        """
+        pass
+    
     @abstractmethod
     def delete_port(self, tenant_id, net_id, port_id):
         """

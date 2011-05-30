@@ -28,11 +28,12 @@ class Fault(webob.exc.HTTPException):
     _fault_names = {
             400: "malformedRequest",
             401: "unauthorized",
-            402: "networkNotFound",
-            403: "requestedStateInvalid",
-            460: "networkInUse",
-            461: "alreadyAttached",
-            462: "portInUse",
+            420: "networkNotFound",
+            421: "networkInUse",            
+            430: "portNotFound",
+            431: "requestedStateInvalid",
+            432: "portInUse",
+            440: "alreadyAttached",
             470: "serviceUnavailable",
             471: "pluginFault"
     }
@@ -50,8 +51,8 @@ class Fault(webob.exc.HTTPException):
         fault_data = {
             fault_name: {
                 'code': code,
-                'message': self.wrapped_exc.explanation}}
-        #TODO (salvatore-orlando): place over-limit stuff here
+                'message': self.wrapped_exc.explanation, 
+                'detail': self.wrapped_exc.detail}}
         # 'code' is an attribute on the fault tag itself
         metadata = {'application/xml': {'attributes': {fault_name: 'code'}}}
         default_xmlns = common.XML_NS_V10
@@ -60,3 +61,85 @@ class Fault(webob.exc.HTTPException):
         self.wrapped_exc.body = serializer.serialize(fault_data, content_type)
         self.wrapped_exc.content_type = content_type
         return self.wrapped_exc
+    
+class NetworkNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the network specified
+    in the HTTP request
+    
+    code: 420, title: Network not Found
+    """
+    code = 420
+    title = 'Network not Found'
+    explanation = ('Unable to find a network with the specified identifier.')
+    
+
+class NetworkInUse(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server could not delete the network as there is
+    at least an attachment plugged into its ports
+    
+    code: 421, title: Network In Use
+    """
+    code = 421
+    title = 'Network in Use'
+    explanation = ('Unable to remove the network: attachments still plugged.')
+
+
+class PortNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the port specified
+    in the HTTP request for a given network
+    
+    code: 430, title: Port not Found
+    """
+    code = 430
+    title = 'Port not Found'
+    explanation = ('Unable to find a port with the specified identifier.')
+    
+
+class RequestedStateInvalid(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server could not update the port state to 
+    to the request value
+    
+    code: 431, title: Requested State Invalid
+    """
+    code = 431
+    title = 'Requested State Invalid'
+    explanation = ('Unable to update port state with specified value.')
+    
+
+class PortInUse(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server could not remove o port or attach
+    a resource to it because there is an attachment plugged into the port
+    
+    code: 432, title: PortInUse
+    """
+    code = 432
+    title = 'Port in Use'
+    explanation = ('A resource is currently attached to the logical port')
+
+class AlreadyAttached(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server refused an attempt to re-attach a resource
+    already attached to the network
+    
+    code: 440, title: AlreadyAttached
+    """
+    code = 440
+    title = 'Already Attached'
+    explanation = ('The resource is already attached to another port')

@@ -13,24 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import httplib
 import logging
 
 from webob import exc
-from xml.dom import minidom
 
-from quantum import manager
-from quantum.common import exceptions as exception
-from quantum.common import flags
-from quantum.common import wsgi
+from quantum.api import api_common as common
 from quantum.api import faults
 from quantum.api.views import networks as networks_view
+from quantum.common import exceptions as exception
 
 LOG = logging.getLogger('quantum.api.networks')
-FLAGS = flags.FLAGS
 
 
-class Controller(wsgi.Controller):
+class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
@@ -41,40 +36,16 @@ class Controller(wsgi.Controller):
         "application/xml": {
             "attributes": {
                 "network": ["id","name"],
-                "link": ["rel", "type", "href"],
             },
         },
     }
 
     def __init__(self, plugin_conf_file=None):
-        self._setup_network_manager()
+        self._resource_name = 'network'
         super(Controller, self).__init__()
 
-    def _parse_request_params(self, req, params):
-        results = {}
-        for param in params:
-            param_name = param['param-name']
-            # 1- parse request body
-            # 2- parse request headers
-            # prepend param name with a 'x-' prefix
-            param_value = req.headers.get("x-" + param_name, None)
-            # 3- parse request query parameters
-            if not param_value:
-                param_value = req.str_GET[param_name]
-            if not param_value and param['required']: 
-                msg = ("Failed to parse request. " +
-                       "Parameter: %(param)s not specified" % locals())
-                for line in msg.split('\n'):
-                    LOG.error(line)
-                raise exc.HTTPBadRequest(msg)
-            results[param_name]=param_value
-        return results             
-        
-    def _setup_network_manager(self):
-        self.network_manager=manager.QuantumManager().get_manager()
-    
     def index(self, req, tenant_id):
-        """ Returns a list of network names and ids """
+        """ Returns a list of network ids """
         #TODO: this should be for a given tenant!!!
         return self._items(req, tenant_id, is_detail=False)
 
@@ -87,7 +58,7 @@ class Controller(wsgi.Controller):
         return dict(networks=result)
     
     def show(self, req, tenant_id, id):
-        """ Returns network details by network id """
+        """ Returns network details for the given network id """
         try:
             network = self.network_manager.get_network_details(
                             tenant_id,id)
@@ -95,14 +66,17 @@ class Controller(wsgi.Controller):
             #build response with details
             result = builder.build(network, True)
             return dict(networks=result)
-        except exception.NotFound:
-            return faults.Fault(exc.HTTPNotFound())
+        except exception.NetworkNotFound as e:
+            return faults.Fault(faults.NetworkNotFound(e))
 
     def create(self, req, tenant_id):
         """ Creates a new network for a given tenant """
         #look for network name in request
-        req_params = \
-            self._parse_request_params(req, self._network_ops_param_list)
+        try:
+            req_params = \
+                self._parse_request_params(req, self._network_ops_param_list)
+        except exc.HTTPError as e:
+            return faults.Fault(e)
         network = self.network_manager.create_network(tenant_id, req_params['network-name'])
         builder = networks_view.get_view_builder(req)
         result = builder.build(network)
@@ -111,36 +85,26 @@ class Controller(wsgi.Controller):
     def update(self, req, tenant_id, id):
         """ Updates the name for the network with the given id """
         try:
-            network_name = req.headers['x-network-name']
-        except KeyError as e:
-            msg = ("Failed to create network. Got error: %(e)s" % locals())
-            for line in msg.split('\n'):
-                LOG.error(line)
-            raise exc.HTTPBadRequest(msg)            
+            req_params = \
+                self._parse_request_params(req, self._network_ops_param_list)
+        except exc.HTTPError as e:
+            return faults.Fault(e)
+        try: 
+            network = self.network_manager.rename_network(tenant_id,
+                        id,req_params['network-name'])
 
-        network = self.network_manager.rename_network(tenant_id,
-                 id,network_name)
-        if not network:
-            raise exc.HTTPNotFound("Network %(id)s could not be found" % locals())
-        builder = networks_view.get_view_builder(req)
-        result = builder.build(network, True)
-        return dict(networks=result)
-
+            builder = networks_view.get_view_builder(req)
+            result = builder.build(network, True)
+            return dict(networks=result)
+        except exception.NetworkNotFound as e:
+            return faults.Fault(faults.NetworkNotFound(e))    
 
     def delete(self, req, tenant_id, id):
         """ Destroys the network with the given id """
         try:
-            network_name = req.headers['x-network-name']
-        except KeyError as e:
-            msg = ("Failed to create network. Got error: %(e)s" % locals())
-            for line in msg.split('\n'):
-                LOG.error(line)
-            raise exc.HTTPBadRequest(msg)            
-
-        network = self.network_manager.delete_network(tenant_id, id)
-        if not network:
-            raise exc.HTTPNotFound("Network %(id)s could not be found" % locals())
-
-        return exc.HTTPAccepted()
-
-
+            self.network_manager.delete_network(tenant_id, id)
+            return exc.HTTPAccepted()
+        except exception.NetworkNotFound as e:
+            return faults.Fault(faults.NetworkNotFound(e))            
+        except exception.NetworkInUse as e:
+            return faults.Fault(faults.NetworkInUse(e))            
