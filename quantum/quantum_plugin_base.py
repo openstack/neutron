@@ -88,11 +88,11 @@ class QuantumPluginBase(object):
     @abstractmethod
     def update_port(self, tenant_id, net_id, port_id, port_state):
         """
-        Updates the state of a specific port on the 
+        Updates the state of a specific port on the
         specified Virtual Network
         """
         pass
-    
+
     @abstractmethod
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -142,13 +142,13 @@ class QuantumPluginBase(object):
         a particular Virtual Network.
         """
         pass
-   
+
     @classmethod
     def __subclasshook__(cls, klass):
         """
         The __subclasshook__ method is a class method
         that will be called everytime a class is tested
-        using issubclass(klass, Plugin). 
+        using issubclass(klass, Plugin).
         In that case, it will check that every method
         marked with the abstractmethod decorator is
         provided by the plugin class.
@@ -160,5 +160,3 @@ class QuantumPluginBase(object):
                 return NotImplemented
             return True
         return NotImplemented
-
-

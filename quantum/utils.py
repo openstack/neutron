@@ -58,6 +58,7 @@ def import_object(import_str):
         cls = import_class(import_str)
         return cls()
 
+
 def to_primitive(value):
     if type(value) is type([]) or type(value) is type((None,)):
         o = []
@@ -77,7 +78,8 @@ def to_primitive(value):
         return to_primitive(list(value))
     else:
         return value
-    
+
+
 def dumps(value):
     try:
         return json.dumps(value)

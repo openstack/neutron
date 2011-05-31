@@ -29,13 +29,13 @@ class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
-        'param-name': 'network-name', 
-        'required': True},]
-    
+        'param-name': 'network-name',
+        'required': True}, ]
+
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "network": ["id","name"],
+                "network": ["id", "name"],
             },
         },
     }
@@ -56,12 +56,12 @@ class Controller(common.QuantumController):
         result = [builder.build(network, is_detail)['network']
                   for network in networks]
         return dict(networks=result)
-    
+
     def show(self, req, tenant_id, id):
         """ Returns network details for the given network id """
         try:
             network = self.network_manager.get_network_details(
-                            tenant_id,id)
+                            tenant_id, id)
             builder = networks_view.get_view_builder(req)
             #build response with details
             result = builder.build(network, True)
@@ -77,7 +77,8 @@ class Controller(common.QuantumController):
                 self._parse_request_params(req, self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
-        network = self.network_manager.create_network(tenant_id, req_params['network-name'])
+        network = self.network_manager.\
+                       create_network(tenant_id,req_params['network-name'])
         builder = networks_view.get_view_builder(req)
         result = builder.build(network)
         return dict(networks=result)
@@ -89,15 +90,15 @@ class Controller(common.QuantumController):
                 self._parse_request_params(req, self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
-        try: 
+        try:
             network = self.network_manager.rename_network(tenant_id,
-                        id,req_params['network-name'])
+                        id, req_params['network-name'])
 
             builder = networks_view.get_view_builder(req)
             result = builder.build(network, True)
             return dict(networks=result)
         except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))    
+            return faults.Fault(faults.NetworkNotFound(e))
 
     def delete(self, req, tenant_id, id):
         """ Destroys the network with the given id """
@@ -105,6 +106,6 @@ class Controller(common.QuantumController):
             self.network_manager.delete_network(tenant_id, id)
             return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))            
+            return faults.Fault(faults.NetworkNotFound(e))
         except exception.NetworkInUse as e:
-            return faults.Fault(faults.NetworkInUse(e))            
+            return faults.Fault(faults.NetworkInUse(e))

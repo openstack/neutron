@@ -22,6 +22,7 @@ import webob.exc
 from quantum.api import api_common as common
 from quantum.common import wsgi
 
+
 class Fault(webob.exc.HTTPException):
     """Error codes for API faults"""
 
@@ -29,7 +30,7 @@ class Fault(webob.exc.HTTPException):
             400: "malformedRequest",
             401: "unauthorized",
             420: "networkNotFound",
-            421: "networkInUse",            
+            421: "networkInUse",
             430: "portNotFound",
             431: "requestedStateInvalid",
             432: "portInUse",
@@ -61,20 +62,21 @@ class Fault(webob.exc.HTTPException):
         self.wrapped_exc.body = serializer.serialize(fault_data, content_type)
         self.wrapped_exc.content_type = content_type
         return self.wrapped_exc
-    
+
+
 class NetworkNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server did not find the network specified
     in the HTTP request
-    
+
     code: 420, title: Network not Found
     """
     code = 420
     title = 'Network not Found'
     explanation = ('Unable to find a network with the specified identifier.')
-    
+
 
 class NetworkInUse(webob.exc.HTTPClientError):
     """
@@ -82,7 +84,7 @@ class NetworkInUse(webob.exc.HTTPClientError):
 
     This indicates that the server could not delete the network as there is
     at least an attachment plugged into its ports
-    
+
     code: 421, title: Network In Use
     """
     code = 421
@@ -96,27 +98,27 @@ class PortNotFound(webob.exc.HTTPClientError):
 
     This indicates that the server did not find the port specified
     in the HTTP request for a given network
-    
+
     code: 430, title: Port not Found
     """
     code = 430
     title = 'Port not Found'
     explanation = ('Unable to find a port with the specified identifier.')
-    
+
 
 class RequestedStateInvalid(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
 
-    This indicates that the server could not update the port state to 
+    This indicates that the server could not update the port state to
     to the request value
-    
+
     code: 431, title: Requested State Invalid
     """
     code = 431
     title = 'Requested State Invalid'
     explanation = ('Unable to update port state with specified value.')
-    
+
 
 class PortInUse(webob.exc.HTTPClientError):
     """
@@ -124,12 +126,13 @@ class PortInUse(webob.exc.HTTPClientError):
 
     This indicates that the server could not remove o port or attach
     a resource to it because there is an attachment plugged into the port
-    
+
     code: 432, title: PortInUse
     """
     code = 432
     title = 'Port in Use'
     explanation = ('A resource is currently attached to the logical port')
+
 
 class AlreadyAttached(webob.exc.HTTPClientError):
     """
@@ -137,7 +140,7 @@ class AlreadyAttached(webob.exc.HTTPClientError):
 
     This indicates that the server refused an attempt to re-attach a resource
     already attached to the network
-    
+
     code: 440, title: AlreadyAttached
     """
     code = 440

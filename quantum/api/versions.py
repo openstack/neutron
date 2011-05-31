@@ -23,6 +23,7 @@ from quantum.api.views import versions as versions_view
 
 LOG = logging.getLogger('quantum.api.versions')
 
+
 class Versions(wsgi.Application):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
@@ -42,7 +43,6 @@ class Versions(wsgi.Application):
         builder = versions_view.get_view_builder(req)
         versions = [builder.build(version) for version in version_objs]
         response = dict(versions=versions)
-        LOG.debug("response:%s",response)
         metadata = {
             "application/xml": {
                 "attributes": {
@@ -51,9 +51,10 @@ class Versions(wsgi.Application):
                 }
             }
         }
-        
+
         content_type = req.best_match_content_type()
-        body = wsgi.Serializer(metadata=metadata).serialize(response, content_type)
+        body = wsgi.Serializer(metadata=metadata). \
+                    serialize(response, content_type)
 
         response = webob.Response()
         response.content_type = content_type

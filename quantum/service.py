@@ -16,14 +16,13 @@
 #    under the License.
 
 import logging
-import json
-import routes
 from quantum.common import config
 from quantum.common import wsgi
 from quantum.common import exceptions as exception
-from webob import Response
+
 
 LOG = logging.getLogger('quantum.service')
+
 
 class WsgiService(object):
     """Base class for WSGI based services.
@@ -60,21 +59,19 @@ class QuantumApiService(WsgiService):
                 message = (_('No paste configuration found for: %s'),
                            app_name)
                 raise exception.Error(message)
-        print "OPTIONS:%s" %options
-        print "CONF:%s" %conf
 
         # Setup logging early, supplying both the CLI options and the
         # configuration mapping from the config file
         # We only update the conf dict for the verbose and debug
         # flags. Everything else must be set up in the conf file...
         # Log the options used when starting if we're in debug mode...
-        
+
         config.setup_logging(options, conf)
         debug = options.get('debug') or \
-                config.get_option(conf, 'debug', 
+                config.get_option(conf, 'debug',
                                   type='bool', default=False)
         verbose = options.get('verbose') or \
-                config.get_option(conf, 'verbose', 
+                config.get_option(conf, 'verbose',
                                   type='bool', default=False)
         conf['debug'] = debug
         conf['verbose'] = verbose
@@ -91,7 +88,7 @@ class QuantumApiService(WsgiService):
         return service
 
 
-def serve_wsgi(cls, conf=None, options = None, args = None):
+def serve_wsgi(cls, conf=None, options = None, args=None):
     try:
         service = cls.create(conf, options, args)
     except Exception:
@@ -104,7 +101,6 @@ def serve_wsgi(cls, conf=None, options = None, args = None):
 
     
 def _run_wsgi(app_name, paste_conf, paste_config_file):
-    print "CICCIO"
     LOG.info(_('Using paste.deploy config at: %s'), paste_config_file)
     app = config.load_paste_app(paste_config_file, app_name)
     if not app:
@@ -112,7 +108,6 @@ def _run_wsgi(app_name, paste_conf, paste_config_file):
                       paste_config_file)
         return
     server = wsgi.Server()
-    server.start(app, 
-                 int(paste_conf['bind_port']),paste_conf['bind_host'])
+    server.start(app,
+                 int(paste_conf['bind_port']), paste_conf['bind_host'])
     return server
-    
