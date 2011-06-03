@@ -451,6 +451,7 @@ if __name__ == "__main__":
 
     if len(args) < 1:
         parser.print_help()
+        help()
         sys.exit(1)
 
     cmd = args[0]
