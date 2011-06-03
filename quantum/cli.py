@@ -246,31 +246,92 @@ def api_detail_port(client, *args):
     print "Virtual Port:%s on Virtual Network:%s " \
           "contains remote interface:%s" % (pid, nid, attachment)
 
-# TODO(bgh): still need to implement the iface commands
 def plug_iface(manager, *args):
     tid, nid, pid, vid = args
     manager.plug_interface(tid, nid, pid, vid)
-    LOG.info("Plugged remote interface:%s " \
-      "into Virtual Network:%s" % (vid, nid))
+    print "Plugged remote interface:%s " \
+      "into Virtual Network:%s" % (vid, nid)
+
+def api_plug_iface(client, *args):
+    tid, nid, pid, vid = args
+    data = {'port': {'attachment-id': '%s' % vid}}
+    body = Serializer().serialize(data, CONTENT_TYPE)
+    res = client.do_request(tid, 'PUT',
+      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
+    output = res.read()
+    LOG.debug(output)
+    if res.status != 202:
+        LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
+          pid, output))
+        return
+    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
 
 def unplug_iface(manager,  *args):
     tid, nid, pid = args
     manager.unplug_interface(tid, nid, pid)
-    LOG.info("UnPlugged remote interface " \
-          "from Virtual Port:%s Virtual Network:%s" % (pid, nid))
+    print "UnPlugged remote interface " \
+      "from Virtual Port:%s Virtual Network:%s" % (pid, nid)
+
+def api_unplug_iface(client, *args):
+    tid, nid, pid = args
+    data = {'port': {'attachment-id': ''}}
+    body = Serializer().serialize(data, CONTENT_TYPE)
+    res = client.do_request(tid, 'DELETE',
+      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
+    output = res.read()
+    LOG.debug(output)
+    if res.status != 202:
+        LOG.error("Failed to unplug iface from port \"%s\": %s" % (vid,
+          pid, output))
+        return
+    print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 
 def detail_iface(manager, *args):
     tid, nid, pid = args
     remote_iface = manager.get_interface_details(tid, nid, pid)
-    LOG.info("Remote interface on Virtual Port:%s " \
-          "Virtual Network:%s is %s" % (pid, nid, remote_iface))
+    print "Remote interface on Virtual Port:%s " \
+      "Virtual Network:%s is %s" % (pid, nid, remote_iface)
+
+def api_detail_iface(manager, *args):
+    tid, nid, pid = args
+    res = client.do_request(tid, 'GET',
+      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
+    output = res.read()
+    rd = simplejson.loads(output)
+    LOG.debug(rd)
+    remote_iface = rd["attachment"]
+    print "Remote interface on Virtual Port:%s " \
+      "Virtual Network:%s is %s" % (pid, nid, remote_iface)
 
 def list_iface(manager, *args):
     tid, nid = args
     iface_list = manager.get_all_attached_interfaces(tid, nid)
-    LOG.info("Remote Interfaces on Virtual Network:%s\n" % nid)
+    print "Remote Interfaces on Virtual Network:%s\n" % nid
     for iface in iface_list:
-        LOG.info("\tRemote interface :%s" % iface)
+        print "\tRemote interface:%s" % iface
+
+# TODO(bgh): I'm not sure how the api maps to manager.get_all_interfaces so
+# I'm just doing this the manual way for now.
+def api_list_iface(client, *args):
+    tid, nid = args
+    res = client.do_request(tid, 'GET',
+      "/networks/%s/ports.%s" % (nid, FORMAT))
+    output = res.read()
+    if res.status != 200:
+        LOG.error("Failed to list ports: %s" % output)
+        return
+    rd = simplejson.loads(output)
+    LOG.debug(rd)
+    print "Remote Interfaces on Virtual Network:%s\n" % nid
+    for port in rd["ports"]:
+        pid = port["id"]
+        res = client.do_request(tid, 'GET',
+          "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
+        output = res.read()
+        rd = simplejson.loads(output)
+        LOG.debug(rd)
+        remote_iface = rd["attachment"]
+        print "\tRemote interface:%s" % remote_iface
 
 commands = {
   "list_nets": {
@@ -320,18 +381,22 @@ commands = {
     },
   "plug_iface": {
     "func": plug_iface,
+    "api_func": api_plug_iface,
     "args": ["tenant-id", "net-id", "port-id", "iface-id"]
     },
   "unplug_iface": {
     "func": unplug_iface,
+    "api_func": api_unplug_iface,
     "args": ["tenant-id", "net-id", "port-id"]
     },
   "detail_iface": {
     "func": detail_iface,
+    "api_func": api_detail_iface,
     "args": ["tenant-id", "net-id", "port-id"]
     },
   "list_iface": {
     "func": list_iface,
+    "api_func": api_list_iface,
     "args": ["tenant-id", "net-id"]
     },
   }
