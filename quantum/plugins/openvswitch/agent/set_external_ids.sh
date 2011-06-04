@@ -1,4 +1,4 @@
-
+#!/bin/sh
 VIFLIST=`xe vif-list params=uuid --minimal | sed s/,/" "/g`
 for VIF_UUID in $VIFLIST; do
 DEVICE_NUM=`xe vif-list params=device uuid=$VIF_UUID --minimal`
