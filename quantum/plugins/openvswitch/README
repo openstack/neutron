@@ -1,0 +1,37 @@
+To Run:
+
+1) On the "Openstack Controller" host:
+
+MySQL should be installed on the host, and all plugins and clients must be
+configured with access to the database.
+
+To prep mysql, run:
+
+mysql -u root -p -e "create database ovs_naas"
+
+2) Edit the configuration file (src/ovs/plugins/ovs_quantum_plugin.ini)
+
+- Make sure it matches your mysql configuration.  This file must be updated
+  with the addresses and credentials to access the database.
+
+3) Create the agent distribution tarball
+
+$ make agent-dist
+
+4) Copy the resulting tarball to your xenserver
+
+5) Unpack the tarball and run install.sh.  This will install all of the
+necessary pieces into /etc/xapi.d/plugins.
+
+6) Run the agent (example below):
+
+# /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugin.ini
+
+7) Run ovs_quantum_plugin.py via the quantum plugin framework cli.
+
+- Edit quantum/plugins.ini to point to where the plugin and configuration
+  files live
+
+$ PYTHONPATH=$HOME/src/quantum-framework/quantum:$PYTHONPATH python quantum/cli.py
+
+This will show all of the available commands.
