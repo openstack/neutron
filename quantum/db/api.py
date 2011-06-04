@@ -35,7 +35,7 @@ def configure_db(options):
     global _ENGINE
     if not _ENGINE:
         _ENGINE = create_engine(options['sql_connection'],
-                                echo=True,
+                                echo=False,
                                 echo_pool=True,
                                 pool_recycle=3600)
         register_models()
@@ -94,7 +94,6 @@ def network_get(net_id):
 
 def network_rename(net_id, tenant_id, new_name):
     session = get_session()
-    # TODO(bgh): Make sure another network doesn't have that name
     try:
         res = session.query(models.Network).\
           filter_by(name=new_name).\
@@ -144,13 +143,21 @@ def port_get(port_id):
 
 def port_set_attachment(port_id, new_interface_id):
     session = get_session()
-    # TODO(bgh): check to make sure new_inteface_id is
-    # unique if it is not None
-    port = port_get(port_id)
-    port.interface_id = new_interface_id
-    session.merge(port)
-    session.flush()
-    return port
+    ports = None
+    try:
+        ports = session.query(models.Port).\
+          filter_by(interface_id=new_interface_id).\
+          all()
+    except exc.NoResultFound:
+        pass
+    if len(ports) == 0:
+        port = port_get(port_id)
+        port.interface_id = new_interface_id
+        session.merge(port)
+        session.flush()
+        return port
+    else:
+        raise Exception("Port with attachment \"%s\" already exists" % (new_interface_id))
 
 def port_destroy(port_id):
     session = get_session()

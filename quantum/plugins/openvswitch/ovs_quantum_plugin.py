@@ -24,15 +24,14 @@ import sys
 import unittest
 
 from quantum.quantum_plugin_base import QuantumPluginBase
+from optparse import OptionParser
+
 import quantum.db.api as db
 import ovs_db
 
-# TODO(bgh): Make sure we delete from network bindings when deleting a port,
-# network, etc.
-
 CONF_FILE="ovs_quantum_plugin.ini"
 
-LOG.basicConfig(level=LOG.DEBUG)
+LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger("ovs_quantum_plugin")
 
 def find_config(basepath):
@@ -63,7 +62,7 @@ class VlanMap(object):
                 self.vlans[x] = None
                 # LOG.debug("VlanMap::release %s" % (x))
                 return
-        raise Exception("No vlan found with network \"%s\"" % network_id)
+        LOG.error("No vlan found with network \"%s\"" % network_id)
 
 class OVSQuantumPlugin(QuantumPluginBase):
     def __init__(self, configfile=None):
@@ -76,7 +75,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
         if configfile == None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
               (configfile))
-        LOG.info("Using configuration file: %s" % configfile)
+        LOG.debug("Using configuration file: %s" % configfile)
         config.read(configfile)
         LOG.debug("Config: %s" % config)
 
@@ -124,7 +123,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
     def delete_network(self, tenant_id, net_id):
         net = db.network_destroy(net_id)
         d = {}
-        d["net-id"] = net.uuid
+        d["net-id"] = str(net.uuid)
         ovs_db.remove_vlan_binding(net_id)
         self.vmap.release(net_id)
         return d
@@ -201,8 +200,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
         ovs_db.update_network_binding(net_id, remote_iface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
-        db.port_set_attachment(port_id, "None")
-        ovs_db.update_network_binding(net_id, remote_iface_id)
+        db.port_set_attachment(port_id, "")
+        ovs_db.update_network_binding(net_id, None)
 
     def get_interface_details(self, tenant_id, net_id, port_id):
         res = db.port_get(port_id)
@@ -237,7 +236,6 @@ class OVSPluginTest(unittest.TestCase):
         nets = self.quantum.get_all_networks(self.tenant_id)
         count = 0
         for x in nets:
-            print x
             if "plugin_test" in x["net-name"]:
                 count += 1
         self.assertTrue(count == 2)
@@ -248,7 +246,6 @@ class OVSPluginTest(unittest.TestCase):
         nets = self.quantum.get_all_networks(self.tenant_id)
         count = 0
         for x in nets:
-            print x
             if "plugin_test" in x["net-name"]:
                 count += 1
         self.assertTrue(count == 0)
@@ -269,20 +266,49 @@ class OVSPluginTest(unittest.TestCase):
         self.assertTrue(count == 1)
 
     def testDeletePort(self):
-        pass
+        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
+        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
+        ports = self.quantum.get_all_ports(self.tenant_id, net1["net-id"])
+        count = 0
+        for p in ports:
+            count += 1
+        self.assertTrue(count == 1)
+        for p in ports:
+            self.quantum.delete_port(self.tenant_id, id, p["port-id"])
+        ports = self.quantum.get_all_ports(self.tenant_id, net1["net-id"])
+        count = 0
+        for p in ports:
+            count += 1
+        self.assertTrue(count == 0)
 
     def testGetPorts(self):
         pass
 
     def testPlugInterface(self):
-        pass
+        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
+        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
+        self.quantum.plug_interface(self.tenant_id, net1["net-id"],
+          port["port-id"], "vif1.1")
+        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
+          port["port-id"])
+        self.assertTrue(port["attachment"] == "vif1.1")
 
     def testUnPlugInterface(self):
-        pass
+        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
+        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
+        self.quantum.plug_interface(self.tenant_id, net1["net-id"],
+          port["port-id"], "vif1.1")
+        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
+          port["port-id"])
+        self.assertTrue(port["attachment"] == "vif1.1")
+        self.quantum.unplug_interface(self.tenant_id, net1["net-id"],
+          port["port-id"])
+        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
+          port["port-id"])
+        self.assertTrue(port["attachment"] == "")
 
     def tearDown(self):
         networks = self.quantum.get_all_networks(self.tenant_id)
-        print networks
         # Clean up any test networks lying around
         for net in networks:
             id = net["net-id"]
@@ -290,26 +316,27 @@ class OVSPluginTest(unittest.TestCase):
             if "plugin_test" in name:
                 # Clean up any test ports lying around
                 ports = self.quantum.get_all_ports(self.tenant_id, id)
-                print ports
                 for p in ports:
                     self.quantum.delete_port(self.tenant_id, id, p["port-id"])
                 self.quantum.delete_network(self.tenant_id, id)
 
 if __name__ == "__main__":
+    usagestr = "Usage: %prog [OPTIONS] <command> [args]"
+    parser = OptionParser(usage=usagestr)
+    parser.add_option("-v", "--verbose", dest="verbose",
+      action="store_true", default=False, help="turn on verbose logging")
+
+    options, args = parser.parse_args()
+
+    if options.verbose:
+        LOG.basicConfig(level=LOG.DEBUG)
+    else:
+        LOG.basicConfig(level=LOG.WARN)
+
+    # Make sqlalchemy quieter
+    LOG.getLogger('sqlalchemy.engine').setLevel(LOG.WARN)
+    # Run the tests
     suite = unittest.TestLoader().loadTestsFromTestCase(OVSPluginTest)
     unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(VlanMapTest)
     unittest.TextTestRunner(verbosity=2).run(suite)
-
-    # TODO(bgh) move to unit tets
-    if False:
-        quantum.plug_interface(tenant_id, net1, port, "vif1.1")
-        portdetails = quantum.get_port_details(tenant_id, net1, port)
-        LOG.DEBUG(portdetails)
-        LOG.info("=== PORT: %s" % quantum.get_port_details(tenant_id, net1, port))
-        assert(portdetails["interface_id"] == "vif1.1")
-        networks = quantum.get_all_networks(tenant_id)
-        LOG.debug(networks)
-        for nid, name in networks.iteritems():
-            ports = quantum.get_all_ports(tenant_id, nid)
-            LOG.debug(ports)
