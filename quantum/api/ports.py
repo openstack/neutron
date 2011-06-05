@@ -29,15 +29,13 @@ class Controller(common.QuantumController):
 
     _port_ops_param_list = [{
         'param-name': 'port-state',
-        'default-value': 'DOWN', 
+        'default-value': 'DOWN',
         'required': False},]
-
 
     _attachment_ops_param_list = [{
         'param-name': 'attachment-id',
         'required': True},]
 
-    
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
@@ -49,7 +47,7 @@ class Controller(common.QuantumController):
     def __init__(self, plugin_conf_file=None):
         self._resource_name = 'port'
         super(Controller, self).__init__()
-    
+
     def index(self, req, tenant_id, network_id):
         """ Returns a list of port ids for a given network """
         return self._items(req, tenant_id, network_id, is_detail=False)
@@ -64,7 +62,7 @@ class Controller(common.QuantumController):
             return dict(ports=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
-           
+
     def show(self, req, tenant_id, network_id, id):
         """ Returns port details for given port and network """
         try:
@@ -77,7 +75,7 @@ class Controller(common.QuantumController):
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))        
+            return faults.Fault(faults.PortNotFound(e))
 
     def create(self, req, tenant_id, network_id):
         """ Creates a new port for a given network """
@@ -87,17 +85,17 @@ class Controller(common.QuantumController):
                 self._parse_request_params(req, self._port_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
-        try: 
+        try:
             port = self.network_manager.create_port(tenant_id,
-                                                    network_id, 
+                                                    network_id,
                                                     req_params['port-state'])
             builder = ports_view.get_view_builder(req)
             result = builder.build(port)
             return dict(ports=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
-        except exception.StateInvalid as e:        
-            return faults.Fault(faults.RequestedStateInvalid(e))                
+        except exception.StateInvalid as e:
+            return faults.Fault(faults.RequestedStateInvalid(e))
 
     def update(self, req, tenant_id, network_id, id):
         """ Updates the state of a port for a given network """
@@ -106,8 +104,8 @@ class Controller(common.QuantumController):
             req_params = \
                 self._parse_request_params(req, self._port_ops_param_list)
         except exc.HTTPError as e:
-            return faults.Fault(e)   
-        try:         
+            return faults.Fault(e)
+        try:
             port = self.network_manager.update_port(tenant_id,network_id, id,
                                                     req_params['port-state'])
             builder = ports_view.get_view_builder(req)
@@ -117,10 +115,9 @@ class Controller(common.QuantumController):
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
-        except exception.StateInvalid as e:        
+        except exception.StateInvalid as e:
             return faults.Fault(faults.RequestedStateInvalid(e))
 
-    
     def delete(self, req, tenant_id, network_id, id):
         """ Destroys the port with the given id """
         #look for port state in request
@@ -131,10 +128,9 @@ class Controller(common.QuantumController):
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))      
+            return faults.Fault(faults.PortNotFound(e))
         except exception.PortInUse as e:
             return faults.Fault(faults.PortInUse(e))
-
 
     def get_resource(self,req,tenant_id, network_id, id):
         try:
@@ -144,9 +140,9 @@ class Controller(common.QuantumController):
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))        
+            return faults.Fault(faults.PortNotFound(e))
 
-    #TODO - Complete implementation of these APIs    
+    #TODO - Complete implementation of these APIs
     def attach_resource(self,req,tenant_id, network_id, id):
         content_type = req.best_match_content_type()
         print "Content type:%s" %content_type
@@ -164,14 +160,13 @@ class Controller(common.QuantumController):
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))      
+            return faults.Fault(faults.PortNotFound(e))
         except exception.PortInUse as e:
             return faults.Fault(faults.PortInUse(e))
         except exception.AlreadyAttached as e:
             return faults.Fault(faults.AlreadyAttached(e))
 
-
-    #TODO - Complete implementation of these APIs   
+    #TODO - Complete implementation of these APIs
     def detach_resource(self,req,tenant_id, network_id, id):
         try:
             self.network_manager.unplug_interface(tenant_id,
@@ -180,4 +175,4 @@ class Controller(common.QuantumController):
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))      
+            return faults.Fault(faults.PortNotFound(e))
