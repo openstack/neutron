@@ -137,20 +137,32 @@ def api_delete_net(client, *args):
 
 def detail_net(manager, *args):
     tid, nid = args
-    network = manager.get_network_details(tid, nid)
-    network_id = network["net-id"]
-    network_name = network["net-name"]
-    print "\tNetwork id:%s\n\tNetwork name:%s\n" % (network_id, network_name)
+    iface_list = manager.get_all_attached_interfaces(tid, nid)
+    print "Remote Interfaces on Virtual Network:%s\n" % nid
+    for iface in iface_list:
+        print "\tRemote interface:%s" % iface
+
 
 def api_detail_net(client, *args):
     tid, nid = args
-    res = client.do_request(tid, 'GET', "/networks/" + nid + "." + FORMAT)
+    res = client.do_request(tid, 'GET',
+      "/networks/%s/ports.%s" % (nid, FORMAT))
     output = res.read()
+    if res.status != 200:
+        LOG.error("Failed to list ports: %s" % output)
+        return
     rd = simplejson.loads(output)
     LOG.debug(rd)
-    network_id = rd["networks"]["network"]["id"]
-    network_name = rd["networks"]["network"]["name"]
-    print "\tNetwork id:%s\n\tNetwork name:%s\n" % (network_id, network_name)
+    print "Remote Interfaces on Virtual Network:%s\n" % nid
+    for port in rd["ports"]:
+        pid = port["id"]
+        res = client.do_request(tid, 'GET',
+          "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
+        output = res.read()
+        rd = simplejson.loads(output)
+        LOG.debug(rd)
+        remote_iface = rd["attachment"]
+        print "\tRemote interface:%s" % remote_iface
 
 def rename_net(manager, *args):
     tid, nid, name = args
@@ -286,53 +298,6 @@ def api_unplug_iface(client, *args):
         return
     print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 
-def detail_iface(manager, *args):
-    tid, nid, pid = args
-    remote_iface = manager.get_interface_details(tid, nid, pid)
-    print "Remote interface on Virtual Port:%s " \
-      "Virtual Network:%s is %s" % (pid, nid, remote_iface)
-
-def api_detail_iface(manager, *args):
-    tid, nid, pid = args
-    res = client.do_request(tid, 'GET',
-      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
-    output = res.read()
-    rd = simplejson.loads(output)
-    LOG.debug(rd)
-    remote_iface = rd["attachment"]
-    print "Remote interface on Virtual Port:%s " \
-      "Virtual Network:%s is %s" % (pid, nid, remote_iface)
-
-def list_iface(manager, *args):
-    tid, nid = args
-    iface_list = manager.get_all_attached_interfaces(tid, nid)
-    print "Remote Interfaces on Virtual Network:%s\n" % nid
-    for iface in iface_list:
-        print "\tRemote interface:%s" % iface
-
-# TODO(bgh): I'm not sure how the api maps to manager.get_all_interfaces so
-# I'm just doing this the manual way for now.
-def api_list_iface(client, *args):
-    tid, nid = args
-    res = client.do_request(tid, 'GET',
-      "/networks/%s/ports.%s" % (nid, FORMAT))
-    output = res.read()
-    if res.status != 200:
-        LOG.error("Failed to list ports: %s" % output)
-        return
-    rd = simplejson.loads(output)
-    LOG.debug(rd)
-    print "Remote Interfaces on Virtual Network:%s\n" % nid
-    for port in rd["ports"]:
-        pid = port["id"]
-        res = client.do_request(tid, 'GET',
-          "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
-        output = res.read()
-        rd = simplejson.loads(output)
-        LOG.debug(rd)
-        remote_iface = rd["attachment"]
-        print "\tRemote interface:%s" % remote_iface
-
 commands = {
   "list_nets": {
     "func": list_nets,
@@ -388,16 +353,6 @@ commands = {
     "func": unplug_iface,
     "api_func": api_unplug_iface,
     "args": ["tenant-id", "net-id", "port-id"]
-    },
-  "detail_iface": {
-    "func": detail_iface,
-    "api_func": api_detail_iface,
-    "args": ["tenant-id", "net-id", "port-id"]
-    },
-  "list_iface": {
-    "func": list_iface,
-    "api_func": api_list_iface,
-    "args": ["tenant-id", "net-id"]
     },
   }
 

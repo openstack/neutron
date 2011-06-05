@@ -129,12 +129,11 @@ class OVSQuantumPlugin(QuantumPluginBase):
         return d
 
     def get_network_details(self, tenant_id, net_id):
-        network = db.network_get(net_id)
-        d = {}
-        d["net-id"] = str(network.uuid)
-        d["net-name"] = network.name
-        d["net-ports"] = self.get_all_ports(tenant_id, net_id)
-        return d
+        ports = db.port_list(net_id)
+        ifaces = []
+        for p in ports:
+            ifaces.append(p.interface_id)
+        return ifaces
 
     def rename_network(self, tenant_id, net_id, new_name):
         try:
@@ -187,13 +186,6 @@ class OVSQuantumPlugin(QuantumPluginBase):
         rv = {"port-id": port.uuid, "attachment": port.interface_id,
           "net-id": port.network_id, "port-state": "UP"}
         return rv
-
-    def get_all_attached_interfaces(self, tenant_id, net_id):
-        ports = db.port_list(net_id)
-        ifaces = []
-        for p in ports:
-            ifaces.append(p.interface_id)
-        return ifaces
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):
         db.port_set_attachment(port_id, remote_iface_id)
