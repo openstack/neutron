@@ -137,11 +137,10 @@ def api_delete_net(client, *args):
 
 def detail_net(manager, *args):
     tid, nid = args
-    iface_list = manager.get_all_attached_interfaces(tid, nid)
+    iface_list = manager.get_network_details(tid, nid)
     print "Remote Interfaces on Virtual Network:%s\n" % nid
     for iface in iface_list:
         print "\tRemote interface:%s" % iface
-
 
 def api_detail_net(client, *args):
     tid, nid = args
@@ -179,13 +178,12 @@ def api_rename_net(client, *args):
     LOG.debug(resdict)
     print "Renamed Virtual Network with ID:%s" % nid
 
-# TODO(bgh): fix this command
 def list_ports(manager, *args):
     tid, nid = args
     ports = manager.get_all_ports(tid, nid)
     print "Ports on Virtual Network:%s\n" % nid
     for port in ports:
-        "\tVirtual Port:%s" % port
+        print "\tVirtual Port:%s" % port["port-id"]
 
 def api_list_ports(client, *args):
     tid, nid = args
