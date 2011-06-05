@@ -79,9 +79,17 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def create_port(self, tenant_id, net_id):
+    def create_port(self, tenant_id, net_id, port_state=None):
         """
         Creates a port on the specified Virtual Network.
+        """
+        pass
+
+    @abstractmethod
+    def update_port(self, tenant_id, net_id, port_id, port_state):
+        """
+        Updates the state of a specific port on the
+        specified Virtual Network
         """
         pass
 
@@ -119,28 +127,13 @@ class QuantumPluginBase(object):
         """
         pass
 
-    @abstractmethod
-    def get_interface_details(self, tenant_id, net_id, port_id):
-        """
-        Retrieves the remote interface that is attached at this
-        particular port.
-        """
-        pass
 
-    @abstractmethod
-    def get_all_attached_interfaces(self, tenant_id, net_id):
-        """
-        Retrieves all remote interfaces that are attached to
-        a particular Virtual Network.
-        """
-        pass
-   
     @classmethod
     def __subclasshook__(cls, klass):
         """
         The __subclasshook__ method is a class method
         that will be called everytime a class is tested
-        using issubclass(klass, Plugin). 
+        using issubclass(klass, Plugin).
         In that case, it will check that every method
         marked with the abstractmethod decorator is
         provided by the plugin class.
@@ -152,5 +145,3 @@ class QuantumPluginBase(object):
                 return NotImplemented
             return True
         return NotImplemented
-
-

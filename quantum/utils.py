@@ -35,6 +35,8 @@ import sys
 import time
 import types
 
+from common import exceptions as exception
+
 
 def import_class(import_str):
     """Returns a class from a string including module and class."""
@@ -55,3 +57,36 @@ def import_object(import_str):
     except ImportError:
         cls = import_class(import_str)
         return cls()
+
+
+def to_primitive(value):
+    if type(value) is type([]) or type(value) is type((None,)):
+        o = []
+        for v in value:
+            o.append(to_primitive(v))
+        return o
+    elif type(value) is type({}):
+        o = {}
+        for k, v in value.iteritems():
+            o[k] = to_primitive(v)
+        return o
+    elif isinstance(value, datetime.datetime):
+        return str(value)
+    elif hasattr(value, 'iteritems'):
+        return to_primitive(dict(value.iteritems()))
+    elif hasattr(value, '__iter__'):
+        return to_primitive(list(value))
+    else:
+        return value
+
+
+def dumps(value):
+    try:
+        return json.dumps(value)
+    except TypeError:
+        pass
+    return json.dumps(to_primitive(value))
+
+
+def loads(s):
+    return json.loads(s)

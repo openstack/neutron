@@ -29,12 +29,13 @@ import socket
 import sys
 import ConfigParser
 
-from common import exceptions
+import exceptions as exception
+import flags
 from exceptions import ProcessExecutionError
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
+FLAGS = flags.FLAGS
 
 def int_from_bool_as_string(subject):
     """
@@ -71,9 +72,11 @@ def import_class(import_str):
     """Returns a class from a string including module and class"""
     mod_str, _sep, class_str = import_str.rpartition('.')
     try:
+        #mod_str = os.path.join(FLAGS.state_path, mod_str)
         __import__(mod_str)
         return getattr(sys.modules[mod_str], class_str)
-    except (ImportError, ValueError, AttributeError):
+    except (ImportError, ValueError, AttributeError) as e:
+        print e
         raise exception.NotFound('Class %s cannot be found' % class_str)
 
 

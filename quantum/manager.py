@@ -23,26 +23,33 @@ plugin that concretely implement quantum_plugin_base class
 
 The caller should make sure that QuantumManager is a singleton.
 """
+import gettext
+gettext.install('quantum', unicode=1)
 
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
 CONFIG_FILE = "plugins.ini"
 
+
 class QuantumManager(object):
-    
-   def __init__(self,config=CONFIG_FILE):
+
+    def __init__(self,config=CONFIG_FILE):
         self.configuration_file = CONFIG_FILE
         plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
+        print "PLUGIN LOCATION:%s" % plugin_location
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
-            raise Exception("Configured Quantum plug-in didn't pass compatibility test")
+            raise Exception("Configured Quantum plug-in " \
+                            "didn't pass compatibility test")
         else:
-            print("Successfully imported Quantum plug-in. All compatibility tests passed\n") 
+            print("Successfully imported Quantum plug-in." \
+                  "All compatibility tests passed\n")
         self.plugin = plugin_klass()
-        
-   def get_manager(self):
-       return self.plugin
+
+    def get_manager(self):
+        return self.plugin
+
 
 # TODO(somik): rmove the main class
 # Added for temporary testing purposes
@@ -55,4 +62,3 @@ def main():
 # Standard boilerplate to call the main() function.
 if __name__ == '__main__':
     main()
-

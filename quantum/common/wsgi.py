@@ -1,3 +1,4 @@
+
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011, Nicira Networks, Inc.
@@ -24,6 +25,8 @@ import logging
 import sys
 import datetime
 
+from xml.dom import minidom
+
 import eventlet
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
@@ -32,6 +35,10 @@ import routes.middleware
 import webob.dec
 import webob.exc
 
+from quantum import utils
+from quantum.common import exceptions as exception
+
+LOG = logging.getLogger('quantum.common.wsgi')
 
 class WritableLogger(object):
     """A thin wrapper that responds to `write` and logs."""
@@ -110,6 +117,104 @@ class Middleware(object):
         return self.process_response(response)
 
 
+class Request(webob.Request):
+
+    def best_match_content_type(self):
+        """Determine the most acceptable content-type.
+
+        Based on the query extension then the Accept header.
+
+        """
+        parts = self.path.rsplit('.', 1)
+        LOG.debug("Request parts:%s",parts)
+        if len(parts) > 1:
+            format = parts[1]
+            if format in ['json', 'xml']:
+                return 'application/{0}'.format(parts[1])
+
+        ctypes = ['application/json', 'application/xml']
+        bm = self.accept.best_match(ctypes)
+        LOG.debug("BM:%s",bm)
+        return bm or 'application/json'
+
+    def get_content_type(self):
+        allowed_types = ("application/xml", "application/json")
+        if not "Content-Type" in self.headers:
+            msg = _("Missing Content-Type")
+            LOG.debug(msg)
+            raise webob.exc.HTTPBadRequest(msg)
+        type = self.content_type
+        if type in allowed_types:
+            return type
+        LOG.debug(_("Wrong Content-Type: %s") % type)
+        raise webob.exc.HTTPBadRequest("Invalid content type")
+
+
+class Application(object):
+    """Base WSGI application wrapper. Subclasses need to implement __call__."""
+
+    @classmethod
+    def factory(cls, global_config, **local_config):
+        """Used for paste app factories in paste.deploy config files.
+
+        Any local configuration (that is, values under the [app:APPNAME]
+        section of the paste config) will be passed into the `__init__` method
+        as kwargs.
+
+        A hypothetical configuration would look like:
+
+            [app:wadl]
+            latest_version = 1.3
+            paste.app_factory = nova.api.fancy_api:Wadl.factory
+
+        which would result in a call to the `Wadl` class as
+
+            import quantum.api.fancy_api
+            fancy_api.Wadl(latest_version='1.3')
+
+        You could of course re-implement the `factory` method in subclasses,
+        but using the kwarg passing it shouldn't be necessary.
+
+        """
+        return cls(**local_config)
+
+    def __call__(self, environ, start_response):
+        r"""Subclasses will probably want to implement __call__ like this:
+
+        @webob.dec.wsgify(RequestClass=Request)
+        def __call__(self, req):
+          # Any of the following objects work as responses:
+
+          # Option 1: simple string
+          res = 'message\n'
+
+          # Option 2: a nicely formatted HTTP exception page
+          res = exc.HTTPForbidden(detail='Nice try')
+
+          # Option 3: a webob Response object (in case you need to play with
+          # headers, or you want to be treated like an iterable, or or or)
+          res = Response();
+          res.app_iter = open('somefile')
+
+          # Option 4: any wsgi app to be run next
+          res = self.application
+
+          # Option 5: you can get a Response object for a wsgi app, too, to
+          # play with headers etc
+          res = req.get_response(self.application)
+
+          # You can then just return your response...
+          return res
+          # ... or set req.response and return None.
+          req.response = res
+
+        See the end of http://pythonpaste.org/webob/modules/dec.html
+        for more info.
+
+        """
+        raise NotImplementedError(_('You must implement __call__'))
+
+
 class Debug(Middleware):
     """
     Helper class that can be inserted into any WSGI application chain
@@ -152,6 +257,13 @@ class Router(object):
     WSGI middleware that maps incoming requests to WSGI apps.
     """
 
+    @classmethod
+    def factory(cls, global_config, **local_config):
+        """
+        Returns an instance of the WSGI Router class
+        """
+        return cls()
+
     def __init__(self, mapper):
         """
         Create a router for the given routes.Mapper.
@@ -169,7 +281,7 @@ class Router(object):
           mapper.connect(None, "/svrlist", controller=sc, action="list")
 
           # Actions are all implicitly defined
-          mapper.resource("server", "servers", controller=sc)
+          mapper.resource("network", "networks", controller=nc)
 
           # Pointing to an arbitrary WSGI app.  You can specify the
           # {path_info:.*} parameter so the target app can be handed just that
@@ -186,6 +298,7 @@ class Router(object):
         Route the incoming request to a controller based on self.map.
         If no match, return a 404.
         """
+        LOG.debug("HERE - wsgi.Router.__call__")
         return self._router
 
     @staticmethod
@@ -204,92 +317,197 @@ class Router(object):
 
 
 class Controller(object):
-    """
+    """WSGI app that dispatched to methods.
+
     WSGI app that reads routing information supplied by RoutesMiddleware
     and calls the requested action method upon itself.  All action methods
     must, in addition to their normal parameters, accept a 'req' argument
-    which is the incoming webob.Request.  They raise a webob.exc exception,
+    which is the incoming wsgi.Request.  They raise a webob.exc exception,
     or return a dict which will be serialized by requested content type.
+
     """
 
-    @webob.dec.wsgify
+    @webob.dec.wsgify(RequestClass=Request)
     def __call__(self, req):
         """
         Call the method specified in req.environ by RoutesMiddleware.
         """
+        LOG.debug("HERE - wsgi.Controller.__call__")
         arg_dict = req.environ['wsgiorg.routing_args'][1]
         action = arg_dict['action']
         method = getattr(self, action)
+        LOG.debug("ARG_DICT:%s",arg_dict)
+        LOG.debug("Action:%s",action)
+        LOG.debug("Method:%s",method)
+        LOG.debug("%s %s" % (req.method, req.url))
         del arg_dict['controller']
         del arg_dict['action']
-        arg_dict['request'] = req
+        if 'format' in arg_dict:
+            del arg_dict['format']
+        arg_dict['req'] = req
         result = method(**arg_dict)
+
         if type(result) is dict:
-            return self._serialize(result, req)
+            content_type = req.best_match_content_type()
+            LOG.debug("Content type:%s",content_type)
+            LOG.debug("Result:%s",result)
+            default_xmlns = self.get_default_xmlns(req)
+            body = self._serialize(result, content_type, default_xmlns)
+
+            response = webob.Response()
+            response.headers['Content-Type'] = content_type
+            response.body = body
+            msg_dict = dict(url=req.url, status=response.status_int)
+            msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
+            LOG.debug(msg)
+            return response
         else:
             return result
 
-    def _serialize(self, data, request):
-        """
-        Serialize the given dict to the response type requested in request.
+    def _serialize(self, data, content_type, default_xmlns):
+        """Serialize the given dict to the provided content_type.
+
         Uses self._serialization_metadata if it exists, which is a dict mapping
         MIME types to information needed to serialize to that type.
+
         """
-        _metadata = getattr(type(self), "_serialization_metadata", {})
-        serializer = Serializer(request.environ, _metadata)
-        return serializer.to_content_type(data)
+        _metadata = getattr(type(self), '_serialization_metadata', {})
+
+        serializer = Serializer(_metadata, default_xmlns)
+        try:
+            return serializer.serialize(data, content_type)
+        except exception.InvalidContentType:
+            raise webob.exc.HTTPNotAcceptable()
+
+    def _deserialize(self, data, content_type):
+        """Deserialize the request body to the specefied content type.
+
+        Uses self._serialization_metadata if it exists, which is a dict mapping
+        MIME types to information needed to serialize to that type.
+
+        """
+        _metadata = getattr(type(self), '_serialization_metadata', {})
+        serializer = Serializer(_metadata)
+        return serializer.deserialize(data, content_type)
+
+    def get_default_xmlns(self, req):
+        """Provide the XML namespace to use if none is otherwise specified."""
+        return None
 
 
 class Serializer(object):
-    """
-    Serializes a dictionary to a Content Type specified by a WSGI environment.
-    """
+    """Serializes and deserializes dictionaries to certain MIME types."""
 
-    def __init__(self, environ, metadata=None):
-        """
-        Create a serializer based on the given WSGI environment.
+    def __init__(self, metadata=None, default_xmlns=None):
+        """Create a serializer based on the given WSGI environment.
+
         'metadata' is an optional dict mapping MIME types to information
         needed to serialize a dictionary to that type.
-        """
-        self.environ = environ
-        self.metadata = metadata or {}
-        self._methods = {
-            'application/json': self._to_json,
-            'application/xml': self._to_xml}
 
-    def to_content_type(self, data):
         """
-        Serialize a dictionary into a string.  The format of the string
-        will be decided based on the Content Type requested in self.environ:
-        by Accept: header, or by URL suffix.
+        self.metadata = metadata or {}
+        self.default_xmlns = default_xmlns
+
+    def _get_serialize_handler(self, content_type):
+        handlers = {
+            'application/json': self._to_json,
+            'application/xml': self._to_xml,
+        }
+
+        try:
+            return handlers[content_type]
+        except Exception:
+            raise exception.InvalidContentType(content_type=content_type)
+
+    def serialize(self, data, content_type):
+        """Serialize a dictionary into the specified content type."""
+        return self._get_serialize_handler(content_type)(data)
+
+    def deserialize(self, datastring, content_type):
+        """Deserialize a string to a dictionary.
+
+        The string must be in the format of a supported MIME type.
+
         """
-        # FIXME(sirp): for now, supporting json only
-        #mimetype = 'application/xml'
-        mimetype = 'application/json'
-        # TODO(gundlach): determine mimetype from request
-        return self._methods.get(mimetype, repr)(data)
+        return self.get_deserialize_handler(content_type)(datastring)
+
+    def get_deserialize_handler(self, content_type):
+        handlers = {
+            'application/json': self._from_json,
+            'application/xml': self._from_xml,
+        }
+
+        try:
+            return handlers[content_type]
+        except Exception:
+            raise exception.InvalidContentType(content_type=content_type)
+
+    def _from_json(self, datastring):
+        return utils.loads(datastring)
+
+    def _from_xml(self, datastring):
+        xmldata = self.metadata.get('application/xml', {})
+        plurals = set(xmldata.get('plurals', {}))
+        node = minidom.parseString(datastring).childNodes[0]
+        return {node.nodeName: self._from_xml_node(node, plurals)}
+
+    def _from_xml_node(self, node, listnames):
+        """Convert a minidom node to a simple Python type.
+
+        listnames is a collection of names of XML nodes whose subnodes should
+        be considered list items.
+
+        """
+        if len(node.childNodes) == 1 and node.childNodes[0].nodeType == 3:
+            return node.childNodes[0].nodeValue
+        elif node.nodeName in listnames:
+            return [self._from_xml_node(n, listnames) for n in node.childNodes]
+        else:
+            result = dict()
+            for attr in node.attributes.keys():
+                result[attr] = node.attributes[attr].nodeValue
+            for child in node.childNodes:
+                if child.nodeType != node.TEXT_NODE:
+                    result[child.nodeName] = self._from_xml_node(child,
+                                                                 listnames)
+            return result
 
     def _to_json(self, data):
-        def sanitizer(obj):
-            if isinstance(obj, datetime.datetime):
-                return obj.isoformat()
-            return obj
-
-        return json.dumps(data, default=sanitizer)
+        return utils.dumps(data)
 
     def _to_xml(self, data):
         metadata = self.metadata.get('application/xml', {})
         # We expect data to contain a single key which is the XML root.
         root_key = data.keys()[0]
-        from xml.dom import minidom
         doc = minidom.Document()
         node = self._to_xml_node(doc, metadata, root_key, data[root_key])
+
+        xmlns = node.getAttribute('xmlns')
+        if not xmlns and self.default_xmlns:
+            node.setAttribute('xmlns', self.default_xmlns)
+
         return node.toprettyxml(indent='    ')
 
     def _to_xml_node(self, doc, metadata, nodename, data):
         """Recursive method to convert data members to XML nodes."""
         result = doc.createElement(nodename)
+
+        # Set the xml namespace if one is specified
+        # TODO(justinsb): We could also use prefixes on the keys
+        xmlns = metadata.get('xmlns', None)
+        if xmlns:
+            result.setAttribute('xmlns', xmlns)
+        LOG.debug("DATA:%s",data)
         if type(data) is list:
+            LOG.debug("TYPE IS LIST")
+            collections = metadata.get('list_collections', {})
+            if nodename in collections:
+                metadata = collections[nodename]
+                for item in data:
+                    node = doc.createElement(metadata['item_name'])
+                    node.setAttribute(metadata['item_key'], str(item))
+                    result.appendChild(node)
+                return result
             singular = metadata.get('plurals', {}).get(nodename, None)
             if singular is None:
                 if nodename.endswith('s'):
@@ -300,6 +518,17 @@ class Serializer(object):
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
         elif type(data) is dict:
+            LOG.debug("TYPE IS DICT")
+            collections = metadata.get('dict_collections', {})
+            if nodename in collections:
+                metadata = collections[nodename]
+                for k, v in data.items():
+                    node = doc.createElement(metadata['item_name'])
+                    node.setAttribute(metadata['item_key'], str(k))
+                    text = doc.createTextNode(str(v))
+                    node.appendChild(text)
+                    result.appendChild(node)
+                return result
             attrs = metadata.get('attributes', {}).get(nodename, {})
             for k, v in data.items():
                 if k in attrs:
@@ -307,7 +536,10 @@ class Serializer(object):
                 else:
                     node = self._to_xml_node(doc, metadata, k, v)
                     result.appendChild(node)
-        else:  # atom
+        else:
+            # Type is atom
+            LOG.debug("TYPE IS ATOM:%s",data)
             node = doc.createTextNode(str(data))
             result.appendChild(node)
         return result
+
