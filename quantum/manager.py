@@ -50,15 +50,3 @@ class QuantumManager(object):
     def get_manager(self):
         return self.plugin
 
-
-# TODO(somik): rmove the main class
-# Added for temporary testing purposes
-def main():
-    manager = QuantumManager()
-    myManager = manager.get_manager()
-    myManager.get_all_networks("tesst")
-    #print("is a plugin")
-
-# Standard boilerplate to call the main() function.
-if __name__ == '__main__':
-    main()
