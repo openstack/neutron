@@ -26,17 +26,26 @@ The caller should make sure that QuantumManager is a singleton.
 import gettext
 gettext.install('quantum', unicode=1)
 
+import os
+
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
 CONFIG_FILE = "plugins.ini"
 
+def find_config(basepath):
+    for root, dirs, files in os.walk(basepath):
+        if CONFIG_FILE in files:
+            return os.path.join(root, CONFIG_FILE)
+    return None
 
 class QuantumManager(object):
-
-    def __init__(self,config=CONFIG_FILE):
-        self.configuration_file = CONFIG_FILE
-        plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
+    def __init__(self, config=None):
+        if config == None:
+            self.configuration_file = find_config(os.path.abspath(os.path.dirname(__file__)))
+        else:
+            self.configuration_file = config
+        plugin_location = utils.getPluginFromConfig(self.configuration_file)
         print "PLUGIN LOCATION:%s" % plugin_location
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
