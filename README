@@ -1,0 +1,29 @@
+# -- Welcome!
+
+  You have come across a cloud computing network fabric controller.  It has identified
+  itself as "Quantum."  It aims to tame your (cloud) networking!
+  
+# -- Basics:
+
+1) Quantum REST API: Quantum supports a REST-ful programmatic interface to manage your
+   cloud networking fabric.
+
+2) Quantum Plugins: Quantum sports a plug-able architecture that allows Quantum's REST API
+   to be backed by various entities that can create a cloud-class virtual networking fabric.
+   The advantages of this plug-able architecture is two-folds:
+   
+   a) Allows for ANY open-source project or commercial vendor to write a Quantum plug-in.
+   
+   b) Allows Quantum users to not be tied down to a single Quantum implementation and
+      enables them to switch out a plug-in by simple editing a config file - plugins.ini
+
+# -- Configuring Quantum plug-in
+
+# -- Launching the Quantum Service
+
+# -- Making requests against the Quantum Service
+
+# -- CLI tools to program the Quantum-managed network fabric
+
+# -- Writing your own Quantum plug-in
+ 
