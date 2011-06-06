@@ -384,8 +384,9 @@ def build_args(cmd, cmdargs, arglist):
 if __name__ == "__main__":
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     parser = OptionParser(usage=usagestr)
-    parser.add_option("-a", "--use-api", dest="use_api",
-      action="store_true", default=False, help="Use WS API")
+    parser.add_option("-l", "--load-plugin", dest="load_plugin",
+      action="store_true", default=False,
+      help="Load plugin directly instead of using WS API")
     parser.add_option("-H", "--host", dest="host",
       type="string", default="127.0.0.1", help="ip address of api host")
     parser.add_option("-p", "--port", dest="port",
@@ -417,7 +418,7 @@ if __name__ == "__main__":
     if not args:
         sys.exit(1)
     LOG.debug("Executing command \"%s\" with args: %s" % (cmd, args))
-    if options.use_api:
+    if not options.load_plugin:
         client = MiniClient(options.host, options.port, options.ssl)
         if not commands[cmd].has_key("api_func"):
             LOG.error("API version of \"%s\" is not yet implemented" % cmd)
