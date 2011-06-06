@@ -37,7 +37,7 @@ class QuantumPluginBase(object):
         the specified tenant.
         
         :returns:
-        :raises:
+        :raises: None
         """
         pass
 
