@@ -10,12 +10,10 @@ fi
 # Make sure we have mysql-python
 rpm -qa | grep MYyQL-python >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-	echo "MySQL-python not found; installing."
-	yum -y install MySQL-python
-	if [ $? -ne 0 ]; then
-		echo "Failed to install MYSQL-python; agent will not work."
-		exit 1
-	fi
+	echo "MySQL-python not found"
+    echo "Please enable the centos repositories and install mysql-python:"
+    echo "yum --enablerepo=base -y install MySQL-python"
+    exit 1
 fi
 
 cp ovs_quantum_agent.py /etc/xapi.d/plugins
@@ -34,5 +32,7 @@ if [ "X$BR" != "X$CONF_BR" ]; then
 	echo "Integration bridge doesn't match configuration file; fixing."
 	sed -i -e "s/^integration-bridge =.*$/integration-bridge = ${BR}/g" $CONF_FILE
 fi
+
+echo "Using integration bridge: $BR (make sure this is set in the nova configuration)"
 
 echo "Make sure to edit: $CONF_FILE"

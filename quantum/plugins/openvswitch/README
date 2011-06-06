@@ -1,46 +1,105 @@
-To Run:
+# -- Background
 
-0) Make it the current quantum plugin
+The quantum openvswitch plugin is a simple plugin that allows you to manage
+connectivity between VMs on hypervisors running openvswitch.
 
-edit ../../plugins.ini and change the provider line to be:
+The quantum openvswitch plugin consists of two components:
+
+1) The plugin itself:  The plugin uses a database backend (mysql for now) to
+   store configuration and mappings that will be used later by the agent.
+
+2) An agent which runs on the hypervisor (dom0) and communicates with
+   openvswitch.
+
+The sections below describe how to configure and run the quantum service with
+the openvswitch plugin.
+
+# -- Nova configuration
+
+- Make sure to set up nova using flat networking.  Also, make sure that the
+  integration bridge (see below under agent configuration) matches the
+  flat_network_bridge specified in your nova flag file.  Here are the relevant
+  entries from my nova flag file.
+--network_manager=nova.network.manager.FlatManager
+--flat_network_bridge=xapi1
+
+# -- Quantum configuration
+
+Make the openvswitch plugin the current quantum plugin
+
+- edit ../../plugins.ini and change the provider line to be:
 provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin
 
-1) On the "Openstack Controller" host:
+# -- Database config.  The OVS quantum service requires access to a mysql
+# database in order to store configuration and mappings that will be used by
+# the agent.  Here is how to set up the database on the host that you will be
+# running the quantum service on.
 
 MySQL should be installed on the host, and all plugins and clients must be
 configured with access to the database.
 
 To prep mysql, run:
 
-mysql -u root -p -e "create database ovs_naas"
+$ mysql -u root -p -e "create database ovs_quantum"
 
-2) Edit the configuration file (src/ovs/plugins/ovs_quantum_plugin.ini)
+Make sure any xenserver running the ovs quantum agent will be able to communicate with the host running the quantum service:
 
-- Make sure it matches your mysql configuration.  This file must be updated
-  with the addresses and credentials to access the database.
+//log in to mysql service
+$ mysql -u root -p
+//grant access to user-remote host combination
+mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
+//force update of authorization changes
+mysql> FLUSH PRIVILEGES;
 
-3) Create the agent distribution tarball
+# -- Plugin configuration.
+
+- Edit the configuration file (ovs_quantum_plugin.ini).  Make sure it matches
+  your mysql configuration.  This file must be updated with the addresses and
+  credentials to access the database.  This file will be included in the agent
+  distribution tarball (see below) and the agent will use the credentials here
+  to access the database.
+
+# -- Agent configuration
+
+- Create the agent distribution tarball
 
 $ make agent-dist
+- Copy the resulting tarball to your xenserver(s) (copy to dom0, not the nova
+  compute node)
+- Unpack the tarball and run install.sh.  This will install all of the
+  necessary pieces into /etc/xapi.d/plugins.  It will also spit out the name
+  of the integration bridge that you'll need for your nova configuration.
+- Run the agent [on your hypervisor (dom0)]:
+$ /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugin.ini
 
-4) Copy the resulting tarball to your xenserver(s)
+# -- Getting quantum up and running
 
-5) Unpack the tarball and run install.sh.  This will install all of the
-necessary pieces into /etc/xapi.d/plugins.
-
-6) Run the agent (example below):
-
-# /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugin.ini
-
-7) Start quantum
-
+- Start quantum [on the quantum service host]:
 ~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python bin/quantum etc/quantum.conf
+- Run ovs_quantum_plugin.py via the quantum plugin framework cli [on the
+  quantum service host]
+~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python -a quantum/cli.py
 
-8) Run ovs_quantum_plugin.py via the quantum plugin framework cli.
+This will show help all of the available commands.
 
-- Edit quantum/plugins.ini to point to where the plugin and configuration
-  files live
+An example session looks like this:
 
-~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python quantum/cli.py
+$ export TENANT=t1
+$ PYTHONPATH=. python quantum/cli.py -v -a create_net $TENANT network1
+Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
+$ export NETWORK=e754e7c0-a8eb-40e5-861a-b182d30c3441
+$ PYTHONPATH=. python quantum/cli.py -v -a create_port $TENANT $NETWORK
+Created Virtual Port:5a1e121b-ccc8-471d-9445-24f15f9f854c on Virtual Network:e754e7c0-a8eb-40e5-861a-b182d30c3441
+$ export PORT=5a1e121b-ccc8-471d-9445-24f15f9f854c
+$ PYTHONPATH=. python quantum/cli.py -v -a plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
+Plugged interface "ubuntu1-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
+$ PYTHONPATH=. python quantum/cli.py -v -a plug_iface $TENANT $NETWORK $PORT ubuntu2-eth1
+Plugged interface "ubuntu2-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 
-This will show all of the available commands.
+Now you should have connectivity between ubuntu1-eth1 and ubuntu2-eth1..
+
+# -- Other items
+
+- To get a listing of the vif names that the ovs quantum service will expect
+  them in, issue the following command on the hypervisor (dom0):
+$ for vif in `xe vif-list params=uuid --minimal | sed s/,/" "/g`; do echo $(xe vif-list params=vm-name-label uuid=${vif} --minimal)-eth$(xe vif-list params=device uuid=${vif} --minimal); done
