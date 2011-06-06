@@ -78,22 +78,22 @@ $ /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugi
 ~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python bin/quantum etc/quantum.conf
 - Run ovs_quantum_plugin.py via the quantum plugin framework cli [on the
   quantum service host]
-~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python -a quantum/cli.py
+~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python quantum/cli.py
 
 This will show help all of the available commands.
 
 An example session looks like this:
 
 $ export TENANT=t1
-$ PYTHONPATH=. python quantum/cli.py -v -a create_net $TENANT network1
+$ PYTHONPATH=. python quantum/cli.py -v create_net $TENANT network1
 Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export NETWORK=e754e7c0-a8eb-40e5-861a-b182d30c3441
-$ PYTHONPATH=. python quantum/cli.py -v -a create_port $TENANT $NETWORK
+$ PYTHONPATH=. python quantum/cli.py -v create_port $TENANT $NETWORK
 Created Virtual Port:5a1e121b-ccc8-471d-9445-24f15f9f854c on Virtual Network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export PORT=5a1e121b-ccc8-471d-9445-24f15f9f854c
-$ PYTHONPATH=. python quantum/cli.py -v -a plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
+$ PYTHONPATH=. python quantum/cli.py -v plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
 Plugged interface "ubuntu1-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
-$ PYTHONPATH=. python quantum/cli.py -v -a plug_iface $TENANT $NETWORK $PORT ubuntu2-eth1
+$ PYTHONPATH=. python quantum/cli.py -v plug_iface $TENANT $NETWORK $PORT ubuntu2-eth1
 Plugged interface "ubuntu2-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 
 Now you should have connectivity between ubuntu1-eth1 and ubuntu2-eth1..
