@@ -6,10 +6,11 @@ connectivity between VMs on hypervisors running openvswitch.
 The quantum openvswitch plugin consists of two components:
 
 1) The plugin itself:  The plugin uses a database backend (mysql for now) to
-   store configuration and mappings that will be used later by the agent.
+   store configuration and mappings that are used by the agent.
 
 2) An agent which runs on the hypervisor (dom0) and communicates with
-   openvswitch.
+  openvswitch.  The agent gathers the configuration and mappings from the
+  mysql database running on the quantum host.
 
 The sections below describe how to configure and run the quantum service with
 the openvswitch plugin.
