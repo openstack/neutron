@@ -35,6 +35,9 @@ class QuantumPluginBase(object):
         Returns a dictionary containing all
         <network_uuid, network_name> for
         the specified tenant.
+        
+        :returns:
+        :raises:
         """
         pass
 
@@ -43,6 +46,9 @@ class QuantumPluginBase(object):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
+        
+        :returns:
+        :raises:
         """
         pass
 
@@ -51,6 +57,10 @@ class QuantumPluginBase(object):
         """
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
+        
+        :returns:
+        :raises: exception.NetworkInUse
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -58,7 +68,10 @@ class QuantumPluginBase(object):
     def get_network_details(self, tenant_id, net_id):
         """
         retrieved a list of all the remote vifs that
-        are attached to the network
+        are attached to the network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -67,6 +80,9 @@ class QuantumPluginBase(object):
         """
         Updates the symbolic name belonging to a particular
         Virtual Network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -75,6 +91,9 @@ class QuantumPluginBase(object):
         """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -82,6 +101,10 @@ class QuantumPluginBase(object):
     def create_port(self, tenant_id, net_id, port_state=None):
         """
         Creates a port on the specified Virtual Network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
+        :raises: exception.StateInvalid
         """
         pass
 
@@ -89,7 +112,11 @@ class QuantumPluginBase(object):
     def update_port(self, tenant_id, net_id, port_id, port_state):
         """
         Updates the state of a specific port on the
-        specified Virtual Network
+        specified Virtual Network.
+        
+        :returns:
+        :raises: exception.StateInvalid
+        :raises: exception.PortNotFound
         """
         pass
 
@@ -100,6 +127,11 @@ class QuantumPluginBase(object):
         if the port contains a remote interface attachment,
         the remote interface is first un-plugged and then the port
         is deleted.
+        
+        :returns:
+        :raises: exception.PortInUse
+        :raises: exception.PortNotFound
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -108,6 +140,10 @@ class QuantumPluginBase(object):
         """
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
+        
+        :returns:
+        :raises: exception.PortNotFound
+        :raises: exception.NetworkNotFound
         """
         pass
 
@@ -116,6 +152,11 @@ class QuantumPluginBase(object):
         """
         Attaches a remote interface to the specified port on the
         specified Virtual Network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
+        :raises: exception.PortNotFound
+        :raises: exception.AlreadyAttached (? should the network automatically unplug/replug)
         """
         pass
 
@@ -124,6 +165,10 @@ class QuantumPluginBase(object):
         """
         Detaches a remote interface from the specified port on the
         specified Virtual Network.
+        
+        :returns:
+        :raises: exception.NetworkNotFound
+        :raises: exception.PortNotFound
         """
         pass
 
