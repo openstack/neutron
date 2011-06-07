@@ -37,12 +37,13 @@ class ViewBuilder(object):
         else:
             port = self._build_simple(port_data)
         return port
-    
+
     def _build_simple(self, port_data):
         """Return a simple model of a server."""
         return dict(port=dict(id=port_data['port-id']))
-    
+
     def _build_detail(self, port_data):
         """Return a simple model of a server."""
         return dict(port=dict(id=port_data['port-id'],
-                              state=port_data['port-state']))
+          attachment=port_data['attachment'],
+          state=port_data['port-state']))

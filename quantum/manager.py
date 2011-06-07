@@ -27,17 +27,33 @@ The caller should make sure that QuantumManager is a singleton.
 import gettext
 gettext.install('quantum', unicode=1)
 
+import os
+
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
 CONFIG_FILE = "plugins.ini"
 
+def find_config(basepath):
+    for root, dirs, files in os.walk(basepath):
+        if CONFIG_FILE in files:
+            return os.path.join(root, CONFIG_FILE)
+    return None
 
 class QuantumManager(object):
+<<<<<<< TREE
 
     def __init__(self, config=CONFIG_FILE):
         self.configuration_file = CONFIG_FILE
         plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
+=======
+    def __init__(self, config=None):
+        if config == None:
+            self.configuration_file = find_config(os.path.abspath(os.path.dirname(__file__)))
+        else:
+            self.configuration_file = config
+        plugin_location = utils.getPluginFromConfig(self.configuration_file)
+>>>>>>> MERGE-SOURCE
         print "PLUGIN LOCATION:%s" % plugin_location
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
@@ -51,15 +67,3 @@ class QuantumManager(object):
     def get_manager(self):
         return self.plugin
 
-
-# TODO(somik): rmove the main class
-# Added for temporary testing purposes
-def main():
-    manager = QuantumManager()
-    myManager = manager.get_manager()
-    myManager.get_all_networks("tesst")
-    #print("is a plugin")
-
-# Standard boilerplate to call the main() function.
-if __name__ == '__main__':
-    main()
