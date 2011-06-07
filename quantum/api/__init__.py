@@ -51,7 +51,7 @@ class APIRouterV01(wsgi.Router):
         mapper.resource('network', 'networks',
                         controller=networks.Controller(),
                         path_prefix=uri_prefix)
-        mapper.resource('port', 'ports', 
+        mapper.resource('port', 'ports',
                         controller=ports.Controller(),
                         parent_resource=dict(member_name='network',
                                              collection_name=\

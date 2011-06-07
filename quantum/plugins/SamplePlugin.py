@@ -166,7 +166,7 @@ class DummyDataPlugin(object):
         are attached to the network
         """
         print("get_network_details() called\n")
-        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0", "/tenant1/networks/10/121/vif1.1"]
+        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0"]
         return vifs_on_net
     
     

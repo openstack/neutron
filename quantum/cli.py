@@ -36,7 +36,7 @@ def usage():
     print "detail_iface <tenant-id> <net-id> <port-id>"
     print "list_iface <tenant-id> <net-id>\n"
 
-if len(sys.argv) < 2 or len(sys.argv) > 6: 
+if len(sys.argv) < 2 or len(sys.argv) > 6:
     usage()
     exit(1)
 
@@ -89,13 +89,13 @@ elif sys.argv[1] == "plug_iface" and len(sys.argv) == 6:
 elif sys.argv[1] == "unplug_iface" and len(sys.argv) == 5:
     manager.unplug_interface(sys.argv[2], sys.argv[3], sys.argv[4])
     print "UnPlugged remote interface " \
-          "from Virtual Port:%s Virtual Network:%s" % (sys.argv[4], 
+          "from Virtual Port:%s Virtual Network:%s" % (sys.argv[4],
                                                        sys.argv[3])
 elif sys.argv[1] == "detail_iface" and len(sys.argv) == 5:
-    remote_iface = manager.get_interface_details(sys.argv[2], 
+    remote_iface = manager.get_interface_details(sys.argv[2],
                                                  sys.argv[3], sys.argv[4])
     print "Remote interface on Virtual Port:%s " \
-          "Virtual Network:%s is %s" % (sys.argv[4], 
+          "Virtual Network:%s is %s" % (sys.argv[4],
                                         sys.argv[3], remote_iface)
 elif sys.argv[1] == "list_iface" and len(sys.argv) == 4:
     iface_list = manager.get_all_attached_interfaces(sys.argv[2], sys.argv[3])
@@ -107,4 +107,3 @@ elif sys.argv[1] == "all" and len(sys.argv) == 2:
 else:
     print "invalid arguments: %s" % str(sys.argv)
     usage()
-
