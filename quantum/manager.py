@@ -18,9 +18,8 @@
 
 
 """
-Quantum's Manager class is responsible for parsing a config file and
-instantiating the correct plugin that concretely implement
-quantum_plugin_base class
+Quantum's Manager class is responsible for parsing a config file and instantiating the correct
+plugin that concretely implement quantum_plugin_base class
 
 The caller should make sure that QuantumManager is a singleton.
 """
@@ -41,19 +40,12 @@ def find_config(basepath):
     return None
 
 class QuantumManager(object):
-<<<<<<< TREE
-
-    def __init__(self, config=CONFIG_FILE):
-        self.configuration_file = CONFIG_FILE
-        plugin_location = utils.getPluginFromConfig(CONFIG_FILE)
-=======
     def __init__(self, config=None):
         if config == None:
             self.configuration_file = find_config(os.path.abspath(os.path.dirname(__file__)))
         else:
             self.configuration_file = config
         plugin_location = utils.getPluginFromConfig(self.configuration_file)
->>>>>>> MERGE-SOURCE
         print "PLUGIN LOCATION:%s" % plugin_location
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
