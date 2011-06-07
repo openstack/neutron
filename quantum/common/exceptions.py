@@ -25,7 +25,7 @@ import logging
 
 class QuantumException(Exception):
     """Base Quantum Exception
-    
+
     Taken from nova.exception.NovaException
     To correctly use this class, inherit from it and define
     a 'message' property. That message will get printf'd
@@ -44,6 +44,7 @@ class QuantumException(Exception):
 
     def __str__(self):
         return self._error_string
+
 
 class ProcessExecutionError(IOError):
     def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
@@ -84,11 +85,11 @@ class NetworkNotFound(NotFound):
 class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found " \
                 "on network %(net_id)s")
-    
+
 
 class StateInvalid(QuantumException):
     message = _("Unsupported port state: %(port_state)s")
-    
+
 
 class NetworkInUse(QuantumException):
     message = _("Unable to complete operation on network %(net_id)s. " \
@@ -100,11 +101,13 @@ class PortInUse(QuantumException):
                 "for network %(net_id)s. The attachment '%(att_id)s" \
                 "is plugged into the logical port.")
 
+
 class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port " \
                 "%(port_id)s for network %(net_id)s. The attachment is " \
                 "already plugged into port %(att_port_id)s")
-    
+
+
 class Duplicate(Error):
     pass
 

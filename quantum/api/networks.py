@@ -78,7 +78,7 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         network = self.network_manager.\
-                       create_network(tenant_id,req_params['network-name'])
+                       create_network(tenant_id, req_params['network-name'])
         builder = networks_view.get_view_builder(req)
         result = builder.build(network)
         return dict(networks=result)

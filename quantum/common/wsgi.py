@@ -40,6 +40,7 @@ from quantum.common import exceptions as exception
 
 LOG = logging.getLogger('quantum.common.wsgi')
 
+
 class WritableLogger(object):
     """A thin wrapper that responds to `write` and logs."""
 
@@ -126,7 +127,7 @@ class Request(webob.Request):
 
         """
         parts = self.path.rsplit('.', 1)
-        LOG.debug("Request parts:%s",parts)
+        LOG.debug("Request parts:%s", parts)
         if len(parts) > 1:
             format = parts[1]
             if format in ['json', 'xml']:
@@ -134,7 +135,6 @@ class Request(webob.Request):
 
         ctypes = ['application/json', 'application/xml']
         bm = self.accept.best_match(ctypes)
-        LOG.debug("BM:%s",bm)
         return bm or 'application/json'
 
     def get_content_type(self):
@@ -336,10 +336,6 @@ class Controller(object):
         arg_dict = req.environ['wsgiorg.routing_args'][1]
         action = arg_dict['action']
         method = getattr(self, action)
-        LOG.debug("ARG_DICT:%s",arg_dict)
-        LOG.debug("Action:%s",action)
-        LOG.debug("Method:%s",method)
-        LOG.debug("%s %s" % (req.method, req.url))
         del arg_dict['controller']
         del arg_dict['action']
         if 'format' in arg_dict:
@@ -349,8 +345,6 @@ class Controller(object):
 
         if type(result) is dict:
             content_type = req.best_match_content_type()
-            LOG.debug("Content type:%s",content_type)
-            LOG.debug("Result:%s",result)
             default_xmlns = self.get_default_xmlns(req)
             body = self._serialize(result, content_type, default_xmlns)
 
@@ -497,9 +491,7 @@ class Serializer(object):
         xmlns = metadata.get('xmlns', None)
         if xmlns:
             result.setAttribute('xmlns', xmlns)
-        LOG.debug("DATA:%s",data)
         if type(data) is list:
-            LOG.debug("TYPE IS LIST")
             collections = metadata.get('list_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -518,7 +510,6 @@ class Serializer(object):
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
         elif type(data) is dict:
-            LOG.debug("TYPE IS DICT")
             collections = metadata.get('dict_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -538,8 +529,6 @@ class Serializer(object):
                     result.appendChild(node)
         else:
             # Type is atom
-            LOG.debug("TYPE IS ATOM:%s",data)
             node = doc.createTextNode(str(data))
             result.appendChild(node)
         return result
-

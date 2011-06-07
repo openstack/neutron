@@ -37,6 +37,7 @@ from exceptions import ProcessExecutionError
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 FLAGS = flags.FLAGS
 
+
 def int_from_bool_as_string(subject):
     """
     Interpret a string as a boolean and return either 1 or 0.
@@ -187,6 +188,7 @@ def isotime(at=None):
 
 def parse_isotime(timestr):
     return datetime.datetime.strptime(timestr, TIME_FORMAT)
+
 
 def getPluginFromConfig(file="config.ini"):
         Config = ConfigParser.ConfigParser()

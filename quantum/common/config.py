@@ -209,7 +209,7 @@ def find_config_file(options, args):
                         fix_path(os.path.join('~', '.quantum')),
                         fix_path('~'),
                         os.path.join(FLAGS.state_path, 'etc'),
-                        os.path.join(FLAGS.state_path, 'etc','quantum'),
+                        os.path.join(FLAGS.state_path, 'etc', 'quantum'),
                         '/etc/quantum/',
                         '/etc']
     for cfg_dir in config_file_dirs:
@@ -244,12 +244,10 @@ def load_paste_config(app_name, options, args):
             problem loading the configuration file.
     """
     conf_file = find_config_file(options, args)
-    print "Conf_file:%s" %conf_file
     if not conf_file:
         raise RuntimeError("Unable to locate any configuration file. "
                             "Cannot load application %s" % app_name)
     try:
-        print "App_name:%s" %app_name
         conf = deploy.appconfig("config:%s" % conf_file, name=app_name)
         return conf_file, conf
     except Exception, e:

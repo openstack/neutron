@@ -33,17 +33,16 @@ class ViewBuilder(object):
 
     def build(self, network_data, is_detail=False):
         """Generic method used to generate a network entity."""
-        print "NETWORK-DATA:%s" %network_data
         if is_detail:
             network = self._build_detail(network_data)
         else:
             network = self._build_simple(network_data)
         return network
-    
+
     def _build_simple(self, network_data):
         """Return a simple model of a server."""
         return dict(network=dict(id=network_data['net-id']))
-    
+
     def _build_detail(self, network_data):
         """Return a simple model of a server."""
         return dict(network=dict(id=network_data['net-id'],
