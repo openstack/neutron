@@ -24,6 +24,7 @@ import quantum.db.api as db
 import quantum.db.models as models
 import ovs_models
 
+
 def get_vlans():
     session = db.get_session()
     try:
@@ -33,8 +34,9 @@ def get_vlans():
         return []
     res = []
     for x in bindings:
-       res.append((x.vlan_id, x.network_id))
+        res.append((x.vlan_id, x.network_id))
     return res
+
 
 def add_vlan_binding(vlanid, netid):
     session = db.get_session()
@@ -42,6 +44,7 @@ def add_vlan_binding(vlanid, netid):
     session.add(binding)
     session.flush()
     return binding.vlan_id
+
 
 def remove_vlan_binding(netid):
     session = db.get_session()
@@ -53,6 +56,7 @@ def remove_vlan_binding(netid):
     except exc.NoResultFound:
             pass
     session.flush()
+
 
 def update_network_binding(netid, ifaceid):
     session = db.get_session()

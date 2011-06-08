@@ -33,6 +33,7 @@ from paste import deploy
 
 from quantum.common import flags
 from quantum.common import exceptions as exception
+from quantum.common import extensions
 
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -209,7 +210,7 @@ def find_config_file(options, args):
                         fix_path(os.path.join('~', '.quantum')),
                         fix_path('~'),
                         os.path.join(FLAGS.state_path, 'etc'),
-                        os.path.join(FLAGS.state_path, 'etc','quantum'),
+                        os.path.join(FLAGS.state_path, 'etc', 'quantum'),
                         '/etc/quantum/',
                         '/etc']
     for cfg_dir in config_file_dirs:
@@ -244,12 +245,10 @@ def load_paste_config(app_name, options, args):
             problem loading the configuration file.
     """
     conf_file = find_config_file(options, args)
-    print "Conf_file:%s" %conf_file
     if not conf_file:
         raise RuntimeError("Unable to locate any configuration file. "
                             "Cannot load application %s" % app_name)
     try:
-        print "App_name:%s" %app_name
         conf = deploy.appconfig("config:%s" % conf_file, name=app_name)
         return conf_file, conf
     except Exception, e:
@@ -257,7 +256,7 @@ def load_paste_config(app_name, options, args):
                            % (conf_file, e))
 
 
-def load_paste_app(conf_file, app_name):
+def load_paste_app(app_name, options, args):
     """
     Builds and returns a WSGI app from a paste config file.
 
@@ -278,16 +277,15 @@ def load_paste_app(conf_file, app_name):
     :raises RuntimeError when config file cannot be located or application
             cannot be loaded from config file
     """
-    #conf_file, conf = load_paste_config(app_name, options, args)
+    conf_file, conf = load_paste_config(app_name, options, args)
 
     try:
-        conf_file = os.path.abspath(conf_file)
         app = deploy.loadapp("config:%s" % conf_file, name=app_name)
     except (LookupError, ImportError), e:
         raise RuntimeError("Unable to load %(app_name)s from "
                            "configuration file %(conf_file)s."
                            "\nGot: %(e)r" % locals())
-    return app
+    return conf, app
 
 
 def get_option(options, option, **kwargs):
