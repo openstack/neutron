@@ -102,7 +102,9 @@ def serve_wsgi(cls, conf=None, options=None, args=None):
 
 def _run_wsgi(app_name, paste_conf, paste_config_file):
     LOG.info(_('Using paste.deploy config at: %s'), paste_config_file)
-    app = config.load_paste_app(paste_config_file, app_name)
+    conf, app = config.load_paste_app(app_name,
+                                      {'config_file': paste_config_file},
+                                      None)
     if not app:
         LOG.error(_('No known API applications configured in %s.'),
                       paste_config_file)

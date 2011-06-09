@@ -33,7 +33,6 @@ from paste import deploy
 
 from quantum.common import flags
 from quantum.common import exceptions as exception
-from quantum.common import extensions
 
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
