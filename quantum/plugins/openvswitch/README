@@ -43,11 +43,13 @@ To prep mysql, run:
 
 $ mysql -u root -p -e "create database ovs_quantum"
 
-Make sure any xenserver running the ovs quantum agent will be able to communicate with the host running the quantum service:
+Make sure any xenserver running the ovs quantum agent will be able to
+communicate with the host running the quantum service:
 
 //log in to mysql service
 $ mysql -u root -p
-//grant access to user-remote host combination
+// grant access to user-remote host combination.  Note: if you're going to use
+// a wildcard here it should be a management network with only trusted hosts.
 mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
 //force update of authorization changes
 mysql> FLUSH PRIVILEGES;
@@ -70,6 +72,7 @@ $ make agent-dist
 - Unpack the tarball and run install.sh.  This will install all of the
   necessary pieces into /etc/xapi.d/plugins.  It will also spit out the name
   of the integration bridge that you'll need for your nova configuration.
+  Make sure to specify this in your nova flagfile as --flat_network_bridge.
 - Run the agent [on your hypervisor (dom0)]:
 $ /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugin.ini
 
@@ -86,21 +89,19 @@ This will show help all of the available commands.
 An example session looks like this:
 
 $ export TENANT=t1
-$ PYTHONPATH=. python quantum/cli.py -v create_net $TENANT network1
+$ PYTHONPATH=. python quantum/cli.py create_net $TENANT network1
 Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export NETWORK=e754e7c0-a8eb-40e5-861a-b182d30c3441
-$ PYTHONPATH=. python quantum/cli.py -v create_port $TENANT $NETWORK
+$ PYTHONPATH=. python quantum/cli.py create_port $TENANT $NETWORK
 Created Virtual Port:5a1e121b-ccc8-471d-9445-24f15f9f854c on Virtual Network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export PORT=5a1e121b-ccc8-471d-9445-24f15f9f854c
-$ PYTHONPATH=. python quantum/cli.py -v plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
+$ PYTHONPATH=. python quantum/cli.py plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
 Plugged interface "ubuntu1-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
-$ PYTHONPATH=. python quantum/cli.py -v plug_iface $TENANT $NETWORK $PORT ubuntu2-eth1
-Plugged interface "ubuntu2-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 
-Now you should have connectivity between ubuntu1-eth1 and ubuntu2-eth1..
+(.. repeat for more ports and interface combinations..)
 
 # -- Other items
 
-- To get a listing of the vif names that the ovs quantum service will expect
-  them in, issue the following command on the hypervisor (dom0):
+- To get a listing of the vif names in the format that the ovs quantum service
+  will expect them in, issue the following command on the hypervisor (dom0):
 $ for vif in `xe vif-list params=uuid --minimal | sed s/,/" "/g`; do echo $(xe vif-list params=vm-name-label uuid=${vif} --minimal)-eth$(xe vif-list params=device uuid=${vif} --minimal); done
