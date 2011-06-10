@@ -44,4 +44,5 @@ class ViewBuilder(object):
     def _build_detail(self, port_data):
         """Return a simple model of a server."""
         return dict(port=dict(id=port_data['port-id'],
-                              state=port_data['port-state']))
+                              state=port_data['port-state'],
+                              attachment=port_data['attachment']))

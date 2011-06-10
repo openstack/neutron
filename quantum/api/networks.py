@@ -36,6 +36,7 @@ class Controller(common.QuantumController):
         "application/xml": {
             "attributes": {
                 "network": ["id", "name"],
+                "port": ["id", "state"],
             },
         },
     }
@@ -47,25 +48,43 @@ class Controller(common.QuantumController):
     def index(self, req, tenant_id):
         """ Returns a list of network ids """
         #TODO: this should be for a given tenant!!!
-        return self._items(req, tenant_id, is_detail=False)
+        return self._items(req, tenant_id, net_detail=False)
 
-    def _items(self, req, tenant_id, is_detail):
+    def _item(self, req, tenant_id, network_id,
+              net_details, port_details):
+        network = self.network_manager.get_network_details(
+                            tenant_id, network_id)
+        builder = networks_view.get_view_builder(req)
+        result = builder.build(network, net_details, port_details)
+        return dict(networks=result)
+
+    def _items(self, req, tenant_id, net_details, port_details):
         """ Returns a list of networks. """
         networks = self.network_manager.get_all_networks(tenant_id)
         builder = networks_view.get_view_builder(req)
-        result = [builder.build(network, is_detail)['network']
+        result = [builder.build(network, net_details, port_details)['network']
                   for network in networks]
         return dict(networks=result)
 
     def show(self, req, tenant_id, id):
         """ Returns network details for the given network id """
         try:
-            network = self.network_manager.get_network_details(
-                            tenant_id, id)
-            builder = networks_view.get_view_builder(req)
-            #build response with details
-            result = builder.build(network, True)
-            return dict(networks=result)
+            return self._item(req, tenant_id, id,
+                              net_details=True, port_details=False)
+        except exception.NetworkNotFound as e:
+            return faults.Fault(faults.NetworkNotFound(e))
+
+    def detail(self, req, **kwargs):
+        tenant_id = kwargs.get('tenant_id')
+        network_id = kwargs.get('id')
+        try:
+            if network_id:
+                return self._item(req, tenant_id, network_id,
+                                  net_details=True, port_details=True)
+            else:
+                #do like show but with detaik
+                return self._items(req, tenant_id,
+                                   net_details=True, port_details=False)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 

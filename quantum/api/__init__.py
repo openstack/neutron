@@ -50,6 +50,8 @@ class APIRouterV01(wsgi.Router):
         uri_prefix = '/tenants/{tenant_id}/'
         mapper.resource('network', 'networks',
                         controller=networks.Controller(),
+                        collection={'detail': 'GET'},
+                        member={'detail': 'GET'},
                         path_prefix=uri_prefix)
         mapper.resource('port', 'ports',
                         controller=ports.Controller(),
@@ -75,3 +77,5 @@ class APIRouterV01(wsgi.Router):
                        controller=ports.Controller(),
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))
+        print "MAPPED ROUTES"
+        print mapper
