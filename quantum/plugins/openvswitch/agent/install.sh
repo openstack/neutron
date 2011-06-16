@@ -8,7 +8,7 @@ if [ ! -d /etc/xapi.d/plugins ]; then
 fi
 
 # Make sure we have mysql-python
-rpm -qa | grep MYyQL-python >/dev/null 2>&1
+rpm -qa | grep MySQL-python >/dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "MySQL-python not found"
     echo "Please enable the centos repositories and install mysql-python:"
