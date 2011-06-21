@@ -54,8 +54,9 @@ class APIRouterV01(wsgi.Router):
         mapper.resource('port', 'ports',
                         controller=ports.Controller(),
                         parent_resource=dict(member_name='network',
-                                             collection_name=\
-                                             uri_prefix + 'networks'))
+                                             collection_name=uri_prefix +\
+                                                 'networks'))
+
         mapper.connect("get_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',

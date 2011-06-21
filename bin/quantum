@@ -33,8 +33,9 @@ if os.path.exists(os.path.join(possible_topdir, 'quantum', '__init__.py')):
 
 gettext.install('quantum', unicode=1)
 
-from quantum import service 
+from quantum import service
 from quantum.common import config
+
 
 def create_options(parser):
     """
@@ -58,4 +59,3 @@ if __name__ == '__main__':
         service.wait()
     except RuntimeError, e:
         sys.exit("ERROR: %s" % e)
-
