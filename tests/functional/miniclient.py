@@ -19,6 +19,7 @@ import httplib
 import socket
 import urllib
 
+
 class MiniClient(object):
 
     """A base client class - derived from Glance.BaseClient"""
@@ -50,7 +51,7 @@ class MiniClient(object):
     def do_request(self, tenant, method, action, body=None,
                    headers=None, params=None):
         """
-        Connects to the server and issues a request.  
+        Connects to the server and issues a request.
         Returns the result data, or raises an appropriate exception if
         HTTP status code is not 2xx
 
@@ -62,14 +63,14 @@ class MiniClient(object):
 
         """
         action = MiniClient.action_prefix + action
-        action = action.replace('{tenant_id}',tenant)
+        action = action.replace('{tenant_id}', tenant)
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
 
         try:
             connection_type = self.get_connection_type()
             headers = headers or {}
-            
+
             # Open connection and send request
             c = connection_type(self.host, self.port)
             c.request(method, action, body, headers)

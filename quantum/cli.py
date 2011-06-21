@@ -31,25 +31,29 @@ from quantum.common.wsgi import Serializer
 FORMAT = "json"
 CONTENT_TYPE = "application/" + FORMAT
 
+
 ### --- Miniclient (taking from the test directory)
 ### TODO(bgh): move this to a library within quantum
 class MiniClient(object):
     """A base client class - derived from Glance.BaseClient"""
     action_prefix = '/v0.1/tenants/{tenant_id}'
+
     def __init__(self, host, port, use_ssl):
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
         self.connection = None
+
     def get_connection_type(self):
         if self.use_ssl:
             return httplib.HTTPSConnection
         else:
             return httplib.HTTPConnection
+
     def do_request(self, tenant, method, action, body=None,
                    headers=None, params=None):
         action = MiniClient.action_prefix + action
-        action = action.replace('{tenant_id}',tenant)
+        action = action.replace('{tenant_id}', tenant)
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
         try:
@@ -67,6 +71,7 @@ class MiniClient(object):
                 raise Exception("Server returned error: %s" % res.read())
         except (socket.error, IOError), e:
             raise Exception("Unable to connect to server. Got error: %s" % e)
+
     def get_status_code(self, response):
         if hasattr(response, 'status_int'):
             return response.status_int
@@ -76,6 +81,7 @@ class MiniClient(object):
 
 ### -- Core CLI functions
 
+
 def list_nets(manager, *args):
     tenant_id = args[0]
     networks = manager.get_all_networks(tenant_id)
@@ -84,6 +90,7 @@ def list_nets(manager, *args):
         id = net["net-id"]
         name = net["net-name"]
         print "\tNetwork ID:%s \n\tNetwork Name:%s \n" % (id, name)
+
 
 def api_list_nets(client, *args):
     tenant_id = args[0]
@@ -98,10 +105,12 @@ def api_list_nets(client, *args):
         # name = n["net-name"]
         # LOG.info("\tNetwork ID:%s \n\tNetwork Name:%s \n" % (id, name))
 
+
 def create_net(manager, *args):
     tid, name = args
     new_net_id = manager.create_network(tid, name)
     print "Created a new Virtual Network with ID:%s\n" % new_net_id
+
 
 def api_create_net(client, *args):
     tid, name = args
@@ -119,10 +128,12 @@ def api_create_net(client, *args):
         return
     print "Created a new Virtual Network with ID:%s\n" % nid
 
+
 def delete_net(manager, *args):
     tid, nid = args
     manager.delete_network(tid, nid)
     print "Deleted Virtual Network with ID:%s" % nid
+
 
 def api_delete_net(client, *args):
     tid, nid = args
@@ -135,12 +146,14 @@ def api_delete_net(client, *args):
     else:
         print "Deleted Virtual Network with ID:%s" % nid
 
+
 def detail_net(manager, *args):
     tid, nid = args
     iface_list = manager.get_network_details(tid, nid)
     print "Remote Interfaces on Virtual Network:%s\n" % nid
     for iface in iface_list:
         print "\tRemote interface:%s" % iface
+
 
 def api_detail_net(client, *args):
     tid, nid = args
@@ -163,10 +176,12 @@ def api_detail_net(client, *args):
         remote_iface = rd["attachment"]
         print "\tRemote interface:%s" % remote_iface
 
+
 def rename_net(manager, *args):
     tid, nid, name = args
     manager.rename_network(tid, nid, name)
     print "Renamed Virtual Network with ID:%s" % nid
+
 
 def api_rename_net(client, *args):
     tid, nid, name = args
@@ -178,12 +193,14 @@ def api_rename_net(client, *args):
     LOG.debug(resdict)
     print "Renamed Virtual Network with ID:%s" % nid
 
+
 def list_ports(manager, *args):
     tid, nid = args
     ports = manager.get_all_ports(tid, nid)
     print "Ports on Virtual Network:%s\n" % nid
     for port in ports:
         print "\tVirtual Port:%s" % port["port-id"]
+
 
 def api_list_ports(client, *args):
     tid, nid = args
@@ -199,11 +216,13 @@ def api_list_ports(client, *args):
     for port in rd["ports"]:
         print "\tVirtual Port:%s" % port["id"]
 
+
 def create_port(manager, *args):
     tid, nid = args
     new_port = manager.create_port(tid, nid)
     print "Created Virtual Port:%s " \
           "on Virtual Network:%s" % (new_port, nid)
+
 
 def api_create_port(client, *args):
     tid, nid = args
@@ -218,10 +237,12 @@ def api_create_port(client, *args):
     print "Created Virtual Port:%s " \
           "on Virtual Network:%s" % (new_port, nid)
 
+
 def delete_port(manager, *args):
     tid, nid, pid = args
     LOG.info("Deleted Virtual Port:%s " \
           "on Virtual Network:%s" % (pid, nid))
+
 
 def api_delete_port(client, *args):
     tid, nid, pid = args
@@ -234,11 +255,13 @@ def api_delete_port(client, *args):
     LOG.info("Deleted Virtual Port:%s " \
           "on Virtual Network:%s" % (pid, nid))
 
+
 def detail_port(manager, *args):
     tid, nid, pid = args
     port_detail = manager.get_port_details(tid, nid, pid)
     print "Virtual Port:%s on Virtual Network:%s " \
           "contains remote interface:%s" % (pid, nid, port_detail)
+
 
 def api_detail_port(client, *args):
     tid, nid, pid = args
@@ -256,11 +279,13 @@ def api_detail_port(client, *args):
     print "Virtual Port:%s on Virtual Network:%s " \
           "contains remote interface:%s" % (pid, nid, attachment)
 
+
 def plug_iface(manager, *args):
     tid, nid, pid, vid = args
     manager.plug_interface(tid, nid, pid, vid)
     print "Plugged remote interface:%s " \
       "into Virtual Network:%s" % (vid, nid)
+
 
 def api_plug_iface(client, *args):
     tid, nid, pid, vid = args
@@ -276,11 +301,13 @@ def api_plug_iface(client, *args):
         return
     print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
 
-def unplug_iface(manager,  *args):
+
+def unplug_iface(manager, *args):
     tid, nid, pid = args
     manager.unplug_interface(tid, nid, pid)
     print "UnPlugged remote interface " \
       "from Virtual Port:%s Virtual Network:%s" % (pid, nid)
+
 
 def api_unplug_iface(client, *args):
     tid, nid, pid = args
@@ -296,69 +323,60 @@ def api_unplug_iface(client, *args):
         return
     print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 
+
 commands = {
   "list_nets": {
     "func": list_nets,
     "api_func": api_list_nets,
-    "args": ["tenant-id"]
-    },
+    "args": ["tenant-id"]},
   "create_net": {
     "func": create_net,
     "api_func": api_create_net,
-    "args": ["tenant-id", "net-name"]
-    },
+    "args": ["tenant-id", "net-name"]},
   "delete_net": {
     "func": delete_net,
     "api_func": api_delete_net,
-    "args": ["tenant-id", "net-id"]
-    },
+    "args": ["tenant-id", "net-id"]},
   "detail_net": {
     "func": detail_net,
     "api_func": api_detail_net,
-    "args": ["tenant-id", "net-id"]
-    },
+    "args": ["tenant-id", "net-id"]},
   "rename_net": {
     "func": rename_net,
     "api_func": api_rename_net,
-    "args": ["tenant-id", "net-id", "new-name"]
-    },
+    "args": ["tenant-id", "net-id", "new-name"]},
   "list_ports": {
     "func": list_ports,
     "api_func": api_list_ports,
-    "args": ["tenant-id", "net-id"]
-    },
+    "args": ["tenant-id", "net-id"]},
   "create_port": {
     "func": create_port,
     "api_func": api_create_port,
-    "args": ["tenant-id", "net-id"]
-    },
+    "args": ["tenant-id", "net-id"]},
   "delete_port": {
     "func": delete_port,
     "api_func": api_delete_port,
-    "args": ["tenant-id", "net-id", "port-id"]
-    },
+    "args": ["tenant-id", "net-id", "port-id"]},
   "detail_port": {
     "func": detail_port,
     "api_func": api_detail_port,
-    "args": ["tenant-id", "net-id", "port-id"]
-    },
+    "args": ["tenant-id", "net-id", "port-id"]},
   "plug_iface": {
     "func": plug_iface,
     "api_func": api_plug_iface,
-    "args": ["tenant-id", "net-id", "port-id", "iface-id"]
-    },
+    "args": ["tenant-id", "net-id", "port-id", "iface-id"]},
   "unplug_iface": {
     "func": unplug_iface,
     "api_func": api_unplug_iface,
-    "args": ["tenant-id", "net-id", "port-id"]
-    },
-  }
+    "args": ["tenant-id", "net-id", "port-id"]}, }
+
 
 def help():
     print "\nCommands:"
     for k in commands.keys():
         print "    %s %s" % (k,
           " ".join(["<%s>" % y for y in commands[k]["args"]]))
+
 
 def build_args(cmd, cmdargs, arglist):
     args = []
@@ -380,6 +398,7 @@ def build_args(cmd, cmdargs, arglist):
           " ".join(["<%s>" % y for y in commands[cmd]["args"]]))
         return None
     return args
+
 
 if __name__ == "__main__":
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
@@ -420,7 +439,7 @@ if __name__ == "__main__":
     LOG.debug("Executing command \"%s\" with args: %s" % (cmd, args))
     if not options.load_plugin:
         client = MiniClient(options.host, options.port, options.ssl)
-        if not commands[cmd].has_key("api_func"):
+        if "api_func" not in commands[cmd]:
             LOG.error("API version of \"%s\" is not yet implemented" % cmd)
             sys.exit(1)
         commands[cmd]["api_func"](client, *args)

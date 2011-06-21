@@ -29,10 +29,11 @@ from optparse import OptionParser
 import quantum.db.api as db
 import ovs_db
 
-CONF_FILE="ovs_quantum_plugin.ini"
+CONF_FILE = "ovs_quantum_plugin.ini"
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger("ovs_quantum_plugin")
+
 
 def find_config(basepath):
     for root, dirs, files in os.walk(basepath):
@@ -40,13 +41,17 @@ def find_config(basepath):
             return os.path.join(root, CONF_FILE)
     return None
 
+
 class VlanMap(object):
     vlans = {}
+
     def __init__(self):
         for x in xrange(2, 4094):
             self.vlans[x] = None
+
     def set(self, vlan_id, network_id):
         self.vlans[vlan_id] = network_id
+
     def acquire(self, network_id):
         for x in xrange(2, 4094):
             if self.vlans[x] == None:
@@ -54,8 +59,10 @@ class VlanMap(object):
                 # LOG.debug("VlanMap::acquire %s -> %s" % (x, network_id))
                 return x
         raise Exception("No free vlans..")
+
     def get(self, vlan_id):
         return self.vlans[vlan_id]
+
     def release(self, network_id):
         for x in self.vlans.keys():
             if self.vlans[x] == network_id:
@@ -64,14 +71,17 @@ class VlanMap(object):
                 return
         LOG.error("No vlan found with network \"%s\"" % network_id)
 
+
 class OVSQuantumPlugin(QuantumPluginBase):
+
     def __init__(self, configfile=None):
         config = ConfigParser.ConfigParser()
         if configfile == None:
             if os.path.exists(CONF_FILE):
                 configfile = CONF_FILE
             else:
-                configfile = find_config(os.path.abspath(os.path.dirname(__file__)))
+                configfile = find_config(os.path.abspath(
+                        os.path.dirname(__file__)))
         if configfile == None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
               (configfile))
@@ -93,7 +103,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
         vlans = ovs_db.get_vlans()
         for x in vlans:
             vlan_id, network_id = x
-            # LOG.debug("Adding already populated vlan %s -> %s" % (vlan_id, network_id))
+            # LOG.debug("Adding already populated vlan %s -> %s"
+            #                                   % (vlan_id, network_id))
             self.vmap.set(vlan_id, network_id)
 
     def get_all_networks(self, tenant_id):
@@ -109,8 +120,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
     def create_network(self, tenant_id, net_name):
         d = {}
         try:
-             res = db.network_create(tenant_id, net_name)
-             LOG.debug("Created newtork: %s" % res)
+            res = db.network_create(tenant_id, net_name)
+            LOG.debug("Created newtork: %s" % res)
         except Exception, e:
             LOG.error("Error: %s" % str(e))
             return d
@@ -199,21 +210,28 @@ class OVSQuantumPlugin(QuantumPluginBase):
         res = db.port_get(port_id)
         return res.interface_id
 
+
 class VlanMapTest(unittest.TestCase):
+
     def setUp(self):
         self.vmap = VlanMap()
+
     def tearDown(self):
         pass
+
     def testAddVlan(self):
         vlan_id = self.vmap.acquire("foobar")
         self.assertTrue(vlan_id == 2)
+
     def testReleaseVlan(self):
         vlan_id = self.vmap.acquire("foobar")
         self.vmap.release("foobar")
         self.assertTrue(self.vmap.get(vlan_id) == None)
 
+
 # TODO(bgh): Make the tests use a sqlite database instead of mysql
 class OVSPluginTest(unittest.TestCase):
+
     def setUp(self):
         self.quantum = OVSQuantumPlugin()
         self.tenant_id = "testtenant"
@@ -311,6 +329,7 @@ class OVSPluginTest(unittest.TestCase):
                 for p in ports:
                     self.quantum.delete_port(self.tenant_id, id, p["port-id"])
                 self.quantum.delete_network(self.tenant_id, id)
+
 
 if __name__ == "__main__":
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"

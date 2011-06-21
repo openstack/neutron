@@ -25,12 +25,14 @@ from sqlalchemy.orm import relation
 
 BASE = declarative_base()
 
+
 class Port(BASE):
     """Represents a port on a quantum network"""
     __tablename__ = 'ports'
 
     uuid = Column(String(255), primary_key=True)
-    network_id = Column(String(255), ForeignKey("networks.uuid"), nullable=False)
+    network_id = Column(String(255), ForeignKey("networks.uuid"),
+                        nullable=False)
     interface_id = Column(String(255))
 
     def __init__(self, network_id):
@@ -38,7 +40,9 @@ class Port(BASE):
         self.network_id = network_id
 
     def __repr__(self):
-        return "<Port(%s,%s,%s)>" % (self.uuid, self.network_id, self.interface_id)
+        return "<Port(%s,%s,%s)>" % (self.uuid, self.network_id,
+                                     self.interface_id)
+
 
 class Network(BASE):
     """Represents a quantum network"""
@@ -56,4 +60,4 @@ class Network(BASE):
 
     def __repr__(self):
         return "<Network(%s,%s,%s)>" % \
-          (self.uuid,self.name,self.tenant_id)
+          (self.uuid, self.name, self.tenant_id)

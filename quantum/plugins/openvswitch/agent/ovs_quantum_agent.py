@@ -28,6 +28,7 @@ import time
 from optparse import OptionParser
 from subprocess import *
 
+
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
 # attributes set).
 class VifPort:
@@ -37,10 +38,12 @@ class VifPort:
         self.vif_id = vif_id
         self.vif_mac = vif_mac
         self.switch = switch
+
     def __str__(self):
         return "iface-id=" + self.vif_id + ", vif_mac=" + \
           self.vif_mac + ", port_name=" + self.port_name + \
           ", ofport=" + self.ofport + ", bridge name = " + self.switch.br_name
+
 
 class OVSBridge:
     def __init__(self, br_name):
@@ -51,27 +54,27 @@ class OVSBridge:
         return Popen(args, stdout=PIPE).communicate()[0]
 
     def run_vsctl(self, args):
-        full_args = ["ovs-vsctl" ] + args
+        full_args = ["ovs-vsctl"] + args
         return self.run_cmd(full_args)
 
     def reset_bridge(self):
-        self.run_vsctl([ "--" , "--if-exists", "del-br", self.br_name])
+        self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
         self.run_vsctl(["add-br", self.br_name])
 
     def delete_port(self, port_name):
-        self.run_vsctl([ "--" , "--if-exists", "del-port", self.br_name,
+        self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
           port_name])
 
     def set_db_attribute(self, table_name, record, column, value):
-        args = [ "set", table_name, record, "%s=%s" % (column,value) ]
+        args = ["set", table_name, record, "%s=%s" % (column, value)]
         self.run_vsctl(args)
 
-    def clear_db_attribute(self, table_name,record, column):
-        args = [ "clear", table_name, record, column ]
+    def clear_db_attribute(self, table_name, record, column):
+        args = ["clear", table_name, record, column]
         self.run_vsctl(args)
 
     def run_ofctl(self, cmd, args):
-        full_args = ["ovs-ofctl", cmd, self.br_name ] + args
+        full_args = ["ovs-ofctl", cmd, self.br_name] + args
         return self.run_cmd(full_args)
 
     def remove_all_flows(self):
@@ -80,7 +83,7 @@ class OVSBridge:
     def get_port_ofport(self, port_name):
         return self.db_get_val("Interface", port_name, "ofport")
 
-    def add_flow(self,**dict):
+    def add_flow(self, **dict):
         if "actions" not in dict:
             raise Exception("must specify one or more actions")
         if "priority" not in dict:
@@ -90,9 +93,9 @@ class OVSBridge:
         if "match" in dict:
             flow_str += "," + dict["match"]
         flow_str += ",actions=%s" % (dict["actions"])
-        self.run_ofctl("add-flow", [ flow_str ] )
+        self.run_ofctl("add-flow", [flow_str])
 
-    def delete_flows(self,**dict):
+    def delete_flows(self, **dict):
         all_args = []
         if "priority" in dict:
             all_args.append("priority=%s" % dict["priority"])
@@ -101,14 +104,14 @@ class OVSBridge:
         if "actions" in dict:
             all_args.append("actions=%s" % (dict["actions"]))
         flow_str = ",".join(all_args)
-        self.run_ofctl("del-flows", [ flow_str ] )
+        self.run_ofctl("del-flows", [flow_str])
 
     def db_get_map(self, table, record, column):
-        str = self.run_vsctl([ "get" , table, record, column ]).rstrip("\n\r")
+        str = self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
         return self.db_str_to_map(str)
 
     def db_get_val(self, table, record, column):
-        return self.run_vsctl([ "get" , table, record, column ]).rstrip("\n\r")
+        return self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
 
     def db_str_to_map(self, full_str):
         list = full_str.strip("{}").split(", ")
@@ -121,7 +124,7 @@ class OVSBridge:
         return ret
 
     def get_port_name_list(self):
-        res = self.run_vsctl([ "list-ports", self.br_name])
+        res = self.run_vsctl(["list-ports", self.br_name])
         return res.split("\n")[0:-1]
 
     def get_port_stats(self, port_name):
@@ -132,47 +135,53 @@ class OVSBridge:
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
-            external_ids = self.db_get_map("Interface",name,"external_ids")
+            external_ids = self.db_get_map("Interface", name, "external_ids")
             if "iface-id" in external_ids and "attached-mac" in external_ids:
-                ofport = self.db_get_val("Interface",name,"ofport")
+                ofport = self.db_get_val("Interface", name, "ofport")
                 p = VifPort(name, ofport, external_ids["iface-id"],
                         external_ids["attached-mac"], self)
                 edge_ports.append(p)
             else:
                 # iface-id might not be set.  See if we can figure it out and
                 # set it here.
-                external_ids = self.db_get_map("Interface",name,"external_ids")
+                external_ids = self.db_get_map("Interface", name,
+                                               "external_ids")
                 if "attached-mac" not in external_ids:
                     continue
                 vif_uuid = external_ids.get("xs-vif-uuid", "")
                 if len(vif_uuid) == 0:
                     continue
                 LOG.debug("iface-id not set, got vif-uuid: %s" % vif_uuid)
-                res = os.popen("xe vif-param-get param-name=other-config uuid=%s | grep nicira-iface-id | awk '{print $2}'" % vif_uuid).readline()
+                res = os.popen("xe vif-param-get param-name=other-config "
+                               "uuid=%s | grep nicira-iface-id | "
+                               "awk '{print $2}'"
+                               % vif_uuid).readline()
                 res = res.strip()
                 if len(res) == 0:
                     continue
                 external_ids["iface-id"] = res
-                LOG.info("Setting interface \"%s\" iface-id to \"%s\"" % (name, res))
+                LOG.info("Setting interface \"%s\" iface-id to \"%s\""
+                         % (name, res))
                 self.set_db_attribute("Interface", name,
-                  "external-ids:iface-id", res)
-                ofport = self.db_get_val("Interface",name,"ofport")
+                                      "external-ids:iface-id", res)
+                ofport = self.db_get_val("Interface", name, "ofport")
                 p = VifPort(name, ofport, external_ids["iface-id"],
-                        external_ids["attached-mac"], self)
+                            external_ids["attached-mac"], self)
                 edge_ports.append(p)
         return edge_ports
+
 
 class OVSNaaSPlugin:
     def __init__(self, integ_br):
         self.setup_integration_br(integ_br)
 
     def port_bound(self, port, vlan_id):
-        self.int_br.set_db_attribute("Port", port.port_name,"tag",
+        self.int_br.set_db_attribute("Port", port.port_name, "tag",
           str(vlan_id))
 
     def port_unbound(self, port, still_exists):
         if still_exists:
-            self.int_br.clear_db_attribute("Port", port.port_name,"tag")
+            self.int_br.clear_db_attribute("Port", port.port_name, "tag")
 
     def setup_integration_br(self, integ_br):
         self.int_br = OVSBridge(integ_br)
@@ -182,7 +191,8 @@ class OVSNaaSPlugin:
         # switch all other traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
         # FIXME send broadcast everywhere, regardless of tenant
-        #int_br.add_flow(priority=3, match="dl_dst=ff:ff:ff:ff:ff:ff", actions="normal")
+        #int_br.add_flow(priority=3, match="dl_dst=ff:ff:ff:ff:ff:ff",
+        #                actions="normal")
 
     def daemon_loop(self, conn):
         self.local_vlan_map = {}
@@ -216,9 +226,9 @@ class OVSNaaSPlugin:
                 else:
                     # no binding, put him on the 'dead vlan'
                     self.int_br.set_db_attribute("Port", p.port_name, "tag",
-                      "4095")
-                old_b = old_local_bindings.get(p.vif_id,None)
-                new_b = new_local_bindings.get(p.vif_id,None)
+                                                 "4095")
+                old_b = old_local_bindings.get(p.vif_id, None)
+                new_b = new_local_bindings.get(p.vif_id, None)
                 if old_b != new_b:
                     if old_b is not None:
                         LOG.info("Removing binding to net-id = %s for %s"
