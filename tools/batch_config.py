@@ -32,7 +32,11 @@ CONTENT_TYPE = "application/" + FORMAT
 
 
 if __name__ == "__main__":
-    usagestr = "Usage: %prog [OPTIONS] <tenant-id> <config-string> [args]"
+    usagestr = "Usage: %prog [OPTIONS] <tenant-id> <config-string> [args]\n" \
+   		"Example config-string: net1=instance-1,instance-2:net2=instance-3,instance-4\n" \
+		"This string would create two networks: \n" \
+		"'net1' would have two ports, with iface-ids instance-1 and instance-2 attached\n" \
+		"'net2' would have two ports, with iface-ids instance-3 and instance-4 attached\n"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-H", "--host", dest="host",
       type="string", default="127.0.0.1", help="ip address of api host")
