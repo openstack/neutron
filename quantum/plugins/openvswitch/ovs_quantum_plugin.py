@@ -189,11 +189,9 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):
         db.port_set_attachment(port_id, remote_iface_id)
-        ovs_db.update_network_binding(net_id, remote_iface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         db.port_set_attachment(port_id, "")
-        ovs_db.update_network_binding(net_id, None)
 
     def get_interface_details(self, tenant_id, net_id, port_id):
         res = db.port_get(port_id)

@@ -220,6 +220,7 @@ def api_create_port(client, *args):
 
 def delete_port(manager, *args):
     tid, nid, pid = args
+    manager.delete_port(tid, nid,pid)
     LOG.info("Deleted Virtual Port:%s " \
           "on Virtual Network:%s" % (pid, nid))
 

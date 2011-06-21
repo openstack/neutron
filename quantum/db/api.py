@@ -67,7 +67,7 @@ def network_create(tenant_id, name):
     net = None
     try:
         net = session.query(models.Network).\
-          filter_by(name=name).\
+          filter_by(tenant_id=tenant_id,name=name).\
           one()
         raise Exception("Network with name \"%s\" already exists" % name)
     except exc.NoResultFound:
@@ -96,7 +96,7 @@ def network_rename(net_id, tenant_id, new_name):
     session = get_session()
     try:
         res = session.query(models.Network).\
-          filter_by(name=new_name).\
+          filter_by(tenant_id=tenant_id,name=new_name).\
           one()
     except exc.NoResultFound:
         net = network_get(net_id)
