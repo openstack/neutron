@@ -25,6 +25,7 @@ _ENGINE = None
 _MAKER = None
 BASE = models.BASE
 
+
 def configure_db(options):
     """
     Establish the database, create an engine if needed, and
@@ -40,6 +41,7 @@ def configure_db(options):
                                 pool_recycle=3600)
         register_models()
 
+
 def get_session(autocommit=True, expire_on_commit=False):
     """Helper method to grab session"""
     global _MAKER, _ENGINE
@@ -50,11 +52,13 @@ def get_session(autocommit=True, expire_on_commit=False):
                               expire_on_commit=expire_on_commit)
     return _MAKER()
 
+
 def register_models():
     """Register Models and create properties"""
     global _ENGINE
     assert _ENGINE
     BASE.metadata.create_all(_ENGINE)
+
 
 def unregister_models():
     """Unregister Models, useful clearing out data before testing"""
@@ -62,12 +66,13 @@ def unregister_models():
     assert _ENGINE
     BASE.metadata.drop_all(_ENGINE)
 
+
 def network_create(tenant_id, name):
     session = get_session()
     net = None
     try:
         net = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id,name=name).\
+          filter_by(tenant_id=tenant_id, name=name).\
           one()
         raise Exception("Network with name \"%s\" already exists" % name)
     except exc.NoResultFound:
@@ -77,11 +82,13 @@ def network_create(tenant_id, name):
             session.flush()
     return net
 
+
 def network_list(tenant_id):
     session = get_session()
     return session.query(models.Network).\
       filter_by(tenant_id=tenant_id).\
       all()
+
 
 def network_get(net_id):
     session = get_session()
@@ -92,11 +99,12 @@ def network_get(net_id):
     except exc.NoResultFound:
         raise Exception("No net found with id = %s" % net_id)
 
+
 def network_rename(net_id, tenant_id, new_name):
     session = get_session()
     try:
         res = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id,name=new_name).\
+          filter_by(tenant_id=tenant_id, name=new_name).\
           one()
     except exc.NoResultFound:
         net = network_get(net_id)
@@ -105,6 +113,7 @@ def network_rename(net_id, tenant_id, new_name):
         session.flush()
         return net
     raise Exception("A network with name \"%s\" already exists" % new_name)
+
 
 def network_destroy(net_id):
     session = get_session()
@@ -118,6 +127,7 @@ def network_destroy(net_id):
     except exc.NoResultFound:
         raise Exception("No network found with id = %s" % net_id)
 
+
 def port_create(net_id):
     session = get_session()
     with session.begin():
@@ -126,11 +136,13 @@ def port_create(net_id):
         session.flush()
         return port
 
+
 def port_list(net_id):
     session = get_session()
     return session.query(models.Port).\
       filter_by(network_id=net_id).\
       all()
+
 
 def port_get(port_id):
     session = get_session()
@@ -140,6 +152,7 @@ def port_get(port_id):
           one()
     except exc.NoResultFound:
         raise Exception("No port found with id = %s " % port_id)
+
 
 def port_set_attachment(port_id, new_interface_id):
     session = get_session()
@@ -157,7 +170,9 @@ def port_set_attachment(port_id, new_interface_id):
         session.flush()
         return port
     else:
-        raise Exception("Port with attachment \"%s\" already exists" % (new_interface_id))
+        raise Exception("Port with attachment \"%s\" already exists"
+                        % (new_interface_id))
+
 
 def port_destroy(port_id):
     session = get_session()
@@ -170,4 +185,3 @@ def port_destroy(port_id):
         return port
     except exc.NoResultFound:
         raise Exception("No port found with id = %s " % port_id)
-

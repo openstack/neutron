@@ -1,25 +1,29 @@
 # -- Welcome!
 
-  You have come across a cloud computing network fabric controller.  It has identified
-  itself as "Quantum."  It aims to tame your (cloud) networking!
+  You have come across a cloud computing network fabric controller.  It has
+  identified itself as "Quantum."  It aims to tame your (cloud) networking!
 
 # -- Basics:
 
-1) Quantum REST API: Quantum supports a REST-ful programmatic interface to manage your
-   cloud networking fabric.
+1) Quantum REST API: Quantum supports a REST-ful programmatic interface to
+   manage your cloud networking fabric.
 
-2) Quantum Plugins: Quantum sports a plug-able architecture that allows Quantum's REST API
-   to be backed by various entities that can create a cloud-class virtual networking fabric.
-   The advantages of this plug-able architecture is two-folds:
+2) Quantum Plugins: Quantum sports a plug-able architecture that allows
+   Quantum's REST API to be backed by various entities that can create a
+   cloud-class virtual networking fabric.  The advantages of this plug-able
+   architecture is two-folds:
 
-   a) Allows for ANY open-source project or commercial vendor to write a Quantum plug-in.
+   a) Allows for ANY open-source project or commercial vendor to write a
+   Quantum plug-in.
 
-   b) Allows Quantum users to not be tied down to a single Quantum implementation and
-      enables them to switch out a plug-in by simple editing a config file - plugins.ini
+   b) Allows Quantum users to not be tied down to a single Quantum
+   implementation and enables them to switch out a plug-in by simple editing a
+   config file - plugins.ini
 
 # -- Dependencies
 
- The following python packages are required to run quantum.  These can be installed using pip:
+ The following python packages are required to run quantum.  These can be
+ installed using pip:
 
  eventlet>=0.9.12
  nose
@@ -32,7 +36,9 @@
  webob
  webtest
 
-1) Install easy_install (there is probably a distribution specific package for this)
+1) Install easy_install (there is probably a distribution specific package for
+this)
+
 2) Install pip:
    $ easy_install pip==dev
 3) Install packages with pip:
@@ -40,14 +46,16 @@
 
 # -- Configuring Quantum plug-in
 
-1) Explore sample and real Quantum plug-ins in the quantum.plugins module.
+1) Identify your desired plug-in.  Choose a plugin from one of he options in
+   the quantum/plugins directory.
 
-2) Or copy another Quantum plug-in into the quantum.plugins module.
+2) Update plug-in configuration by editing the quantum/plugins.ini file and
+   modify "provider" property to point to the location of the Quantum plug-in.
+   It should specify the class path to the plugin and the class name (i.e. for
+   a plugin class MyPlugin in quantum/plugins/myplugin/myplugin.py the
+   provider would be: quantum.plugins.myplugin.myplugin.MyPlugin)
 
-3) Update plug-in configuration by editing plugins.ini file and modify
-   "provider" property to point to the location of the Quantum plug-in.
-
-4) Read the plugin specific README, this is usually found in the same
+3) Read the plugin specific README, this is usually found in the same
    directory as your Quantum plug-in, and follow configuration instructions.
 
 # -- Launching the Quantum Service
@@ -63,8 +71,8 @@ Please refer to sample Web Service client code in:
 
 # -- CLI tools to program the Quantum-managed Cloud networking fabric
 
-Quantum comes with a programmatic CLI that is driven by the Quantum Web Service
-You can use the CLI by issuing the following command:
+Quantum comes with a programmatic CLI that is driven by the Quantum Web
+Service.  You can use the CLI by issuing the following command:
 
 ~/src/quantum$ PYTHONPATH=.:$PYTHONPATH python quantum/cli.py
 
@@ -85,16 +93,16 @@ well as sample plugins available in:
 
 There are a few requirements to writing your own plugin:
 
-1) Your plugin should implement all methods defined in
-../quantum/quantum/quantum_plugin_base.QuantumPluginBase class
+1) Your plugin should implement all methods defined in the
+   quantum/quantum_plugin_base.QuantumPluginBase class
 
-2) Copy your Quantum plug-in over to the ../quantum/quantum/plugins/.. directory
+2) Copy your Quantum plug-in over to the quantum/quantum/plugins/.. directory
 
 3) The next step is to edit the plugins.ini file in the same directory
    as QuantumPluginBase class and specify the location of your custom plugin
    as the "provider"
 
-4) Launch the Quantum Service, and your plug-in is configured and ready to manage
-   a Cloud Networking Fabric.
+4) Launch the Quantum Service, and your plug-in is configured and ready to
+   manage a Cloud Networking Fabric.
 
 

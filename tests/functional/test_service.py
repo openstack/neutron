@@ -34,15 +34,17 @@ TENANT_ID = 'totore'
 FORMAT = "json"
 
 test_network1_data = \
-    {'network': {'network-name': 'test1' }}
+    {'network': {'network-name': 'test1'}}
 test_network2_data = \
-    {'network': {'network-name': 'test2' }}
+    {'network': {'network-name': 'test2'}}
+
 
 def print_response(res):
     content = res.read()
-    print "Status: %s" %res.status
-    print "Content: %s" %content
+    print "Status: %s" % res.status
+    print "Content: %s" % content
     return content
+
 
 class QuantumTest(unittest.TestCase):
     def setUp(self):
@@ -58,7 +60,7 @@ class QuantumTest(unittest.TestCase):
     def test_listNetworks(self):
         self.create_network(test_network1_data)
         self.create_network(test_network2_data)
-        res = self.client.do_request(TENANT_ID,'GET', "/networks." + FORMAT)
+        res = self.client.do_request(TENANT_ID, 'GET', "/networks." + FORMAT)
         self.assertEqual(res.status, 200, "bad response: %s" % res.read())
 
     def test_createNetwork(self):
@@ -111,8 +113,9 @@ class QuantumTest(unittest.TestCase):
         resdict = simplejson.loads(res.read())
         self.assertTrue(resdict["networks"]["network"]["id"] == net_id,
           "Network_rename: renamed network has a different uuid")
-        self.assertTrue(resdict["networks"]["network"]["name"] == "test_renamed",
-          "Network rename didn't take effect")
+        self.assertTrue(
+            resdict["networks"]["network"]["name"] == "test_renamed",
+            "Network rename didn't take effect")
 
     def delete_networks(self):
         # Remove all the networks created on the tenant

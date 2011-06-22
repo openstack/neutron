@@ -23,8 +23,8 @@ import uuid
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation
-
 from quantum.db.models import BASE
+
 
 class VlanBinding(BASE):
     """Represents a binding of network_id, vlan_id"""
