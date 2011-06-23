@@ -5,11 +5,28 @@ verbose = True
 # Show debugging output in logs (sets DEBUG log level output)
 debug = False
 
-[app:quantum]
-paste.app_factory = quantum.service:app_factory
-
 # Address to bind the API server
 bind_host = 0.0.0.0
 
 # Port the bind the API server to
 bind_port = 9696
+
+# Path to the extensions
+api_extensions_path = extensions
+
+[composite:quantum]
+use = egg:Paste#urlmap
+/: quantumversions
+/v0.1: quantumapi
+
+[pipeline:quantumapi]
+pipeline = extensions quantumapiapp
+
+[filter:extensions]
+paste.filter_factory = quantum.common.extensions:ExtensionMiddleware.factory
+
+[app:quantumversions]
+paste.app_factory = quantum.api.versions:Versions.factory
+
+[app:quantumapiapp]
+paste.app_factory = quantum.api:APIRouterV01.factory
