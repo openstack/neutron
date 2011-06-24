@@ -86,6 +86,12 @@ class QuantumEchoPlugin(object):
         """
         print("delete_port() called\n")
 
+    def update_port(self, tenant_id, net_id, port_id, port_state):
+        """
+        Updates the state of a port on the specified Virtual Network.
+        """
+        print("update_port() called\n")
+
     def get_port_details(self, tenant_id, net_id, port_id):
         """
         This method allows the user to retrieve a remote interface
@@ -161,9 +167,7 @@ class DummyDataPlugin(object):
         retrieved a list of all the remote vifs that
         are attached to the network
         """
-        print("get_network_details() called\n")
-        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0",
-                       "/tenant1/networks/10/121/vif1.1"]
+        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0"]
         return vifs_on_net
 
     def rename_network(self, tenant_id, net_id, new_name):
@@ -222,27 +226,6 @@ class DummyDataPlugin(object):
         """
         print("unplug_interface() called\n")
 
-    def get_interface_details(self, tenant_id, net_id, port_id):
-        """
-        Retrieves the remote interface that is attached at this
-        particular port.
-        """
-        print("get_interface_details() called\n")
-        #returns the remote interface UUID
-        return "/tenant1/networks/net_id/portid/vif2.0"
-
-    def get_all_attached_interfaces(self, tenant_id, net_id):
-        """
-        Retrieves all remote interfaces that are attached to
-        a particular Virtual Network.
-        """
-        print("get_all_attached_interfaces() called\n")
-        # returns a list of all attached remote interfaces
-        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0",
-                       "/tenant1/networks/10/121/vif1.1"]
-        return vifs_on_net
-
-
 class FakePlugin(object):
     """
     FakePlugin is a demo plugin that provides
@@ -257,16 +240,14 @@ class FakePlugin(object):
                        'attachment': None},
                    2: {'port-id': 2,
                        'port-state': 'UP',
-                       'attachment': None}
-                   }
+                       'attachment': None}}
     _port_dict_2 = {
                    1: {'port-id': 1,
                        'port-state': 'UP',
                        'attachment': 'SomeFormOfVIFID'},
                    2: {'port-id': 2,
                        'port-state': 'DOWN',
-                       'attachment': None}
-                   }
+                       'attachment': None}}
     _networks = {'001':
                     {
                     'net-id': '001',
@@ -277,8 +258,7 @@ class FakePlugin(object):
                     {
                     'net-id': '002',
                     'net-name': 'cicciotest',
-                    'net-ports': _port_dict_2
-                    }}
+                    'net-ports': _port_dict_2}}
 
     def __init__(self):
         FakePlugin._net_counter = len(FakePlugin._networks)
@@ -341,6 +321,7 @@ class FakePlugin(object):
         new_net_dict = {'net-id': new_net_id,
                         'net-name': net_name,
                         'net-ports': {}}
+
         FakePlugin._networks[new_net_id] = new_net_dict
         # return network_id of the created network
         return new_net_dict
@@ -471,7 +452,6 @@ class FakePlugin(object):
         # Should unplug on port without attachment raise an Error?
         port['attachment'] = None
 
-    # TODO - neeed to update methods from this point onwards
     def get_all_attached_interfaces(self, tenant_id, net_id):
         """
         Retrieves all remote interfaces that are attached to

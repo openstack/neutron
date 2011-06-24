@@ -36,8 +36,7 @@ class Fault(webob.exc.HTTPException):
             432: "portInUse",
             440: "alreadyAttached",
             470: "serviceUnavailable",
-            471: "pluginFault"
-    }
+            471: "pluginFault"}
 
     def __init__(self, exception):
         """Create a Fault for the given webob.exc.exception."""

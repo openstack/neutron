@@ -340,7 +340,7 @@ class Controller(object):
         del arg_dict['action']
         if 'format' in arg_dict:
             del arg_dict['format']
-        arg_dict['req'] = req
+        arg_dict['request'] = req
         result = method(**arg_dict)
 
         if type(result) is dict:
@@ -528,7 +528,7 @@ class Serializer(object):
                     node = self._to_xml_node(doc, metadata, k, v)
                     result.appendChild(node)
         else:
-            # Type is atom
+            # Type is atom.
             node = doc.createTextNode(str(data))
             result.appendChild(node)
         return result

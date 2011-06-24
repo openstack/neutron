@@ -255,7 +255,7 @@ def load_paste_config(app_name, options, args):
                            % (conf_file, e))
 
 
-def load_paste_app(conf_file, app_name):
+def load_paste_app(app_name, options, args):
     """
     Builds and returns a WSGI app from a paste config file.
 
@@ -276,16 +276,15 @@ def load_paste_app(conf_file, app_name):
     :raises RuntimeError when config file cannot be located or application
             cannot be loaded from config file
     """
-    #conf_file, conf = load_paste_config(app_name, options, args)
+    conf_file, conf = load_paste_config(app_name, options, args)
 
     try:
-        conf_file = os.path.abspath(conf_file)
         app = deploy.loadapp("config:%s" % conf_file, name=app_name)
     except (LookupError, ImportError), e:
         raise RuntimeError("Unable to load %(app_name)s from "
                            "configuration file %(conf_file)s."
                            "\nGot: %(e)r" % locals())
-    return app
+    return conf, app
 
 
 def get_option(options, option, **kwargs):

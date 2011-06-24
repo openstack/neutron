@@ -192,7 +192,7 @@ def parse_isotime(timestr):
 
 def getPluginFromConfig(file="config.ini"):
         Config = ConfigParser.ConfigParser()
-        Config.read(os.path.join(FLAGS.state_path, file))
+        Config.read(file)
         return Config.get("PLUGIN", "provider")
 
 

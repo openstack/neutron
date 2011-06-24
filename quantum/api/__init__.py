@@ -20,6 +20,7 @@ Quantum API controllers.
 """
 
 import logging
+import pprint
 import routes
 import webob.dec
 import webob.exc

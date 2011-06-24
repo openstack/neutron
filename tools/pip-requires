@@ -1,0 +1,10 @@
+eventlet>=0.9.12
+nose
+Paste
+PasteDeploy
+pep8==0.5.0
+python-gflags
+routes
+simplejson
+webob
+webtest

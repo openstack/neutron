@@ -45,10 +45,10 @@ class Controller(common.QuantumController):
         self._resource_name = 'network'
         super(Controller, self).__init__()
 
-    def index(self, req, tenant_id):
+    def index(self, request, tenant_id):
         """ Returns a list of network ids """
         #TODO: this should be for a given tenant!!!
-        return self._items(req, tenant_id, net_detail=False)
+        return self._items(request, tenant_id, net_detail=False)
 
     def _item(self, req, tenant_id, network_id,
               net_details, port_details):
@@ -66,60 +66,63 @@ class Controller(common.QuantumController):
                   for network in networks]
         return dict(networks=result)
 
-    def show(self, req, tenant_id, id):
+    def show(self, request, tenant_id, id):
         """ Returns network details for the given network id """
         try:
-            return self._item(req, tenant_id, id,
+            return self._item(request, tenant_id, id,
                               net_details=True, port_details=False)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
-    def detail(self, req, **kwargs):
+    def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         network_id = kwargs.get('id')
         try:
             if network_id:
-                return self._item(req, tenant_id, network_id,
+                return self._item(request, tenant_id, network_id,
                                   net_details=True, port_details=True)
             else:
                 #do like show but with detaik
-                return self._items(req, tenant_id,
+                return self._items(request, tenant_id,
                                    net_details=True, port_details=False)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
-    def create(self, req, tenant_id):
+    def create(self, request, tenant_id):
         """ Creates a new network for a given tenant """
         #look for network name in request
         try:
-            req_params = \
-                self._parse_request_params(req, self._network_ops_param_list)
+            request_params = \
+                self._parse_request_params(request,
+                                           self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
         network = self.network_manager.\
-                       create_network(tenant_id, req_params['network-name'])
-        builder = networks_view.get_view_builder(req)
+                       create_network(tenant_id,
+                                      request_params['network-name'])
+        builder = networks_view.get_view_builder(request)
         result = builder.build(network)
         return dict(networks=result)
 
-    def update(self, req, tenant_id, id):
+    def update(self, request, tenant_id, id):
         """ Updates the name for the network with the given id """
         try:
-            req_params = \
-                self._parse_request_params(req, self._network_ops_param_list)
+            request_params = \
+                self._parse_request_params(request,
+                                           self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
             network = self.network_manager.rename_network(tenant_id,
-                        id, req_params['network-name'])
+                        id, request_params['network-name'])
 
-            builder = networks_view.get_view_builder(req)
+            builder = networks_view.get_view_builder(request)
             result = builder.build(network, True)
             return dict(networks=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
-    def delete(self, req, tenant_id, id):
+    def delete(self, request, tenant_id, id):
         """ Destroys the network with the given id """
         try:
             self.network_manager.delete_network(tenant_id, id)
