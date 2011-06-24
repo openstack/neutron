@@ -42,7 +42,6 @@ class Controller(common.QuantumController):
             "attributes": {
                 "port": ["id", "state"], }, }, }
 
-
     def __init__(self, plugin_conf_file=None):
         self._resource_name = 'port'
         super(Controller, self).__init__()
@@ -141,7 +140,6 @@ class Controller(common.QuantumController):
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
-
 
     def attach_resource(self, request, tenant_id, network_id, id):
         content_type = request.best_match_content_type()

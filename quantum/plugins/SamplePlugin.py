@@ -226,6 +226,7 @@ class DummyDataPlugin(object):
         """
         print("unplug_interface() called\n")
 
+
 class FakePlugin(object):
     """
     FakePlugin is a demo plugin that provides
