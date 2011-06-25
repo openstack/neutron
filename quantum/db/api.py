@@ -156,13 +156,14 @@ def port_get(port_id):
 
 def port_set_attachment(port_id, new_interface_id):
     session = get_session()
-    ports = None
-    try:
-        ports = session.query(models.Port).\
-          filter_by(interface_id=new_interface_id).\
-          all()
-    except exc.NoResultFound:
-        pass
+    ports = []
+    if new_interface_id != "":
+        try:
+            ports = session.query(models.Port).\
+            filter_by(interface_id=new_interface_id).\
+            all()
+        except exc.NoResultFound:
+            pass
     if len(ports) == 0:
         port = port_get(port_id)
         port.interface_id = new_interface_id

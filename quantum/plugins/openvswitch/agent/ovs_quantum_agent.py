@@ -222,8 +222,6 @@ class OVSQuantumAgent:
                     new_local_bindings[p.vif_id] = all_bindings[p.vif_id]
                 else:
                     # no binding, put him on the 'dead vlan'
-                    LOG.info("No binding for %s, setting to dead vlan" \
-                            % p.vif_id)
                     self.int_br.set_db_attribute("Port", p.port_name, "tag",
                               "4095")
                     self.int_br.add_flow(priority=2,

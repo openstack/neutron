@@ -30,6 +30,89 @@ from quantum.cli import MiniClient
 FORMAT = "json"
 CONTENT_TYPE = "application/" + FORMAT
 
+def delete_all_nets(client, tenant_id):
+    res = client.do_request(tenant_id, 'GET', "/networks." + FORMAT)
+    resdict = json.loads(res.read())
+    LOG.debug(resdict)
+    for n in resdict["networks"]:
+        nid = n["id"]
+
+        res = client.do_request(tenant_id, 'GET',
+            "/networks/%s/ports.%s" % (nid, FORMAT))
+        output = res.read()
+        if res.status != 200:
+            LOG.error("Failed to list ports: %s" % output)
+            continue
+        rd = json.loads(output)
+        LOG.debug(rd)
+        for port in rd["ports"]:
+            pid = port["id"]
+
+            data = {'port': {'attachment-id': ''}}
+            body = Serializer().serialize(data, CONTENT_TYPE)
+            res = client.do_request(tenant_id, 'DELETE',
+                "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
+            output = res.read()
+            LOG.debug(output)
+            if res.status != 202:
+                LOG.error("Failed to unplug iface from port \"%s\": %s" % (vid,
+                pid, output))
+                continue
+            LOG.info("Unplugged interface from port:%s on network:%s" % (pid, nid))
+
+            res = client.do_request(tenant_id, 'DELETE',
+                "/networks/%s/ports/%s.%s" % (nid, pid, FORMAT))
+            output = res.read()
+            if res.status != 202:
+                LOG.error("Failed to delete port: %s" % output)
+                continue
+            print "Deleted Virtual Port:%s " \
+                "on Virtual Network:%s" % (pid, nid)
+
+        res = client.do_request(tenant_id, 'DELETE',
+                    "/networks/" + nid + "." + FORMAT)
+        status = res.status
+        if status != 202:
+            Log.error("Failed to delete network: %s" % nid)
+            output = res.read()
+            print output
+        else:
+            print "Deleted Virtual Network with ID:%s" % nid
+
+def create_net_with_attachments(net_name, iface_ids):
+        data = {'network': {'network-name': '%s' % net_name}}
+        body = Serializer().serialize(data, CONTENT_TYPE)
+        res = client.do_request(tenant_id, 'POST',
+            "/networks." + FORMAT, body=body)
+        rd = json.loads(res.read())
+        LOG.debug(rd)
+        nid = rd["networks"]["network"]["id"]
+        print "Created a new Virtual Network %s with ID:%s" % (net_name, nid)
+
+        for iface_id in iface_ids:
+            res = client.do_request(tenant_id, 'POST',
+                "/networks/%s/ports.%s" % (nid, FORMAT))
+            output = res.read()
+            if res.status != 200:
+                LOG.error("Failed to create port: %s" % output)
+                continue
+            rd = json.loads(output)
+            new_port_id = rd["ports"]["port"]["id"]
+            print "Created Virtual Port:%s " \
+                "on Virtual Network:%s" % (new_port_id, nid)
+            data = {'port': {'attachment-id': '%s' % iface_id}}
+            body = Serializer().serialize(data, CONTENT_TYPE)
+            res = client.do_request(tenant_id, 'PUT',
+                "/networks/%s/ports/%s/attachment.%s" %\
+                 (nid, new_port_id, FORMAT), body=body)
+            output = res.read()
+            LOG.debug(output)
+            if res.status != 202:
+                LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % \
+                        (iface_id, new_port_id, output))
+                continue
+            print "Plugged interface \"%s\" to port:%s on network:%s" % \
+                        (iface_id, new_port_id, nid)
 
 if __name__ == "__main__":
     usagestr = "Usage: %prog [OPTIONS] <tenant-id> <config-string> [args]\n" \
@@ -49,6 +132,8 @@ if __name__ == "__main__":
       action="store_true", default=False, help="use ssl")
     parser.add_option("-v", "--verbose", dest="verbose",
       action="store_true", default=False, help="turn on verbose logging")
+    parser.add_option("-d", "--delete", dest="delete",
+      action="store_true", default=False, help="delete existing tenants networks")
 
     options, args = parser.parse_args()
 
@@ -75,74 +160,10 @@ if __name__ == "__main__":
 
     client = MiniClient(options.host, options.port, options.ssl)
 
-    res = client.do_request(tenant_id, 'GET', "/networks." + FORMAT)
-    resdict = json.loads(res.read())
-    LOG.debug(resdict)
-    for n in resdict["networks"]:
-        nid = n["id"]
-
-        res = client.do_request(tenant_id, 'GET',
-            "/networks/%s/ports.%s" % (nid, FORMAT))
-        output = res.read()
-        if res.status != 200:
-            LOG.error("Failed to list ports: %s" % output)
-        continue
-        rd = json.loads(output)
-        LOG.debug(rd)
-        for port in rd["ports"]:
-            pid = port["id"]
-            res = client.do_request(tenant_id, 'DELETE',
-                "/networks/%s/ports/%s.%s" % (nid, pid, FORMAT))
-            output = res.read()
-            if res.status != 202:
-                LOG.error("Failed to delete port: %s" % output)
-                continue
-            LOG.info("Deleted Virtual Port:%s " \
-                "on Virtual Network:%s" % (pid, nid))
-
-        res = client.do_request(tenant_id, 'DELETE',
-                    "/networks/" + nid + "." + FORMAT)
-        status = res.status
-        if status != 202:
-            print "Failed to delete network: %s" % nid
-            output = res.read()
-            print output
-        else:
-            print "Deleted Virtual Network with ID:%s" % nid
+    if options.delete:
+        delete_all_nets(client, tenant_id)
 
     for net_name, iface_ids in nets.items():
-        data = {'network': {'network-name': '%s' % net_name}}
-        body = Serializer().serialize(data, CONTENT_TYPE)
-        res = client.do_request(tenant_id, 'POST',
-            "/networks." + FORMAT, body=body)
-        rd = json.loads(res.read())
-        LOG.debug(rd)
-        nid = rd["networks"]["network"]["id"]
-        print "Created a new Virtual Network %s with ID:%s\n" % (net_name, nid)
-
-        for iface_id in iface_ids:
-            res = client.do_request(tenant_id, 'POST',
-                "/networks/%s/ports.%s" % (nid, FORMAT))
-            output = res.read()
-            if res.status != 200:
-                LOG.error("Failed to create port: %s" % output)
-            continue
-            rd = json.loads(output)
-            new_port_id = rd["ports"]["port"]["id"]
-            print "Created Virtual Port:%s " \
-                "on Virtual Network:%s" % (new_port_id, nid)
-            data = {'port': {'attachment-id': '%s' % iface_id}}
-            body = Serializer().serialize(data, CONTENT_TYPE)
-            res = client.do_request(tenant_id, 'PUT',
-                "/networks/%s/ports/%s/attachment.%s" %\
-                 (nid, new_port_id, FORMAT), body=body)
-            output = res.read()
-            LOG.debug(output)
-            if res.status != 202:
-                LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % \
-                        (iface_id, new_port_id, output))
-                continue
-        print "Plugged interface \"%s\" to port:%s on network:%s" % \
-                        (iface_id, new_port_id, nid)
+        create_net_with_attachments(net_name, iface_ids)
 
     sys.exit(0)
