@@ -30,6 +30,7 @@ from quantum.cli import MiniClient
 FORMAT = "json"
 CONTENT_TYPE = "application/" + FORMAT
 
+
 def delete_all_nets(client, tenant_id):
     res = client.do_request(tenant_id, 'GET', "/networks." + FORMAT)
     resdict = json.loads(res.read())
@@ -51,14 +52,16 @@ def delete_all_nets(client, tenant_id):
             data = {'port': {'attachment-id': ''}}
             body = Serializer().serialize(data, CONTENT_TYPE)
             res = client.do_request(tenant_id, 'DELETE',
-                "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
+                "/networks/%s/ports/%s/attachment.%s" % \
+                (nid, pid, FORMAT), body=body)
             output = res.read()
             LOG.debug(output)
             if res.status != 202:
                 LOG.error("Failed to unplug iface from port \"%s\": %s" % (vid,
                 pid, output))
                 continue
-            LOG.info("Unplugged interface from port:%s on network:%s" % (pid, nid))
+            LOG.info("Unplugged interface from port:%s on network:%s" % (pid,
+                                                                        nid))
 
             res = client.do_request(tenant_id, 'DELETE',
                 "/networks/%s/ports/%s.%s" % (nid, pid, FORMAT))
@@ -78,6 +81,7 @@ def delete_all_nets(client, tenant_id):
             print output
         else:
             print "Deleted Virtual Network with ID:%s" % nid
+
 
 def create_net_with_attachments(net_name, iface_ids):
         data = {'network': {'network-name': '%s' % net_name}}
@@ -133,7 +137,8 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", dest="verbose",
       action="store_true", default=False, help="turn on verbose logging")
     parser.add_option("-d", "--delete", dest="delete",
-      action="store_true", default=False, help="delete existing tenants networks")
+      action="store_true", default=False, \
+        help="delete existing tenants networks")
 
     options, args = parser.parse_args()
 
