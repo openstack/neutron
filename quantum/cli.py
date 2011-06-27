@@ -319,8 +319,7 @@ def api_unplug_iface(client, *args):
     output = res.read()
     LOG.debug(output)
     if res.status != 202:
-        LOG.error("Failed to unplug iface from port \"%s\": %s" % (vid,
-          pid, output))
+        LOG.error("Failed to unplug iface from port \"%s\": %s" % (pid, output))
         return
     print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 
