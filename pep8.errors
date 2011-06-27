@@ -1,0 +1,49 @@
+quantum/cli.py:39:43: W291 trailing whitespace
+quantum/cli.py:92:68: W291 trailing whitespace
+quantum/cli.py:95:62: W291 trailing whitespace
+quantum/cli.py:98:53: W291 trailing whitespace
+quantum/cli.py:110:1: W391 blank line at end of file
+quantum/manager.py:21:80: E501 line too long (94 characters)
+quantum/manager.py:37:22: E231 missing whitespace after ','
+quantum/service.py:91:39: E251 no spaces around keyword / parameter equals
+quantum/service.py:102:1: W293 blank line contains whitespace
+quantum/api/__init__.py:54:41: W291 trailing whitespace
+quantum/api/__init__.py:57:60: E251 no spaces around keyword / parameter equals
+quantum/api/faults.py:55:57: W291 trailing whitespace
+quantum/api/networks.py:81:48: E231 missing whitespace after ','
+quantum/common/exceptions.py:98:1: E302 expected 2 blank lines, found 1
+quantum/common/exceptions.py:103:1: E302 expected 2 blank lines, found 1
+quantum/plugins/SamplePlugin.py:137:30: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:139:47: E203 whitespace before ','
+quantum/plugins/SamplePlugin.py:184:1: W293 blank line contains whitespace
+quantum/plugins/SamplePlugin.py:255:38: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:258:38: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:255:21: E203 whitespace before ':'
+quantum/plugins/SamplePlugin.py:259:37: E231 missing whitespace after ':'
+quantum/plugins/SamplePlugin.py:263:38: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:266:38: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:269:21: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:263:21: E203 whitespace before ':'
+quantum/plugins/SamplePlugin.py:267:37: E231 missing whitespace after ':'
+quantum/plugins/SamplePlugin.py:280:46: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:272:29: E231 missing whitespace after ':'
+quantum/plugins/SamplePlugin.py:270:14: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:284:32: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:300:43: E231 missing whitespace after ','
+quantum/plugins/SamplePlugin.py:309:49: E251 no spaces around keyword / parameter equals
+quantum/plugins/SamplePlugin.py:318:30: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:338:19: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:341:31: E231 missing whitespace after ':'
+quantum/plugins/SamplePlugin.py:341:21: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:344:41: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:373:33: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:373:24: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:401:63: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:404:40: E225 missing whitespace around operator
+quantum/plugins/SamplePlugin.py:405:35: E231 missing whitespace after ':'
+quantum/plugins/SamplePlugin.py:409:29: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:419:20: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:432:46: E231 missing whitespace after ','
+quantum/plugins/SamplePlugin.py:436:25: W291 trailing whitespace
+quantum/plugins/SamplePlugin.py:459:46: E231 missing whitespace after ','
+quantum/plugins/SamplePlugin.py:482:80: E501 line too long (99 characters)

@@ -48,17 +48,17 @@ class Controller(common.QuantumController):
     def index(self, request, tenant_id):
         """ Returns a list of network ids """
         #TODO: this should be for a given tenant!!!
-        return self._items(request, tenant_id, net_detail=False)
+        return self._items(request, tenant_id)
 
     def _item(self, req, tenant_id, network_id,
-              net_details, port_details):
+              net_details=True, port_details=False):
         network = self.network_manager.get_network_details(
                             tenant_id, network_id)
         builder = networks_view.get_view_builder(req)
         result = builder.build(network, net_details, port_details)
         return dict(networks=result)
 
-    def _items(self, req, tenant_id, net_details, port_details):
+    def _items(self, req, tenant_id, net_details=False, port_details=False):
         """ Returns a list of networks. """
         networks = self.network_manager.get_all_networks(tenant_id)
         builder = networks_view.get_view_builder(req)

@@ -20,17 +20,13 @@
 Utility methods for working with WSGI servers
 """
 
-import json
 import logging
 import sys
-import datetime
 
 from xml.dom import minidom
 
-import eventlet
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
-import routes
 import routes.middleware
 import webob.dec
 import webob.exc
@@ -423,6 +419,7 @@ class Serializer(object):
         The string must be in the format of a supported MIME type.
 
         """
+        LOG.debug("Deserialize invoked:%s", datastring)
         return self.get_deserialize_handler(content_type)(datastring)
 
     def get_deserialize_handler(self, content_type):
@@ -455,7 +452,8 @@ class Serializer(object):
         if len(node.childNodes) == 1 and node.childNodes[0].nodeType == 3:
             return node.childNodes[0].nodeValue
         elif node.nodeName in listnames:
-            return [self._from_xml_node(n, listnames) for n in node.childNodes]
+            return [self._from_xml_node(n, listnames)
+                    for n in node.childNodes if n.nodeType != node.TEXT_NODE]
         else:
             result = dict()
             for attr in node.attributes.keys():

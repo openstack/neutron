@@ -49,7 +49,8 @@ def print_response(res):
 class QuantumTest(unittest.TestCase):
     def setUp(self):
         self.client = MiniClient(HOST, PORT, USE_SSL)
-
+        
+    
     def create_network(self, data):
         content_type = "application/" + FORMAT
         body = Serializer().serialize(data, content_type)
@@ -128,7 +129,8 @@ class QuantumTest(unittest.TestCase):
             self.assertEqual(res.status, 202)
 
     def tearDown(self):
-        self.delete_networks()
+        pass
+        #self.delete_networks()
 
 # Standard boilerplate to call the main() function.
 if __name__ == '__main__':
