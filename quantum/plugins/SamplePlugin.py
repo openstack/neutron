@@ -374,7 +374,10 @@ class FakePlugin(object):
         # TODO(salvatore-orlando): Validate port state in API?
         self._validate_port_state(port_state)
         ports = net['net-ports']
-        new_port_id = max(ports.keys()) + 1
+        if len(ports.keys()) == 0:
+            new_port_id = 1
+        else:
+            new_port_id = max(ports.keys()) + 1
         new_port_dict = {'port-id': new_port_id,
                          'port-state': port_state,
                          'attachment': None}
@@ -434,3 +437,11 @@ class FakePlugin(object):
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
         port['attachment'] = None
+
+    def get_interface_details(self, tenant_id, net_id, port_id):
+        """
+        Get Attachment details
+        """
+        print("get_interface_details() called\n")
+        port = self._get_port(tenant_id, net_id, port_id)
+        return port["attachment"]
