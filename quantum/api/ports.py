@@ -143,7 +143,6 @@ class Controller(common.QuantumController):
     #TODO - Complete implementation of these APIs
     def attach_resource(self, request, tenant_id, network_id, id):
         content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
         try:
             request_params = \
                 self._parse_request_params(request,

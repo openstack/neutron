@@ -25,16 +25,15 @@ class.
 The caller should make sure that QuantumManager is a singleton.
 """
 import gettext
+import logging
 import os
 gettext.install('quantum', unicode=1)
-
-import os
 
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
 CONFIG_FILE = "plugins.ini"
-
+LOG = logging.getLogger('quantum.manager')
 
 def find_config(basepath):
     for root, dirs, files in os.walk(basepath):
@@ -51,14 +50,14 @@ class QuantumManager(object):
         else:
             self.configuration_file = config
         plugin_location = utils.getPluginFromConfig(self.configuration_file)
-        print "PLUGIN LOCATION:%s" % plugin_location
         plugin_klass = utils.import_class(plugin_location)
+        LOG.debug("Plugin location:%s", plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
             raise Exception("Configured Quantum plug-in " \
                             "didn't pass compatibility test")
         else:
-            print("Successfully imported Quantum plug-in." \
-                  "All compatibility tests passed\n")
+            LOG.debug("Successfully imported Quantum plug-in." \
+                      "All compatibility tests passed")
         self.plugin = plugin_klass()
 
     def get_manager(self):
