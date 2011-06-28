@@ -49,8 +49,7 @@ def print_response(res):
 class QuantumTest(unittest.TestCase):
     def setUp(self):
         self.client = MiniClient(HOST, PORT, USE_SSL)
-        
-    
+
     def create_network(self, data):
         content_type = "application/" + FORMAT
         body = Serializer().serialize(data, content_type)

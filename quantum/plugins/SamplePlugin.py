@@ -113,20 +113,6 @@ class QuantumEchoPlugin(object):
         """
         print("unplug_interface() called\n")
 
-    def get_interface_details(self, tenant_id, net_id, port_id):
-        """
-        Retrieves the remote interface that is attached at this
-        particular port.
-        """
-        print("get_interface_details() called\n")
-
-    def get_all_attached_interfaces(self, tenant_id, net_id):
-        """
-        Retrieves all remote interfaces that are attached to
-        a particular Virtual Network.
-        """
-        print("get_all_attached_interfaces() called\n")
-
 
 class DummyDataPlugin(object):
 
@@ -240,11 +226,11 @@ class FakePlugin(object):
                        'port-state': 'DOWN',
                        'attachment': None},
                    2: {'port-id': 2,
-                       'port-state': 'UP',
+                       'port-state': 'ACTIVE',
                        'attachment': None}}
     _port_dict_2 = {
                    1: {'port-id': 1,
-                       'port-state': 'UP',
+                       'port-state': 'ACTIVE',
                        'attachment': 'SomeFormOfVIFID'},
                    2: {'port-id': 2,
                        'port-state': 'DOWN',
@@ -418,15 +404,6 @@ class FakePlugin(object):
         except KeyError:
             raise exc.PortNotFound(net_id=net_id, port_id=port_id)
 
-    def get_interface_details(self, tenant_id, net_id, port_id):
-        """
-        Retrieves the remote interface that is attached at this
-        particular port.
-        """
-        print("get_interface_details() called\n")
-        port = self._get_port(tenant_id, net_id, port_id)
-        return port['attachment']
-
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
         """
         Attaches a remote interface to the specified port on the
@@ -452,14 +429,3 @@ class FakePlugin(object):
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
         port['attachment'] = None
-
-    def get_all_attached_interfaces(self, tenant_id, net_id):
-        """
-        Retrieves all remote interfaces that are attached to
-        a particular Virtual Network.
-        """
-        print("get_all_attached_interfaces() called\n")
-        # returns a list of all attached remote interfaces
-        vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0",
-                       "/tenant1/networks/10/121/vif1.1"]
-        return vifs_on_net

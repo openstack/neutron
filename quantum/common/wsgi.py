@@ -294,7 +294,6 @@ class Router(object):
         Route the incoming request to a controller based on self.map.
         If no match, return a 404.
         """
-        LOG.debug("HERE - wsgi.Router.__call__")
         return self._router
 
     @staticmethod
@@ -328,7 +327,6 @@ class Controller(object):
         """
         Call the method specified in req.environ by RoutesMiddleware.
         """
-        LOG.debug("HERE - wsgi.Controller.__call__")
         arg_dict = req.environ['wsgiorg.routing_args'][1]
         action = arg_dict['action']
         method = getattr(self, action)
@@ -419,7 +417,6 @@ class Serializer(object):
         The string must be in the format of a supported MIME type.
 
         """
-        LOG.debug("Deserialize invoked:%s", datastring)
         return self.get_deserialize_handler(content_type)(datastring)
 
     def get_deserialize_handler(self, content_type):
