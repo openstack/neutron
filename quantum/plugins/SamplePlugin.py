@@ -232,32 +232,6 @@ class FakePlugin(object):
     client/cli/api development
     """
 
-    #static data for networks and ports
-    _port_dict_1 = {
-                   1: {'port-id': 1,
-                        'port-state': 'DOWN',
-                        'attachment': None},
-                   2: {'port-id': 2,
-                        'port-state': 'UP',
-                        'attachment': None}}
-    _port_dict_2 = {
-                   1: {'port-id': 1,
-                        'port-state': 'UP',
-                        'attachment': 'SomeFormOfVIFID'},
-                   2: {'port-id': 2,
-                        'port-state': 'DOWN',
-                        'attachment': None}}
-    _networks = {'001':
-                    {
-                    'net-id': '001',
-                    'net-name': 'pippotest',
-                    'net-ports': _port_dict_1},
-                    '002':
-                    {
-                    'net-id': '002',
-                    'net-name': 'cicciotest',
-                    'net-ports': _port_dict_2}}
-
     def __init__(self):
         db_options = {"sql_connection": "sqlite:///fake_plugin.sqllite"}
         db.configure_db(db_options)        
