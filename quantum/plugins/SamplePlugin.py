@@ -19,6 +19,7 @@
 import logging
 
 from quantum.common import exceptions as exc
+from quantum.db import api as db
 
 LOG = logging.getLogger('quantum.plugins.SamplePlugin')
 
@@ -258,35 +259,37 @@ class FakePlugin(object):
                     'net-ports': _port_dict_2}}
 
     def __init__(self):
-        FakePlugin._net_counter = len(FakePlugin._networks)
+        db_options = {"sql_connection": "sqlite:///fake_plugin.sqllite"}
+        db.configure_db(db_options)        
+        FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
-        network = FakePlugin._networks.get(network_id)
+        network = db.network_get(network_id)
         if not network:
             raise exc.NetworkNotFound(net_id=network_id)
         return network
 
     def _get_port(self, tenant_id, network_id, port_id):
         net = self._get_network(tenant_id, network_id)
-        port = net['net-ports'].get(int(port_id))
-        if not port:
+        port = db.port_get(port_id)
+        # Port must exist and belong to the appropriate network.
+        if not port or port['network_id']!=net['uuid']:
             raise exc.PortNotFound(net_id=network_id, port_id=port_id)
         return port
 
     def _validate_port_state(self, port_state):
-        if port_state.upper() not in ('UP', 'DOWN'):
+        if port_state.upper() not in ('ACTIVE', 'DOWN'):
             raise exc.StateInvalid(port_state=port_state)
         return True
 
     def _validate_attachment(self, tenant_id, network_id, port_id,
                              remote_interface_id):
-        network = self._get_network(tenant_id, network_id)
-        for port in network['net-ports'].values():
-            if port['attachment'] == remote_interface_id:
+        for port in db.port_list(network_id):
+            if port['interface_id'] == remote_interface_id:
                 raise exc.AlreadyAttached(net_id=network_id,
                                           port_id=port_id,
-                                          att_id=port['attachment'],
-                                          att_port_id=port['port-id'])
+                                          att_id=port['interface_id'],
+                                          att_port_id=port['uuid'])
 
     def get_all_networks(self, tenant_id):
         """
@@ -295,14 +298,19 @@ class FakePlugin(object):
         the specified tenant.
         """
         LOG.debug("FakePlugin.get_all_networks() called")
-        return FakePlugin._networks.values()
+        nets = []
+        for net in db.network_list(tenant_id):
+            net_item = {'net-id':str(net.uuid), 
+                        'net-name':net.name}
+            nets.append(net_item)
+        return nets        
 
     def get_network_details(self, tenant_id, net_id):
         """
         retrieved a list of all the remote vifs that
         are attached to the network
         """
-        LOG.debug("get_network_details() called")
+        LOG.debug("FakePlugin.get_network_details() called")
         return self._get_network(tenant_id, net_id)
 
     def create_network(self, tenant_id, net_name):
@@ -311,15 +319,9 @@ class FakePlugin(object):
         a symbolic name.
         """
         LOG.debug("FakePlugin.create_network() called")
-        FakePlugin._net_counter += 1
-        new_net_id = ("0" * (3 - len(str(FakePlugin._net_counter)))) + \
-                    str(FakePlugin._net_counter)
-        new_net_dict = {'net-id': new_net_id,
-                      'net-name': net_name,
-                      'net-ports': {}}
-        FakePlugin._networks[new_net_id] = new_net_dict
-        # return network_id of the created network
-        return new_net_dict
+        new_net = db.network_create(tenant_id, net_name)
+        # Return uuid for newly created network as net-id.
+        return {'net-id': new_net['uuid']}
 
     def delete_network(self, tenant_id, net_id):
         """
@@ -327,14 +329,14 @@ class FakePlugin(object):
         belonging to the specified tenant.
         """
         LOG.debug("FakePlugin.delete_network() called")
-        net = FakePlugin._networks.get(net_id)
+        net = self._get_network(tenant_id, net_id)
         # Verify that no attachments are plugged into the network
         if net:
             if net['net-ports']:
-                for port in net['net-ports'].values():
-                    if port['attachment']:
+                for port in db.port_list(net_id):
+                    if port['interface-id']:
                         raise exc.NetworkInUse(net_id=net_id)
-            FakePlugin._networks.pop(net_id)
+            db.network_destroy(net_id)
             return net
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)
@@ -345,8 +347,8 @@ class FakePlugin(object):
         Virtual Network.
         """
         LOG.debug("FakePlugin.rename_network() called")
+        db.network_rename(net_id, tenant_id, new_name)
         net = self._get_network(tenant_id, net_id)
-        net['net-name'] = new_name
         return net
 
     def get_all_ports(self, tenant_id, net_id):
@@ -355,9 +357,12 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.get_all_ports() called")
-        network = self._get_network(tenant_id, net_id)
-        ports_on_net = network['net-ports'].values()
-        return ports_on_net
+        port_ids = []
+        ports = db.port_list(net_id)
+        for x in ports:
+            d = {'port-id':str(x.uuid)}
+            port_ids.append(d)
+        return port_ids
 
     def get_port_details(self, tenant_id, net_id, port_id):
         """
@@ -372,30 +377,19 @@ class FakePlugin(object):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("FakePlugin.create_port() called")
-        net = self._get_network(tenant_id, net_id)
-        # check port state
-        # TODO(salvatore-orlando): Validate port state in API?
-        self._validate_port_state(port_state)
-        ports = net['net-ports']
-        if len(ports.keys()) == 0:
-            new_port_id = 1
-        else:
-            new_port_id = max(ports.keys()) + 1
-        new_port_dict = {'port-id': new_port_id,
-                         'port-state': port_state,
-                         'attachment': None}
-        ports[new_port_id] = new_port_dict
-        return new_port_dict
+        port = db.port_create(net_id)
+        port_item = {'port-id':str(port.uuid)}
+        return port_item
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, new_state):
         """
         Updates the state of a port on the specified Virtual Network.
         """
+        port=self._get_port(tenant_id, net_id, port_id)
         LOG.debug("FakePlugin.update_port() called")
-        port = self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(port_state)
-        port['port-state'] = port_state
-        return port
+        db.port_set_state(new_state)
+        return 
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -411,9 +405,12 @@ class FakePlugin(object):
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['attachment'])
         try:
-            net['net-ports'].pop(int(port_id))
-        except KeyError:
-            raise exc.PortNotFound(net_id=net_id, port_id=port_id)
+            port = db.port_destroy(port_id)
+        except Exception, e:
+            raise Exception("Failed to delete port: %s" % str(e))
+        d = {}
+        d["port-id"] = str(port.uuid)
+        return d
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
         """
@@ -428,7 +425,7 @@ class FakePlugin(object):
         if port['attachment']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['attachment'])
-        port['attachment'] = remote_interface_id
+        db.port_set_attachment(port_id, remote_interface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
@@ -436,7 +433,6 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.unplug_interface() called")
-        port = self._get_port(tenant_id, net_id, port_id)
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
-        port['attachment'] = None
+        db.port_set_attachment(port_id, None)

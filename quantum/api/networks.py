@@ -29,7 +29,7 @@ class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
-        'param-name': 'network-name',
+        'param-name': 'net-name',
         'required': True}, ]
 
     _serialization_metadata = {

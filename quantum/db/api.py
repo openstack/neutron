@@ -72,9 +72,10 @@ def network_create(tenant_id, name):
     net = None
     try:
         net = session.query(models.Network).\
-          filter_by(name=name).\
+          filter_by(name=name, tenant_id=tenant_id).\
           one()
-        raise Exception("Network with name \"%s\" already exists" % name)
+        raise Exception("Network with name %(name)s already " \
+                        "exists for tenant %(tenant_id)s" % locals())
     except exc.NoResultFound:
         with session.begin():
             net = models.Network(tenant_id, name)
@@ -152,6 +153,16 @@ def port_get(port_id):
           one()
     except exc.NoResultFound:
         raise Exception("No port found with id = %s " % port_id)
+
+
+def port_set_state(port_id, new_state):
+    port = port_get(port_id)
+    if port:
+        session = get_session()
+        port.state = new_state
+        session.merge(port)
+        session.flush()
+        return port
 
 
 def port_set_attachment(port_id, new_interface_id):
