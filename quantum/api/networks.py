@@ -80,7 +80,7 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         network = self.network_manager.\
                        create_network(tenant_id,
-                                      request_params['network-name'])
+                                      request_params['net-name'])
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)
         return dict(networks=result)

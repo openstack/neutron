@@ -132,8 +132,8 @@ class Controller(common.QuantumController):
 
     def get_resource(self, request, tenant_id, network_id, id):
         try:
-            result = self.network_manager.get_interface_details(
-                            tenant_id, network_id, id)
+            result = self.network_manager.get_port_details(
+                            tenant_id, network_id, id).get('attachment-id', None)
             return dict(attachment=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

@@ -285,7 +285,9 @@ class FakePlugin(object):
         are attached to the network
         """
         LOG.debug("FakePlugin.get_network_details() called")
-        return self._get_network(tenant_id, net_id)
+        net = self._get_network(tenant_id, net_id)
+        return {'net-id':str(net.uuid), 
+                'net-name':net.name}
 
     def create_network(self, tenant_id, net_name):
         """
@@ -306,10 +308,9 @@ class FakePlugin(object):
         net = self._get_network(tenant_id, net_id)
         # Verify that no attachments are plugged into the network
         if net:
-            if net['net-ports']:
-                for port in db.port_list(net_id):
-                    if port['interface-id']:
-                        raise exc.NetworkInUse(net_id=net_id)
+            for port in db.port_list(net_id):
+                if port['interface-id']:
+                    raise exc.NetworkInUse(net_id=net_id)
             db.network_destroy(net_id)
             return net
         # Network not found
@@ -344,7 +345,11 @@ class FakePlugin(object):
         that is attached to this particular port.
         """
         LOG.debug("FakePlugin.get_port_details() called")
-        return self._get_port(tenant_id, net_id, port_id)
+        port = self._get_port(tenant_id, net_id, port_id)
+        return {'port-id':str(port.uuid), 
+                'attachment-id':port.interface_id,
+                'port-state':port.state}
+    
 
     def create_port(self, tenant_id, net_id, port_state=None):
         """
@@ -359,10 +364,9 @@ class FakePlugin(object):
         """
         Updates the state of a port on the specified Virtual Network.
         """
-        port=self._get_port(tenant_id, net_id, port_id)
         LOG.debug("FakePlugin.update_port() called")
-        self._validate_port_state(port_state)
-        db.port_set_state(new_state)
+        self._validate_port_state(new_state)
+        db.port_set_state(port_id,new_state)
         return 
 
     def delete_port(self, tenant_id, net_id, port_id):
@@ -375,9 +379,9 @@ class FakePlugin(object):
         LOG.debug("FakePlugin.delete_port() called")
         net = self._get_network(tenant_id, net_id)
         port = self._get_port(tenant_id, net_id, port_id)
-        if port['attachment']:
+        if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port['attachment'])
+                                att_id=port['interface_id'])
         try:
             port = db.port_destroy(port_id)
         except Exception, e:
@@ -396,9 +400,9 @@ class FakePlugin(object):
         self._validate_attachment(tenant_id, net_id, port_id,
                                   remote_interface_id)
         port = self._get_port(tenant_id, net_id, port_id)
-        if port['attachment']:
+        if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port['attachment'])
+                                att_id=port['interface_id'])
         db.port_set_attachment(port_id, remote_interface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
