@@ -35,6 +35,7 @@ from quantum_plugin_base import QuantumPluginBase
 CONFIG_FILE = "plugins.ini"
 LOG = logging.getLogger('quantum.manager')
 
+
 def find_config(basepath):
     for root, dirs, files in os.walk(basepath):
         if CONFIG_FILE in files:

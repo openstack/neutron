@@ -63,7 +63,7 @@ To run a single functional test module::
 """
 
 import gettext
-import logging 
+import logging
 import os
 import unittest
 import sys
@@ -289,7 +289,7 @@ if __name__ == '__main__':
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
     logger.setLevel(logging.DEBUG)
-    
+
     working_dir = os.path.abspath("tests")
     c = config.Config(stream=sys.stdout,
                       env=os.environ,

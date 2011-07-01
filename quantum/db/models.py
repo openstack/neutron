@@ -96,10 +96,9 @@ class Port(BASE, QuantumBase):
         self.network_id = network_id
         self.state = "DOWN"
 
-    
     def __repr__(self):
         return "<Port(%s,%s,%s,%s)>" % (self.uuid, self.network_id,
-                                     self.state,self.interface_id)
+                                     self.state, self.interface_id)
 
 
 class Network(BASE, QuantumBase):

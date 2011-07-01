@@ -17,8 +17,6 @@
 #    under the License.
 
 import gettext
-import json
-import sys
 import unittest
 
 gettext.install('quantum', unicode=1)
@@ -161,7 +159,8 @@ class QuantumTest(unittest.TestCase):
             #self.assertEqual(res.status, 200, "Bad response: %s" % output)
             #resdict = json.loads(output)
             #attachment = resdict["attachment"]
-            #self.assertEqual(attachment, "fudd", "Attachment: %s" % attachment)
+            #self.assertEqual(attachment, "fudd", "Attachment: %s"
+            #% attachment)
 
     #def test_renameNetwork(self):
         #self.create_network(test_network1_data)

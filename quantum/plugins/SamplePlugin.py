@@ -23,6 +23,7 @@ from quantum.db import api as db
 
 LOG = logging.getLogger('quantum.plugins.SamplePlugin')
 
+
 class QuantumEchoPlugin(object):
 
     """
@@ -234,7 +235,7 @@ class FakePlugin(object):
 
     def __init__(self):
         db_options = {"sql_connection": "sqlite:///fake_plugin.sqllite"}
-        db.configure_db(db_options)        
+        db.configure_db(db_options)
         FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
@@ -245,9 +246,12 @@ class FakePlugin(object):
 
     def _get_port(self, tenant_id, network_id, port_id):
         net = self._get_network(tenant_id, network_id)
-        port = db.port_get(port_id)
+        try: 
+            port = db.port_get(port_id)
+        except:
+            raise exc.PortNotFound(net_id=network_id, port_id=port_id)
         # Port must exist and belong to the appropriate network.
-        if not port or port['network_id']!=net['uuid']:
+        if port['network_id'] != net['uuid']:
             raise exc.PortNotFound(net_id=network_id, port_id=port_id)
         return port
 
@@ -274,10 +278,10 @@ class FakePlugin(object):
         LOG.debug("FakePlugin.get_all_networks() called")
         nets = []
         for net in db.network_list(tenant_id):
-            net_item = {'net-id':str(net.uuid), 
-                        'net-name':net.name}
+            net_item = {'net-id': str(net.uuid),
+                        'net-name': net.name}
             nets.append(net_item)
-        return nets        
+        return nets
 
     def get_network_details(self, tenant_id, net_id):
         """
@@ -286,8 +290,8 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_network_details() called")
         net = self._get_network(tenant_id, net_id)
-        return {'net-id':str(net.uuid), 
-                'net-name':net.name}
+        return {'net-id': str(net.uuid),
+                'net-name': net.name}
 
     def create_network(self, tenant_id, net_name):
         """
@@ -309,7 +313,7 @@ class FakePlugin(object):
         # Verify that no attachments are plugged into the network
         if net:
             for port in db.port_list(net_id):
-                if port['interface-id']:
+                if port['interface_id']:
                     raise exc.NetworkInUse(net_id=net_id)
             db.network_destroy(net_id)
             return net
@@ -335,7 +339,7 @@ class FakePlugin(object):
         port_ids = []
         ports = db.port_list(net_id)
         for x in ports:
-            d = {'port-id':str(x.uuid)}
+            d = {'port-id': str(x.uuid)}
             port_ids.append(d)
         return port_ids
 
@@ -346,10 +350,9 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_port_details() called")
         port = self._get_port(tenant_id, net_id, port_id)
-        return {'port-id':str(port.uuid), 
-                'attachment-id':port.interface_id,
-                'port-state':port.state}
-    
+        return {'port-id': str(port.uuid),
+                'attachment-id': port.interface_id,
+                'port-state': port.state}
 
     def create_port(self, tenant_id, net_id, port_state=None):
         """
@@ -357,7 +360,7 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.create_port() called")
         port = db.port_create(net_id)
-        port_item = {'port-id':str(port.uuid)}
+        port_item = {'port-id': str(port.uuid)}
         return port_item
 
     def update_port(self, tenant_id, net_id, port_id, new_state):
@@ -366,8 +369,8 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.update_port() called")
         self._validate_port_state(new_state)
-        db.port_set_state(port_id,new_state)
-        return 
+        db.port_set_state(port_id, new_state)
+        return
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
