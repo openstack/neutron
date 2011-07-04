@@ -61,5 +61,5 @@ class QuantumManager(object):
                   "All compatibility tests passed\n")
         self.plugin = plugin_klass()
 
-    def get_manager(self):
+    def get_plugin(self):
         return self.plugin

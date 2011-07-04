@@ -19,7 +19,6 @@ import logging
 
 from webob import exc
 
-from quantum import manager
 from quantum.common import wsgi
 
 XML_NS_V01 = 'http://netstack.org/quantum/api/v0.1'
@@ -30,8 +29,8 @@ LOG = logging.getLogger('quantum.api.api_common')
 class QuantumController(wsgi.Controller):
     """ Base controller class for Quantum API """
 
-    def __init__(self, plugin_conf_file=None):
-        self._setup_network_manager()
+    def __init__(self, plugin):
+        self._plugin = plugin
         super(QuantumController, self).__init__()
 
     def _parse_request_params(self, req, params):
@@ -65,6 +64,3 @@ class QuantumController(wsgi.Controller):
                     raise exc.HTTPBadRequest(msg)
             results[param_name] = param_value or param.get('default-value')
         return results
-
-    def _setup_network_manager(self):
-        self.network_manager = manager.QuantumManager().get_manager()
