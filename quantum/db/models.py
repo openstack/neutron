@@ -20,6 +20,7 @@
 import uuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation
 
@@ -44,8 +45,7 @@ class QuantumBase(object):
 
     def delete(self, session=None):
         """Delete this object."""
-        self.deleted = True
-        self.deleted_at = utils.utcnow()
+        # TODO: this method does not do anything at the moment
         self.save(session=session)
 
     def __setitem__(self, key, value):
