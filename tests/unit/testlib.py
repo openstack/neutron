@@ -12,60 +12,78 @@ def create_request(path, body, content_type, method='GET'):
     return req
 
 
-def create_network_list_request(tenant_id, format='xml'):
+def network_list_request(tenant_id, format='xml'):
     method = 'GET'
     path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
-def create_new_network_request(tenant_id, network_name, format='xml'):
+def show_network_request(tenant_id, network_id, format='xml'):
+    method = 'GET'
+    path = "/tenants/%(tenant_id)s/networks/" \
+           "%(network_id)s.%(format)s" % locals()
+    content_type = "application/%s" % format
+    return create_request(path, None, content_type, method)
+
+
+def new_network_request(tenant_id, network_name, format='xml'):
     method = 'POST'
     path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
     data = {'network': {'net-name': '%s' % network_name}}
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
-def create_network_delete_request(tenant_id, network_id, format='xml'):
+def network_delete_request(tenant_id, network_id, format='xml'):
     method = 'DELETE'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s.%(format)s" % locals()
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
-def create_port_list_request(tenant_id, network_id, format='xml'):
+def port_list_request(tenant_id, network_id, format='xml'):
     method = 'GET'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports.%(format)s" % locals()
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
-def create_new_port_request(tenant_id, network_id, port_state, format='xml'):
+def show_port_request(tenant_id, network_id, port_id, format='xml'):
+    method = 'GET'
+    path = "/tenants/%(tenant_id)s/networks/%(network_id)s" \
+           "/ports/%(port_id)s.%(format)s" % locals()
+    content_type = "application/%s" % format
+    return create_request(path, None, content_type, method)
+
+
+def new_port_request(tenant_id, network_id, port_state, format='xml'):
     method = 'POST'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports.%(format)s" % locals()
     data = {'port': {'port-state': '%s' % port_state}}
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
-def create_port_delete_request(tenant_id, network_id, port_id, format='xml'):
+def port_delete_request(tenant_id, network_id, port_id, format='xml'):
     method = 'DELETE'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports/%(port_id)s.%(format)s" % locals()
-    content_type = "application/" + format
+    content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
-def create_attachment_request(tid, nid, pid, attachment_id):
-    path = "/v0.1/tenants/%s/networks/%s/ports/%s/attachment.json" % (tid,
-      nid, pid)
+def put_attachment_request(tenant_id, network_id, port_id,
+                              attachment_id, format='xml'):
+    method = 'PUT'
+    path = "/tenants/%(tenant_id)s/networks/" \
+           "%(network_id)s/ports/%(port_id)s/attachment.%(format)s" % locals()
     data = {'port': {'attachment-id': attachment_id}}
-    content_type = "application/json"
+    content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
-    return create_request(path, body)
+    return create_request(path, body, content_type, method)

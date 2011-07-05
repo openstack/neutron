@@ -24,6 +24,7 @@ import routes
 import webob.dec
 import webob.exc
 
+from quantum import manager
 from quantum.api import faults
 from quantum.api import networks
 from quantum.api import ports
@@ -40,38 +41,38 @@ class APIRouterV01(wsgi.Router):
     Routes requests on the Quantum API to the appropriate controller
     """
 
-    def __init__(self, ext_mgr=None):
+    def __init__(self, options=None):
         mapper = routes.Mapper()
-        self._setup_routes(mapper)
+        self._setup_routes(mapper, options)
         super(APIRouterV01, self).__init__(mapper)
 
-    def _setup_routes(self, mapper):
-
+    def _setup_routes(self, mapper, options):
+        # Loads the quantum plugin
+        plugin = manager.QuantumManager(options).get_plugin()
         uri_prefix = '/tenants/{tenant_id}/'
         mapper.resource('network', 'networks',
-                        controller=networks.Controller(),
+                        controller=networks.Controller(plugin),
                         path_prefix=uri_prefix)
         mapper.resource('port', 'ports',
-                        controller=ports.Controller(),
+                        controller=ports.Controller(plugin),
                         parent_resource=dict(member_name='network',
                                              collection_name=uri_prefix +\
                                                  'networks'))
-
         mapper.connect("get_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(),
+                       controller=ports.Controller(plugin),
                        action="get_resource",
                        conditions=dict(method=['GET']))
         mapper.connect("attach_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(),
+                       controller=ports.Controller(plugin),
                        action="attach_resource",
                        conditions=dict(method=['PUT']))
         mapper.connect("detach_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(),
+                       controller=ports.Controller(plugin),
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))

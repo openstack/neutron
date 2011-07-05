@@ -42,6 +42,13 @@ def configure_db(options):
         register_models()
 
 
+def unconfigure_db():
+    unregister_models()
+    # Unset the engine
+    global _ENGINE
+    _ENGINE = None
+
+
 def get_session(autocommit=True, expire_on_commit=False):
     """Helper method to grab session"""
     global _MAKER, _ENGINE
@@ -72,7 +79,7 @@ def network_create(tenant_id, name):
     net = None
     try:
         net = session.query(models.Network).\
-          filter_by(name=name, tenant_id=tenant_id).\
+          filter_by(tenant_id=tenant_id, name=name).\
           one()
         raise Exception("Network with name %(name)s already " \
                         "exists for tenant %(tenant_id)s" % locals())
@@ -105,7 +112,7 @@ def network_rename(net_id, tenant_id, new_name):
     session = get_session()
     try:
         res = session.query(models.Network).\
-          filter_by(name=new_name).\
+          filter_by(tenant_id=tenant_id, name=new_name).\
           one()
     except exc.NoResultFound:
         net = network_get(net_id)
@@ -167,13 +174,14 @@ def port_set_state(port_id, new_state):
 
 def port_set_attachment(port_id, new_interface_id):
     session = get_session()
-    ports = None
-    try:
-        ports = session.query(models.Port).\
-          filter_by(interface_id=new_interface_id).\
-          all()
-    except exc.NoResultFound:
-        pass
+    ports = []
+    if new_interface_id != "":
+        try:
+            ports = session.query(models.Port).\
+            filter_by(interface_id=new_interface_id).\
+            all()
+        except exc.NoResultFound:
+            pass
     if len(ports) == 0:
         port = port_get(port_id)
         port.interface_id = new_interface_id

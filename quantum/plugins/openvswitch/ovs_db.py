@@ -56,21 +56,3 @@ def remove_vlan_binding(netid):
     except exc.NoResultFound:
             pass
     session.flush()
-
-
-def update_network_binding(netid, ifaceid):
-    session = db.get_session()
-    # Add to or delete from the bindings table
-    if ifaceid == None:
-        try:
-            binding = session.query(ovs_models.NetworkBinding).\
-              filter_by(network_id=netid).\
-              one()
-            session.delete(binding)
-        except exc.NoResultFound:
-            raise Exception("No binding found with network_id = %s" % netid)
-    else:
-        binding = ovs_models.NetworkBinding(netid, ifaceid)
-        session.add(binding)
-
-    session.flush()

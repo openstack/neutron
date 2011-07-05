@@ -233,9 +233,13 @@ class FakePlugin(object):
     client/cli/api development
     """
 
-    def __init__(self):
-        db_options = {"sql_connection": "sqlite:///fake_plugin.sqllite"}
-        db.configure_db(db_options)
+    def __init__(self, options):
+        # use supplied options for configuring db
+        if not options:
+            options = {"sql_connection": "sqlite:///fake_plugin.sqllite"}
+        elif not 'sql_connection' in options:
+            options['sql_connection'] = "sqlite:///fake_plugin.sqllite"
+        db.configure_db(options)
         FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
@@ -246,7 +250,7 @@ class FakePlugin(object):
 
     def _get_port(self, tenant_id, network_id, port_id):
         net = self._get_network(tenant_id, network_id)
-        try: 
+        try:
             port = db.port_get(port_id)
         except:
             raise exc.PortNotFound(net_id=network_id, port_id=port_id)
