@@ -36,7 +36,7 @@ CONFIG_FILE = "plugins.ini"
 
 
 def find_config(basepath):
-    for root, files in os.walk(basepath):
+    for root, dirs, files in os.walk(basepath):
         if CONFIG_FILE in files:
             return os.path.join(root, CONFIG_FILE)
     return None
