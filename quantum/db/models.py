@@ -19,34 +19,15 @@
 
 import uuid
 
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relation, object_mapper
 
 BASE = declarative_base()
 
 
 class QuantumBase(object):
     """Base class for Quantum Models."""
-
-    def save(self, session=None):
-        """Save this object."""
-        if not session:
-            session = get_session()
-        session.add(self)
-        try:
-            session.flush()
-        except IntegrityError, e:
-            if str(e).endswith('is not unique'):
-                raise exception.Duplicate(str(e))
-            else:
-                raise
-
-    def delete(self, session=None):
-        """Delete this object."""
-        # TODO: this method does not do anything at the moment
-        self.save(session=session)
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
