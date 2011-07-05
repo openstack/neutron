@@ -19,7 +19,8 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
-import models
+
+from quantum.db import models
 
 _ENGINE = None
 _MAKER = None
@@ -42,11 +43,11 @@ def configure_db(options):
         register_models()
 
 
-def unconfigure_db():
-    unregister_models()
-    # Unset the engine
+def clear_db():
     global _ENGINE
-    _ENGINE = None
+    assert _ENGINE
+    for table in reversed(BASE.metadata.sorted_tables):
+        _ENGINE.execute(table.delete())
 
 
 def get_session(autocommit=True, expire_on_commit=False):
