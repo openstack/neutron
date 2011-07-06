@@ -38,6 +38,10 @@ class ExtensionControllerTest(unittest.TestCase):
 
     def test_index(self):
         response = self.test_app.get("/extensions")
+        foxnsox = response.json["extensions"][0]
+        self.assertEqual(foxnsox["alias"], "FOXNSOX")
+        self.assertEqual(foxnsox["namespace"],
+                         "http://www.fox.in.socks/api/ext/pie/v1.0")
         self.assertEqual(200, response.status_int)
 
     def test_get_by_alias(self):
@@ -147,6 +151,30 @@ class RequestExtensionTest(BaseTest):
         self.assertEqual('newblue', response_data['googoose'])
         self.assertEqual("Pig Bands!", response_data['big_bands'])
 
+    def test_edit_previously_uneditable_field(self):
+
+        def _update_handler(req, res):
+            data = json.loads(res.body)
+            data['uneditable'] = req.params['uneditable']
+            res.body = json.dumps(data)
+            return res
+
+        conf, app = config.load_paste_app('extensions_test_app',
+                                               {'config_file': test_conf_file}, None)
+        base_app = TestApp(app)
+        response = base_app.put("/dummy_resources/1", {'uneditable': "new_value"})
+        self.assertEqual(response.json['uneditable'], "original_value")
+        
+
+        req_ext = extensions.RequestExtension('PUT',
+                                                '/dummy_resources/:(id)',
+                                                _update_handler)
+
+        manager = StubExtensionManager(None, None, req_ext)
+        extended_app = setup_extensions_test_app(manager)
+        response = extended_app.put("/dummy_resources/1", {'uneditable': "new_value"})
+        self.assertEqual(response.json['uneditable'], "new_value")
+
 
 class TestExtensionMiddlewareFactory(unittest.TestCase):
 
@@ -179,6 +207,9 @@ class StubController(wsgi.Controller):
 
     def show(self, request, id):
         return {'fort': 'knox'}
+
+    def update(self, request, id):
+        return {'uneditable': 'original_value'}
 
 
 def app_factory(global_conf, **local_conf):
