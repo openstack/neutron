@@ -100,6 +100,49 @@ class APITest(unittest.TestCase):
                          network_data['networks']['network'])
         LOG.debug("_test_show_network - format:%s - END", format)
 
+    def _test_show_network_not_found(self, format):
+        LOG.debug("_test_show_network_not_found - format:%s - START", format)
+        show_network_req = testlib.show_network_request(self.tenant_id,
+                                                        "A_BAD_ID",
+                                                        format)
+        show_network_res = show_network_req.get_response(self.api)
+        self.assertEqual(show_network_res.status_int, 420)
+        LOG.debug("_test_show_network_not_found - format:%s - END", format)
+
+    def _test_rename_network(self, format):
+        LOG.debug("_test_rename_network - format:%s - START", format)
+        content_type = "application/%s" % format
+        new_name = 'new_network_name'
+        network_id = self._create_network(format)
+        update_network_req = testlib.update_network_request(self.tenant_id,
+                                                        network_id,
+                                                        new_name,
+                                                        format)
+        update_network_res = update_network_req.get_response(self.api)
+        self.assertEqual(update_network_res.status_int, 202)
+        show_network_req = testlib.show_network_request(self.tenant_id,
+                                                        network_id,
+                                                        format)
+        show_network_res = show_network_req.get_response(self.api)
+        self.assertEqual(show_network_res.status_int, 200)
+        network_data = Serializer().deserialize(show_network_res.body,
+                                                content_type)
+        self.assertEqual({'id': network_id, 'name': new_name},
+                         network_data['networks']['network'])
+        LOG.debug("_test_rename_network - format:%s - END", format)
+
+    def _test_rename_network_not_found(self, format):
+        LOG.debug("_test_rename_network_not_found - format:%s - START", format)
+        content_type = "application/%s" % format
+        new_name = 'new_network_name'
+        update_network_req = testlib.update_network_request(self.tenant_id,
+                                                        "A BAD ID",
+                                                        new_name,
+                                                        format)
+        update_network_res = update_network_req.get_response(self.api)
+        self.assertEqual(update_network_res.status_int, 420)
+        LOG.debug("_test_rename_network_not_found - format:%s - END", format)
+
     def _test_delete_network(self, format):
         LOG.debug("_test_delete_network - format:%s - START", format)
         content_type = "application/%s" % format
@@ -237,8 +280,14 @@ class APITest(unittest.TestCase):
     def test_create_network_json(self):
         self._test_create_network('json')
 
-    #def test_create_network_xml(self):
-    #    self._test_create_network('xml')
+    def test_create_network_xml(self):
+        self._test_create_network('xml')
+
+    def test_show_network_not_found_json(self):
+        self._test_show_network_not_found('json')
+
+    def test_show_network_not_found_xml(self):
+        self._test_show_network_not_found('xml')
 
     def test_show_network_json(self):
         self._test_show_network('json')
@@ -251,6 +300,18 @@ class APITest(unittest.TestCase):
 
     def test_delete_network_xml(self):
         self._test_delete_network('xml')
+
+    def test_rename_network_json(self):
+        self._test_rename_network('json')
+
+    def test_rename_network_xml(self):
+        self._test_rename_network('xml')
+
+    def test_rename_network_not_found_json(self):
+        self._test_rename_network_not_found('json')
+
+    def test_rename_network_not_found_xml(self):
+        self._test_rename_network_not_found('xml')
 
     def test_delete_network_in_use_json(self):
         self._test_delete_network_in_use('json')

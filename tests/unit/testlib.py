@@ -21,8 +21,8 @@ def network_list_request(tenant_id, format='xml'):
 
 def show_network_request(tenant_id, network_id, format='xml'):
     method = 'GET'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s.%(format)s" % locals()
+    path = "/tenants/%(tenant_id)s/networks" \
+           "/%(network_id)s.%(format)s" % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
@@ -35,6 +35,14 @@ def new_network_request(tenant_id, network_name, format='xml'):
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
+def update_network_request(tenant_id, network_id, network_name, format='xml'):
+    method = 'PUT'
+    path = "/tenants/%(tenant_id)s/networks" \
+           "/%(network_id)s.%(format)s" % locals()
+    data = {'network': {'net-name': '%s' % network_name}}
+    content_type = "application/%s" % format
+    body = Serializer().serialize(data, content_type)
+    return create_request(path, body, content_type, method)
 
 def network_delete_request(tenant_id, network_id, format='xml'):
     method = 'DELETE'

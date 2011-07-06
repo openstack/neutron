@@ -94,12 +94,9 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            network = self._plugin.rename_network(tenant_id,
-                        id, request_params['network-name'])
-
-            builder = networks_view.get_view_builder(request)
-            result = builder.build(network, True)
-            return dict(networks=result)
+            self._plugin.rename_network(tenant_id, id,
+                                        request_params['net-name'])
+            return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 

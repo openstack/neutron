@@ -49,7 +49,7 @@ class QuantumTest(unittest.TestCase):
         self.client = MiniClient(HOST, PORT, USE_SSL)
 
     #def create_network(self, data, tenant_id=TENANT_ID):
-    #    content_type = "application/" + FORMAT
+    #    content_type = "application/%s" % FORMAT
     #    body = Serializer().serialize(data, content_type)
     #    res = self.client.do_request(tenant_id, 'POST', "/networks." + FORMAT,
     #      body=body)
