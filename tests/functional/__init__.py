@@ -76,7 +76,7 @@ class Server(object):
         if kwargs:
             conf_override.update(**kwargs)
 
-        # Create temporary configuration file for Quantum Unit tests. 
+        # Create temporary configuration file for Quantum Unit tests.
 
         conf_file = tempfile.NamedTemporaryFile()
         conf_file.write(self.conf_base % conf_override)
@@ -188,7 +188,6 @@ class FunctionalTest(unittest.TestCase):
         self.quantum_server = QuantumAPIServer(self.test_dir,
                                                self.test_port)
 
-
     def tearDown(self):
         self.cleanup()
         # We destroy the test data store between each test case,
@@ -227,7 +226,6 @@ class FunctionalTest(unittest.TestCase):
             exitcode, out, err = execute(cmd)
             self.assertEqual(0, exitcode)
 
-
     def start_servers(self, **kwargs):
         """
         Starts the Quantum API server on an unused port.
@@ -242,7 +240,7 @@ class FunctionalTest(unittest.TestCase):
                          "Failed to spin up the Quantum server. "
                          "Got: %s" % err)
         #self.assertTrue("Starting quantum with" in out)
-        #TODO: replace with appropriate assert 
+        #TODO: replace with appropriate assert
 
         self.wait_for_servers()
 

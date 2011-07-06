@@ -243,9 +243,9 @@ class FakePlugin(object):
         FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
-        try: 
+        try:
             network = db.network_get(network_id)
-        except: 
+        except:
             raise exc.NetworkNotFound(net_id=network_id)
         return network
 
@@ -331,7 +331,7 @@ class FakePlugin(object):
         Virtual Network.
         """
         LOG.debug("FakePlugin.rename_network() called")
-        try: 
+        try:
             db.network_rename(net_id, tenant_id, new_name)
         except:
             raise exc.NetworkNotFound(net_id=net_id)

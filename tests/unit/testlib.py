@@ -35,6 +35,7 @@ def new_network_request(tenant_id, network_name, format='xml'):
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
+
 def update_network_request(tenant_id, network_id, network_name, format='xml'):
     method = 'PUT'
     path = "/tenants/%(tenant_id)s/networks" \
@@ -43,6 +44,7 @@ def update_network_request(tenant_id, network_id, network_name, format='xml'):
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
+
 
 def network_delete_request(tenant_id, network_id, format='xml'):
     method = 'DELETE'
