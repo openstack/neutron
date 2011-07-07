@@ -56,9 +56,9 @@ class Foxinsocks(object):
 
     def get_actions(self):
         return  [extensions.ActionExtension('dummy_resources', 'add_tweedle',
-                                            self._add_tweedle),
+                                            self._add_tweedle_handler),
                  extensions.ActionExtension('dummy_resources',
-                                       'delete_tweedle', self._delete_tweedle)]
+                               'delete_tweedle', self._delete_tweedle_handler)]
 
     def get_request_extensions(self):
         request_exts = []
@@ -88,10 +88,9 @@ class Foxinsocks(object):
         request_exts.append(req_ext2)
         return request_exts
 
-    def _add_tweedle(self, input_dict, req, id):
+    def _add_tweedle_handler(self, input_dict, req, id):
+        return "Tweedle {0} Added.".format(input_dict['add_tweedle']['name'])
 
-        return "Tweedle Beetle Added."
-
-    def _delete_tweedle(self, input_dict, req, id):
-
-        return "Tweedle Beetle Deleted."
+    def _delete_tweedle_handler(self, input_dict, req, id):
+        return "Tweedle {0} Deleted.".format(
+                                        input_dict['delete_tweedle']['name'])

@@ -352,6 +352,8 @@ class ExtensionManager(object):
             LOG.debug(_('Ext updated: %s'), extension.get_updated())
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
+            return False
+        return True
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
@@ -391,16 +393,18 @@ class ExtensionManager(object):
                     continue
                 new_ext = new_ext_class()
                 self._check_extension(new_ext)
-                self._add_extension(new_ext)
+                self.add_extension(new_ext)
 
-    def _add_extension(self, ext):
+    def add_extension(self, ext):
+        # Do nothing if the extension doesn't check out
+        if not self._check_extension(ext):
+            return
+
         alias = ext.get_alias()
-        LOG.info(_('Loaded extension: %s'), alias)
-
-        self._check_extension(ext)
+        LOG.warn(_('Loaded extension: %s'), alias)
 
         if alias in self.extensions:
-            raise exception.Error("Found duplicate extension: %s"
+            raise exceptions.Error("Found duplicate extension: %s"
                                          % alias)
         self.extensions[alias] = ext
 

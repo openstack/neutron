@@ -25,7 +25,7 @@ from quantum.common import wsgi
 from quantum.common import config
 
 
-response_body = "Try to say this Mr. Knox, sir..."
+extension_index_response = "Try to say this Mr. Knox, sir..."
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
 
@@ -36,127 +36,152 @@ class ExtensionControllerTest(unittest.TestCase):
         super(ExtensionControllerTest, self).setUp()
         self.test_app = setup_extensions_test_app()
 
-    def test_index(self):
+    def test_index_gets_all_registerd_extensions(self):
         response = self.test_app.get("/extensions")
         foxnsox = response.json["extensions"][0]
+
         self.assertEqual(foxnsox["alias"], "FOXNSOX")
         self.assertEqual(foxnsox["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
-        self.assertEqual(200, response.status_int)
 
-    def test_get_by_alias(self):
-        response = self.test_app.get("/extensions/FOXNSOX")
-        self.assertEqual(200, response.status_int)
+    def test_extension_can_be_accessed_by_alias(self):
+        foxnsox_extension = self.test_app.get("/extensions/FOXNSOX").json
+
+        self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
+        self.assertEqual(foxnsox_extension["namespace"],
+                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
 
 class ResourceExtensionTest(unittest.TestCase):
 
-    def test_no_extension_present(self):
-        test_app = setup_extensions_test_app(StubExtensionManager(None))
-        response = test_app.get("/blah", status='*')
-        self.assertEqual(404, response.status_int)
-
-    def test_get_resources(self):
-        res_ext = extensions.ResourceExtension('tweedles',
-                                               StubController(response_body))
+    def test_resource_extension(self):
+        res_ext = extensions.ResourceExtension('tweedles', StubController(
+                                                  extension_index_response))
         test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
 
         response = test_app.get("/tweedles")
         self.assertEqual(200, response.status_int)
-        self.assertEqual(response_body, response.body)
+        self.assertEqual(extension_index_response, response.body)
+
+    def test_returns_404_for_non_existant_extension(self):
+        test_app = setup_extensions_test_app(StubExtensionManager(None))
+
+        response = test_app.get("/non_extistant_extension", status='*')
+
+        self.assertEqual(404, response.status_int)
 
 
 class ExtensionManagerTest(unittest.TestCase):
 
-    def test_get_resources(self):
-        test_app = setup_extensions_test_app()
-        response = test_app.get('/foxnsocks')
+    def test_invalid_extensions_are_not_registered(self):
 
-        self.assertEqual(200, response.status_int)
-        self.assertEqual(response_body, response.body)
+        class ValidExtension(object):
+
+            def get_name(self):
+                return "Valid Extension"
+
+            def get_alias(self):
+                return "valid_extension"
+
+            def get_description(self):
+                return ""
+
+            def get_namespace(self):
+                return ""
+
+            def get_updated(self):
+                return ""
+
+        class InvalidExtension(object):
+            def get_alias(self):
+                return "invalid_extension"
+
+        extended_app = setup_extensions_middleware()
+        ext_mgr = extended_app.ext_mgr
+        ext_mgr.add_extension(InvalidExtension())
+        ext_mgr.add_extension(ValidExtension())
+        self.assertTrue('valid_extension' in ext_mgr.extensions)
+        self.assertFalse('invalid_extension' in ext_mgr.extensions)
 
 
 class ActionExtensionTest(unittest.TestCase):
 
     def setUp(self):
         super(ActionExtensionTest, self).setUp()
-        self.test_app = setup_extensions_test_app()
+        self.extension_app = setup_extensions_test_app()
 
-    def _send_server_action_request(self, url, body):
-        return self.test_app.post(url, json.dumps(body),
-                                  content_type='application/json', status='*')
-
-    def test_extended_action(self):
-        body = json.dumps(dict(add_tweedle=dict(name="test")))
-        response = self.test_app.post('/dummy_resources/1/action', body,
-                                      content_type='application/json')
+    def test_extended_action_for_adding_extra_data(self):
+        action_name = 'add_tweedle'
+        action_params = dict(name='Beetle')
+        req_body = json.dumps({action_name: action_params})
+        response = self.extension_app.post('/dummy_resources/1/action',
+                                     req_body, content_type='application/json')
         self.assertEqual("Tweedle Beetle Added.", response.body)
 
-        body = json.dumps(dict(delete_tweedle=dict(name="test")))
-        response = self.test_app.post("/dummy_resources/1/action", body,
-                                      content_type='application/json')
+    def test_extended_action_for_deleting_extra_data(self):
+        action_name = 'delete_tweedle'
+        action_params = dict(name='Bailey')
+        req_body = json.dumps({action_name: action_params})
+        response = self.extension_app.post("/dummy_resources/1/action",
+                                     req_body, content_type='application/json')
+        self.assertEqual("Tweedle Bailey Deleted.", response.body)
 
-        self.assertEqual(200, response.status_int)
-        self.assertEqual("Tweedle Beetle Deleted.", response.body)
+    def test_returns_404_for_non_existant_action(self):
+        non_existant_action = 'blah_action'
+        action_params = dict(name="test")
+        req_body = json.dumps({non_existant_action: action_params})
 
-    def test_invalid_action_body(self):
-        body = json.dumps(dict(blah=dict(name="test")))  # Doesn't exist
-        response = self.test_app.post("/dummy_resources/1/action", body,
-                                      content_type='application/json',
-                                      status='*')
+        response = self.extension_app.post("/dummy_resources/1/action",
+                                     req_body, content_type='application/json',
+                                     status='*')
+
         self.assertEqual(404, response.status_int)
 
-    def test_invalid_action(self):
-        body = json.dumps(dict(blah=dict(name="test")))
-        response = self.test_app.post("/asdf/1/action",
-                                      body, content_type='application/json',
-                                      status='*')
+    def test_returns_404_for_non_existant_resource(self):
+        action_name = 'add_tweedle'
+        action_params = dict(name='Beetle')
+        req_body = json.dumps({action_name: action_params})
+
+        response = self.extension_app.post("/asdf/1/action", req_body,
+                                   content_type='application/json', status='*')
         self.assertEqual(404, response.status_int)
 
 
 class RequestExtensionTest(BaseTest):
 
-    def test_headers_extension(self):
-        def _req_header_handler(req, res):
-            ext_header = req.headers['X-rax-fox']
-            res.headers['X-got-header'] = ext_header
+    def test_headers_can_be_extended(self):
+        def extend_headers(req, res):
+            assert req.headers['X-NEW-REQUEST-HEADER'] == "sox"
+            res.headers['X-NEW-RESPONSE-HEADER'] = "response_header_data"
             return res
 
-        app = self._setup_app_with_request_handler(_req_header_handler,
-                                                   'GET')
-        response = app.get("/dummy_resources/1", headers={'X-rax-fox': "sox"})
-        self.assertEqual(response.headers['X-got-header'], "sox")
+        app = self._setup_app_with_request_handler(extend_headers, 'GET')
+        response = app.get("/dummy_resources/1",
+                           headers={'X-NEW-REQUEST-HEADER': "sox"})
 
-    def test_get_resources_with_stub_mgr(self):
-        def _req_handler(req, res):
-            # only handle JSON responses
+        self.assertEqual(response.headers['X-NEW-RESPONSE-HEADER'],
+                                                   "response_header_data")
+
+    def test_extend_get_resource_response(self):
+        def extend_response_data(req, res):
             data = json.loads(res.body)
-            data['googoose'] = req.GET.get('chewing')
+            data['extended_key'] = req.GET.get('extended_key')
             res.body = json.dumps(data)
             return res
 
-        req_ext = extensions.RequestExtension('GET',
-                                                '/dummy_resources/:(id)',
-                                                _req_handler)
-
-        manager = StubExtensionManager(None, None, req_ext)
-        app = setup_extensions_test_app(manager)
-
-        response = app.get("/dummy_resources/1?chewing=bluegoos",
-                           extra_environ={'api.version': '1.1'})
+        app = self._setup_app_with_request_handler(extend_response_data, 'GET')
+        response = app.get("/dummy_resources/1?extended_key=extended_data")
 
         self.assertEqual(200, response.status_int)
         response_data = json.loads(response.body)
-        self.assertEqual('bluegoos', response_data['googoose'])
+        self.assertEqual('extended_data', response_data['extended_key'])
         self.assertEqual('knox', response_data['fort'])
 
-    def test_get_resources_with_mgr(self):
+    def test_get_resources(self):
         app = setup_extensions_test_app()
 
-        response = app.get("/dummy_resources/1?"
-                                            "chewing=newblue", status='*')
+        response = app.get("/dummy_resources/1?chewing=newblue")
 
-        self.assertEqual(200, response.status_int)
         response_data = json.loads(response.body)
         self.assertEqual('newblue', response_data['googoose'])
         self.assertEqual("Pig Bands!", response_data['big_bands'])
@@ -169,10 +194,7 @@ class RequestExtensionTest(BaseTest):
             res.body = json.dumps(data)
             return res
 
-        conf, app = config.load_paste_app('extensions_test_app',
-                                         {'config_file': test_conf_file}, None)
-        base_app = TestApp(app)
-
+        base_app = TestApp(setup_base_app())
         response = base_app.put("/dummy_resources/1",
                                 {'uneditable': "new_value"})
         self.assertEqual(response.json['uneditable'], "original_value")
@@ -186,7 +208,6 @@ class RequestExtensionTest(BaseTest):
     def _setup_app_with_request_handler(self, handler, verb):
         req_ext = extensions.RequestExtension(verb,
                                    '/dummy_resources/:(id)', handler)
-
         manager = StubExtensionManager(None, None, req_ext)
         return setup_extensions_test_app(manager)
 
@@ -205,7 +226,7 @@ class ExtensionsTestApp(wsgi.Router):
 
     def __init__(self, options={}):
         mapper = routes.Mapper()
-        controller = StubController(response_body)
+        controller = StubController(extension_index_response)
         mapper.resource("dummy_resource", "/dummy_resources",
                         controller=controller)
         super(ExtensionsTestApp, self).__init__(mapper)
@@ -232,11 +253,20 @@ def app_factory(global_conf, **local_conf):
     return ExtensionsTestApp(conf)
 
 
-def setup_extensions_test_app(extension_manager=None):
+def setup_base_app():
     options = {'config_file': test_conf_file}
     conf, app = config.load_paste_app('extensions_test_app', options, None)
-    extended_app = extensions.ExtensionMiddleware(app, conf, extension_manager)
-    return TestApp(extended_app)
+    return app
+
+
+def setup_extensions_middleware(extension_manager=None):
+    options = {'config_file': test_conf_file}
+    conf, app = config.load_paste_app('extensions_test_app', options, None)
+    return extensions.ExtensionMiddleware(app, conf, extension_manager)
+
+
+def setup_extensions_test_app(extension_manager=None):
+    return TestApp(setup_extensions_middleware(extension_manager))
 
 
 class StubExtensionManager(object):
