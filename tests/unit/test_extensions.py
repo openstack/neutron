@@ -116,8 +116,18 @@ class ActionExtensionTest(unittest.TestCase):
 
 class RequestExtensionTest(BaseTest):
 
-    def test_get_resources_with_stub_mgr(self):
+    def test_headers_extension(self):
+        def _req_header_handler(req, res):
+            ext_header = req.headers['X-rax-fox']
+            res.headers['X-got-header'] = ext_header
+            return res
 
+        app = self._setup_app_with_request_handler(_req_header_handler,
+                                                   'GET')
+        response = app.get("/dummy_resources/1", headers={'X-rax-fox': "sox"})
+        self.assertEqual(response.headers['X-got-header'], "sox")
+
+    def test_get_resources_with_stub_mgr(self):
         def _req_handler(req, res):
             # only handle JSON responses
             data = json.loads(res.body)
@@ -160,28 +170,32 @@ class RequestExtensionTest(BaseTest):
             return res
 
         conf, app = config.load_paste_app('extensions_test_app',
-                                               {'config_file': test_conf_file}, None)
+                                         {'config_file': test_conf_file}, None)
         base_app = TestApp(app)
-        response = base_app.put("/dummy_resources/1", {'uneditable': "new_value"})
-        self.assertEqual(response.json['uneditable'], "original_value")
-        
 
-        req_ext = extensions.RequestExtension('PUT',
-                                                '/dummy_resources/:(id)',
-                                                _update_handler)
+        response = base_app.put("/dummy_resources/1",
+                                {'uneditable': "new_value"})
+        self.assertEqual(response.json['uneditable'], "original_value")
+
+        ext_app = self._setup_app_with_request_handler(_update_handler,
+                                                            'PUT')
+        ext_response = ext_app.put("/dummy_resources/1",
+                                    {'uneditable': "new_value"})
+        self.assertEqual(ext_response.json['uneditable'], "new_value")
+
+    def _setup_app_with_request_handler(self, handler, verb):
+        req_ext = extensions.RequestExtension(verb,
+                                   '/dummy_resources/:(id)', handler)
 
         manager = StubExtensionManager(None, None, req_ext)
-        extended_app = setup_extensions_test_app(manager)
-        response = extended_app.put("/dummy_resources/1", {'uneditable': "new_value"})
-        self.assertEqual(response.json['uneditable'], "new_value")
+        return setup_extensions_test_app(manager)
 
 
 class TestExtensionMiddlewareFactory(unittest.TestCase):
 
     def test_app_configured_with_extensions_as_filter(self):
         conf, quantum_app = config.load_paste_app('extensions_app_with_filter',
-                                                  {"config_file": test_conf_file},
-                                                  None)
+                                        {"config_file": test_conf_file}, None)
 
         response = TestApp(quantum_app).get("/extensions")
         self.assertEqual(response.status_int, 200)
