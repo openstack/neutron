@@ -1,0 +1,78 @@
+ L2 Network Plugin
+==================
+
+*** Current support for UCS (blade servers) with M81KR VIC (Palo) for 802.1Qbh ***
+
+** Pre-requisities
+* UCS B200 series blades with M81KR VIC installed.
+* UCSM 2.0 (Capitola) Build 230
+* RHEL 6.1
+* UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
+http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
+* To run Quantum on RHEL, you will need to have the correct version of python-routes (version 1.12.3 or later). The RHEL 6.1 package contains an older version. Do the following and check your python-routes version:
+rpm -qav | grep "python-routes"
+
+If it's an older version, you will need to upgrade to 1.12.3 or later. One quick way to do it as by adding the following to your /etc/yum.repos.d/openstack.repo (assuming that you had installed OpenStack on this host, and hence had this repo; else you could add to any other operational repo config), and then update the python-routes package. That should get you the python-routes-1.12.3-2.el6.noarch package.
+
+[openstack-deps]
+name=OpenStack Nova Compute Dependencies
+baseurl=http://yum.griddynamics.net/yum/cactus/deps
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSTACK
+
+
+** Plugin Installation Instructions:
+* Make a backup copy of quantum/quantum/plugins.ini, and edit the file to remove all exisiting entries and add the following entry:
+provider = quantum.plugins.cisco.l2network_plugin.L2Network
+* You should have the following files in quantum/quantum/plugins/cisco directory (if you have pulled the Cisco Quantum branch, you will already have them):
+l2network_plugin.py
+cisco_configuration.py
+cisco_constants.py
+cisco_credentials.py
+cisco_exceptions.py
+cisco_nexus_network_driver.py
+cisco_ucs_network_driver.py
+cisco_ucs_plugin.py
+cisco_utils.py
+__init__.py
+get-vif.sh
+* Configure the L2 Network Pllugin:
+	+ In cisco_configuration.py, 
+		- change the UCSM IP in the following statement to your UCSM IP
+			flags.DEFINE_string('ucsm_ip_address', "172.20.231.27", 'IP address of UCSM')
+		- change the Nova MySQL DB IP if you are running Quantum on a different host than the OpenStack Cloud Controller (in other words you do not need to change the IP if Quantum is running on the same host on which the Nova DB is running). DB IP is changed in the following statement:
+			flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB server')
+		- change the hostname of the OpenStack Cloud Controller below
+			flags.DEFINE_string('nova_host_name', "openstack-0203", 'nova cloud controller hostname')
+		- change the name of the OpenStack project
+			flags.DEFINE_string('nova_proj_name', "demo", 'project created in nova')
+		- change the start range of the VLAN (if you are not sure about this number, leave this unchanged)
+			flags.DEFINE_string('vlan_start', "100", 'This is the start value of the allowable VLANs')
+		- change the end range of the VLAN (if you are not sure about this number, leave this unchanged)
+			flags.DEFINE_string('vlan_end', "3000", 'This is the end value of the allowable VLANs')
+		- unless you have VLANs created in UCSM which start with the name "q-", you do not need to change the following property. If you do need to change it, change "q-" to some other string. Do not use more than 6 characters.
+			flags.DEFINE_string('vlan_name_prefix', "q-", 'Prefix of the name given to the VLAN')
+		- unless you have Port Profiles created in UCSM which start with the name "q-", you do not need to change the following property. If you do need to change it, change "q-" to some other string. Do not use more than 6 characters.
+			flags.DEFINE_string('profile_name_prefix', "q-", 'Prefix of the name given to the port profile')
+		- Change the path to reflect the location of the get-vif.sh script, if you have followed the instructions in this README, this location should be the same as that of your other plugin modules
+                        flags.DEFINE_string('get_next_vif', "/root/sumit/quantum/quantum/plugins/cisco/get-vif.sh", 'This is the location of the script to get the next available dynamic nic')
+	+ In cisco_credentials.py, 
+		- Change the following stucture to reflect the correct UCS and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
+			_creds_dictionary = {
+                     		'UCSM_IP_ADDRESS':["UCSM_USERNAME", "UCSM_PASSWORD"],
+                     		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
+                    	}
+* Start the Quantum service
+
+** Additional installation required on Nova Compute:
+* Create DB Table in Nova DB (On the Cloud Controller)
+mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHAR(255) primary key, profile_name VARCHAR(255), dynamic_vnic VARCHAR(255), host VARCHAR(255), instance_name VARCHAR(255), instance_nic_name VARCHAR(255), used tinyint(1));'
+
+* Replace the following files with the files from the Cisco Nova branch:
+/usr/lib/python2.6/site-packages/nova/virt/libvirt_conn.py
+
+* Add the following files from the Cisco Nova branch:
+/usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
+
+* Restart nova-compute service
