@@ -25,7 +25,7 @@ LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 _creds_dictionary = {
-    '172.20.231.27': ["admin", "c3l12345"],
+    '10.10.10.10': ["username", "password"],
     '127.0.0.1': ["root", "nova"]
 }
 
