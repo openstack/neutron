@@ -24,10 +24,8 @@ from quantum.plugins.cisco import cisco_constants as const
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
-_creds_dictionary = {
-    '10.10.10.10': ["username", "password"],
-    '127.0.0.1': ["root", "nova"]
-}
+_creds_dictionary = {'10.10.10.10': ["username", "password"],
+                     '127.0.0.1': ["root", "nova"]}
 
 
 class Store(object):
