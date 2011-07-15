@@ -48,5 +48,10 @@ class NetworksLimit(exceptions.QuantumException):
 
 
 class PortProfileNotFound(exceptions.QuantumException):
-    message = _("Port profile %(port_id)s could not be found " \
+    message = _("Port profile %(portprofile_id)s could not be found " \
                 "for tenant %(tenant_id)s")
+
+
+class PortProfileInvalidDelete(exceptions.QuantumException):
+    message = _("Port profile %(profile_id)s could not be deleted " \
+                "for tenant %(tenant_id)s since port associations exist")

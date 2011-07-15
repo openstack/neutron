@@ -40,7 +40,8 @@ PORT_PROFILE = 'port-profile'
 PROFILE_ID = 'profile-id'
 PROFILE_NAME = 'profile-name'
 PROFILE_VLAN_NAME = 'profile-vlan-name'
-PROFILE_VLAN_ID = 'profile-vlan-id'
+PROFILE_VLAN_ID = 'vlan-id'
 PROFILE_QOS = 'profile-qos'
+PROFILE_ASSOCIATIONS = 'assignment'
 
 LOGGER_COMPONENT_NAME = "cisco_plugin"

@@ -230,24 +230,46 @@ class L2Network(object):
         profile_id = self._get_unique_profile_id(tenant_id)
         new_port_profile_dict = {const.PROFILE_ID: profile_id,
                                  const.PROFILE_NAME: profile_name,
+                                 const.PROFILE_ASSOCIATIONS: [],
                                  const.PROFILE_VLAN_ID: vlan_id,
                                  const.PROFILE_QOS: None}
         self._portprofiles[profile_id] = new_port_profile_dict
         tenant = self._get_tenant(tenant_id)
         portprofiles = tenant[const.TENANT_PORTPROFILES]
         portprofiles[profile_id] = new_port_profile_dict
-        return new_profile_dict
+        return new_port_profile_dict
 
     def delete_portprofile(self, tenant_id, profile_id):
         portprofile = self._get_portprofile(tenant_id, profile_id)
-        self._portprofile.pop(profile_id)
-        tenant = self._get_tenant(tenant_id)
-        tenant[const.TENANT_PORTPROFILES].pop(profile_id)
+        associations = portprofile[const.PROFILE_ASSOCIATIONS]
+        if len(associations) > 0:
+            raise cexc.PortProfileInvalidDelete(tenant_id=tenant_id,
+                                               profile_id=profile_id)
+        else:
+            self._portprofiles.pop(profile_id)
+            tenant = self._get_tenant(tenant_id)
+            tenant[const.TENANT_PORTPROFILES].pop(profile_id)
 
     def rename_portprofile(self, tenant_id, profile_id, new_name):
         portprofile = self._get_portprofile(tenant_id, profile_id)
         portprofile[const.PROFILE_NAME] = new_name
         return portprofile
+
+    def associate_portprofile(self, tenant_id, net_id,
+                              port_id, portprofile_id):
+        portprofile = self._get_portprofile(tenant_id, portprofile_id)
+        associations = portprofile[const.PROFILE_ASSOCIATIONS]
+        associations.append(port_id)
+
+    def disassociate_portprofile(self, tenant_id, net_id,
+                                 port_id, portprofile_id):
+        portprofile = self._get_portprofile(tenant_id, portprofile_id)
+        associations = portprofile[const.PROFILE_ASSOCIATIONS]
+        associations.remove(port_id)
+
+    def create_defaultPProfile(self, tenant_id, network_id, profile_name,
+                               vlan_id):
+        pass
 
     """
     Private functions
@@ -313,7 +335,7 @@ class L2Network(object):
         portprofile = self._portprofiles.get(portprofile_id)
         if not portprofile:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           profile_id=portprofile_id)
+                                           portprofile_id=portprofile_id)
         return portprofile
 
     def _get_unique_net_id(self, tenant_id):

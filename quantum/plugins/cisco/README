@@ -31,7 +31,7 @@ cisco_configuration.py
 cisco_constants.py
 cisco_credentials.py
 cisco_exceptions.py
-cisco_nexus_network_driver.py
+cisco_nexus_plugin.py
 cisco_ucs_network_driver.py
 cisco_ucs_plugin.py
 cisco_utils.py
