@@ -352,7 +352,8 @@ class ExtensionManager(object):
             LOG.debug(_('Ext description: %s'), extension.get_description())
             LOG.debug(_('Ext namespace: %s'), extension.get_namespace())
             LOG.debug(_('Ext updated: %s'), extension.get_updated())
-            return self._plugin_supports(extension)
+            return (self._plugin_supports(extension) and
+                    self._plugin_implements_interface(extension))
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
@@ -360,6 +361,19 @@ class ExtensionManager(object):
     def _plugin_supports(self, extension):
         return (hasattr(self.plugin, "supports_extension") and
                 self.plugin.supports_extension(extension))
+
+    def _plugin_implements_interface(self, extension):
+        if not hasattr(extension, "get_plugin_interface"):
+            return True
+        interface = extension.get_plugin_interface()
+        expected_methods = self._get_public_methods(interface)
+        implemented_methods = self._get_public_methods(self.plugin.__class__)
+        missing_methods = set(expected_methods) - set(implemented_methods)
+        return len(missing_methods) == 0
+
+    def _get_public_methods(self, klass):
+        return filter(lambda name: not(name.startswith("_")),
+                      klass.__dict__.keys())
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.

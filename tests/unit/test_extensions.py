@@ -101,7 +101,23 @@ class StubPlugin(object):
         return extension.get_alias() in self.supported_extensions
 
 
+class ExtensionExpectingPluginInterface(StubExtension):
+
+    def get_plugin_interface(self):
+        return PluginInterface
+
+
+class PluginInterface(object):
+
+    def get_foo(self, bar=None):
+        pass
+
+
 class ExtensionManagerTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ext_mgr = setup_extensions_middleware().ext_mgr
+        super(ExtensionManagerTest, self).setUp()
 
     def test_invalid_extensions_are_not_registered(self):
 
@@ -109,26 +125,24 @@ class ExtensionManagerTest(unittest.TestCase):
             def get_alias(self):
                 return "invalid_extension"
 
-        ext_mgr = setup_extensions_middleware().ext_mgr
-        ext_mgr.add_extension(InvalidExtension())
-        ext_mgr.add_extension(StubExtension("valid_extension"))
+        self.ext_mgr.add_extension(InvalidExtension())
+        self.ext_mgr.add_extension(StubExtension("valid_extension"))
 
-        self.assertTrue('valid_extension' in ext_mgr.extensions)
-        self.assertFalse('invalid_extension' in ext_mgr.extensions)
+        self.assertTrue('valid_extension' in self.ext_mgr.extensions)
+        self.assertFalse('invalid_extension' in self.ext_mgr.extensions)
 
     def test_unsupported_extensions_are_not_loaded(self):
-        ext_mgr = setup_extensions_middleware().ext_mgr
-        ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
 
-        ext_mgr.add_extension(StubExtension("e1"))
-        ext_mgr.add_extension(StubExtension("e2"))
-        ext_mgr.add_extension(StubExtension("e3"))
+        self.ext_mgr.add_extension(StubExtension("e1"))
+        self.ext_mgr.add_extension(StubExtension("e2"))
+        self.ext_mgr.add_extension(StubExtension("e3"))
 
-        self.assertTrue("e1" in ext_mgr.extensions)
-        self.assertFalse("e2" in ext_mgr.extensions)
-        self.assertTrue("e3" in ext_mgr.extensions)
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+        self.assertFalse("e2" in self.ext_mgr.extensions)
+        self.assertTrue("e3" in self.ext_mgr.extensions)
 
-    def test_extensions_are_not_loaded_for_extensions_unaware_plugins(self):
+    def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
         class ExtensionUnawarePlugin(object):
             """
             This plugin does not implement supports_extension method.
@@ -136,12 +150,54 @@ class ExtensionManagerTest(unittest.TestCase):
             """
             pass
 
-        ext_mgr = setup_extensions_middleware().ext_mgr
-        ext_mgr.plugin = ExtensionUnawarePlugin()
+        self.ext_mgr.plugin = ExtensionUnawarePlugin()
+        self.ext_mgr.add_extension(StubExtension("e1"))
 
-        ext_mgr.add_extension(StubExtension("e1"))
+        self.assertFalse("e1" in self.ext_mgr.extensions)
 
-        self.assertFalse("e1" in ext_mgr.extensions)
+    def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
+
+        class PluginWithoutExpectedInterface(object):
+            """
+            Plugin does not implement get_foo method as expected by extension
+            """
+            def supports_extension(self, true):
+                return true
+
+        self.ext_mgr.plugin = PluginWithoutExpectedInterface()
+        self.ext_mgr.add_extension(ExtensionExpectingPluginInterface("e1"))
+
+        self.assertFalse("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
+
+        class PluginWithExpectedInterface(object):
+            """
+            This Plugin implements get_foo method as expected by extension
+            """
+            def supports_extension(self, true):
+                return true
+
+            def get_foo(self, bar=None):
+                pass
+
+        self.ext_mgr.plugin = PluginWithExpectedInterface()
+        self.ext_mgr.add_extension(ExtensionExpectingPluginInterface("e1"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_expecting_quantum_plugin_interface_are_loaded(self):
+        class ExtensionForQuamtumPluginInterface(StubExtension):
+            """
+            This Extension does not implement get_plugin_interface method.
+            This will work with any plugin implementing QuantumPluginBase
+            """
+            pass
+
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
+        self.ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
 
 
 class ActionExtensionTest(unittest.TestCase):
