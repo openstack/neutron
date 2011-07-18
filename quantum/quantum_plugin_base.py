@@ -230,6 +230,15 @@ class QuantumPluginBase(object):
         """
         pass
 
+    @abstractmethod
+    def supports_extension(self, extension):
+        """
+        Returns if the extension is suppoorted
+
+        :returns: True or False
+        """
+        pass
+
     @classmethod
     def __subclasshook__(cls, klass):
         """

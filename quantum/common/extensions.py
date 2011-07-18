@@ -24,6 +24,7 @@ import logging
 import webob.dec
 import webob.exc
 
+from quantum.manager import QuantumManager
 from quantum.common import exceptions
 from quantum.common import wsgi
 from gettext import gettext as _
@@ -231,8 +232,9 @@ class ExtensionMiddleware(wsgi.Middleware):
                  ext_mgr=None):
 
         self.ext_mgr = (ext_mgr
-                   or ExtensionManager(config_params.get('api_extensions_path',
-                                                         '')))
+                        or ExtensionManager(
+                config_params.get('api_extensions_path',
+                                  ''), QuantumManager().plugin))
 
         mapper = routes.Mapper()
 
@@ -296,11 +298,11 @@ class ExtensionManager(object):
     example extension implementation.
 
     """
-
-    def __init__(self, path):
+    def __init__(self, path, plugin):
         LOG.info(_('Initializing extension manager.'))
 
         self.path = path
+        self.plugin = plugin
         self.extensions = {}
         self._load_all_extensions()
 
@@ -350,10 +352,10 @@ class ExtensionManager(object):
             LOG.debug(_('Ext description: %s'), extension.get_description())
             LOG.debug(_('Ext namespace: %s'), extension.get_namespace())
             LOG.debug(_('Ext updated: %s'), extension.get_updated())
+            return self.plugin.supports_extension(extension)
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
-        return True
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
@@ -392,7 +394,6 @@ class ExtensionManager(object):
                               'file': ext_path})
                     continue
                 new_ext = new_ext_class()
-                self._check_extension(new_ext)
                 self.add_extension(new_ext)
 
     def add_extension(self, ext):

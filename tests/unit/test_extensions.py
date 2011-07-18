@@ -23,7 +23,7 @@ from webtest import TestApp
 from quantum.common import extensions
 from quantum.common import wsgi
 from quantum.common import config
-
+from quantum.common.extensions import ExtensionManager
 
 extension_index_response = "Try to say this Mr. Knox, sir..."
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
@@ -71,37 +71,62 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(404, response.status_int)
 
 
+class StubExtension(object):
+
+    def __init__(self, alias="stub_extension"):
+        self.alias = alias
+
+    def get_name(self):
+        return "Stub Extension"
+
+    def get_alias(self):
+        return self.alias
+
+    def get_description(self):
+        return ""
+
+    def get_namespace(self):
+        return ""
+
+    def get_updated(self):
+        return ""
+
+
+class StubPlugin(object):
+
+    def __init__(self, supported_extensions=[]):
+        self.supported_extensions = supported_extensions
+
+    def supports_extension(self, extension):
+        return extension.get_alias() in self.supported_extensions
+
+
 class ExtensionManagerTest(unittest.TestCase):
 
     def test_invalid_extensions_are_not_registered(self):
-
-        class ValidExtension(object):
-
-            def get_name(self):
-                return "Valid Extension"
-
-            def get_alias(self):
-                return "valid_extension"
-
-            def get_description(self):
-                return ""
-
-            def get_namespace(self):
-                return ""
-
-            def get_updated(self):
-                return ""
 
         class InvalidExtension(object):
             def get_alias(self):
                 return "invalid_extension"
 
-        extended_app = setup_extensions_middleware()
-        ext_mgr = extended_app.ext_mgr
+        ext_mgr = setup_extensions_middleware().ext_mgr
         ext_mgr.add_extension(InvalidExtension())
-        ext_mgr.add_extension(ValidExtension())
+        ext_mgr.add_extension(StubExtension("valid_extension"))
+
         self.assertTrue('valid_extension' in ext_mgr.extensions)
         self.assertFalse('invalid_extension' in ext_mgr.extensions)
+
+    def test_unsupported_extensions_are_not_loaded(self):
+        ext_mgr = setup_extensions_middleware().ext_mgr
+        ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
+
+        ext_mgr.add_extension(StubExtension("e1"))
+        ext_mgr.add_extension(StubExtension("e2"))
+        ext_mgr.add_extension(StubExtension("e3"))
+
+        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertFalse("e2" in ext_mgr.extensions)
+        self.assertTrue("e3" in ext_mgr.extensions)
 
 
 class ActionExtensionTest(unittest.TestCase):

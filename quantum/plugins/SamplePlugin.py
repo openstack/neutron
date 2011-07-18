@@ -434,3 +434,6 @@ class FakePlugin(object):
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
         port['attachment'] = None
+
+    def supports_extension(self, extension):
+        return True

@@ -26,6 +26,7 @@ The caller should make sure that QuantumManager is a singleton.
 """
 import gettext
 import os
+import logging
 gettext.install('quantum', unicode=1)
 
 import os
@@ -33,6 +34,7 @@ import os
 from common import utils
 from quantum_plugin_base import QuantumPluginBase
 
+LOG = logging.getLogger('quantum.manager')
 CONFIG_FILE = "plugins.ini"
 
 
@@ -51,13 +53,13 @@ class QuantumManager(object):
         else:
             self.configuration_file = config
         plugin_location = utils.getPluginFromConfig(self.configuration_file)
-        print "PLUGIN LOCATION:%s" % plugin_location
+        LOG.debug("PLUGIN LOCATION:%s" % plugin_location)
         plugin_klass = utils.import_class(plugin_location)
         if not issubclass(plugin_klass, QuantumPluginBase):
             raise Exception("Configured Quantum plug-in " \
                             "didn't pass compatibility test")
         else:
-            print("Successfully imported Quantum plug-in." \
+            LOG.debug("Successfully imported Quantum plug-in." \
                   "All compatibility tests passed\n")
         self.plugin = plugin_klass()
 
