@@ -128,6 +128,21 @@ class ExtensionManagerTest(unittest.TestCase):
         self.assertFalse("e2" in ext_mgr.extensions)
         self.assertTrue("e3" in ext_mgr.extensions)
 
+    def test_extensions_are_not_loaded_for_extensions_unaware_plugins(self):
+        class ExtensionUnawarePlugin(object):
+            """
+            This plugin does not implement supports_extension method.
+            Extensions will not be loaded when this plugin is used.
+            """
+            pass
+
+        ext_mgr = setup_extensions_middleware().ext_mgr
+        ext_mgr.plugin = ExtensionUnawarePlugin()
+
+        ext_mgr.add_extension(StubExtension("e1"))
+
+        self.assertFalse("e1" in ext_mgr.extensions)
+
 
 class ActionExtensionTest(unittest.TestCase):
 

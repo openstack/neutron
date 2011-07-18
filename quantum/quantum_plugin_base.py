@@ -230,10 +230,10 @@ class QuantumPluginBase(object):
         """
         pass
 
-    @abstractmethod
     def supports_extension(self, extension):
         """
-        Returns if the extension is suppoorted
+        Returns if the extension is supported.
+        If this method is not implemented, extensions will not be loaded.
 
         :returns: True or False
         """

@@ -44,6 +44,9 @@ def find_config(basepath):
 
 
 class QuantumManager(object):
+
+    _instance = None
+
     def __init__(self, config=None):
         if config == None:
             self.configuration_file = find_config(
@@ -60,5 +63,8 @@ class QuantumManager(object):
                   "All compatibility tests passed\n")
         self.plugin = plugin_klass()
 
-    def get_plugin(self):
-        return self.plugin
+    @classmethod
+    def get_plugin(cls):
+        if(cls._instance is None):
+            cls._instance = QuantumManager()
+        return cls._instance.plugin

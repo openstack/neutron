@@ -234,7 +234,7 @@ class ExtensionMiddleware(wsgi.Middleware):
         self.ext_mgr = (ext_mgr
                         or ExtensionManager(
                 config_params.get('api_extensions_path',
-                                  ''), QuantumManager().plugin))
+                                  ''), QuantumManager.get_plugin()))
 
         mapper = routes.Mapper()
 
@@ -352,10 +352,14 @@ class ExtensionManager(object):
             LOG.debug(_('Ext description: %s'), extension.get_description())
             LOG.debug(_('Ext namespace: %s'), extension.get_namespace())
             LOG.debug(_('Ext updated: %s'), extension.get_updated())
-            return self.plugin.supports_extension(extension)
+            return self._plugin_supports(extension)
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
+
+    def _plugin_supports(self, extension):
+        return (hasattr(self.plugin, "supports_extension") and
+                self.plugin.supports_extension(extension))
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
