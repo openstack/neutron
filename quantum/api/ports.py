@@ -132,7 +132,7 @@ class Controller(common.QuantumController):
 
     def get_resource(self, request, tenant_id, network_id, id):
         try:
-            result = self.network_manager.get_port_details(
+            result = self._plugin.get_port_details(
                             tenant_id, network_id, id).get('attachment-id',
                                                            None)
             return dict(attachment=result)

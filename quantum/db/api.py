@@ -137,10 +137,11 @@ def network_destroy(net_id):
         raise Exception("No network found with id = %s" % net_id)
 
 
-def port_create(net_id):
+def port_create(net_id, state=None):
     session = get_session()
     with session.begin():
         port = models.Port(net_id)
+        port['state'] = state or 'DOWN'
         session.add(port)
         session.flush()
         return port

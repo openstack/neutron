@@ -367,7 +367,9 @@ class FakePlugin(object):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("FakePlugin.create_port() called")
-        port = db.port_create(net_id)
+        # verify net_id
+        self._get_network(tenant_id, net_id)
+        port = db.port_create(net_id, port_state)
         port_item = {'port-id': str(port.uuid)}
         return port_item
 
@@ -376,9 +378,15 @@ class FakePlugin(object):
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("FakePlugin.update_port() called")
+        #validate port and network ids
+        self._get_network(tenant_id, net_id)
+        self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(new_state)
         db.port_set_state(port_id, new_state)
-        return
+        port_item = {'port-id': port_id, 
+                     'port-state': new_state}
+        return port_item
+
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
