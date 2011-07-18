@@ -162,11 +162,10 @@ class Controller(common.QuantumController):
         except exception.AlreadyAttached as e:
             return faults.Fault(faults.AlreadyAttached(e))
 
-    #TODO - Complete implementation of these APIs
     def detach_resource(self, request, tenant_id, network_id, id):
         try:
             self._plugin.unplug_interface(tenant_id,
-                                                  network_id, id)
+                                          network_id, id)
             return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

@@ -383,10 +383,9 @@ class FakePlugin(object):
         self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(new_state)
         db.port_set_state(port_id, new_state)
-        port_item = {'port-id': port_id, 
+        port_item = {'port-id': port_id,
                      'port-state': new_state}
         return port_item
-
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -430,6 +429,7 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.unplug_interface() called")
+        self._get_port(tenant_id, net_id, port_id)
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
-        db.port_set_attachment(port_id, None)
+        db.port_unset_attachment(port_id)

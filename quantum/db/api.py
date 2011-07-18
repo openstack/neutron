@@ -195,6 +195,14 @@ def port_set_attachment(port_id, new_interface_id):
                         % (new_interface_id))
 
 
+def port_unset_attachment(port_id):
+    session = get_session()
+    port = port_get(port_id)
+    port.interface_id = None
+    session.merge(port)
+    session.flush
+
+
 def port_destroy(port_id):
     session = get_session()
     try:
