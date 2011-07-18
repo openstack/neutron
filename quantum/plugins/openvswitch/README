@@ -62,19 +62,24 @@ mysql> FLUSH PRIVILEGES;
   distribution tarball (see below) and the agent will use the credentials here
   to access the database.
 
-# -- Agent configuration
+# -- XenServer Agent configuration
 
 - Create the agent distribution tarball
 
 $ make agent-dist
 - Copy the resulting tarball to your xenserver(s) (copy to dom0, not the nova
   compute node)
-- Unpack the tarball and run install.sh.  This will install all of the
+- Unpack the tarball and run xenserver_install.sh.  This will install all of the
   necessary pieces into /etc/xapi.d/plugins.  It will also spit out the name
   of the integration bridge that you'll need for your nova configuration.
   Make sure to specify this in your nova flagfile as --flat_network_bridge.
 - Run the agent [on your hypervisor (dom0)]:
 $ /etc/xapi.d/plugins/ovs_quantum_agent.py /etc/xapi.d/plugins/ovs_quantum_plugin.ini
+
+# -- KVM Agent configuration
+
+- Copy ovs_quantum_agent.py and ovs_quantum_plugin.ini to the Linux host and run: 
+$ python ovs_quantum_agent.py ovs_quantum_plugin.ini
 
 # -- Getting quantum up and running
 
