@@ -24,7 +24,8 @@ from webtest import TestApp
 from quantum.common import extensions
 from quantum.common import wsgi
 from quantum.common import config
-from quantum.common.extensions import ExtensionManager
+from quantum.common.extensions import (ExtensionManager,
+                                       PluginAwareExtensionManager)
 
 extension_index_response = "Try to say this Mr. Knox, sir..."
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
@@ -121,10 +122,6 @@ class StubPluginInterface(extensions.PluginInterface):
 
 class ExtensionManagerTest(unittest.TestCase):
 
-    def setUp(self):
-        self.ext_mgr = setup_extensions_middleware().ext_mgr
-        super(ExtensionManagerTest, self).setUp()
-
     def test_invalid_extensions_are_not_registered(self):
 
         class InvalidExtension(object):
@@ -135,11 +132,18 @@ class ExtensionManagerTest(unittest.TestCase):
             def get_alias(self):
                 return "invalid_extension"
 
-        self.ext_mgr.add_extension(InvalidExtension())
-        self.ext_mgr.add_extension(StubExtension("valid_extension"))
+        ext_mgr = ExtensionManager('')
+        ext_mgr.add_extension(InvalidExtension())
+        ext_mgr.add_extension(StubExtension("valid_extension"))
 
-        self.assertTrue('valid_extension' in self.ext_mgr.extensions)
-        self.assertFalse('invalid_extension' in self.ext_mgr.extensions)
+        self.assertTrue('valid_extension' in ext_mgr.extensions)
+        self.assertFalse('invalid_extension' in ext_mgr.extensions)
+
+
+class PluginAwareExtensionManagerTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ext_mgr = PluginAwareExtensionManager('')
 
     def test_unsupported_extensions_are_not_loaded(self):
         self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])

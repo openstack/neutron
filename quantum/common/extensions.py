@@ -261,9 +261,8 @@ class ExtensionMiddleware(wsgi.Middleware):
                  ext_mgr=None):
 
         self.ext_mgr = (ext_mgr
-                        or ExtensionManager(
-                config_params.get('api_extensions_path',
-                                  ''), QuantumManager.get_plugin()))
+                        or PluginAwareExtensionManager(
+                config_params.get('api_extensions_path', '')))
 
         mapper = routes.Mapper()
 
@@ -327,11 +326,9 @@ class ExtensionManager(object):
     example extension implementation.
 
     """
-    def __init__(self, path, plugin):
+    def __init__(self, path):
         LOG.info(_('Initializing extension manager.'))
-
         self.path = path
-        self.plugin = plugin
         self.extensions = {}
         self._load_all_extensions()
 
@@ -381,25 +378,10 @@ class ExtensionManager(object):
             LOG.debug(_('Ext description: %s'), extension.get_description())
             LOG.debug(_('Ext namespace: %s'), extension.get_namespace())
             LOG.debug(_('Ext updated: %s'), extension.get_updated())
-            return (self._plugin_supports(extension) and
-                    self._plugin_implements_interface(extension))
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
-
-    def _plugin_supports(self, extension):
-        return (hasattr(self.plugin, "supports_extension") and
-                self.plugin.supports_extension(extension))
-
-    def _plugin_implements_interface(self, extension):
-        if(not hasattr(extension, "get_plugin_interface") or
-           extension.get_plugin_interface() is None):
-            return True
-        return isinstance(self.plugin, extension.get_plugin_interface())
-
-    def _get_public_methods(self, klass):
-        return filter(lambda name: not(name.startswith("_")),
-                      klass.__dict__.keys())
+        return True
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
@@ -452,6 +434,31 @@ class ExtensionManager(object):
             raise exceptions.Error("Found duplicate extension: %s"
                                          % alias)
         self.extensions[alias] = ext
+
+
+class PluginAwareExtensionManager(ExtensionManager):
+
+    def __init__(self, path):
+        self.plugin = QuantumManager.get_plugin()
+        super(PluginAwareExtensionManager, self).__init__(path)
+
+    def _check_extension(self, extension):
+        """Checks if plugin supports extension and implements the contract."""
+        extension_is_valid = super(PluginAwareExtensionManager,
+                                self)._check_extension(extension)
+        return (extension_is_valid and
+                self._plugin_supports(extension) and
+                self._plugin_implements_interface(extension))
+
+    def _plugin_supports(self, extension):
+        return (hasattr(self.plugin, "supports_extension") and
+                self.plugin.supports_extension(extension))
+
+    def _plugin_implements_interface(self, extension):
+        if(not hasattr(extension, "get_plugin_interface") or
+           extension.get_plugin_interface() is None):
+            return True
+        return isinstance(self.plugin, extension.get_plugin_interface())
 
 
 class RequestExtension(object):
