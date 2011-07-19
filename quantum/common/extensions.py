@@ -23,13 +23,34 @@ import routes
 import logging
 import webob.dec
 import webob.exc
+from gettext import gettext as _
+from abc import ABCMeta, abstractmethod
 
 from quantum.manager import QuantumManager
 from quantum.common import exceptions
 from quantum.common import wsgi
-from gettext import gettext as _
 
 LOG = logging.getLogger('quantum.common.extensions')
+
+
+class PluginInterface(object):
+    __metaclass__ = ABCMeta
+
+    @classmethod
+    def __subclasshook__(cls, klass):
+        """
+        The __subclasshook__ method is a class method
+        that will be called everytime a class is tested
+        using issubclass(klass, PluginInterface).
+        In that case, it will check that every method
+        marked with the abstractmethod decorator is
+        provided by the plugin class.
+        """
+        for method in cls.__abstractmethods__:
+            if any(method in base.__dict__ for base in klass.__mro__):
+                continue
+            return NotImplemented
+        return True
 
 
 class ExtensionDescriptor(object):
@@ -107,6 +128,14 @@ class ExtensionDescriptor(object):
         """
         request_exts = []
         return request_exts
+
+    def get_plugin_interface(self):
+        """
+        Returns an abstract class which defines contract for the plugin.
+        The abstract class should inherit from extesnions.PluginInterface,
+        Methods in this abstract class  should be decorated as abstractmethod
+        """
+        return None
 
 
 class ActionExtensionController(wsgi.Controller):
@@ -363,13 +392,10 @@ class ExtensionManager(object):
                 self.plugin.supports_extension(extension))
 
     def _plugin_implements_interface(self, extension):
-        if not hasattr(extension, "get_plugin_interface"):
+        if(not hasattr(extension, "get_plugin_interface") or
+           extension.get_plugin_interface() is None):
             return True
-        interface = extension.get_plugin_interface()
-        expected_methods = self._get_public_methods(interface)
-        implemented_methods = self._get_public_methods(self.plugin.__class__)
-        missing_methods = set(expected_methods) - set(implemented_methods)
-        return not missing_methods
+        return isinstance(self.plugin, extension.get_plugin_interface())
 
     def _get_public_methods(self, klass):
         return filter(lambda name: not(name.startswith("_")),

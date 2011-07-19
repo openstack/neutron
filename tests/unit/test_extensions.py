@@ -18,6 +18,7 @@ import unittest
 import routes
 import os.path
 from tests.unit import BaseTest
+from abc import  abstractmethod
 
 from webtest import TestApp
 from quantum.common import extensions
@@ -104,15 +105,16 @@ class StubPlugin(object):
 class ExtensionExpectingPluginInterface(StubExtension):
     """
     This extension expects plugin to implement all the methods defined
-    in PluginInterface
+    in StubPluginInterface
     """
 
     def get_plugin_interface(self):
-        return PluginInterface
+        return StubPluginInterface
 
 
-class PluginInterface(object):
+class StubPluginInterface(extensions.PluginInterface):
 
+    @abstractmethod
     def get_foo(self, bar=None):
         pass
 
@@ -204,6 +206,20 @@ class ExtensionManagerTest(unittest.TestCase):
 
         self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
         self.ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_without_need_for__plugin_interface_are_loaded(self):
+        class ExtensionWithNoNeedForPluginInterface(StubExtension):
+            """
+            This Extension does not need any plugin interface.
+            This will work with any plugin implementing QuantumPluginBase
+            """
+            def get_plugin_interface(self):
+                return None
+
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
+        self.ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
 
         self.assertTrue("e1" in self.ext_mgr.extensions)
 
