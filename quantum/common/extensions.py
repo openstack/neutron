@@ -369,7 +369,7 @@ class ExtensionManager(object):
         expected_methods = self._get_public_methods(interface)
         implemented_methods = self._get_public_methods(self.plugin.__class__)
         missing_methods = set(expected_methods) - set(implemented_methods)
-        return len(missing_methods) == 0
+        return not missing_methods
 
     def _get_public_methods(self, klass):
         return filter(lambda name: not(name.startswith("_")),

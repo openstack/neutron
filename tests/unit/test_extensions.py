@@ -102,6 +102,10 @@ class StubPlugin(object):
 
 
 class ExtensionExpectingPluginInterface(StubExtension):
+    """
+    This extension expects plugin to implement all the methods defined
+    in PluginInterface
+    """
 
     def get_plugin_interface(self):
         return PluginInterface
@@ -122,6 +126,10 @@ class ExtensionManagerTest(unittest.TestCase):
     def test_invalid_extensions_are_not_registered(self):
 
         class InvalidExtension(object):
+            """
+            This Extension doesn't implement extension methods :
+            get_name, get_description, get_namespace and get_updated
+            """
             def get_alias(self):
                 return "invalid_extension"
 
