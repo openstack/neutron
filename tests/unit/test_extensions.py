@@ -65,6 +65,28 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(200, response.status_int)
         self.assertEqual(extension_index_response, response.body)
 
+    def test_resource_extension_with_custom_member_action(self):
+        controller = StubController(extension_index_response)
+        member = {'custom_member_action': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               member_actions=member)
+        test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
+
+        response = test_app.get("/tweedles/some_id/custom_member_action")
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(json.loads(response.body)['member_action'], "value")
+
+    def test_resource_extension_with_custom_collection_action(self):
+        controller = StubController(extension_index_response)
+        collections = {'custom_collection_action': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_actions=collections)
+        test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
+
+        response = test_app.get("/tweedles/custom_collection_action")
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(json.loads(response.body)['collection'], "value")
+
     def test_returns_404_for_non_existant_extension(self):
         test_app = setup_extensions_test_app(StubExtensionManager(None))
 
@@ -369,6 +391,12 @@ class StubController(wsgi.Controller):
 
     def update(self, request, id):
         return {'uneditable': 'original_value'}
+
+    def custom_member_action(self, request, id):
+        return {'member_action': 'value'}
+
+    def custom_collection_action(self, request):
+        return {'collection': 'value'}
 
 
 def app_factory(global_conf, **local_conf):
