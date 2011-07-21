@@ -234,7 +234,7 @@ class FakePlugin(object):
     """
 
     def __init__(self):
-        db.configure_db({'sql_connection':'sqlite:///:memory:'})
+        db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
