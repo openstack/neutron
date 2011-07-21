@@ -1,0 +1,47 @@
+Testing Quantum
+=============================================================
+
+Overview
+
+    There are two types of tests in quantum: functional and unit.  Their
+    respective directories are located in the tests/ directory.
+
+    The functional tests are intended to be used when the service is running.
+    Their goal is to make sure the service is working end to end and also to
+    test any plugin for conformance and functionality.  Also note that the
+    functional tests expect quantum to be running on the local machine.  If it
+    isn't you will have to change the tests to point to your quuntum instance.
+
+    The unit tests can be run without the service running.  They are designed
+    to test the various pieces of the quantum tree to make sure any new
+    changes don't break existing functionality.
+
+Running tests
+
+    All tests can be run via the run_tests.sh script, which will allow you to
+    run them in the standard environment or create a virtual environment to
+    run them in.  All of the functional tests will fail if the service isn't
+    running.  One current TODO item is to be able to specify whether you want
+    to run the functional or unit tests via run_tests.sh.
+
+    After running all of the tests, run_test.sh will report any pep8 errors
+    found in the tree.
+
+Adding more tests
+
+    Quantum is a pretty new code base at this point and there is plenty of
+    areas that need tests.  The current blueprint and branch for adding tests
+    is located at:
+    https://code.launchpad.net/~netstack/quantum/quantum-unit-tests
+
+    Also, there is a wiki page tracking the status of the test effort:
+    http://wiki.openstack.org/QuantumUnitTestStatus
+
+Development process
+
+    It is expected that any new changes that are proposed for merge come with
+    unit tests for that feature or code area.  Ideally any bugs fixes that are
+    submitted also have unit tests to prove that they stay fixed! :)  In
+    addition, before proposing for merge, all of the current unit tests should
+    be passing.
+

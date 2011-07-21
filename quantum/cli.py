@@ -240,6 +240,7 @@ def api_create_port(client, *args):
 
 def delete_port(manager, *args):
     tid, nid, pid = args
+    manager.delete_port(tid, nid, pid)
     LOG.info("Deleted Virtual Port:%s " \
           "on Virtual Network:%s" % (pid, nid))
 
@@ -299,7 +300,8 @@ def api_plug_iface(client, *args):
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
           pid, output))
         return
-    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
+    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid,
+      nid)
 
 
 def unplug_iface(manager, *args):
@@ -318,8 +320,8 @@ def api_unplug_iface(client, *args):
     output = res.read()
     LOG.debug(output)
     if res.status != 202:
-        LOG.error("Failed to unplug iface from port \"%s\": %s" % (vid,
-          pid, output))
+        LOG.error("Failed to unplug iface from port \"%s\": %s" % \
+            (pid, output))
         return
     print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 

@@ -29,7 +29,7 @@ class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
-        'param-name': 'network-name',
+        'param-name': 'net-name',
         'required': True}, ]
 
     _serialization_metadata = {
@@ -41,9 +41,9 @@ class Controller(common.QuantumController):
         },
     }
 
-    def __init__(self, plugin_conf_file=None):
+    def __init__(self, plugin):
         self._resource_name = 'network'
-        super(Controller, self).__init__()
+        super(Controller, self).__init__(plugin)
 
     def index(self, request, tenant_id):
         """ Returns a list of network ids """
@@ -60,7 +60,7 @@ class Controller(common.QuantumController):
 
     def _items(self, req, tenant_id, net_details=False, port_details=False):
         """ Returns a list of networks. """
-        networks = self.network_manager.get_all_networks(tenant_id)
+        networks = self._plugin.get_all_networks(tenant_id)
         builder = networks_view.get_view_builder(req)
         result = [builder.build(network, net_details, port_details)['network']
                   for network in networks]
@@ -85,6 +85,12 @@ class Controller(common.QuantumController):
                 #do like show but with detaik
                 return self._items(request, tenant_id,
                                    net_details=True, port_details=False)
+            network = self._plugin.get_network_details(
+                            tenant_id, id)
+            builder = networks_view.get_view_builder(request)
+            #build response with details
+            result = builder.build(network, True)
+            return dict(networks=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
@@ -97,9 +103,9 @@ class Controller(common.QuantumController):
                                            self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
-        network = self.network_manager.\
+        network = self._plugin.\
                        create_network(tenant_id,
-                                      request_params['network-name'])
+                                      request_params['net-name'])
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)
         return dict(networks=result)
@@ -113,19 +119,16 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            network = self.network_manager.rename_network(tenant_id,
-                        id, request_params['network-name'])
-
-            builder = networks_view.get_view_builder(request)
-            result = builder.build(network, True)
-            return dict(networks=result)
+            self._plugin.rename_network(tenant_id, id,
+                                        request_params['net-name'])
+            return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
     def delete(self, request, tenant_id, id):
         """ Destroys the network with the given id """
         try:
-            self.network_manager.delete_network(tenant_id, id)
+            self._plugin.delete_network(tenant_id, id)
             return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
