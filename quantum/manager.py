@@ -65,7 +65,7 @@ class QuantumManager(object):
         else:
             LOG.debug("Successfully imported Quantum plug-in." \
                       "All compatibility tests passed")
-        self.plugin = plugin_klass(options)
+        self.plugin = plugin_klass()
 
     def get_plugin(self):
         return self.plugin

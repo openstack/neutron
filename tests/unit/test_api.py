@@ -615,10 +615,8 @@ class APITest(unittest.TestCase):
                   "format:%s - END", format)
 
     def setUp(self):
-        self.db_file = ':memory:'
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
-        options['sql_connection'] = 'sqlite:///%s' % self.db_file
         self.api = server.APIRouterV01(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"

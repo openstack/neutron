@@ -31,14 +31,6 @@ class QuantumPluginBase(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, options):
-        """
-        Initializes the Quantum plugin using provided options.
-
-        """
-        pass
-
-    @abstractmethod
     def get_all_networks(self, tenant_id):
         """
         Returns a dictionary containing all
