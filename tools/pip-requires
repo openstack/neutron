@@ -1,4 +1,5 @@
 eventlet>=0.9.12
+Routes>=1.12.3
 nose
 Paste
 PasteDeploy
