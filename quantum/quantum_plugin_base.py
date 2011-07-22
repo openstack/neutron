@@ -230,15 +230,6 @@ class QuantumPluginBase(object):
         """
         pass
 
-    def supports_extension(self, extension):
-        """
-        Returns if the extension is supported.
-        If this method is not implemented, extensions will not be loaded.
-
-        :returns: True or False
-        """
-        pass
-
     @classmethod
     def __subclasshook__(cls, klass):
         """

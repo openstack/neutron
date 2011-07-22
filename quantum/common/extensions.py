@@ -212,6 +212,46 @@ class ExtensionController(wsgi.Controller):
 
 class ExtensionMiddleware(wsgi.Middleware):
     """Extensions middleware for WSGI."""
+    def __init__(self, application, config_params,
+                 ext_mgr=None):
+
+        self.ext_mgr = (ext_mgr
+                        or PluginAwareExtensionManager(
+                config_params.get('api_extensions_path', '')))
+
+        mapper = routes.Mapper()
+
+        # extended resources
+        for resource in self.ext_mgr.get_resources():
+            LOG.debug(_('Extended resource: %s'),
+                        resource.collection)
+            mapper.resource(resource.collection, resource.collection,
+                            controller=resource.controller,
+                            collection=resource.collection_actions,
+                            member=resource.member_actions,
+                            parent_resource=resource.parent)
+
+        # extended actions
+        action_controllers = self._action_ext_controllers(application,
+                                                          self.ext_mgr, mapper)
+        for action in self.ext_mgr.get_actions():
+            LOG.debug(_('Extended action: %s'), action.action_name)
+            controller = action_controllers[action.collection]
+            controller.add_action(action.action_name, action.handler)
+
+        # extended requests
+        req_controllers = self._request_ext_controllers(application,
+                                                        self.ext_mgr, mapper)
+        for request_ext in self.ext_mgr.get_request_extensions():
+            LOG.debug(_('Extended request: %s'), request_ext.key)
+            controller = req_controllers[request_ext.key]
+            controller.add_handler(request_ext.handler)
+
+        self._router = routes.middleware.RoutesMiddleware(self._dispatch,
+                                                          mapper)
+
+        super(ExtensionMiddleware, self).__init__(application)
+
     @classmethod
     def factory(cls, global_config, **local_config):
         """Paste factory."""
@@ -256,46 +296,6 @@ class ExtensionMiddleware(wsgi.Middleware):
                 request_ext_controllers[req_ext.key] = controller
 
         return request_ext_controllers
-
-    def __init__(self, application, config_params,
-                 ext_mgr=None):
-
-        self.ext_mgr = (ext_mgr
-                        or PluginAwareExtensionManager(
-                config_params.get('api_extensions_path', '')))
-
-        mapper = routes.Mapper()
-
-        # extended resources
-        for resource in self.ext_mgr.get_resources():
-            LOG.debug(_('Extended resource: %s'),
-                        resource.collection)
-            mapper.resource(resource.collection, resource.collection,
-                            controller=resource.controller,
-                            collection=resource.collection_actions,
-                            member=resource.member_actions,
-                            parent_resource=resource.parent)
-
-        # extended actions
-        action_controllers = self._action_ext_controllers(application,
-                                                          self.ext_mgr, mapper)
-        for action in self.ext_mgr.get_actions():
-            LOG.debug(_('Extended action: %s'), action.action_name)
-            controller = action_controllers[action.collection]
-            controller.add_action(action.action_name, action.handler)
-
-        # extended requests
-        req_controllers = self._request_ext_controllers(application,
-                                                        self.ext_mgr, mapper)
-        for request_ext in self.ext_mgr.get_request_extensions():
-            LOG.debug(_('Extended request: %s'), request_ext.key)
-            controller = req_controllers[request_ext.key]
-            controller.add_handler(request_ext.handler)
-
-        self._router = routes.middleware.RoutesMiddleware(self._dispatch,
-                                                          mapper)
-
-        super(ExtensionMiddleware, self).__init__(application)
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
@@ -451,8 +451,9 @@ class PluginAwareExtensionManager(ExtensionManager):
                 self._plugin_implements_interface(extension))
 
     def _plugin_supports(self, extension):
-        return (hasattr(self.plugin, "supports_extension") and
-                self.plugin.supports_extension(extension))
+        alias = extension.get_alias()
+        return (hasattr(self.plugin, "supported_extension_aliases") and
+                alias in self.plugin.supported_extension_aliases)
 
     def _plugin_implements_interface(self, extension):
         if(not hasattr(extension, "get_plugin_interface") or

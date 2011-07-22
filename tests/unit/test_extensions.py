@@ -27,72 +27,8 @@ from quantum.common import config
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager)
 
-extension_index_response = "Try to say this Mr. Knox, sir..."
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
-
-
-class ExtensionControllerTest(unittest.TestCase):
-
-    def setUp(self):
-        super(ExtensionControllerTest, self).setUp()
-        self.test_app = setup_extensions_test_app()
-
-    def test_index_gets_all_registerd_extensions(self):
-        response = self.test_app.get("/extensions")
-        foxnsox = response.json["extensions"][0]
-
-        self.assertEqual(foxnsox["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
-
-    def test_extension_can_be_accessed_by_alias(self):
-        foxnsox_extension = self.test_app.get("/extensions/FOXNSOX").json
-
-        self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
-        self.assertEqual(foxnsox_extension["namespace"],
-                         "http://www.fox.in.socks/api/ext/pie/v1.0")
-
-
-class ResourceExtensionTest(unittest.TestCase):
-
-    def test_resource_extension(self):
-        res_ext = extensions.ResourceExtension('tweedles', StubController(
-                                                  extension_index_response))
-        test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
-
-        response = test_app.get("/tweedles")
-        self.assertEqual(200, response.status_int)
-        self.assertEqual(extension_index_response, response.body)
-
-    def test_resource_extension_with_custom_member_action(self):
-        controller = StubController(extension_index_response)
-        member = {'custom_member_action': "GET"}
-        res_ext = extensions.ResourceExtension('tweedles', controller,
-                                               member_actions=member)
-        test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
-
-        response = test_app.get("/tweedles/some_id/custom_member_action")
-        self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['member_action'], "value")
-
-    def test_resource_extension_with_custom_collection_action(self):
-        controller = StubController(extension_index_response)
-        collections = {'custom_collection_action': "GET"}
-        res_ext = extensions.ResourceExtension('tweedles', controller,
-                                               collection_actions=collections)
-        test_app = setup_extensions_test_app(StubExtensionManager(res_ext))
-
-        response = test_app.get("/tweedles/custom_collection_action")
-        self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], "value")
-
-    def test_returns_404_for_non_existant_extension(self):
-        test_app = setup_extensions_test_app(StubExtensionManager(None))
-
-        response = test_app.get("/non_extistant_extension", status='*')
-
-        self.assertEqual(404, response.status_int)
 
 
 class StubExtension(object):
@@ -119,10 +55,7 @@ class StubExtension(object):
 class StubPlugin(object):
 
     def __init__(self, supported_extensions=[]):
-        self.supported_extensions = supported_extensions
-
-    def supports_extension(self, extension):
-        return extension.get_alias() in self.supported_extensions
+        self.supported_extension_aliases = supported_extensions
 
 
 class ExtensionExpectingPluginInterface(StubExtension):
@@ -142,112 +75,84 @@ class StubPluginInterface(extensions.PluginInterface):
         pass
 
 
-class ExtensionManagerTest(unittest.TestCase):
+class StubBaseAppController(wsgi.Controller):
 
-    def test_invalid_extensions_are_not_registered(self):
+    def index(self, request):
+        return "base app index"
 
-        class InvalidExtension(object):
-            """
-            This Extension doesn't implement extension methods :
-            get_name, get_description, get_namespace and get_updated
-            """
-            def get_alias(self):
-                return "invalid_extension"
+    def show(self, request, id):
+        return {'fort': 'knox'}
 
-        ext_mgr = ExtensionManager('')
-        ext_mgr.add_extension(InvalidExtension())
-        ext_mgr.add_extension(StubExtension("valid_extension"))
-
-        self.assertTrue('valid_extension' in ext_mgr.extensions)
-        self.assertFalse('invalid_extension' in ext_mgr.extensions)
+    def update(self, request, id):
+        return {'uneditable': 'original_value'}
 
 
-class PluginAwareExtensionManagerTest(unittest.TestCase):
+class ExtensionsTestApp(wsgi.Router):
 
-    def setUp(self):
-        self.ext_mgr = PluginAwareExtensionManager('')
+    def __init__(self, options={}):
+        mapper = routes.Mapper()
+        controller = StubBaseAppController()
+        mapper.resource("dummy_resource", "/dummy_resources",
+                        controller=controller)
+        super(ExtensionsTestApp, self).__init__(mapper)
 
-    def test_unsupported_extensions_are_not_loaded(self):
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
 
-        self.ext_mgr.add_extension(StubExtension("e1"))
-        self.ext_mgr.add_extension(StubExtension("e2"))
-        self.ext_mgr.add_extension(StubExtension("e3"))
+class ResourceExtensionTest(unittest.TestCase):
 
-        self.assertTrue("e1" in self.ext_mgr.extensions)
-        self.assertFalse("e2" in self.ext_mgr.extensions)
-        self.assertTrue("e3" in self.ext_mgr.extensions)
+    class ResourceExtensionController(wsgi.Controller):
 
-    def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
-        class ExtensionUnawarePlugin(object):
-            """
-            This plugin does not implement supports_extension method.
-            Extensions will not be loaded when this plugin is used.
-            """
-            pass
+        def index(self, request):
+            return "resource index"
 
-        self.ext_mgr.plugin = ExtensionUnawarePlugin()
-        self.ext_mgr.add_extension(StubExtension("e1"))
+        def show(self, request, id):
+            return {'data': {'id': id}}
 
-        self.assertFalse("e1" in self.ext_mgr.extensions)
+        def custom_member_action(self, request, id):
+            return {'member_action': 'value'}
 
-    def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
+        def custom_collection_action(self, request):
+            return {'collection': 'value'}
 
-        class PluginWithoutExpectedInterface(object):
-            """
-            Plugin does not implement get_foo method as expected by extension
-            """
-            def supports_extension(self, true):
-                return true
+    def test_resource_can_be_added_as_extension(self):
+        res_ext = extensions.ResourceExtension('tweedles',
+                                            self.ResourceExtensionController())
+        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
-        self.ext_mgr.plugin = PluginWithoutExpectedInterface()
-        self.ext_mgr.add_extension(ExtensionExpectingPluginInterface("e1"))
+        index_response = test_app.get("/tweedles")
+        self.assertEqual(200, index_response.status_int)
+        self.assertEqual("resource index", index_response.body)
 
-        self.assertFalse("e1" in self.ext_mgr.extensions)
+        show_response = test_app.get("/tweedles/25266")
+        self.assertEqual({'data': {'id': "25266"}}, show_response.json)
 
-    def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
+    def test_resource_extension_with_custom_member_action(self):
+        controller = self.ResourceExtensionController()
+        member = {'custom_member_action': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               member_actions=member)
+        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
-        class PluginWithExpectedInterface(object):
-            """
-            This Plugin implements get_foo method as expected by extension
-            """
-            def supports_extension(self, true):
-                return true
+        response = test_app.get("/tweedles/some_id/custom_member_action")
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(json.loads(response.body)['member_action'], "value")
 
-            def get_foo(self, bar=None):
-                pass
+    def test_resource_extension_with_custom_collection_action(self):
+        controller = self.ResourceExtensionController()
+        collections = {'custom_collection_action': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               collection_actions=collections)
+        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
-        self.ext_mgr.plugin = PluginWithExpectedInterface()
-        self.ext_mgr.add_extension(ExtensionExpectingPluginInterface("e1"))
+        response = test_app.get("/tweedles/custom_collection_action")
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(json.loads(response.body)['collection'], "value")
 
-        self.assertTrue("e1" in self.ext_mgr.extensions)
+    def test_returns_404_for_non_existant_extension(self):
+        test_app = setup_extensions_test_app(SimpleExtensionManager(None))
 
-    def test_extensions_expecting_quantum_plugin_interface_are_loaded(self):
-        class ExtensionForQuamtumPluginInterface(StubExtension):
-            """
-            This Extension does not implement get_plugin_interface method.
-            This will work with any plugin implementing QuantumPluginBase
-            """
-            pass
+        response = test_app.get("/non_extistant_extension", status='*')
 
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
-        self.ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
-
-        self.assertTrue("e1" in self.ext_mgr.extensions)
-
-    def test_extensions_without_need_for__plugin_interface_are_loaded(self):
-        class ExtensionWithNoNeedForPluginInterface(StubExtension):
-            """
-            This Extension does not need any plugin interface.
-            This will work with any plugin implementing QuantumPluginBase
-            """
-            def get_plugin_interface(self):
-                return None
-
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
-        self.ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
-
-        self.assertTrue("e1" in self.ext_mgr.extensions)
+        self.assertEqual(404, response.status_int)
 
 
 class ActionExtensionTest(unittest.TestCase):
@@ -354,8 +259,138 @@ class RequestExtensionTest(BaseTest):
     def _setup_app_with_request_handler(self, handler, verb):
         req_ext = extensions.RequestExtension(verb,
                                    '/dummy_resources/:(id)', handler)
-        manager = StubExtensionManager(None, None, req_ext)
+        manager = SimpleExtensionManager(None, None, req_ext)
         return setup_extensions_test_app(manager)
+
+
+class ExtensionManagerTest(unittest.TestCase):
+
+    def test_invalid_extensions_are_not_registered(self):
+
+        class InvalidExtension(object):
+            """
+            This Extension doesn't implement extension methods :
+            get_name, get_description, get_namespace and get_updated
+            """
+            def get_alias(self):
+                return "invalid_extension"
+
+        ext_mgr = ExtensionManager('')
+        ext_mgr.add_extension(InvalidExtension())
+        ext_mgr.add_extension(StubExtension("valid_extension"))
+
+        self.assertTrue('valid_extension' in ext_mgr.extensions)
+        self.assertFalse('invalid_extension' in ext_mgr.extensions)
+
+
+class PluginAwareExtensionManagerTest(unittest.TestCase):
+
+    def setUp(self):
+        self.ext_mgr = PluginAwareExtensionManager('')
+
+    def test_unsupported_extensions_are_not_loaded(self):
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
+
+        self.ext_mgr.add_extension(StubExtension("e1"))
+        self.ext_mgr.add_extension(StubExtension("e2"))
+        self.ext_mgr.add_extension(StubExtension("e3"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+        self.assertFalse("e2" in self.ext_mgr.extensions)
+        self.assertTrue("e3" in self.ext_mgr.extensions)
+
+    def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
+        class ExtensionUnawarePlugin(object):
+            """
+            This plugin does not implement supports_extension method.
+            Extensions will not be loaded when this plugin is used.
+            """
+            pass
+
+        self.ext_mgr.plugin = ExtensionUnawarePlugin()
+        self.ext_mgr.add_extension(StubExtension("e1"))
+
+        self.assertFalse("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
+
+        class PluginWithoutExpectedInterface(object):
+            """
+            Plugin does not implement get_foo method as expected by extension
+            """
+            supported_extension_aliases = ["supported_extension"]
+
+        self.ext_mgr.plugin = PluginWithoutExpectedInterface()
+        self.ext_mgr.add_extension(
+            ExtensionExpectingPluginInterface("supported_extension"))
+
+        self.assertFalse("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
+
+        class PluginWithExpectedInterface(object):
+            """
+            This Plugin implements get_foo method as expected by extension
+            """
+            supported_extension_aliases = ["supported_extension"]
+
+            def get_foo(self, bar=None):
+                pass
+
+        self.ext_mgr.plugin = PluginWithExpectedInterface()
+        self.ext_mgr.add_extension(
+                ExtensionExpectingPluginInterface("supported_extension"))
+
+        self.assertTrue("supported_extension" in self.ext_mgr.extensions)
+
+    def test_extensions_expecting_quantum_plugin_interface_are_loaded(self):
+        class ExtensionForQuamtumPluginInterface(StubExtension):
+            """
+            This Extension does not implement get_plugin_interface method.
+            This will work with any plugin implementing QuantumPluginBase
+            """
+            pass
+
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
+        self.ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+
+    def test_extensions_without_need_for__plugin_interface_are_loaded(self):
+        class ExtensionWithNoNeedForPluginInterface(StubExtension):
+            """
+            This Extension does not need any plugin interface.
+            This will work with any plugin implementing QuantumPluginBase
+            """
+            def get_plugin_interface(self):
+                return None
+
+        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
+        self.ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
+
+        self.assertTrue("e1" in self.ext_mgr.extensions)
+
+
+class ExtensionControllerTest(unittest.TestCase):
+
+    def setUp(self):
+        super(ExtensionControllerTest, self).setUp()
+        self.test_app = setup_extensions_test_app()
+
+    def test_index_gets_all_registerd_extensions(self):
+        response = self.test_app.get("/extensions")
+        foxnsox = response.json["extensions"][0]
+
+        self.assertEqual(foxnsox["alias"], "FOXNSOX")
+        self.assertEqual(foxnsox["namespace"],
+                         "http://www.fox.in.socks/api/ext/pie/v1.0")
+
+    def test_extension_can_be_accessed_by_alias(self):
+        foxnsox_extension = self.test_app.get("/extensions/FOXNSOX").json
+
+        self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
+        self.assertEqual(foxnsox_extension["namespace"],
+                         "http://www.fox.in.socks/api/ext/pie/v1.0")
 
 
 class TestExtensionMiddlewareFactory(unittest.TestCase):
@@ -366,37 +401,6 @@ class TestExtensionMiddlewareFactory(unittest.TestCase):
 
         response = TestApp(quantum_app).get("/extensions")
         self.assertEqual(response.status_int, 200)
-
-
-class ExtensionsTestApp(wsgi.Router):
-
-    def __init__(self, options={}):
-        mapper = routes.Mapper()
-        controller = StubController(extension_index_response)
-        mapper.resource("dummy_resource", "/dummy_resources",
-                        controller=controller)
-        super(ExtensionsTestApp, self).__init__(mapper)
-
-
-class StubController(wsgi.Controller):
-
-    def __init__(self, body):
-        self.body = body
-
-    def index(self, request):
-        return self.body
-
-    def show(self, request, id):
-        return {'fort': 'knox'}
-
-    def update(self, request, id):
-        return {'uneditable': 'original_value'}
-
-    def custom_member_action(self, request, id):
-        return {'member_action': 'value'}
-
-    def custom_collection_action(self, request):
-        return {'collection': 'value'}
 
 
 def app_factory(global_conf, **local_conf):
@@ -421,21 +425,12 @@ def setup_extensions_test_app(extension_manager=None):
     return TestApp(setup_extensions_middleware(extension_manager))
 
 
-class StubExtensionManager(object):
+class SimpleExtensionManager(object):
 
     def __init__(self, resource_ext=None, action_ext=None, request_ext=None):
         self.resource_ext = resource_ext
         self.action_ext = action_ext
         self.request_ext = request_ext
-
-    def get_name(self):
-        return "Tweedle Beetle Extension"
-
-    def get_alias(self):
-        return "TWDLBETL"
-
-    def get_description(self):
-        return "Provides access to Tweedle Beetles"
 
     def get_resources(self):
         resource_exts = []

@@ -253,6 +253,8 @@ class FakePlugin(object):
                     'net-name': 'cicciotest',
                     'net-ports': _port_dict_2}}
 
+    supported_extension_aliases = ["FOXNSOX"]
+
     def __init__(self):
         FakePlugin._net_counter = len(FakePlugin._networks)
 
@@ -434,6 +436,3 @@ class FakePlugin(object):
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
         port['attachment'] = None
-
-    def supports_extension(self, extension):
-        return True
