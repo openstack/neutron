@@ -132,18 +132,16 @@ class Controller(common.QuantumController):
 
     def get_resource(self, request, tenant_id, network_id, id):
         try:
-            result = self._plugin.get_interface_details(
-                            tenant_id, network_id, id)
+            result = self._plugin.get_port_details(
+                            tenant_id, network_id, id).get('attachment-id',
+                                                           None)
             return dict(attachment=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
 
-    #TODO - Complete implementation of these APIs
     def attach_resource(self, request, tenant_id, network_id, id):
-        content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
         try:
             request_params = \
                 self._parse_request_params(request,
@@ -164,11 +162,10 @@ class Controller(common.QuantumController):
         except exception.AlreadyAttached as e:
             return faults.Fault(faults.AlreadyAttached(e))
 
-    #TODO - Complete implementation of these APIs
     def detach_resource(self, request, tenant_id, network_id, id):
         try:
             self._plugin.unplug_interface(tenant_id,
-                                                  network_id, id)
+                                          network_id, id)
             return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

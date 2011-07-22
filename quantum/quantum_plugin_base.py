@@ -22,6 +22,7 @@ QuantumPluginBase provides the definition of minimum set of
 methods that needs to be implemented by a Quantum Plug-in.
 """
 
+import inspect
 from abc import ABCMeta, abstractmethod
 
 
@@ -242,7 +243,17 @@ class QuantumPluginBase(object):
         """
         if cls is QuantumPluginBase:
             for method in cls.__abstractmethods__:
-                if any(method in base.__dict__ for base in klass.__mro__):
+                method_ok = False
+                for base in klass.__mro__:
+                    if method in base.__dict__:
+                        fn_obj = base.__dict__[method]
+                        if inspect.isfunction(fn_obj):
+                            abstract_fn_obj = cls.__dict__[method]
+                            arg_count = fn_obj.func_code.co_argcount
+                            expected_arg_count = \
+                                abstract_fn_obj.func_code.co_argcount
+                            method_ok = arg_count == expected_arg_count
+                if method_ok:
                     continue
                 return NotImplemented
             return True

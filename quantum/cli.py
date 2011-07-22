@@ -300,7 +300,8 @@ def api_plug_iface(client, *args):
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
           pid, output))
         return
-    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
+    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid,
+      nid)
 
 
 def unplug_iface(manager, *args):
