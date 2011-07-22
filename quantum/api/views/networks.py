@@ -50,10 +50,12 @@ class ViewBuilder(object):
 
     def _build_detail(self, network_data):
         """Return a detailed model of a network."""
+        # net-ports might not be present in response from plugin
+        ports = network_data.get('net-ports', None)
+        portcount = ports and len(ports) or 0
         return dict(network=dict(id=network_data['net-id'],
                                 name=network_data['net-name'],
-                                PortCount=len(network_data['net-ports'].
-                                              keys())))
+                                PortCount=portcount))
 
     def _build_port(self, port_data):
         """Return details about a specific logical port."""

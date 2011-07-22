@@ -38,11 +38,10 @@ class ViewBuilder(object):
         return port
 
     def _build_simple(self, port_data):
-        """Return a simple model of a server."""
+        """Return a simple model of a port."""
         return dict(port=dict(id=port_data['port-id']))
 
     def _build_detail(self, port_data):
-        """Return a simple model of a server."""
+        """Return a simple model of a port (with its state)."""
         return dict(port=dict(id=port_data['port-id'],
-                              state=port_data['port-state'],
-                              attachment=port_data['attachment']))
+                              state=port_data['port-state']))

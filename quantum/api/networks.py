@@ -38,6 +38,7 @@ class Controller(common.QuantumController):
                 "network": ["id", "name"],
                 "port": ["id", "state"],
             },
+            "plurals": {"networks": "network"}
         },
     }
 
@@ -52,11 +53,13 @@ class Controller(common.QuantumController):
 
     def _item(self, req, tenant_id, network_id,
               net_details=True, port_details=False):
-        network = self.network_manager.get_network_details(
+        # We expect get_network_details to return information
+        # concerning logical ports as well.
+        network = self._plugin.get_network_details(
                             tenant_id, network_id)
         builder = networks_view.get_view_builder(req)
-        result = builder.build(network, net_details, port_details)
-        return dict(networks=result)
+        result = builder.build(network, net_details, port_details)['network']
+        return dict(network=result)
 
     def _items(self, req, tenant_id, net_details=False, port_details=False):
         """ Returns a list of networks. """
@@ -79,10 +82,11 @@ class Controller(common.QuantumController):
         network_id = kwargs.get('id')
         try:
             if network_id:
+                # show details for a given network
                 return self._item(request, tenant_id, network_id,
                                   net_details=True, port_details=True)
             else:
-                #do like show but with detaik
+                # show details for all networks
                 return self._items(request, tenant_id,
                                    net_details=True, port_details=False)
             network = self._plugin.get_network_details(

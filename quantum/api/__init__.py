@@ -79,5 +79,3 @@ class APIRouterV01(wsgi.Router):
                        controller=ports.Controller(plugin),
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))
-        print "MAPPED ROUTES"
-        print mapper

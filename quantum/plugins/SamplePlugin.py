@@ -283,8 +283,11 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_network_details() called")
         net = self._get_network(tenant_id, net_id)
+        # Retrieves ports for network
+        ports = self.get_all_ports(tenant_id, net_id)
         return {'net-id': str(net.uuid),
-                'net-name': net.name}
+                'net-name': net.name,
+                'net-ports': ports}
 
     def create_network(self, tenant_id, net_name):
         """
