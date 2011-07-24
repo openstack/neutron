@@ -33,7 +33,6 @@ class ViewBuilder(object):
 
     def build(self, network_data, is_detail=False):
         """Generic method used to generate a network entity."""
-        print "NETWORK-DATA:%s" % network_data
         if is_detail:
             network = self._build_detail(network_data)
         else:

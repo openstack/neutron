@@ -29,7 +29,7 @@ class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
-        'param-name': 'network-name',
+        'param-name': 'net-name',
         'required': True}, ]
 
     _serialization_metadata = {
@@ -80,7 +80,7 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         network = self._plugin.\
                        create_network(tenant_id,
-                                      request_params['network-name'])
+                                      request_params['net-name'])
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)
         return dict(networks=result)
@@ -94,12 +94,9 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            network = self._plugin.rename_network(tenant_id,
-                        id, request_params['network-name'])
-
-            builder = networks_view.get_view_builder(request)
-            result = builder.build(network, True)
-            return dict(networks=result)
+            self._plugin.rename_network(tenant_id, id,
+                                        request_params['net-name'])
+            return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 

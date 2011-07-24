@@ -31,7 +31,6 @@ class ViewBuilder(object):
 
     def build(self, port_data, is_detail=False):
         """Generic method used to generate a port entity."""
-        print "PORT-DATA:%s" % port_data
         if is_detail:
             port = self._build_detail(port_data)
         else:
@@ -45,5 +44,4 @@ class ViewBuilder(object):
     def _build_detail(self, port_data):
         """Return a simple model of a server."""
         return dict(port=dict(id=port_data['port-id'],
-          attachment=port_data['attachment'],
           state=port_data['port-state']))

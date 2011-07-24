@@ -2,7 +2,7 @@
 
 function usage {
   echo "Usage: $0 [OPTION]..."
-  echo "Run Melange's test suite(s)"
+  echo "Run Quantum's test suite(s)"
   echo ""
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
   echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
