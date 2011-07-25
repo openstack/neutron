@@ -190,7 +190,7 @@ def parse_isotime(timestr):
     return datetime.datetime.strptime(timestr, TIME_FORMAT)
 
 
-def getPluginFromConfig(file="config.ini"):
+def get_plugin_from_config(file="config.ini"):
         Config = ConfigParser.ConfigParser()
         Config.read(file)
         return Config.get("PLUGIN", "provider")

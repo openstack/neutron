@@ -25,10 +25,13 @@ from quantum.common import extensions
 from quantum.common import wsgi
 from quantum.common import config
 from quantum.common.extensions import (ExtensionManager,
-                                       PluginAwareExtensionManager)
+                                       PluginAwareExtensionManager,
+                                       PluginAwareExtensionMiddleware)
 
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
+
+plugin_options = {'plugin_provider': "quantum.plugins.SamplePlugin.FakePlugin"}
 
 
 class StubExtension(object):
@@ -286,7 +289,7 @@ class ExtensionManagerTest(unittest.TestCase):
 class PluginAwareExtensionManagerTest(unittest.TestCase):
 
     def setUp(self):
-        self.ext_mgr = PluginAwareExtensionManager('')
+        self.ext_mgr = PluginAwareExtensionManager('', plugin_options)
 
     def test_unsupported_extensions_are_not_loaded(self):
         self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
@@ -418,7 +421,8 @@ def setup_base_app():
 def setup_extensions_middleware(extension_manager=None):
     options = {'config_file': test_conf_file}
     conf, app = config.load_paste_app('extensions_test_app', options, None)
-    return extensions.ExtensionMiddleware(app, conf, extension_manager)
+    return PluginAwareExtensionMiddleware(app, conf, ext_mgr=extension_manager,
+                                          plugin_options=plugin_options)
 
 
 def setup_extensions_test_app(extension_manager=None):

@@ -216,9 +216,8 @@ class ExtensionMiddleware(wsgi.Middleware):
                  ext_mgr=None):
 
         self.ext_mgr = (ext_mgr
-                        or PluginAwareExtensionManager(
+                        or ExtensionManager(
                 config_params.get('api_extensions_path', '')))
-
         mapper = routes.Mapper()
 
         # extended resources
@@ -317,6 +316,18 @@ class ExtensionMiddleware(wsgi.Middleware):
             return req.environ['extended.app']
         app = match['controller']
         return app
+
+
+class PluginAwareExtensionMiddleware(ExtensionMiddleware):
+
+    def __init__(self, application, config_params, ext_mgr=None,
+                 plugin_options=None):
+        plugin_aware_extension_mgr = PluginAwareExtensionManager(
+                      config_params.get('api_extensions_path', ''),
+                      plugin_options)
+        ext_mgr = (ext_mgr or plugin_aware_extension_mgr)
+        super(PluginAwareExtensionMiddleware, self).__init__(
+            application, config_params, ext_mgr)
 
 
 class ExtensionManager(object):
@@ -438,8 +449,8 @@ class ExtensionManager(object):
 
 class PluginAwareExtensionManager(ExtensionManager):
 
-    def __init__(self, path):
-        self.plugin = QuantumManager.get_plugin()
+    def __init__(self, path, plugin_options=None):
+        self.plugin = QuantumManager(plugin_options).get_plugin()
         super(PluginAwareExtensionManager, self).__init__(path)
 
     def _check_extension(self, extension):

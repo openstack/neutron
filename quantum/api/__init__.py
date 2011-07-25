@@ -41,14 +41,15 @@ class APIRouterV01(wsgi.Router):
     Routes requests on the Quantum API to the appropriate controller
     """
 
-    def __init__(self, ext_mgr=None):
+    def __init__(self, options=None):
         mapper = routes.Mapper()
-        self._setup_routes(mapper)
+        self._setup_routes(mapper, options)
         super(APIRouterV01, self).__init__(mapper)
 
-    def _setup_routes(self, mapper):
+    def _setup_routes(self, mapper, options):
         # Loads the quantum plugin
-        plugin = manager.QuantumManager.get_plugin()
+        plugin = manager.QuantumManager(options).get_plugin()
+
         uri_prefix = '/tenants/{tenant_id}/'
         mapper.resource('network', 'networks',
                         controller=networks.Controller(plugin),

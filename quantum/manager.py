@@ -25,6 +25,7 @@ class.
 The caller should make sure that QuantumManager is a singleton.
 """
 import gettext
+import logging
 import os
 import logging
 gettext.install('quantum', unicode=1)
@@ -34,6 +35,7 @@ from quantum_plugin_base import QuantumPluginBase
 
 LOG = logging.getLogger('quantum.manager')
 CONFIG_FILE = "plugins.ini"
+LOG = logging.getLogger('quantum.manager')
 
 
 def find_config(basepath):
@@ -45,26 +47,27 @@ def find_config(basepath):
 
 class QuantumManager(object):
 
-    _instance = None
-
-    def __init__(self, config=None):
-        if config == None:
+    def __init__(self, options=None, config_file=None):
+        if config_file == None:
             self.configuration_file = find_config(
                 os.path.abspath(os.path.dirname(__file__)))
         else:
-            self.configuration_file = config
-        plugin_location = utils.getPluginFromConfig(self.configuration_file)
-        plugin_klass = utils.import_class(plugin_location)
+            self.configuration_file = config_file
+        # If no options have been provided, create an empty dict
+        if not options:
+            options = {}
+        if not 'plugin_provider' in options:
+            options['plugin_provider'] = \
+                utils.get_plugin_from_config(self.configuration_file)
+        LOG.debug("Plugin location:%s", options['plugin_provider'])
+        plugin_klass = utils.import_class(options['plugin_provider'])
         if not issubclass(plugin_klass, QuantumPluginBase):
             raise Exception("Configured Quantum plug-in " \
                             "didn't pass compatibility test")
         else:
             LOG.debug("Successfully imported Quantum plug-in." \
-                  "All compatibility tests passed\n")
+                      "All compatibility tests passed")
         self.plugin = plugin_klass()
 
-    @classmethod
-    def get_plugin(cls):
-        if(cls._instance is None):
-            cls._instance = QuantumManager()
-        return cls._instance.plugin
+    def get_plugin(self):
+        return self.plugin
