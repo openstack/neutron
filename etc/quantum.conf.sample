@@ -23,7 +23,7 @@ use = egg:Paste#urlmap
 pipeline = extensions quantumapiapp
 
 [filter:extensions]
-paste.filter_factory = quantum.common.extensions:ExtensionMiddleware.factory
+paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
 
 [app:quantumversions]
 paste.app_factory = quantum.api.versions:Versions.factory

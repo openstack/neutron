@@ -18,24 +18,7 @@ api_extensions_path = unit/extensions
 pipeline = extensions extensions_test_app
 
 [filter:extensions]
-paste.filter_factory = quantum.common.extensions:ExtensionMiddleware.factory
+paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
 
 [app:extensions_test_app]
 paste.app_factory = tests.unit.test_extensions:app_factory
-
-[composite:quantum]
-use = egg:Paste#urlmap
-/: quantumversions
-/v0.1: quantumapi
-
-[pipeline:quantumapi]
-pipeline = extensions quantumapiapp
-
-[filter:extensions]
-paste.filter_factory = quantum.common.extensions:ExtensionMiddleware.factory
-
-[app:quantumversions]
-paste.app_factory = quantum.api.versions:Versions.factory
-
-[app:quantumapiapp]
-paste.app_factory = quantum.api:APIRouterV01.factory

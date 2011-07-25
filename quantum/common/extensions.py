@@ -318,16 +318,14 @@ class ExtensionMiddleware(wsgi.Middleware):
         return app
 
 
-class PluginAwareExtensionMiddleware(ExtensionMiddleware):
-
-    def __init__(self, application, config_params, ext_mgr=None,
-                 plugin_options=None):
-        plugin_aware_extension_mgr = PluginAwareExtensionManager(
-                      config_params.get('api_extensions_path', ''),
-                      plugin_options)
-        ext_mgr = (ext_mgr or plugin_aware_extension_mgr)
-        super(PluginAwareExtensionMiddleware, self).__init__(
-            application, config_params, ext_mgr)
+def plugin_aware_extension_middleware_factory(global_config, **local_config):
+    """Paste factory."""
+    def _factory(app):
+        extensions_path = global_config.get('api_extensions_path', '')
+        ext_mgr = PluginAwareExtensionManager(extensions_path,
+                                              QuantumManager().get_plugin())
+        return ExtensionMiddleware(app, global_config, ext_mgr=ext_mgr)
+    return _factory
 
 
 class ExtensionManager(object):
@@ -449,8 +447,8 @@ class ExtensionManager(object):
 
 class PluginAwareExtensionManager(ExtensionManager):
 
-    def __init__(self, path, plugin_options=None):
-        self.plugin = QuantumManager(plugin_options).get_plugin()
+    def __init__(self, path, plugin):
+        self.plugin = plugin
         super(PluginAwareExtensionManager, self).__init__(path)
 
     def _check_extension(self, extension):
@@ -470,7 +468,8 @@ class PluginAwareExtensionManager(ExtensionManager):
         if(not hasattr(extension, "get_plugin_interface") or
            extension.get_plugin_interface() is None):
             return True
-        return isinstance(self.plugin, extension.get_plugin_interface())
+        return isinstance(self.plugin,
+                          extension.get_plugin_interface())
 
 
 class RequestExtension(object):

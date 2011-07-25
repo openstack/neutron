@@ -26,7 +26,7 @@ from quantum.common import wsgi
 from quantum.common import config
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
-                                       PluginAwareExtensionMiddleware)
+                                       ExtensionMiddleware)
 
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
@@ -288,19 +288,17 @@ class ExtensionManagerTest(unittest.TestCase):
 
 class PluginAwareExtensionManagerTest(unittest.TestCase):
 
-    def setUp(self):
-        self.ext_mgr = PluginAwareExtensionManager('', plugin_options)
-
     def test_unsupported_extensions_are_not_loaded(self):
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1", "e3"])
+        stub_plugin = StubPlugin(supported_extensions=["e1", "e3"])
+        ext_mgr = PluginAwareExtensionManager('', stub_plugin)
 
-        self.ext_mgr.add_extension(StubExtension("e1"))
-        self.ext_mgr.add_extension(StubExtension("e2"))
-        self.ext_mgr.add_extension(StubExtension("e3"))
+        ext_mgr.add_extension(StubExtension("e1"))
+        ext_mgr.add_extension(StubExtension("e2"))
+        ext_mgr.add_extension(StubExtension("e3"))
 
-        self.assertTrue("e1" in self.ext_mgr.extensions)
-        self.assertFalse("e2" in self.ext_mgr.extensions)
-        self.assertTrue("e3" in self.ext_mgr.extensions)
+        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertFalse("e2" in ext_mgr.extensions)
+        self.assertTrue("e3" in ext_mgr.extensions)
 
     def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
         class ExtensionUnawarePlugin(object):
@@ -310,10 +308,10 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             """
             pass
 
-        self.ext_mgr.plugin = ExtensionUnawarePlugin()
-        self.ext_mgr.add_extension(StubExtension("e1"))
+        ext_mgr = PluginAwareExtensionManager('', ExtensionUnawarePlugin())
+        ext_mgr.add_extension(StubExtension("e1"))
 
-        self.assertFalse("e1" in self.ext_mgr.extensions)
+        self.assertFalse("e1" in ext_mgr.extensions)
 
     def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
 
@@ -323,11 +321,12 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             """
             supported_extension_aliases = ["supported_extension"]
 
-        self.ext_mgr.plugin = PluginWithoutExpectedInterface()
-        self.ext_mgr.add_extension(
+        ext_mgr = PluginAwareExtensionManager('',
+                                              PluginWithoutExpectedInterface())
+        ext_mgr.add_extension(
             ExtensionExpectingPluginInterface("supported_extension"))
 
-        self.assertFalse("e1" in self.ext_mgr.extensions)
+        self.assertFalse("e1" in ext_mgr.extensions)
 
     def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
 
@@ -339,12 +338,12 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
 
             def get_foo(self, bar=None):
                 pass
-
-        self.ext_mgr.plugin = PluginWithExpectedInterface()
-        self.ext_mgr.add_extension(
+        ext_mgr = PluginAwareExtensionManager('',
+                                              PluginWithExpectedInterface())
+        ext_mgr.add_extension(
                 ExtensionExpectingPluginInterface("supported_extension"))
 
-        self.assertTrue("supported_extension" in self.ext_mgr.extensions)
+        self.assertTrue("supported_extension" in ext_mgr.extensions)
 
     def test_extensions_expecting_quantum_plugin_interface_are_loaded(self):
         class ExtensionForQuamtumPluginInterface(StubExtension):
@@ -353,11 +352,11 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             This will work with any plugin implementing QuantumPluginBase
             """
             pass
+        stub_plugin = StubPlugin(supported_extensions=["e1"])
+        ext_mgr = PluginAwareExtensionManager('', stub_plugin)
+        ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
 
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
-        self.ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
-
-        self.assertTrue("e1" in self.ext_mgr.extensions)
+        self.assertTrue("e1" in ext_mgr.extensions)
 
     def test_extensions_without_need_for__plugin_interface_are_loaded(self):
         class ExtensionWithNoNeedForPluginInterface(StubExtension):
@@ -368,10 +367,11 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             def get_plugin_interface(self):
                 return None
 
-        self.ext_mgr.plugin = StubPlugin(supported_extensions=["e1"])
-        self.ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
+        stub_plugin = StubPlugin(supported_extensions=["e1"])
+        ext_mgr = PluginAwareExtensionManager('', stub_plugin)
+        ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
 
-        self.assertTrue("e1" in self.ext_mgr.extensions)
+        self.assertTrue("e1" in ext_mgr.extensions)
 
 
 class ExtensionControllerTest(unittest.TestCase):
@@ -396,16 +396,6 @@ class ExtensionControllerTest(unittest.TestCase):
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
 
 
-class TestExtensionMiddlewareFactory(unittest.TestCase):
-
-    def test_app_configured_with_extensions_as_filter(self):
-        conf, quantum_app = config.load_paste_app('extensions_app_with_filter',
-                                        {"config_file": test_conf_file}, None)
-
-        response = TestApp(quantum_app).get("/extensions")
-        self.assertEqual(response.status_int, 200)
-
-
 def app_factory(global_conf, **local_conf):
     conf = global_conf.copy()
     conf.update(local_conf)
@@ -421,8 +411,7 @@ def setup_base_app():
 def setup_extensions_middleware(extension_manager=None):
     options = {'config_file': test_conf_file}
     conf, app = config.load_paste_app('extensions_test_app', options, None)
-    return PluginAwareExtensionMiddleware(app, conf, ext_mgr=extension_manager,
-                                          plugin_options=plugin_options)
+    return ExtensionMiddleware(app, conf, ext_mgr=extension_manager)
 
 
 def setup_extensions_test_app(extension_manager=None):
