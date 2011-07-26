@@ -415,21 +415,25 @@ class ExtensionManager(object):
 
     def _load_all_extensions_from_path(self, path):
         for f in os.listdir(path):
-            LOG.info(_('Loading extension file: %s'), f)
-            mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
-            ext_path = os.path.join(path, f)
-            if file_ext.lower() == '.py' and not mod_name.startswith('_'):
-                mod = imp.load_source(mod_name, ext_path)
-                ext_name = mod_name[0].upper() + mod_name[1:]
-                new_ext_class = getattr(mod, ext_name, None)
-                if not new_ext_class:
-                    LOG.warn(_('Did not find expected name '
-                               '"%(ext_name)s" in %(file)s'),
-                             {'ext_name': ext_name,
-                              'file': ext_path})
-                    continue
-                new_ext = new_ext_class()
+            try:
+                LOG.info(_('Loading extension file: %s'), f)
+                mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
+                ext_path = os.path.join(path, f)
+                if file_ext.lower() == '.py' and not mod_name.startswith('_'):
+                    mod = imp.load_source(mod_name, ext_path)
+                    ext_name = mod_name[0].upper() + mod_name[1:]
+                    new_ext_class = getattr(mod, ext_name, None)
+                    if not new_ext_class:
+                        LOG.warn(_('Did not find expected name '
+                                   '"%(ext_name)s" in %(file)s'),
+                                 {'ext_name': ext_name,
+                                  'file': ext_path})
+                        continue
+                    new_ext = new_ext_class()
                 self.add_extension(new_ext)
+            except Exception as exception:
+                LOG.warn("extension file %s wasnt loaded due to %s",
+                         f, exception)
 
     def add_extension(self, ext):
         # Do nothing if the extension doesn't check out
@@ -452,7 +456,8 @@ class PluginAwareExtensionManager(ExtensionManager):
         super(PluginAwareExtensionManager, self).__init__(path)
 
     def _check_extension(self, extension):
-        """Checks if plugin supports extension and implements the contract."""
+        """Checks if plugin supports extension and implements the
+        extension contract."""
         extension_is_valid = super(PluginAwareExtensionManager,
                                 self)._check_extension(extension)
         return (extension_is_valid and
@@ -461,15 +466,25 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     def _plugin_supports(self, extension):
         alias = extension.get_alias()
-        return (hasattr(self.plugin, "supported_extension_aliases") and
-                alias in self.plugin.supported_extension_aliases)
+        supports_extension = (hasattr(self.plugin,
+                                      "supported_extension_aliases") and
+                              alias in self.plugin.supported_extension_aliases)
+        if not supports_extension:
+            LOG.warn("extension %s not supported by plugin %s",
+                     alias, self.plugin)
+        return supports_extension
 
     def _plugin_implements_interface(self, extension):
         if(not hasattr(extension, "get_plugin_interface") or
            extension.get_plugin_interface() is None):
             return True
-        return isinstance(self.plugin,
-                          extension.get_plugin_interface())
+        plugin_has_interface = isinstance(self.plugin,
+                                          extension.get_plugin_interface())
+        if not plugin_has_interface:
+            LOG.warn("plugin %s does not implement extension's"
+                     "plugin interface %s" % (self.plugin,
+                                             extension.get_alias()))
+        return plugin_has_interface
 
 
 class RequestExtension(object):
