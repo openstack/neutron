@@ -108,26 +108,32 @@ There are a few requirements to writing your own plugin:
 # -- Extensions
 
 1) Creating Extensions:
-   An example extension exists in ./tests/unit/extensions/foxinsocks.py
-   The unit tests in ./tests/unit/test_extensions.py document the complete
-   set of extension features supported
-2) Loading Extension: 
-   a) The extension file should have a class with same name as the filename. 
+   a) Extension files should be placed under ./extensions folder. 
+   b) The extension file should have a class with the same name as the filename. 
       This class should implement the contract required by the extension framework. 
       See ExtensionDescriptor class in ./quantum/common/extensions.py for details
-      For an example look at Foxinsocks class in foxinsocks.py
-   b) The extension file should be deployed in the ./extensions folder. 
-      If the filename starts with an "_", it will not be treated as an extension.
-3) Plugins advertizing extension support:
-   A Plugin can advertize all the extensions it supports through the 
-   'supported_extension_aliases' attribute. Eg:
+   c) To stop a file in ./extensions folder from being loaded as an extension, 
+      the filename should start with an "_"
+   For an example of an extension file look at Foxinsocks class in 
+   ./tests/unit/extensions/foxinsocks.py
+   The unit tests in ./tests/unit/test_extensions.py document all the ways in 
+   which you can use extensions
+
+2) Associating plugins with extensions:
+   a) A Plugin can advertize all the extensions it supports through the 
+     'supported_extension_aliases' attribute. Eg:
  
-   class SomePlugin:
-      ...
-      supported_extension_aliases = ['extension1_alias', 
+      class SomePlugin:
+        ...
+        supported_extension_aliases = ['extension1_alias', 
                                      'extension2_alias',
                                      'extension3_alias']
-4) Standardizing extensions:
-  An extension might be supported by multiple plugins. In such cases, the extension
-  can mandate an interface that all plugins have to support for that extension.
-  For an example see the FoxInSocksPluginInterface in foxinsocks.py and the QuantumEchoPlugin
+      Any extension not in this list will not be loaded for the plugin
+
+  b) Extension Interfaces for plugins (optional)
+     The extension can mandate an interface that plugins have to support with the
+     'get_plugin_interface' method in the extension.
+     For an example see the FoxInSocksPluginInterface in foxinsocks.py.
+
+  The QuantumEchoPlugin lists foxinsox in its supported_extension_aliases 
+  and implements the method from FoxInSocksPluginInterface.
