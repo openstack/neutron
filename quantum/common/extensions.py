@@ -24,7 +24,7 @@ import logging
 import webob.dec
 import webob.exc
 from gettext import gettext as _
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 from quantum.manager import QuantumManager
 from quantum.common import exceptions

@@ -19,6 +19,7 @@ import json
 
 from quantum.common import wsgi
 from quantum.common import extensions
+from abc import  abstractmethod
 
 
 class FoxInSocksController(wsgi.Controller):
@@ -27,10 +28,20 @@ class FoxInSocksController(wsgi.Controller):
         return "Try to say this Mr. Knox, sir..."
 
 
+class FoxInSocksPluginInterface(extensions.PluginInterface):
+
+    @abstractmethod
+    def method_to_support_foxnsox_extension(self):
+        pass
+
+
 class Foxinsocks(object):
 
     def __init__(self):
         pass
+
+    def get_plugin_interface(self):
+        return FoxInSocksPluginInterface
 
     def get_name(self):
         return "Fox In Socks"

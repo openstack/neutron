@@ -119,6 +119,11 @@ class QuantumEchoPlugin(object):
         """
         print("unplug_interface() called\n")
 
+    supported_extension_aliases = ["FOXNSOX"]
+
+    def method_to_support_foxnsox_extension(self):
+        print("method_to_support_foxnsox_extension() called\n")
+
 
 class DummyDataPlugin(object):
 
@@ -236,8 +241,6 @@ class FakePlugin(object):
     def __init__(self):
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         FakePlugin._net_counter = 0
-
-    supported_extension_aliases = ["FOXNSOX"]
 
     def _get_network(self, tenant_id, network_id):
         try:

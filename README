@@ -105,4 +105,29 @@ There are a few requirements to writing your own plugin:
 4) Launch the Quantum Service, and your plug-in is configured and ready to
    manage a Cloud Networking Fabric.
 
+# -- Extensions
 
+1) Creating Extensions:
+   An example extension exists in ./tests/unit/extensions/foxinsocks.py
+   The unit tests in ./tests/unit/test_extensions.py document the complete
+   set of extension features supported
+2) Loading Extension: 
+   a) The extension file should have a class with same name as the filename. 
+      This class should implement the contract required by the extension framework. 
+      See ExtensionDescriptor class in ./quantum/common/extensions.py for details
+      For an example look at Foxinsocks class in foxinsocks.py
+   b) The extension file should be deployed in the ./extensions folder. 
+      If the filename starts with an "_", it will not be treated as an extension.
+3) Plugins advertizing extension support:
+   A Plugin can advertize all the extensions it supports through the 
+   'supported_extension_aliases' attribute. Eg:
+ 
+   class SomePlugin:
+      ...
+      supported_extension_aliases = ['extension1_alias', 
+                                     'extension2_alias',
+                                     'extension3_alias']
+4) Standardizing extensions:
+  An extension might be supported by multiple plugins. In such cases, the extension
+  can mandate an interface that all plugins have to support for that extension.
+  For an example see the FoxInSocksPluginInterface in foxinsocks.py and the QuantumEchoPlugin

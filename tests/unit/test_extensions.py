@@ -27,11 +27,11 @@ from quantum.common import config
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
+from quantum.plugins.SamplePlugin import QuantumEchoPlugin
 
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
-
-plugin_options = {'plugin_provider': "quantum.plugins.SamplePlugin.FakePlugin"}
+extensions_path = os.path.join(os.path.dirname(__file__), "extensions")
 
 
 class StubExtension(object):
@@ -409,6 +409,9 @@ def setup_base_app():
 
 
 def setup_extensions_middleware(extension_manager=None):
+    extension_manager = (extension_manager or
+                         PluginAwareExtensionManager(extensions_path,
+                                                     QuantumEchoPlugin()))
     options = {'config_file': test_conf_file}
     conf, app = config.load_paste_app('extensions_test_app', options, None)
     return ExtensionMiddleware(app, conf, ext_mgr=extension_manager)
