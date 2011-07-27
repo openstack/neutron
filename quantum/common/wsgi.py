@@ -482,7 +482,7 @@ class Serializer(object):
         if not xmlns and self.default_xmlns:
             node.setAttribute('xmlns', self.default_xmlns)
 
-        return node.toprettyxml(indent='    ')
+        return node.toprettyxml(indent='', newl='')
 
     def _to_xml_node(self, doc, metadata, nodename, data):
         """Recursive method to convert data members to XML nodes."""
