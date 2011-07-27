@@ -425,7 +425,10 @@ class Serializer(object):
         The string must be in the format of a supported MIME type.
 
         """
-        return self.get_deserialize_handler(content_type)(datastring)
+        try:
+            return self.get_deserialize_handler(content_type)(datastring)
+        except Exception:
+            raise webob.exc.HTTPBadRequest("Could not deserialize data")
 
     def get_deserialize_handler(self, content_type):
         handlers = {
