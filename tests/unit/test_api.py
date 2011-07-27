@@ -630,7 +630,6 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_unparsable_data - " \
                   "format:%s - END", format)
 
-
     def setUp(self):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
@@ -852,4 +851,3 @@ class APITest(unittest.TestCase):
 
     def test_unparsable_data_json(self):
         self._test_unparsable_data('json')
-
