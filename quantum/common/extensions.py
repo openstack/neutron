@@ -400,18 +400,12 @@ class ExtensionManager(object):
         widgets.py the extension class within that module should be
         'Widgets'.
 
-        In addition, extensions are loaded from the 'contrib' directory.
-
         See tests/unit/extensions/foxinsocks.py for an example
         extension implementation.
 
         """
         if os.path.exists(self.path):
             self._load_all_extensions_from_path(self.path)
-
-        contrib_path = os.path.join(os.path.dirname(__file__), "contrib")
-        if os.path.exists(contrib_path):
-            self._load_all_extensions_from_path(contrib_path)
 
     def _load_all_extensions_from_path(self, path):
         for f in os.listdir(path):
@@ -430,7 +424,7 @@ class ExtensionManager(object):
                                   'file': ext_path})
                         continue
                     new_ext = new_ext_class()
-                self.add_extension(new_ext)
+                    self.add_extension(new_ext)
             except Exception as exception:
                 LOG.warn("extension file %s wasnt loaded due to %s",
                          f, exception)
