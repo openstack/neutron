@@ -90,9 +90,9 @@ class APITest(unittest.TestCase):
         """ Setups a test environment for the API client """
         HOST = '127.0.0.1'
         PORT = 9696
-        USE_SSL = True
+        USE_SSL = False
 
-        self.client = Client(HOST,PORT,USE_SSL,TENANT_1,'json',ServerStub, key_file="/ssl.cert", cert_file="/ssl.cert")
+        self.client = Client(HOST,PORT,USE_SSL,TENANT_1,'json',ServerStub)
 
     def _assert_sanity(self, call, status, method, path, data=[], params={}):
         """ Perform common assertions to test the sanity of client requests """
@@ -103,7 +103,7 @@ class APITest(unittest.TestCase):
             self.assertRaises(Exception, call, *data, **params)
             return
 
-        # Make the call, then get the data from the root node and strip its data
+        # Make the call, then get the data from the root node and assert it
         data = call(*data, **params)['data']
 
         self.assertEqual(data['method'], method)
