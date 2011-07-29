@@ -614,6 +614,22 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_delete_attachment_portnotfound - " \
                   "format:%s - END", format)
 
+    def _test_unparsable_data(self, format):
+        LOG.debug("_test_unparsable_data - " \
+                  " format:%s - START", format)
+
+        data = "this is not json or xml"
+        method = 'POST'
+        content_type = "application/%s" % format
+        tenant_id = self.tenant_id
+        path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
+        network_req = testlib.create_request(path, data, content_type, method)
+        network_res = network_req.get_response(self.api)
+        self.assertEqual(network_res.status_int, 400)
+
+        LOG.debug("_test_unparsable_data - " \
+                  "format:%s - END", format)
+
     def setUp(self):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
@@ -829,3 +845,9 @@ class APITest(unittest.TestCase):
 
     def test_delete_attachment_portnotfound_json(self):
         self._test_delete_attachment_portnotfound('json')
+
+    def test_unparsable_data_xml(self):
+        self._test_unparsable_data('xml')
+
+    def test_unparsable_data_json(self):
+        self._test_unparsable_data('json')
