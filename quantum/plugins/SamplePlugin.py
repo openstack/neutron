@@ -159,7 +159,6 @@ class DummyDataPlugin(object):
         retrieved a list of all the remote vifs that
         are attached to the network
         """
-        print("get_network_details() called\n")
         vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0"]
         return vifs_on_net
 
@@ -186,12 +185,6 @@ class DummyDataPlugin(object):
         print("create_port() called\n")
         #return the port id
         return 201
-
-    def update_port(self, tenant_id, net_id, port_id, port_state):
-        """
-        Updates the state of a port on the specified Virtual Network.
-        """
-        print("update_port() called\n")
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -290,8 +283,11 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_network_details() called")
         net = self._get_network(tenant_id, net_id)
+        # Retrieves ports for network
+        ports = self.get_all_ports(tenant_id, net_id)
         return {'net-id': str(net.uuid),
-                'net-name': net.name}
+                'net-name': net.name,
+                'net-ports': ports}
 
     def create_network(self, tenant_id, net_name):
         """

@@ -84,10 +84,10 @@ $ python ovs_quantum_agent.py ovs_quantum_plugin.ini
 # -- Getting quantum up and running
 
 - Start quantum [on the quantum service host]:
-~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python bin/quantum etc/quantum.conf
+~/src/quantum  $ PYTHONPATH=.:$PYTHONPATH python bin/quantum etc/quantum.conf
 - Run ovs_quantum_plugin.py via the quantum plugin framework cli [on the
   quantum service host]
-~/src/quantum-framework$ PYTHONPATH=.:$PYTHONPATH python quantum/cli.py
+~/src/quantum$ PYTHONPATH=.:$PYTHONPATH python quantum/cli.py
 
 This will show help all of the available commands.
 
