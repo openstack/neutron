@@ -45,7 +45,7 @@ class ServerStub():
             return status
             
     # To test error codes, set the host to 10.0.0.1, and the port to the code
-    def __init__(self, host, port, key_file, cert_file):
+    def __init__(self, host, port=9696, key_file="", cert_file=""):
         self.host = host
         self.port = port
         self.key_file = key_file

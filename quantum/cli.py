@@ -64,7 +64,7 @@ def create_net(manager, *args):
 
 def api_create_net(client, *args):
     tid, name = args
-    data = {'network': {'network-name': '%s' % name}}
+    data = {'network': {'net-name': '%s' % name}}
     res = client.create_network(data)
     LOG.debug(res)
     nid = None
@@ -133,7 +133,7 @@ def rename_net(manager, *args):
 
 def api_rename_net(client, *args):
     tid, nid, name = args
-    data = {'network': {'network-name': '%s' % name}}
+    data = {'network': {'net-name': '%s' % name}}
     try:
         res = client.update_network(nid, data)
     except Exception, e:
