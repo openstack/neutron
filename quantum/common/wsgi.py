@@ -425,7 +425,10 @@ class Serializer(object):
         The string must be in the format of a supported MIME type.
 
         """
-        return self.get_deserialize_handler(content_type)(datastring)
+        try:
+            return self.get_deserialize_handler(content_type)(datastring)
+        except Exception:
+            raise webob.exc.HTTPBadRequest("Could not deserialize data")
 
     def get_deserialize_handler(self, content_type):
         handlers = {
@@ -482,7 +485,7 @@ class Serializer(object):
         if not xmlns and self.default_xmlns:
             node.setAttribute('xmlns', self.default_xmlns)
 
-        return node.toprettyxml(indent='    ')
+        return node.toprettyxml(indent='', newl='')
 
     def _to_xml_node(self, doc, metadata, nodename, data):
         """Recursive method to convert data members to XML nodes."""
