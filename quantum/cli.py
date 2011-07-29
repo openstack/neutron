@@ -114,7 +114,7 @@ def create_net(manager, *args):
 
 def api_create_net(client, *args):
     tid, name = args
-    data = {'network': {'network-name': '%s' % name}}
+    data = {'network': {'net-name': '%s' % name}}
     body = Serializer().serialize(data, CONTENT_TYPE)
     res = client.do_request(tid, 'POST', "/networks." + FORMAT, body=body)
     rd = json.loads(res.read())
@@ -185,7 +185,7 @@ def rename_net(manager, *args):
 
 def api_rename_net(client, *args):
     tid, nid, name = args
-    data = {'network': {'network-name': '%s' % name}}
+    data = {'network': {'net-name': '%s' % name}}
     body = Serializer().serialize(data, CONTENT_TYPE)
     res = client.do_request(tid, 'PUT', "/networks/%s.%s" % (nid, FORMAT),
       body=body)
