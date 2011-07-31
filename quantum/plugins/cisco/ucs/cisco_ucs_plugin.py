@@ -20,12 +20,12 @@
 import logging as LOG
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco import cisco_configuration as conf
-from quantum.plugins.cisco import cisco_constants as const
-from quantum.plugins.cisco import cisco_credentials as cred
-from quantum.plugins.cisco import cisco_exceptions as cexc
-from quantum.plugins.cisco import cisco_ucs_network_driver
-from quantum.plugins.cisco import cisco_utils as cutil
+from quantum.plugins.cisco.common import cisco_configuration as conf
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
+from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
+from quantum.plugins.cisco.common import cisco_utils as cutil
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

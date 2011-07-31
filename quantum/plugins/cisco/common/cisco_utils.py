@@ -23,9 +23,9 @@ import sys
 import traceback
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco import cisco_configuration as conf
-from quantum.plugins.cisco import cisco_constants as const
-from quantum.plugins.cisco import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_configuration as conf
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_credentials as cred
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

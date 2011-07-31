@@ -27,16 +27,16 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSTACK
 provider = quantum.plugins.cisco.l2network_plugin.L2Network
 * You should have the following files in quantum/quantum/plugins/cisco directory (if you have pulled the Cisco Quantum branch, you will already have them):
 l2network_plugin.py
-cisco_configuration.py
-cisco_constants.py
-cisco_credentials.py
-cisco_exceptions.py
-cisco_nexus_plugin.py
-cisco_ucs_network_driver.py
-cisco_ucs_plugin.py
-cisco_utils.py
+common/cisco_configuration.py
+common/cisco_constants.py
+common/cisco_credentials.py
+common/cisco_exceptions.py
+nexus/cisco_nexus_plugin.py
+ucs/cisco_ucs_network_driver.py
+ucs/cisco_ucs_plugin.py
+common/cisco_utils.py
 __init__.py
-get-vif.sh
+ucs/get-vif.sh
 * Configure the L2 Network Pllugin:
 	+ In cisco_configuration.py, 
 		- change the UCSM IP in the following statement to your UCSM IP
