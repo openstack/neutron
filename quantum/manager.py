@@ -21,7 +21,6 @@
 Quantum's Manager class is responsible for parsing a config file and
 instantiating the correct plugin that concretely implement quantum_plugin_base
 class.
-
 The caller should make sure that QuantumManager is a singleton.
 """
 import gettext
