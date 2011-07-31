@@ -114,8 +114,7 @@ class APITest(unittest.TestCase):
         network_data = self._net_serializer.deserialize(
                            show_network_res.body, content_type)
         self.assertEqual({'id': network_id,
-                          'name': self.network_name,
-                          'PortCount': 0},
+                          'name': self.network_name},
                          network_data['network'])
         LOG.debug("_test_show_network - format:%s - END", format)
 
@@ -147,8 +146,7 @@ class APITest(unittest.TestCase):
         network_data = self._net_serializer.deserialize(
                            show_network_res.body, content_type)
         self.assertEqual({'id': network_id,
-                          'name': new_name,
-                          'PortCount': 0},
+                          'name': new_name},
                          network_data['network'])
         LOG.debug("_test_rename_network - format:%s - END", format)
 

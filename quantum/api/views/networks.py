@@ -54,8 +54,7 @@ class ViewBuilder(object):
         ports = network_data.get('net-ports', None)
         portcount = ports and len(ports) or 0
         return dict(network=dict(id=network_data['net-id'],
-                                name=network_data['net-name'],
-                                PortCount=portcount))
+                                name=network_data['net-name']))
 
     def _build_port(self, port_data):
         """Return details about a specific logical port."""
