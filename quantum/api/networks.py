@@ -29,7 +29,7 @@ class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
     _network_ops_param_list = [{
-        'param-name': 'net-name',
+        'param-name': 'name',
         'required': True}, ]
 
     _serialization_metadata = {
@@ -45,11 +45,6 @@ class Controller(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'network'
         super(Controller, self).__init__(plugin)
-
-    def index(self, request, tenant_id):
-        """ Returns a list of network ids """
-        #TODO: this should be for a given tenant!!!
-        return self._items(request, tenant_id)
 
     def _item(self, req, tenant_id, network_id,
               net_details=True, port_details=False):
@@ -68,6 +63,10 @@ class Controller(common.QuantumController):
         result = [builder.build(network, net_details, port_details)['network']
                   for network in networks]
         return dict(networks=result)
+
+    def index(self, request, tenant_id):
+        """ Returns a list of network ids """
+        return self._items(request, tenant_id)
 
     def show(self, request, tenant_id, id):
         """ Returns network details for the given network id """
@@ -109,10 +108,11 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         network = self._plugin.\
                        create_network(tenant_id,
-                                      request_params['net-name'])
+                                      request_params['name'])
         builder = networks_view.get_view_builder(request)
-        result = builder.build(network)
-        return dict(networks=result)
+        result = builder.build(network)['network']
+        #MUST RETURN 202
+        return dict(network=result)
 
     def update(self, request, tenant_id, id):
         """ Updates the name for the network with the given id """
@@ -125,7 +125,7 @@ class Controller(common.QuantumController):
         try:
             self._plugin.rename_network(tenant_id, id,
                                         request_params['net-name'])
-            return exc.HTTPAccepted()
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
@@ -133,7 +133,7 @@ class Controller(common.QuantumController):
         """ Destroys the network with the given id """
         try:
             self._plugin.delete_network(tenant_id, id)
-            return exc.HTTPAccepted()
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.NetworkInUse as e:
