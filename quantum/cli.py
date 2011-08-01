@@ -137,7 +137,7 @@ def api_rename_net(client, *args):
     try:
         res = client.update_network(nid, data)
     except Exception, e:
-        LOG.error("Failed to rename network %s: %s" % (nid,e))
+        LOG.error("Failed to rename network %s: %s" % (nid, e))
         return
     LOG.debug(res)
     print "Renamed Virtual Network with ID:%s" % nid
@@ -378,7 +378,8 @@ if __name__ == "__main__":
         sys.exit(1)
     LOG.debug("Executing command \"%s\" with args: %s" % (cmd, args))
     if not options.load_plugin:
-        client = Client(options.host, options.port, options.ssl, args[0],FORMAT)
+        client = Client(options.host, options.port, options.ssl,
+                        args[0], FORMAT)
         if "api_func" not in commands[cmd]:
             LOG.error("API version of \"%s\" is not yet implemented" % cmd)
             sys.exit(1)

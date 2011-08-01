@@ -21,6 +21,7 @@ import socket
 import urllib
 from quantum.common.wsgi import Serializer
 
+
 class api_call(object):
     """A Decorator to add support for format and tenant overriding"""
     def __init__(self, f):
@@ -28,7 +29,7 @@ class api_call(object):
 
     def __get__(self, instance, owner):
         def with_params(*args, **kwargs):
-            # Backup the format and tenant, then temporarily change them if needed
+            # Temporarily set format and tenant for this request
             (format, tenant) = (instance.format, instance.tenant)
 
             if 'format' in kwargs:
@@ -41,12 +42,13 @@ class api_call(object):
             return ret
         return with_params
 
+
 class Client(object):
 
     """A base client class - derived from Glance.BaseClient"""
 
     action_prefix = '/v0.1/tenants/{tenant_id}'
-    
+
     """Action query strings"""
     networks_path = "/networks"
     network_path = "/networks/%s"
@@ -54,8 +56,8 @@ class Client(object):
     port_path = "/networks/%s/ports/%s"
     attachment_path = "/networks/%s/ports/%s/attachment"
 
-    def __init__(self, host = "127.0.0.1", port = 9696, use_ssl = False,
-        tenant=None, format="xml", testingStub=None, key_file=None, cert_file=None):
+    def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
+                format="xml", testingStub=None, key_file=None, cert_file=None):
         """
         Creates a new client to some service.
 
@@ -64,7 +66,7 @@ class Client(object):
         :param use_ssl: True to use SSL, False to use HTTP
         :param tenant: The tenant ID to make requests with
         :param format: The format to query the server with
-        :param testingStub: A class that stubs basic server attributes for tests
+        :param testingStub: A class that stubs basic server methods for tests
         :param key_file: The SSL key file to use if use_ssl is true
         :param cert_file: The SSL cert file to use if use_ssl is true
         """
@@ -92,7 +94,7 @@ class Client(object):
     def do_request(self, method, action, body=None,
                    headers=None, params=None):
         """
-        Connects to the server and issues a request.  
+        Connects to the server and issues a request.
         Returns the result data, or raises an appropriate exception if
         HTTP status code is not 2xx
 
@@ -103,7 +105,7 @@ class Client(object):
                              to action
 
         """
-        
+
         # Ensure we have a tenant id
         if not self.tenant:
             raise Exception("Tenant ID not set")
@@ -111,7 +113,7 @@ class Client(object):
         # Add format and tenant_id
         action += ".%s" % self.format
         action = Client.action_prefix + action
-        action = action.replace('{tenant_id}',self.tenant)
+        action = action.replace('{tenant_id}', self.tenant)
 
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
@@ -119,10 +121,10 @@ class Client(object):
         try:
             connection_type = self.get_connection_type()
             headers = headers or {}
-            
+
             # Open connection and send request, handling SSL certs
-            certs = {'key_file':self.key_file, 'cert_file':self.cert_file}
-            certs = dict((x,certs[x]) for x in certs if certs[x] != None)
+            certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
+            certs = dict((x, certs[x]) for x in certs if certs[x] != None)
 
             if self.use_ssl and len(certs):
                 c = connection_type(self.host, self.port, **certs)
@@ -180,7 +182,7 @@ class Client(object):
         """
         Queries the server for the details of a certain network
         """
-        return self.do_request("GET", (self.network_path%network))
+        return self.do_request("GET", self.network_path % (network))
 
     @api_call
     def create_network(self, body=None):
@@ -196,7 +198,7 @@ class Client(object):
         Updates a network on the server
         """
         body = self.serialize(body)
-        return self.do_request("PUT", self.network_path % (network),body=body)
+        return self.do_request("PUT", self.network_path % (network), body=body)
 
     @api_call
     def delete_network(self, network):
@@ -217,7 +219,7 @@ class Client(object):
         """
         Queries the server for a list of ports on a given network
         """
-        return self.do_request("GET", self.port_path % (network,port))
+        return self.do_request("GET", self.port_path % (network, port))
 
     @api_call
     def create_port(self, network):
@@ -231,7 +233,7 @@ class Client(object):
         """
         Deletes a port from a network on the server
         """
-        return self.do_request("DELETE", self.port_path % (network,port))
+        return self.do_request("DELETE", self.port_path % (network, port))
 
     @api_call
     def set_port_state(self, network, port, body=None):
@@ -240,15 +242,15 @@ class Client(object):
         """
         body = self.serialize(body)
         return self.do_request("PUT",
-            self.port_path % (network,port), body=body)
+            self.port_path % (network, port), body=body)
 
     @api_call
     def list_port_attachments(self, network, port):
         """
         Deletes a port from a network on the server
         """
-        return self.do_request("GET", self.attachment_path % (network,port))
-    
+        return self.do_request("GET", self.attachment_path % (network, port))
+
     @api_call
     def attach_resource(self, network, port, body=None):
         """
@@ -256,11 +258,12 @@ class Client(object):
         """
         body = self.serialize(body)
         return self.do_request("PUT",
-            self.attachment_path % (network,port), body=body)
+            self.attachment_path % (network, port), body=body)
 
     @api_call
     def detach_resource(self, network, port):
         """
         Deletes a port from a network on the server
         """
-        return self.do_request("DELETE", self.attachment_path % (network,port))
+        return self.do_request("DELETE",
+                               self.attachment_path % (network, port))
