@@ -76,3 +76,11 @@ mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHA
 /usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
 
 * Restart nova-compute service
+
+**L2network database usage requirements -
+* mysql database "quantum_l2network" is required for persistence of the l2network plugin data.
+	+ The database can be created as follows -
+		- # mysql -uroot -pnova; (username/password here is root/nova)
+		- mysql> create database quantum_l2network;
+		- mysql> use quantum_l2network;
+	+ The database and login details must be specified in quantum/plugins/cisco/db/db_conn.ini.
