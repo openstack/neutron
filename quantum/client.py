@@ -123,7 +123,7 @@ class Client(object):
             # Open connection and send request, handling SSL certs
             certs = {'key_file':self.key_file, 'cert_file':self.cert_file}
             certs = {x:certs[x] for x in certs if x != None}
-            print connection_type
+
             if self.use_ssl and len(certs):
                 c = connection_type(self.host, self.port, **certs)
             else:
