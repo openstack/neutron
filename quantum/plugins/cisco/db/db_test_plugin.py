@@ -19,14 +19,17 @@ import ConfigParser
 import os
 import logging as LOG
 import unittest
+
 from optparse import OptionParser
+from quantum.plugins.cisco.common import cisco_constants as const
 
 import quantum.db.api as db
-import quantum.plugins.cisco.l2network_db as l2network_db
 import quantum.db.models
-import quantum.plugins.cisco.l2network_models
+import quantum.plugins.cisco.db.l2network_db as l2network_db
+import quantum.plugins.cisco.db.l2network_models
 
 CONF_FILE = "db_conn.ini"
+LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 def find_config(basepath):
@@ -1032,9 +1035,9 @@ if __name__ == "__main__":
 
     #load the models and db based on the 2nd level plugin argument
     if args[0] == "ucs":
-        ucs_db = __import__("quantum.plugins.cisco.ucs_db", \
+        ucs_db = __import__("quantum.plugins.cisco.db.ucs_db", \
                 fromlist=["ucs_db"])
-        ucs_model = __import__("quantum.plugins.cisco.ucs_models", \
+        ucs_model = __import__("quantum.plugins.cisco.db.ucs_models", \
                 fromlist=["ucs_models"])
 
     db_conf()

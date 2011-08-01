@@ -17,9 +17,9 @@
 
 from sqlalchemy.orm import exc
 
+import l2network_models
 import quantum.db.api as db
 import quantum.db.models as models
-import l2network_models
 
 
 def get_all_vlan_bindings():

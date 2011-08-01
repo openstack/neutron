@@ -19,7 +19,7 @@
 
 import logging as LOG
 
-from quantum.plugins.cisco import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_constants as const
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

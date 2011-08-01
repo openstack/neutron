@@ -27,9 +27,9 @@ import subprocess
 from xml.etree import ElementTree as et
 import urllib
 
-from quantum.plugins.cisco import cisco_configuration as conf
-from quantum.plugins.cisco import cisco_constants as const
-from quantum.plugins.cisco import cisco_exceptions as cexc
+from quantum.plugins.cisco.common import cisco_configuration as conf
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

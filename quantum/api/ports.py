@@ -40,7 +40,10 @@ class Controller(common.QuantumController):
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "port": ["id", "state"], }, }, }
+                "port": ["id", "state"], },
+            "plurals": {"ports": "port"}
+        },
+    }
 
     def __init__(self, plugin):
         self._resource_name = 'port'
@@ -68,8 +71,8 @@ class Controller(common.QuantumController):
                             tenant_id, network_id, id)
             builder = ports_view.get_view_builder(request)
             #build response with details
-            result = builder.build(port, True)
-            return dict(ports=result)
+            result = builder.build(port, True)['port']
+            return dict(port=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
@@ -105,7 +108,7 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         try:
             port = self._plugin.update_port(tenant_id, network_id, id,
-                                                 request_params['port-state'])
+                                            request_params['port-state'])
             builder = ports_view.get_view_builder(request)
             result = builder.build(port, True)
             return dict(ports=result)
@@ -122,7 +125,7 @@ class Controller(common.QuantumController):
         try:
             self._plugin.delete_port(tenant_id, network_id, id)
             return exc.HTTPAccepted()
-            #TODO(salvatore-orlando): Handle portInUse error
+            # TODO(salvatore-orlando): Handle portInUse error
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
