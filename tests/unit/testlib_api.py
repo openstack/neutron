@@ -77,9 +77,10 @@ def new_port_request(tenant_id, network_id, port_state,
     method = 'POST'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports.%(format)s" % locals()
-    data = custom_req_body or {'port': {'port-state': '%s' % port_state}}
+    data = custom_req_body or port_state and \
+           {'port': {'port-state': '%s' % port_state}}
     content_type = "application/%s" % format
-    body = Serializer().serialize(data, content_type)
+    body = data and Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
