@@ -18,76 +18,23 @@ import unittest
 import routes
 import os.path
 from tests.unit import BaseTest
-from abc import  abstractmethod
 
 from webtest import TestApp
-from quantum.common import extensions
 from quantum.common import wsgi
 from quantum.common import config
+from quantum.common import extensions
+from quantum.plugins.SamplePlugin import QuantumEchoPlugin
+from tests.unit.extension_stubs import (StubExtension, StubPlugin,
+                                        StubPluginInterface,
+                                        StubBaseAppController,
+                                        ExtensionExpectingPluginInterface)
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
-from quantum.plugins.SamplePlugin import QuantumEchoPlugin
 
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
 extensions_path = os.path.join(os.path.dirname(__file__), "extensions")
-
-
-class StubExtension(object):
-
-    def __init__(self, alias="stub_extension"):
-        self.alias = alias
-
-    def get_name(self):
-        return "Stub Extension"
-
-    def get_alias(self):
-        return self.alias
-
-    def get_description(self):
-        return ""
-
-    def get_namespace(self):
-        return ""
-
-    def get_updated(self):
-        return ""
-
-
-class StubPlugin(object):
-
-    def __init__(self, supported_extensions=[]):
-        self.supported_extension_aliases = supported_extensions
-
-
-class ExtensionExpectingPluginInterface(StubExtension):
-    """
-    This extension expects plugin to implement all the methods defined
-    in StubPluginInterface
-    """
-
-    def get_plugin_interface(self):
-        return StubPluginInterface
-
-
-class StubPluginInterface(extensions.PluginInterface):
-
-    @abstractmethod
-    def get_foo(self, bar=None):
-        pass
-
-
-class StubBaseAppController(wsgi.Controller):
-
-    def index(self, request):
-        return "base app index"
-
-    def show(self, request, id):
-        return {'fort': 'knox'}
-
-    def update(self, request, id):
-        return {'uneditable': 'original_value'}
 
 
 class ExtensionsTestApp(wsgi.Router):
