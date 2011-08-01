@@ -20,6 +20,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
 
+from quantum.common import exceptions as q_exc
 from quantum.db import models
 
 _ENGINE = None
@@ -105,8 +106,8 @@ def network_get(net_id):
         return  session.query(models.Network).\
             filter_by(uuid=net_id).\
             one()
-    except exc.NoResultFound:
-        raise Exception("No net found with id = %s" % net_id)
+    except exc.NoResultFound, e:
+        raise q_exc.NetworkNotFound(net_id=net_id)
 
 
 def network_rename(net_id, tenant_id, new_name):
@@ -115,6 +116,8 @@ def network_rename(net_id, tenant_id, new_name):
         res = session.query(models.Network).\
           filter_by(tenant_id=tenant_id, name=new_name).\
           one()
+        if not res:
+            raise exc.NetworkNotFound(net_id=net_id)
     except exc.NoResultFound:
         net = network_get(net_id)
         net.name = new_name
@@ -134,10 +137,13 @@ def network_destroy(net_id):
         session.flush()
         return net
     except exc.NoResultFound:
-        raise Exception("No network found with id = %s" % net_id)
+        raise q_exc.NetworkNotFound(net_id=net_id)
 
 
 def port_create(net_id, state=None):
+    # confirm network exists
+    network_get(net_id)
+
     session = get_session()
     with session.begin():
         port = models.Port(net_id)
@@ -154,63 +160,90 @@ def port_list(net_id):
       all()
 
 
-def port_get(port_id):
+def port_get(port_id, net_id):
+    # confirm network exists
+    network_get(net_id)
     session = get_session()
     try:
         return  session.query(models.Port).\
           filter_by(uuid=port_id).\
+          filter_by(network_id=net_id).\
           one()
     except exc.NoResultFound:
-        raise Exception("No port found with id = %s " % port_id)
+        raise q_exc.PortNotFound(net_id=net_id, port_id=port_id)
 
 
-def port_set_state(port_id, new_state):
-    port = port_get(port_id)
-    if port:
-        session = get_session()
-        port.state = new_state
-        session.merge(port)
-        session.flush()
-        return port
+def port_set_state(port_id, net_id, new_state):
+    if new_state not in ('ACTIVE', 'DOWN'):
+        raise q_exc.StateInvalid(port_state=new_state)
 
+    # confirm network exists
+    network_get(net_id)
 
-def port_set_attachment(port_id, new_interface_id):
+    port = port_get(port_id, net_id)
     session = get_session()
-    ports = []
+    port.state = new_state
+    session.merge(port)
+    session.flush()
+    return port
+
+
+def port_set_attachment(port_id, net_id, new_interface_id):
+    # confirm network exists
+    network_get(net_id)
+
+    session = get_session()
+    port = port_get(port_id, net_id)
+
     if new_interface_id != "":
+        # We are setting, not clearing, the attachment-id
+        if port['interface_id']:
+            raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
+                                att_id=port['interface_id'])
+
         try:
-            ports = session.query(models.Port).\
+            port = session.query(models.Port).\
             filter_by(interface_id=new_interface_id).\
-            all()
+            one()
+            raise q_exc.AlreadyAttached(net_id=net_id,
+                                    port_id=port_id,
+                                    att_id=new_interface_id,
+                                    att_port_id=port['uuid'])
         except exc.NoResultFound:
+            # this is what should happen
             pass
-    if len(ports) == 0:
-        port = port_get(port_id)
-        port.interface_id = new_interface_id
-        session.merge(port)
-        session.flush()
-        return port
-    else:
-        raise Exception("Port with attachment \"%s\" already exists"
-                        % (new_interface_id))
+    port.interface_id = new_interface_id
+    session.merge(port)
+    session.flush()
+    return port
 
 
-def port_unset_attachment(port_id):
+def port_unset_attachment(port_id, net_id):
+    # confirm network exists
+    network_get(net_id)
+
     session = get_session()
-    port = port_get(port_id)
+    port = port_get(port_id, net_id)
     port.interface_id = None
     session.merge(port)
     session.flush
 
 
-def port_destroy(port_id):
+def port_destroy(port_id, net_id):
+    # confirm network exists
+    network_get(net_id)
+
     session = get_session()
     try:
         port = session.query(models.Port).\
-            filter_by(uuid=port_id).\
-            one()
+          filter_by(uuid=port_id).\
+          filter_by(network_id=net_id).\
+          one()
+        if port['interface_id']:
+            raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
+                                att_id=port['interface_id'])
         session.delete(port)
         session.flush()
         return port
     except exc.NoResultFound:
-        raise Exception("No port found with id = %s " % port_id)
+        raise q_exc.PortNotFound(port_id=port_id)

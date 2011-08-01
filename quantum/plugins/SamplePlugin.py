@@ -240,7 +240,7 @@ class FakePlugin(object):
     def _get_port(self, tenant_id, network_id, port_id):
         net = self._get_network(tenant_id, network_id)
         try:
-            port = db.port_get(port_id)
+            port = db.port_get(port_id, network_id)
         except:
             raise exc.PortNotFound(net_id=network_id, port_id=port_id)
         # Port must exist and belong to the appropriate network.
@@ -373,7 +373,7 @@ class FakePlugin(object):
         self._get_network(tenant_id, net_id)
         self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(new_state)
-        db.port_set_state(port_id, new_state)
+        db.port_set_state(port_id, net_id, new_state)
         port_item = {'port-id': port_id,
                      'port-state': new_state}
         return port_item
@@ -392,7 +392,7 @@ class FakePlugin(object):
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])
         try:
-            port = db.port_destroy(port_id)
+            port = db.port_destroy(port_id, net_id)
         except Exception, e:
             raise Exception("Failed to delete port: %s" % str(e))
         d = {}
@@ -412,7 +412,7 @@ class FakePlugin(object):
         if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])
-        db.port_set_attachment(port_id, remote_interface_id)
+        db.port_set_attachment(port_id, net_id, remote_interface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
@@ -423,4 +423,4 @@ class FakePlugin(object):
         self._get_port(tenant_id, net_id, port_id)
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
-        db.port_unset_attachment(port_id)
+        db.port_unset_attachment(port_id, net_id)
