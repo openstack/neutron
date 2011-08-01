@@ -52,7 +52,6 @@ class ViewBuilder(object):
         """Return a detailed model of a network."""
         # net-ports might not be present in response from plugin
         ports = network_data.get('net-ports', None)
-        portcount = ports and len(ports) or 0
         return dict(network=dict(id=network_data['net-id'],
                                 name=network_data['net-name']))
 
