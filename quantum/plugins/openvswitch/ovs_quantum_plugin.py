@@ -164,18 +164,18 @@ class OVSQuantumPlugin(QuantumPluginBase):
         ports = db.port_list(net_id)
         for p in ports:
             LOG.debug("Appending port: %s" % p.uuid)
-            d = self._make_port_dict(str(p.uuid), "ACTIVE", None, None)
+            d = self._make_port_dict(str(p.uuid), p.state, None, None)
             ids.append(d)
         return ids
 
     def create_port(self, tenant_id, net_id, port_state=None):
         LOG.debug("Creating port with network_id: %s" % net_id)
-        port = db.port_create(net_id)
-        return self._make_port_dict(str(port.uuid), "ACTIVE", None, None)
+        port = db.port_create(net_id,port_state)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def delete_port(self, tenant_id, net_id, port_id):
         port = db.port_destroy(port_id, net_id)
-        return self._make_port_dict(str(port.uuid), "ACTIVE", None, None)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def update_port(self, tenant_id, net_id, port_id, port_state):
         """
@@ -184,11 +184,11 @@ class OVSQuantumPlugin(QuantumPluginBase):
         LOG.debug("update_port() called\n")
         port = db.port_get(port_id, net_id)
         db.port_set_state(port_id, net_id, port_state)
-        return self._make_port_dict(str(port.uuid), "ACTIVE", None, None)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def get_port_details(self, tenant_id, net_id, port_id):
         port = db.port_get(port_id, net_id)
-        return self._make_port_dict(str(port.uuid), "ACTIVE",
+        return self._make_port_dict(str(port.uuid), port.state,
                                 port.network_id, port.interface_id)
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):

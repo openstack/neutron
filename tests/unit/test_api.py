@@ -414,6 +414,23 @@ class APITest(unittest.TestCase):
                         show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': new_port_state},
                          port_data['port'])
+
+        # now set it back to the original value
+        update_port_req = testlib.update_port_request(self.tenant_id,
+                                                        network_id, port_id,
+                                                        port_state,
+                                                        format)
+        update_port_res = update_port_req.get_response(self.api)
+        self.assertEqual(update_port_res.status_int, 200)
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id,
+                                                  format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual({'id': port_id, 'state': port_state},
+                         port_data['port'])
         LOG.debug("_test_set_port_state - format:%s - END", format)
 
     def _test_set_port_state_networknotfound(self, format):
