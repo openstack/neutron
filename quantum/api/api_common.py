@@ -57,8 +57,7 @@ class QuantumController(wsgi.Controller):
                         pass
                 if not param_value and param['required']:
                     msg = ("Failed to parse request. " +
-                           "Parameter: %(param_name)s " +
-                           "not specified" % locals())
+                           "Parameter: " + param_name + " not specified")
                     for line in msg.split('\n'):
                         LOG.error(line)
                     raise exc.HTTPBadRequest(msg)

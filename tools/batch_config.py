@@ -84,7 +84,7 @@ def delete_all_nets(client, tenant_id):
 
 
 def create_net_with_attachments(net_name, iface_ids):
-        data = {'network': {'network-name': '%s' % net_name}}
+        data = {'network': {'net-name': '%s' % net_name}}
         body = Serializer().serialize(data, CONTENT_TYPE)
         res = client.do_request(tenant_id, 'POST',
             "/networks." + FORMAT, body=body)

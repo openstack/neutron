@@ -52,7 +52,7 @@ class Fault(webob.exc.HTTPException):
             fault_name: {
                 'code': code,
                 'message': self.wrapped_exc.explanation,
-                'detail': self.wrapped_exc.detail}}
+                'detail': str(self.wrapped_exc.detail)}}
         # 'code' is an attribute on the fault tag itself
         metadata = {'application/xml': {'attributes': {fault_name: 'code'}}}
         default_xmlns = common.XML_NS_V10
