@@ -76,21 +76,28 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def network_create(tenant_id, name):
+def _check_duplicate_net_name(tenant_id, net_name):
     session = get_session()
-    net = None
     try:
         net = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id, name=name).\
+          filter_by(tenant_id=tenant_id, name=net_name).\
           one()
-        raise Exception("Network with name %(name)s already " \
-                        "exists for tenant %(tenant_id)s" % locals())
+        raise q_exc.NetworkNameExists(tenant_id=tenant_id,
+                        net_name=net_name, net_id=net.uuid)
     except exc.NoResultFound:
-        with session.begin():
-            net = models.Network(tenant_id, name)
-            session.add(net)
-            session.flush()
-    return net
+        # this is the "normal" path, as API spec specifies
+        # that net-names are unique within a tenant
+        pass
+
+def network_create(tenant_id, name):
+    session = get_session()
+
+    _check_duplicate_net_name(tenant_id, name)
+    with session.begin():
+        net = models.Network(tenant_id, name)
+        session.add(net)
+        session.flush()
+        return net
 
 
 def network_list(tenant_id):
@@ -112,20 +119,12 @@ def network_get(net_id):
 
 def network_rename(net_id, tenant_id, new_name):
     session = get_session()
-    try:
-        res = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id, name=new_name).\
-          one()
-        if not res:
-            raise exc.NetworkNotFound(net_id=net_id)
-    except exc.NoResultFound:
-        net = network_get(net_id)
-        net.name = new_name
-        session.merge(net)
-        session.flush()
-        return net
-    raise Exception("A network with name \"%s\" already exists" % new_name)
-
+    net = network_get(net_id)
+    _check_duplicate_net_name(tenant_id, new_name)
+    net.name = new_name
+    session.merge(net)
+    session.flush()
+    return net
 
 def network_destroy(net_id):
     session = get_session()
