@@ -170,7 +170,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
     def create_port(self, tenant_id, net_id, port_state=None):
         LOG.debug("Creating port with network_id: %s" % net_id)
-        port = db.port_create(net_id,port_state)
+        port = db.port_create(net_id, port_state)
         return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def delete_port(self, tenant_id, net_id, port_id):
