@@ -15,6 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
+# @author: Edgar Magana, Cisco Systems, Inc.
 #
 from quantum.common import flags
 
@@ -26,6 +27,10 @@ FLAGS = flags.FLAGS
 #
 flags.DEFINE_string('ucsm_ip_address', "172.20.231.27", 'IP address of \
                     UCSM')
+flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of \
+                     Nexus Switch')
+flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface  \
+                     connected from the Nexus Switch to UCSM 6120')
 flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB \
                     server')
 flags.DEFINE_string('nova_host_name', "openstack-0203", 'nova cloud \
@@ -68,6 +73,8 @@ flags.DEFINE_string('get_next_vif',
 
 # Inventory items
 UCSM_IP_ADDRESS = FLAGS.ucsm_ip_address
+NEXUS_IP_ADDRESS = FLAGS.nexus_ip_address
+NEXUS_PORT = FLAGS.nexus_port
 DB_SERVER_IP = FLAGS.db_server_ip
 NOVA_HOST_NAME = FLAGS.nova_host_name
 

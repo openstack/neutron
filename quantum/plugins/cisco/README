@@ -7,6 +7,7 @@
 * UCS B200 series blades with M81KR VIC installed.
 * UCSM 2.0 (Capitola) Build 230
 * RHEL 6.1
+* ncclcient v0.3.1 - Python library for NETCONF clients (http://schmizz.net/ncclient/)
 * UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
 http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
 * To run Quantum on RHEL, you will need to have the correct version of python-routes (version 1.12.3 or later). The RHEL 6.1 package contains an older version. Do the following and check your python-routes version:
@@ -41,6 +42,10 @@ ucs/get-vif.sh
 	+ In cisco_configuration.py, 
 		- change the UCSM IP in the following statement to your UCSM IP
 			flags.DEFINE_string('ucsm_ip_address', "172.20.231.27", 'IP address of UCSM')
+		- change the NEXUS 7K IP in the following statement to your N7K Switch IP
+			flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of N7K')
+		- change the NEXUS Interface in the following statement to the interface number in your N7K which is connected to your UCSM UpLink port 
+			flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface connected from the Nexus 7K Switch to UCSM 6120')
 		- change the Nova MySQL DB IP if you are running Quantum on a different host than the OpenStack Cloud Controller (in other words you do not need to change the IP if Quantum is running on the same host on which the Nova DB is running). DB IP is changed in the following statement:
 			flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB server')
 		- change the hostname of the OpenStack Cloud Controller below
@@ -58,9 +63,11 @@ ucs/get-vif.sh
 		- Change the path to reflect the location of the get-vif.sh script, if you have followed the instructions in this README, this location should be the same as that of your other plugin modules
                         flags.DEFINE_string('get_next_vif', "/root/sumit/quantum/quantum/plugins/cisco/get-vif.sh", 'This is the location of the script to get the next available dynamic nic')
 	+ In cisco_credentials.py, 
-		- Change the following stucture to reflect the correct UCS and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
+		- Change the following structure to reflect the correct UCS, N7K and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
+			N7K_IP_ADDRESS has to match with your Nexus 7k switch IP Address, N7K_USERNAME is the administrator user-name and N7K_PASSWORD is the password.
 			_creds_dictionary = {
                      		'UCSM_IP_ADDRESS':["UCSM_USERNAME", "UCSM_PASSWORD"],
+                     		'N7K_IP_ADDRESS':["N7K_USERNAME", "N7K_PASSWORD"],
                      		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
                     	}
 * Start the Quantum service

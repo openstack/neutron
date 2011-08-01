@@ -15,6 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
+# @author: Edgar Magana, Cisco Systems, Inc.
 #
 import logging as LOG
 
@@ -25,6 +26,8 @@ from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 
+from quantum.plugins.cisco.nexus import cisco_nexus_network_driver
+
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
@@ -33,10 +36,12 @@ class NexusPlugin(object):
     _networks = {}
 
     def __init__(self):
-        """
-        Initialize the Nexus driver here
-        """
-        pass
+        self._client = cisco_nexus_network_driver.CiscoNEXUSDriver()
+        #TODO (Edgar) Using just one Nexus 7K Switch and Port
+        self._nexus_ip = conf.NEXUS_IP_ADDRESS
+        self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)
+        self._nexus_password = cred.Store.getPassword(conf.NEXUS_IP_ADDRESS)
+        self._nexus_port = conf.NEXUS_PORT
 
     def get_all_networks(self, tenant_id):
         """
@@ -53,8 +58,9 @@ class NexusPlugin(object):
         for this VLAN
         """
         LOG.debug("NexusPlugin:create_network() called\n")
-        # TODO (Sumit): Call the nexus driver here to create the VLAN, and
-        # configure the appropriate interfaces
+        self._client.create_vlan(vlan_name, str(vlan_id), self._nexus_ip,
+                self._nexus_username, self._nexus_password, self._nexus_port)
+
         new_net_dict = {const.NET_ID: net_id,
                         const.NET_NAME: net_name,
                         const.NET_PORTS: {},
@@ -70,9 +76,10 @@ class NexusPlugin(object):
         """
         LOG.debug("NexusPlugin:delete_network() called\n")
         net = self._networks.get(net_id)
+        vlan_id = self._get_vlan_id_for_network(tenant_id, net_id)
         if net:
-            # TODO (Sumit): Call the nexus driver here to create the VLAN,
-            # and configure the appropriate interfaces
+            self._client.delete_vlan(str(vlan_id), self._nexus_ip,
+                self._nexus_username, self._nexus_password)
             self._networks.pop(net_id)
             return net
         # Network not found
@@ -144,6 +151,11 @@ class NexusPlugin(object):
         Delete if not required.
         """
         LOG.debug("NexusPlugin:unplug_interface() called\n")
+
+    def _get_vlan_id_for_network(self, tenant_id, network_id):
+        net = self._get_network(tenant_id, network_id)
+        vlan_id = net[const.NET_VLAN_ID]
+        return vlan_id
 
     def _get_network(self, tenant_id, network_id):
         network = self._networks.get(network_id)
