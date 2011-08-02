@@ -111,7 +111,7 @@ class Controller(common.QuantumController):
                                       request_params['name'])
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)['network']
-        #MUST RETURN 202
+        #MUST RETURN 202???
         return dict(network=result)
 
     def update(self, request, tenant_id, id):
@@ -124,7 +124,7 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         try:
             self._plugin.rename_network(tenant_id, id,
-                                        request_params['net-name'])
+                                        request_params['name'])
             return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

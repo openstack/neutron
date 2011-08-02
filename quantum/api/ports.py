@@ -29,7 +29,7 @@ class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
 
     _port_ops_param_list = [{
-        'param-name': 'port-state',
+        'param-name': 'state',
         'default-value': 'DOWN',
         'required': False}, ]
 
@@ -89,10 +89,10 @@ class Controller(common.QuantumController):
         try:
             port = self._plugin.create_port(tenant_id,
                                             network_id,
-                                            request_params['port-state'])
+                                            request_params['state'])
             builder = ports_view.get_view_builder(request)
-            result = builder.build(port)
-            return dict(ports=result)
+            result = builder.build(port)['port']
+            return dict(port=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.StateInvalid as e:
@@ -107,11 +107,9 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            port = self._plugin.update_port(tenant_id, network_id, id,
-                                            request_params['port-state'])
-            builder = ports_view.get_view_builder(request)
-            result = builder.build(port, True)
-            return dict(ports=result)
+            self._plugin.update_port(tenant_id, network_id, id,
+                                     request_params['state'])
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
@@ -124,8 +122,7 @@ class Controller(common.QuantumController):
         #look for port state in request
         try:
             self._plugin.delete_port(tenant_id, network_id, id)
-            return exc.HTTPAccepted()
-            # TODO(salvatore-orlando): Handle portInUse error
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
