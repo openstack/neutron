@@ -31,6 +31,8 @@ flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of \
                      Nexus Switch')
 flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface  \
                      connected from the Nexus Switch to UCSM 6120')
+flags.DEFINE_string('nexus_driver_active', "off", 'Flag to activate Nexus OS\
+                     Driver')
 flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB \
                     server')
 flags.DEFINE_string('nova_host_name', "openstack-0203", 'nova cloud \
@@ -74,6 +76,7 @@ flags.DEFINE_string('get_next_vif',
 # Inventory items
 UCSM_IP_ADDRESS = FLAGS.ucsm_ip_address
 NEXUS_IP_ADDRESS = FLAGS.nexus_ip_address
+NEXUS_DRIVER_ACTIVE = FLAGS.nexus_driver_active
 NEXUS_PORT = FLAGS.nexus_port
 DB_SERVER_IP = FLAGS.db_server_ip
 NOVA_HOST_NAME = FLAGS.nova_host_name

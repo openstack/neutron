@@ -38,14 +38,10 @@ ucs/cisco_ucs_plugin.py
 common/cisco_utils.py
 __init__.py
 ucs/get-vif.sh
-* Configure the L2 Network Pllugin:
+* Configure the L2 Network Plugin:
 	+ In cisco_configuration.py, 
 		- change the UCSM IP in the following statement to your UCSM IP
 			flags.DEFINE_string('ucsm_ip_address', "172.20.231.27", 'IP address of UCSM')
-		- change the NEXUS 7K IP in the following statement to your N7K Switch IP
-			flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of N7K')
-		- change the NEXUS Interface in the following statement to the interface number in your N7K which is connected to your UCSM UpLink port 
-			flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface connected from the Nexus 7K Switch to UCSM 6120')
 		- change the Nova MySQL DB IP if you are running Quantum on a different host than the OpenStack Cloud Controller (in other words you do not need to change the IP if Quantum is running on the same host on which the Nova DB is running). DB IP is changed in the following statement:
 			flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB server')
 		- change the hostname of the OpenStack Cloud Controller below
@@ -62,6 +58,24 @@ ucs/get-vif.sh
 			flags.DEFINE_string('profile_name_prefix', "q-", 'Prefix of the name given to the port profile')
 		- Change the path to reflect the location of the get-vif.sh script, if you have followed the instructions in this README, this location should be the same as that of your other plugin modules
                         flags.DEFINE_string('get_next_vif', "/root/sumit/quantum/quantum/plugins/cisco/get-vif.sh", 'This is the location of the script to get the next available dynamic nic')
+	
+	+ In cisco_credentials.py, 
+		- Change the following structure to reflect the correct UCS, N7K and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
+			N7K_IP_ADDRESS has to match with your Nexus 7k switch IP Address, N7K_USERNAME is the administrator user-name and N7K_PASSWORD is the password.
+			_creds_dictionary = {
+                     		'UCSM_IP_ADDRESS':["UCSM_USERNAME", "UCSM_PASSWORD"],
+                     		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
+                    	}
+                    	
+* Configure the L2 Network Plugin with Nexus OS Driver for testing VLANs CRUD on Nexus 7k Switch. Making these changes requires one Nexus 7K Switch connected to the UCSM and the ncclient patch not just the regular library, otherwise the system will fail.
+	+ In cisco_configuration.py,
+		- change the NEXUS 7K IP in the following statement to your N7K Switch IP
+			flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of N7K')
+		- change the NEXUS Interface in the following statement to the interface number in your N7K which is connected to your UCSM UpLink port 
+			flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface connected from the Nexus 7K Switch to UCSM 6120')	
+		- change NEXUS Driver Flag to "on" in the following statement
+			flags.DEFINE_string('nexus_driver_active', "off", 'Flag to activate Nexus OS Driver')
+	
 	+ In cisco_credentials.py, 
 		- Change the following structure to reflect the correct UCS, N7K and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
 			N7K_IP_ADDRESS has to match with your Nexus 7k switch IP Address, N7K_USERNAME is the administrator user-name and N7K_PASSWORD is the password.
@@ -70,6 +84,7 @@ ucs/get-vif.sh
                      		'N7K_IP_ADDRESS':["N7K_USERNAME", "N7K_PASSWORD"],
                      		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
                     	}
+                    	
 * Start the Quantum service
 
 ** Additional installation required on Nova Compute:

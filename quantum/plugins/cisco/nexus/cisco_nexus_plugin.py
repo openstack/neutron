@@ -98,6 +98,7 @@ class NexusPlugin(object):
         Updates the symbolic name belonging to a particular
         Virtual Network.
         """
+        #TODO (Edgar) We need to add an update method in the Nexus Driver
         LOG.debug("NexusPlugin:rename_network() called\n")
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name

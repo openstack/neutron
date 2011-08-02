@@ -15,6 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
+# @author: Edgar Magana, Cisco Systems, Inc.
 #
 
 import logging as LOG
@@ -65,8 +66,13 @@ class L2Network(object):
         new_net_id = self._get_unique_net_id(tenant_id)
         vlan_id = self._get_vlan_for_tenant(tenant_id, net_name)
         vlan_name = self._get_vlan_name(new_net_id, str(vlan_id))
-        self._nexus_plugin.create_network(tenant_id, net_name, new_net_id,
+        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
+        if nexus_driver_flag == 'on':
+            LOG.debug("Nexus OS Driver called\n")
+            self._nexus_plugin.create_network(tenant_id, net_name, new_net_id,
                                           vlan_name, vlan_id)
+        else:
+            LOG.debug("No Nexus OS Driver available\n")
         self._ucs_plugin.create_network(tenant_id, net_name, new_net_id,
                                         vlan_name, vlan_id)
         new_net_dict = {const.NET_ID: new_net_id,
@@ -88,12 +94,17 @@ class L2Network(object):
         """
         LOG.debug("delete_network() called\n")
         net = self._networks.get(net_id)
+        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
         # TODO (Sumit) : Verify that no attachments are plugged into the
         # network
         if net:
             # TODO (Sumit) : Before deleting the network, make sure all the
             # ports associated with this network are also deleted
-            self._nexus_plugin.delete_network(tenant_id, net_id)
+            if nexus_driver_flag == 'on':
+                LOG.debug("Nexus OS Driver called\n")
+                self._nexus_plugin.delete_network(tenant_id, net_id)
+            else:
+                LOG.debug("No Nexus OS Driver available\n")
             self._ucs_plugin.delete_network(tenant_id, net_id)
             self._networks.pop(net_id)
             tenant = self._get_tenant(tenant_id)
@@ -118,7 +129,12 @@ class L2Network(object):
         Virtual Network.
         """
         LOG.debug("rename_network() called\n")
-        self._nexus_plugin.rename_network(tenant_id, net_id)
+        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
+        if nexus_driver_flag == 'on':
+            LOG.debug("Nexus OS Driver called\n")
+            self._nexus_plugin.rename_network(tenant_id, net_id)
+        else:
+            LOG.debug("No Nexus OS Driver available\n")
         self._ucs_plugin.rename_network(tenant_id, net_id)
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name
