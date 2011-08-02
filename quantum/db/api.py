@@ -89,6 +89,7 @@ def _check_duplicate_net_name(tenant_id, net_name):
         # that net-names are unique within a tenant
         pass
 
+
 def network_create(tenant_id, name):
     session = get_session()
 
@@ -125,6 +126,7 @@ def network_rename(net_id, tenant_id, new_name):
     session.merge(net)
     session.flush()
     return net
+
 
 def network_destroy(net_id):
     session = get_session()
@@ -225,7 +227,7 @@ def port_unset_attachment(port_id, net_id):
     port = port_get(port_id, net_id)
     port.interface_id = None
     session.merge(port)
-    session.flush
+    session.flush()
 
 
 def port_destroy(port_id, net_id):
