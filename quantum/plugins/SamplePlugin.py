@@ -322,10 +322,7 @@ class FakePlugin(object):
         Virtual Network.
         """
         LOG.debug("FakePlugin.rename_network() called")
-        try:
-            db.network_rename(net_id, tenant_id, new_name)
-        except:
-            raise exc.NetworkNotFound(net_id=net_id)
+        db.network_rename(net_id, tenant_id, new_name)
         net = self._get_network(tenant_id, net_id)
         return net
 
