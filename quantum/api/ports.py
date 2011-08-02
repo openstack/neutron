@@ -33,10 +33,6 @@ class Controller(common.QuantumController):
         'default-value': 'DOWN',
         'required': False}, ]
 
-    _attachment_ops_param_list = [{
-        'param-name': 'attachment-id',
-        'required': True}, ]
-
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
@@ -129,45 +125,3 @@ class Controller(common.QuantumController):
             return faults.Fault(faults.PortNotFound(e))
         except exception.PortInUse as e:
             return faults.Fault(faults.PortInUse(e))
-
-    def get_resource(self, request, tenant_id, network_id, id):
-        try:
-            result = self._plugin.get_port_details(
-                            tenant_id, network_id, id).get('attachment-id',
-                                                           None)
-            return dict(attachment=result)
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
-
-    def attach_resource(self, request, tenant_id, network_id, id):
-        try:
-            request_params = \
-                self._parse_request_params(request,
-                                           self._attachment_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            self._plugin.plug_interface(tenant_id,
-                                            network_id, id,
-                                            request_params['attachment-id'])
-            return exc.HTTPAccepted()
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
-        except exception.PortInUse as e:
-            return faults.Fault(faults.PortInUse(e))
-        except exception.AlreadyAttached as e:
-            return faults.Fault(faults.AlreadyAttached(e))
-
-    def detach_resource(self, request, tenant_id, network_id, id):
-        try:
-            self._plugin.unplug_interface(tenant_id,
-                                          network_id, id)
-            return exc.HTTPAccepted()
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))

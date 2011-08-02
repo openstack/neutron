@@ -61,4 +61,4 @@ class ViewBuilder(object):
         """Return details about a specific logical port."""
         return dict(port=dict(id=port_data['port-id'],
                               state=port_data['port-state'],
-                              attachment=port_data['attachment']))
+                              attachment=port_data['attachment-id']))

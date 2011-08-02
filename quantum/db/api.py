@@ -17,6 +17,8 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
+import logging 
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
 
@@ -25,7 +27,7 @@ from quantum.db import models
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
-
+LOG = logging.getLogger('quantum.plugins.SamplePlugin')
 
 def configure_db(options):
     """
@@ -200,7 +202,8 @@ def port_unset_attachment(port_id):
     port = port_get(port_id)
     port.interface_id = None
     session.merge(port)
-    session.flush
+    session.flush()
+    port = port_get(port_id)
 
 
 def port_destroy(port_id):
