@@ -120,7 +120,8 @@ class Client(object):
 
         try:
             connection_type = self.get_connection_type()
-            headers = headers or {}
+            headers = headers or {"Content-Type":
+                                      "application/%s" % self.format}
 
             # Open connection and send request, handling SSL certs
             certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
