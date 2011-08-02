@@ -20,7 +20,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
 
+
 from quantum.db import models
+
 
 _ENGINE = None
 _MAKER = None

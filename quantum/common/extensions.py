@@ -16,18 +16,17 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import imp
+import logging
 import os
 import routes
-import logging
 import webob.dec
 import webob.exc
+
 from gettext import gettext as _
 from abc import ABCMeta
-
-from quantum.manager import QuantumManager
 from quantum.common import exceptions
+from quantum.manager import QuantumManager
 from quantum.common import wsgi
 
 LOG = logging.getLogger('quantum.common.extensions')

@@ -14,12 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import json
-import unittest
-import routes
 import os.path
+import routes
+import unittest
 from tests.unit import BaseTest
-
 from webtest import TestApp
+
+
 from quantum.common import wsgi
 from quantum.common import config
 from quantum.common import extensions
@@ -31,6 +32,7 @@ from tests.unit.extension_stubs import (StubExtension, StubPlugin,
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
+
 
 test_conf_file = os.path.join(os.path.dirname(__file__), os.pardir,
                               os.pardir, 'etc', 'quantum.conf.test')
