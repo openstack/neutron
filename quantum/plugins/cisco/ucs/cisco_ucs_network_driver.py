@@ -198,7 +198,7 @@ class CiscoUCSMDriver():
                        ucsm_password):
         data = self._create_profile_post_data(profile_name, vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-        data = self._create_profile_client_post_data(profile_name)
+        data = self._create_profile_client_post_data(profile_name[-16:])
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def change_vlan_in_profile(self, profile_name, old_vlan_name,
