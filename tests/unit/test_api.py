@@ -283,6 +283,21 @@ class APITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 430)
         LOG.debug("_test_show_port_portnotfound - format:%s - END", format)
 
+    def _test_create_port_noreqbody(self, format):
+        LOG.debug("_test_create_port_noreqbody - format:%s - START", format)
+        content_type = "application/%s" % format
+        network_id = self._create_network(format)
+        port_id = self._create_port(network_id, None, format,
+                                    custom_req_body='')
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id, format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual(port_id, port_data['port']['id'])
+        LOG.debug("_test_create_port_noreqbody - format:%s - END", format)
+
     def _test_create_port(self, format):
         LOG.debug("_test_create_port - format:%s - START", format)
         content_type = "application/%s" % format
@@ -738,6 +753,12 @@ class APITest(unittest.TestCase):
 
     def test_create_port_xml(self):
         self._test_create_port('xml')
+
+    def test_create_port_noreqbody_json(self):
+        self._test_create_port_noreqbody('json')
+
+    def test_create_port_noreqbody_xml(self):
+        self._test_create_port_noreqbody('xml')
 
     def test_create_port_networknotfound_json(self):
         self._test_create_port_networknotfound('json')
