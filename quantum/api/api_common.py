@@ -43,7 +43,13 @@ class QuantumController(wsgi.Controller):
                 des_body = self._deserialize(req.body,
                                              req.best_match_content_type())
                 data = des_body and des_body.get(self._resource_name, None)
-                param_value = data and data.get(param_name, None)
+                if not data:
+                    msg = ("Failed to parse request. Resource: " +
+                           self._resource_name + " not found in request body")
+                    for line in msg.split('\n'):
+                        LOG.error(line)
+                    raise exc.HTTPBadRequest(msg)
+                param_value = data.get(param_name, None)
             if not param_value:
                 # 2- parse request headers
                 # prepend param name with a 'x-' prefix
