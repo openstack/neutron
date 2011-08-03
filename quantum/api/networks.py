@@ -37,6 +37,7 @@ class Controller(common.QuantumController):
             "attributes": {
                 "network": ["id", "name"],
                 "port": ["id", "state"],
+                "attachment": ["id"]
             },
             "plurals": {"networks": "network"}
         },
@@ -52,15 +53,21 @@ class Controller(common.QuantumController):
         # concerning logical ports as well.
         network = self._plugin.get_network_details(
                             tenant_id, network_id)
+        port_list = self._plugin.get_all_ports(
+                            tenant_id, network_id)
+        ports_data = [self._plugin.get_port_details(
+                                   tenant_id, network_id, port['port-id'])
+                      for port in port_list]
         builder = networks_view.get_view_builder(req)
-        result = builder.build(network, net_details, port_details)['network']
+        result = builder.build(network, net_details,
+                               ports_data, port_details)['network']
         return dict(network=result)
 
-    def _items(self, req, tenant_id, net_details=False, port_details=False):
+    def _items(self, req, tenant_id, net_details=False):
         """ Returns a list of networks. """
         networks = self._plugin.get_all_networks(tenant_id)
         builder = networks_view.get_view_builder(req)
-        result = [builder.build(network, net_details, port_details)['network']
+        result = [builder.build(network, net_details)['network']
                   for network in networks]
         return dict(networks=result)
 
@@ -79,23 +86,13 @@ class Controller(common.QuantumController):
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         network_id = kwargs.get('id')
-        try:
-            if network_id:
-                # show details for a given network
-                return self._item(request, tenant_id, network_id,
-                                  net_details=True, port_details=True)
-            else:
-                # show details for all networks
-                return self._items(request, tenant_id,
-                                   net_details=True, port_details=False)
-            network = self._plugin.get_network_details(
-                            tenant_id, id)
-            builder = networks_view.get_view_builder(request)
-            #build response with details
-            result = builder.build(network, True)
-            return dict(networks=result)
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
+        if network_id:
+            # show details for a given network
+            return self._item(request, tenant_id, network_id,
+                              net_details=True, port_details=True)
+        else:
+            # show details for all networks
+            return self._items(request, tenant_id, net_details=True)
 
     def create(self, request, tenant_id):
         """ Creates a new network for a given tenant """

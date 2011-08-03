@@ -15,8 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.api.views import ports as ports_view
+import logging
 
+LOG = logging.getLogger('quantum.api.views.networks')
 
 def get_view_builder(req):
     base_url = req.application_url
@@ -31,17 +32,16 @@ class ViewBuilder(object):
         """
         self.base_url = base_url
 
-    def build(self, network_data, net_detail=False, port_detail=False):
+    def build(self, network_data, net_detail=False, ports_data=None, port_detail=False):
         """Generic method used to generate a network entity."""
         if net_detail:
             network = self._build_detail(network_data)
         else:
             network = self._build_simple(network_data)
         if port_detail:
-            builder = ports_view.ViewBuilder(self.base_url)
-            ports = [builder.build(port_data, port_detail)['port']
-                     for port_data in network_data['net-ports'].values()]
-            network['ports'] = ports
+            ports = [self._build_port(port_data) for port_data in ports_data]
+            network['network']['ports'] = ports
+        LOG.debug("NETWORK:%s", network)
         return network
 
     def _build_simple(self, network_data):
@@ -50,15 +50,13 @@ class ViewBuilder(object):
 
     def _build_detail(self, network_data):
         """Return a detailed model of a network."""
-        # net-ports might not be present in response from plugin
-        ports = network_data.get('net-ports', None)
-        portcount = ports and len(ports) or 0
         return dict(network=dict(id=network_data['net-id'],
-                                name=network_data['net-name'],
-                                PortCount=portcount))
+                                name=network_data['net-name']))
 
     def _build_port(self, port_data):
         """Return details about a specific logical port."""
-        return dict(port=dict(id=port_data['port-id'],
-                              state=port_data['port-state'],
-                              attachment=port_data['attachment-id']))
+        port_dict = dict(id=port_data['port-id'],
+                         state=port_data['port-state'])
+        if port_data['attachment-id']:
+            port_dict['attachment'] = dict(id=port_data['attachment-id'])
+        return port_dict 

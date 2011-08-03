@@ -31,7 +31,7 @@ def new_network_request(tenant_id, network_name='new_name',
                         format='xml', custom_req_body=None):
     method = 'POST'
     path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
-    data = custom_req_body or {'network': {'net-name': '%s' % network_name}}
+    data = custom_req_body or {'network': {'name': '%s' % network_name}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
@@ -42,7 +42,7 @@ def update_network_request(tenant_id, network_id, network_name, format='xml',
     method = 'PUT'
     path = "/tenants/%(tenant_id)s/networks" \
            "/%(network_id)s.%(format)s" % locals()
-    data = custom_req_body or {'network': {'net-name': '%s' % network_name}}
+    data = custom_req_body or {'network': {'name': '%s' % network_name}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
@@ -77,9 +77,10 @@ def new_port_request(tenant_id, network_id, port_state,
     method = 'POST'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports.%(format)s" % locals()
-    data = custom_req_body or {'port': {'port-state': '%s' % port_state}}
+    data = custom_req_body or port_state and \
+           {'port': {'state': '%s' % port_state}}
     content_type = "application/%s" % format
-    body = Serializer().serialize(data, content_type)
+    body = data and Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
@@ -96,7 +97,7 @@ def update_port_request(tenant_id, network_id, port_id, port_state,
     method = 'PUT'
     path = "/tenants/%(tenant_id)s/networks" \
            "/%(network_id)s/ports/%(port_id)s.%(format)s" % locals()
-    data = custom_req_body or {'port': {'port-state': '%s' % port_state}}
+    data = custom_req_body or {'port': {'state': '%s' % port_state}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
@@ -115,7 +116,7 @@ def put_attachment_request(tenant_id, network_id, port_id,
     method = 'PUT'
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports/%(port_id)s/attachment.%(format)s" % locals()
-    data = {'port': {'attachment-id': attachment_id}}
+    data = {'attachment': {'id': attachment_id}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
