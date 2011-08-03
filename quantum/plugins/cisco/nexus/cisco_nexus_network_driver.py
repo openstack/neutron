@@ -193,6 +193,12 @@ class CiscoNEXUSDriver():
         print confstr
         mgr.edit_config(target='running', config=confstr)
 
+    def disable_switch_port(self, mgr, interface):
+        confstr = cmd_no_switchport % (interface)
+        confstr = exec_conf_prefix + confstr + exec_conf_postfix
+        print confstr
+        mgr.edit_config(target='running', config=confstr)
+
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
         confstr = cmd_vlan_int_snippet % (interface, vlanid)
         confstr = exec_conf_prefix + confstr + exec_conf_postfix
@@ -221,12 +227,14 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, 22, nexus_user,
                                nexus_password) as m:
             self.enable_vlan(m, vlan_id, vlan_name)
-            self.enable_port_trunk(m, nexus_interface)
+            self.enable_vlan_on_trunk_int(m, nexus_interface, vlan_id)
 
-    def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password):
+    def delete_vlan(self, vlan_id, nexus_host, nexus_user,
+                    nexus_password, nexus_interface):
         with self.nxos_connect(nexus_host, 22, nexus_user,
                                nexus_password) as m:
             self.disable_vlan(m, vlan_id)
+            self.disable_switch_port(m, nexus_interface)
 
 
 def main():

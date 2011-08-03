@@ -79,7 +79,7 @@ class NexusPlugin(object):
         vlan_id = self._get_vlan_id_for_network(tenant_id, net_id)
         if net:
             self._client.delete_vlan(str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password)
+                self._nexus_username, self._nexus_password, self._nexus_port)
             self._networks.pop(net_id)
             return net
         # Network not found
