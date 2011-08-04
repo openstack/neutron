@@ -15,9 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
-LOG = logging.getLogger('quantum.api.views.networks')
 
 def get_view_builder(req):
     base_url = req.application_url
@@ -32,7 +29,8 @@ class ViewBuilder(object):
         """
         self.base_url = base_url
 
-    def build(self, network_data, net_detail=False, ports_data=None, port_detail=False):
+    def build(self, network_data, net_detail=False,
+              ports_data=None, port_detail=False):
         """Generic method used to generate a network entity."""
         if net_detail:
             network = self._build_detail(network_data)
@@ -41,7 +39,6 @@ class ViewBuilder(object):
         if port_detail:
             ports = [self._build_port(port_data) for port_data in ports_data]
             network['network']['ports'] = ports
-        LOG.debug("NETWORK:%s", network)
         return network
 
     def _build_simple(self, network_data):
@@ -59,4 +56,4 @@ class ViewBuilder(object):
                          state=port_data['port-state'])
         if port_data['attachment-id']:
             port_dict['attachment'] = dict(id=port_data['attachment-id'])
-        return port_dict 
+        return port_dict

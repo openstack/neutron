@@ -23,7 +23,7 @@ import re
 from quantum.common.wsgi import Serializer
 from quantum.client import Client
 
-LOG = logging.getLogger('quantum.tests.test_api')
+LOG = logging.getLogger('quantum.tests.test_cliet')
 
 # Set a couple tenants to use for testing
 TENANT_1 = 'totore'
@@ -43,7 +43,7 @@ class ServerStub():
             return self.content
 
         def status(self):
-            return status
+            return self.status
 
     # To test error codes, set the host to 10.0.0.1, and the port to the code
     def __init__(self, host, port=9696, key_file="", cert_file=""):
@@ -88,7 +88,7 @@ class ServerStub():
         return res
 
 
-class APITest(unittest.TestCase):
+class ClientLibTest(unittest.TestCase):
 
     def setUp(self):
         """ Setups a test environment for the API client """
@@ -118,8 +118,8 @@ class APITest(unittest.TestCase):
         return data
 
     def _test_list_networks(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_networks - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_list_networks - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.list_networks,
                             status,
@@ -128,13 +128,13 @@ class APITest(unittest.TestCase):
                             data=[],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_networks - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_list_networks - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
-    def _test_list_network_details(self,
-                                   tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_network_details - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+    def _test_list_network_details(self, tenant=TENANT_1,
+                                   format='json', status=200):
+        LOG.debug("_test_list_network_details - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.list_network_details,
                             status,
@@ -143,12 +143,12 @@ class APITest(unittest.TestCase):
                             data=["001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_network_details - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_list_network_details - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_create_network(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_create_network - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_create_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.create_network,
                             status,
@@ -157,12 +157,12 @@ class APITest(unittest.TestCase):
                             data=[{'network': {'net-name': 'testNetwork'}}],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_create_network - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_create_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_update_network(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_update_network - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_update_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.update_network,
                             status,
@@ -172,12 +172,12 @@ class APITest(unittest.TestCase):
                                   {'network': {'net-name': 'newName'}}],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_update_network - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_update_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_delete_network(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_delete_network - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_delete_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.delete_network,
                             status,
@@ -186,12 +186,12 @@ class APITest(unittest.TestCase):
                             data=["001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_delete_network - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_delete_network - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_list_ports(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_ports - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_list_ports - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.list_ports,
                             status,
@@ -200,13 +200,13 @@ class APITest(unittest.TestCase):
                             data=["001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_ports - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_list_ports - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_list_port_details(self,
                                 tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_port_details - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_list_port_details - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.list_port_details,
                             status,
@@ -215,12 +215,12 @@ class APITest(unittest.TestCase):
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_port_details - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_list_port_details - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_create_port(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_create_port - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_create_port - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.create_port,
                             status,
@@ -229,12 +229,12 @@ class APITest(unittest.TestCase):
                             data=["001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_create_port - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_create_port - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_delete_port(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_delete_port - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_delete_port - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.delete_port,
                             status,
@@ -243,12 +243,12 @@ class APITest(unittest.TestCase):
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_delete_port - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_delete_port - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_set_port_state(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_set_port_state - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_set_port_state - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.set_port_state,
                             status,
@@ -258,13 +258,13 @@ class APITest(unittest.TestCase):
                                   {'port': {'state': 'ACTIVE'}}],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_set_port_state - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_set_port_state - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_list_port_attachments(self,
                                    tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_port_attachments - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_list_port_attachments - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.list_port_attachments,
                             status,
@@ -273,13 +273,13 @@ class APITest(unittest.TestCase):
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_port_attachments - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_list_port_attachments - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_attach_resource(self, tenant=TENANT_1,
                               format='json', status=200):
-        LOG.debug("_test_attach_resource - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_attach_resource - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.attach_resource,
                             status,
@@ -289,13 +289,13 @@ class APITest(unittest.TestCase):
                                     {'resource': {'id': '1234'}}],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_attach_resource - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_attach_resource - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_detach_resource(self, tenant=TENANT_1,
                               format='json', status=200):
-        LOG.debug("_test_detach_resource - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_detach_resource - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         self._assert_sanity(self.client.detach_resource,
                             status,
@@ -304,13 +304,13 @@ class APITest(unittest.TestCase):
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_detach_resource - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_detach_resource - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def _test_ssl_certificates(self, tenant=TENANT_1,
                                format='json', status=200):
-        LOG.debug("_test_ssl_certificates - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+        LOG.debug("_test_ssl_certificates - tenant:%(tenant)s "\
+                  "- format:%(format)s - START" % locals())
 
         # Set SSL, and our cert file
         self.client.use_ssl = True
@@ -327,8 +327,8 @@ class APITest(unittest.TestCase):
         self.assertEquals(data["key_file"], cert_file)
         self.assertEquals(data["cert_file"], cert_file)
 
-        LOG.debug("_test_ssl_certificates - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+        LOG.debug("_test_ssl_certificates - tenant:%(tenant)s "\
+                  "- format:%(format)s - END" % locals())
 
     def test_list_networks_json(self):
         self._test_list_networks(format='json')

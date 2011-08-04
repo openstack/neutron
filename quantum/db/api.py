@@ -17,7 +17,7 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
-import logging 
+import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
@@ -27,7 +27,8 @@ from quantum.db import models
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
-LOG = logging.getLogger('quantum.plugins.SamplePlugin')
+LOG = logging.getLogger('quantum.db.api')
+
 
 def configure_db(options):
     """
