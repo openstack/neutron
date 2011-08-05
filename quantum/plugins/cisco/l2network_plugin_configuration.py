@@ -34,6 +34,9 @@ VLAN_END = section['vlan_end']
 section = cp['PORTS']
 MAX_PORTS = section['max_ports']
 
+section = cp['PORTPROFILES']
+MAX_PORT_PROFILES = section['max_port_profiles']
+
 section = cp['NETWORKS']
 MAX_NETWORKS = section['max_networks']
 
