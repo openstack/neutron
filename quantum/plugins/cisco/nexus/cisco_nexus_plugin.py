@@ -20,13 +20,12 @@
 import logging as LOG
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.common import cisco_configuration as conf
+from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
-
-from quantum.plugins.cisco.nexus import cisco_nexus_network_driver
+from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -36,7 +35,8 @@ class NexusPlugin(object):
     _networks = {}
 
     def __init__(self):
-        self._client = cisco_nexus_network_driver.CiscoNEXUSDriver()
+        self._client = utils.import_object(conf.NEXUS_DRIVER)
+        LOG.debug("Loaded driver %s\n" % conf.NEXUS_DRIVER)
         #TODO (Edgar) Using just one Nexus 7K Switch and Port
         self._nexus_ip = conf.NEXUS_IP_ADDRESS
         self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)

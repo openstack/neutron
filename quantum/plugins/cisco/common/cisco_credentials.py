@@ -18,54 +18,51 @@
 #
 
 import logging as LOG
+import os
 
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_configparser as confp
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
-_creds_dictionary = {'10.10.10.10': ["username", "password"],
-                     '127.0.0.1': ["root", "nova"]}
+CREDENTIALS_FILE = "../conf/credentials.ini"
+
+cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+                             + "/" + CREDENTIALS_FILE)
+_creds_dictionary = cp.walk(cp.dummy)
 
 
 class Store(object):
-    # The format for this store is {"ip-address" :{"username", "password"}}
-    def __init__(self):
-        pass
-
     @staticmethod
-    def putId(id):
-        _creds_dictionary[id] = []
-
-    @staticmethod
-    def putUsername(id, username):
-        creds = _creds_dictionary.get(id)
-        creds.insert(0, username)
-
-    @staticmethod
-    def putPassword(id, password):
-        creds = _creds_dictionary.get(id)
-        creds.insert(1, password)
+    def putCredential(id, username, password):
+        _creds_dictionary[id] = {const.USERNAME: username,
+                                 const.PASSWORD: password}
 
     @staticmethod
     def getUsername(id):
-        creds = _creds_dictionary.get(id)
-        return creds[0]
+        return _creds_dictionary[id][const.USERNAME]
 
     @staticmethod
     def getPassword(id):
-        creds = _creds_dictionary.get(id)
-        return creds[1]
+        return _creds_dictionary[id][const.PASSWORD]
+
+    @staticmethod
+    def getCredential(id):
+        return _creds_dictionary[id]
+
+    @staticmethod
+    def getCredentials():
+        return _creds_dictionary
+
+    @staticmethod
+    def deleteCredential(id):
+        return _creds_dictionary.pop(id)
 
 
 def main():
-    LOG.debug("username %s\n" % Store.getUsername("172.20.231.27"))
-    LOG.debug("password %s\n" % Store.getPassword("172.20.231.27"))
-    Store.putId("192.168.1.1")
-    Store.putUsername("192.168.1.1", "guest-username")
-    Store.putPassword("192.168.1.1", "guest-password")
-    LOG.debug("username %s\n" % Store.getUsername("192.168.1.1"))
-    LOG.debug("password %s\n" % Store.getPassword("192.168.1.1"))
+    Store.putCredential("10.10.10.10", "foo", "bar")
+    print ("%s\n") % Store.getCredentials()
 
 if __name__ == '__main__':
     main()

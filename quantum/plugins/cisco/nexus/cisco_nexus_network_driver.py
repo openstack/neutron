@@ -25,7 +25,6 @@ import logging as LOG
 import string
 import subprocess
 
-from quantum.plugins.cisco.common import cisco_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 

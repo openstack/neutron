@@ -15,18 +15,16 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-# @author: Edgar Magana, Cisco Systems, Inc.
 #
 
 import logging as LOG
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.common import cisco_configuration as conf
+from quantum.common import utils
+from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.nexus import cisco_nexus_plugin
-from quantum.plugins.cisco.ucs import cisco_ucs_plugin
 from quantum.plugins.cisco.common import cisco_utils as cutil
 
 LOG.basicConfig(level=LOG.WARN)
@@ -37,13 +35,18 @@ class L2Network(object):
     _networks = {}
     _tenants = {}
     _portprofiles = {}
+    _plugins = {}
 
     def __init__(self):
         self._net_counter = 0
         self._portprofile_counter = 0
+        self._port_counter = 0
         self._vlan_counter = int(conf.VLAN_START) - 1
-        self._ucs_plugin = cisco_ucs_plugin.UCSVICPlugin()
-        self._nexus_plugin = cisco_nexus_plugin.NexusPlugin()
+        for key in conf.plugins[const.PLUGINS].keys():
+            self._plugins[key] = utils.import_object(
+                conf.plugins[const.PLUGINS][key])
+            LOG.debug("Loaded device plugin %s\n" % \
+                    conf.plugins[const.PLUGINS][key])
 
     """
     Core API implementation
@@ -66,15 +69,9 @@ class L2Network(object):
         new_net_id = self._get_unique_net_id(tenant_id)
         vlan_id = self._get_vlan_for_tenant(tenant_id, net_name)
         vlan_name = self._get_vlan_name(new_net_id, str(vlan_id))
-        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
-        if nexus_driver_flag == 'on':
-            LOG.debug("Nexus OS Driver called\n")
-            self._nexus_plugin.create_network(tenant_id, net_name, new_net_id,
-                                          vlan_name, vlan_id)
-        else:
-            LOG.debug("No Nexus OS Driver available\n")
-        self._ucs_plugin.create_network(tenant_id, net_name, new_net_id,
-                                        vlan_name, vlan_id)
+        for pluginClass in self._plugins.values():
+            pluginClass.create_network(tenant_id, net_name,
+                                       new_net_id, vlan_name, vlan_id)
         new_net_dict = {const.NET_ID: new_net_id,
                         const.NET_NAME: net_name,
                         const.NET_PORTS: {},
@@ -94,18 +91,20 @@ class L2Network(object):
         """
         LOG.debug("delete_network() called\n")
         net = self._networks.get(net_id)
-        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
         # TODO (Sumit) : Verify that no attachments are plugged into the
         # network
         if net:
+            if len(net[const.NET_PORTS].values()) > 0:
+                ports_on_net = net[const.NET_PORTS].values()
+                for port in ports_on_net:
+                    if port[const.ATTACHMENT]:
+                        raise exc.NetworkInUse(net_id=net_id)
+                for port in ports_on_net:
+                    self.delete_port(tenant_id, net_id, port[const.PORT_ID])
             # TODO (Sumit) : Before deleting the network, make sure all the
             # ports associated with this network are also deleted
-            if nexus_driver_flag == 'on':
-                LOG.debug("Nexus OS Driver called\n")
-                self._nexus_plugin.delete_network(tenant_id, net_id)
-            else:
-                LOG.debug("No Nexus OS Driver available\n")
-            self._ucs_plugin.delete_network(tenant_id, net_id)
+            for pluginClass in self._plugins.values():
+                pluginClass.delete_network(tenant_id, net_id)
             self._networks.pop(net_id)
             tenant = self._get_tenant(tenant_id)
             tenant_networks = tenant[const.TENANT_NETWORKS]
@@ -129,13 +128,8 @@ class L2Network(object):
         Virtual Network.
         """
         LOG.debug("rename_network() called\n")
-        nexus_driver_flag = conf.NEXUS_DRIVER_ACTIVE
-        if nexus_driver_flag == 'on':
-            LOG.debug("Nexus OS Driver called\n")
-            self._nexus_plugin.rename_network(tenant_id, net_id)
-        else:
-            LOG.debug("No Nexus OS Driver available\n")
-        self._ucs_plugin.rename_network(tenant_id, net_id)
+        for pluginClass in self._plugins.values():
+            pluginClas.rename_network(tenant_id, net_id)
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name
         return network
@@ -158,8 +152,9 @@ class L2Network(object):
         net = self._get_network(tenant_id, net_id)
         ports = net[const.NET_PORTS]
         unique_port_id_string = self._get_unique_port_id(tenant_id, net_id)
-        self._ucs_plugin.create_port(tenant_id, net_id, port_state,
-                                     unique_port_id_string)
+        self._plugins[const.UCS_PLUGIN].create_port(tenant_id, net_id,
+                                                    port_state,
+                                                    unique_port_id_string)
         new_port_dict = {const.PORT_ID: unique_port_id_string,
                          const.PORT_STATE: const.PORT_UP,
                          const.ATTACHMENT: None}
@@ -181,7 +176,8 @@ class L2Network(object):
         try:
             #TODO (Sumit): Before deleting port profile make sure that there
             # is no VM using this port profile
-            self._ucs_plugin.delete_port(tenant_id, net_id, port_id)
+            self._plugins[const.UCS_PLUGIN].delete_port(tenant_id, net_id,
+                                                        port_id)
             net = self._get_network(tenant_id, net_id)
             net[const.NET_PORTS].pop(port_id)
         except KeyError:
@@ -218,8 +214,9 @@ class L2Network(object):
         if port[const.ATTACHMENT]:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port[const.ATTACHMENT])
-        self._ucs_plugin.plug_interface(tenant_id, net_id, port_id,
-                                        remote_interface_id)
+        self._plugins[const.UCS_PLUGIN].plug_interface(tenant_id,
+                                                       net_id, port_id,
+                                                       remote_interface_id)
         port[const.ATTACHMENT] = remote_interface_id
 
     def unplug_interface(self, tenant_id, net_id, port_id):
@@ -229,8 +226,8 @@ class L2Network(object):
         """
         LOG.debug("unplug_interface() called\n")
         port = self._get_port(tenant_id, net_id, port_id)
-        self._ucs_plugin.unplug_interface(tenant_id, net_id,
-                                          port_id)
+        self._plugins[const.UCS_PLUGIN].unplug_interface(tenant_id, net_id,
+                                                         port_id)
         port[const.ATTACHMENT] = None
 
     """
@@ -361,17 +358,15 @@ class L2Network(object):
         "-n-" + ("0" * (6 - len(str(self._net_counter)))) + \
         str(self._net_counter)
         # TODO (Sumit): Need to check if the ID has already been allocated
+        # ID will be generated by DB
         return id
 
     def _get_unique_port_id(self, tenant_id, net_id):
-        net = self._get_network(tenant_id, net_id)
-        ports = net[const.NET_PORTS]
-        if len(ports) == 0:
-            new_port_id = 1
-        else:
-            new_port_id = max(ports.keys()) + 1
-        id = net_id + "-p-" + str(new_port_id)
+        self._port_counter += 1
+        self._port_counter %= int(conf.MAX_PORTS)
+        id = net_id + "-p-" + str(self._port_counter)
         # TODO (Sumit): Need to check if the ID has already been allocated
+        # ID will be generated by DB
         return id
 
     def _get_unique_profile_id(self, tenant_id):
@@ -380,6 +375,7 @@ class L2Network(object):
         id = tenant_id[:3] + "-pp-" + \
         ("0" * (6 - len(str(self._net_counter)))) + str(self._net_counter)
         # TODO (Sumit): Need to check if the ID has already been allocated
+        # ID will be generated by DB
         return id
 
 # TODO (Sumit):

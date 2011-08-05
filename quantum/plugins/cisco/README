@@ -7,9 +7,13 @@
 * UCS B200 series blades with M81KR VIC installed.
 * UCSM 2.0 (Capitola) Build 230
 * RHEL 6.1
-* ncclcient v0.3.1 - Python library for NETCONF clients (http://schmizz.net/ncclient/)
 * UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
 http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
+
+* If you have a Nexus switch in your topology and decide to turn on Nexus support, you will need:
+	- ncclcient v0.3.1 - Python library for NETCONF clients (http://schmizz.net/ncclient/).
+	- paramiko library (do: yum install python-paramiko.noarch)
+
 * To run Quantum on RHEL, you will need to have the correct version of python-routes (version 1.12.3 or later). The RHEL 6.1 package contains an older version. Do the following and check your python-routes version:
 rpm -qav | grep "python-routes"
 
@@ -26,64 +30,12 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSTACK
 ** Plugin Installation Instructions:
 * Make a backup copy of quantum/quantum/plugins.ini, and edit the file to remove all exisiting entries and add the following entry:
 provider = quantum.plugins.cisco.l2network_plugin.L2Network
-* You should have the following files in quantum/quantum/plugins/cisco directory (if you have pulled the Cisco Quantum branch, you will already have them):
-l2network_plugin.py
-common/cisco_configuration.py
-common/cisco_constants.py
-common/cisco_credentials.py
-common/cisco_exceptions.py
-nexus/cisco_nexus_plugin.py
-ucs/cisco_ucs_network_driver.py
-ucs/cisco_ucs_plugin.py
-common/cisco_utils.py
-__init__.py
-ucs/get-vif.sh
-* Configure the L2 Network Plugin:
-	+ In cisco_configuration.py, 
-		- change the UCSM IP in the following statement to your UCSM IP
-			flags.DEFINE_string('ucsm_ip_address', "172.20.231.27", 'IP address of UCSM')
-		- change the Nova MySQL DB IP if you are running Quantum on a different host than the OpenStack Cloud Controller (in other words you do not need to change the IP if Quantum is running on the same host on which the Nova DB is running). DB IP is changed in the following statement:
-			flags.DEFINE_string('db_server_ip', "127.0.0.1", 'IP address of nova DB server')
-		- change the hostname of the OpenStack Cloud Controller below
-			flags.DEFINE_string('nova_host_name', "openstack-0203", 'nova cloud controller hostname')
-		- change the name of the OpenStack project
-			flags.DEFINE_string('nova_proj_name', "demo", 'project created in nova')
-		- change the start range of the VLAN (if you are not sure about this number, leave this unchanged)
-			flags.DEFINE_string('vlan_start', "100", 'This is the start value of the allowable VLANs')
-		- change the end range of the VLAN (if you are not sure about this number, leave this unchanged)
-			flags.DEFINE_string('vlan_end', "3000", 'This is the end value of the allowable VLANs')
-		- unless you have VLANs created in UCSM which start with the name "q-", you do not need to change the following property. If you do need to change it, change "q-" to some other string. Do not use more than 6 characters.
-			flags.DEFINE_string('vlan_name_prefix', "q-", 'Prefix of the name given to the VLAN')
-		- unless you have Port Profiles created in UCSM which start with the name "q-", you do not need to change the following property. If you do need to change it, change "q-" to some other string. Do not use more than 6 characters.
-			flags.DEFINE_string('profile_name_prefix', "q-", 'Prefix of the name given to the port profile')
-		- Change the path to reflect the location of the get-vif.sh script, if you have followed the instructions in this README, this location should be the same as that of your other plugin modules
-                        flags.DEFINE_string('get_next_vif', "/root/sumit/quantum/quantum/plugins/cisco/get-vif.sh", 'This is the location of the script to get the next available dynamic nic')
-	
-	+ In cisco_credentials.py, 
-		- Change the following structure to reflect the correct UCS, N7K and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
-			N7K_IP_ADDRESS has to match with your Nexus 7k switch IP Address, N7K_USERNAME is the administrator user-name and N7K_PASSWORD is the password.
-			_creds_dictionary = {
-                     		'UCSM_IP_ADDRESS':["UCSM_USERNAME", "UCSM_PASSWORD"],
-                     		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
-                    	}
-                    	
-* Configure the L2 Network Plugin with Nexus OS Driver for testing VLANs CRUD on Nexus 7k Switch. Making these changes requires one Nexus 7K Switch connected to the UCSM and the ncclient patch not just the regular library, otherwise the system will fail.
-	+ In cisco_configuration.py,
-		- change the NEXUS 7K IP in the following statement to your N7K Switch IP
-			flags.DEFINE_string('nexus_ip_address', "172.20.231.61", 'IP address of N7K')
-		- change the NEXUS Interface in the following statement to the interface number in your N7K which is connected to your UCSM UpLink port 
-			flags.DEFINE_string('nexus_port', "3/23", 'Port number of the Interface connected from the Nexus 7K Switch to UCSM 6120')	
-		- change NEXUS Driver Flag to "on" in the following statement
-			flags.DEFINE_string('nexus_driver_active', "off", 'Flag to activate Nexus OS Driver')
-	
-	+ In cisco_credentials.py, 
-		- Change the following structure to reflect the correct UCS, N7K and Nova DB details. Your UCSM_IP_ADDRESS has to match the ucsmm_ip_addresss  which you provided in the cisco_configuration file earlier. Similarly, your NOVA_DATABSE_IP has to match the db_server_ip which you provided earlier. DB_USERNAME and DB_PASSWORD are those which you provided for the Nova MySQL DB when you setup OpenStack
-			N7K_IP_ADDRESS has to match with your Nexus 7k switch IP Address, N7K_USERNAME is the administrator user-name and N7K_PASSWORD is the password.
-			_creds_dictionary = {
-                     		'UCSM_IP_ADDRESS':["UCSM_USERNAME", "UCSM_PASSWORD"],
-                     		'N7K_IP_ADDRESS':["N7K_USERNAME", "N7K_PASSWORD"],
-                     		'NOVA_DATABASE_IP':["DB_USERNAME", "DB_PASSWORD"]
-                    	}
+
+* All configuration files are located under quantum/plugins/cisco/conf. Where you find <put_something_here> kind of placeholder, please replace it entirely with the relevant values (don't forget to remove the angle brackets as well) 
+
+* If you are not running Quantum on the same host as the OpenStack Cloud Controller, you will need to change the db_ip_address configuration in nova.ini
+
+* If you want to turn on Nexus support, please uncomment the nexus_plugin property in the nexus.ini file. You will also require a patch to the ncclient in addition to the library mentioned in the prerequisities.
                     	
 * Start the Quantum service
 
@@ -98,11 +50,3 @@ mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHA
 /usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
 
 * Restart nova-compute service
-
-**L2network database usage requirements -
-* mysql database "quantum_l2network" is required for persistence of the l2network plugin data.
-	+ The database can be created as follows -
-		- # mysql -uroot -pnova; (username/password here is root/nova)
-		- mysql> create database quantum_l2network;
-		- mysql> use quantum_l2network;
-	+ The database and login details must be specified in quantum/plugins/cisco/db/db_conn.ini.
