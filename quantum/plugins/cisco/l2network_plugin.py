@@ -115,12 +115,14 @@ class L2Network(object):
 
     def get_network_details(self, tenant_id, net_id):
         """
-        Deletes the Virtual Network belonging to a the
-        spec
+        Gets the details of a particular network
         """
         LOG.debug("get_network_details() called\n")
         network = self._get_network(tenant_id, net_id)
-        return network
+        ports_on_net = network[const.NET_PORTS].values()
+        return {const.NET_ID: network[const.NET_ID],
+                const.NET_NAME: network[const.NET_NAME],
+                const.NET_PORTS: ports_on_net}
 
     def rename_network(self, tenant_id, net_id, new_name):
         """
@@ -129,7 +131,7 @@ class L2Network(object):
         """
         LOG.debug("rename_network() called\n")
         for pluginClass in self._plugins.values():
-            pluginClas.rename_network(tenant_id, net_id)
+            pluginClass.rename_network(tenant_id, net_id, new_name)
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name
         return network
