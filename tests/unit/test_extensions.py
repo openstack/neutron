@@ -168,7 +168,7 @@ class RequestExtensionTest(BaseTest):
     def test_extend_get_resource_response(self):
         def extend_response_data(req, res):
             data = json.loads(res.body)
-            data['extended_key'] = req.GET.get('extended_key')
+            data['FOXNSOX:extended_key'] = req.GET.get('extended_key')
             res.body = json.dumps(data)
             return res
 
@@ -177,7 +177,8 @@ class RequestExtensionTest(BaseTest):
 
         self.assertEqual(200, response.status_int)
         response_data = json.loads(response.body)
-        self.assertEqual('extended_data', response_data['extended_key'])
+        self.assertEqual('extended_data',
+                         response_data['FOXNSOX:extended_key'])
         self.assertEqual('knox', response_data['fort'])
 
     def test_get_resources(self):
@@ -343,6 +344,11 @@ class ExtensionControllerTest(unittest.TestCase):
         self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
         self.assertEqual(foxnsox_extension["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
+
+    def test_show_returns_not_found_for_non_existant_extension(self):
+        response = self.test_app.get("/extensions/non_existant", status="*")
+
+        self.assertEqual(response.status_int, 404)
 
 
 def app_factory(global_conf, **local_conf):

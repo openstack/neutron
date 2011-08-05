@@ -199,7 +199,10 @@ class ExtensionController(wsgi.Controller):
 
     def show(self, request, id):
         # NOTE(dprince): the extensions alias is used as the 'id' for show
-        ext = self.extension_manager.extensions[id]
+        ext = self.extension_manager.extensions.get(id, None)
+        if not ext:
+            raise webob.exc.HTTPNotFound(
+                _("Extension with alias %s does not exist") % id)
         return self._translate(ext)
 
     def delete(self, request, id):
