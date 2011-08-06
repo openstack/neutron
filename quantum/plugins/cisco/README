@@ -2,6 +2,7 @@
 ==================
 
 *** Current support for UCS (blade servers) with M81KR VIC (Palo) for 802.1Qbh ***
+*** Also supports Nexus 7k ***
 
 ** Pre-requisities
 * UCS B200 series blades with M81KR VIC installed.
@@ -28,14 +29,16 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSTACK
 
 
 ** Plugin Installation Instructions:
-* Make a backup copy of quantum/quantum/plugins.ini, and edit the file to remove all exisiting entries and add the following entry:
+* Make a backup copy of quantum/quantum/plugins.ini, and edit the "provider" entry to point to the L2Network-plugin:
 provider = quantum.plugins.cisco.l2network_plugin.L2Network
 
-* All configuration files are located under quantum/plugins/cisco/conf. Where you find <put_something_here> kind of placeholder, please replace it entirely with the relevant values (don't forget to remove the angle brackets as well) 
+* All configuration files are located under quantum/plugins/cisco/conf. Wherever you find <put_something_here> kind of placeholder, please replace it entirely with the relevant values (don't forget to remove the angle brackets as well) 
 
 * If you are not running Quantum on the same host as the OpenStack Cloud Controller, you will need to change the db_ip_address configuration in nova.ini
 
-* If you want to turn on Nexus support, please uncomment the nexus_plugin property in the nexus.ini file. You will also require a patch to the ncclient in addition to the library mentioned in the prerequisities.
+* If you want to turn on Nexus support, please uncomment the nexus_plugin property in the plugins.ini file, and enter the relevant configuration in the nexus.ini file. You will also require a patch to the ncclient in addition to the library mentioned in the prerequisities. If you are not turning the Nexus support on, your Nexus configuration will be ignored.
+
+* Check again if you have gone through every conf file and made the required changes (check if all IP addresses are correct, and check if you have entered the credentials correponding to each of those IP addresses in the credentials.ini file).
                     	
 * Start the Quantum service
 
