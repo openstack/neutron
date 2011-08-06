@@ -35,6 +35,7 @@ CONF_FILE = "ovs_quantum_plugin.ini"
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger("ovs_quantum_plugin")
 
+
 def find_config(basepath):
     for root, dirs, files in os.walk(basepath):
         if CONF_FILE in files:

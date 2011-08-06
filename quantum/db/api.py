@@ -127,6 +127,7 @@ def network_rename(net_id, tenant_id, new_name):
     session.flush()
     return net
 
+
 def network_destroy(net_id):
     session = get_session()
     try:
