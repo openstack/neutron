@@ -26,58 +26,9 @@ import urllib
 
 from manager import QuantumManager
 from optparse import OptionParser
-from quantum.common.wsgi import Serializer
+from client import Client
 
 FORMAT = "json"
-CONTENT_TYPE = "application/" + FORMAT
-
-
-### --- Miniclient (taking from the test directory)
-### TODO(bgh): move this to a library within quantum
-class MiniClient(object):
-    """A base client class - derived from Glance.BaseClient"""
-    action_prefix = '/v0.1/tenants/{tenant_id}'
-
-    def __init__(self, host, port, use_ssl):
-        self.host = host
-        self.port = port
-        self.use_ssl = use_ssl
-        self.connection = None
-
-    def get_connection_type(self):
-        if self.use_ssl:
-            return httplib.HTTPSConnection
-        else:
-            return httplib.HTTPConnection
-
-    def do_request(self, tenant, method, action, body=None,
-                   headers=None, params=None):
-        action = MiniClient.action_prefix + action
-        action = action.replace('{tenant_id}', tenant)
-        if type(params) is dict:
-            action += '?' + urllib.urlencode(params)
-        try:
-            connection_type = self.get_connection_type()
-            headers = headers or {}
-            # Open connection and send request
-            c = connection_type(self.host, self.port)
-            c.request(method, action, body, headers)
-            res = c.getresponse()
-            status_code = self.get_status_code(res)
-            if status_code in (httplib.OK, httplib.CREATED,
-                               httplib.ACCEPTED, httplib.NO_CONTENT):
-                return res
-            else:
-                raise Exception("Server returned error: %s" % res.read())
-        except (socket.error, IOError), e:
-            raise Exception("Unable to connect to server. Got error: %s" % e)
-
-    def get_status_code(self, response):
-        if hasattr(response, 'status_int'):
-            return response.status_int
-        else:
-            return response.status
-### -- end of miniclient
 
 ### -- Core CLI functions
 
@@ -94,11 +45,10 @@ def list_nets(manager, *args):
 
 def api_list_nets(client, *args):
     tenant_id = args[0]
-    res = client.do_request(tenant_id, 'GET', "/networks." + FORMAT)
-    resdict = json.loads(res.read())
-    LOG.debug(resdict)
+    res = client.list_networks()
+    LOG.debug(res)
     print "Virtual Networks on Tenant:%s\n" % tenant_id
-    for n in resdict["networks"]:
+    for n in res["networks"]:
         net_id = n["id"]
         print "\tNetwork ID:%s\n" % (net_id)
         # TODO(bgh): we should make this call pass back the name too
@@ -115,13 +65,11 @@ def create_net(manager, *args):
 def api_create_net(client, *args):
     tid, name = args
     data = {'network': {'net-name': '%s' % name}}
-    body = Serializer().serialize(data, CONTENT_TYPE)
-    res = client.do_request(tid, 'POST', "/networks." + FORMAT, body=body)
-    rd = json.loads(res.read())
-    LOG.debug(rd)
+    res = client.create_network(data)
+    LOG.debug(res)
     nid = None
     try:
-        nid = rd["networks"]["network"]["id"]
+        nid = res["networks"]["network"]["id"]
     except Exception, e:
         print "Failed to create network"
         # TODO(bgh): grab error details from ws request result
@@ -137,14 +85,12 @@ def delete_net(manager, *args):
 
 def api_delete_net(client, *args):
     tid, nid = args
-    res = client.do_request(tid, 'DELETE', "/networks/" + nid + "." + FORMAT)
-    status = res.status
-    if status != 202:
-        print "Failed to delete network"
-        output = res.read()
-        print output
-    else:
+    try:
+        res = client.delete_network(nid)
         print "Deleted Virtual Network with ID:%s" % nid
+    except Exception, e:
+        print "Failed to delete network"
+        LOG.error("Failed to delete network: %s" % e)
 
 
 def detail_net(manager, *args):
@@ -157,23 +103,25 @@ def detail_net(manager, *args):
 
 def api_detail_net(client, *args):
     tid, nid = args
-    res = client.do_request(tid, 'GET',
-      "/networks/%s/ports.%s" % (nid, FORMAT))
-    output = res.read()
-    if res.status != 200:
-        LOG.error("Failed to list ports: %s" % output)
+    try:
+        res = client.list_network_details(nid)["networks"]["network"]
+    except Exception, e:
+        LOG.error("Failed to get network details: %s" % e)
         return
-    rd = json.loads(output)
-    LOG.debug(rd)
+
+    try:
+        ports = client.list_ports(nid)
+    except Exception, e:
+        LOG.error("Failed to list ports: %s" % e)
+        return
+
+    print "Network %s (%s)" % (res['name'], res['id'])
     print "Remote Interfaces on Virtual Network:%s\n" % nid
-    for port in rd["ports"]:
+    for port in ports["ports"]:
         pid = port["id"]
-        res = client.do_request(tid, 'GET',
-          "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT))
-        output = res.read()
-        rd = json.loads(output)
-        LOG.debug(rd)
-        remote_iface = rd["attachment"]
+        res = client.list_port_attachments(nid, pid)
+        LOG.debug(res)
+        remote_iface = res["attachment"]
         print "\tRemote interface:%s" % remote_iface
 
 
@@ -186,11 +134,12 @@ def rename_net(manager, *args):
 def api_rename_net(client, *args):
     tid, nid, name = args
     data = {'network': {'net-name': '%s' % name}}
-    body = Serializer().serialize(data, CONTENT_TYPE)
-    res = client.do_request(tid, 'PUT', "/networks/%s.%s" % (nid, FORMAT),
-      body=body)
-    resdict = json.loads(res.read())
-    LOG.debug(resdict)
+    try:
+        res = client.update_network(nid, data)
+    except Exception, e:
+        LOG.error("Failed to rename network %s: %s" % (nid, e))
+        return
+    LOG.debug(res)
     print "Renamed Virtual Network with ID:%s" % nid
 
 
@@ -204,16 +153,15 @@ def list_ports(manager, *args):
 
 def api_list_ports(client, *args):
     tid, nid = args
-    res = client.do_request(tid, 'GET',
-      "/networks/%s/ports.%s" % (nid, FORMAT))
-    output = res.read()
-    if res.status != 200:
-        LOG.error("Failed to list ports: %s" % output)
+    try:
+        ports = client.list_ports(nid)
+    except Exception, e:
+        LOG.error("Failed to list ports: %s" % e)
         return
-    rd = json.loads(output)
-    LOG.debug(rd)
+
+    LOG.debug(ports)
     print "Ports on Virtual Network:%s\n" % nid
-    for port in rd["ports"]:
+    for port in ports["ports"]:
         print "\tVirtual Port:%s" % port["id"]
 
 
@@ -226,14 +174,12 @@ def create_port(manager, *args):
 
 def api_create_port(client, *args):
     tid, nid = args
-    res = client.do_request(tid, 'POST',
-      "/networks/%s/ports.%s" % (nid, FORMAT))
-    output = res.read()
-    if res.status != 200:
-        LOG.error("Failed to create port: %s" % output)
+    try:
+        res = client.create_port(nid)
+    except Exception, e:
+        LOG.error("Failed to create port: %s" % e)
         return
-    rd = json.loads(output)
-    new_port = rd["ports"]["port"]["id"]
+    new_port = res["ports"]["port"]["id"]
     print "Created Virtual Port:%s " \
           "on Virtual Network:%s" % (new_port, nid)
 
@@ -247,14 +193,15 @@ def delete_port(manager, *args):
 
 def api_delete_port(client, *args):
     tid, nid, pid = args
-    res = client.do_request(tid, 'DELETE',
-      "/networks/%s/ports/%s.%s" % (nid, pid, FORMAT))
-    output = res.read()
-    if res.status != 202:
-        LOG.error("Failed to delete port: %s" % output)
+    try:
+        res = client.delete_port(nid, pid)
+    except Exception, e:
+        LOG.error("Failed to delete port: %s" % e)
         return
     LOG.info("Deleted Virtual Port:%s " \
           "on Virtual Network:%s" % (pid, nid))
+    print "Deleted Virtual Port:%s " \
+          "on Virtual Network:%s" % (pid, nid)
 
 
 def detail_port(manager, *args):
@@ -266,14 +213,12 @@ def detail_port(manager, *args):
 
 def api_detail_port(client, *args):
     tid, nid, pid = args
-    res = client.do_request(tid, 'GET',
-      "/networks/%s/ports/%s.%s" % (nid, pid, FORMAT))
-    output = res.read()
-    if res.status != 200:
-        LOG.error("Failed to get port details: %s" % output)
+    try:
+        port = client.list_port_details(nid, pid)["ports"]["port"]
+    except Exception, e:
+        LOG.error("Failed to get port details: %s" % e)
         return
-    rd = json.loads(output)
-    port = rd["ports"]["port"]
+
     id = port["id"]
     attachment = port["attachment"]
     LOG.debug(port)
@@ -290,18 +235,15 @@ def plug_iface(manager, *args):
 
 def api_plug_iface(client, *args):
     tid, nid, pid, vid = args
-    data = {'port': {'attachment-id': '%s' % vid}}
-    body = Serializer().serialize(data, CONTENT_TYPE)
-    res = client.do_request(tid, 'PUT',
-      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
-    output = res.read()
-    LOG.debug(output)
-    if res.status != 202:
+    try:
+        data = {'port': {'attachment-id': '%s' % vid}}
+        res = client.attach_resource(nid, pid, data)
+    except Exception, e:
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
           pid, output))
         return
-    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid,
-      nid)
+    LOG.debug(res)
+    print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
 
 
 def unplug_iface(manager, *args):
@@ -313,16 +255,12 @@ def unplug_iface(manager, *args):
 
 def api_unplug_iface(client, *args):
     tid, nid, pid = args
-    data = {'port': {'attachment-id': ''}}
-    body = Serializer().serialize(data, CONTENT_TYPE)
-    res = client.do_request(tid, 'DELETE',
-      "/networks/%s/ports/%s/attachment.%s" % (nid, pid, FORMAT), body=body)
-    output = res.read()
-    LOG.debug(output)
-    if res.status != 202:
-        LOG.error("Failed to unplug iface from port \"%s\": %s" % \
-            (pid, output))
+    try:
+        res = client.detach_resource(nid, pid)
+    except Exception, e:
+        LOG.error("Failed to unplug iface from port \"%s\": %s" % (pid, e))
         return
+    LOG.debug(res)
     print "Unplugged interface from port:%s on network:%s" % (pid, nid)
 
 
@@ -440,7 +378,8 @@ if __name__ == "__main__":
         sys.exit(1)
     LOG.debug("Executing command \"%s\" with args: %s" % (cmd, args))
     if not options.load_plugin:
-        client = MiniClient(options.host, options.port, options.ssl)
+        client = Client(options.host, options.port, options.ssl,
+                        args[0], FORMAT)
         if "api_func" not in commands[cmd]:
             LOG.error("API version of \"%s\" is not yet implemented" % cmd)
             sys.exit(1)
