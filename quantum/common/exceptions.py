@@ -21,6 +21,9 @@ Quantum-type exceptions. SHOULD include dedicated exception logging.
 """
 
 import logging
+import gettext
+
+gettext.install('quantum', unicode=1)
 
 
 class QuantumException(Exception):
@@ -106,6 +109,7 @@ class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port " \
                 "%(port_id)s for network %(net_id)s. The attachment is " \
                 "already plugged into port %(att_port_id)s")
+
 
 class NetworkNameExists(QuantumException):
     message = _("Unable to set network name to %(net_name). " \

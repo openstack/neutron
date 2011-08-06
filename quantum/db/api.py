@@ -89,6 +89,7 @@ def _check_duplicate_net_name(tenant_id, net_name):
         # that net-names are unique within a tenant
         pass
 
+
 def network_create(tenant_id, name):
     session = get_session()
 

@@ -91,6 +91,7 @@ class NetworkInUse(webob.exc.HTTPClientError):
     title = 'Network in Use'
     explanation = ('Unable to remove the network: attachments still plugged.')
 
+
 class NetworkNameExists(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
