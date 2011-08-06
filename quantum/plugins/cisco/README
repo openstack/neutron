@@ -36,7 +36,7 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
 
 * If you are not running Quantum on the same host as the OpenStack Cloud Controller, you will need to change the db_ip_address configuration in nova.ini
 
-* If you want to turn on Nexus support, please uncomment the nexus_plugin property in the plugins.ini file, and enter the relevant configuration in the nexus.ini file. You will also require a patch to the ncclient in addition to the library mentioned in the prerequisities. If you are not turning the Nexus support on, your Nexus configuration will be ignored.
+* If you want to turn on Nexus support, please uncomment the nexus_plugin property in the plugins.ini file, and enter the relevant configuration in the nexus.ini file. In addition, you will require a patch to the ncclient library. Also make sure that the switch's host key is known to the host on which you are running the Quantum service (since the connection to the switch is over ssh). If you are not turning the Nexus support on, your Nexus configuration will be ignored.
 
 * Check again if you have gone through every conf file and made the required changes (check if all IP addresses are correct, and check if you have entered the credentials correponding to each of those IP addresses in the credentials.ini file).
                     	
