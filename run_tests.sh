@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-  echo "Usage: $0 [OPTION]"
+  echo "Usage: $0 [OPTION]..."
   echo "Run Quantum's test suite(s)"
   echo ""
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
