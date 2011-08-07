@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-  echo "Usage: $0 [OPTION]..."
+  echo "Usage: $0 [OPTION]"
   echo "Run Quantum's test suite(s)"
   echo ""
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
@@ -39,11 +39,20 @@ done
 
 function run_tests {
   # Just run the test suites in current environment
-  ${wrapper} rm -f tests.sqlite
-  ${wrapper} $NOSETESTS 2> run_tests.err.log
+  ${wrapper} rm -f ./$PLUGIN_DIR/tests.sqlite
+  ${wrapper} $NOSETESTS 2> ./$PLUGIN_DIR/run_tests.err.log
 }
 
-NOSETESTS="python run_tests.py $noseargs"
+NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseargs"
+
+if [ -n "$PLUGIN_DIR" ]
+then
+    if ! [ -f ./$PLUGIN_DIR/run_tests.py ]
+    then
+        echo "Could not find run_tests.py in plugin directory $PLUGIN_DIR"
+        exit 1
+    fi
+fi
 
 if [ $never_venv -eq 0 ]
 then

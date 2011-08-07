@@ -17,43 +17,66 @@
 #    limitations under the License.
 
 
-"""Unittest runner for quantum
+"""Unittest runner for quantum OVS plugin
+
+This file should be run from the top dir in the quantum directory
 
 To run all test::
-    python run_tests.py
+    python quantum/plugins/openvswitch/run_tests.py
 
 To run all unit tests::
-    python run_tests.py unit
+    python quantum/plugins/openvswitch/run_tests.py unit
 
 To run all functional tests::
-    python run_tests.py functional
+    python quantum/plugins/openvswitch/run_tests.py functional
 
 To run a single unit test::
-    python run_tests.py unit.test_stores:TestSwiftBackend.test_get
+    python  quantum/plugins/openvswitch/run_tests.py \
+        unit.test_stores:TestSwiftBackend.test_get
 
 To run a single functional test::
-    python run_tests.py functional.test_service:TestController.test_create
+    python  quantum/plugins/openvswitch/run_tests.py \
+        functional.test_service:TestController.test_create
 
 To run a single unit test module::
-    python run_tests.py unit.test_stores
+    python  quantum/plugins/openvswitch/run_tests.py unit.test_stores
 
 To run a single functional test module::
-    python run_tests.py functional.test_stores
+    python quantum/plugins/openvswitch/run_tests.py functional.test_stores
 """
 
 import gettext
+import logging
 import os
 import unittest
 import sys
 
-from quantum.common.test_lib import run_tests
 from nose import config
 
+sys.path.append(os.getcwd())
+
+from quantum.common.test_lib import run_tests, test_config
+from quantum.plugins.openvswitch.tests.test_vlan_map import VlanMapTest
 
 if __name__ == '__main__':
+    exit_status = False
+
+    cwd = os.getcwd()
+
     working_dir = os.path.abspath("tests")
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
                       workingDir=working_dir)
-    sys.exit(run_tests(c))
+    exit_status = run_tests(c)
+
+    os.chdir(cwd)
+
+    working_dir = os.path.abspath("quantum/plugins/openvswitch/tests")
+    c = config.Config(stream=sys.stdout,
+                      env=os.environ,
+                      verbosity=3,
+                      workingDir=working_dir)
+    exit_status = exit_status or run_tests(c)
+
+    sys.exit(exit_status)
