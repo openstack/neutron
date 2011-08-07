@@ -36,7 +36,9 @@ class Controller(common.QuantumController):
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "port": ["id", "state"], },
+                "port": ["id", "state"],
+                "attachment": ["id"]
+                },
             "plurals": {"ports": "port"}
         },
     }
@@ -45,34 +47,53 @@ class Controller(common.QuantumController):
         self._resource_name = 'port'
         super(Controller, self).__init__(plugin)
 
-    def index(self, request, tenant_id, network_id):
-        """ Returns a list of port ids for a given network """
-        return self._items(request, tenant_id, network_id, is_detail=False)
-
-    def _items(self, request, tenant_id, network_id, is_detail):
-        """ Returns a list of networks. """
+    def _items(self, request, tenant_id, network_id,
+               port_details=False):
+        """ Returns a list of ports. """
         try:
             ports = self._plugin.get_all_ports(tenant_id, network_id)
             builder = ports_view.get_view_builder(request)
-            result = [builder.build(port, is_detail)['port']
+            result = [builder.build(port, port_details)['port']
                       for port in ports]
             return dict(ports=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
+        
+    def _item(self, request, tenant_id, network_id, port_id,
+              att_details=False):
+        """ Returns a specific port. """
+        port = self._plugin.get_port_details(
+                        tenant_id, network_id, port_id)
+        builder = ports_view.get_view_builder(request)
+        result = builder.build(port, port_details=True,
+                               att_details=att_details)['port']
+        return dict(port=result)
+
+    def index(self, request, tenant_id, network_id):
+        """ Returns a list of port ids for a given network """
+        return self._items(request, tenant_id, network_id, port_details=False)
 
     def show(self, request, tenant_id, network_id, id):
         """ Returns port details for given port and network """
         try:
-            port = self._plugin.get_port_details(
-                            tenant_id, network_id, id)
-            builder = ports_view.get_view_builder(request)
-            #build response with details
-            result = builder.build(port, True)['port']
-            return dict(port=result)
+            return self._item(request, tenant_id, network_id, id)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
+
+    def detail(self, request, **kwargs):
+        tenant_id = kwargs.get('tenant_id')
+        network_id = kwargs.get('network_id')
+        port_id = kwargs.get('id')
+        if port_id:
+            # show details for a given network
+            return self._item(request, tenant_id, 
+                              network_id, port_id, att_details=True)
+        else:
+            # show details for all port
+            return self._items(request, tenant_id, 
+                               network_id, port_details=True)
 
     def create(self, request, tenant_id, network_id):
         """ Creates a new port for a given network """
