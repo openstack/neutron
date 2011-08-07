@@ -21,6 +21,7 @@ import logging as LOG
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
+from quantum.quantum_plugin_base import QuantumPluginBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
@@ -31,7 +32,7 @@ LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
-class L2Network(object):
+class L2Network(QuantumPluginBase):
     _networks = {}
     _tenants = {}
     _portprofiles = {}
