@@ -24,14 +24,15 @@ from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
+from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
-class UCSVICPlugin(object):
+class UCSVICPlugin(L2DevicePluginBase):
     _networks = {}
 
     def __init__(self):
@@ -45,7 +46,7 @@ class UCSVICPlugin(object):
         # TODO (Sumit) Make the counter per UCSM
         self._port_profile_counter = 0
 
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         """
         Returns a dictionary containing all
         <network_uuid, network_name> for
@@ -54,7 +55,8 @@ class UCSVICPlugin(object):
         LOG.debug("UCSVICPlugin:get_all_networks() called\n")
         return self._networks.values()
 
-    def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id):
+    def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
+                       **kwargs):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
@@ -70,7 +72,7 @@ class UCSVICPlugin(object):
         self._networks[net_id] = new_net_dict
         return new_net_dict
 
-    def delete_network(self, tenant_id, net_id):
+    def delete_network(self, tenant_id, net_id, **kwargs):
         """
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
@@ -88,7 +90,7 @@ class UCSVICPlugin(object):
             return net
         raise exc.NetworkNotFound(net_id=net_id)
 
-    def get_network_details(self, tenant_id, net_id):
+    def get_network_details(self, tenant_id, net_id, **kwargs):
         """
         Deletes the Virtual Network belonging to a the
         spec
@@ -97,7 +99,7 @@ class UCSVICPlugin(object):
         network = self._get_network(tenant_id, net_id)
         return network
 
-    def rename_network(self, tenant_id, net_id, new_name):
+    def rename_network(self, tenant_id, net_id, new_name, **kwargs):
         """
         Updates the symbolic name belonging to a particular
         Virtual Network.
@@ -107,7 +109,7 @@ class UCSVICPlugin(object):
         network[const.NET_NAME] = new_name
         return network
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
@@ -117,7 +119,7 @@ class UCSVICPlugin(object):
         ports_on_net = network[const.NET_PORTS].values()
         return ports_on_net
 
-    def create_port(self, tenant_id, net_id, port_state, port_id):
+    def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
         """
         Creates a port on the specified Virtual Network.
         """
@@ -145,7 +147,7 @@ class UCSVICPlugin(object):
         ports[port_id] = new_port_dict
         return new_port_dict
 
-    def delete_port(self, tenant_id, net_id, port_id):
+    def delete_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         Deletes a port on a specified Virtual Network,
         if the port contains a remote interface attachment,
@@ -172,7 +174,7 @@ class UCSVICPlugin(object):
         except KeyError:
             raise exc.PortNotFound(net_id=net_id, port_id=port_id)
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
         """
         Updates the state of a port on the specified Virtual Network.
         """
@@ -182,7 +184,7 @@ class UCSVICPlugin(object):
         port[const.PORT_STATE] = port_state
         return port
 
-    def get_port_details(self, tenant_id, net_id, port_id):
+    def get_port_details(self, tenant_id, net_id, port_id, **kwargs):
         """
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
@@ -190,7 +192,8 @@ class UCSVICPlugin(object):
         LOG.debug("UCSVICPlugin:get_port_details() called\n")
         return self._get_port(tenant_id, net_id, port_id)
 
-    def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
+    def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
+                       **kwargs):
         """
         Attaches a remote interface to the specified port on the
         specified Virtual Network.
@@ -215,7 +218,7 @@ class UCSVICPlugin(object):
         port_profile[const.PROFILE_VLAN_NAME] = new_vlan_name
         port_profile[const.PROFILE_VLAN_ID] = new_vlan_id
 
-    def unplug_interface(self, tenant_id, net_id, port_id):
+    def unplug_interface(self, tenant_id, net_id, port_id, **kwargs):
         """
         Detaches a remote interface from the specified port on the
         specified Virtual Network.

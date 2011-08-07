@@ -96,3 +96,8 @@ RHEL_DEVICE_NAME_REPFIX = "eth"
 
 UCS_PLUGIN = 'ucs_plugin'
 NEXUS_PLUGIN = 'nexus_plugin'
+
+PLUGIN_OBJ_REF = 'plugin-obj-ref'
+PARAM_LIST = 'param-list'
+
+DEVICE_IP = 'device-ip'

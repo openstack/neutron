@@ -25,13 +25,14 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
-class NexusPlugin(object):
+class NexusPlugin(L2DevicePluginBase):
     _networks = {}
 
     def __init__(self):
@@ -52,7 +53,8 @@ class NexusPlugin(object):
         LOG.debug("NexusPlugin:get_all_networks() called\n")
         return self._networks.values()
 
-    def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id):
+    def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
+                       **kwargs):
         """
         Create a VLAN in the switch, and configure the appropriate interfaces
         for this VLAN
@@ -69,7 +71,7 @@ class NexusPlugin(object):
         self._networks[net_id] = new_net_dict
         return new_net_dict
 
-    def delete_network(self, tenant_id, net_id):
+    def delete_network(self, tenant_id, net_id, **kwargs):
         """
         Deletes a VLAN in the switch, and removes the VLAN configuration
         from the relevant interfaces
@@ -85,7 +87,7 @@ class NexusPlugin(object):
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)
 
-    def get_network_details(self, tenant_id, net_id):
+    def get_network_details(self, tenant_id, net_id, **kwargs):
         """
         Returns the details of a particular network
         """
@@ -93,7 +95,7 @@ class NexusPlugin(object):
         network = self._get_network(tenant_id, net_id)
         return network
 
-    def rename_network(self, tenant_id, net_id, new_name):
+    def rename_network(self, tenant_id, net_id, new_name, **kwargs):
         """
         Updates the symbolic name belonging to a particular
         Virtual Network.
@@ -104,49 +106,50 @@ class NexusPlugin(object):
         network[const.NET_NAME] = new_name
         return network
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:get_all_ports() called\n")
 
-    def create_port(self, tenant_id, net_id, port_state, port_id):
+    def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:create_port() called\n")
 
-    def delete_port(self, tenant_id, net_id, port_id):
+    def delete_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:delete_port() called\n")
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:update_port() called\n")
 
-    def get_port_details(self, tenant_id, net_id, port_id):
+    def get_port_details(self, tenant_id, net_id, port_id, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:get_port_details() called\n")
 
-    def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id):
+    def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
+                       **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.
         """
         LOG.debug("NexusPlugin:plug_interface() called\n")
 
-    def unplug_interface(self, tenant_id, net_id, port_id):
+    def unplug_interface(self, tenant_id, net_id, port_id, **kwargs):
         """
         This is probably not applicable to the Nexus plugin.
         Delete if not required.

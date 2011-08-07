@@ -40,6 +40,9 @@ MAX_PORT_PROFILES = section['max_port_profiles']
 section = cp['NETWORKS']
 MAX_NETWORKS = section['max_networks']
 
+section = cp['MODEL']
+MODEL_CLASS = section['model_class']
+
 CONF_FILE = "conf/plugins.ini"
 
 cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \

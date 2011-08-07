@@ -1,6 +1,8 @@
  L2 Network Plugin
 ==================
 
+*** Reference implementation of plugin framework for L2 network ***
+*** Multi-switch (devices and types) capability ***   
 *** Current support for UCS (blade servers) with M81KR VIC (Palo) for 802.1Qbh ***
 *** Also supports Nexus 7k ***
 
@@ -10,6 +12,7 @@
 * RHEL 6.1
 * UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
 http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
+* Package python-configobj-4.6.0-3.el6.noarch
 
 * If you have a Nexus switch in your topology and decide to turn on Nexus support, you will need:
 	- ncclcient v0.3.1 - Python library for NETCONF clients (http://schmizz.net/ncclient/).
