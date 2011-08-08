@@ -32,8 +32,8 @@ class ViewBuilder(object):
     def build(self, port_data, port_details=False, att_details=False):
         """Generic method used to generate a port entity."""
         port = dict(port=dict(id=port_data['port-id']))
-        if port_details: 
+        if port_details:
             port['port']['state'] = port_data['port-state']
         if att_details and port_data['attachment-id']:
-            port['attachment'] = dict(id=port_data['attachment-id'])
+            port['port']['attachment'] = dict(id=port_data['attachment-id'])
         return port

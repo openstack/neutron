@@ -51,14 +51,23 @@ class Controller(common.QuantumController):
                port_details=False):
         """ Returns a list of ports. """
         try:
-            ports = self._plugin.get_all_ports(tenant_id, network_id)
+            port_list = self._plugin.get_all_ports(tenant_id, network_id)
             builder = ports_view.get_view_builder(request)
+
+            # Load extra data for ports if required.
+            if port_details:
+                port_list_detail = \
+                    [self._plugin.get_port_details(
+                                tenant_id, network_id, port['port-id'])
+                      for port in port_list]
+                port_list = port_list_detail
+
             result = [builder.build(port, port_details)['port']
-                      for port in ports]
+                      for port in port_list]
             return dict(ports=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
-        
+
     def _item(self, request, tenant_id, network_id, port_id,
               att_details=False):
         """ Returns a specific port. """
@@ -88,11 +97,11 @@ class Controller(common.QuantumController):
         port_id = kwargs.get('id')
         if port_id:
             # show details for a given network
-            return self._item(request, tenant_id, 
+            return self._item(request, tenant_id,
                               network_id, port_id, att_details=True)
         else:
             # show details for all port
-            return self._items(request, tenant_id, 
+            return self._items(request, tenant_id,
                                network_id, port_details=True)
 
     def create(self, request, tenant_id, network_id):

@@ -39,7 +39,8 @@ class Controller(common.QuantumController):
                 "port": ["id", "state"],
                 "attachment": ["id"]
             },
-            "plurals": {"networks": "network"}
+            "plurals": {"networks": "network",
+                        "ports": "port"}
         },
     }
 

@@ -12,19 +12,38 @@ def create_request(path, body, content_type, method='GET'):
     return req
 
 
-def network_list_request(tenant_id, format='xml'):
+def _network_list_request(tenant_id, format='xml', detail=False):
     method = 'GET'
-    path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
+    detail_str = detail and '/detail' or ''
+    path = "/tenants/%(tenant_id)s/networks" \
+           "%(detail_str)s.%(format)s" % locals()
+    content_type = "application/%s" % format
+    return create_request(path, None, content_type, method)
+
+
+def network_list_request(tenant_id, format='xml'):
+    return _network_list_request(tenant_id, format)
+
+
+def network_list_detail_request(tenant_id, format='xml'):
+    return _network_list_request(tenant_id, format, detail=True)
+
+
+def _show_network_request(tenant_id, network_id, format='xml', detail=False):
+    method = 'GET'
+    detail_str = detail and '/detail' or ''
+    path = "/tenants/%(tenant_id)s/networks" \
+           "/%(network_id)s%(detail_str)s.%(format)s" % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
 def show_network_request(tenant_id, network_id, format='xml'):
-    method = 'GET'
-    path = "/tenants/%(tenant_id)s/networks" \
-           "/%(network_id)s.%(format)s" % locals()
-    content_type = "application/%s" % format
-    return create_request(path, None, content_type, method)
+    return _show_network_request(tenant_id, network_id, format)
+
+
+def show_network_detail_request(tenant_id, network_id, format='xml'):
+    return _show_network_request(tenant_id, network_id, format, detail=True)
 
 
 def new_network_request(tenant_id, network_name='new_name',
@@ -56,20 +75,41 @@ def network_delete_request(tenant_id, network_id, format='xml'):
     return create_request(path, None, content_type, method)
 
 
-def port_list_request(tenant_id, network_id, format='xml'):
+def _port_list_request(tenant_id, network_id, format='xml', detail=False):
     method = 'GET'
+    detail_str = detail and '/detail' or ''
     path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports.%(format)s" % locals()
+           "%(network_id)s/ports%(detail_str)s.%(format)s" % locals()
+    content_type = "application/%s" % format
+    return create_request(path, None, content_type, method)
+
+
+def port_list_request(tenant_id, network_id, format='xml'):
+    return _port_list_request(tenant_id, network_id, format)
+
+
+def port_list_detail_request(tenant_id, network_id, format='xml'):
+    return _port_list_request(tenant_id, network_id,
+                              format, detail=True)
+
+
+def _show_port_request(tenant_id, network_id, port_id,
+                       format='xml', detail=False):
+    method = 'GET'
+    detail_str = detail and '/detail' or ''
+    path = "/tenants/%(tenant_id)s/networks/%(network_id)s" \
+           "/ports/%(port_id)s%(detail_str)s.%(format)s" % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
 def show_port_request(tenant_id, network_id, port_id, format='xml'):
-    method = 'GET'
-    path = "/tenants/%(tenant_id)s/networks/%(network_id)s" \
-           "/ports/%(port_id)s.%(format)s" % locals()
-    content_type = "application/%s" % format
-    return create_request(path, None, content_type, method)
+    return _show_port_request(tenant_id, network_id, port_id, format)
+
+
+def show_port_detail_request(tenant_id, network_id, port_id, format='xml'):
+    return _show_port_request(tenant_id, network_id, port_id,
+                              format, detail=True)
 
 
 def new_port_request(tenant_id, network_id, port_state,

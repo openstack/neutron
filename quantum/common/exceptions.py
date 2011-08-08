@@ -102,6 +102,12 @@ class PortInUse(QuantumException):
                 "is plugged into the logical port.")
 
 
+class PortIsDown(QuantumException):
+    message = _("Unable to perform operation on port %(port_id)s " \
+                "for network %(net_id)s. The port is currently " \
+                "administratively down.")
+
+
 class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port " \
                 "%(port_id)s for network %(net_id)s. The attachment is " \

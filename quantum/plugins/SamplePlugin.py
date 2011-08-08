@@ -405,10 +405,13 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.plug_interface() called")
+        port = self._get_port(tenant_id, net_id, port_id)
+        # Verify port state
+        if port['state'] == 'DOWN':
+            raise exc.PortIsDown(net_id=net_id, port_id=port_id)
         # Validate attachment
         self._validate_attachment(tenant_id, net_id, port_id,
                                   remote_interface_id)
-        port = self._get_port(tenant_id, net_id, port_id)
         if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])

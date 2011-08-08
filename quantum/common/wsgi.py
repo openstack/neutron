@@ -129,13 +129,13 @@ class Request(webob.Request):
             format = parts[1]
             if format in ['json', 'xml']:
                 return 'application/{0}'.format(parts[1])
-        
+
         #Then look up content header
         type_from_header = self.get_content_type()
         if type_from_header:
             return type_from_header
         ctypes = ['application/json', 'application/xml']
-        
+
         #Finally search in Accept-* headers
         bm = self.accept.best_match(ctypes)
         return bm or 'application/json'
