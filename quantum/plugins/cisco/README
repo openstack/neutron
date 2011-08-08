@@ -208,7 +208,7 @@ You'll be prompted for a password.
 
 4.  Add the 802.1Qbh specific libvirt template file, from:
     nova/virt/libvirt-qbh.xml.template
-    tO:
+    to:
     /usr/share/nova/libvirt-qbh.xml.template
     
 5.  Edit /etc/nova.conf to set the libvirt XML template to the above template:
