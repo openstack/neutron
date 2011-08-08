@@ -106,3 +106,13 @@ mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHA
 		- mysql> create database quantum_l2network;
 		- mysql> use quantum_l2network;
 	+ The database and login details must be specified in quantum/plugins/cisco/db/db_conn.ini.
+
+** Execute the Test cases
+* The unit tests are located at quantum/plugins/cisco/tests/unit. They are executed from quantum/plugins/cisco/ using the runtests.py script.
+
+* Execution of the runtests.py script.
+    All unit tests
+        python runtests.py unit
+    Specific Plugin unit test
+        python runtests.py unit.<name_of_the file>
+
