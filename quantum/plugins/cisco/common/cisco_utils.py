@@ -23,9 +23,9 @@ import sys
 import traceback
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.common import cisco_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_nova_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -38,8 +38,8 @@ class DBUtils(object):
 
     def _get_db_connection(self):
         db_ip = conf.DB_SERVER_IP
-        db_username = cred.Store.getUsername(db_ip)
-        db_password = cred.Store.getPassword(db_ip)
+        db_username = conf.DB_USERNAME
+        db_password = conf.DB_PASSWORD
         self.db = MySQLdb.connect(db_ip, db_username, db_password,
                                   conf.DB_NAME)
         return self.db

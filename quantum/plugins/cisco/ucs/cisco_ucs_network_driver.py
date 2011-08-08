@@ -27,9 +27,10 @@ import subprocess
 from xml.etree import ElementTree as et
 import urllib
 
-from quantum.plugins.cisco.common import cisco_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
+from quantum.plugins.cisco.ucs import cisco_getvif as gvif
+
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -180,11 +181,7 @@ class CiscoUCSMDriver():
         return data
 
     def _get_next_dynamic_nic(self):
-        # TODO (Sumit): following should be a call to a python module
-        # (which will in turn eliminate the reference to the path and script)
-        dynamic_nic_id = string.strip(subprocess.Popen(
-            conf.GET_NEXT_VIF_SCRIPT,
-            stdout=subprocess.PIPE).communicate()[0])
+        dynamic_nic_id = gvif.get_next_dynic()
         if len(dynamic_nic_id) > 0:
             return dynamic_nic_id
         else:
@@ -247,12 +244,14 @@ def main():
     #client.get_dynamic_nic("dummy")
     #client.get_dynamic_nic("dummy")
     #client.release_dynamic_nic("dummy")
-    #client.get_dynamic_nic("dummy")
-    #client.change_vlan_in_profile("br100", "default", "test-2",
-    #                              "172.20.231.27","admin",
-    #                              "c3l12345")
+    print client.get_dynamic_nic("dummy")
+    """
+    client.change_vlan_in_profile("br100", "default", "test-2",
+                                  "172.20.231.27","admin",
+                                  "c3l12345")
     client.change_vlan_in_profile("br100", "test-2", "default",
                                   "172.20.231.27", "admin", "c3l12345")
+    """
 
 if __name__ == '__main__':
     main()
