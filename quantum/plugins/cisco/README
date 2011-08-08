@@ -1,23 +1,21 @@
- L2 Network Plugin
-==================
+ L2 Network Plugin Framework
+============================
 
 *** Reference implementation of plugin framework for L2 network ***
 *** Multi-switch (devices and types) capability ***   
-*** Current support for UCS (blade servers) with M81KR VIC (Palo) for 802.1Qbh ***
-*** Also supports Nexus 7k ***
+*** Support for UCS (blade servers) with M81KR VIC (Palo) for 802.1Qbh ***
+*** Support for Nexus 7000 ***
 
 ** Pre-requisities
 * UCS B200 series blades with M81KR VIC installed.
 * UCSM 2.0 (Capitola) Build 230
 * RHEL 6.1 (Currently UCS support is only on RHEL, Ubuntu will be supporting in upcoming releases)
-* UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
-http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
+* UCS & VIC installation (support for KVM)
+* OpenStack Cactus release installation (patch is required, details follow in this document)
 * Package python-configobj-4.6.0-3.el6.noarch
-
 * If you have a Nexus switch in your topology and decide to turn on Nexus support, you will need:
 	- ncclcient v0.3.1 - Python library for NETCONF clients (http://schmizz.net/ncclient/).
 	- paramiko library (do: yum install python-paramiko.noarch)
-
 * To run Quantum on RHEL, you will need to have the correct version of python-routes (version 1.12.3 or later). The RHEL 6.1 package contains an older version. Do the following and check your python-routes version:
 rpm -qav | grep "python-routes"
 
@@ -49,20 +47,27 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
 * Create DB Table in Nova DB (On the Cloud Controller)
 mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHAR(255) primary key, profile_name VARCHAR(255), dynamic_vnic VARCHAR(255), host VARCHAR(255), instance_name VARCHAR(255), instance_nic_name VARCHAR(255), used tinyint(1));'
 
-* Replace the following files with the files from the Cisco Nova branch:
+* Replace the following file with the files from the Cisco OpenStack Cactus patch:
 /usr/lib/python2.6/site-packages/nova/virt/libvirt_conn.py
 
-* Add the following files from the Cisco Nova branch:
+* Add the following file from the Cisco OpenStack Cactus patch to your installation:
 /usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
 
 * Restart nova-compute service
 
-** Execute the Test cases
-* The unit tests are located at quantum/plugins/cisco/tests/unit. They are executed from quantum/plugins/cisco/ using the runtests.py script. (Note that to execute the test cases one currently requires the environment setup as outlined in the pre-requisites.)
+* Note that the requirement for the above patch is temporary and will go away with the integration with OpenStack Diablo. A 802.1Qbh-specific VIF driver will be made available as per the specification here:
+http://wiki.openstack.org/network-refactoring#VIF_driver
 
-* Execution of the run_tests.py script.
-    All unit tests
-        python run_tests.py unit
-    Specific Plugin unit test
-        python run_tests.py unit.<name_of_the file>
-	e.g. python run_tests.py unit.test_l2networkApi
+** Testing
+* The unit tests are located at quantum/plugins/cisco/tests/unit. They are executed from quantum/plugins/cisco/ using the run_tests.py script.
+
+* Execution of the run_tests.py script:
+    + Testing the core API (without UCS/Nexus/RHEL hardware, can be run on Ubuntu)
+	- Disable all device-specific plugins by commenting the entries in the quantum/plugins/cisco/conf/plugins.ini configuration file.
+	$> python run_tests.py unit.test_l2networkApi
+    + Specific Plugin unit test (needs environment setup as indicated in the pre-requisites)
+        - python run_tests.py unit.<name_of_the file>
+	e.g.
+        $> python run_tests.py unit.test_ucs_plugin.py
+    + All unit tests (needs environment setup as indicated in the pre-requisites)
+        $> python run_tests.py unit
