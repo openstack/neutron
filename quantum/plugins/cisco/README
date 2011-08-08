@@ -9,7 +9,7 @@
 ** Pre-requisities
 * UCS B200 series blades with M81KR VIC installed.
 * UCSM 2.0 (Capitola) Build 230
-* RHEL 6.1
+* RHEL 6.1 (Currently UCS support is only on RHEL, Ubuntu will be supporting in upcoming releases)
 * UCS & VIC installation (support for KVM) - please consult the accompanying installation guide available at:
 http://wikicentral.cisco.com/display/GROUP/SAVBU+Palo+VM-FEX+for+Linux+KVM
 * Package python-configobj-4.6.0-3.el6.noarch
