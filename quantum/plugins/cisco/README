@@ -60,9 +60,9 @@ mysql -uroot -p<mysql_password_here> nova -e 'create table ports (port_id VARCHA
 ** Execute the Test cases
 * The unit tests are located at quantum/plugins/cisco/tests/unit. They are executed from quantum/plugins/cisco/ using the runtests.py script. (Note that to execute the test cases one currently requires the environment setup as outlined in the pre-requisites.)
 
-* Execution of the runtests.py script.
+* Execution of the run_tests.py script.
     All unit tests
-        python runtests.py unit
+        python run_tests.py unit
     Specific Plugin unit test
-        python runtests.py unit.<name_of_the file>
-	e.g. python run_tests.py unit.test_coreApi
+        python run_tests.py unit.<name_of_the file>
+	e.g. python run_tests.py unit.test_l2networkApi

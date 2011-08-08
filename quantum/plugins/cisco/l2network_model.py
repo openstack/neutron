@@ -47,12 +47,14 @@ class L2NetworkModel(L2NetworkModelBase):
             getattr(pluginObjRef, function_name)(*args, **kwargs)
 
     def _invokeUCSPlugin(self, function_name, args, kwargs):
-        getattr(self._plugins[const.UCS_PLUGIN],
-                function_name)(*args, **kwargs)
+        if const.UCS_PLUGIN in self._plugins.keys():
+            getattr(self._plugins[const.UCS_PLUGIN],
+                    function_name)(*args, **kwargs)
 
     def _invokeNexusPlugin(self, function_name, args, kwargs):
-        getattr(self._plugins[const.NEXUS_PLUGIN],
-                function_name)(*args, **kwargs)
+        if const.NEXUS_PLUGIN in self._plugins.keys():
+            getattr(self._plugins[const.NEXUS_PLUGIN],
+                    function_name)(*args, **kwargs)
 
     def get_all_networks(self, args):
         pass
