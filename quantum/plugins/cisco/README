@@ -76,6 +76,7 @@ Module Structure:
                        /conf   - All configuration files
                        /db     - Persistence framework
                        /nexus  - Nexus-specific modules
+                       /tests  - Tests specific to this plugin
                        /ucs    - UCS-specific modules
 
 
