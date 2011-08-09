@@ -114,7 +114,7 @@ class ActionExtensionTest(unittest.TestCase):
         self.extension_app = setup_extensions_test_app()
 
     def test_extended_action_for_adding_extra_data(self):
-        action_name = 'add_tweedle'
+        action_name = 'FOXNSOX:add_tweedle'
         action_params = dict(name='Beetle')
         req_body = json.dumps({action_name: action_params})
         response = self.extension_app.post('/dummy_resources/1/action',
@@ -122,7 +122,7 @@ class ActionExtensionTest(unittest.TestCase):
         self.assertEqual("Tweedle Beetle Added.", response.body)
 
     def test_extended_action_for_deleting_extra_data(self):
-        action_name = 'delete_tweedle'
+        action_name = 'FOXNSOX:delete_tweedle'
         action_params = dict(name='Bailey')
         req_body = json.dumps({action_name: action_params})
         response = self.extension_app.post("/dummy_resources/1/action",
@@ -187,8 +187,8 @@ class RequestExtensionTest(BaseTest):
         response = app.get("/dummy_resources/1?chewing=newblue")
 
         response_data = json.loads(response.body)
-        self.assertEqual('newblue', response_data['googoose'])
-        self.assertEqual("Pig Bands!", response_data['big_bands'])
+        self.assertEqual('newblue', response_data['FOXNSOX:googoose'])
+        self.assertEqual("Pig Bands!", response_data['FOXNSOX:big_bands'])
 
     def test_edit_previously_uneditable_field(self):
 

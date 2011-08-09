@@ -66,10 +66,12 @@ class Foxinsocks(object):
         return resources
 
     def get_actions(self):
-        return  [extensions.ActionExtension('dummy_resources', 'add_tweedle',
+        return  [extensions.ActionExtension('dummy_resources',
+                                            'FOXNSOX:add_tweedle',
                                             self._add_tweedle_handler),
                  extensions.ActionExtension('dummy_resources',
-                               'delete_tweedle', self._delete_tweedle_handler)]
+                                            'FOXNSOX:delete_tweedle',
+                                            self._delete_tweedle_handler)]
 
     def get_request_extensions(self):
         request_exts = []
@@ -78,7 +80,7 @@ class Foxinsocks(object):
             #NOTE: This only handles JSON responses.
             # You can use content type header to test for XML.
             data = json.loads(res.body)
-            data['googoose'] = req.GET.get('chewing')
+            data['FOXNSOX:googoose'] = req.GET.get('chewing')
             res.body = json.dumps(data)
             return res
 
@@ -90,7 +92,7 @@ class Foxinsocks(object):
             #NOTE: This only handles JSON responses.
             # You can use content type header to test for XML.
             data = json.loads(res.body)
-            data['big_bands'] = 'Pig Bands!'
+            data['FOXNSOX:big_bands'] = 'Pig Bands!'
             res.body = json.dumps(data)
             return res
 
@@ -100,8 +102,9 @@ class Foxinsocks(object):
         return request_exts
 
     def _add_tweedle_handler(self, input_dict, req, id):
-        return "Tweedle {0} Added.".format(input_dict['add_tweedle']['name'])
+        return "Tweedle {0} Added.".format(
+            input_dict['FOXNSOX:add_tweedle']['name'])
 
     def _delete_tweedle_handler(self, input_dict, req, id):
         return "Tweedle {0} Deleted.".format(
-                                        input_dict['delete_tweedle']['name'])
+            input_dict['FOXNSOX:delete_tweedle']['name'])
