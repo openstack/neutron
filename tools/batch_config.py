@@ -30,7 +30,6 @@ def delete_all_nets(client):
     res = client.list_networks()
     for n in res["networks"]:
         nid = n["id"]
-
         pres = client.list_ports(nid)
         for port in pres["ports"]:
             pid = port['id']
@@ -102,7 +101,8 @@ if __name__ == "__main__":
 
     print "nets: %s" % str(nets)
 
-    client = Client(options.host, options.port, options.ssl, tenant=tenant_id)
+    client = Client(options.host, options.port, options.ssl,
+                        format='json', tenant=tenant_id)
 
     if options.delete:
         delete_all_nets(client)
