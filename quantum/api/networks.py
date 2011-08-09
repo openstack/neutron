@@ -107,12 +107,15 @@ class Controller(common.QuantumController):
                                            self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
-        network = self._plugin.\
+        try:
+            network = self._plugin.\
                        create_network(tenant_id,
                                       request_params['net-name'])
-        builder = networks_view.get_view_builder(request)
-        result = builder.build(network)
-        return dict(networks=result)
+            builder = networks_view.get_view_builder(request)
+            result = builder.build(network)
+            return dict(networks=result)
+        except exception.NetworkNameExists as e:
+            return faults.Fault(faults.NetworkNameExists(e))
 
     def update(self, request, tenant_id, id):
         """ Updates the name for the network with the given id """
@@ -128,6 +131,8 @@ class Controller(common.QuantumController):
             return exc.HTTPAccepted()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
+        except exception.NetworkNameExists as e:
+            return faults.Fault(faults.NetworkNameExists(e))
 
     def delete(self, request, tenant_id, id):
         """ Destroys the network with the given id """
