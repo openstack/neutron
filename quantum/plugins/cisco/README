@@ -43,7 +43,8 @@ Pre-requisites
   ** Package: python-routes-1.12.3-2.el6.noarch (or newer)
 
 If you are using a Nexus switch in your topology, you'll need the following 
-packages to enable Nexus support:
+NX-OS version and packages to enable Nexus support:
+* NX-OS 5.2.1 (Delhi) Build 69 or above.
 * paramiko library - SSHv2 protocol library for python
   ** To install on RHEL 6.1, run: yum install python-paramiko
 * ncclient v0.3.1 - Python library for NETCONF clients 
