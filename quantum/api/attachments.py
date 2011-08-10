@@ -72,8 +72,6 @@ class Controller(common.QuantumController):
             return faults.Fault(faults.PortNotFound(e))
         except exception.PortInUse as e:
             return faults.Fault(faults.PortInUse(e))
-        except exception.PortIsDown as e:
-            return faults.Fault(faults.PortIsDown(e))
         except exception.AlreadyAttached as e:
             return faults.Fault(faults.AlreadyAttached(e))
 

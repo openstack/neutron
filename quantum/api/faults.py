@@ -31,6 +31,7 @@ class Fault(webob.exc.HTTPException):
             401: "unauthorized",
             420: "networkNotFound",
             421: "networkInUse",
+            422: "networkNameExists",
             430: "portNotFound",
             431: "requestedStateInvalid",
             432: "portInUse",
@@ -132,19 +133,6 @@ class PortInUse(webob.exc.HTTPClientError):
     code = 432
     title = 'Port in Use'
     explanation = ('A resource is currently attached to the logical port')
-
-
-class PortIsDown(webob.exc.HTTPClientError):
-    """
-    subclass of :class:`~HTTPClientError`
-
-    This indicates that the server could not plug an attachment into a port
-    as the port is administratively down
-    code: 433, title: PortIsDown
-    """
-    code = 433
-    title = 'Port is Down'
-    explanation = ('The specified logical port is administratively down')
 
 
 class AlreadyAttached(webob.exc.HTTPClientError):

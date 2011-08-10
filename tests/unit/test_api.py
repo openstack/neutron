@@ -527,6 +527,23 @@ class APITest(unittest.TestCase):
                         show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': new_port_state},
                          port_data['port'])
+
+        # now set it back to the original value
+        update_port_req = testlib.update_port_request(self.tenant_id,
+                                                        network_id, port_id,
+                                                        port_state,
+                                                        format)
+        update_port_res = update_port_req.get_response(self.api)
+        self.assertEqual(update_port_res.status_int, 204)
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id,
+                                                  format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual({'id': port_id, 'state': port_state},
+                         port_data['port'])
         LOG.debug("_test_set_port_state - format:%s - END", format)
 
     def _test_set_port_state_networknotfound(self, format):
@@ -680,22 +697,6 @@ class APITest(unittest.TestCase):
         self.assertEqual(put_attachment_res.status_int, 430)
         LOG.debug("_test_put_attachment_portnotfound - format:%s - END",
                   format)
-
-    def _test_put_attachment_portisdown(self, format):
-        LOG.debug("_test_put_attachment_portisdown - format:%s - START",
-                  format)
-        port_state = "DOWN"
-        network_id = self._create_network(format)
-        interface_id = "test_interface"
-        port_id = self._create_port(network_id, port_state, format)
-        put_attachment_req = testlib.put_attachment_request(self.tenant_id,
-                                                            network_id,
-                                                            port_id,
-                                                            interface_id,
-                                                            format)
-        put_attachment_res = put_attachment_req.get_response(self.api)
-        self.assertEqual(put_attachment_res.status_int, 433)
-        LOG.debug("_test_put_attachment_portisdown - format:%s - END", format)
 
     def _test_delete_attachment(self, format):
         LOG.debug("_test_delete_attachment - format:%s - START", format)
@@ -995,12 +996,6 @@ class APITest(unittest.TestCase):
 
     def test_put_attachment_portnotfound_json(self):
         self._test_put_attachment_portnotfound('json')
-
-    def test_put_attachment_portisdown_xml(self):
-        self._test_put_attachment_portisdown('xml')
-
-    def test_put_attachment_portisdown_json(self):
-        self._test_put_attachment_portisdown('json')
 
     def test_delete_attachment_xml(self):
         self._test_delete_attachment('xml')

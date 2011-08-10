@@ -37,8 +37,7 @@ class Controller(common.QuantumController):
         "application/xml": {
             "attributes": {
                 "port": ["id", "state"],
-                "attachment": ["id"]
-                },
+                "attachment": ["id"]},
             "plurals": {"ports": "port"}
         },
     }

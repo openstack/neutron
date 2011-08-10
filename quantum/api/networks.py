@@ -37,8 +37,7 @@ class Controller(common.QuantumController):
             "attributes": {
                 "network": ["id", "name"],
                 "port": ["id", "state"],
-                "attachment": ["id"]
-            },
+                "attachment": ["id"]},
             "plurals": {"networks": "network",
                         "ports": "port"}
         },
@@ -105,8 +104,8 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         network = self._plugin.\
-                       create_network(tenant_id,
-                                      request_params['name'])
+                   create_network(tenant_id,
+                                  request_params['name'])
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)['network']
         #MUST RETURN 202???
