@@ -29,6 +29,7 @@ import unittest
 
 from quantum import api as server
 from quantum import cli
+from quantum.client import Client
 from quantum.db import api as db
 from tests.unit.client_tools import stubs as client_stubs
 
@@ -41,6 +42,9 @@ class CLITest(unittest.TestCase):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
         self.api = server.APIRouterV01(options)
+        #self.client = Client("host", "port", False,
+        #                args[0], FORMAT)
+
         self.tenant_id = "test_tenant"
         self.network_name_1 = "test_network_1"
         self.network_name_2 = "test_network_2"
@@ -56,4 +60,5 @@ class CLITest(unittest.TestCase):
         db.clear_db()
         
     def test_list_networks_api(self):
+        cli.api_list_nets(client)
         pass
