@@ -48,8 +48,14 @@ NX-OS version and packages to enable Nexus support:
 * paramiko library - SSHv2 protocol library for python
   ** To install on RHEL 6.1, run: yum install python-paramiko
 * ncclient v0.3.1 - Python library for NETCONF clients 
-  ** RedHat does not provide a package for ncclient in RHEL 6.1.  
-  ** See http://schmizz.net/ncclient/ for documentation and downloads. 
+  ** RedHat does not provide a package for ncclient in RHEL 6.1. Here is how
+     to get it, from your shell prompt do:
+
+     git clone git@github.com:ddutta/ncclient.git 
+     sudo python ./setup.py install
+
+  ** For more information of ncclient, see:
+     http://schmizz.net/ncclient/
 
 To verify the version of any package you have installed on your system,
 run "rpm -qav | grep <package name>", where <package name> is the 
