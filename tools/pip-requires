@@ -1,10 +1,11 @@
 eventlet>=0.9.12
+Routes>=1.12.3
 nose
 Paste
 PasteDeploy
-pep8==0.5.0
+pep8>=0.5.0
 python-gflags
-routes
+sqlalchemy
 simplejson
 webob
 webtest

@@ -159,7 +159,6 @@ class DummyDataPlugin(object):
         retrieved a list of all the remote vifs that
         are attached to the network
         """
-        print("get_network_details() called\n")
         vifs_on_net = ["/tenant1/networks/net_id/portid/vif2.0"]
         return vifs_on_net
 
@@ -186,12 +185,6 @@ class DummyDataPlugin(object):
         print("create_port() called\n")
         #return the port id
         return 201
-
-    def update_port(self, tenant_id, net_id, port_id, port_state):
-        """
-        Updates the state of a port on the specified Virtual Network.
-        """
-        print("update_port() called\n")
 
     def delete_port(self, tenant_id, net_id, port_id):
         """
@@ -247,7 +240,7 @@ class FakePlugin(object):
     def _get_port(self, tenant_id, network_id, port_id):
         net = self._get_network(tenant_id, network_id)
         try:
-            port = db.port_get(port_id)
+            port = db.port_get(port_id, network_id)
         except:
             raise exc.PortNotFound(net_id=network_id, port_id=port_id)
         # Port must exist and belong to the appropriate network.
@@ -290,8 +283,11 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_network_details() called")
         net = self._get_network(tenant_id, net_id)
+        # Retrieves ports for network
+        ports = self.get_all_ports(tenant_id, net_id)
         return {'net-id': str(net.uuid),
-                'net-name': net.name}
+                'net-name': net.name,
+                'net-ports': ports}
 
     def create_network(self, tenant_id, net_name):
         """
@@ -326,10 +322,7 @@ class FakePlugin(object):
         Virtual Network.
         """
         LOG.debug("FakePlugin.rename_network() called")
-        try:
-            db.network_rename(net_id, tenant_id, new_name)
-        except:
-            raise exc.NetworkNotFound(net_id=net_id)
+        db.network_rename(net_id, tenant_id, new_name)
         net = self._get_network(tenant_id, net_id)
         return net
 
@@ -377,7 +370,7 @@ class FakePlugin(object):
         self._get_network(tenant_id, net_id)
         self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(new_state)
-        db.port_set_state(port_id, new_state)
+        db.port_set_state(port_id, net_id, new_state)
         port_item = {'port-id': port_id,
                      'port-state': new_state}
         return port_item
@@ -396,7 +389,7 @@ class FakePlugin(object):
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])
         try:
-            port = db.port_destroy(port_id)
+            port = db.port_destroy(port_id, net_id)
         except Exception, e:
             raise Exception("Failed to delete port: %s" % str(e))
         d = {}
@@ -416,7 +409,7 @@ class FakePlugin(object):
         if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])
-        db.port_set_attachment(port_id, remote_interface_id)
+        db.port_set_attachment(port_id, net_id, remote_interface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
@@ -427,4 +420,4 @@ class FakePlugin(object):
         self._get_port(tenant_id, net_id, port_id)
         # TODO(salvatore-orlando):
         # Should unplug on port without attachment raise an Error?
-        db.port_unset_attachment(port_id)
+        db.port_unset_attachment(port_id, net_id)

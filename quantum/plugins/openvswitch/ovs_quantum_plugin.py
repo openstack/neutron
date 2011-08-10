@@ -19,12 +19,13 @@
 
 import ConfigParser
 import logging as LOG
+from optparse import OptionParser
 import os
 import sys
 import unittest
 
+from quantum.common import exceptions as q_exc
 from quantum.quantum_plugin_base import QuantumPluginBase
-from optparse import OptionParser
 
 import quantum.db.api as db
 import ovs_db
@@ -111,101 +112,93 @@ class OVSQuantumPlugin(QuantumPluginBase):
         nets = []
         for x in db.network_list(tenant_id):
             LOG.debug("Adding network: %s" % x.uuid)
-            d = {}
-            d["net-id"] = str(x.uuid)
-            d["net-name"] = x.name
-            nets.append(d)
+            nets.append(self._make_net_dict(str(x.uuid), x.name, None))
         return nets
 
+    def _make_net_dict(self, net_id, net_name, ports):
+        res = {'net-id': net_id,
+                'net-name': net_name}
+        if ports:
+            res['net-ports'] = ports
+        return res
+
     def create_network(self, tenant_id, net_name):
-        d = {}
-        try:
-            res = db.network_create(tenant_id, net_name)
-            LOG.debug("Created newtork: %s" % res)
-        except Exception, e:
-            LOG.error("Error: %s" % str(e))
-            return d
-        d["net-id"] = str(res.uuid)
-        d["net-name"] = res.name
-        vlan_id = self.vmap.acquire(str(res.uuid))
-        ovs_db.add_vlan_binding(vlan_id, str(res.uuid))
-        return d
+        net = db.network_create(tenant_id, net_name)
+        LOG.debug("Created network: %s" % net)
+        vlan_id = self.vmap.acquire(str(net.uuid))
+        ovs_db.add_vlan_binding(vlan_id, str(net.uuid))
+        return self._make_net_dict(str(net.uuid), net.name, [])
 
     def delete_network(self, tenant_id, net_id):
+        net = db.network_get(net_id)
+
+        # Verify that no attachments are plugged into the network
+        for port in db.port_list(net_id):
+            if port['interface_id']:
+                raise q_exc.NetworkInUse(net_id=net_id)
         net = db.network_destroy(net_id)
-        d = {}
-        d["net-id"] = str(net.uuid)
         ovs_db.remove_vlan_binding(net_id)
         self.vmap.release(net_id)
-        return d
+        return self._make_net_dict(str(net.uuid), net.name, [])
 
     def get_network_details(self, tenant_id, net_id):
-        ports = db.port_list(net_id)
-        ifaces = []
-        for p in ports:
-            ifaces.append(p.interface_id)
-        return ifaces
+        net = db.network_get(net_id)
+        ports = self.get_all_ports(tenant_id, net_id)
+        return self._make_net_dict(str(net.uuid), net.name, ports)
 
     def rename_network(self, tenant_id, net_id, new_name):
-        try:
-            net = db.network_rename(net_id, tenant_id, new_name)
-        except Exception, e:
-            raise Exception("Failed to rename network: %s" % str(e))
-        d = {}
-        d["net-id"] = str(net.uuid)
-        d["net-name"] = net.name
-        return d
+        net = db.network_rename(net_id, tenant_id, new_name)
+        return self._make_net_dict(str(net.uuid), net.name, None)
+
+    def _make_port_dict(self, port_id, port_state, net_id, attachment):
+        res = {'port-id': port_id,
+               'port-state': port_state}
+        if net_id:
+            res['net-id'] = net_id
+        if attachment:
+            res['attachment-id'] = attachment
+        return res
 
     def get_all_ports(self, tenant_id, net_id):
         ids = []
         ports = db.port_list(net_id)
-        for x in ports:
-            LOG.debug("Appending port: %s" % x.uuid)
-            d = {}
-            d["port-id"] = str(x.uuid)
+        for p in ports:
+            LOG.debug("Appending port: %s" % p.uuid)
+            d = self._make_port_dict(str(p.uuid), p.state, None, None)
             ids.append(d)
         return ids
 
     def create_port(self, tenant_id, net_id, port_state=None):
         LOG.debug("Creating port with network_id: %s" % net_id)
-        port = db.port_create(net_id)
-        d = {}
-        d["port-id"] = str(port.uuid)
-        LOG.debug("-> %s" % (port.uuid))
-        return d
+        port = db.port_create(net_id, port_state)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def delete_port(self, tenant_id, net_id, port_id):
-        try:
-            port = db.port_destroy(port_id)
-        except Exception, e:
-            raise Exception("Failed to delete port: %s" % str(e))
-        d = {}
-        d["port-id"] = str(port.uuid)
-        return d
+        port = db.port_destroy(port_id, net_id)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def update_port(self, tenant_id, net_id, port_id, port_state):
         """
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
-        port = db.port_get(port_id)
-        port['port-state'] = port_state
-        return port
+        port = db.port_get(port_id, net_id)
+        db.port_set_state(port_id, net_id, port_state)
+        return self._make_port_dict(str(port.uuid), port.state, None, None)
 
     def get_port_details(self, tenant_id, net_id, port_id):
-        port = db.port_get(port_id)
-        rv = {"port-id": port.uuid, "attachment": port.interface_id,
-          "net-id": port.network_id, "port-state": "UP"}
-        return rv
+        port = db.port_get(port_id, net_id)
+        return self._make_port_dict(str(port.uuid), port.state,
+                                port.network_id, port.interface_id)
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):
-        db.port_set_attachment(port_id, remote_iface_id)
+        db.port_set_attachment(port_id, net_id, remote_iface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
-        db.port_set_attachment(port_id, "")
+        db.port_set_attachment(port_id, net_id, "")
 
     def get_interface_details(self, tenant_id, net_id, port_id):
-        res = db.port_get(port_id)
+        res = db.port_get(port_id, net_id)
         return res.interface_id
 
 
@@ -227,108 +220,6 @@ class VlanMapTest(unittest.TestCase):
         self.assertTrue(self.vmap.get(vlan_id) == None)
 
 
-# TODO(bgh): Make the tests use a sqlite database instead of mysql
-class OVSPluginTest(unittest.TestCase):
-
-    def setUp(self):
-        self.quantum = OVSQuantumPlugin()
-        self.tenant_id = "testtenant"
-
-    def testCreateNetwork(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        self.assertTrue(net1["net-name"] == "plugin_test1")
-
-    def testGetNetworks(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        net2 = self.quantum.create_network(self.tenant_id, "plugin_test2")
-        nets = self.quantum.get_all_networks(self.tenant_id)
-        count = 0
-        for x in nets:
-            if "plugin_test" in x["net-name"]:
-                count += 1
-        self.assertTrue(count == 2)
-
-    def testDeleteNetwork(self):
-        net = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        self.quantum.delete_network(self.tenant_id, net["net-id"])
-        nets = self.quantum.get_all_networks(self.tenant_id)
-        count = 0
-        for x in nets:
-            if "plugin_test" in x["net-name"]:
-                count += 1
-        self.assertTrue(count == 0)
-
-    def testRenameNetwork(self):
-        net = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        net = self.quantum.rename_network(self.tenant_id, net["net-id"],
-          "plugin_test_renamed")
-        self.assertTrue(net["net-name"] == "plugin_test_renamed")
-
-    def testCreatePort(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
-        ports = self.quantum.get_all_ports(self.tenant_id, net1["net-id"])
-        count = 0
-        for p in ports:
-            count += 1
-        self.assertTrue(count == 1)
-
-    def testDeletePort(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
-        ports = self.quantum.get_all_ports(self.tenant_id, net1["net-id"])
-        count = 0
-        for p in ports:
-            count += 1
-        self.assertTrue(count == 1)
-        for p in ports:
-            self.quantum.delete_port(self.tenant_id, id, p["port-id"])
-        ports = self.quantum.get_all_ports(self.tenant_id, net1["net-id"])
-        count = 0
-        for p in ports:
-            count += 1
-        self.assertTrue(count == 0)
-
-    def testGetPorts(self):
-        pass
-
-    def testPlugInterface(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
-        self.quantum.plug_interface(self.tenant_id, net1["net-id"],
-          port["port-id"], "vif1.1")
-        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
-          port["port-id"])
-        self.assertTrue(port["attachment"] == "vif1.1")
-
-    def testUnPlugInterface(self):
-        net1 = self.quantum.create_network(self.tenant_id, "plugin_test1")
-        port = self.quantum.create_port(self.tenant_id, net1["net-id"])
-        self.quantum.plug_interface(self.tenant_id, net1["net-id"],
-          port["port-id"], "vif1.1")
-        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
-          port["port-id"])
-        self.assertTrue(port["attachment"] == "vif1.1")
-        self.quantum.unplug_interface(self.tenant_id, net1["net-id"],
-          port["port-id"])
-        port = self.quantum.get_port_details(self.tenant_id, net1["net-id"],
-          port["port-id"])
-        self.assertTrue(port["attachment"] == "")
-
-    def tearDown(self):
-        networks = self.quantum.get_all_networks(self.tenant_id)
-        # Clean up any test networks lying around
-        for net in networks:
-            id = net["net-id"]
-            name = net["net-name"]
-            if "plugin_test" in name:
-                # Clean up any test ports lying around
-                ports = self.quantum.get_all_ports(self.tenant_id, id)
-                for p in ports:
-                    self.quantum.delete_port(self.tenant_id, id, p["port-id"])
-                self.quantum.delete_network(self.tenant_id, id)
-
-
 if __name__ == "__main__":
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     parser = OptionParser(usage=usagestr)
@@ -345,7 +236,5 @@ if __name__ == "__main__":
     # Make sqlalchemy quieter
     LOG.getLogger('sqlalchemy.engine').setLevel(LOG.WARN)
     # Run the tests
-    suite = unittest.TestLoader().loadTestsFromTestCase(OVSPluginTest)
-    unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(VlanMapTest)
     unittest.TextTestRunner(verbosity=2).run(suite)

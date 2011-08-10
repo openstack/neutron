@@ -75,7 +75,7 @@ class APITest(unittest.TestCase):
         network_data = Serializer().deserialize(show_network_res.body,
                                                 content_type)
         self.assertEqual(network_id,
-                         network_data['networks']['network']['id'])
+                         network_data['network']['id'])
         LOG.debug("_test_create_network - format:%s - END", format)
 
     def _test_create_network_badrequest(self, format):
@@ -96,8 +96,8 @@ class APITest(unittest.TestCase):
                                                         format)
         list_network_res = list_network_req.get_response(self.api)
         self.assertEqual(list_network_res.status_int, 200)
-        network_data = Serializer().deserialize(list_network_res.body,
-                                                content_type)
+        network_data = self._net_serializer.deserialize(
+                           list_network_res.body, content_type)
         # Check network count: should return 2
         self.assertEqual(len(network_data['networks']), 2)
         LOG.debug("_test_list_networks - format:%s - END", format)
@@ -111,10 +111,11 @@ class APITest(unittest.TestCase):
                                                         format)
         show_network_res = show_network_req.get_response(self.api)
         self.assertEqual(show_network_res.status_int, 200)
-        network_data = Serializer().deserialize(show_network_res.body,
-                                                content_type)
-        self.assertEqual({'id': network_id, 'name': self.network_name},
-                         network_data['networks']['network'])
+        network_data = self._net_serializer.deserialize(
+                           show_network_res.body, content_type)
+        self.assertEqual({'id': network_id,
+                          'name': self.network_name},
+                         network_data['network'])
         LOG.debug("_test_show_network - format:%s - END", format)
 
     def _test_show_network_not_found(self, format):
@@ -142,11 +143,25 @@ class APITest(unittest.TestCase):
                                                         format)
         show_network_res = show_network_req.get_response(self.api)
         self.assertEqual(show_network_res.status_int, 200)
-        network_data = Serializer().deserialize(show_network_res.body,
-                                                content_type)
-        self.assertEqual({'id': network_id, 'name': new_name},
-                         network_data['networks']['network'])
+        network_data = self._net_serializer.deserialize(
+                           show_network_res.body, content_type)
+        self.assertEqual({'id': network_id,
+                          'name': new_name},
+                         network_data['network'])
         LOG.debug("_test_rename_network - format:%s - END", format)
+
+    def _test_rename_network_duplicate(self, format):
+        LOG.debug("_test_rename_network_duplicate - format:%s - START", format)
+        content_type = "application/%s" % format
+        network_id1 = self._create_network(format, name="net1")
+        network_id2 = self._create_network(format, name="net2")
+        update_network_req = testlib.update_network_request(self.tenant_id,
+                                                            network_id2,
+                                                            "net1",
+                                                            format)
+        update_network_res = update_network_req.get_response(self.api)
+        self.assertEqual(update_network_res.status_int, 422)
+        LOG.debug("_test_rename_network_duplicate - format:%s - END", format)
 
     def _test_rename_network_badrequest(self, format):
         LOG.debug("_test_rename_network_badrequest - format:%s - START",
@@ -189,8 +204,8 @@ class APITest(unittest.TestCase):
         list_network_req = testlib.network_list_request(self.tenant_id,
                                                         format)
         list_network_res = list_network_req.get_response(self.api)
-        network_list_data = Serializer().deserialize(list_network_res.body,
-                                                     content_type)
+        network_list_data = self._net_serializer.deserialize(
+                                list_network_res.body, content_type)
         network_count = len(network_list_data['networks'])
         self.assertEqual(network_count, 0)
         LOG.debug("_test_delete_network - format:%s - END", format)
@@ -233,8 +248,8 @@ class APITest(unittest.TestCase):
                                                    network_id, format)
         list_port_res = list_port_req.get_response(self.api)
         self.assertEqual(list_port_res.status_int, 200)
-        port_data = Serializer().deserialize(list_port_res.body,
-                                                content_type)
+        port_data = self._port_serializer.deserialize(
+                        list_port_res.body, content_type)
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
         LOG.debug("_test_list_ports - format:%s - END", format)
@@ -250,10 +265,10 @@ class APITest(unittest.TestCase):
                                                   format)
         show_port_res = show_port_req.get_response(self.api)
         self.assertEqual(show_port_res.status_int, 200)
-        port_data = Serializer().deserialize(show_port_res.body,
-                                                content_type)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': port_state},
-                         port_data['ports']['port'])
+                         port_data['port'])
         LOG.debug("_test_show_port - format:%s - END", format)
 
     def _test_show_port_networknotfound(self, format):
@@ -281,6 +296,21 @@ class APITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 430)
         LOG.debug("_test_show_port_portnotfound - format:%s - END", format)
 
+    def _test_create_port_noreqbody(self, format):
+        LOG.debug("_test_create_port_noreqbody - format:%s - START", format)
+        content_type = "application/%s" % format
+        network_id = self._create_network(format)
+        port_id = self._create_port(network_id, None, format,
+                                    custom_req_body='')
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id, format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual(port_id, port_data['port']['id'])
+        LOG.debug("_test_create_port_noreqbody - format:%s - END", format)
+
     def _test_create_port(self, format):
         LOG.debug("_test_create_port - format:%s - START", format)
         content_type = "application/%s" % format
@@ -291,8 +321,9 @@ class APITest(unittest.TestCase):
                                                   network_id, port_id, format)
         show_port_res = show_port_req.get_response(self.api)
         self.assertEqual(show_port_res.status_int, 200)
-        port_data = Serializer().deserialize(show_port_res.body, content_type)
-        self.assertEqual(port_id, port_data['ports']['port']['id'])
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual(port_id, port_data['port']['id'])
         LOG.debug("_test_create_port - format:%s - END", format)
 
     def _test_create_port_networknotfound(self, format):
@@ -329,8 +360,8 @@ class APITest(unittest.TestCase):
         list_port_req = testlib.port_list_request(self.tenant_id, network_id,
                                                   format)
         list_port_res = list_port_req.get_response(self.api)
-        port_list_data = Serializer().deserialize(list_port_res.body,
-                                                  content_type)
+        port_list_data = self._port_serializer.deserialize(
+                             list_port_res.body, content_type)
         port_count = len(port_list_data['ports'])
         self.assertEqual(port_count, 0)
         LOG.debug("_test_delete_port - format:%s - END", format)
@@ -405,10 +436,27 @@ class APITest(unittest.TestCase):
                                                   format)
         show_port_res = show_port_req.get_response(self.api)
         self.assertEqual(show_port_res.status_int, 200)
-        network_data = Serializer().deserialize(show_port_res.body,
-                                                content_type)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': new_port_state},
-                         network_data['ports']['port'])
+                         port_data['port'])
+
+        # now set it back to the original value
+        update_port_req = testlib.update_port_request(self.tenant_id,
+                                                        network_id, port_id,
+                                                        port_state,
+                                                        format)
+        update_port_res = update_port_req.get_response(self.api)
+        self.assertEqual(update_port_res.status_int, 200)
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id,
+                                                  format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual({'id': port_id, 'state': port_state},
+                         port_data['port'])
         LOG.debug("_test_set_port_state - format:%s - END", format)
 
     def _test_set_port_state_networknotfound(self, format):
@@ -614,12 +662,32 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_delete_attachment_portnotfound - " \
                   "format:%s - END", format)
 
+    def _test_unparsable_data(self, format):
+        LOG.debug("_test_unparsable_data - " \
+                  " format:%s - START", format)
+
+        data = "this is not json or xml"
+        method = 'POST'
+        content_type = "application/%s" % format
+        tenant_id = self.tenant_id
+        path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
+        network_req = testlib.create_request(path, data, content_type, method)
+        network_res = network_req.get_response(self.api)
+        self.assertEqual(network_res.status_int, 400)
+
+        LOG.debug("_test_unparsable_data - " \
+                  "format:%s - END", format)
+
     def setUp(self):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
         self.api = server.APIRouterV01(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
+        self._net_serializer = \
+            Serializer(server.networks.Controller._serialization_metadata)
+        self._port_serializer = \
+            Serializer(server.ports.Controller._serialization_metadata)
 
     def tearDown(self):
         """Clear the test environment"""
@@ -668,6 +736,12 @@ class APITest(unittest.TestCase):
     def test_rename_network_xml(self):
         self._test_rename_network('xml')
 
+    def test_rename_network_duplicate_json(self):
+        self._test_rename_network_duplicate('json')
+
+    def test_rename_network_duplicate_xml(self):
+        self._test_rename_network_duplicate('xml')
+
     def test_rename_network_badrequest_json(self):
         self._test_rename_network_badrequest('json')
 
@@ -715,6 +789,12 @@ class APITest(unittest.TestCase):
 
     def test_create_port_xml(self):
         self._test_create_port('xml')
+
+    def test_create_port_noreqbody_json(self):
+        self._test_create_port_noreqbody('json')
+
+    def test_create_port_noreqbody_xml(self):
+        self._test_create_port_noreqbody('xml')
 
     def test_create_port_networknotfound_json(self):
         self._test_create_port_networknotfound('json')
@@ -829,3 +909,9 @@ class APITest(unittest.TestCase):
 
     def test_delete_attachment_portnotfound_json(self):
         self._test_delete_attachment_portnotfound('json')
+
+    def test_unparsable_data_xml(self):
+        self._test_unparsable_data('xml')
+
+    def test_unparsable_data_json(self):
+        self._test_unparsable_data('json')
