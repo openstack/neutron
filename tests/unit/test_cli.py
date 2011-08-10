@@ -23,10 +23,14 @@
 
 
 import logging
+import stubout
 import sys
 import unittest
 
 from quantum import api as server
+from quantum import cli
+from quantum.db import api as db
+from tests.unit.client_tools import stubs as client_stubs
 
 LOG = logging.getLogger('quantum.tests.test_cli')
 
@@ -34,8 +38,22 @@ class CLITest(unittest.TestCase):
 
     def setUp(self):
         """Prepare the test environment"""
+        options = {}
+        options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
+        self.api = server.APIRouterV01(options)
+        self.tenant_id = "test_tenant"
+        self.network_name_1 = "test_network_1"
+        self.network_name_2 = "test_network_2"
+        # Stubout do_request
+        self.stubs = stubout.StubOutForTesting()
+        client_stubs.stubout_send_request(self.stubs, self.api)
+        # Redirect stdout
+        # Pre-populate data
         pass
     
     def tearDown(self):
         """Clear the test environment"""
+        db.clear_db()
+        
+    def test_list_networks_api(self):
         pass

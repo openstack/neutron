@@ -19,6 +19,7 @@
 import httplib
 import socket
 import urllib
+
 from quantum.common.wsgi import Serializer
 
 
@@ -91,6 +92,13 @@ class Client(object):
         else:
             return httplib.HTTPConnection
 
+    def _send_request(self, conn, method, action, body, headers):
+        # Salvatore: Isolating this piece of code in its own method to
+        # facilitate stubout for testing
+        conn.request(method, action, body, headers)
+        return conn.getresponse()
+        
+        
     def do_request(self, method, action, body=None,
                    headers=None, params=None):
         """
@@ -132,8 +140,7 @@ class Client(object):
             else:
                 c = connection_type(self.host, self.port)
 
-            c.request(method, action, body, headers)
-            res = c.getresponse()
+            res = self._send_request(c, method, action, body, headers)
             status_code = self.get_status_code(res)
             if status_code in (httplib.OK,
                                httplib.CREATED,
