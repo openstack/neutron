@@ -3,7 +3,7 @@ Routes>=1.12.3
 nose
 Paste
 PasteDeploy
-pep8==0.5.0
+pep8>=0.5.0
 python-gflags
 simplejson
 sqlalchemy

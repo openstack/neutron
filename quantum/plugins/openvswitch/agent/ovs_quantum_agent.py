@@ -198,7 +198,7 @@ class OVSQuantumAgent:
 
         while True:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM ports")
+            cursor.execute("SELECT * FROM ports where state = 'ACTIVE'")
             rows = cursor.fetchall()
             cursor.close()
             all_bindings = {}
