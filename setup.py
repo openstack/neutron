@@ -5,17 +5,15 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
     
-requirements = ['httplib2', 'argparse']
-if sys.version_info < (2,6):
-    requirements.append('simplejson')
-    
+requirements = ['httplib2','eventlet','routes','webob']
+
 setup(
     name = "Quantum",
     version = "0.1",
     description = "Layer 2 network as a service for Openstack",
     long_description = read('README'),
     url = 'http://launchpad.net/quantum',
-    license = 'BSD',
+    license = 'Apache',
     author = 'Netstack',
     author_email = 'netstack@launchpad.net',
     packages = find_packages(exclude=['tests']),
@@ -31,6 +29,6 @@ setup(
     namespace_packages = ["quantum"],
     install_requires = requirements,
     
-    tests_require = ["nose", "mock"],
+    tests_require = ["nose"],
     test_suite = "nose.collector",
 )
