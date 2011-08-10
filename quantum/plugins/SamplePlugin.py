@@ -119,6 +119,11 @@ class QuantumEchoPlugin(object):
         """
         print("unplug_interface() called\n")
 
+    supported_extension_aliases = ["FOXNSOX"]
+
+    def method_to_support_foxnsox_extension(self):
+        print("method_to_support_foxnsox_extension() called\n")
+
 
 class DummyDataPlugin(object):
 

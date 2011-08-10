@@ -22,17 +22,17 @@ Utility methods for working with WSGI servers
 
 import logging
 import sys
-
-from xml.dom import minidom
-
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
 import routes.middleware
 import webob.dec
 import webob.exc
+from xml.dom import minidom
 
-from quantum import utils
+
 from quantum.common import exceptions as exception
+from quantum import utils
+
 
 LOG = logging.getLogger('quantum.common.wsgi')
 

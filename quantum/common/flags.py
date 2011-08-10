@@ -21,13 +21,11 @@ Wraps gflags.
 Global flags should be defined here, the rest are defined where they're used.
 
 """
-
 import getopt
+import gflags
 import os
 import string
 import sys
-
-import gflags
 
 
 class FlagValues(gflags.FlagValues):

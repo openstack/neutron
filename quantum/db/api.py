@@ -23,6 +23,7 @@ from sqlalchemy.orm import sessionmaker, exc
 from quantum.common import exceptions as q_exc
 from quantum.db import models
 
+
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
