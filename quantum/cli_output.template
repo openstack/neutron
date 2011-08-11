@@ -1,0 +1,8 @@
+## Cheetah template for cli output
+#if $cmd == 'list_nets'
+Virtual Networks on Tenant $tenant_id
+#for $network in $networks
+\tNetwork ID: $network.id
+#end for 
+#end if
+
