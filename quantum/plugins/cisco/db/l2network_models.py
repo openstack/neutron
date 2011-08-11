@@ -21,7 +21,8 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
 
-BASE = declarative_base()
+from quantum.plugins.cisco.db.models import BASE
+from quantum.plugins.cisco.db import models
 
 
 class L2NetworkBase(object):
@@ -60,45 +61,6 @@ class L2NetworkBase(object):
         return local.iteritems()
 
 
-class Port(BASE, L2NetworkBase):
-    """Represents a port on a l2network plugin"""
-    __tablename__ = 'ports'
-
-    uuid = Column(String(255), primary_key=True)
-    network_id = Column(String(255), ForeignKey("networks.uuid"),
-                        nullable=False)
-    interface_id = Column(String(255))
-    state = Column(String(8))
-
-    def __init__(self, network_id):
-        self.uuid = str(uuid.uuid4())
-        self.network_id = network_id
-        self.state = "DOWN"
-
-    def __repr__(self):
-        return "<Port(%s,%s,%s,%s)>" % (self.uuid, self.network_id,
-                                     self.state, self.interface_id)
-
-
-class Network(BASE, L2NetworkBase):
-    """Represents a networ on l2network plugin"""
-    __tablename__ = 'networks'
-
-    uuid = Column(String(255), primary_key=True)
-    tenant_id = Column(String(255), nullable=False)
-    name = Column(String(255))
-    ports = relation(Port, order_by=Port.uuid, backref="network")
-
-    def __init__(self, tenant_id, name):
-        self.uuid = str(uuid.uuid4())
-        self.tenant_id = tenant_id
-        self.name = name
-
-    def __repr__(self):
-        return "<Network(%s,%s,%s)>" % \
-          (self.uuid, self.name, self.tenant_id)
-
-
 class VlanBinding(BASE, L2NetworkBase):
     """Represents a binding of vlan_id to network_id"""
     __tablename__ = 'vlan_bindings'
@@ -107,7 +69,7 @@ class VlanBinding(BASE, L2NetworkBase):
     vlan_name = Column(String(255))
     network_id = Column(String(255), ForeignKey("networks.uuid"), \
                         nullable=False)
-    network = relation(Network, uselist=False)
+    network = relation(models.Network, uselist=False)
 
     def __init__(self, vlan_id, vlan_name, network_id):
         self.vlan_id = vlan_id
@@ -151,7 +113,7 @@ class PortProfileBinding(BASE, L2NetworkBase):
     portprofile_id = Column(String(255), ForeignKey("portprofiles.uuid"), \
                             nullable=False)
     default = Column(Boolean)
-    network = relation(Network, uselist=False)
+    network = relation(models.Network, uselist=False)
     portprofile = relation(PortProfile, uselist=False)
 
     def __init__(self, tenant_id, network_id, portprofile_id, default):
