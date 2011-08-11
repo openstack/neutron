@@ -134,7 +134,9 @@ class Client(object):
 
             c.request(method, action, body, headers)
             res = c.getresponse()
+            print "RESPONSE RECEIVED"
             status_code = self.get_status_code(res)
+            print "STATUS CODE:%s" %status_code
             if status_code in (httplib.OK,
                                httplib.CREATED,
                                httplib.ACCEPTED,

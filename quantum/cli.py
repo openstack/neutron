@@ -104,7 +104,9 @@ def detail_net(manager, *args):
 def api_detail_net(client, *args):
     tid, nid = args
     try:
-        res = client.list_network_details(nid)["networks"]["network"]
+        res = client.list_network_details(nid)["network"]
+        print "BLOODY MARY"
+        print res
     except Exception, e:
         LOG.error("Failed to get network details: %s" % e)
         return
