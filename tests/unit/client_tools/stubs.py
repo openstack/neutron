@@ -16,6 +16,7 @@
 
 """ Stubs for client tools unit tests """
 
+from quantum import api as server
 from quantum import client
 from tests.unit import testlib_api
 
@@ -24,14 +25,56 @@ def stubout_send_request(stubs, api):
     """Simulates a failure in fetch image_glance_disk."""
 
     def fake_send_request(self, conn, method, action, body, headers):
-        # ignore headers and connection 
+        # ignore headers and connection
         req = testlib_api.create_request(action, body,
                                          "application/json", method)
         res = req.get_response(api)
         return res
     
     stubs.Set(client.Client, '_send_request', fake_send_request)
+
     
+class FakeStdout: 
+    
+    def __init__(self):
+        self.content = []
+    
+    def write(self, text):
+        self.content.append(text)
+        
+    def make_string(self):
+        result = ''
+        for line in self.content:
+            result = result + line
+        return result
+
+
 class FakeHTTPConnection:
     """ stub HTTP connection class for CLI testing """ 
-    pass    
+    def __init__(self, _1, _2):
+        # Ignore host and port parameters
+        self._req = None
+        options = dict(plugin_provider = \
+                        'quantum.plugins.SamplePlugin.FakePlugin')
+        self._api = server.APIRouterV01(options)
+    
+    def request(self, method, action, body, headers):
+        # TODO: remove version prefix from action!
+        parts = action.split('/', 2)
+        path = '/' + parts[2]
+        self._req = testlib_api.create_request(path, body, "application/json",
+                                               method)
+ 
+    def getresponse(self):
+        res = self._req.get_response(self._api)
+
+        def _fake_read():
+            """ Trick for macking a webob.Response look like a 
+                httplib.Response
+                
+            """
+            return res.body
+
+        setattr(res, 'read', _fake_read)
+        return res 
+    

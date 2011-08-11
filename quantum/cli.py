@@ -17,6 +17,7 @@
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 
+import Cheetah.Template as cheetah_template
 import httplib
 import logging as LOG
 import json
@@ -24,36 +25,43 @@ import socket
 import sys
 import urllib
 
+from client import Client
 from manager import QuantumManager
 from optparse import OptionParser
-from client import Client
+from quantum.api.views.networks import ViewBuilder as NetworkBuilder
+from quantum.api.views.ports import ViewBuilder as PortBuilder
 
 FORMAT = "json"
+CLI_TEMPLATE = "../quantum/cli_output.template"
 
 ### -- Core CLI functions
 
 
+def prepare_output(cmd, tenant_id, response):
+    #add command and tenant to response for output generation
+    response['cmd'] = cmd
+    response['tenant_id'] = tenant_id
+    template_file = open(CLI_TEMPLATE).read()
+    output = str(cheetah_template.Template(template_file,
+                                           searchList=response))
+    return output    
+
 def list_nets(manager, *args):
     tenant_id = args[0]
     networks = manager.get_all_networks(tenant_id)
-    print "Virtual Networks on Tenant:%s\n" % tenant_id
-    for net in networks:
-        id = net["net-id"]
-        name = net["net-name"]
-        print "\tNetwork ID:%s \n\tNetwork Name:%s \n" % (id, name)
+    builder=NetworkBuilder()
+    nw_list = [builder.build(network, net_detail=True, port_detail=False)['network']
+               for network in networks]
+    res = dict(networks=nw_list)    
+    output = prepare_output("list_nets", tenant_id, res)
+    print output
 
 
 def api_list_nets(client, *args):
     tenant_id = args[0]
     res = client.list_networks()
-    LOG.debug(res)
-    print "Virtual Networks on Tenant:%s\n" % tenant_id
-    for n in res["networks"]:
-        net_id = n["id"]
-        print "\tNetwork ID:%s\n" % (net_id)
-        # TODO(bgh): we should make this call pass back the name too
-        # name = n["net-name"]
-        # LOG.info("\tNetwork ID:%s \n\tNetwork Name:%s \n" % (id, name))
+    output = prepare_output("list_nets", tenant_id, res)
+    print output
 
 
 def create_net(manager, *args):
@@ -310,7 +318,6 @@ commands = {
     "api_func": api_unplug_iface,
     "args": ["tenant-id", "net-id", "port-id"]}, }
 
-
 def help():
     print "\nCommands:"
     for k in commands.keys():
@@ -386,6 +393,6 @@ if __name__ == "__main__":
         commands[cmd]["api_func"](client, *args)
     else:
         quantum = QuantumManager()
-        manager = quantum.get_manager()
+        manager = quantum.get_plugin()
         commands[cmd]["func"](manager, *args)
     sys.exit(0)
