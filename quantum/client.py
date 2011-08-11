@@ -118,7 +118,7 @@ class Client(object):
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
 
-        if body != None:
+        if body:
             body = self.serialize(body)
 
         try:
