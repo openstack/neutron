@@ -251,4 +251,3 @@ def port_destroy(net_id, port_id):
         return port
     except exc.NoResultFound:
         raise q_exc.PortNotFound(port_id=port_id)
-
