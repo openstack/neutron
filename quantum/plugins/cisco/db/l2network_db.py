@@ -16,7 +16,6 @@
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 import ConfigParser
-from optparse import OptionParser
 import os
 import logging as LOG
 
@@ -62,6 +61,7 @@ def initialize(configfile=None):
     DB_PASS, DB_HOST, DB_NAME)}
     db.configure_db(options)
 
+
 def create_vlanids():
     """Prepopulates the vlan_bindings table"""
     session = db.get_session()
@@ -77,7 +77,8 @@ def create_vlanids():
             session.add(vlanid)
             start += 1
         session.flush()
-    return 
+    return
+
 
 def get_all_vlanids():
     session = db.get_session()
@@ -86,8 +87,9 @@ def get_all_vlanids():
           all()
         return vlanids
     except exc.NoResultFound:
-        return []       
-    
+        return []
+
+
 def is_vlanid_used(vlan_id):
     session = db.get_session()
     try:
@@ -97,7 +99,8 @@ def is_vlanid_used(vlan_id):
         return vlanid["vlan_used"]
     except exc.NoResultFound:
         raise Exception("No vlan found with vlan-id = %s" % vlan_id)
-     
+
+
 def release_vlanid(vlan_id):
     session = db.get_session()
     try:
@@ -110,8 +113,8 @@ def release_vlanid(vlan_id):
         return vlanid["vlan_used"]
     except exc.NoResultFound:
         raise Exception("Vlan id %s not present in table" % vlan_id)
-        
-    return 
+    return
+
 
 def delete_vlanid(vlan_id):
     session = db.get_session()
@@ -124,7 +127,8 @@ def delete_vlanid(vlan_id):
         return vlanid
     except exc.NoResultFound:
             pass
-    
+
+
 def reserve_vlanid():
     session = db.get_session()
     try:
@@ -141,7 +145,8 @@ def reserve_vlanid():
         return vlanids[0]["vlan_id"]
     except exc.NoResultFound:
         raise Exception("All vlan id's are used")
-     
+
+
 def get_all_vlan_bindings():
     """Lists all the vlan to network associations"""
     session = db.get_session()

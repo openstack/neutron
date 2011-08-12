@@ -60,6 +60,7 @@ class L2NetworkBase(object):
         local.update(joined)
         return local.iteritems()
 
+
 class VlanID(BASE, L2NetworkBase):
     """Represents a vlan_id usage"""
     __tablename__ = 'vlan_ids'
@@ -74,7 +75,7 @@ class VlanID(BASE, L2NetworkBase):
     def __repr__(self):
         return "<VlanBinding(%d,%s)>" % \
           (self.vlan_id, self.vlan_used)
-    
+
 
 class VlanBinding(BASE, L2NetworkBase):
     """Represents a binding of vlan_id to network_id"""
