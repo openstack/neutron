@@ -54,9 +54,6 @@ class CLITest(unittest.TestCase):
         # Redirect stdout
         self.fake_stdout = client_stubs.FakeStdout()
         sys.stdout = self.fake_stdout
-        # Pre-populate data for testing using db api
-        db.network_create(self.tenant_id, self.network_name_1)
-        db.network_create(self.tenant_id, self.network_name_2)
     
     def tearDown(self):
         """Clear the test environment"""
@@ -74,20 +71,41 @@ class CLITest(unittest.TestCase):
             # Verify!
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
+
+    def _verify_create_network(self):
+            # Verification - get raw result from db
+            nw_list = db.network_list(self.tenant_id)
+            if len(nw_list) != 1:
+                self.fail("No network created")
+            network_id = nw_list[0].uuid
+            # Fill CLI template
+            output = cli.prepare_output('create_net', self.tenant_id,
+                                        dict(network_id=network_id))
+            # Verify!
+            # Must add newline at the end to match effect of print call
+            self.assertEquals(self.fake_stdout.make_string(), output + '\n')
         
     def test_list_networks(self):
         try: 
+            # Pre-populate data for testing using db api
+            db.network_create(self.tenant_id, self.network_name_1)
+            db.network_create(self.tenant_id, self.network_name_2)
+            
             cli.list_nets(self.manager, self.tenant_id)
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
             self._verify_list_networks()
         except: 
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_list_network_api failed due to an exception")
+            self.fail("test_list_network failed due to an exception")
 
     
     def test_list_networks_api(self):
         try: 
+            # Pre-populate data for testing using db api
+            db.network_create(self.tenant_id, self.network_name_1)
+            db.network_create(self.tenant_id, self.network_name_2)
+            
             cli.api_list_nets(self.client, self.tenant_id)
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
@@ -96,3 +114,23 @@ class CLITest(unittest.TestCase):
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_list_network_api failed due to an exception")
 
+    def test_create_network(self):
+        try: 
+            cli.create_net(self.manager, self.tenant_id, "test")
+            LOG.debug("Operation completed. Verifying result")
+            LOG.debug(self.fake_stdout.content)
+            self._verify_create_network()
+        except: 
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_create_network failed due to an exception")
+
+    
+    def test_create_network_api(self):
+        try: 
+            cli.api_create_net(self.client, self.tenant_id, "test")
+            LOG.debug("Operation completed. Verifying result")
+            LOG.debug(self.fake_stdout.content)
+            self._verify_create_network()  
+        except: 
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_create_network_api failed due to an exception")

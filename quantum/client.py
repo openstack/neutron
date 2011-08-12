@@ -148,7 +148,9 @@ class Client(object):
                                httplib.NO_CONTENT):
                 return self.deserialize(res)
             else:
-                raise Exception("Server returned error: %s" % res.read())
+                ex = Exception("Server returned error: %s" % status_code)
+                ex.args = ([dict(status_code=status_code, message=res.read())],)
+                raise ex
 
         except (socket.error, IOError), e:
             raise Exception("Unable to connect to "

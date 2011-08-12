@@ -33,11 +33,10 @@ from quantum.api.views.ports import ViewBuilder as PortBuilder
 
 FORMAT = "json"
 CLI_TEMPLATE = "../quantum/cli_output.template"
-
-### -- Core CLI functions
-
+#TODO(salvatore-orlando): do proper logging!
 
 def prepare_output(cmd, tenant_id, response):
+    """ Fills a cheetah template with the response """
     #add command and tenant to response for output generation
     response['cmd'] = cmd
     response['tenant_id'] = tenant_id
@@ -65,37 +64,50 @@ def api_list_nets(client, *args):
 
 
 def create_net(manager, *args):
-    tid, name = args
-    new_net_id = manager.create_network(tid, name)
-    print "Created a new Virtual Network with ID:%s\n" % new_net_id
+    tenant_id, name = args
+    new_net_id = manager.create_network(tenant_id, name)['net-id']
+    output = prepare_output("create_net", tenant_id,
+                            dict(network_id=new_net_id))
+    print output
 
 
 def api_create_net(client, *args):
-    tid, name = args
-    data = {'network': {'net-name': '%s' % name}}
-    res = client.create_network(data)
-    LOG.debug(res)
-    nid = None
+    tenant_id, name = args
+    data = {'network': {'net-name': name}}
+    new_net_id = None
     try:
-        nid = res["networks"]["network"]["id"]
-    except Exception, e:
-        print "Failed to create network"
-        # TODO(bgh): grab error details from ws request result
+        res = client.create_network(data)
+        new_net_id = res["networks"]["network"]["id"]
+    except Exception as ex:
+        status_code = None
+        message = None
+        #Retrieve dict at 1st element of tuple at last argument
+        if ex.args and isinstance(ex.args[-1][0],dict):
+            status_code = ex.args[-1][0].get('status_code', None)
+            message = ex.args[-1][0].get('message', None)
+        print "Failed to create network: %s" % status_code or '<missing>'
+        print "Error message:%s" % message or '<missing>'
         return
-    print "Created a new Virtual Network with ID:%s\n" % nid
+    output = prepare_output("create_net", tenant_id,
+                            dict(network_id=new_net_id))
+    print output
 
 
 def delete_net(manager, *args):
-    tid, nid = args
-    manager.delete_network(tid, nid)
-    print "Deleted Virtual Network with ID:%s" % nid
+    tenant_id, network_id = args
+    manager.delete_network(tenant_id, network_id)
+    output = prepare_output("delete_net", tenant_id,
+                            dict(network_id=network_id))
+    print output
 
 
 def api_delete_net(client, *args):
-    tid, nid = args
+    tenant_id, network_id = args
     try:
-        res = client.delete_network(nid)
-        print "Deleted Virtual Network with ID:%s" % nid
+        client.delete_network(network_id)
+        output = prepare_output("delete_net", tenant_id,
+                            dict(network_id=network_id))
+        print output
     except Exception, e:
         print "Failed to delete network"
         LOG.error("Failed to delete network: %s" % e)

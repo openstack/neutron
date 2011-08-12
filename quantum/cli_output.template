@@ -4,5 +4,9 @@ Virtual Networks on Tenant $tenant_id
 #for $network in $networks
 \tNetwork ID: $network.id
 #end for 
+#elif $cmd == 'create_net'
+Created a new Virtual Network with ID: $network_id for Tenant $tenant_id
+#elif $cmd == 'delete_net'
+Deleted Virtual Network with ID: $network_id for Tenant $tenant_id
 #end if
 
