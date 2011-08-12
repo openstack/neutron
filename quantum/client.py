@@ -57,7 +57,8 @@ class Client(object):
     attachment_path = "/networks/%s/ports/%s/attachment"
 
     def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
-                format="xml", testingStub=None, key_file=None, cert_file=None):
+                format="xml", testingStub=None, key_file=None, cert_file=None,
+                logger=None):
         """
         Creates a new client to some service.
 
@@ -79,6 +80,7 @@ class Client(object):
         self.testingStub = testingStub
         self.key_file = key_file
         self.cert_file = cert_file
+        self.logger = logger
 
     def get_connection_type(self):
         """
@@ -135,14 +137,26 @@ class Client(object):
             else:
                 c = connection_type(self.host, self.port)
 
+            if self.logger:
+                self.logger.debug("Quantum Client Request:\n" \
+                        + method + " " + action + "\n")
+                if body:
+                    self.logger.debug(body)
+
             c.request(method, action, body, headers)
             res = c.getresponse()
             status_code = self.get_status_code(res)
+            data = res.read()
+
+            if self.logger:
+                self.logger.debug("Quantum Client Reply (code = %s) :\n %s" \
+                        % (str(status_code), data))
+
             if status_code in (httplib.OK,
                                httplib.CREATED,
                                httplib.ACCEPTED,
                                httplib.NO_CONTENT):
-                return self.deserialize(res)
+                return self.deserialize(data, status_code)
             else:
                 raise Exception("Server returned error: %s" % res.read())
 
@@ -161,13 +175,18 @@ class Client(object):
             return response.status
 
     def serialize(self, data):
-        if type(data) is dict:
+        if data is None:
+            return None
+        elif type(data) is dict:
             return Serializer().serialize(data, self.content_type())
+        else:
+            raise Exception("unable to deserialize object of type = '%s'" \
+                                % type(data))
 
-    def deserialize(self, data):
-        if self.get_status_code(data) == 202:
-            return data.read()
-        return Serializer().deserialize(data.read(), self.content_type())
+    def deserialize(self, data, status_code):
+        if status_code == 202:
+            return data
+        return Serializer().deserialize(data, self.content_type())
 
     def content_type(self, format=None):
         if not format:
@@ -177,85 +196,86 @@ class Client(object):
     @api_call
     def list_networks(self):
         """
-        Queries the server for a list of networks
+        Fetches a list of all networks for a tenant
         """
         return self.do_request("GET", self.networks_path)
 
     @api_call
-    def list_network_details(self, network):
+    def show_network_details(self, network):
         """
-        Queries the server for the details of a certain network
+        Fetches the details of a certain network
         """
         return self.do_request("GET", self.network_path % (network))
 
     @api_call
     def create_network(self, body=None):
         """
-        Creates a new network on the server
+        Creates a new network
         """
         return self.do_request("POST", self.networks_path, body=body)
 
     @api_call
     def update_network(self, network, body=None):
         """
-        Updates a network on the server
+        Updates a network
         """
         return self.do_request("PUT", self.network_path % (network), body=body)
 
     @api_call
     def delete_network(self, network):
         """
-        Deletes a network on the server
+        Deletes the specified network
         """
         return self.do_request("DELETE", self.network_path % (network))
 
     @api_call
     def list_ports(self, network):
         """
-        Queries the server for a list of ports on a given network
+        Fetches a list of ports on a given network
         """
         return self.do_request("GET", self.ports_path % (network))
 
     @api_call
-    def list_port_details(self, network, port):
+    def show_port_details(self, network, port):
         """
-        Queries the server for a list of ports on a given network
+        Fetches the details of a certain port
         """
         return self.do_request("GET", self.port_path % (network, port))
 
     @api_call
-    def create_port(self, network):
+    def create_port(self, network, body=None):
         """
-        Creates a new port on a network on the server
+        Creates a new port on a given network
         """
-        return self.do_request("POST", self.ports_path % (network))
+        body = self.serialize(body)
+        return self.do_request("POST", self.ports_path % (network), body=body)
 
     @api_call
     def delete_port(self, network, port):
         """
-        Deletes a port from a network on the server
+        Deletes the specified port from a network
         """
         return self.do_request("DELETE", self.port_path % (network, port))
 
     @api_call
     def set_port_state(self, network, port, body=None):
         """
-        Sets the state of a port on the server
+        Sets the state of the specified port
         """
         return self.do_request("PUT",
             self.port_path % (network, port), body=body)
 
     @api_call
-    def list_port_attachments(self, network, port):
+    def show_port_attachment(self, network, port):
         """
-        Deletes a port from a network on the server
+        Fetches the attachment-id associated with the specified port
         """
         return self.do_request("GET", self.attachment_path % (network, port))
 
     @api_call
     def attach_resource(self, network, port, body=None):
         """
-        Deletes a port from a network on the server
+        Sets the attachment-id of the specified port
         """
         return self.do_request("PUT",
             self.attachment_path % (network, port), body=body)
@@ -263,7 +283,7 @@ class Client(object):
     @api_call
     def detach_resource(self, network, port):
         """
-        Deletes a port from a network on the server
+        Removes the attachment-id of the specified port
         """
         return self.do_request("DELETE",
                                self.attachment_path % (network, port))
