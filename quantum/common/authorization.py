@@ -28,48 +28,61 @@
 import logging
 
 from webob.exc import HTTPUnauthorized, HTTPForbidden
-from webob.exc import Request, Response
 
 LOG = logging.getLogger('quantum.common.authorization')
 
 class QuantumAuthorization(object):
     """ Authorizes an operation before it reaches the API WSGI app"""
 
+    def __init__(self, app, conf):
+        """ Common initialization code """
+        LOG.info("Starting the Authorization component")
+        self.conf = conf
+        self.app = app
+
+    
     def __call__(self, req, start_response):
         """ Handle incoming request. Authorize. And send downstream. """
         LOG.debug("entering QuantumAuthorization.__call__")
         self.start_response = start_response
+        LOG.debug("Self is:%s" %self)
+        LOG.debug("Req is:%s:" %req)
         self.req = req
 
         # Retrieves TENANT ID from headers as the request 
         # should already have been authenticated with Keystone
         self.headers = req.copy()
-        if not "X_TENANT" in self.headers:
+        LOG.debug("Looking for X_TENANT header")
+        LOG.debug("Headers:%s" %self.headers)
+        if not "HTTP_X_TENANT" in self.headers:
             # This is bad, very bad
-            self._reject()
-        
-        auth_tenant_id = self.headers['X_TENANT']
-        path = self.req.path
+            return self._reject()
+        LOG.debug("X_TENANT header found:%s", self.headers['HTTP_X_TENANT'])
+        LOG.debug("Looking for tenant_id in request URI")
+        auth_tenant_id = self.headers['HTTP_X_TENANT']
+        path = self.req['PATH_INFO']
         parts=path.split('/')
+        LOG.debug("Request parts:%s", parts)
         #TODO (salvatore-orlando): need bound checking here
         idx = parts.index('tenants') + 1
         req_tenant_id = parts[idx]
-        
+        LOG.debug("Tenant ID from request:%s", req_tenant_id)
         if auth_tenant_id != req_tenant_id:
             # This is bad, very bad
-            self._forbid()
+            return self._forbid()
         
-        # Okay, authorize it!
+        # Okay, authorize it - pass downstream
+        return self.app(self.req, self.start_response)
         
     def _reject(self):
         """Apparently the request has not been authenticated """
-        return HTTPUnauthorized()(self.env,
+        return HTTPUnauthorized()(self.req,
             self.start_response)
     
     
     def _forbid(self):
         """Cannot authorize. Operating on non-owned resources"""
-        return HTTPForbidden()(self.env,
+        return HTTPForbidden()(self.req,
             self.start_response)
         
         

@@ -66,7 +66,7 @@ from webob.exc import Request, Response
 from quantum.common.bufferedhttp import http_connect_raw as http_connect
 
 PROTOCOL_NAME = "Token Authentication"
-LOG = logging.getLogger('quantum.common.auth_token')
+LOG = logging.getLogger('quantum.common.authentication')
 
 class AuthProtocol(object):
     """Auth Middleware that handles authenticating client calls"""
