@@ -62,22 +62,86 @@ def initialize(configfile=None):
     DB_PASS, DB_HOST, DB_NAME)}
     db.configure_db(options)
 
-def prepopulate_vlan_bindings():
+def create_vlanids():
     """Prepopulates the vlan_bindings table"""
     session = db.get_session()
     try:
-        binding = session.query(l2network_models.VlanBinding).\
-          all()
+        vlanid = session.query(l2network_models.VlanID).\
+          one()
         raise Exception("Vlan table not empty id for prepopulation")
     except exc.NoResultFound:
-        start = conf.VLAN_START
-        end = conf.VLAN_END
-        while start < end:
-            binding = l2network_models.VlanBinding(vlanid, "", 0)
-            session.add(binding)
+        start = int(conf.VLAN_START)
+        end = int(conf.VLAN_END)
+        while start <= end:
+            vlanid = l2network_models.VlanID(start)
+            session.add(vlanid)
+            start += 1
         session.flush()
     return 
 
+def get_all_vlanids():
+    session = db.get_session()
+    try:
+        vlanids = session.query(l2network_models.VlanID).\
+          all()
+        return vlanids
+    except exc.NoResultFound:
+        return []       
+    
+def is_vlanid_used(vlan_id):
+    session = db.get_session()
+    try:
+        vlanid = session.query(l2network_models.VlanID).\
+          filter_by(vlan_id=vlan_id).\
+          one()
+        return vlanid["vlan_used"]
+    except exc.NoResultFound:
+        raise Exception("No vlan found with vlan-id = %s" % vlan_id)
+     
+def release_vlanid(vlan_id):
+    session = db.get_session()
+    try:
+        vlanid = session.query(l2network_models.VlanID).\
+         filter_by(vlan_id=vlan_id).\
+          one()
+        vlanid["vlan_used"] = False
+        session.merge(vlanid)
+        session.flush()
+        return vlanid["vlan_used"]
+    except exc.NoResultFound:
+        raise Exception("Vlan id %s not present in table" % vlan_id)
+        
+    return 
+
+def delete_vlanid(vlan_id):
+    session = db.get_session()
+    try:
+        vlanid = session.query(l2network_models.VlanID).\
+          filter_by(vlan_id=vlan_id).\
+          one()
+        session.delete(vlanid)
+        session.flush()
+        return vlanid
+    except exc.NoResultFound:
+            pass
+    
+def reserve_vlanid():
+    session = db.get_session()
+    try:
+        vlanids = session.query(l2network_models.VlanID).\
+         filter_by(vlan_used=False).\
+          all()
+        rvlan = vlanids[0]
+        rvlanid = session.query(l2network_models.VlanID).\
+         filter_by(vlan_id=rvlan["vlan_id"]).\
+          one()
+        rvlanid["vlan_used"] = True
+        session.merge(rvlanid)
+        session.flush()
+        return vlanids[0]["vlan_id"]
+    except exc.NoResultFound:
+        raise Exception("All vlan id's are used")
+     
 def get_all_vlan_bindings():
     """Lists all the vlan to network associations"""
     session = db.get_session()
@@ -243,7 +307,7 @@ def get_pp_binding(ppid):
         raise Exception("No portprofile binding found with id = %s" % ppid)
 
 
-def add_pp_binding(tenantid, networkid, ppid, default):
+def add_pp_binding(tenantid, portid, ppid, default):
     """Adds a port profile binding"""
     session = db.get_session()
     try:
@@ -253,19 +317,20 @@ def add_pp_binding(tenantid, networkid, ppid, default):
         raise Exception("Port profile binding with id \"%s\" already \
                                                          exists" % ppid)
     except exc.NoResultFound:
-        binding = l2network_models.PortProfileBinding(tenantid, networkid, \
+        binding = l2network_models.PortProfileBinding(tenantid, portid, \
                                                             ppid, default)
         session.add(binding)
         session.flush()
         return binding
 
 
-def remove_pp_binding(ppid):
+def remove_pp_binding(portid, ppid):
     """Removes a port profile binding"""
     session = db.get_session()
     try:
         binding = session.query(l2network_models.PortProfileBinding).\
           filter_by(portprofile_id=ppid).\
+          filter_by(port_id=portid).\
           one()
         session.delete(binding)
         session.flush()
@@ -274,7 +339,7 @@ def remove_pp_binding(ppid):
             pass
 
 
-def update_pp_binding(ppid, newtenantid=None, newnetworkid=None, \
+def update_pp_binding(ppid, newtenantid=None, newportid=None, \
                                                     newdefault=None):
     """Updates port profile binding"""
     session = db.get_session()
@@ -284,8 +349,8 @@ def update_pp_binding(ppid, newtenantid=None, newnetworkid=None, \
           one()
         if newtenantid:
             binding["tenant_id"] = newtenantid
-        if newnetworkid:
-            binding["network_id"] = newnetworkid
+        if newportid:
+            binding["port_id"] = newportid
         if newdefault:
             binding["default"] = newdefault
         session.merge(binding)
