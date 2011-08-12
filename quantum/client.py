@@ -118,6 +118,9 @@ class Client(object):
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
 
+        if body:
+            body = self.serialize(body)
+
         try:
             connection_type = self.get_connection_type()
             headers = headers or {"Content-Type":
@@ -190,7 +193,6 @@ class Client(object):
         """
         Creates a new network on the server
         """
-        body = self.serialize(body)
         return self.do_request("POST", self.networks_path, body=body)
 
     @api_call
@@ -198,7 +200,6 @@ class Client(object):
         """
         Updates a network on the server
         """
-        body = self.serialize(body)
         return self.do_request("PUT", self.network_path % (network), body=body)
 
     @api_call
@@ -241,7 +242,6 @@ class Client(object):
         """
         Sets the state of a port on the server
         """
-        body = self.serialize(body)
         return self.do_request("PUT",
             self.port_path % (network, port), body=body)
 
@@ -257,7 +257,6 @@ class Client(object):
         """
         Deletes a port from a network on the server
         """
-        body = self.serialize(body)
         return self.do_request("PUT",
             self.attachment_path % (network, port), body=body)
 
