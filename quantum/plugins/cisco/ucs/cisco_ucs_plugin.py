@@ -238,7 +238,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         port_profile[const.PROFILE_VLAN_ID] = conf.DEFAULT_VLAN_ID
 
     def _get_profile_name(self, port_id):
-        profile_name = conf.PROFILE_NAME_PREFIX + port_id
+        #profile_name = conf.PROFILE_NAME_PREFIX + port_id
+        profile_name = conf.PROFILE_NAME_PREFIX \
+                + cutil.get16ByteUUID(port_id)
         return profile_name
 
     def _validate_port_state(self, port_state):

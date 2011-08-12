@@ -23,6 +23,21 @@ PORT_STATE = 'port-state'
 PORT_UP = "UP"
 PORT_DOWN = "DOWN"
 
+UUID = 'uuid'
+TENANTID = 'tenant_id'
+NETWORKID = 'network_id'
+NETWORKNAME = 'name'
+NETWORKPORTS = 'ports'
+INTERFACEID = 'interface_id'
+PORTSTATE = 'state'
+PORTID = 'port_id'
+PPNAME = 'name'
+PPVLANID = 'vlan_id'
+PPQOS = 'qos'
+PPID = 'portprofile_id'
+PPDEFAULT = 'default'
+VLANID = 'vlan_id'
+
 ATTACHMENT = 'attachment'
 PORT_ID = 'port-id'
 
@@ -101,3 +116,5 @@ PLUGIN_OBJ_REF = 'plugin-obj-ref'
 PARAM_LIST = 'param-list'
 
 DEVICE_IP = 'device-ip'
+
+NO_VLAN_ID = 0
