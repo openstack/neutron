@@ -108,6 +108,14 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 
     4b.  Enter the relevant configuration in the 
          quantum/plugins/cisco/conf/nexus.ini file.  Example:
+         
+5.  Plugin Persistence framework setup:
+	5a.  Create quantum_l2network database in mysql with the following command -
+	
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
+
+	5b.  Enter the quantum_l2netowrk database configuration info in the 
+         quantum/plugins/cisco/conf/db_conn.ini file.
 
 [SWITCH]
 # Change the following to reflect the IP address of the Nexus switch.
