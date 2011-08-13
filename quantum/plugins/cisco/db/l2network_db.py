@@ -67,8 +67,9 @@ def create_vlanids():
     session = db.get_session()
     try:
         vlanid = session.query(l2network_models.VlanID).\
-          one()
-        raise Exception("Vlan table not empty id for prepopulation")
+          all()
+	pass
+        #raise Exception("Vlan table not empty id for prepopulation")
     except exc.NoResultFound:
         start = int(conf.VLAN_START)
         end = int(conf.VLAN_END)
@@ -309,8 +310,7 @@ def get_pp_binding(ppid):
           one()
         return binding
     except exc.NoResultFound:
-        raise Exception("No portprofile binding found with id = %s" % ppid)
-
+        return []	
 
 def add_pp_binding(tenantid, portid, ppid, default):
     """Adds a port profile binding"""
