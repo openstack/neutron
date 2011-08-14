@@ -388,19 +388,6 @@ class L2Network(QuantumPluginBase):
     def _funcName(self, offset=0):
         return inspect.stack()[1 + offset][3]
 
-
-def main():
-    client = L2Network()
-    """
-    client.create_portprofile("12345", "tpp1", "2")
-    client.create_portprofile("12345", "tpp2", "3")
-    print ("%s\n") % client.get_all_portprofiles("12345")
-    """
-
-
-if __name__ == '__main__':
-    main()
-
 """
 TODO (Sumit):
 (1) Persistent storage

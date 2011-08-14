@@ -32,6 +32,8 @@ Let's leap in!
 
 Pre-requisites
 --------------
+(The following are necessary only when using the UCS and/or Nexus devices in your system.
+If you plan to just leverage the plugin framework, you do not need these.)
 * One or more UCS B200 series blade servers with M81KR VIC (aka 
   Palo adapters) installed.
 * UCSM 2.0 (Capitola) Build 230 or above.

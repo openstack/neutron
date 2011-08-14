@@ -49,8 +49,3 @@ def get_next_dynic(argv=[]):
             if not used:
                 break
     return eth
-
-if __name__ == '__main__':
-    #nic = get_next_dynic(sys.argv)
-    nic = get_next_dynic()
-    print nic

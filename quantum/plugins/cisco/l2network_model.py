@@ -98,10 +98,3 @@ class L2NetworkModel(L2NetworkModelBase):
     def unplug_interface(self, args):
         deviceParams = {const.DEVICE_IP: ""}
         self._invokeUCSPlugin(self._funcName(), args, deviceParams)
-
-
-def main():
-    client = L2NetworkModel()
-
-if __name__ == '__main__':
-    main()

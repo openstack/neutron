@@ -233,25 +233,3 @@ class CiscoUCSMDriver():
     def release_dynamic_nic(self, host):
         # TODO (Sumit): Release on a specific host
         pass
-
-
-def main():
-    client = CiscoUCSMDriver()
-    #client.create_vlan("quantum-vlan-3", "3","172.20.231.27","admin",
-    #                   "c3l12345")
-    #client.create_profile("q-prof-3", "quantum-vlan-3","172.20.231.27",
-    #                      "admin", "c3l12345")
-    #client.get_dynamic_nic("dummy")
-    #client.get_dynamic_nic("dummy")
-    #client.release_dynamic_nic("dummy")
-    print client.get_dynamic_nic("dummy")
-    """
-    client.change_vlan_in_profile("br100", "default", "test-2",
-                                  "172.20.231.27","admin",
-                                  "c3l12345")
-    client.change_vlan_in_profile("br100", "test-2", "default",
-                                  "172.20.231.27", "admin", "c3l12345")
-    """
-
-if __name__ == '__main__':
-    main()

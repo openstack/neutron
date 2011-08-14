@@ -58,11 +58,3 @@ class Store(object):
     @staticmethod
     def deleteCredential(id):
         return _creds_dictionary.pop(id)
-
-
-def main():
-    Store.putCredential("10.10.10.10", "foo", "bar")
-    print ("%s\n") % Store.getCredentials()
-
-if __name__ == '__main__':
-    main()

@@ -35,10 +35,3 @@ PROFILE_NAME_PREFIX = section['profile_name_prefix']
 
 section = cp['DRIVER']
 UCSM_DRIVER = section['name']
-
-
-def main():
-    print MAX_UCSM_PORT_PROFILES
-
-if __name__ == '__main__':
-    main()

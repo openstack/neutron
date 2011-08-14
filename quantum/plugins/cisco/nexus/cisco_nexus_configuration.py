@@ -33,10 +33,3 @@ NEXUS_PORT = section['nexus_port']
 
 section = cp['DRIVER']
 NEXUS_DRIVER = section['name']
-
-
-def main():
-    print NEXUS_PORT
-
-if __name__ == '__main__':
-    main()

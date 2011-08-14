@@ -33,10 +33,3 @@ DB_USERNAME = section['db_username']
 DB_PASSWORD = section['db_password']
 NOVA_HOST_NAME = section['nova_host_name']
 NOVA_PROJ_NAME = section['nova_proj_name']
-
-
-def main():
-    print NOVA_PROJ_NAME
-
-if __name__ == '__main__':
-    main()

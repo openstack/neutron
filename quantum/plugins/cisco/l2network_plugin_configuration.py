@@ -48,10 +48,3 @@ CONF_FILE = "conf/plugins.ini"
 cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
                              + "/" + CONF_FILE)
 plugins = cp.walk(cp.dummy)
-
-
-def main():
-    print plugins['PLUGINS']
-
-if __name__ == '__main__':
-    main()

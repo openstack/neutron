@@ -38,12 +38,3 @@ class CiscoConfigParser(ConfigObj):
 
     def dummy(self, section, key):
         return section[key]
-
-
-def main():
-    cp = CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                           + "/" + "test.ini")
-    print ("%s\n") % cp['PLUGIN']['provider']
-
-if __name__ == '__main__':
-    main()

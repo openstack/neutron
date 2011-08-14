@@ -234,10 +234,3 @@ class CiscoNEXUSDriver():
                                nexus_password) as m:
             self.disable_vlan(m, vlan_id)
             self.disable_switch_port(m, nexus_interface)
-
-
-def main():
-    client = CiscoNEXUSDriver()
-
-if __name__ == '__main__':
-    main()
