@@ -20,7 +20,7 @@
 PLUGINS = 'PLUGINS'
 
 PORT_STATE = 'port-state'
-PORT_UP = "UP"
+PORT_UP = "ACTIVE"
 PORT_DOWN = "DOWN"
 
 UUID = 'uuid'
