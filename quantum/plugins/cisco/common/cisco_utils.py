@@ -57,7 +57,7 @@ class DBUtils(object):
             results = cursor.fetchall()
             db.commit()
             LOG.debug("DB query execution succeeded: %s" % sql_query)
-            db.close()
+	    db.close()
         except:
             db.rollback()
             LOG.debug("DB query execution failed: %s" % sql_query)
