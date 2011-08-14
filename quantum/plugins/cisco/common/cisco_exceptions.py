@@ -15,7 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
+# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 """
 Exceptions used by the Cisco plugin
@@ -55,3 +55,26 @@ class PortProfileNotFound(exceptions.QuantumException):
 class PortProfileInvalidDelete(exceptions.QuantumException):
     message = _("Port profile %(profile_id)s could not be deleted " \
                 "for tenant %(tenant_id)s since port associations exist")
+
+
+class NetworkVlanBindingAlreadyExists(exceptions.QuantumException):
+    message = _("NetworkVlanBinding for %(vlan_id)s and network " \
+                "%(network_id)s already exists")
+
+
+class PortProfileAlreadyExists(exceptions.QuantumException):
+    message = _("PortProfile %(pp_name) for %(tenant_id)s " \
+                "already exists")
+
+
+class PortProfileBindingAlreadyExists(exceptions.QuantumException):
+    message = _("PortProfileBinding for port profile %(pp_id)s to " \
+                 "port %(port_id) already exists")
+
+
+class VlanIDNotFound(exceptions.QuantumException):
+    message = _("Vlan ID %(vlan_id)s not found")
+
+
+class VlanIDNotAvailable(exceptions.QuantumException):
+    message = _("No available Vlan ID found")

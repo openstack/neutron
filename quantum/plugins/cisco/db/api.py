@@ -231,6 +231,7 @@ def port_unset_attachment(net_id, port_id):
     port.interface_id = None
     session.merge(port)
     session.flush()
+    return port
 
 
 def port_destroy(net_id, port_id):

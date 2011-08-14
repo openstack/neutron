@@ -15,7 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
+# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 import os
 
@@ -49,6 +49,16 @@ cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
                              + "/" + CONF_FILE)
 plugins = cp.walk(cp.dummy)
 
+CONF_FILE = "conf/db_conn.ini"
+
+cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+                             + "/" + CONF_FILE)
+
+section = cp['DATABASE']
+DB_NAME = section['name']
+DB_USER = section['user']
+DB_PASS = section['pass']
+DB_HOST = section['host']
 
 def main():
     print plugins['PLUGINS']

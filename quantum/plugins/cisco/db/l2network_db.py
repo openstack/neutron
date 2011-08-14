@@ -15,50 +15,22 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import ConfigParser
-import os
 import logging as LOG
+import os
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, exc, joinedload
+from sqlalchemy.orm import exc, joinedload
 
+from quantum.common import exceptions as q_exc
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-
-import quantum.plugins.cisco.db.api as db
+from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 
 import l2network_models
-
-
-CONF_FILE = "db_conn.ini"
-
-
-def find_config(basepath):
-    for root, dirs, files in os.walk(basepath):
-        if CONF_FILE in files:
-            return os.path.join(root, CONF_FILE)
-    return None
+import quantum.plugins.cisco.db.api as db
 
 
 def initialize(configfile=None):
-    config = ConfigParser.ConfigParser()
-    if configfile == None:
-        if os.path.exists(CONF_FILE):
-            configfile = CONF_FILE
-        else:
-            configfile = \
-           find_config(os.path.abspath(os.path.dirname(__file__)))
-    if configfile == None:
-        raise Exception("Configuration file \"%s\" doesn't exist" %
-              (configfile))
-    LOG.debug("Using configuration file: %s" % configfile)
-    config.read(configfile)
-
-    DB_NAME = config.get("DATABASE", "name")
-    DB_USER = config.get("DATABASE", "user")
-    DB_PASS = config.get("DATABASE", "pass")
-    DB_HOST = config.get("DATABASE", "host")
-    options = {"sql_connection": "mysql://%s:%s@%s/%s" % (DB_USER,
-    DB_PASS, DB_HOST, DB_NAME)}
+    options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
+    conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
     db.configure_db(options)
 
 
@@ -68,7 +40,8 @@ def create_vlanids():
     try:
         vlanid = session.query(l2network_models.VlanID).\
           one()
-        raise Exception("Vlan table not empty id for prepopulation")
+    except exc.MultipleResultsFound:
+        pass
     except exc.NoResultFound:
         start = int(conf.VLAN_START)
         end = int(conf.VLAN_END)
@@ -98,7 +71,7 @@ def is_vlanid_used(vlan_id):
           one()
         return vlanid["vlan_used"]
     except exc.NoResultFound:
-        raise Exception("No vlan found with vlan-id = %s" % vlan_id)
+        raise c_exc.VlanIDNotFound(vlan_id=vlan_id)
 
 
 def release_vlanid(vlan_id):
@@ -112,7 +85,7 @@ def release_vlanid(vlan_id):
         session.flush()
         return vlanid["vlan_used"]
     except exc.NoResultFound:
-        raise Exception("Vlan id %s not present in table" % vlan_id)
+        raise c_exc.VlanIDNotFound(vlan_id=vlan_id)
     return
 
 
@@ -144,7 +117,7 @@ def reserve_vlanid():
         session.flush()
         return vlanids[0]["vlan_id"]
     except exc.NoResultFound:
-        raise Exception("All vlan id's are used")
+        raise VlanIDNotAvailable()
 
 
 def get_all_vlan_bindings():
@@ -167,7 +140,7 @@ def get_vlan_binding(netid):
           one()
         return binding
     except exc.NoResultFound:
-        raise Exception("No network found with net-id = %s" % network_id)
+        raise q_exc.NetworkNotFound(net_id=netid)
 
 
 def add_vlan_binding(vlanid, vlanname, netid):
@@ -177,7 +150,8 @@ def add_vlan_binding(vlanid, vlanname, netid):
         binding = session.query(l2network_models.VlanBinding).\
           filter_by(vlan_id=vlanid).\
           one()
-        raise Exception("Vlan with id \"%s\" already exists" % vlanid)
+        raise c_exc.NetworkVlanBindingAlreadyExists(vlan_id=vlanid,
+                                                    network_id=netid)
     except exc.NoResultFound:
         binding = l2network_models.VlanBinding(vlanid, vlanname, netid)
         session.add(binding)
@@ -214,7 +188,7 @@ def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
         session.flush()
         return binding
     except exc.NoResultFound:
-        raise Exception("No vlan binding found with network_id = %s" % netid)
+        raise q_exc.NetworkNotFound(net_id=netid)
 
 
 def get_all_portprofiles():
@@ -228,7 +202,7 @@ def get_all_portprofiles():
         return []
 
 
-def get_portprofile(ppid):
+def get_portprofile(tenantid, ppid):
     """Lists a port profile"""
     session = db.get_session()
     try:
@@ -237,17 +211,19 @@ def get_portprofile(ppid):
           one()
         return pp
     except exc.NoResultFound:
-        raise Exception("No portprofile found with id = %s" % ppid)
+        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
+                                portprofile_id=ppid)
 
 
-def add_portprofile(ppname, vlanid, qos):
+def add_portprofile(tenantid, ppname, vlanid, qos):
     """Adds a port profile"""
     session = db.get_session()
     try:
         pp = session.query(l2network_models.PortProfile).\
           filter_by(name=ppname).\
           one()
-        raise Exception("Port profile with name %s already exists" % ppname)
+        raise c_exc.PortProfileAlreadyExists(tenant_id=tenantid,
+                                       pp_name=ppname)
     except exc.NoResultFound:
         pp = l2network_models.PortProfile(ppname, vlanid, qos)
         session.add(pp)
@@ -255,7 +231,7 @@ def add_portprofile(ppname, vlanid, qos):
         return pp
 
 
-def remove_portprofile(ppid):
+def remove_portprofile(tenantid, ppid):
     """Removes a port profile"""
     session = db.get_session()
     try:
@@ -269,7 +245,8 @@ def remove_portprofile(ppid):
             pass
 
 
-def update_portprofile(ppid, newppname=None, newvlanid=None, newqos=None):
+def update_portprofile(tenantid, ppid, newppname=None, newvlanid=None, \
+                       newqos=None):
     """Updates port profile"""
     session = db.get_session()
     try:
@@ -286,7 +263,8 @@ def update_portprofile(ppid, newppname=None, newvlanid=None, newqos=None):
         session.flush()
         return pp
     except exc.NoResultFound:
-        raise Exception("No port profile with id = %s" % ppid)
+        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
+                                portprofile_id=ppid)
 
 
 def get_all_pp_bindings():
@@ -300,7 +278,7 @@ def get_all_pp_bindings():
         return []
 
 
-def get_pp_binding(ppid):
+def get_pp_binding(tenantid, ppid):
     """Lists a port profile binding"""
     session = db.get_session()
     try:
@@ -309,7 +287,7 @@ def get_pp_binding(ppid):
           one()
         return binding
     except exc.NoResultFound:
-        raise Exception("No portprofile binding found with id = %s" % ppid)
+        return []
 
 
 def add_pp_binding(tenantid, portid, ppid, default):
@@ -319,8 +297,8 @@ def add_pp_binding(tenantid, portid, ppid, default):
         binding = session.query(l2network_models.PortProfileBinding).\
           filter_by(portprofile_id=ppid).\
           one()
-        raise Exception("Port profile binding with id \"%s\" already \
-                                                         exists" % ppid)
+        raise c_exc.PortProfileBindingAlreadyExists(pp_id=ppid,
+                                                    port_id=portid)
     except exc.NoResultFound:
         binding = l2network_models.PortProfileBinding(tenantid, portid, \
                                                             ppid, default)
@@ -329,7 +307,7 @@ def add_pp_binding(tenantid, portid, ppid, default):
         return binding
 
 
-def remove_pp_binding(portid, ppid):
+def remove_pp_binding(tenantid, portid, ppid):
     """Removes a port profile binding"""
     session = db.get_session()
     try:
@@ -344,7 +322,7 @@ def remove_pp_binding(portid, ppid):
             pass
 
 
-def update_pp_binding(ppid, newtenantid=None, newportid=None, \
+def update_pp_binding(tenantid, ppid, newtenantid=None, newportid=None, \
                                                     newdefault=None):
     """Updates port profile binding"""
     session = db.get_session()
@@ -362,4 +340,5 @@ def update_pp_binding(ppid, newtenantid=None, newportid=None, \
         session.flush()
         return binding
     except exc.NoResultFound:
-        raise Exception("No port profile binding with id = %s" % ppid)
+        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
+                                portprofile_id=ppid)
