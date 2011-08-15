@@ -210,16 +210,6 @@ class CiscoNEXUSDriver():
         print confstr
         mgr.edit_config(target='running', config=confstr)
 
-    def test_nxos_api(self, host, user, password):
-        with self.nxos_connect(host, port=22, user=user,
-                               password=password) as m:
-            #enable_vlan(m, '100', 'ccn1')
-            #enable_vlan_on_trunk_int(m, '2/1', '100')
-            #disable_vlan_on_trunk_int(m, '2/1', '100')
-            #disable_vlan(m, '100')
-            result = m.get(("subtree", filter_show_vlan_brief_snippet))
-            print result
-
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
                     nexus_password, nexus_interface):
         #TODO (Edgar) Move the SSH port to the configuration file
