@@ -8,5 +8,11 @@ Virtual Networks on Tenant $tenant_id
 Created a new Virtual Network with ID: $network_id for Tenant $tenant_id
 #elif $cmd == 'delete_net'
 Deleted Virtual Network with ID: $network_id for Tenant $tenant_id
+#elif $cmd == 'detail_net'
+Network $network.name ($network.id)
+Remote Interfaces on Virtual Network
+#for $port in $network.port
+Port $port.id: $port.attachment
+#end for
 #end if
 

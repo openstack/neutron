@@ -84,6 +84,18 @@ class CLITest(unittest.TestCase):
             # Verify!
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
+
+    def _verify_delete_network(self, network_id):
+            # Verification - get raw result from db
+            nw_list = db.network_list(self.tenant_id)
+            if len(nw_list) != 0:
+                self.fail("DB should not contain any network")
+            # Fill CLI template
+            output = cli.prepare_output('delete_net', self.tenant_id,
+                                        dict(network_id=network_id))
+            # Verify!
+            # Must add newline at the end to match effect of print call
+            self.assertEquals(self.fake_stdout.make_string(), output + '\n')
         
     def test_list_networks(self):
         try: 
@@ -123,7 +135,6 @@ class CLITest(unittest.TestCase):
         except: 
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_create_network failed due to an exception")
-
     
     def test_create_network_api(self):
         try: 
@@ -134,3 +145,40 @@ class CLITest(unittest.TestCase):
         except: 
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_create_network_api failed due to an exception")
+    
+    def _prepare_test_delete_network(self):
+        # Pre-populate data for testing using db api
+        db.network_create(self.tenant_id, self.network_name_1)
+        net_id = db.network_list(self.tenant_id)[0]['uuid']
+        return net_id
+
+    def test_delete_network(self):
+        try: 
+            network_id = self._prepare_test_delete_network()
+            cli.delete_net(self.manager, self.tenant_id, network_id)
+            LOG.debug("Operation completed. Verifying result")
+            LOG.debug(self.fake_stdout.content)
+            self._verify_delete_network(network_id)
+        except: 
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_delete_network failed due to an exception")
+
+    
+    def test_delete_network_api(self):
+        try: 
+            network_id = self._prepare_test_delete_network()
+            cli.api_delete_net(self.client, self.tenant_id, network_id)
+            LOG.debug("Operation completed. Verifying result")
+            LOG.debug(self.fake_stdout.content)
+            self._verify_delete_network(network_id)  
+        except: 
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_delete_network_api failed due to an exception")
+            
+    def test_detail_network_api(self):
+            # Load some data into the datbase
+            net = db.network_create(self.tenant_id, self.network_name_1)
+            db.port_create(net['uuid'])       
+            port = db.port_create(net['uuid'])
+            cli.api_detail_net(self.client, self.tenant_id, net['uuid'])
+            db.port_set_attachment(port['uuid'], net['uuid'], "test_iface_id")

@@ -116,33 +116,35 @@ def api_delete_net(client, *args):
 def detail_net(manager, *args):
     tid, nid = args
     iface_list = manager.get_network_details(tid, nid)
+    output = prepare_output("detail_net", tenant_id,
+                            dict(network=iface_list))
+    #TODO(salvatore-orlando): delete here
     print "Remote Interfaces on Virtual Network:%s\n" % nid
     for iface in iface_list:
         print "\tRemote interface:%s" % iface
 
 
 def api_detail_net(client, *args):
-    tid, nid = args
+    tenant_id, network_id = args
     try:
-        res = client.list_network_details(nid)["networks"]["network"]
+        res = client.list_network_details(network_id)["networks"]["network"]
     except Exception, e:
         LOG.error("Failed to get network details: %s" % e)
         return
-
     try:
-        ports = client.list_ports(nid)
+        ports = client.list_ports(network_id)
     except Exception, e:
         LOG.error("Failed to list ports: %s" % e)
         return
 
-    print "Network %s (%s)" % (res['name'], res['id'])
-    print "Remote Interfaces on Virtual Network:%s\n" % nid
+    res['ports'] = ports
     for port in ports["ports"]:
-        pid = port["id"]
-        res = client.list_port_attachments(nid, pid)
-        LOG.debug(res)
-        remote_iface = res["attachment"]
-        print "\tRemote interface:%s" % remote_iface
+        att_data = client.list_port_attachments(network_id, port['id'])
+        port['attachment'] = att_data["attachment"]
+
+    output = prepare_output("detail_net", tenant_id,
+                            dict(network=res))
+    print output
 
 
 def rename_net(manager, *args):
