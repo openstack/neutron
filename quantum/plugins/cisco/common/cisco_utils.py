@@ -17,8 +17,9 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
 
-import MySQLdb
+import hashlib
 import logging as LOG
+import MySQLdb
 import sys
 import traceback
 
@@ -29,6 +30,10 @@ from quantum.plugins.cisco.common import cisco_nova_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+
+
+def get16ByteUUID(uuid):
+    return hashlib.md5(uuid).hexdigest()[:16]
 
 
 class DBUtils(object):
@@ -52,6 +57,7 @@ class DBUtils(object):
             results = cursor.fetchall()
             db.commit()
             LOG.debug("DB query execution succeeded: %s" % sql_query)
+	    db.close()
         except:
             db.rollback()
             LOG.debug("DB query execution failed: %s" % sql_query)

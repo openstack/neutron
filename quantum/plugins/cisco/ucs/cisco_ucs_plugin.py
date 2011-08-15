@@ -238,7 +238,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         port_profile[const.PROFILE_VLAN_ID] = conf.DEFAULT_VLAN_ID
 
     def _get_profile_name(self, port_id):
-        profile_name = conf.PROFILE_NAME_PREFIX + port_id
+        #profile_name = conf.PROFILE_NAME_PREFIX + port_id
+        profile_name = conf.PROFILE_NAME_PREFIX \
+                + cutil.get16ByteUUID(port_id)
         return profile_name
 
     def _validate_port_state(self, port_state):
@@ -251,10 +253,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         network = self._get_network(tenant_id, network_id)
         for port in network[const.NET_PORTS].values():
             if port[const.ATTACHMENT] == remote_interface_id:
-                raise exc.AlreadyAttached(net_id=network_id,
-                                          port_id=port_id,
-                                          att_id=port[const.ATTACHMENT],
-                                          att_port_id=port[const.PORT_ID])
+                raise exc.PortInUse(net_id=network_id,
+                                    port_id=port_id,
+                                    att_id=port[const.ATTACHMENT])
 
     def _get_network(self, tenant_id, network_id):
         network = self._networks.get(network_id)
