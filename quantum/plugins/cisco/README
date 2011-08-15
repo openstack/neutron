@@ -1,6 +1,6 @@
-============================================
-README:  Quantum L2 Network Plugin Framework
-============================================
+=====================================================================
+README: A Framework for a Quantum Plugin Supporting Multiple Switches
+=====================================================================
 
 :Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu
 :Contact: netstack@lists.launchpad.net
@@ -15,8 +15,8 @@ Introduction
 This plugin implementation provides the following capabilities
 to help you take your Layer 2 network for a Quantum leap:
 
-* A reference implementation of plugin framework for L2 network
-* Supports multiple switches in the network
+* A reference implementation a framework for a Quantum Plugin 
+to use multiple devices/switches in a L2 network
 * Supports multiple models of switches concurrently
 * Supports Cisco UCS blade servers with M81KR Virtual Interface Cards 
   (aka "Palo adapters") via 802.1Qbh.
