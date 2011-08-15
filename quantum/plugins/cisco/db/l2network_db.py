@@ -15,10 +15,7 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import logging as LOG
-import os
-
-from sqlalchemy.orm import exc, joinedload
+from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
@@ -28,7 +25,8 @@ import l2network_models
 import quantum.plugins.cisco.db.api as db
 
 
-def initialize(configfile=None):
+def initialize():
+    'Establish database connection and load models'
     options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
     conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
     db.configure_db(options)
@@ -54,6 +52,7 @@ def create_vlanids():
 
 
 def get_all_vlanids():
+    """Gets all the vlanids"""
     session = db.get_session()
     try:
         vlanids = session.query(l2network_models.VlanID).\
@@ -64,6 +63,7 @@ def get_all_vlanids():
 
 
 def is_vlanid_used(vlan_id):
+    """Checks if a vlanid is in use"""
     session = db.get_session()
     try:
         vlanid = session.query(l2network_models.VlanID).\
@@ -75,6 +75,7 @@ def is_vlanid_used(vlan_id):
 
 
 def release_vlanid(vlan_id):
+    """Sets the vlanid state to be unused"""
     session = db.get_session()
     try:
         vlanid = session.query(l2network_models.VlanID).\
@@ -90,6 +91,7 @@ def release_vlanid(vlan_id):
 
 
 def delete_vlanid(vlan_id):
+    """Deletes a vlanid entry from db"""
     session = db.get_session()
     try:
         vlanid = session.query(l2network_models.VlanID).\
@@ -103,6 +105,7 @@ def delete_vlanid(vlan_id):
 
 
 def reserve_vlanid():
+    """Reserves the first unused vlanid"""
     session = db.get_session()
     try:
         vlanids = session.query(l2network_models.VlanID).\
@@ -117,7 +120,7 @@ def reserve_vlanid():
         session.flush()
         return vlanids[0]["vlan_id"]
     except exc.NoResultFound:
-        raise VlanIDNotAvailable()
+        raise c_exc.VlanIDNotAvailable()
 
 
 def get_all_vlan_bindings():

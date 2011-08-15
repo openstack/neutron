@@ -18,7 +18,6 @@
 import uuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
 
 from quantum.plugins.cisco.db.models import BASE
@@ -30,19 +29,24 @@ class L2NetworkBase(object):
     __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
+        """Internal Dict set method"""
         setattr(self, key, value)
 
     def __getitem__(self, key):
+        """Internal Dict get method"""
         return getattr(self, key)
 
     def get(self, key, default=None):
+        """Dict get method"""
         return getattr(self, key, default)
 
     def __iter__(self):
+        """Iterate over table columns"""
         self._i = iter(object_mapper(self).columns)
         return self
 
     def next(self):
+        """Next method for the iterator"""
         n = self._i.next().name
         return n, getattr(self, n)
 
@@ -52,7 +56,7 @@ class L2NetworkBase(object):
             setattr(self, k, v)
 
     def iteritems(self):
-        """Make the model object behave like a dict.
+        """Make the model object behave like a dict"
         Includes attributes from joins."""
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
