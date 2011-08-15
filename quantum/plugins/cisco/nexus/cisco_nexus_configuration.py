@@ -30,6 +30,7 @@ cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
 section = cp['SWITCH']
 NEXUS_IP_ADDRESS = section['nexus_ip_address']
 NEXUS_PORT = section['nexus_port']
+NEXUS_SSH_PORT = section['nexus_ssh_port']
 
 section = cp['DRIVER']
 NEXUS_DRIVER = section['name']

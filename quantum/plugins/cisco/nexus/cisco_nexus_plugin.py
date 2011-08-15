@@ -43,6 +43,7 @@ class NexusPlugin(L2DevicePluginBase):
         self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)
         self._nexus_password = cred.Store.getPassword(conf.NEXUS_IP_ADDRESS)
         self._nexus_port = conf.NEXUS_PORT
+        self._nexus_ssh_port = conf.NEXUS_SSH_PORT
 
     def get_all_networks(self, tenant_id):
         """
@@ -61,7 +62,8 @@ class NexusPlugin(L2DevicePluginBase):
         """
         LOG.debug("NexusPlugin:create_network() called\n")
         self._client.create_vlan(vlan_name, str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password, self._nexus_port)
+                self._nexus_username, self._nexus_password, self._nexus_port,
+                self._nexus_ssh_port)
 
         new_net_dict = {const.NET_ID: net_id,
                         const.NET_NAME: net_name,
@@ -81,7 +83,8 @@ class NexusPlugin(L2DevicePluginBase):
         vlan_id = self._get_vlan_id_for_network(tenant_id, net_id)
         if net:
             self._client.delete_vlan(str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password, self._nexus_port)
+                self._nexus_username, self._nexus_password, self._nexus_port,
+                self._nexus_ssh_port)
             self._networks.pop(net_id)
             return net
         # Network not found
