@@ -19,13 +19,13 @@
 
 import logging
 import unittest
-import time
+#import time
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco import l2network_plugin
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.plugins.cisco.common import cisco_utils as utils
+#from quantum.plugins.cisco.common import cisco_utils as utils
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 
@@ -675,13 +675,16 @@ class CoreAPITestFunc(unittest.TestCase):
         port_dict = self._l2network_plugin.create_port(
                         tenant_id, new_net_dict[const.NET_ID], 'const.PORT_UP')
         self._l2network_plugin.associate_portprofile(
-                        tenant_id, new_net_dict[const.NET_ID], port_dict[const.PORT_ID], port_profile_id)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        port_dict[const.PORT_ID], port_profile_id)
         self.assertRaises(cexc.PortProfileInvalidDelete,
                           self._l2network_plugin.delete_portprofile,
                           tenant_id, port_profile_id)
-        self.tearDownAssociatePortProfile(tenant_id, new_net_dict[const.NET_ID],
-                                          port_dict[const.PORT_ID], port_profile_id)
-        self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
+        self.tearDownAssociatePortProfile(
+                         tenant_id, new_net_dict[const.NET_ID],
+                         port_dict[const.PORT_ID], port_profile_id)
+        self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID],
+                                 port_dict[const.PORT_ID])
         LOG.debug("test_delete_portprofileAssociated - END")
 
     def test_list_portprofile(self, tenant_id='test_tenant'):
@@ -793,8 +796,7 @@ class CoreAPITestFunc(unittest.TestCase):
                           tenant_id, profile_id, new_profile_name)
         LOG.debug("test_rename_portprofileDNE - END")
 
-    def test_associate_portprofile(self, tenant_id='test_tenant',
-                                   net_id='0005', port_id='p00005'):
+    def test_associate_portprofile(self, tenant_id='test_tenant'):
         """
         Tests association of a port-profile
         """
@@ -809,18 +811,18 @@ class CoreAPITestFunc(unittest.TestCase):
                         tenant_id, self.profile_name, self.qos)
         port_profile_id = port_profile_dict['profile-id']
         self._l2network_plugin.associate_portprofile(
-                        tenant_id, net_id, port_dict[const.PORT_ID],
-                        port_profile_id)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        port_dict[const.PORT_ID], port_profile_id)
         port_profile_associate = cdb.get_pp_binding(tenant_id, port_profile_id)
         self.assertEqual(port_profile_associate[const.PORTID],
                          port_dict[const.PORT_ID])
         #self.assertEqual(
          #       self._l2network_plugin._portprofiles[port_profile_id]
           #      [const.PROFILE_ASSOCIATIONS][0], port_id)
-        self.tearDownAssociatePortProfile(tenant_id, net_id,
-                                          port_dict[const.PORT_ID],
-                                          port_profile_id)
-        self.tearDownNetworkPortInterface(
+        self.tearDownAssociatePortProfile(
+                     tenant_id, new_net_dict[const.NET_ID],
+                     port_dict[const.PORT_ID], port_profile_id)
+        self.tearDownNetworkPort(
                           tenant_id, new_net_dict[const.NET_ID],
                           port_dict[const.PORT_ID])
         LOG.debug("test_associate_portprofile - END")
@@ -839,7 +841,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_associate_portprofileDNE - END")
 
     def test_disassociate_portprofile(self, tenant_id='test_tenant',
-                                      net_id='0005', port_id='p00005'):
+                                      ):
         """
         Tests disassociation of a port-profile
         """
@@ -864,7 +866,7 @@ class CoreAPITestFunc(unittest.TestCase):
 #        self.assertEqual(self._l2network_plugin._portprofiles
  #                       [port_profile_id][const.PROFILE_ASSOCIATIONS], [])
         self.tearDownPortProfile(tenant_id, port_profile_id)
-        self.tearDownNetworkPortInterface(
+        self.tearDownNetworkPort(
                           tenant_id, new_net_dict[const.NET_ID],
                           port_dict[const.PORT_ID])
         LOG.debug("test_disassociate_portprofile - END")
@@ -988,7 +990,8 @@ class CoreAPITestFunc(unittest.TestCase):
 
     def _make_portprofile_dict(self, tenant_id, profile_id, profile_name,
                                qos):
-        profile_associations = self._make_portprofile_assc_list(tenant_id, profile_id)
+        profile_associations = self._make_portprofile_assc_list(
+                                          tenant_id, profile_id)
         res = {const.PROFILE_ID: str(profile_id),
                const.PROFILE_NAME: profile_name,
                const.PROFILE_ASSOCIATIONS: profile_associations,
