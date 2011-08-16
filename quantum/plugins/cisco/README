@@ -1,6 +1,6 @@
-============================================
-README:  Quantum L2 Network Plugin Framework
-============================================
+=========================================================================================
+README: A Quantum Plugin Framework for Supporting L2 Networks Spannning Multiple Switches
+=========================================================================================
 
 :Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu, Debo Dutta
 :Contact: netstack@lists.launchpad.net
@@ -15,9 +15,11 @@ Introduction
 This plugin implementation provides the following capabilities
 to help you take your Layer 2 network for a Quantum leap:
 
-* A reference implementation of plugin framework for L2 network
+* A reference implementation for a Quantum Plugin Framework
+(For details see: http://wiki.openstack.org/quantum-multi-switch-plugin)
 * Supports multiple switches in the network
 * Supports multiple models of switches concurrently
+* Supports use of multiple L2 technologies
 * Supports Cisco UCS blade servers with M81KR Virtual Interface Cards 
   (aka "Palo adapters") via 802.1Qbh.
 * Supports the Cisco Nexus family of switches.
@@ -32,6 +34,8 @@ Let's leap in!
 
 Pre-requisites
 --------------
+(The following are necessary only when using the UCS and/or Nexus devices in your system.
+If you plan to just leverage the plugin framework, you do not need these.)
 * One or more UCS B200 series blade servers with M81KR VIC (aka 
   Palo adapters) installed.
 * UCSM 2.0 (Capitola) Build 230 or above.
@@ -108,14 +112,6 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 
     4b.  Enter the relevant configuration in the 
          quantum/plugins/cisco/conf/nexus.ini file.  Example:
-         
-5.  Plugin Persistence framework setup:
-	5a.  Create quantum_l2network database in mysql with the following command -
-	
-mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
-
-	5b.  Enter the quantum_l2netowrk database configuration info in the 
-         quantum/plugins/cisco/conf/db_conn.ini file.
 
 [SWITCH]
 # Change the following to reflect the IP address of the Nexus switch.
@@ -138,8 +134,16 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
          host key changes (e.g. due to replacement of the supervisor or
          clearing of the SSH config on the switch), you may need to repeat
          this step and remove the old hostkey from ~/.ssh/known_hosts.
+         
+5.  Plugin Persistence framework setup:
+	5a.  Create quantum_l2network database in mysql with the following command -
+	
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-5.  Verify that you have the correct credentials for each IP address listed
+	5b.  Enter the quantum_l2netowrk database configuration info in the 
+         quantum/plugins/cisco/conf/db_conn.ini file.
+
+6.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
 
 # Provide the UCSM credentials
@@ -160,7 +164,7 @@ password=mySecretPasswordForNova
 username=admin
 password=mySecretPasswordForNexus
 
-6.  Start the Quantum service.  If something doesn't work, verify that
+7.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
 

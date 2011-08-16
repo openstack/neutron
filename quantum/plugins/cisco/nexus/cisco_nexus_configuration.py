@@ -38,13 +38,3 @@ NEXUS_SSH_PORT = SECTION['nexus_ssh_port']
 
 SECTION = CP['DRIVER']
 NEXUS_DRIVER = SECTION['name']
-
-
-def main():
-    """
-    Indicates the value of the Nexus Port
-    """
-    print NEXUS_PORT
-
-if __name__ == '__main__':
-    main()
