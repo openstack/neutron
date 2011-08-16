@@ -18,8 +18,10 @@
 """
 System-level utilities and helper functions.
 """
-
+import ConfigParser
 import datetime
+import exceptions as exception
+import flags
 import inspect
 import logging
 import os
@@ -27,10 +29,8 @@ import random
 import subprocess
 import socket
 import sys
-import ConfigParser
 
-import exceptions as exception
-import flags
+
 from exceptions import ProcessExecutionError
 
 
