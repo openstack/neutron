@@ -61,6 +61,10 @@ from quantum.plugins.openvswitch.tests.test_vlan_map import VlanMapTest
 if __name__ == '__main__':
     exit_status = False
 
+    # if a single test case was specified,
+    # we should only invoked the tests once
+    invoke_once = len(sys.argv) > 1
+
     cwd = os.getcwd()
 
     working_dir = os.path.abspath("tests")
@@ -69,6 +73,9 @@ if __name__ == '__main__':
                       verbosity=3,
                       workingDir=working_dir)
     exit_status = run_tests(c)
+
+    if invoke_once:
+        sys.exit(0)
 
     os.chdir(cwd)
 
