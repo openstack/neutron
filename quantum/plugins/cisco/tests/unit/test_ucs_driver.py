@@ -110,7 +110,7 @@ class TestUCSDriver(unittest.TestCase):
         """
 
         LOG.debug("test_create_profile_post_data - START")
-        profile_details = self.ucsm_driver._change_vlan_in_profile_post_data(
+        profile_details = self.ucsm_driver._change_vlaninprof_post_data(
                         self.profile_name, self.old_vlan_name, self.vlan_name)
         self.assertEqual(profile_details, expected_output)
         LOG.debug("test_create_profile_post - END")
@@ -152,7 +152,7 @@ class TestUCSDriver(unittest.TestCase):
         """
 
         LOG.debug("test_create_profile_client_data - START")
-        profile_details = self.ucsm_driver._create_profile_client_post_data(
+        profile_details = self.ucsm_driver._create_pclient_post_data(
                                 self.profile_name, self.profile_client_name)
         self.assertEqual(profile_details, expected_output)
         LOG.debug("test_create_profile_post - END")
