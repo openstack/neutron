@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
+"""
 
 import os
 
@@ -23,45 +25,43 @@ from quantum.plugins.cisco.common import cisco_configparser as confp
 
 CONF_FILE = "conf/l2network_plugin.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                             + "/" + CONF_FILE)
+CONF_PARSER_OBJ = confp.\
+CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
+"/" + CONF_FILE)
 
-section = cp['VLANS']
-VLAN_NAME_PREFIX = section['vlan_name_prefix']
-VLAN_START = section['vlan_start']
-VLAN_END = section['vlan_end']
+SECTION_CONF = CONF_PARSER_OBJ['VLANS']
+VLAN_NAME_PREFIX = SECTION_CONF['vlan_name_prefix']
+VLAN_START = SECTION_CONF['vlan_start']
+VLAN_END = SECTION_CONF['vlan_end']
 
-section = cp['PORTS']
-MAX_PORTS = section['max_ports']
+SECTION_CONF = CONF_PARSER_OBJ['PORTS']
+MAX_PORTS = SECTION_CONF['max_ports']
 
-section = cp['PORTPROFILES']
-MAX_PORT_PROFILES = section['max_port_profiles']
+SECTION_CONF = CONF_PARSER_OBJ['PORTPROFILES']
+MAX_PORT_PROFILES = SECTION_CONF['max_port_profiles']
 
-section = cp['NETWORKS']
-MAX_NETWORKS = section['max_networks']
+SECTION_CONF = CONF_PARSER_OBJ['NETWORKS']
+MAX_NETWORKS = SECTION_CONF['max_networks']
 
-section = cp['MODEL']
-MODEL_CLASS = section['model_class']
+SECTION_CONF = CONF_PARSER_OBJ['MODEL']
+MODEL_CLASS = SECTION_CONF['model_class']
 
 CONF_FILE = "conf/plugins.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                             + "/" + CONF_FILE)
-plugins = cp.walk(cp.dummy)
+CONF_PARSER_OBJ = confp.\
+CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
+"/" + CONF_FILE)
+
+PLUGINS = CONF_PARSER_OBJ.walk(CONF_PARSER_OBJ.dummy)
 
 CONF_FILE = "conf/db_conn.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                             + "/" + CONF_FILE)
+CONF_PARSER_OBJ = confp.\
+CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
+"/" + CONF_FILE)
 
-section = cp['DATABASE']
-DB_NAME = section['name']
-DB_USER = section['user']
-DB_PASS = section['pass']
-DB_HOST = section['host']
-
-def main():
-    print plugins['PLUGINS']
-
-if __name__ == '__main__':
-    main()
+SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
+DB_NAME = SECTION_CONF['name']
+DB_USER = SECTION_CONF['user']
+DB_PASS = SECTION_CONF['pass']
+DB_HOST = SECTION_CONF['host']

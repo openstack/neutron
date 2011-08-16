@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import inspect
 import logging as LOG
@@ -34,6 +36,7 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class L2Network(QuantumPluginBase):
+    """ L2 Network Framework Plugin """
 
     def __init__(self):
         self._vlan_counter = int(conf.VLAN_START) - 1
@@ -52,7 +55,7 @@ class L2Network(QuantumPluginBase):
         the specified tenant.
         """
         LOG.debug("get_all_networks() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id])
+        self._invoke_device_plugins(self._func_name(), [tenant_id])
         networks_list = db.network_list(tenant_id)
         new_networks_list = []
         for network in networks_list:
@@ -73,7 +76,7 @@ class L2Network(QuantumPluginBase):
         new_net_id = new_network[const.UUID]
         vlan_id = self._get_vlan_for_tenant(tenant_id, net_name)
         vlan_name = self._get_vlan_name(new_net_id, str(vlan_id))
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_name,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_name,
                                                      new_net_id, vlan_name,
                                                      vlan_id])
         cdb.add_vlan_binding(vlan_id, vlan_name, new_net_id)
@@ -98,7 +101,7 @@ class L2Network(QuantumPluginBase):
                 for port in ports_on_net:
                     self.delete_port(tenant_id, net_id, port[const.PORTID])
 
-            self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id])
+            self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
             net_dict = self._make_net_dict(net[const.UUID],
                                            net[const.NETWORKNAME],
                                            [])
@@ -114,7 +117,7 @@ class L2Network(QuantumPluginBase):
         Gets the details of a particular network
         """
         LOG.debug("get_network_details() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id])
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         network = db.network_get(net_id)
         ports_list = network[const.NETWORKPORTS]
         ports_on_net = []
@@ -137,7 +140,7 @@ class L2Network(QuantumPluginBase):
         Virtual Network.
         """
         LOG.debug("rename_network() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      new_name])
         network = db.network_rename(tenant_id, net_id, new_name)
         net_dict = self._make_net_dict(network[const.UUID],
@@ -151,7 +154,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("get_all_ports() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id])
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         network = db.network_get(net_id)
         ports_list = network[const.NETWORKPORTS]
         ports_on_net = []
@@ -171,7 +174,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("create_port() called\n")
         port = db.port_create(net_id, port_state)
         unique_port_id_string = port[const.UUID]
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_state,
                                                      unique_port_id_string])
         new_port_dict = self._make_port_dict(port[const.UUID],
@@ -188,7 +191,7 @@ class L2Network(QuantumPluginBase):
         then the port can be deleted.
         """
         LOG.debug("delete_port() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         db.port_destroy(net_id, port_id)
         new_port_dict = self._make_port_dict(port_id, None, None, None)
@@ -199,7 +202,7 @@ class L2Network(QuantumPluginBase):
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id, port_state])
         self._validate_port_state(port_state)
         db.port_set_state(net_id, port_id, port_state)
@@ -213,7 +216,7 @@ class L2Network(QuantumPluginBase):
         that is attached to this particular port.
         """
         LOG.debug("get_port_details() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         port = db.port_get(net_id, port_id)
         new_port_dict = self._make_port_dict(port[const.UUID],
@@ -229,7 +232,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("plug_interface() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id,
                                                      remote_interface_id])
         db.port_set_attachment(net_id, port_id, remote_interface_id)
@@ -240,7 +243,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("unplug_interface() called\n")
-        self._invokeDevicePlugins(self._funcName(), [tenant_id, net_id,
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         db.port_unset_attachment(net_id, port_id)
 
@@ -248,40 +251,42 @@ class L2Network(QuantumPluginBase):
     Extension API implementation
     """
     def get_all_portprofiles(self, tenant_id):
-        #return self._portprofiles.values()
+        """Get all port profiles"""
         pplist = cdb.get_all_portprofiles()
         new_pplist = []
-        for pp in pplist:
+        for portprofile in pplist:
             new_pp = self._make_portprofile_dict(tenant_id,
-                                                 pp[const.UUID],
-                                                 pp[const.PPNAME],
-                                                 pp[const.PPQOS])
+                                                 portprofile[const.UUID],
+                                                 portprofile[const.PPNAME],
+                                                 portprofile[const.PPQOS])
             new_pplist.append(new_pp)
 
         return new_pplist
 
     def get_portprofile_details(self, tenant_id, profile_id):
-        #return self._get_portprofile(tenant_id, profile_id)
-        pp = cdb.get_portprofile(tenant_id, profile_id)
+        """Get port profile details"""
+        portprofile = cdb.get_portprofile(tenant_id, profile_id)
         new_pp = self._make_portprofile_dict(tenant_id,
-                                             pp[const.UUID],
-                                             pp[const.PPNAME],
-                                             pp[const.PPQOS])
+                                             portprofile[const.UUID],
+                                             portprofile[const.PPNAME],
+                                             portprofile[const.PPQOS])
         return new_pp
 
     def create_portprofile(self, tenant_id, profile_name, qos):
-        pp = cdb.add_portprofile(tenant_id, profile_name,
+        """Create port profile"""
+        portprofile = cdb.add_portprofile(tenant_id, profile_name,
                                  const.NO_VLAN_ID, qos)
         new_pp = self._make_portprofile_dict(tenant_id,
-                                             pp[const.UUID],
-                                             pp[const.PPNAME],
-                                             pp[const.PPQOS])
+                                             portprofile[const.UUID],
+                                             portprofile[const.PPNAME],
+                                             portprofile[const.PPQOS])
         return new_pp
 
     def delete_portprofile(self, tenant_id, profile_id):
+        """Delete portprofile"""
         try:
-            pp = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, e:
+            portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        except Exception, exc:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
 
@@ -293,23 +298,25 @@ class L2Network(QuantumPluginBase):
             cdb.remove_portprofile(tenant_id, profile_id)
 
     def rename_portprofile(self, tenant_id, profile_id, new_name):
+        """Rename port profile"""
         try:
-            pp = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, e:
+            portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        except Exception, exc:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
-        pp = cdb.update_portprofile(tenant_id, profile_id, new_name)
+        portprofile = cdb.update_portprofile(tenant_id, profile_id, new_name)
         new_pp = self._make_portprofile_dict(tenant_id,
-                                             pp[const.UUID],
-                                             pp[const.PPNAME],
-                                             pp[const.PPQOS])
+                                             portprofile[const.UUID],
+                                             portprofile[const.PPNAME],
+                                             portprofile[const.PPQOS])
         return new_pp
 
     def associate_portprofile(self, tenant_id, net_id,
                               port_id, portprofile_id):
+        """Associate port profile"""
         try:
-            pp = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, e:
+            portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
+        except Exception, exc:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=portprofile_id)
 
@@ -317,35 +324,40 @@ class L2Network(QuantumPluginBase):
 
     def disassociate_portprofile(self, tenant_id, net_id,
                                  port_id, portprofile_id):
+        """Disassociate port profile"""
         try:
-            pp = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, e:
+            portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
+        except Exception, exc:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                       portprofile_id=portprofile_id)
 
         cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
 
-    def create_defaultPProfile(self, tenant_id, network_id, profile_name,
-                               qos):
-        pp = cdb.add_portprofile(tenant_id, profile_name,
+    def create_default_port_profile(self, tenant_id, network_id, profile_name,
+                                    qos):
+        "Create default port profile"""
+        portprofile = cdb.add_portprofile(tenant_id, profile_name,
                                  const.NO_VLAN_ID, qos)
         new_pp = self._make_portprofile_dict(tenant_id,
-                                             pp[const.UUID],
-                                             pp[const.PPNAME],
-                                             pp[const.PPQOS])
-        cdb.add_pp_binding(tenant_id, port_id, portprofile_id, True)
+                                             portprofile[const.UUID],
+                                             portprofile[const.PPNAME],
+                                             portprofile[const.PPQOS])
+        # TODO (Sumit): Need to check the following
+        port_id = None
+        cdb.add_pp_binding(tenant_id, port_id, portprofile[const.UUID], True)
         return new_pp
 
     """
     Private functions
     """
-    def _invokeDevicePlugins(self, function_name, args):
+    def _invoke_device_plugins(self, function_name, args):
         """
         All device-specific calls are delegate to the model
         """
         getattr(self._model, function_name)(args)
 
     def _get_vlan_for_tenant(self, tenant_id, net_name):
+        """Get vlan ID"""
         # TODO (Sumit):
         # The VLAN ID for a tenant might need to be obtained from
         # somewhere (from Donabe/Melange?)
@@ -355,27 +367,33 @@ class L2Network(QuantumPluginBase):
         return cdb.reserve_vlanid()
 
     def _release_vlan_for_tenant(self, tenant_id, net_id):
+        """Relase VLAN"""
         vlan_binding = cdb.get_vlan_binding(net_id)
         return cdb.release_vlanid(vlan_binding[const.VLANID])
 
     def _get_vlan_name(self, net_id, vlan):
+        """Getting the vlan name from the tenant and vlan"""
         vlan_name = conf.VLAN_NAME_PREFIX + vlan
         return vlan_name
 
     def _validate_port_state(self, port_state):
+        """Checking the port state"""
         if port_state.upper() not in (const.PORT_UP, const.PORT_DOWN):
             raise exc.StateInvalid(port_state=port_state)
         return True
 
-    def _funcName(self, offset=0):
+    def _func_name(self, offset=0):
+        """Getting the name of the calling funciton"""
         return inspect.stack()[1 + offset][3]
 
     def _make_net_dict(self, net_id, net_name, ports):
+        """Helper funciton"""
         res = {const.NET_ID: net_id, const.NET_NAME: net_name}
         res[const.NET_PORTS] = ports
         return res
 
     def _make_port_dict(self, port_id, port_state, net_id, attachment):
+        """Helper funciton"""
         res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
         res[const.NET_ID] = net_id
         res[const.ATTACHMENT] = attachment
@@ -383,6 +401,7 @@ class L2Network(QuantumPluginBase):
 
     def _make_portprofile_dict(self, tenant_id, profile_id, profile_name,
                                qos):
+        """Helper funciton"""
         profile_associations = self._make_portprofile_assc_list(tenant_id,
                                                                 profile_id)
         res = {const.PROFILE_ID: str(profile_id),
@@ -393,21 +412,10 @@ class L2Network(QuantumPluginBase):
         return res
 
     def _make_portprofile_assc_list(self, tenant_id, profile_id):
+        """Helper function to create port profile association list"""
         plist = cdb.get_pp_binding(tenant_id, profile_id)
         assc_list = []
         for port in plist:
             assc_list.append(port[const.PORTID])
 
         return assc_list
-
-
-def main():
-    client = L2Network()
-    """
-    client.create_portprofile("12345", "tpp1", "2")
-    client.create_portprofile("12345", "tpp2", "3")
-    print ("%s\n") % client.get_all_portprofiles("12345")
-    """
-
-if __name__ == '__main__':
-    main()
