@@ -32,7 +32,7 @@ class UCSVICTestPlugin(unittest.TestCase):
 
         self.tenant_id = "test_tenant_cisco12"
         self.net_name = "test_network_cisco12"
-        self.net_id = 000007
+        self.net_id = 000011
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 266
         self.port_id = "4"
@@ -238,12 +238,12 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertEqual(new_port_profile[const.PROFILE_NAME], profile_name)
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
-    def _test_get_port_details_state_down(self, port_state):
+    def _test_show_port_state_down(self, port_state):
         """
         Tests whether  user is able  to retrieve a remote interface
         that is attached to this particular port when port state is down.
         """
-        LOG.debug("UCSVICTestPlugin:_test_get_port_details_state_down()" +
+        LOG.debug("UCSVICTestPlugin:_test_show_port_state_down()" +
              "called\n")
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                                self.net_id, self.vlan_name,
@@ -268,8 +268,8 @@ class UCSVICTestPlugin(unittest.TestCase):
     def test_get_port_details_state_up(self):
         self._test_get_port_details_state_up(const.PORT_UP)
 
-    def test_get_port_details_state_down(self):
-        self._test_get_port_details_state_down(const.PORT_DOWN)
+    def test_show_port_state_down(self):
+        self._test_show_port_state_down(const.PORT_DOWN)
 
     def test_create_port_profile(self):
         LOG.debug("UCSVICTestPlugin:test_create_port_profile() called\n")
@@ -313,7 +313,7 @@ class UCSVICTestPlugin(unittest.TestCase):
              self.tenant_id, self.net_id, self.port_id)
         self.assertEqual(port[const.ATTACHMENT], remote_interface_id)
         port_profile = port[const.PORT_PROFILE]
-        profile_name = port_profile[const.PROFILE_NAME]
+        #profile_name = port_profile[const.PROFILE_NAME]
         new_vlan_name = self._cisco_ucs_plugin._get_vlan_name_for_network(
              self.tenant_id, self.net_id)
         new_vlan_id = self._cisco_ucs_plugin._get_vlan_id_for_network(
@@ -346,7 +346,7 @@ class UCSVICTestPlugin(unittest.TestCase):
              self.tenant_id, self.net_id, self.port_id)
         self.assertEqual(port[const.ATTACHMENT], None)
         port_profile = port[const.PORT_PROFILE]
-        profile_name = port_profile[const.PROFILE_NAME]
+        #profile_name = port_profile[const.PROFILE_NAME]
         self.assertEqual(port_profile[const.PROFILE_VLAN_NAME],
                               conf.DEFAULT_VLAN_NAME)
         self.assertEqual(port_profile[const.PROFILE_VLAN_ID],
@@ -394,12 +394,12 @@ class UCSVICTestPlugin(unittest.TestCase):
     def test_get_network_NetworkNotFound(self):
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin._get_network,
-                          *(self.tenant_id, self.net_id))
+                          self.tenant_id, self.net_id)
 
     def test_delete_network_NetworkNotFound(self):
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin.delete_network,
-                          *(self.tenant_id, self.net_id))
+                          self.tenant_id, self.net_id)
 
     def test_delete_port_PortInUse(self):
         self._test_delete_port_PortInUse("4")
@@ -414,7 +414,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                                               self.port_id,
                                               remote_interface_id)
         self.assertRaises(exc.PortInUse, self._cisco_ucs_plugin.delete_port,
-                               *(self.tenant_id, self.net_id, self.port_id))
+                               self.tenant_id, self.net_id, self.port_id)
         self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
                                                self.port_id)
 
@@ -423,7 +423,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                                                    self.net_id, self.vlan_name,
                                               self.vlan_id)
         self.assertRaises(exc.PortNotFound, self._cisco_ucs_plugin.delete_port,
-                               *(self.tenant_id, self.net_id, self.port_id))
+                               self.tenant_id, self.net_id, self.port_id)
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_plug_interface_PortInUse(self):
@@ -441,16 +441,16 @@ class UCSVICTestPlugin(unittest.TestCase):
                                               self.port_id,
                                               remote_interface_id1)
         self.assertRaises(exc.PortInUse, self._cisco_ucs_plugin.plug_interface,
-                          *(self.tenant_id, self.net_id, self.port_id,
-                          remote_interface_id2))
+                          self.tenant_id, self.net_id, self.port_id,
+                          remote_interface_id2)
         self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
                                           self.port_id)
 
-    def test_validate_attachment_AlreadyAttached(self):
+    def test_attachment_exists(self):
         LOG.debug("UCSVICTestPlugin:testValidateAttachmentAlreadyAttached")
-        self._test_validate_attachment_AlreadyAttached("4")
+        self._test_attachment_exists("4")
 
-    def _test_validate_attachment_AlreadyAttached(self, remote_interface_id):
+    def _test_attachment_exists(self, remote_interface_id):
         LOG.debug("UCSVICTestPlugin:_test_validate_attachmentAlreadyAttached")
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                               self.net_id, self.vlan_name,
@@ -461,8 +461,8 @@ class UCSVICTestPlugin(unittest.TestCase):
                                               self.port_id,
                                               remote_interface_id)
         self.assertRaises(
-            exc.AlreadyAttached, self._cisco_ucs_plugin._validate_attachment,
-            *(self.tenant_id, self.net_id, self.port_id, remote_interface_id))
+            exc.PortInUse, self._cisco_ucs_plugin._validate_attachment,
+            self.tenant_id, self.net_id, self.port_id, remote_interface_id)
         self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
                                           self.port_id)
 
