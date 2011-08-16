@@ -17,14 +17,15 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Edgar Magana, Cisco Systems, Inc.
 #
+"""
+PlugIn for Nexus OS driver
+"""
 import logging as LOG
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
@@ -33,12 +34,17 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class NexusPlugin(L2DevicePluginBase):
+    """
+    Nexus PLugIn Main Class
+    """
     _networks = {}
 
     def __init__(self):
+        """
+        Extracts the configuration parameters from the configuration file
+        """
         self._client = utils.import_object(conf.NEXUS_DRIVER)
         LOG.debug("Loaded driver %s\n" % conf.NEXUS_DRIVER)
-        #TODO (Edgar) Using just one Nexus 7K Switch and Port
         self._nexus_ip = conf.NEXUS_IP_ADDRESS
         self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)
         self._nexus_password = cred.Store.getPassword(conf.NEXUS_IP_ADDRESS)
@@ -103,7 +109,6 @@ class NexusPlugin(L2DevicePluginBase):
         Updates the symbolic name belonging to a particular
         Virtual Network.
         """
-        #TODO (Edgar) We need to add an update method in the Nexus Driver
         LOG.debug("NexusPlugin:rename_network() called\n")
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name
@@ -160,11 +165,17 @@ class NexusPlugin(L2DevicePluginBase):
         LOG.debug("NexusPlugin:unplug_interface() called\n")
 
     def _get_vlan_id_for_network(self, tenant_id, network_id):
+        """
+        Obtain the VLAN ID given the Network ID
+        """
         net = self._get_network(tenant_id, network_id)
         vlan_id = net[const.NET_VLAN_ID]
         return vlan_id
 
     def _get_network(self, tenant_id, network_id):
+        """
+        Gets the NETWORK ID
+        """
         network = self._networks.get(network_id)
         if not network:
             raise exc.NetworkNotFound(net_id=network_id)

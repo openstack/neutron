@@ -21,8 +21,6 @@ Nexus-OS XML-based configuration snippets
 """
 
 import logging as LOG
-import string
-import subprocess
 
 from quantum.plugins.cisco.common import cisco_constants as const
 
@@ -31,21 +29,21 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 # The following are standard strings, messages used to communicate with Nexus,
-exec_conf_prefix = """
+EXEC_CONF_PREFIX = """
       <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         <configure xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
           <__XML__MODE__exec_configure>
 """
 
 
-exec_conf_postfix = """
+EXEC_CONF_POSTFIX = """
           </__XML__MODE__exec_configure>
         </configure>
       </config>
 """
 
 
-cmd_vlan_conf_snippet = """
+CMD_VLAN_CONF_SNIPPET = """
             <vlan>
               <vlan-id-create-delete>
                 <__XML__PARAM_value>%s</__XML__PARAM_value>
@@ -64,7 +62,7 @@ cmd_vlan_conf_snippet = """
             </vlan>
 """
 
-cmd_no_vlan_conf_snippet = """
+CMD_NO_VLAN_CONF_SNIPPET = """
           <no>
           <vlan>
             <vlan-id-create-delete>
@@ -74,7 +72,7 @@ cmd_no_vlan_conf_snippet = """
           </no>
 """
 
-cmd_vlan_int_snippet = """
+CMD_VLAN_INT_SNIPPET = """
           <interface>
             <ethernet>
               <interface>%s</interface>
@@ -96,7 +94,7 @@ cmd_vlan_int_snippet = """
           </interface>
 """
 
-cmd_port_trunk = """
+CMD_PORT_TRUNK = """
           <interface>
             <ethernet>
               <interface>%s</interface>
@@ -113,7 +111,7 @@ cmd_port_trunk = """
           </interface>
 """
 
-cmd_no_switchport = """
+CMD_NO_SWITCHPORT = """
           <interface>
             <ethernet>
               <interface>%s</interface>
@@ -128,7 +126,7 @@ cmd_no_switchport = """
 """
 
 
-cmd_no_vlan_int_snippet = """
+CMD_NO_VLAN_INT_SNIPPET = """
           <interface>
             <ethernet>C:  1: Missing docstring
               <interface>%s</interface>
@@ -153,7 +151,7 @@ cmd_no_vlan_int_snippet = """
 """
 
 
-filter_show_vlan_brief_snippet = """
+FILTER_SHOW_VLAN_BRIEF_SNIPPET = """
       <show xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
         <vlan>
           <brief/>

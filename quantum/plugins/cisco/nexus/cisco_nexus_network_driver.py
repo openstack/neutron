@@ -22,11 +22,8 @@ Implements a Nexus-OS NETCONF over SSHv2 API Client
 """
 
 import logging as LOG
-import string
-import subprocess
 
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
 from ncclient import manager
@@ -36,60 +33,93 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class CiscoNEXUSDriver():
-
+    """
+    Nexus Driver Main Class
+    """
     def __init__(self):
         pass
 
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
-            m = manager.connect(host=nexus_host, port=nexus_ssh_port,
+        """
+        Makes the SSH connection to the Nexus Switch
+        """
+        man = manager.connect(host=nexus_host, port=nexus_ssh_port,
                                 username=nexus_user, password=nexus_password)
-            return m
+        return man
 
     def enable_vlan(self, mgr, vlanid, vlanname):
-        confstr = snipp.cmd_vlan_conf_snippet % (vlanid, vlanname)
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Creates a VLAN on Nexus Switch given the VLAN ID and Name
+        """
+        confstr = snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname)
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan(self, mgr, vlanid):
-        confstr = snipp.cmd_no_vlan_conf_snippet % vlanid
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Delete a VLAN on Nexus Switch given the VLAN ID
+        """
+        confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         mgr.edit_config(target='running', config=confstr)
 
     def enable_port_trunk(self, mgr, interface):
-        confstr = snipp.cmd_port_trunk % (interface)
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Enables trunk mode an interface on Nexus Switch
+        """
+        confstr = snipp.CMD_PORT_TRUNK % (interface)
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_switch_port(self, mgr, interface):
-        confstr = snipp.cmd_no_switchport % (interface)
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Disables trunk mode an interface on Nexus Switch
+        """
+        confstr = snipp.CMD_NO_SWITCHPORT % (interface)
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        confstr = snipp.cmd_vlan_int_snippet % (interface, vlanid)
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Enables trunk mode vlan access an interface on Nexus Switch given
+        VLANID
+        """
+        confstr = snipp.CMD_VLAN_INT_SNIPPET % (interface, vlanid)
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        confstr = snipp.cmd_no_vlan_int_snippet % (interface, vlanid)
-        confstr = snipp.exec_conf_prefix + confstr + snipp.exec_conf_postfix
+        """
+        Enables trunk mode vlan access an interface on Nexus Switch given
+        VLANID
+        """
+        confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
+        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
                     nexus_password, nexus_interface, nexus_ssh_port):
+        """
+        Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
+        given the VLAN ID and Name and Interface Number
+        """
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
-                               nexus_password) as m:
-            self.enable_vlan(m, vlan_id, vlan_name)
-            self.enable_vlan_on_trunk_int(m, nexus_interface, vlan_id)
+                               nexus_password) as man:
+            self.enable_vlan(man, vlan_id, vlan_name)
+            self.enable_vlan_on_trunk_int(man, nexus_interface, vlan_id)
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user,
                     nexus_password, nexus_interface, nexus_ssh_port):
+        """
+        Delete a VLAN and Disables trunk mode an interface on Nexus Switch
+        given the VLAN ID and Interface Number
+        """
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
-                               nexus_password) as m:
-            self.disable_vlan(m, vlan_id)
-            self.disable_switch_port(m, nexus_interface)
+                               nexus_password) as man:
+            self.disable_vlan(man, vlan_id)
+            self.disable_switch_port(man, nexus_interface)

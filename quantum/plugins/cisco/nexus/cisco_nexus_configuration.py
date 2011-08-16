@@ -17,26 +17,33 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Edgar Magana, Cisco Systems, Inc.
 #
-
+"""
+Configuration consolidation for the Nexus Driver
+This module will export the configuration parameters
+from the nexus.ini file
+"""
 import os
 
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
 CONF_FILE = "../conf/nexus.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
                              + "/" + CONF_FILE)
 
-section = cp['SWITCH']
-NEXUS_IP_ADDRESS = section['nexus_ip_address']
-NEXUS_PORT = section['nexus_port']
-NEXUS_SSH_PORT = section['nexus_ssh_port']
+SECTION = CP['SWITCH']
+NEXUS_IP_ADDRESS = SECTION['nexus_ip_address']
+NEXUS_PORT = SECTION['nexus_port']
+NEXUS_SSH_PORT = SECTION['nexus_ssh_port']
 
-section = cp['DRIVER']
-NEXUS_DRIVER = section['name']
+SECTION = CP['DRIVER']
+NEXUS_DRIVER = SECTION['name']
 
 
 def main():
+    """
+    Indicates the value of the Nexus Port
+    """
     print NEXUS_PORT
 
 if __name__ == '__main__':
