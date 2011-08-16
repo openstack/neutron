@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,12 +17,20 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import inspect
 from abc import ABCMeta, abstractmethod
 
 
 class L2NetworkModelBase(object):
+    """
+    Base class for L2 Network Model
+    It relies on a pluggable network configuration module  to gather
+    knowledge of the system, but knows which device-specific plugins
+    to invoke for a corresponding core API call, and what parameters to pass
+    to that plugin.
+    """
 
     __metaclass__ = ABCMeta
 
@@ -131,7 +140,7 @@ class L2NetworkModelBase(object):
         marked with the abstractmethod decorator is
         provided by the plugin class.
         """
-        if cls is QuantumPluginBase:
+        if cls is L2NetworkModelBase:
             for method in cls.__abstractmethods__:
                 method_ok = False
                 for base in klass.__mro__:
