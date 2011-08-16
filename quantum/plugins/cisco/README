@@ -2,7 +2,7 @@
 README:  Quantum L2 Network Plugin Framework
 ============================================
 
-:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu
+:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu, Debo Dutta
 :Contact: netstack@lists.launchpad.net
 :Web site: https://launchpad.net/~cisco-openstack
 :Copyright: 2011 Cisco Systems, Inc.
@@ -125,6 +125,8 @@ nexus_ip_address=10.0.0.1
 # Port number on the Nexus switch to which the UCSM 6120 is connected
 # Use shortened interface syntax, e.g. "3/23" not "Ethernet3/23".
 nexus_port=3/23
+#Port number where the SSH will be running at Nexus Switch, e.g.: 22 (Default) 
+nexus_ssh_port=22
 
 [DRIVER]
 name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
