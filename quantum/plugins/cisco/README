@@ -172,7 +172,8 @@ password=mySecretPasswordForNexus
 How to test the installation
 ----------------------------
 The unit tests are located at quantum/plugins/cisco/tests/unit. They can be
-executed from quantum/plugins/cisco/ using the run_tests.py script.
+executed from the main folder using the run_tests.sh or to get a more detailed
+result the quantum/plugins/cisco/run_tests.py script.
 
 1. Testing the core API (without UCS/Nexus/RHEL hardware, and can be run on
    Ubuntu):
@@ -180,18 +181,41 @@ executed from quantum/plugins/cisco/ using the run_tests.py script.
    quantum/plugins/cisco/conf/plugins.ini
    Then run the test script:
 
-python run_tests.py unit.test_l2networkApi
+   Set the environment variable PLUGIN_DIR to the location of the plugin 
+   directory. This is manadatory if the run_tests.sh script is used.
+
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+
+   or
+
+   python quantum/plugins/cisco/run_tests.py 
+	quantum.plugins.cisco.tests.unit.test_l2networkApi
 
 2. Specific Plugin unit test (needs environment setup as indicated in the 
    pre-requisites):
-   python run_tests.py unit.<name_of_the file>
+
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the file>
+
+   or 
+
+   python <path to the plugin directory>/run_tests.py 
+          quantum.plugins.cisco.tests.unit.<name_of_the file>
    E.g.:
 
-python run_tests.py unit.test_ucs_plugin.py
+   python quantum/plugins/cisco/run_tests.py 
+          quantum.plugins.cisco.tests.unit.test_ucs_plugin.py
 
 3. All unit tests (needs environment setup as indicated in the pre-requisites):
    
-python run_tests.py unit
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit
+
+   or 
+
+   python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
+
 
 
 Additional installation required on Nova Compute

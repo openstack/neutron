@@ -259,11 +259,10 @@ class TestNexusPlugin(unittest.TestCase):
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_get_vlan_id_for_network - END")
 
-    """
-        Clean up functions after the tests
-    """
-
     def tearDownNetwork(self, tenant_id, network_dict_id):
+        """
+        Clean up functions after the tests
+        """
         self._cisco_nexus_plugin.delete_network(tenant_id, network_dict_id)
 
 #    def test_create_network(self):
