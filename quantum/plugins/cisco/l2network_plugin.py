@@ -44,7 +44,6 @@ class L2Network(QuantumPluginBase):
     _qos_levels = {}
     _credentials = {}
 
-
     def __init__(self):
         self._vlan_counter = int(conf.VLAN_START) - 1
         self._model = utils.import_object(conf.MODEL_CLASS)
@@ -443,11 +442,7 @@ class L2Network(QuantumPluginBase):
     def get_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("get_host() called\n")
-        host_list = {const.HOST_LIST:
-                     {
-                         const.HOST_1: platform.node()
-                     }
-                    }
+        host_list = {const.HOST_LIST: {const.HOST_1: platform.node()}}
         return host_list
 
     def get_instance_port(self, tenant_id, instance_id, instance_desc):
@@ -456,12 +451,7 @@ class L2Network(QuantumPluginBase):
         """
         LOG.debug("get_instance_port() called\n")
         vif_desc = {const.VIF_DESC:
-                    {
-                        const.DEVICENAME: "eth2",
-                        const.UCSPROFILE: "default"
-                    }
-                   }
-                    
+                    {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
         return vif_desc
 
     """
