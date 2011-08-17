@@ -1,0 +1,127 @@
+'''
+Created on Jun 08, 2011
+
+@author: ying
+'''
+
+import os
+import sys
+
+import gettext
+
+#gettext.install('quantum', unicode=1)
+possible_topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
+                                   os.pardir,
+                                   os.pardir))
+if os.path.exists(os.path.join(possible_topdir, 'quantum', '__init__.py')):
+    sys.path.insert(0, possible_topdir)
+
+gettext.install('quantum', unicode=1)
+
+from test_scripts.miniclient import MiniClient
+from quantum.common.wsgi import Serializer
+
+HOST = '127.0.0.1'
+PORT = 9696
+USE_SSL = False
+TENANT_ID = 'ucs_user'
+
+test_network_data = \
+    {'network': {'network-name': 'cisco_test_network',
+                 'valn-id': 28 }}
+    
+test_portprofile_data = \
+    {'portprofile': {'portprofile-name': 'cisco_test_portprofile',
+                 'vlan-id': 28,
+                 'vlan-name': 'test-vlan' }}
+
+def print_response(res):
+    content = res.read()
+    print "Status: %s" %res.status
+    print "Content: %s" %content
+    return content
+
+    
+def create_cisco_network(format = 'xml'):
+    client = MiniClient(HOST, PORT, USE_SSL)
+    print "CREATE NETWORK -- FORMAT:%s" %format 
+    print "----------------------------"
+    content_type = "application/" + format
+    body = Serializer().serialize(test_network_data, content_type)
+    res = client.do_request(TENANT_ID,'POST', "/networks." + format, body=body)
+    print "XML Response"
+    print_response(res)
+    print "COMPLETED"
+    print "----------------------------"
+
+def create_cisco_portprofile(format = 'xml'):
+    client = MiniClient(HOST, PORT, USE_SSL)
+    print "CREATE Profile -- FORMAT:%s" %format
+    print "----------------------------"
+    content_type = "application/" + format
+    body = Serializer().serialize(test_portprofile_data, content_type)
+    print "**********BODY is**********"
+    print body
+    print "***************************"
+    res = client.do_request(TENANT_ID,'POST', "/portprofiles." + format, body=body)
+    print "XML Response"
+    print_response(res)
+    print "COMPLETED"
+    print "----------------------------"
+
+def test_delete_network(format = 'xml'):
+    client = MiniClient(HOST, PORT, USE_SSL)
+    content_type = "application/" + format
+    print "TEST DELETE NETWORK -- FORMAT:%s" %format 
+    print "----------------------------"
+    print "--> Step 1 - List All Networks"
+    res = client.do_request(TENANT_ID,'GET', "/networks." + format)
+    content = print_response(res)
+    network_data = Serializer().deserialize(content, content_type)
+    print network_data
+    net_id = network_data['networks'][0]['id']
+    print "--> Step 2 - Delete network %s" %net_id    
+    res = client.do_request(TENANT_ID,'DELETE',
+                            "/networks/" + net_id + "." + format)
+    print_response(res)
+    print "--> Step 3 - List All Networks (Again)"
+    res = client.do_request(TENANT_ID,'GET', "/networks." + format)
+    print_response(res)
+    print "COMPLETED"
+    print "----------------------------"
+
+
+def test_delete_portprofile(format = 'xml'):
+    client = MiniClient(HOST, PORT, USE_SSL)
+    content_type = "application/" + format
+    print "TEST DELETE PROFILE -- FORMAT:%s" %format 
+    print "----------------------------"
+    print "--> Step 1 - List All Profiles"
+    res = client.do_request(TENANT_ID,'GET', "/portprofiles." + format)
+    content = print_response(res)
+    portprofile_data = Serializer().deserialize(content, content_type)
+    print portprofile_data
+    profile_id = portprofile_data['portprofiles'][0]['id']
+    print "--> Step 2 - Delete portprofile %s" %profile_id    
+    res = client.do_request(TENANT_ID,'DELETE',
+                            "/portprofiles/" + profile_id + "." + format)
+    print_response(res)
+    print "--> Step 3 - List All Profiles (Again)"
+    res = client.do_request(TENANT_ID,'GET', "/portprofiles." + format)
+    print_response(res)
+    print "COMPLETED"
+    print "----------------------------"
+
+def main():
+   
+    create_cisco_network('xml')
+  
+    create_cisco_portprofile('xml')    
+    #test_delete_network('json')
+    test_delete_portprofile('json') 
+    pass
+    
+
+# Standard boilerplate to call the main() function.
+if __name__ == '__main__':
+    main()
