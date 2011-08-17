@@ -101,7 +101,7 @@ def delete_vlanid(vlan_id):
         session.flush()
         return vlanid
     except exc.NoResultFound:
-            pass
+        pass
 
 
 def reserve_vlanid():
@@ -173,7 +173,7 @@ def remove_vlan_binding(netid):
         session.flush()
         return binding
     except exc.NoResultFound:
-            pass
+        pass
 
 
 def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
@@ -245,10 +245,10 @@ def remove_portprofile(tenantid, ppid):
         session.flush()
         return pp
     except exc.NoResultFound:
-            pass
+        pass
 
 
-def update_portprofile(tenantid, ppid, newppname=None, newvlanid=None, \
+def update_portprofile(tenantid, ppid, newppname=None, newvlanid=None, 
                        newqos=None):
     """Updates port profile"""
     session = db.get_session()
@@ -322,10 +322,10 @@ def remove_pp_binding(tenantid, portid, ppid):
         session.flush()
         return binding
     except exc.NoResultFound:
-            pass
+        pass
 
 
-def update_pp_binding(tenantid, ppid, newtenantid=None, newportid=None, \
+def update_pp_binding(tenantid, ppid, newtenantid=None, newportid=None, 
                                                     newdefault=None):
     """Updates port profile binding"""
     session = db.get_session()
