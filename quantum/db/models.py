@@ -19,9 +19,11 @@
 
 import uuid
 
+
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
+
 
 BASE = declarative_base()
 

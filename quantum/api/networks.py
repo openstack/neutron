@@ -39,8 +39,7 @@ class Controller(common.QuantumController):
                 "port": ["id", "state"],
                 "attachment": ["id"]},
             "plurals": {"networks": "network",
-                        "ports": "port"}
-        },
+                        "ports": "port"}},
     }
 
     def __init__(self, plugin):

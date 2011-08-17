@@ -20,8 +20,8 @@
 import logging
 import unittest
 
-import tests.unit.testlib_api as testlib
 
+import tests.unit.testlib_api as testlib
 from quantum import api as server
 from quantum.db import api as db
 from quantum.common.wsgi import Serializer
@@ -150,12 +150,8 @@ class APITest(unittest.TestCase):
                            show_network_res.body, content_type)
         self.assertEqual({'id': network_id,
                           'name': self.network_name,
-                          'ports': [
-                                    {
-                                     'id': port_id,
-                                     'state': 'ACTIVE'
-                                    }
-                                   ]},
+                          'ports': [{'id': port_id,
+                                     'state': 'ACTIVE'}]},
                          network_data['network'])
         LOG.debug("_test_show_network_detail - format:%s - END", format)
 
