@@ -20,8 +20,8 @@
 import logging
 import unittest
 
-import tests.unit.testlib_api as testlib
 
+import tests.unit.testlib_api as testlib
 from quantum import api as server
 from quantum.db import api as db
 from quantum.common.test_lib import test_config
@@ -149,6 +149,19 @@ class APITest(unittest.TestCase):
                           'name': new_name},
                          network_data['network'])
         LOG.debug("_test_rename_network - format:%s - END", format)
+
+    def _test_rename_network_duplicate(self, format):
+        LOG.debug("_test_rename_network_duplicate - format:%s - START", format)
+        content_type = "application/%s" % format
+        network_id1 = self._create_network(format, name="net1")
+        network_id2 = self._create_network(format, name="net2")
+        update_network_req = testlib.update_network_request(self.tenant_id,
+                                                            network_id2,
+                                                            "net1",
+                                                            format)
+        update_network_res = update_network_req.get_response(self.api)
+        self.assertEqual(update_network_res.status_int, 422)
+        LOG.debug("_test_rename_network_duplicate - format:%s - END", format)
 
     def _test_rename_network_badrequest(self, format):
         LOG.debug("_test_rename_network_badrequest - format:%s - START",
@@ -426,6 +439,23 @@ class APITest(unittest.TestCase):
         port_data = self._port_serializer.deserialize(
                         show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': new_port_state},
+                         port_data['port'])
+
+        # now set it back to the original value
+        update_port_req = testlib.update_port_request(self.tenant_id,
+                                                        network_id, port_id,
+                                                        port_state,
+                                                        format)
+        update_port_res = update_port_req.get_response(self.api)
+        self.assertEqual(update_port_res.status_int, 200)
+        show_port_req = testlib.show_port_request(self.tenant_id,
+                                                  network_id, port_id,
+                                                  format)
+        show_port_res = show_port_req.get_response(self.api)
+        self.assertEqual(show_port_res.status_int, 200)
+        port_data = self._port_serializer.deserialize(
+                        show_port_res.body, content_type)
+        self.assertEqual({'id': port_id, 'state': port_state},
                          port_data['port'])
         LOG.debug("_test_set_port_state - format:%s - END", format)
 
@@ -705,6 +735,12 @@ class APITest(unittest.TestCase):
 
     def test_rename_network_xml(self):
         self._test_rename_network('xml')
+
+    def test_rename_network_duplicate_json(self):
+        self._test_rename_network_duplicate('json')
+
+    def test_rename_network_duplicate_xml(self):
+        self._test_rename_network_duplicate('xml')
 
     def test_rename_network_badrequest_json(self):
         self._test_rename_network_badrequest('json')
