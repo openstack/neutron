@@ -31,11 +31,9 @@ class Fault(webob.exc.HTTPException):
             401: "unauthorized",
             420: "networkNotFound",
             421: "networkInUse",
-            422: "networkNameExists",
             430: "portNotFound",
             431: "requestedStateInvalid",
             432: "portInUse",
-            433: "portIsDown",
             440: "alreadyAttached",
             470: "serviceUnavailable",
             471: "pluginFault"}
