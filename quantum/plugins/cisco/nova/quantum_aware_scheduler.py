@@ -59,7 +59,7 @@ class QuantumScheduler(driver.Scheduler):
                   'instance-desc': \
                   {'user_id': user_id, 'project_id': project_id}}}
         client = Client(HOST, PORT, USE_SSL)
-        content_type = "application/" + "json"
+        content_type = "application/json"
         body = Serializer().serialize(instance_data_dict, content_type)
         request_url = "/novatenants/" + project_id + "/get_host.json"
         res = client.do_request(TENANT_ID, 'PUT', request_url, body=body)
