@@ -68,6 +68,7 @@ from quantum.common.bufferedhttp import http_connect_raw as http_connect
 PROTOCOL_NAME = "Token Authentication"
 LOG = logging.getLogger('quantum.common.authentication')
 
+
 class AuthProtocol(object):
     """Auth Middleware that handles authenticating client calls"""
 
@@ -169,7 +170,7 @@ class AuthProtocol(object):
                 if claims:
                     # TODO(Ziad): add additional details we may need,
                     #             like tenant and group info
-                    self._decorate_request('X_AUTHORIZATION', "Proxy %s" % 
+                    self._decorate_request('X_AUTHORIZATION', "Proxy %s" %
                         claims['user'])
                     self._decorate_request('X_TENANT', claims['tenant'])
                     self._decorate_request('X_USER', claims['user'])
@@ -230,13 +231,12 @@ class AuthProtocol(object):
         # Step 1: We need to auth with the keystone service, so get an
         # admin token
         #TODO(ziad): Need to properly implement this, where to store creds
-        # for now using token from ini        
-        #TODO(salvatore-orlando): Temporarily restoring auth token retrieval, 
+        # for now using token from ini
+        #TODO(salvatore-orlando): Temporarily restoring auth token retrieval,
         # with credentials in configuration file
-        if not self.admin_token: 
+        if not self.admin_token:
             auth = self.get_admin_auth_token(self.admin_user,
                                              self.admin_password)
-            LOG.debug("ADMIN TOKEN?%s",json.loads(auth))
             self.admin_token = json.loads(auth)["auth"]["token"]["id"]
 
         # Step 2: validate the user's token with the auth service

@@ -104,9 +104,7 @@ def detail_net(manager, *args):
 def api_detail_net(client, *args):
     tid, nid = args
     try:
-        res = client.list_network_details(nid)["network"]
-        print "BLOODY MARY"
-        print res
+        res = client.show_network_details(nid)["networks"]["network"]
     except Exception, e:
         LOG.error("Failed to get network details: %s" % e)
         return
@@ -121,7 +119,7 @@ def api_detail_net(client, *args):
     print "Remote Interfaces on Virtual Network:%s\n" % nid
     for port in ports["ports"]:
         pid = port["id"]
-        res = client.list_port_attachments(nid, pid)
+        res = client.show_port_attachment(nid, pid)
         LOG.debug(res)
         remote_iface = res["attachment"]
         print "\tRemote interface:%s" % remote_iface
@@ -216,7 +214,7 @@ def detail_port(manager, *args):
 def api_detail_port(client, *args):
     tid, nid, pid = args
     try:
-        port = client.list_port_details(nid, pid)["ports"]["port"]
+        port = client.show_port_details(nid, pid)["ports"]["port"]
     except Exception, e:
         LOG.error("Failed to get port details: %s" % e)
         return
@@ -242,7 +240,7 @@ def api_plug_iface(client, *args):
         res = client.attach_resource(nid, pid, data)
     except Exception, e:
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
-          pid, output))
+          pid, e))
         return
     LOG.debug(res)
     print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
@@ -388,6 +386,6 @@ if __name__ == "__main__":
         commands[cmd]["api_func"](client, *args)
     else:
         quantum = QuantumManager()
-        manager = quantum.get_manager()
+        manager = quantum.get_plugin()
         commands[cmd]["func"](manager, *args)
     sys.exit(0)
