@@ -89,6 +89,22 @@ class VlanIDNotAvailable(exceptions.QuantumException):
     """VLAN ID is reserved"""
     message = _("No available Vlan ID found")
 
+
+class QoSLevelNotFound(exceptions.QuantumException):
+    message = _("QoS level %(qos_id)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class QoSLevelInvalidDelete(exceptions.QuantumException):
+    message = _("QoS level %(qos_id)s could not be deleted " \
+                "for tenant %(tenant_id)s since association exists")
+
+
+class CredentialNotFound(exceptions.QuantumException):
+    message = _("Credential %(credential_id)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
 try:
     _("test")
 except NameError:
