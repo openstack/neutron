@@ -160,7 +160,7 @@ class Client(object):
                     self.logger.debug(body)
 
             conn.request(method, action, body, headers)
-            res = c.getresponse()
+            res = conn.getresponse()
             status_code = self.get_status_code(res)
             data = res.read()
 
