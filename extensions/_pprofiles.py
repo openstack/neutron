@@ -39,7 +39,7 @@ class ViewBuilder(object):
 
     def build(self, portprofile_data, is_detail=False):
         """Generic method used to generate a portprofile entity."""
-        print "portprofile_DATA:%s" % portprofile_data
+        
         if is_detail:
             portprofile = self._build_detail(portprofile_data)
         else:

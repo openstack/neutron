@@ -39,7 +39,7 @@ class ViewBuilder(object):
 
     def build(self, credential_data, is_detail=False):
         """Generic method used to generate a credential entity."""
-        print "credential-DATA:%s" % credential_data
+        
         if is_detail:
             credential = self._build_detail(credential_data)
         else:

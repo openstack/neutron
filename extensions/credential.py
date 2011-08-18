@@ -100,7 +100,6 @@ class CredentialController(common.QuantumController):
              
     def index(self, request, tenant_id):
         """ Returns a list of credential ids """
-        #TODO: this should be for a given tenant!!!
         return self._items(request, tenant_id, is_detail=False)
 
     def _items(self, request, tenant_id, is_detail):
