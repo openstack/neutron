@@ -17,7 +17,7 @@
 #    limitations under the License.
 
 
-"""Unittest runner for quantum OVS plugin
+"""Unittest runner for quantum Cisco plugin
 
 This file should be run from the top dir in the quantum directory
 
@@ -28,22 +28,22 @@ To run all unit tests::
     python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
 
 To run all functional tests::
-    python quantum/plugins/openvswitch/run_tests.py functional
+    python quantum/plugins/cisco/run_tests.py functional
 
 To run a single unit test::
-    python  quantum/plugins/openvswitch/run_tests.py \
+    python  quantum/plugins/cisco/run_tests.py \
         quantum.plugins.cisco.tests.unit.test_stores:TestSwiftBackend.test_get
 
 To run a single functional test::
-    python  quantum/plugins/openvswitch/run_tests.py \
+    python  quantum/plugins/cisco/run_tests.py \
     quantum.plugins.cisco.tests.functional.test_service \
     :TestController.test_create
 
 To run a single unit test module::
-    python quantum/plugins/openvswitch/run_tests.py unit.test_stores
+    python quantum/plugins/cisco/run_tests.py unit.test_stores
 
 To run a single functional test module::
-    python quantum/plugins/openvswitch/run_tests.py functional.test_stores
+    python quantum/plugins/cisco/run_tests.py functional.test_stores
 """
 
 import gettext
@@ -57,7 +57,6 @@ from nose import config
 sys.path.append(os.getcwd())
 
 from quantum.common.test_lib import run_tests, test_config
-#from quantum.plugins.openvswitch.tests.test_vlan_map import VlanMapTest
 
 if __name__ == '__main__':
     exit_status = False
