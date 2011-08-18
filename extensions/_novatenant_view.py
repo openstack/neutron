@@ -18,7 +18,10 @@
 # @author: Ying Liu, Cisco Systems, Inc.
 #
 """
+
+
 def get_view_builder(req):
+    """get view builder """
     base_url = req.application_url
     return ViewBuilder(base_url)
 
@@ -36,7 +39,7 @@ class ViewBuilder(object):
     
     def build_host(self, host_data):
         """Return host description."""
-        return dict(host_desc=host_data['host_desc'])
+        return dict(host_list=host_data['host_list'])
     
     def build_vif(self, vif_data):
         """Return VIF description."""

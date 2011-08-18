@@ -117,7 +117,8 @@ def create_cisco_portprofile(format='xml'):
     content = print_response(res)
     portprofile_data = Serializer().deserialize(content, content_type)
     print portprofile_data
-  
+    
+    """
     print "List a specific Profile -- FORMAT:%s" % format
     profile_id = portprofile_data['portprofiles'][0]['id']
     #profile_id='001'
@@ -126,7 +127,7 @@ def create_cisco_portprofile(format='xml'):
                             'GET', "/portprofiles/" 
                             + profile_id + "." + format)
     print_response(res)
-    
+    """
     print "CREATE Profile -- FORMAT:%s" % format
     print "----------------------------"
     content_type = "application/" + format
@@ -364,7 +365,7 @@ def test_assign_portprofile(format='xml'):
     
 def main():
     create_cisco_portprofile('json') 
-    test_attach_resource('json') 
+    #test_attach_resource('json') 
    
     test_delete_portprofile('json') 
     test_credential('json')
@@ -373,10 +374,10 @@ def main():
     test_get_host('json')
     test_get_instance_port('json')
     
-    #create_cisco_network('json')
-    #test_create_port('json')
-    #create_cisco_portprofile('json')
-    #test_assign_portprofile('json')
+    create_cisco_network('json')
+    test_create_port('json')
+    create_cisco_portprofile('json')
+    test_assign_portprofile('json')
     pass
     
 

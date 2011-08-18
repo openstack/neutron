@@ -25,32 +25,43 @@ from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
-from quantum.common import wsgi
 from quantum.common import extensions
 from quantum.manager import QuantumManager
 
 
 class Novatenant(object):
-
+    """extension class Novatenant"""
     def __init__(self):
         pass
 
-    def get_name(self):
+    @classmethod
+    def get_name(cls):
+        """ Returns Ext Resource Name """   
         return "Cisco Nova Tenant"
-
-    def get_alias(self):
+    
+    @classmethod
+    def get_alias(cls):
+        """ Returns Ext Resource Name """
         return "Cisco Nova Tenant"
-
-    def get_description(self):
+    
+    @classmethod
+    def get_description(cls):
+        """ Returns Ext Resource Name """
         return "novatenant resource is used by nova side to invoke quantum api"
-
-    def get_namespace(self):
-        return ""
-
-    def get_updated(self):
+    
+    @classmethod
+    def get_namespace(cls):
+        """ Returns Ext Resource Name """
+        return "http://docs.ciscocloud.com/api/ext/novatenant/v1.0"
+    
+    @classmethod
+    def get_updated(cls):
+        """ Returns Ext Resource Name """
         return "2011-08-09T13:25:27-06:00"
-
-    def get_resources(self):
+    
+    @classmethod
+    def get_resources(cls):
+        """ Returns Ext Resource Name """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'get_host': "PUT",
@@ -85,7 +96,8 @@ class NovatenantsController(common.QuantumController):
 
     def __init__(self, plugin):
         self._resource_name = 'novatenant'
-        super(NovatenantsController, self).__init__(plugin)
+        self._plugin = plugin
+        #super(NovatenantsController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of novatenant ids """
@@ -95,6 +107,7 @@ class NovatenantsController(common.QuantumController):
         """ Returns a list of novatenants. """
         return "novatenant is a dummy resource"
 
+    # pylint: disable-msg=E1101,W0613
     def show(self, request, tenant_id, id):
         """ Returns novatenant details for the given novatenant id """
         return "novatenant is a dummy resource"
@@ -120,8 +133,8 @@ class NovatenantsController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request,
                                            self._get_host_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         instance_id = req_params['instance_id']
         
         instance_desc = req_params['instance_desc']
@@ -131,12 +144,11 @@ class NovatenantsController(common.QuantumController):
             result = builder.build_host(host)
             return result
             #return exc.HTTPAccepted()
-        except exception.NovatenantNotFound as e:
-            return faults.Fault(faults.NovatenantNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
+        except exception.NovatenantNotFound as exp:
+            return faults.Fault(faults.NovatenantNotFound(exp))
+        except exception.PortNotFound as exp:
+            return faults.Fault(faults.PortNotFound(exp))
         
-     #added for Cisco extension
     def get_instance_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
@@ -145,8 +157,8 @@ class NovatenantsController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request,
                                            self._get_host_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         instance_id = req_params['instance_id']
        
         instance_desc = req_params['instance_desc']
@@ -157,8 +169,7 @@ class NovatenantsController(common.QuantumController):
             result = builder.build_vif(vif)
             return result
             
-            return exc.HTTPAccepted()
-        except exception.NovatenantNotFound as e:
-            return faults.Fault(faults.NovatenantNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
+        except exception.NovatenantNotFound as exp:
+            return faults.Fault(faults.NovatenantNotFound(exp))
+        except exception.PortNotFound as exp:
+            return faults.Fault(faults.PortNotFound(exp))

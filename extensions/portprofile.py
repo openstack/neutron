@@ -26,37 +26,42 @@ from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
-from quantum.common import wsgi
 from quantum.common import extensions
 from quantum.manager import QuantumManager
 
 
 class Portprofile(object):
-
+    """extension class Portprofile"""
     def __init__(self):
         pass
-
-    def get_name(self):
+    
+    @classmethod
+    def get_name(cls):
         """ Returns Ext Resource Name """
         return "Cisco Port Profile"
-
-    def get_alias(self):
+    
+    @classmethod
+    def get_alias(cls):
         """ Returns Ext Resource alias """
         return "Cisco Port Profile"
-
-    def get_description(self):
+    
+    @classmethod
+    def get_description(cls):
         """ Returns Ext Resource Description """
         return "Portprofile include QoS information"
-
-    def get_namespace(self):
+    
+    @classmethod
+    def get_namespace(cls):
         """ Returns Ext Resource Namespace """
-        return ""
-
-    def get_updated(self):
+        return "http://docs.ciscocloud.com/api/ext/portprofile/v1.0"
+    
+    @classmethod
+    def get_updated(cls):
         """ Returns Ext Resource Updateed time """
         return "2011-07-23T13:25:27-06:00"
-
-    def get_resources(self):
+    
+    @classmethod
+    def get_resources(cls):
         """ Returns all defined resources """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
@@ -67,12 +72,17 @@ class Portprofile(object):
                                              parent=parent_resource,
                                              member_actions=member_actions)]
     
-    
+     
 class PortprofilesController(common.QuantumController):
     """ portprofile API controller
         based on QuantumController """
+   
+    def __init__(self, plugin):
+        self._resource_name = 'portprofile'
+        self._plugin = plugin
+        #super(PortprofilesController, self).__init__(plugin)
         
-    _portprofile_ops_param_list = [{
+        self._portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
         'required': True}, {
         'param-name': 'qos_name',
@@ -80,28 +90,22 @@ class PortprofilesController(common.QuantumController):
         'param-name': 'assignment',
         'required': False}]
     
-    _assignprofile_ops_param_list = [{
+        self._assignprofile_ops_param_list = [{
         'param-name': 'network-id',
         'required': True}, {
         'param-name': 'port-id',
         'required': True}]
     
-    _serialization_metadata = {
+        self._serialization_metadata = {
         "application/xml": {
             "attributes": {
                 "portprofile": ["id", "name"],
             },
         },
     }
-    
-    def __init__(self, plugin):
-        self._resource_name = 'portprofile'
-        self._plugin = plugin
-        super(PortprofilesController, self).__init__(plugin)
-             
+      
     def index(self, request, tenant_id):
         """ Returns a list of portprofile ids """
-        #TODO: this should be for a given tenant!!!
         return self._items(request, tenant_id, is_detail=False)
 
     def _items(self, request, tenant_id, is_detail):
@@ -112,6 +116,7 @@ class PortprofilesController(common.QuantumController):
                   for portprofile in portprofiles]
         return dict(portprofiles=result)
     
+    # pylint: disable-msg=E1101
     def show(self, request, tenant_id, id):
         """ Returns portprofile details for the given portprofile id """
         try:
@@ -121,9 +126,9 @@ class PortprofilesController(common.QuantumController):
             #build response with details
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as e:
-            return faults.Fault(faults.PortprofileNotFound(e))
-            #return faults.Fault(e)
+        except exception.PortprofileNotFound as exp:
+            return faults.Fault(faults.PortprofileNotFound(exp))
+            #return faults.Fault(exp)
 
     def create(self, request, tenant_id):
         """ Creates a new portprofile for a given tenant """
@@ -132,8 +137,8 @@ class PortprofilesController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._portprofile_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         portprofile = self._plugin.\
                        create_portprofile(tenant_id,
                                           req_params['portprofile_name'],
@@ -148,8 +153,8 @@ class PortprofilesController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._portprofile_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         try:
             portprofile = self._plugin.\
             rename_portprofile(tenant_id,
@@ -158,18 +163,17 @@ class PortprofilesController(common.QuantumController):
             builder = pprofiles_view.get_view_builder(request)
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as e:
-            return faults.Fault(faults.PortprofileNotFound(e))
+        except exception.PortprofileNotFound as exp:
+            return faults.Fault(faults.PortprofileNotFound(exp))
 
     def delete(self, request, tenant_id, id):
         """ Destroys the portprofile with the given id """
         try:
             self._plugin.delete_portprofile(tenant_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as e:
-            return faults.Fault(faults.PortprofileNotFound(e))
+        except exception.PortprofileNotFound as exp:
+            return faults.Fault(faults.PortprofileNotFound(exp))
          
-    #added for cisco's extension
     def associate_portprofile(self, request, tenant_id, id):
         """ associate a portprofile to the port """
         content_type = request.best_match_content_type()
@@ -179,8 +183,8 @@ class PortprofilesController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request,
                                            self._assignprofile_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
         #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
@@ -189,12 +193,11 @@ class PortprofilesController(common.QuantumController):
                                                 net_id, port_id,
                                                 id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as e:
-            return faults.Fault(faults.PortprofileNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
+        except exception.PortprofileNotFound as exp:
+            return faults.Fault(faults.PortprofileNotFound(exp))
+        except exception.PortNotFound as exp:
+            return faults.Fault(faults.PortNotFound(exp))
         
-     #added for Cisco extension
     def disassociate_portprofile(self, request, tenant_id, id):
         """ Disassociate a portprofile from a port """
         content_type = request.best_match_content_type()
@@ -204,8 +207,8 @@ class PortprofilesController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request,
                                            self._assignprofile_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
         #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
@@ -214,7 +217,7 @@ class PortprofilesController(common.QuantumController):
             disassociate_portprofile(tenant_id,
                                     net_id, port_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as e:
-            return faults.Fault(faults.PortprofileNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
+        except exception.PortprofileNotFound as exp:
+            return faults.Fault(faults.PortprofileNotFound(exp))
+        except exception.PortNotFound as exp:
+            return faults.Fault(faults.PortNotFound(exp))

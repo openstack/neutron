@@ -26,7 +26,6 @@ from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
-from quantum.common import wsgi
 from quantum.common import extensions
 from quantum.manager import QuantumManager
 
@@ -34,26 +33,38 @@ LOG = logging.getLogger('quantum.api.qoss')
 
 
 class Qos(object):
-
+    """Qos extension file"""
     def __init__(self):
         pass
-
-    def get_name(self):
+    
+    @classmethod
+    def get_name(cls):
+        """ Returns Ext Resource Name """
         return "Cisco qos"
 
-    def get_alias(self):
+    @classmethod
+    def get_alias(cls):
+        """ Returns Ext Resource Alias """
         return "Cisco qos"
 
-    def get_description(self):
+    @classmethod
+    def get_description(cls):
+        """ Returns Ext Resource Description """
         return "qos include username and password"
 
-    def get_namespace(self):
-        return ""
-
-    def get_updated(self):
+    @classmethod
+    def get_namespace(cls):
+        """ Returns Ext Resource Namespace """
+        return "http://docs.ciscocloud.com/api/ext/qos/v1.0"
+    
+    @classmethod
+    def get_updated(cls):
+        """ Returns Ext Resource update """
         return "2011-07-25T13:25:27-06:00"
 
-    def get_resources(self):
+    @classmethod
+    def get_resources(cls):
+        """ Returns Ext Resources """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
        
@@ -81,11 +92,11 @@ class QosController(common.QuantumController):
 
     def __init__(self, plugin):
         self._resource_name = 'qos'
-        super(QosController, self).__init__(plugin)
+        self._plugin = plugin
+        #super(QosController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of qos ids """
-        #TODO: this should be for a given tenant!!!
         return self._items(request, tenant_id, is_detail=False)
 
     def _items(self, request, tenant_id, is_detail):
@@ -96,6 +107,7 @@ class QosController(common.QuantumController):
                   for qos in qoss]
         return dict(qoss=result)
 
+    # pylint: disable-msg=E1101
     def show(self, request, tenant_id, id):
         """ Returns qos details for the given qos id """
         try:
@@ -105,10 +117,8 @@ class QosController(common.QuantumController):
             #build response with details
             result = builder.build(qos, True)
             return dict(qoss=result)
-        except exception.QosNotFound as e:
-            return faults.Fault(faults.QosNotFound(e))
-                                
-            #return faults.Fault(e)
+        except exception.QosNotFound as exp:
+            return faults.Fault(faults.QosNotFound(exp))
 
     def create(self, request, tenant_id):
         """ Creates a new qos for a given tenant """
@@ -117,8 +127,8 @@ class QosController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._qos_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         qos = self._plugin.\
                        create_qos(tenant_id,
                                           req_params['qos_name'],
@@ -133,8 +143,8 @@ class QosController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._qos_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         try:
             qos = self._plugin.\
             rename_qos(tenant_id,
@@ -143,13 +153,13 @@ class QosController(common.QuantumController):
             builder = qos_view.get_view_builder(request)
             result = builder.build(qos, True)
             return dict(qoss=result)
-        except exception.QosNotFound as e:
-            return faults.Fault(faults.QosNotFound(e))
+        except exception.QosNotFound as exp:
+            return faults.Fault(faults.QosNotFound(exp))
 
     def delete(self, request, tenant_id, id):
         """ Destroys the qos with the given id """
         try:
             self._plugin.delete_qos(tenant_id, id)
             return exc.HTTPAccepted()
-        except exception.QosNotFound as e:
-            return faults.Fault(faults.QosNotFound(e))
+        except exception.QosNotFound as exp:
+            return faults.Fault(faults.QosNotFound(exp))

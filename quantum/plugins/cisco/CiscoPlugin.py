@@ -73,7 +73,7 @@ class CiscoPaloPlugin2(object):
                     'qos_name': 'gold',
                     'qos_desc': {'pps':340, 'TTL':10}}}
     
-    _host = {'host_desc': {
+    _host = {'host_list': {
                            "host_key1": "host_value1",
                            "host_key2": "host_value2"}}
     _vif = {'vif_desc': {

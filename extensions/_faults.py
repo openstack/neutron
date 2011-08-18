@@ -19,7 +19,6 @@
 #
 """
 import webob.dec
-import webob.exc
 
 from quantum.api import api_common as common
 from quantum.common import wsgi
@@ -51,7 +50,6 @@ class Fault(webob.exc.HTTPException):
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
         """Generate a WSGI response based on the exception passed to ctor."""
-        #print ("*********TEST2")
         # Replace the body with fault details.
         code = self.wrapped_exc.status_int
         fault_name = self._fault_names.get(code, "quantumServiceFault")
@@ -79,7 +77,6 @@ class PortprofileNotFound(webob.exc.HTTPClientError):
 
     code: 450, title: Portprofile not Found
     """
-    #print ("*********TEST1")
     code = 450
     title = 'Portprofile Not Found'
     explanation = ('Unable to find a Portprofile with' 

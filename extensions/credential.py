@@ -26,7 +26,6 @@ from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
-from quantum.common import wsgi
 from quantum.common import extensions
 from quantum.manager import QuantumManager
 
@@ -34,26 +33,38 @@ LOG = logging.getLogger('quantum.api.credentials')
 
 
 class Credential(object):
-
+    """extension class Credential"""
     def __init__(self):
         pass
-
-    def get_name(self):
+    
+    @classmethod
+    def get_name(cls):
+        """ Returns Ext Resource Name """
         return "Cisco Credential"
 
-    def get_alias(self):
+    @classmethod
+    def get_alias(cls):
+        """ Returns Ext Resource Alias """
         return "Cisco Credential"
 
-    def get_description(self):
+    @classmethod
+    def get_description(cls):
+        """ Returns Ext Resource Description """
         return "Credential include username and password"
 
-    def get_namespace(self):
-        return ""
+    @classmethod
+    def get_namespace(cls):
+        """ Returns Ext Resource Namespace """
+        return "http://docs.ciscocloud.com/api/ext/credential/v1.0"
 
-    def get_updated(self):
+    @classmethod
+    def get_updated(cls):
+        """ Returns Ext Resource Name """
         return "2011-07-25T13:25:27-06:00"
 
-    def get_resources(self):
+    @classmethod
+    def get_resources(cls):
+        """ Returns Ext Resources """
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
        
@@ -84,7 +95,8 @@ class CredentialController(common.QuantumController):
 
     def __init__(self, plugin):
         self._resource_name = 'credential'
-        super(CredentialController, self).__init__(plugin)
+        self._plugin = plugin
+        #super(CredentialController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of credential ids """
@@ -99,6 +111,7 @@ class CredentialController(common.QuantumController):
                   for credential in credentials]
         return dict(credentials=result)
 
+    # pylint: disable-msg=E1101,W0613
     def show(self, request, tenant_id, id):
         """ Returns credential details for the given credential id """
         try:
@@ -108,10 +121,8 @@ class CredentialController(common.QuantumController):
             #build response with details
             result = builder.build(credential, True)
             return dict(credentials=result)
-        except exception.CredentialNotFound as e:
-            return faults.Fault(faults.CredentialNotFound(e))
-                                
-            #return faults.Fault(e)
+        except exception.CredentialNotFound as exp:
+            return faults.Fault(faults.CredentialNotFound(exp))
 
     def create(self, request, tenant_id):
         """ Creates a new credential for a given tenant """
@@ -120,8 +131,8 @@ class CredentialController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._credential_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         credential = self._plugin.\
                        create_credential(tenant_id,
                                           req_params['credential_name'],
@@ -137,8 +148,8 @@ class CredentialController(common.QuantumController):
             req_params = \
                 self._parse_request_params(request, 
                                            self._credential_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
         try:
             credential = self._plugin.\
             rename_credential(tenant_id,
@@ -147,14 +158,14 @@ class CredentialController(common.QuantumController):
             builder = credential_view.get_view_builder(request)
             result = builder.build(credential, True)
             return dict(credentials=result)
-        except exception.CredentialNotFound as e:
-            return faults.Fault(faults.CredentialNotFound(e))
+        except exception.CredentialNotFound as exp:
+            return faults.Fault(faults.CredentialNotFound(exp))
 
     def delete(self, request, tenant_id, id):
         """ Destroys the credential with the given id """
         try:
             self._plugin.delete_credential(tenant_id, id)
             return exc.HTTPAccepted()
-        except exception.CredentialNotFound as e:
-            return faults.Fault(faults.CredentialNotFound(e))
+        except exception.CredentialNotFound as exp:
+            return faults.Fault(faults.CredentialNotFound(exp))
         

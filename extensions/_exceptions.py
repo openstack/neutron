@@ -21,6 +21,7 @@
 import logging
 
 
+# pylint: disable-msg=E0602
 class ExtensionException(Exception):
     """Quantum Cisco api Exception
     
@@ -41,10 +42,12 @@ class ExtensionException(Exception):
             self._error_string = self.message
 
     def __str__(self):
+        """Error Msg"""
         return self._error_string
 
 
 class ProcessExecutionError(IOError):
+    """Process Exe Error"""
     def __init__(self, stdout=None, stderr=None, exit_code=None, cmd=None,
                  description=None):
         if description is None:
@@ -57,11 +60,13 @@ class ProcessExecutionError(IOError):
 
 
 class Error(Exception):
+    """Error Class"""
     def __init__(self, message=None):
         super(Error, self).__init__(message)
 
 
 class ApiError(Error):
+    """Api Error"""
     def __init__(self, message='Unknown', code='Unknown'):
         self.message = message
         self.code = code
@@ -69,31 +74,38 @@ class ApiError(Error):
 
 
 class NotFound(ExtensionException):
+    """Error Msg"""
     pass
 
 
 class ClassNotFound(NotFound):
+    """Extension Error Msg"""
     message = _("Class %(class_name)s could not be found")
 
 
 class PortprofileNotFound(NotFound):
+    """Extension Error Msg"""
     message = _("Portprofile %(_id)s could not be found")
     
     
 class NovatenantNotFound(NotFound):
+    """Extension Error Msg"""
     message = _("Novatenant %(_id)s could not be found")
 
 
 class PortNotFound(NotFound):
+    """Extension Error"""
     message = _("Port %(port_id)s could not be found " \
                 "on Network %(net_id)s")
     
     
 class CredentialNotFound(NotFound):
+    """Extension Error"""
     message = _("Credential %(_id)s could not be found")
     
     
 class QosNotFound(NotFound):
+    """Extension Error"""
     message = _("QoS %(_id)s could not be found")
     
 
@@ -119,18 +131,22 @@ class AlreadyAttached(ExtensionException):
 
 
 class Duplicate(Error):
+    """Duplication Error"""
     pass
 
 
 class NotAuthorized(Error):
+    "Not Auth Error"
     pass
 
 
 class NotEmpty(Error):
+    """Not Empty Error"""
     pass
 
 
 class Invalid(Error):
+    """Invalid Error"""
     pass
 
 
@@ -144,19 +160,22 @@ class BadInputError(Exception):
 
 
 class MissingArgumentError(Error):
+    """Miss arg error"""
     pass
 
 
-def wrap_exception(f):
+def wrap_exception(afunc):
+    """Wrap Exception"""
     def _wrap(*args, **kw):
+        """Internal Wrap Exception func"""
         try:
-            return f(*args, **kw)
-        except Exception, e:
-            if not isinstance(e, Error):
+            return afunc(*args, **kw)
+        except Exception, exp:
+            if not isinstance(exp, Error):
                 #exc_type, exc_value, exc_traceback = sys.exc_info()
                 logging.exception('Uncaught exception')
                 #logging.error(traceback.extract_stack(exc_traceback))
-                raise Error(str(e))
+                raise Error(str(exp))
             raise
-    _wrap.func_name = f.func_name
+    _wrap.func_name = afunc.func_name
     return _wrap
