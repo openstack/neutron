@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Ying Liu, Cisco Systems, Inc.
 #
+"""
 import webob.dec
 import webob.exc
 

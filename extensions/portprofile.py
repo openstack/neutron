@@ -1,7 +1,7 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 OpenStack LLC.
-# All Rights Reserved.
+#
+# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,6 +14,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Ying Liu, Cisco Systems, Inc.
+#
+"""
 
 from webob import exc
 
@@ -33,21 +37,27 @@ class Portprofile(object):
         pass
 
     def get_name(self):
+        """ Returns Ext Resource Name """
         return "Cisco Port Profile"
 
     def get_alias(self):
+        """ Returns Ext Resource alias """
         return "Cisco Port Profile"
 
     def get_description(self):
+        """ Returns Ext Resource Description """
         return "Portprofile include QoS information"
 
     def get_namespace(self):
+        """ Returns Ext Resource Namespace """
         return ""
 
     def get_updated(self):
+        """ Returns Ext Resource Updateed time """
         return "2011-07-23T13:25:27-06:00"
 
     def get_resources(self):
+        """ Returns all defined resources """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
@@ -61,7 +71,7 @@ class Portprofile(object):
 class PortprofilesController(common.QuantumController):
     """ portprofile API controller
         based on QuantumController """
-
+        
     _portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
         'required': True}, {
@@ -83,9 +93,10 @@ class PortprofilesController(common.QuantumController):
             },
         },
     }
-
+    
     def __init__(self, plugin):
         self._resource_name = 'portprofile'
+        self._plugin = plugin
         super(PortprofilesController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
@@ -160,6 +171,7 @@ class PortprofilesController(common.QuantumController):
          
     #added for cisco's extension
     def associate_portprofile(self, request, tenant_id, id):
+        """ associate a portprofile to the port """
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
         
@@ -184,6 +196,7 @@ class PortprofilesController(common.QuantumController):
         
      #added for Cisco extension
     def disassociate_portprofile(self, request, tenant_id, id):
+        """ Disassociate a portprofile from a port """
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
         
