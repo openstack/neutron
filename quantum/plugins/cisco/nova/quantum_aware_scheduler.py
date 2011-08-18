@@ -57,9 +57,7 @@ class QuantumScheduler(driver.Scheduler):
                 {'novatenant': \
                  {'instance-id': instance_id,
                   'instance-desc': \
-                  {'user_id': user_id,
-                   'project_id': project_id
-                  }}}
+                  {'user_id': user_id, 'project_id': project_id}}}
         client = Client(HOST, PORT, USE_SSL)
         content_type = "application/" + "json"
         body = Serializer().serialize(instance_data_dict, content_type)
