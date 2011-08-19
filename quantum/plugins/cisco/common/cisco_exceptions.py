@@ -105,6 +105,11 @@ class CredentialNotFound(exceptions.QuantumException):
                 "for tenant %(tenant_id)s")
 
 
+class NexusPortBindingNotFound(exceptions.QuantumException):
+    """NexusPort Binding is not present"""
+    message = _("Nexus Port Binding %(port_id) is not present")
+
+
 try:
     _("test")
 except NameError:

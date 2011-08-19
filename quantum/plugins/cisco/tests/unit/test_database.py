@@ -26,9 +26,76 @@ from quantum.plugins.cisco.common import cisco_constants as const
 
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
+import quantum.plugins.cisco.db.nexus_db as nexus_db
 
 
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+
+
+class NexusDB(object):
+    """Class consisting of methods to call nexus db methods"""
+    def get_all_nexusportbindings(self):
+        """get all nexus port bindings"""
+        bindings = []
+        try:
+            for bind in nexus_db.get_all_nexusport_bindings():
+                LOG.debug("Getting nexus port binding : %s" % bind.port_id)
+                bind_dict = {}
+                bind_dict["port-id"] = str(bind.port_id)
+                bind_dict["vlan-id"] = str(bind.vlan_id)
+                bindings.append(bind_dict)
+        except Exception, exc:
+            LOG.error("Failed to get all bindings: %s" % str(exc))
+        return bindings
+
+    def get_nexusportbinding(self, port_id):
+        """get nexus port binding"""
+        binding = []
+        try:
+            for bind in nexus_db.get_nexusport_binding(port_id):
+                LOG.debug("Getting nexus port binding : %s" % bind.port_id)
+                bind_dict = {}
+                bind_dict["port-id"] = str(bind.port_id)
+                bind_dict["vlan-id"] = str(bind.vlan_id)
+                binding.append(bind_dict)
+        except Exception, exc:
+            LOG.error("Failed to get all bindings: %s" % str(exc))
+        return binding
+
+    def create_nexusportbinding(self, port_id, vlan_id):
+        """create nexus port binding"""
+        bind_dict = {}
+        try:
+            res = nexus_db.add_nexusport_binding(port_id, vlan_id)
+            LOG.debug("Created nexus port binding: %s" % res.port_id)
+            bind_dict["port-id"] = str(bind.port_id)
+            bind_dict["vlan-id"] = str(bind.vlan_id)
+            return bind_dict
+        except Exception, exc:
+            LOG.error("Failed to create ucsm binding: %s" % str(exc))
+
+    def delete_nexusportbinding(self, port_id):
+        """delete nexus port binding"""
+        try:
+            res = nexus_db.remove_nexusport_binding(port_id)
+            LOG.debug("Deleted nexus port binding : %s" % res.port_id)
+            bind_dict = {}
+            bind_dict["port-id"] = str(res.port_id)
+            return bind_dict
+        except Exception, exc:
+            raise Exception("Failed to delete dynamic vnic: %s" % str(exc))
+
+    def update_nexusportbinding(self, port_id, new_vlan_id):
+        """update nexus port binding"""
+        try:
+            res = nexus_db.update_nexusport_binding(port_id, new_vlan_id)
+            LOG.debug("Updating nexus port binding : %s" % res.port_id)
+            bind_dict = {}
+            bind_dict["port-id"] = str(bind.port_id)
+            bind_dict["vlan-id"] = str(bind.vlan_id)
+            return bind_dict
+        except Exception, exc:
+            raise Exception("Failed to update dynamic vnic: %s" % str(exc))
 
 
 class L2networkDB(object):
@@ -420,6 +487,70 @@ class QuantumDB(object):
             return port_dict
         except Exception, exc:
             raise Exception("Failed to unplug interface: %s" % str(exc))
+
+
+class NexusDBTest(unittest.TestCase):
+    """Class conisting of nexus DB unit tests"""
+    def setUp(self):
+        """Setup for ucs db tests"""
+        l2network_db.initialize()
+        self.dbtest = NexusDB()
+        LOG.debug("Setup")
+
+    def tearDown(self):
+        """Tear Down"""
+        db.clear_db()
+
+    def testa_create_nexusportbinding(self):
+        """create nexus port binding"""
+        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
+        self.assertTrue(binding1["port-id"] == "port1")
+        self.tearDown_nexusportbinding()
+
+    def testb_getall_nexusportbindings(self):
+        """get all nexus port binding"""
+        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
+        binding2 = self.dbtest.create_nexusportbinding("port2", 10)
+        bindings = self.dbtest.get_all_nexusportbindings()
+        count = 0
+        for bind in bindings:
+            if "port" in bind["port-id"]:
+                count += 1
+        self.assertTrue(count == 2)
+        self.tearDown_nexusportbinding()
+
+    def testc_delete_nexusportbinding(self):
+        """delete nexus port binding"""
+        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
+        self.dbtest.delete_nexusportbinding(binding1["port-id"])
+        bindings = self.dbtest.get_all_nexusportbindings()
+        count = 0
+        for bind in bindings:
+            if "port " in bind["port-id"]:
+                count += 1
+        self.assertTrue(count == 0)
+        self.tearDown_nexusportbinding()
+
+    def testd_update_nexusportbinding(self):
+        """update nexus port binding"""
+        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
+        binding1 = self.dbtest.update_nexusportbinding(binding1["port-id"], \
+                                                             20)
+        bindings = self.dbtest.get_all_nexusportbindings()
+        count = 0
+        for bind in bindings:
+            if "20" in str(bind["vlan-id"]):
+                count += 1
+        self.assertTrue(count == 1)
+        self.tearDown_nexusportbinding()
+
+    def tearDown_nexusportbinding(self):
+        """tear down ucsm binding table"""
+        LOG.debug("Tearing Down Nexus port Bindings")
+        binds = self.dbtest.get_all_nexusportbindings()
+        for bind in binds:
+            port_id = bind["port-id"]
+            self.dbtest.delete_nexusportbinding(port_id)
 
 
 class L2networkDBTest(unittest.TestCase):
