@@ -22,7 +22,8 @@ import logging
 
 from webob import exc
 from extensions import _credential_view as credential_view
-from extensions import _exceptions as exception
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+#from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common

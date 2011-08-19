@@ -22,7 +22,9 @@
 from webob import exc
 
 from extensions import _pprofiles as pprofiles_view
-from extensions import _exceptions as exception
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.common import exceptions as qexception
+#from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
@@ -126,7 +128,7 @@ class PortprofilesController(common.QuantumController):
             #build response with details
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
             #return faults.Fault(exp)
 
@@ -163,7 +165,7 @@ class PortprofilesController(common.QuantumController):
             builder = pprofiles_view.get_view_builder(request)
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
 
     def delete(self, request, tenant_id, id):
@@ -171,7 +173,7 @@ class PortprofilesController(common.QuantumController):
         try:
             self._plugin.delete_portprofile(tenant_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
          
     def associate_portprofile(self, request, tenant_id, id):
@@ -193,9 +195,9 @@ class PortprofilesController(common.QuantumController):
                                                 net_id, port_id,
                                                 id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         
     def disassociate_portprofile(self, request, tenant_id, id):
@@ -217,7 +219,7 @@ class PortprofilesController(common.QuantumController):
             disassociate_portprofile(tenant_id,
                                     net_id, port_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
