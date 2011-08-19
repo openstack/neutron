@@ -19,6 +19,7 @@ import logging
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin
+from quantum.plugins.cisco.db import l2network_db as cdb
 
 LOG = logging.getLogger('quantum.tests.test_nexus')
 
@@ -34,6 +35,7 @@ class TestNexusPlugin(unittest.TestCase):
         self.vlan_id = 267
         self.port_id = "9"
         self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
+        cdb.initialize()
 
     def test_create_network(self, net_tenant_id=None, network_name=None,
                             network_id=None, net_vlan_name=None,
@@ -66,7 +68,6 @@ class TestNexusPlugin(unittest.TestCase):
 
         new_net_dict = self._cisco_nexus_plugin.create_network(
                 tenant_id, net_name, net_id, vlan_name, vlan_id)
-
         self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
         self.assertEqual(new_net_dict[const.NET_NAME], self.net_name)
         self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
