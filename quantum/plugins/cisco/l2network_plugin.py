@@ -379,7 +379,7 @@ class L2Network(QuantumPluginBase):
         try:
             qos_level = self._get_qos_level(tenant_id, qos_id)
         except Exception, excp:
-            raise cexc.QoSLevelNotFound(tenant_id=tenant_id,
+            raise cexc.QosNotFound(tenant_id=tenant_id,
                                         qos_id=qos_id)
         return qos_level
 
@@ -400,7 +400,7 @@ class L2Network(QuantumPluginBase):
         try:
             qos_level = self._get_qos_level(tenant_id, qos_id)
         except Exception, excp:
-            raise cexc.QoSLevelNotFound(tenant_id=tenant_id,
+            raise cexc.QosNotFound(tenant_id=tenant_id,
                                         qos_id=qos_id)
         associations = qos_level[const.QOS_LEVEL_ASSOCIATIONS]
         if len(associations) > 0:
@@ -416,7 +416,7 @@ class L2Network(QuantumPluginBase):
         try:
             qos_level = self._get_qos_level(tenant_id, qos_id)
         except Exception, excp:
-            raise cexc.QoSLevelNotFound(tenant_id=tenant_id,
+            raise cexc.QosNotFound(tenant_id=tenant_id,
                                         qos_id=qos_id)
         qos_level[const.QOS_LEVEL_NAME] = new_name
         return qos_level
@@ -565,7 +565,7 @@ class L2Network(QuantumPluginBase):
         """Return a QoS level based on the ID"""
         qos_level = self._qos_levels.get(qos_id)
         if not qos_level:
-            raise cexc.QoSLevelNotFound(tenant_id=tenant_id,
+            raise cexc.QosNotFound(tenant_id=tenant_id,
                                         qos_id=qos_id)
         return qos_level
 
