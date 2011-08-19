@@ -21,7 +21,8 @@
 from webob import exc
 
 from extensions import _novatenant_view as novatenant_view
-from extensions import _exceptions as exception
+from quantum.common import exceptions as qexception
+#from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
@@ -144,9 +145,7 @@ class NovatenantsController(common.QuantumController):
             result = builder.build_host(host)
             return result
             #return exc.HTTPAccepted()
-        except exception.NovatenantNotFound as exp:
-            return faults.Fault(faults.NovatenantNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         
     def get_instance_port(self, request, tenant_id, id):
@@ -169,7 +168,5 @@ class NovatenantsController(common.QuantumController):
             result = builder.build_vif(vif)
             return result
             
-        except exception.NovatenantNotFound as exp:
-            return faults.Fault(faults.NovatenantNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
