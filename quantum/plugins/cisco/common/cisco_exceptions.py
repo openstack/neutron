@@ -90,7 +90,7 @@ class VlanIDNotAvailable(exceptions.QuantumException):
     message = _("No available Vlan ID found")
 
 
-class QoSLevelNotFound(exceptions.QuantumException):
+class QosNotFound(exceptions.QuantumException):
     message = _("QoS level %(qos_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 
