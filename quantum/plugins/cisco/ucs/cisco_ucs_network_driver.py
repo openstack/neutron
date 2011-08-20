@@ -32,8 +32,7 @@ from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.ucs import cisco_getvif as gvif
 
 
-LOG.basicConfig(level=LOG.DEBUG)
-#LOG.basicConfig(level=LOG.WARN)
+LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 COOKIE_VALUE = "cookie_placeholder"
@@ -152,33 +151,30 @@ class CiscoUCSMDriver():
         conn.request(METHOD, URL, login_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug(response_data)
-        #print("***Sumit: response %s") % response_data
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug(response_data)
         # TODO (Sumit): If login is not successful, throw exception
         xml_tree = et.XML(response_data)
         cookie = xml_tree.attrib["outCookie"]
 
         data = data.replace(COOKIE_VALUE, cookie)
-        LOG.debug("POST: %s" % data)
+        #LOG.debug("POST: %s" % data)
         conn.request(METHOD, URL, data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug("UCSM Response: %s" % response_data)
-        #print("***Sumit: response %s") % response_data
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug("UCSM Response: %s" % response_data)
         post_data_response = response_data
 
         logout_data = "<aaaLogout inCookie=\"" + cookie + "\" />"
         conn.request(METHOD, URL, logout_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug(response_data)
-        #print("***Sumit: response %s") % response_data
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug(response_data)
         return post_data_response
 
     def _create_vlan_post_data(self, vlan_name, vlan_id):
