@@ -57,15 +57,14 @@ class Libvirt802dot1QbhDriver(VIFDriver):
                  {'instance-id': instance_id,
                   'instance-desc': \
                   {'user_id': user_id, 'project_id': project_id}}}
-        client = Client(HOST, PORT, USE_SSL)
-        content_type = "application/json"
-        body = Serializer().serialize(instance_data_dict, content_type)
-        request_url = "/novatenants/" + project_id + "/get_instance_port.json"
-        res = client.do_request(TENANT_ID, 'PUT', request_url, body=body)
-        content = res.read()
-        data = Serializer().deserialize(content, content_type)
+
+        client = Client(HOST, PORT, USE_SSL, format='json')
+        request_url = "/novatenants/" + project_id + "/get_instance_port"
+        data = client.do_request(TENANT_ID, 'PUT', request_url,
+                                 body=instance_data_dict)
         device = data['vif_desc']['device']
         portprofile = data['vif_desc']['portprofile']
+
         LOG.debug(_("Quantum returned device: %s\n") % device)
         LOG.debug(_("Quantum returned portprofile: %s\n") % portprofile)
         mac_id = mapping['mac'].replace(':', '')
