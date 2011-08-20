@@ -612,7 +612,7 @@ class CoreAPITestFunc(unittest.TestCase):
             qos = self.qos
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, profile_name, qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
         self.assertEqual(port_profile[const.PPNAME], profile_name)
         self.assertEqual(port_profile[const.PPQOS], qos)
@@ -639,7 +639,7 @@ class CoreAPITestFunc(unittest.TestCase):
             tenant_id = self.tenant_id
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         self._l2network_plugin.delete_portprofile(tenant_id, port_profile_id)
 #        port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
         self.assertRaises(Exception, cdb.get_portprofile, port_profile_id)
@@ -669,7 +669,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_delete_portprofileAssociated - START")
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         new_net_dict = self._l2network_plugin.create_network(
                         tenant_id, 'test_network')
         port_dict = self._l2network_plugin.create_port(
@@ -699,8 +699,8 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.profile_name, self.qos)
         port_profile_dict2 = self._l2network_plugin.create_portprofile(
                                 tenant_id, profile_name2, qos2)
-        port_profile_id1 = port_profile_dict1['profile-id']
-        port_profile_id2 = port_profile_dict2['profile-id']
+        port_profile_id1 = port_profile_dict1['profile_id']
+        port_profile_id2 = port_profile_dict2['profile_id']
         list_all_portprofiles = self._l2network_plugin.get_all_portprofiles(
                                                                 tenant_id)
         port_profile_list = [port_profile_dict1, port_profile_dict2]
@@ -739,7 +739,7 @@ class CoreAPITestFunc(unittest.TestCase):
             tenant_id = self.tenant_id
         port_profile_dict = self._l2network_plugin.create_portprofile(
                         tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         result_port_profile = self._l2network_plugin.get_portprofile_details(
                                         tenant_id, port_profile_id)
         port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
@@ -773,7 +773,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_rename_portprofile - START")
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         result_port_profile_dict = self._l2network_plugin.rename_portprofile(
                                 tenant_id, port_profile_id, new_profile_name)
         port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
@@ -809,7 +809,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 self.port_state)
         port_profile_dict = self._l2network_plugin.create_portprofile(
                         tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         self._l2network_plugin.associate_portprofile(
                         tenant_id, new_net_dict[const.NET_ID],
                         port_dict[const.PORT_ID], port_profile_id)
@@ -854,7 +854,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 self.port_state)
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, self.profile_name, self.qos)
-        port_profile_id = port_profile_dict['profile-id']
+        port_profile_id = port_profile_dict['profile_id']
         self._l2network_plugin.associate_portprofile(
                           tenant_id, new_net_dict[const.NET_ID],
                           port_dict[const.PORT_ID], port_profile_id)
