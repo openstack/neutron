@@ -126,8 +126,8 @@ class L2Network(QuantumPluginBase):
         Gets the details of a particular network
         """
         LOG.debug("get_network_details() called\n")
-        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         network = db.network_get(net_id)
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         ports_list = network[const.NETWORKPORTS]
         ports_on_net = []
         for port in ports_list:
@@ -149,6 +149,7 @@ class L2Network(QuantumPluginBase):
         Virtual Network.
         """
         LOG.debug("rename_network() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      new_name])
         network = db.network_rename(tenant_id, net_id, new_name)
@@ -163,8 +164,8 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("get_all_ports() called\n")
-        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         network = db.network_get(net_id)
+        self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         ports_list = network[const.NETWORKPORTS]
         ports_on_net = []
         for port in ports_list:
@@ -200,6 +201,7 @@ class L2Network(QuantumPluginBase):
         then the port can be deleted.
         """
         LOG.debug("delete_port() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         db.port_destroy(net_id, port_id)
@@ -211,6 +213,7 @@ class L2Network(QuantumPluginBase):
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id, port_state])
         self._validate_port_state(port_state)
@@ -225,6 +228,7 @@ class L2Network(QuantumPluginBase):
         that is attached to this particular port.
         """
         LOG.debug("get_port_details() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         port = db.port_get(net_id, port_id)
@@ -241,6 +245,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("plug_interface() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id,
                                                      remote_interface_id])
@@ -252,6 +257,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("unplug_interface() called\n")
+        network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
         db.port_unset_attachment(net_id, port_id)
