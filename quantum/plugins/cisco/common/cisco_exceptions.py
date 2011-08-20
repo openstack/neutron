@@ -90,7 +90,7 @@ class VlanIDNotAvailable(exceptions.QuantumException):
     message = _("No available Vlan ID found")
 
 
-class QoSLevelNotFound(exceptions.QuantumException):
+class QosNotFound(exceptions.QuantumException):
     message = _("QoS level %(qos_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 
@@ -103,6 +103,11 @@ class QoSLevelInvalidDelete(exceptions.QuantumException):
 class CredentialNotFound(exceptions.QuantumException):
     message = _("Credential %(credential_id)s could not be found " \
                 "for tenant %(tenant_id)s")
+
+
+class NexusPortBindingNotFound(exceptions.QuantumException):
+    """NexusPort Binding is not present"""
+    message = _("Nexus Port Binding %(port_id) is not present")
 
 
 try:

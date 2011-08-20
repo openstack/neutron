@@ -118,9 +118,10 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 # This will be the address at which Quantum sends and receives configuration
 # information via SSHv2.
 nexus_ip_address=10.0.0.1
-# Port number on the Nexus switch to which the UCSM 6120 is connected
-# Use shortened interface syntax, e.g. "3/23" not "Ethernet3/23".
-nexus_port=3/23
+# Port numbers on the Nexus switch to each one of the UCSM 6120s is connected
+# Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10".
+nexus_first_port=1/10
+nexus_second_port=1/11
 #Port number where the SSH will be running at Nexus Switch, e.g.: 22 (Default) 
 nexus_ssh_port=22
 
@@ -205,7 +206,7 @@ result the quantum/plugins/cisco/run_tests.py script.
    E.g.:
 
    python quantum/plugins/cisco/run_tests.py 
-          quantum.plugins.cisco.tests.unit.test_ucs_plugin.py
+          quantum.plugins.cisco.tests.unit.test_ucs_plugin
 
 3. All unit tests (needs environment setup as indicated in the pre-requisites):
    
@@ -216,7 +217,10 @@ result the quantum/plugins/cisco/run_tests.py script.
 
    python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
 
-
+4. Testing the Extension API
+   The script is placed alongwith the other cisco unit tests. The location may
+   change later.
+   Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
 
 Additional installation required on Nova Compute
 ------------------------------------------------

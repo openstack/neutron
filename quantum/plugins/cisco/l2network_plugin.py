@@ -48,8 +48,6 @@ class L2Network(QuantumPluginBase):
         cdb.initialize()
         self._model = utils.import_object(conf.MODEL_CLASS)
         self._vlan_mgr = utils.import_object(conf.MANAGER_CLASS)
-        # TODO (Sumit): The following should move to the segmentation module
-        #cdb.create_vlanids()
         self._qoslevels_counter = 0
         self._credentials_counter = 0
         LOG.debug("L2Network plugin initialization done successfully\n")
@@ -282,7 +280,12 @@ class L2Network(QuantumPluginBase):
     def get_portprofile_details(self, tenant_id, profile_id):
         """Get port profile details"""
         LOG.debug("get_portprofile_details() called\n")
-        portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        try:
+            portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        except Exception, excp:
+            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
+                                           portprofile_id=profile_id)
+
         new_pp = self._make_portprofile_dict(tenant_id,
                                              portprofile[const.UUID],
                                              portprofile[const.PPNAME],
@@ -298,7 +301,6 @@ class L2Network(QuantumPluginBase):
                                              portprofile[const.UUID],
                                              portprofile[const.PPNAME],
                                              portprofile[const.PPQOS])
-        print("***Sumit: %s\n", new_pp)
         return new_pp
 
     def delete_portprofile(self, tenant_id, profile_id):
@@ -306,7 +308,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("delete_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
 
@@ -322,7 +324,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("rename_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
         portprofile = cdb.update_portprofile(tenant_id, profile_id, new_name)
@@ -338,7 +340,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("associate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=portprofile_id)
 
@@ -350,7 +352,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("disassociate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                       portprofile_id=portprofile_id)
 
@@ -379,7 +381,12 @@ class L2Network(QuantumPluginBase):
     def get_qos_details(self, tenant_id, qos_id):
         """Get QoS Details"""
         LOG.debug("get_qos_details() called\n")
-        return self._get_qos_level(tenant_id, qos_id)
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
+        return qos_level
 
     def create_qos(self, tenant_id, qos_name, qos_desc):
         """Create a QoS level"""
@@ -395,7 +402,11 @@ class L2Network(QuantumPluginBase):
     def delete_qos(self, tenant_id, qos_id):
         """Delete a QoS level"""
         LOG.debug("delete_qos() called\n")
-        qos_level = self._get_qos_level(tenant_id, qos_id)
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
         associations = qos_level[const.QOS_LEVEL_ASSOCIATIONS]
         if len(associations) > 0:
             raise cexc.QoSLevelInvalidDelete(tenant_id=tenant_id,
@@ -407,6 +418,11 @@ class L2Network(QuantumPluginBase):
         """Rename QoS level"""
         LOG.debug("rename_qos() called\n")
         qos_level = self._get_qos_level(tenant_id, qos_id)
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
         qos_level[const.QOS_LEVEL_NAME] = new_name
         return qos_level
 
@@ -418,7 +434,12 @@ class L2Network(QuantumPluginBase):
     def get_credential_details(self, tenant_id, credential_id):
         """Get a particular credential"""
         LOG.debug("get_credential_details() called\n")
-        return self._get_credential(tenant_id, credential_id)
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
+        return credential
 
     def create_credential(self, tenant_id, credential_name, user_name,
                           password):
@@ -437,14 +458,25 @@ class L2Network(QuantumPluginBase):
     def delete_credential(self, tenant_id, credential_id):
         """Delete a credential"""
         LOG.debug("delete_credential() called\n")
-        credential = self._get_credential(tenant_id, credential_id)
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
         self._credentials.pop(credential_id)
         cred.Store.deleteCredential(credential_id)
 
     def rename_credential(self, tenant_id, credential_id, new_name):
         """Do nothing for this resource"""
         LOG.debug("rename_credential() called\n")
-        pass
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
+
+        credential[const.CREDENTIAL_NAME] = new_name
+        return credential
 
     def get_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
@@ -532,7 +564,7 @@ class L2Network(QuantumPluginBase):
         """Return a QoS level based on the ID"""
         qos_level = self._qos_levels.get(qos_id)
         if not qos_level:
-            raise cexc.QoSLevelNotFound(tenant_id=tenant_id,
+            raise cexc.QosNotFound(tenant_id=tenant_id,
                                         qos_id=qos_id)
         return qos_level
 
