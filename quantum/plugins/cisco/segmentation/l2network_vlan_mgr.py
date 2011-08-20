@@ -34,6 +34,8 @@ class L2NetworkVLANMgr(L2NetworkSegmentationMgrBase):
     """
     VLAN Manager which gets VLAN ID from DB
     """
+    def __init__(self):
+        cdb.create_vlanids()
 
     def reserve_segmentation_id(self, tenant_id, net_name, **kwargs):
         """Get an available VLAN ID"""

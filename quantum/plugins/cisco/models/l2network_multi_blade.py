@@ -23,10 +23,12 @@ import inspect
 import logging as LOG
 import platform
 
+from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv
 
 LOG.basicConfig(level=LOG.WARN)
@@ -116,6 +118,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         """Support for the Quantum core API call"""
         least_reserved_blade_dict = \
                 self._ucs_inventory.get_least_reserved_blade()
+        if not least_reserved_blade_dict:
+            raise cexc.NoMoreNics()
         ucsm_ip = least_reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
         device_params = {const.DEVICE_IP: ucsm_ip,
                          const.UCS_INVENTORY: self._ucs_inventory,
@@ -128,6 +132,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         rsvd_info = \
                 self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
                                                                 args[2])
+        if not rsvd_info:
+            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
         device_params = \
                 {const.DEVICE_IP: rsvd_info[const.UCSM_IP],
                  const.UCS_INVENTORY: self._ucs_inventory,
@@ -146,12 +152,22 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def plug_interface(self, args):
         """Support for the Quantum core API call"""
-        device_params = {const.DEVICE_IP: ""}
+        rsvd_info = \
+                self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
+                                                                args[2])
+        if not rsvd_info:
+            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
+        device_params = {const.DEVICE_IP: rsvd_info[const.UCSM_IP]}
         self._invoke_ucs_plugin(self._func_name(), args, device_params)
 
     def unplug_interface(self, args):
         """Support for the Quantum core API call"""
-        device_params = {const.DEVICE_IP: ""}
+        rsvd_info = \
+                self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
+                                                                args[2])
+        if not rsvd_info:
+            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
+        device_params = {const.DEVICE_IP: rsvd_info[const.UCSM_IP]}
         self._invoke_ucs_plugin(self._func_name(), args, device_params)
 
     def get_host(self, args):

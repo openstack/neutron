@@ -41,7 +41,6 @@ class UCSVICPlugin(L2DevicePluginBase):
     def __init__(self):
         self._client = utils.import_object(conf.UCSM_DRIVER)
         LOG.debug("Loaded driver %s\n" % conf.UCSM_DRIVER)
-        self._utils = cutil.DBUtils()
         # TODO (Sumit) Make the counter per UCSM
         self._port_profile_counter = 0
 
@@ -173,7 +172,6 @@ class UCSVICPlugin(L2DevicePluginBase):
         try:
             #TODO (Sumit): Before deleting port profile make sure that there
             # is no VM using this port profile
-            self._client.release_dynamic_nic("dummy")
             port_profile = port[const.PORT_PROFILE]
             self._delete_port_profile(port_id,
                                       port_profile[const.PROFILE_NAME])

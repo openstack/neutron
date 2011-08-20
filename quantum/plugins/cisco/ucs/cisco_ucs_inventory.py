@@ -18,6 +18,7 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
 """
+from copy import deepcopy
 import logging as LOG
 
 from quantum.common import exceptions as exc
@@ -25,7 +26,8 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
-from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
+from quantum.plugins.cisco.ucs \
+        import cisco_ucs_inventory_configuration as conf
 from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
 
 LOG.basicConfig(level=LOG.WARN)
@@ -37,6 +39,42 @@ The _inventory data strcuture contains a nested disctioary:
                 "Chassis-ID": [Blade-ID, Blade-ID, Blade-ID]]},
      "UCSM_IP: {"Chassis-ID": [Balde-ID]}
     }
+"""
+"""
+_inventory_state data structure is organized as below:
+{ucsm_ip:
+    {chassis_id:
+        {blade_id:
+            {'blade-data':
+                {blade-dn-1: {blade-intf-data},
+                 blade-dn-2: {blade-intf-data}
+                }
+            }
+        }
+    }
+}
+'blade-data': Blade Data dictionary has the following keys:
+===========================================================
+const.BLADE_INTF_DATA: This is a dictionary, with the key as the
+                       dn of the interface, and the value as the
+                       Blade Interface Dictionary described next
+const.BLADE_UNRESERVED_INTF_COUNT: Number of unreserved interfaces
+                                   on this blade
+
+'blade-intf-data': Blade Interface dictionary has the following keys:
+=====================================================================
+const.BLADE_INTF_DN
+const.BLADE_INTF_ORDER
+const.BLADE_INTF_LINK_STATE
+const.BLADE_INTF_OPER_STATE
+const.BLADE_INTF_INST_TYPE
+const.BLADE_INTF_RHEL_DEVICE_NAME
+const.BLADE_INTF_RESERVATION
+const.TENANTID
+const.PORTID
+const.PROFILE_ID
+const.INSTANCE_ID
+const.VIF_ID
 """
 
 
@@ -56,7 +94,9 @@ class UCSInventory(object):
 
     def _load_inventory(self):
         """Load the inventory from a config file"""
-        inventory = conf.INVENTORY
+        inventory = deepcopy(conf.INVENTORY)
+        LOG.debug("Loaded UCS inventory: %s\n" % inventory)
+
         for ucsm in inventory.keys():
             ucsm_ip = inventory[ucsm][const.IP_ADDRESS]
             inventory[ucsm].pop(const.IP_ADDRESS)
@@ -75,14 +115,47 @@ class UCSInventory(object):
                     blade_list.append(blade_id)
                 chassis_dict[chassis_id] = blade_list
             self._inventory[ucsm_ip] = chassis_dict
+        
+        self.build_inventory_state()
 
     def _get_host_name(self, ucsm_ip, chassis_id, blade_id):
         """Get the hostname based on the blade info"""
         host_key = ucsm_ip + "-" + chassis_id + "-" + blade_id
         return self._host_names[host_key]
 
-    def _get_blade_state(self, chassis_id, blade_id, ucsm_ip, ucsm_username,
-                          ucsm_password):
+    def _get_initial_blade_state(self, chassis_id, blade_id, ucsm_ip,
+                                 ucsm_username, ucsm_password):
+        """Get the initial blade state"""
+        blade_intf_data = self._client.get_blade_data(chassis_id, blade_id,
+                                                      ucsm_ip, ucsm_username,
+                                                      ucsm_password)
+        unreserved_counter = 0
+
+        for blade_intf in blade_intf_data.keys():
+            if (blade_intf_data[blade_intf][const.BLADE_INTF_LINK_STATE] == \
+                const.BLADE_INTF_STATE_UNALLOCATED  or \
+                blade_intf_data[blade_intf][const.BLADE_INTF_LINK_STATE] == \
+                const.BLADE_INTF_STATE_UNKNOWN) and \
+               blade_intf_data[blade_intf][const.BLADE_INTF_OPER_STATE] == \
+               const.BLADE_INTF_STATE_UNKNOWN:
+                blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
+                        const.BLADE_INTF_UNRESERVED
+                unreserved_counter += 1
+            else:
+                blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
+                        const.BLADE_INTF_RESERVED
+            blade_intf_data[blade_intf][const.TENANTID] = None
+            blade_intf_data[blade_intf][const.PORTID] = None
+            blade_intf_data[blade_intf][const.PROFILE_ID] = None
+            blade_intf_data[blade_intf][const.INSTANCE_ID] = None
+            blade_intf_data[blade_intf][const.VIF_ID] = None
+
+        blade_data = {const.BLADE_INTF_DATA: blade_intf_data,
+                     const.BLADE_UNRESERVED_INTF_COUNT: unreserved_counter}
+        return blade_data
+
+    def _get_blade_state(self, chassis_id, blade_id, ucsm_ip,
+                                 ucsm_username, ucsm_password):
         """Get the blade state"""
         blade_intf_data = self._client.get_blade_data(chassis_id, blade_id,
                                                       ucsm_ip, ucsm_username,
@@ -128,11 +201,14 @@ class UCSInventory(object):
                 blades_dict = {}
                 chasses_state[chassis_id] = blades_dict
                 for blade_id in ucsm[chassis_id]:
-                    blade_data = self._get_blade_state(chassis_id, blade_id,
-                                                       ucsm_ip, ucsm_username,
-                                                       ucsm_password)
+                    blade_data = self._get_initial_blade_state(chassis_id,
+                                                               blade_id,
+                                                               ucsm_ip,
+                                                               ucsm_username,
+                                                               ucsm_password)
                     blades_dict[blade_id] = blade_data
 
+        LOG.debug("UCS Inventory state is: %s\n" % self._inventory_state)
         return True
 
     def get_least_reserved_blade(self):
@@ -182,12 +258,22 @@ class UCSInventory(object):
         old_blade_intf_data = blade_data_dict[const.BLADE_INTF_DATA]
 
         """
-        We will now copy the older blade interface reservation state
+        We will now copy the older blade interface state
         """
         for blade_intf in blade_intf_data.keys():
             blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
                     old_blade_intf_data[blade_intf]\
                     [const.BLADE_INTF_RESERVATION]
+            blade_intf_data[blade_intf][const.TENANTID] = \
+                    old_blade_intf_data[blade_intf][const.TENANTID]
+            blade_intf_data[blade_intf][const.PORTID] = \
+                    old_blade_intf_data[blade_intf][const.PORTID]
+            blade_intf_data[blade_intf][const.PROFILE_ID] = \
+                    old_blade_intf_data[blade_intf][const.PROFILE_ID]
+            blade_intf_data[blade_intf][const.INSTANCE_ID] = \
+                    old_blade_intf_data[blade_intf][const.INSTANCE_ID]
+            blade_intf_data[blade_intf][const.VIF_ID] = \
+                    old_blade_intf_data[blade_intf][const.VIF_ID]
 
         blade_data[const.BLADE_UNRESERVED_INTF_COUNT] = \
                 blade_data_dict[const.BLADE_UNRESERVED_INTF_COUNT]
@@ -228,12 +314,16 @@ class UCSInventory(object):
         """Unreserve a previously reserved interface on a blade"""
         ucsm_username = cred.Store.getUsername(ucsm_ip)
         ucsm_password = cred.Store.getPassword(ucsm_ip)
-        self._inventory_state[ucsm_ip][chassis_id][blade_id]\
-                [const.BLADE_INTF_DATA] \
-                [interface_dn][const.BLADE_INTF_RESERVATION] = \
-                const.BLADE_INTF_UNRESERVED
         self._inventory_state[ucsm_ip][chassis_id][blade_id] \
                 [const.BLADE_UNRESERVED_INTF_COUNT] += 1
+        blade_intf = self._inventory_state[ucsm_ip][chassis_id]\
+                [blade_id][const.BLADE_INTF_DATA][interface_dn]
+        blade_intf[const.BLADE_INTF_RESERVATION] = const.BLADE_INTF_UNRESERVED
+        blade_intf[const.TENANTID] = None
+        blade_intf[const.PORTID] = None
+        blade_intf[const.PROFILE_ID] = None
+        blade_intf[const.INSTANCE_ID] = None
+        blade_intf[const.VIF_ID] = None
         LOG.debug("Unreserved blade interface %s\n" % interface_dn)
 
     def get_rsvd_blade_intf_by_port(self, tenant_id, port_id):
@@ -292,7 +382,7 @@ class UCSInventory(object):
                             return host_name
         return None
 
-    def get_instance_port(self, tenant_id, instance_id):
+    def get_instance_port(self, tenant_id, instance_id, vif_id):
         """
         Return the device name for a reserved interface
         """
@@ -310,6 +400,9 @@ class UCSInventory(object):
                            [const.TENANTID] == tenant_id and \
                            blade_intf_data[blade_intf]\
                            [const.INSTANCE_ID] == instance_id:
+                            blade_intf_data[blade_intf][const.VIF_ID] = \
+                                    vif_id
+
                             return blade_intf_data[blade_intf]\
                                     [const.BLADE_INTF_RHEL_DEVICE_NAME]
         return None

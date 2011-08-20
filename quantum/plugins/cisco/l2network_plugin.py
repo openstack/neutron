@@ -45,14 +45,14 @@ class L2Network(QuantumPluginBase):
     _credentials = {}
 
     def __init__(self):
-        self._vlan_counter = int(conf.VLAN_START) - 1
+        cdb.initialize()
         self._model = utils.import_object(conf.MODEL_CLASS)
         self._vlan_mgr = utils.import_object(conf.MANAGER_CLASS)
-        cdb.initialize()
         # TODO (Sumit): The following should move to the segmentation module
-        cdb.create_vlanids()
+        #cdb.create_vlanids()
         self._qoslevels_counter = 0
         self._credentials_counter = 0
+        LOG.debug("L2Network plugin initialization done successfully\n")
 
     """
     Core API implementation

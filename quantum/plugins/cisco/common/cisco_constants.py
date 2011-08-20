@@ -134,6 +134,7 @@ BLADE_ID = 'blade_id'
 HOST_NAME = 'host_name'
 
 INSTANCE_ID = 'instance_id'
+VIF_ID = 'vif_id'
 
 UCS_INVENTORY = 'ucs_inventory'
 LEAST_RSVD_BLADE_DICT = 'least_rsvd_blade_dict'
