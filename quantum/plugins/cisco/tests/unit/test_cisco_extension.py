@@ -41,18 +41,17 @@ from quantum.manager import QuantumManager
 from quantum.plugins.cisco import l2network_plugin
 
 TEST_CONF_FILE = os.path.join(os.path.dirname(__file__), os.pardir,
-                              os.pardir, 
-                              'etc', 'quantum.conf.mocktest')
+                              os.pardir, 'etc', 'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir,
-                              os.pardir, 
-                              "extensions")
+                               os.pardir, "extensions")
 
 LOG = logging.getLogger('quantum.plugins.cisco.tests.test_cisco_extensions')
 
 
 class ExtensionsTestApp(wsgi.Router):
 
-    def __init__(self, options={}):
+    def __init__(self, options=None):
+        options = options or {}
         mapper = routes.Mapper()
         controller = StubBaseAppController()
         mapper.resource("dummy_resource", "/dummy_resources",
