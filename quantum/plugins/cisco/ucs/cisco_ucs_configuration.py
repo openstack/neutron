@@ -37,3 +37,10 @@ PROFILE_NAME_PREFIX = SECTION['profile_name_prefix']
 
 SECTION = CP['DRIVER']
 UCSM_DRIVER = SECTION['name']
+
+CONF_FILE = "../conf/ucs_inventory.ini"
+
+CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+                             + "/" + CONF_FILE)
+
+INVENTORY = CP.walk(CP.dummy)

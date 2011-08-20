@@ -47,6 +47,7 @@ class L2Network(QuantumPluginBase):
     def __init__(self):
         self._vlan_counter = int(conf.VLAN_START) - 1
         self._model = utils.import_object(conf.MODEL_CLASS)
+        self._vlan_mgr = utils.import_object(conf.MANAGER_CLASS)
         cdb.initialize()
         # TODO (Sumit): The following should move to the segmentation module
         cdb.create_vlanids()
@@ -442,41 +443,35 @@ class L2Network(QuantumPluginBase):
     def get_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("get_host() called\n")
-        host_list = {const.HOST_LIST: {const.HOST_1: platform.node()}}
-        return host_list
+        return self._invoke_device_plugins(self._func_name(), [tenant_id,
+                                                               instance_id,
+                                                               instance_desc])
 
     def get_instance_port(self, tenant_id, instance_id, instance_desc):
         """
         Get the portprofile name and the device namei for the dynamic vnic
         """
         LOG.debug("get_instance_port() called\n")
-        vif_desc = {const.VIF_DESC:
-                    {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
-        return vif_desc
+        return self._invoke_device_plugins(self._func_name(), [tenant_id,
+                                                               instance_id,
+                                                               instance_desc])
 
     """
     Private functions
     """
     def _invoke_device_plugins(self, function_name, args):
         """
-        All device-specific calls are delegate to the model
+        All device-specific calls are delegated to the model
         """
         getattr(self._model, function_name)(args)
 
     def _get_vlan_for_tenant(self, tenant_id, net_name):
         """Get vlan ID"""
-        # TODO (Sumit):
-        # The VLAN ID for a tenant might need to be obtained from
-        # somewhere (from Donabe/Melange?)
-        # Also need to make sure that the VLAN ID is not being used already
-        # Currently, just a wrap-around counter ranging from VLAN_START to
-        # VLAN_END
-        return cdb.reserve_vlanid()
+        return self._vlan_mgr.reserve_segmentation_id(tenant_id, net_name)
 
     def _release_vlan_for_tenant(self, tenant_id, net_id):
         """Relase VLAN"""
-        vlan_binding = cdb.get_vlan_binding(net_id)
-        return cdb.release_vlanid(vlan_binding[const.VLANID])
+        return self._vlan_mgr.release_segmentation_id(tenant_id, net_id)
 
     def _get_vlan_name(self, net_id, vlan):
         """Getting the vlan name from the tenant and vlan"""

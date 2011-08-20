@@ -42,10 +42,6 @@ class UCSVICPlugin(L2DevicePluginBase):
         self._client = utils.import_object(conf.UCSM_DRIVER)
         LOG.debug("Loaded driver %s\n" % conf.UCSM_DRIVER)
         self._utils = cutil.DBUtils()
-        # TODO (Sumit) This is for now, when using only one chassis
-        self._ucsm_ip = conf.UCSM_IP_ADDRESS
-        self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
-        self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
         # TODO (Sumit) Make the counter per UCSM
         self._port_profile_counter = 0
 
@@ -56,6 +52,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         the specified tenant.
         """
         LOG.debug("UCSVICPlugin:get_all_networks() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         return self._networks.values()
 
     def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
@@ -65,6 +62,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         a symbolic name.
         """
         LOG.debug("UCSVICPlugin:create_network() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         self._client.create_vlan(vlan_name, str(vlan_id), self._ucsm_ip,
                                  self._ucsm_username, self._ucsm_password)
         new_net_dict = {const.NET_ID: net_id,
@@ -81,6 +79,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         belonging to the specified tenant.
         """
         LOG.debug("UCSVICPlugin:delete_network() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         net = self._networks.get(net_id)
         # TODO (Sumit) : Verify that no attachments are plugged into the
         # network
@@ -99,6 +98,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         spec
         """
         LOG.debug("UCSVICPlugin:get_network_details() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         network = self._get_network(tenant_id, net_id)
         return network
 
@@ -108,6 +108,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Virtual Network.
         """
         LOG.debug("UCSVICPlugin:rename_network() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         network = self._get_network(tenant_id, net_id)
         network[const.NET_NAME] = new_name
         return network
@@ -118,6 +119,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:get_all_ports() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         network = self._get_network(tenant_id, net_id)
         ports_on_net = network[const.NET_PORTS].values()
         return ports_on_net
@@ -127,27 +129,28 @@ class UCSVICPlugin(L2DevicePluginBase):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:create_port() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        ucs_inventory = kwargs[const.UCS_INVENTORY]
+        least_rsvd_blade_dict = kwargs[const.LEAST_RSVD_BLADE_DICT]
+        chassis_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_CHASSIS]
+        blade_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_ID]
+        blade_data_dict = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_DATA]
         net = self._get_network(tenant_id, net_id)
         ports = net[const.NET_PORTS]
-        # TODO (Sumit): This works on a single host deployment,
-        # in multi-host environment, dummy needs to be replaced with the
-        # hostname
-        dynamic_nic_name = self._client.get_dynamic_nic("dummy")
         new_port_profile = self._create_port_profile(tenant_id, net_id,
                                                      port_id,
                                                      conf.DEFAULT_VLAN_NAME,
                                                      conf.DEFAULT_VLAN_ID)
         profile_name = new_port_profile[const.PROFILE_NAME]
-        sql_query = "INSERT INTO ports (port_id, profile_name, dynamic_vnic," \
-        "host, instance_name, instance_nic_name, used) VALUES" \
-        "('%s', '%s', '%s', 'dummy', NULL, NULL, 0)" % \
-        (port_id, profile_name, dynamic_nic_name)
-        self._utils.execute_db_query(sql_query)
         new_port_dict = {const.PORT_ID: port_id,
                          const.PORT_STATE: const.PORT_UP,
                          const.ATTACHMENT: None,
                          const.PORT_PROFILE: new_port_profile}
         ports[port_id] = new_port_dict
+        ucs_inventory.reserve_blade_interface(self._ucsm_ip, chassis_id,
+                                              blade_id, blade_data_dict,
+                                              tenant_id, port_id,
+                                              portprofile_name)
         return new_port_dict
 
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):
@@ -158,6 +161,11 @@ class UCSVICPlugin(L2DevicePluginBase):
         then the port can be deleted.
         """
         LOG.debug("UCSVICPlugin:delete_port() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        ucs_inventory = kwargs[const.UCS_INVENTORY]
+        chassis_id = kwargs[const.const.CHASSIS_ID]
+        blade_id = kwargs[const.const.BLADE_ID]
+        interface_dn = kwargs[const.BLADE_INTF_DN]
         port = self._get_port(tenant_id, net_id, port_id)
         if port[const.ATTACHMENT]:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
@@ -169,11 +177,10 @@ class UCSVICPlugin(L2DevicePluginBase):
             port_profile = port[const.PORT_PROFILE]
             self._delete_port_profile(port_id,
                                       port_profile[const.PROFILE_NAME])
-            sql_query = "delete from ports where port_id = \"%s\"" % \
-            (port[const.PORT_ID])
-            self._utils.execute_db_query(sql_query)
             net = self._get_network(tenant_id, net_id)
             net[const.NET_PORTS].pop(port_id)
+            ucs_inventory.unreserve_blade_interface(ucsm_ip, chassis_id,
+                                                    blade_id, interface_dn)
         except KeyError:
             raise exc.PortNotFound(net_id=net_id, port_id=port_id)
 
@@ -182,6 +189,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:update_port() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         port = self._get_port(tenant_id, net_id, port_id)
         self._validate_port_state(port_state)
         port[const.PORT_STATE] = port_state
@@ -193,6 +201,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         that is attached to this particular port.
         """
         LOG.debug("UCSVICPlugin:get_port_details() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         return self._get_port(tenant_id, net_id, port_id)
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
@@ -202,6 +211,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:plug_interface() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         self._validate_attachment(tenant_id, net_id, port_id,
                                   remote_interface_id)
         port = self._get_port(tenant_id, net_id, port_id)
@@ -227,6 +237,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:unplug_interface() called\n")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
         port = self._get_port(tenant_id, net_id, port_id)
         port[const.ATTACHMENT] = None
         port_profile = port[const.PORT_PROFILE]
@@ -308,3 +319,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         self._client.delete_profile(profile_name, self._ucsm_ip,
                                     self._ucsm_username, self._ucsm_password)
         self._port_profile_counter -= 1
+
+    def _set_ucsm(self, ucsm_ip):
+        self._ucsm_ip = ucsm_ip
+        self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
+        self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
+

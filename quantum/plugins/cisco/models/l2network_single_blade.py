@@ -31,7 +31,7 @@ LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
-class L2NetworkModel(L2NetworkModelBase):
+class L2NetworkSinlgeBlade(L2NetworkModelBase):
     """
     Implements the L2NetworkModelBase
     This implementation works with UCS and Nexus plugin,
@@ -121,3 +121,19 @@ class L2NetworkModel(L2NetworkModelBase):
         """Support for the Quantum core API call"""
         device_params = {const.DEVICE_IP: ""}
         self._invoke_ucs_plugin(self._func_name(), args, device_params)
+
+    def get_host(self, args):
+        """Provides the hostname on which a dynamic vnic is reserved"""
+        LOG.debug("get_host() called\n")
+        host_list = {const.HOST_LIST: {const.HOST_1: platform.node()}}
+        return host_list
+
+    def get_instance_port(self, args):
+        """
+        Get the portprofile name and the device namei for the dynamic vnic
+        """
+        LOG.debug("get_instance_port() called\n")
+        vif_desc = {const.VIF_DESC:
+                    {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
+        return vif_desc
+

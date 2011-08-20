@@ -128,5 +128,17 @@ VIF_DESC = 'vif_desc'
 DEVICENAME = 'device'
 UCSPROFILE = 'portprofile'
 
+IP_ADDRESS = 'ip_address'
+CHASSIS_ID = 'chassis_id'
+BLADE_ID = 'blade_id'
+HOST_NAME = 'host_name'
+
+INSTANCE_ID = 'instance_id'
+
+UCS_INVENTORY = 'ucs_inventory'
+LEAST_RSVD_BLADE_DICT = 'least_rsvd_blade_dict'
+
+UCSM_IP = 'ucsm_ip_address'
+
 MAX_CREDENTIALS = 65568
 MAX_QOS_LEVELS = 1024
