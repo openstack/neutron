@@ -272,7 +272,7 @@ class UcsDB(object):
                 LOG.debug("Getting port binding for port: %s" % bind.port_id)
                 port_bind_dict = {}
                 port_bind_dict["port-id"] = bind.port_id
-                port_bind_dict["dynamic-vnic-id"] = str(bind.dynamic_vnic_id)
+                port_bind_dict["blade-intf-dn"] = str(bind.blade_intf_dn)
                 port_bind_dict["portprofile-name"] = bind.portprofile_name
                 port_bind_dict["vlan-name"] = bind.vlan_name
                 port_bind_dict["vlan-id"] = str(bind.vlan_id)
@@ -290,7 +290,7 @@ class UcsDB(object):
                 LOG.debug("Getting port binding for port: %s" % bind.port_id)
                 port_bind_dict = {}
                 port_bind_dict["port-id"] = bind.port_id
-                port_bind_dict["dynamic-vnic-id"] = str(bind.dynamic_vnic_id)
+                port_bind_dict["blade-intf-dn"] = str(bind.blade_intf_dn)
                 port_bind_dict["portprofile-name"] = bind.portprofile_name
                 port_bind_dict["vlan-name"] = bind.vlan_name
                 port_bind_dict["vlan-id"] = str(bind.vlan_id)
@@ -300,16 +300,16 @@ class UcsDB(object):
             LOG.error("Failed to get port binding: %s" % str(exc))
         return port_binding
 
-    def create_port_binding(self, port_id, dynamic_vnic_id, portprofile_name, \
+    def create_port_binding(self, port_id, blade_intf_dn, portprofile_name, \
                             vlan_name, vlan_id, qos):
         """create port binding"""
         port_bind_dict = {}
         try:
-            res = ucs_db.add_portbinding(port_id, dynamic_vnic_id, \
+            res = ucs_db.add_portbinding(port_id, blade_intf_dn, \
                                   portprofile_name, vlan_name, vlan_id, qos)
             LOG.debug("Created port binding: %s" % res.port_id)
             port_bind_dict["port-id"] = res.port_id
-            port_bind_dict["dynamic-vnic-id"] = str(res.dynamic_vnic_id)
+            port_bind_dict["blade-intf-dn"] = str(res.blade_intf_dn)
             port_bind_dict["portprofile-name"] = res.portprofile_name
             port_bind_dict["vlan-name"] = res.vlan_name
             port_bind_dict["vlan-id"] = str(res.vlan_id)
@@ -329,16 +329,16 @@ class UcsDB(object):
         except Exception, exc:
             raise Exception("Failed to delete port profile: %s" % str(exc))
 
-    def update_port_binding(self, port_id, dynamic_vnic_id, \
+    def update_port_binding(self, port_id, blade_intf_dn, \
                          portprofile_name, vlan_name, vlan_id, qos):
         """update port binding"""
         try:
-            res = ucs_db.update_portbinding(port_id, dynamic_vnic_id, \
+            res = ucs_db.update_portbinding(port_id, blade_intf_dn, \
                                portprofile_name, vlan_name, vlan_id, qos)
             LOG.debug("Updating port binding: %s" % res.port_id)
             port_bind_dict = {}
             port_bind_dict["port-id"] = res.port_id
-            port_bind_dict["dynamic-vnic-id"] = str(res.dynamic_vnic_id)
+            port_bind_dict["dynamic-vnic-id"] = str(res.blade_intf_dn)
             port_bind_dict["portprofile-name"] = res.portprofile_name
             port_bind_dict["vlan-name"] = res.vlan_name
             port_bind_dict["vlan-id"] = str(res.vlan_id)
