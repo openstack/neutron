@@ -39,6 +39,8 @@ PPQOS = 'qos'
 PPID = 'portprofile_id'
 PPDEFAULT = 'default'
 VLANID = 'vlan_id'
+VLANNAME = 'vlan_name'
+PORTPROFILENAME = 'portprofile_name'
 
 ATTACHMENT = 'attachment'
 PORT_ID = 'port-id'
