@@ -87,7 +87,7 @@ class VlanBinding(BASE, L2NetworkBase):
 
     vlan_id = Column(Integer, primary_key=True)
     vlan_name = Column(String(255))
-    network_id = Column(String(255), ForeignKey("networks.uuid"), \
+    network_id = Column(String(255), ForeignKey("networks.uuid"),
                         nullable=False)
     network = relation(models.Network, uselist=False)
 
@@ -128,9 +128,9 @@ class PortProfileBinding(BASE, L2NetworkBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id = Column(String(255))
 
-    port_id = Column(String(255), ForeignKey("ports.uuid"), \
+    port_id = Column(String(255), ForeignKey("ports.uuid"),
                         nullable=False)
-    portprofile_id = Column(String(255), ForeignKey("portprofiles.uuid"), \
+    portprofile_id = Column(String(255), ForeignKey("portprofiles.uuid"),
                             nullable=False)
     default = Column(Boolean)
     ports = relation(models.Port)
