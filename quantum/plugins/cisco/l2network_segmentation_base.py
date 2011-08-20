@@ -56,7 +56,7 @@ class L2NetworkSegmentationMgrBase(object):
         marked with the abstractmethod decorator is
         provided by the plugin class.
         """
-        if cls is L2NetworkSegementationMgrBase:
+        if cls is L2NetworkSegmentationMgrBase:
             for method in cls.__abstractmethods__:
                 method_ok = False
                 for base in klass.__mro__:

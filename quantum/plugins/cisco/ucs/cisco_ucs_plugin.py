@@ -150,7 +150,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         ucs_inventory.reserve_blade_interface(self._ucsm_ip, chassis_id,
                                               blade_id, blade_data_dict,
                                               tenant_id, port_id,
-                                              portprofile_name)
+                                              profile_name)
         return new_port_dict
 
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):
@@ -163,8 +163,8 @@ class UCSVICPlugin(L2DevicePluginBase):
         LOG.debug("UCSVICPlugin:delete_port() called\n")
         self._set_ucsm(kwargs[const.DEVICE_IP])
         ucs_inventory = kwargs[const.UCS_INVENTORY]
-        chassis_id = kwargs[const.const.CHASSIS_ID]
-        blade_id = kwargs[const.const.BLADE_ID]
+        chassis_id = kwargs[const.CHASSIS_ID]
+        blade_id = kwargs[const.BLADE_ID]
         interface_dn = kwargs[const.BLADE_INTF_DN]
         port = self._get_port(tenant_id, net_id, port_id)
         if port[const.ATTACHMENT]:
@@ -179,7 +179,7 @@ class UCSVICPlugin(L2DevicePluginBase):
                                       port_profile[const.PROFILE_NAME])
             net = self._get_network(tenant_id, net_id)
             net[const.NET_PORTS].pop(port_id)
-            ucs_inventory.unreserve_blade_interface(ucsm_ip, chassis_id,
+            ucs_inventory.unreserve_blade_interface(self._ucsm_ip, chassis_id,
                                                     blade_id, interface_dn)
         except KeyError:
             raise exc.PortNotFound(net_id=net_id, port_id=port_id)
@@ -321,7 +321,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         self._port_profile_counter -= 1
 
     def _set_ucsm(self, ucsm_ip):
+        """Set the UCSM IP, username, and password"""
         self._ucsm_ip = ucsm_ip
         self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
         self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
-

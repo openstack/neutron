@@ -21,12 +21,13 @@
 
 import inspect
 import logging as LOG
+import platform
 
 from quantum.common import utils
 from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv 
+from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -130,8 +131,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         device_params = \
                 {const.DEVICE_IP: rsvd_info[const.UCSM_IP],
                  const.UCS_INVENTORY: self._ucs_inventory,
-                 const.CHASSIS_ID: rsvd_info[const.const.CHASSIS_ID],
-                 const.BLADE_ID: rsvd_info[const.const.BLADE_ID],
+                 const.CHASSIS_ID: rsvd_info[const.CHASSIS_ID],
+                 const.BLADE_ID: rsvd_info[const.BLADE_ID],
                  const.BLADE_INTF_DN: rsvd_info[const.BLADE_INTF_DN]}
         self._invoke_ucs_plugin(self._func_name(), args, device_params)
 
@@ -167,4 +168,3 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         vif_desc = {const.VIF_DESC:
                     {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
         return vif_desc
-

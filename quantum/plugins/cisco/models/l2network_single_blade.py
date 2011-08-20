@@ -21,6 +21,7 @@
 
 import inspect
 import logging as LOG
+import platform
 
 from quantum.common import utils
 from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
@@ -136,4 +137,3 @@ class L2NetworkSinlgeBlade(L2NetworkModelBase):
         vif_desc = {const.VIF_DESC:
                     {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
         return vif_desc
-

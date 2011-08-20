@@ -21,7 +21,6 @@
 
 import logging as LOG
 
-from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.l2network_segmentation_base \
@@ -29,6 +28,7 @@ from quantum.plugins.cisco.l2network_segmentation_base \
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+
 
 class L2NetworkVLANMgr(L2NetworkSegmentationMgrBase):
     """
@@ -39,9 +39,7 @@ class L2NetworkVLANMgr(L2NetworkSegmentationMgrBase):
         """Get an available VLAN ID"""
         return cdb.reserve_vlanid()
 
-
     def release_segmentation_id(self, tenant_id, net_id, **kwargs):
         """Release the ID"""
         vlan_binding = cdb.get_vlan_binding(net_id)
         return cdb.release_vlanid(vlan_binding[const.VLANID])
-

@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,7 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
-
+"""
 import logging as LOG
 
 from quantum.common import exceptions as exc
@@ -38,7 +39,12 @@ The _inventory data strcuture contains a nested disctioary:
     }
 """
 
+
 class UCSInventory(object):
+    """
+    Manages the state of all the UCS chasses, and blades in
+    the system
+    """
 
     _inventory = {}
     _host_names = {}
@@ -102,13 +108,13 @@ class UCSInventory(object):
         return blade_data
 
     def get_all_ucsms(self):
+        """Get the IPs of all the UCSMs in the system"""
         return self._inventory.keys()
 
     def reload_inventory(self):
         """Reload the inventory from a conf file"""
         self._load_inventory()
-        pass
-    
+
     def build_inventory_state(self):
         """Populate the state of all the blades"""
         for ucsm_ip in self._inventory.keys():
@@ -195,7 +201,8 @@ class UCSInventory(object):
                         const.BLADE_INTF_RESERVED
                 blade_intf_data[blade_intf][const.TENANTID] = tenant_id
                 blade_intf_data[blade_intf][const.PORTID] = port_id
-                blade_intf_data[blade_intf][const.PROFILEID] = portprofile_name
+                blade_intf_data[blade_intf][const.PROFILE_ID] = \
+                        portprofile_name
                 blade_intf_data[blade_intf][const.INSTANCE_ID] = None
                 dev_eth_name = blade_intf_data[blade_intf] \
                         [const.BLADE_INTF_RHEL_DEVICE_NAME]
@@ -253,14 +260,14 @@ class UCSInventory(object):
                             blade_intf_info = {const.UCSM_IP: ucsm_ip,
                                                const.CHASSIS_ID: chassis_id,
                                                const.BLADE_ID: blade_id,
-                                               const.BLADE_INTF_DN: 
+                                               const.BLADE_INTF_DN:
                                                interface_dn}
                             return blade_intf_info
         return None
 
     def get_host_name(self, tenant_id, instance_id):
         """
-        Return the hostname of the blade with a reserved instance 
+        Return the hostname of the blade with a reserved instance
         for this tenant
         """
         for ucsm_ip in self._inventory_state.keys():
@@ -324,7 +331,8 @@ def main():
             print "No more unreserved blades\n"
             break
 
-        least_reserved_blade_ucsm = reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
+        least_reserved_blade_ucsm = \
+                reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
         least_reserved_blade_chassis = \
         reserved_blade_dict[const.LEAST_RSVD_BLADE_CHASSIS]
         least_reserved_blade_id = \
@@ -336,7 +344,7 @@ def main():
                                             least_reserved_blade_chassis,
                                             least_reserved_blade_id,
                                             least_reserved_blade_data,
-                                      "demo")
+                                      "demo", "12345", "profilename")
         if reserved_nic_dict:
             reserved_intf_nic_info = {const.RESERVED_INTERFACE_UCSM:
                                    least_reserved_blade_ucsm,
