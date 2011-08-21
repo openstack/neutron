@@ -89,7 +89,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         LOG.debug("UCSVICPlugin:delete_network() called\n")
         self._set_ucsm(kwargs[const.DEVICE_IP])
         net = db.network_get(net_id)
-        self._driver.delete_vlan(net[const.NET_VLAN_NAME], self._ucsm_ip,
+        vlan_binding = cdb.get_vlan_binding(net[const.UUID])
+        vlan_name = vlan_binding[const.VLANNAME]
+        self._driver.delete_vlan(vlan_name, self._ucsm_ip,
                                  self._ucsm_username, self._ucsm_password)
         net_dict = cutil.make_net_dict(net[const.UUID],
                                        net[const.NETWORKNAME],
