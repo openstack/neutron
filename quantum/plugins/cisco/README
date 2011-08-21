@@ -266,55 +266,6 @@ result the quantum/plugins/cisco/run_tests.py script.
    change later.
    Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
 
-Additional installation required on Nova Compute
-------------------------------------------------
-1.  Create a table in the "nova" database for ports.  This can be 
-    accomplished with the following SQL statement:
-
-CREATE TABLE ports (
-   port_id           VARCHAR(255) PRIMARY KEY,
-   profile_name      VARCHAR(255),
-   dynamic_vnic      VARCHAR(255),
-   host              VARCHAR(255),
-   instance_name     VARCHAR(255),
-   instance_nic_name VARCHAR(255),
-   used              TINYINT(1)
-);
-
-    Assuming you're using MySQL, you can run the following command from a 
-    shell prompt on the Cloud Controller node to create the table:
-
-mysql -uroot -p nova -e 'create table ports (port_id VARCHAR(255) primary key, profile_name VARCHAR(255), dynamic_vnic VARCHAR(255), host VARCHAR(255), instance_name VARCHAR(255), instance_nic_name VARCHAR(255), used tinyint(1));'
-
-You'll be prompted for a password.
-
-2.  A patch is available for the Cactus release in this branch:
-    https://code.launchpad.net/~snaiksat/quantum/cactus-ucs-support 
-    replace the following file in your installation:
-    /usr/lib/python2.6/site-packages/nova/virt/libvirt_conn.py
-    with the file from the branch:
-    nova/virt/libvirt_conn.py
-
-3.  Add the following file from the Cisco Nova branch:
-    nova/virt/cisco_ucs.py
-    to:
-    /usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
-
-4.  Add the 802.1Qbh specific libvirt template file, from:
-    nova/virt/libvirt-qbh.xml.template
-    to:
-    /usr/share/nova/libvirt-qbh.xml.template
-    
-5.  Edit /etc/nova.conf to set the libvirt XML template to the above template:
-    --libvirt_xml_template=/usr/share/nova/libvirt-qbh.xml.template
-
-6.  Restart the nova-compute service.
-
-    (Note that the requirement for the above patch is temporary and will go away
-     with the integration with OpenStack Diablo. A 802.1Qbh-specific VIF driver 
-     will be made available as per the specification here:
-     http://wiki.openstack.org/network-refactoring#VIF_driver)
-
 Bingo bango bongo!  That's it!  Thanks for taking the leap into Quantum.
 
 ...Oh, boy!
