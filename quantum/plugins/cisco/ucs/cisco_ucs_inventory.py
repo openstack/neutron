@@ -404,7 +404,7 @@ class UCSInventory(object):
                             return host_name
         return None
 
-    def get_instance_port(self, tenant_id, instance_id, vif_id):
+    def get_instance_port(self, tenant_id, instance_id, vif_id=None):
         """
         Return the device name for a reserved interface
         """
@@ -428,60 +428,14 @@ class UCSInventory(object):
                             port_id = port_binding[const.PORTID]
                             udb.update_portbinding(port_id,
                                                    vif_id=vif_id)
-                            return blade_intf_data[blade_intf]\
+                            device_name = blade_intf_data[blade_intf]\
                                     [const.BLADE_INTF_RHEL_DEVICE_NAME]
+                            profile_name = port_binding[const.PORTPROFILENAME]
+                            return {const.DEVICENAME: device_name,
+                                    const.UCSPROFILE: profile_name}
         return None
 
     def add_blade(self, ucsm_ip, chassis_id, blade_id):
         """Add a blade to the inventory"""
+        # TODO (Sumit)
         pass
-
-
-def main():
-    #client = UCSInventory()
-    #client.build_state()
-    ucsinv = UCSInventory()
-    reserved_nics = []
-    ucsinv.build_inventory_state()
-    while True:
-        reserved_blade_dict = ucsinv.get_least_reserved_blade()
-        if not reserved_blade_dict:
-            print "No more unreserved blades\n"
-            break
-
-        least_reserved_blade_ucsm = \
-                reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
-        least_reserved_blade_chassis = \
-        reserved_blade_dict[const.LEAST_RSVD_BLADE_CHASSIS]
-        least_reserved_blade_id = \
-        reserved_blade_dict[const.LEAST_RSVD_BLADE_ID]
-        least_reserved_blade_data = \
-        reserved_blade_dict[const.LEAST_RSVD_BLADE_DATA]
-        reserved_nic_dict = \
-        ucsinv.reserve_blade_interface(least_reserved_blade_ucsm,
-                                            least_reserved_blade_chassis,
-                                            least_reserved_blade_id,
-                                            least_reserved_blade_data,
-                                      "demo", "12345", "profilename")
-        if reserved_nic_dict:
-            reserved_intf_nic_info = {const.RESERVED_INTERFACE_UCSM:
-                                   least_reserved_blade_ucsm,
-                                   const.RESERVED_INTERFACE_CHASSIS:
-                                   least_reserved_blade_chassis,
-                                   const.RESERVED_INTERFACE_BLADE:
-                                   least_reserved_blade_id,
-                                   const.RESERVED_INTERFACE_DN:
-                                   reserved_nic_dict[const.BLADE_INTF_DN]}
-            reserved_nics.append(reserved_intf_nic_info)
-            #break
-
-    for rnic in reserved_nics:
-        ucsinv.unreserve_blade_interface(
-            rnic[const.RESERVED_INTERFACE_UCSM],
-            rnic[const.RESERVED_INTERFACE_CHASSIS],
-            rnic[const.RESERVED_INTERFACE_BLADE],
-            rnic[const.RESERVED_INTERFACE_DN])
-
-
-if __name__ == '__main__':
-    main()

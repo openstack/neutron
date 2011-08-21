@@ -116,6 +116,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def create_port(self, args):
         """Support for the Quantum core API call"""
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
         least_reserved_blade_dict = \
                 self._ucs_inventory.get_least_reserved_blade()
         if not least_reserved_blade_dict:
@@ -129,6 +131,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def delete_port(self, args):
         """Support for the Quantum core API call"""
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
         rsvd_info = \
                 self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
                                                                 args[2])
@@ -152,6 +156,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def plug_interface(self, args):
         """Support for the Quantum core API call"""
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
         rsvd_info = \
                 self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
                                                                 args[2])
@@ -162,6 +168,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def unplug_interface(self, args):
         """Support for the Quantum core API call"""
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
         rsvd_info = \
                 self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
                                                                 args[2])
@@ -173,7 +181,12 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
     def get_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("get_host() called\n")
-        host_list = {const.HOST_LIST: {const.HOST_1: platform.node()}}
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
+        tenant_id = args[0]
+        instance_id = args[1]
+        host_name = self._ucs_inventory.get_host_name(tenant_id, instance_id)
+        host_list = {const.HOST_LIST: {const.HOST_1: host_name}}
         return host_list
 
     def get_instance_port(self, args):
@@ -181,6 +194,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         Get the portprofile name and the device namei for the dynamic vnic
         """
         LOG.debug("get_instance_port() called\n")
-        vif_desc = {const.VIF_DESC:
-                    {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
+        if not const.UCS_PLUGIN in self._plugins.keys():
+            return
+        tenant_id = args[0]
+        instance_id = args[1]
+        vif_id = args[2]
+        vif_info = self._ucs_inventory.get_instance_port(tenant_id,
+                                                         instance_id,
+                                                         vif_id)
+        vif_desc = {const.VIF_DESC: vif_info}
         return vif_desc
