@@ -41,6 +41,7 @@ PPDEFAULT = 'default'
 VLANID = 'vlan_id'
 VLANNAME = 'vlan_name'
 PORTPROFILENAME = 'portprofile_name'
+QOS='qos'
 
 ATTACHMENT = 'attachment'
 PORT_ID = 'port-id'
