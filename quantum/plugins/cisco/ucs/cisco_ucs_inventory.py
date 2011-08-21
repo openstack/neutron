@@ -96,7 +96,7 @@ class UCSInventory(object):
     def _load_inventory(self):
         """Load the inventory from a config file"""
         inventory = deepcopy(conf.INVENTORY)
-        LOG.debug("Loaded UCS inventory: %s\n" % inventory)
+        LOG.info("Loaded UCS inventory: %s\n" % inventory)
 
         for ucsm in inventory.keys():
             ucsm_ip = inventory[ucsm][const.IP_ADDRESS]
@@ -130,6 +130,8 @@ class UCSInventory(object):
         blade_intf_data = self._client.get_blade_data(chassis_id, blade_id,
                                                       ucsm_ip, ucsm_username,
                                                       ucsm_password)
+        LOG.info("Building UCS inventory state (this may take a while)...")
+
         unreserved_counter = 0
 
         for blade_intf in blade_intf_data.keys():
@@ -152,16 +154,23 @@ class UCSInventory(object):
                 blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
                         const.BLADE_INTF_RESERVED
                 port_binding = udb.get_portbinding_dn(dist_name)
-                blade_intf_data[blade_intf][const.TENANTID] = \
-                        port_binding[const.TENANTID]
-                blade_intf_data[blade_intf][const.PORTID] = \
-                        port_binding[const.PORTID]
-                blade_intf_data[blade_intf][const.PROFILE_ID] = \
-                        port_binding[const.PORTPROFILENAME]
-                blade_intf_data[blade_intf][const.INSTANCE_ID] = \
-                        port_binding[const.INSTANCE_ID]
-                blade_intf_data[blade_intf][const.VIF_ID] = \
-                        port_binding[const.VIF_ID]
+                if not port_binding:
+                    blade_intf_data[blade_intf][const.TENANTID] = None
+                    blade_intf_data[blade_intf][const.PORTID] = None
+                    blade_intf_data[blade_intf][const.PROFILE_ID] = None
+                    blade_intf_data[blade_intf][const.INSTANCE_ID] = None
+                    blade_intf_data[blade_intf][const.VIF_ID] = None
+                else:
+                    blade_intf_data[blade_intf][const.TENANTID] = \
+                            port_binding[const.TENANTID]
+                    blade_intf_data[blade_intf][const.PORTID] = \
+                            port_binding[const.PORTID]
+                    blade_intf_data[blade_intf][const.PROFILE_ID] = \
+                            port_binding[const.PORTPROFILENAME]
+                    blade_intf_data[blade_intf][const.INSTANCE_ID] = \
+                            port_binding[const.INSTANCE_ID]
+                    blade_intf_data[blade_intf][const.VIF_ID] = \
+                            port_binding[const.VIF_ID]
 
         blade_data = {const.BLADE_INTF_DATA: blade_intf_data,
                      const.BLADE_UNRESERVED_INTF_COUNT: unreserved_counter}
@@ -356,6 +365,9 @@ class UCSInventory(object):
                     blade_data = ucsm[chassis_id][blade_id]
                     blade_intf_data = blade_data[const.BLADE_INTF_DATA]
                     for blade_intf in blade_intf_data.keys():
+                        if not blade_intf_data[blade_intf][const.PORTID] or \
+                           not blade_intf_data[blade_intf][const.TENANTID]:
+                            continue
                         if blade_intf_data[blade_intf]\
                            [const.BLADE_INTF_RESERVATION] == \
                            const.BLADE_INTF_RESERVED and \
