@@ -172,11 +172,11 @@ class UCSVICPlugin(L2DevicePluginBase):
                                         blade_id, blade_data_dict,
                                         tenant_id, port_id,
                                         profile_name)
-        port_binding = udb.add_portbinding(port_id,
-                                           rsvd_nic_dict[const.BLADE_INTF_DN],
-                                           profile_name,
-                                           conf.DEFAULT_VLAN_NAME,
-                                           conf.DEFAULT_VLAN_ID, qos)
+        port_binding = udb.update_portbinding(port_id,
+                                       portprofile_name=profile_name,
+                                       vlan_name=conf.DEFAULT_VLAN_NAME,
+                                       vlan_id=conf.DEFAULT_VLAN_ID,
+                                       qos=qos)
         return port_binding
 
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):

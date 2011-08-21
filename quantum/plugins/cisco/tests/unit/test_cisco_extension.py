@@ -640,8 +640,7 @@ class CredentialExtensionTest(unittest.TestCase):
         self.test_credential_data = {'credential':
                                     {'credential_name': 'cred8',
                                     'user_name': 'newUser2',
-                                    'password': 'newPasswd1'
-                                    }}
+                                    'password': 'newPasswd1'}}
 
     def test_list_credentials(self):
         #Create Credential before listing
@@ -653,8 +652,7 @@ class CredentialExtensionTest(unittest.TestCase):
         req_body2 = json.dumps({'credential':
                                 {'credential_name': 'cred9',
                                 'user_name': 'newUser2',
-                                'password': 'newPasswd2'
-                                }})
+                                'password': 'newPasswd2'}})
         create_response2 = self.test_app.post(
                            self.credential_path, req_body2,
                            content_type=self.contenttype)
@@ -735,8 +733,7 @@ class CredentialExtensionTest(unittest.TestCase):
         rename_req_body = json.dumps({'credential':
                                       {'credential_name': 'cred3',
                                           'user_name': 'RenamedUser',
-                                          'password': 'Renamedpassword'
-                                      }})
+                                          'password': 'Renamedpassword'}})
         rename_path_temp = self.cred_second_path +\
                            resp_body['credentials']['credential']['id']
         rename_path = str(rename_path_temp)
@@ -767,8 +764,7 @@ class CredentialExtensionTest(unittest.TestCase):
         rename_req_body = json.dumps({'credential':
                                       {'credential_name': 'cred3',
                                           'user_name': 'RenamedUser',
-                                          'password': 'Renamedpassword'
-                                      }})
+                                          'password': 'Renamedpassword'}})
         rename_path_temp = self.cred_second_path + credential_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,

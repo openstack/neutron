@@ -26,6 +26,7 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.db import ucs_db as udb
 from quantum.plugins.cisco.ucs \
         import cisco_ucs_inventory_configuration as conf
 from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
@@ -115,7 +116,7 @@ class UCSInventory(object):
                     blade_list.append(blade_id)
                 chassis_dict[chassis_id] = blade_list
             self._inventory[ucsm_ip] = chassis_dict
-        
+
         self.build_inventory_state()
 
     def _get_host_name(self, ucsm_ip, chassis_id, blade_id):
@@ -132,6 +133,7 @@ class UCSInventory(object):
         unreserved_counter = 0
 
         for blade_intf in blade_intf_data.keys():
+            dist_name = blade_intf_data[blade_intf][const.BLADE_INTF_DN]
             if (blade_intf_data[blade_intf][const.BLADE_INTF_LINK_STATE] == \
                 const.BLADE_INTF_STATE_UNALLOCATED  or \
                 blade_intf_data[blade_intf][const.BLADE_INTF_LINK_STATE] == \
@@ -141,14 +143,25 @@ class UCSInventory(object):
                 blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
                         const.BLADE_INTF_UNRESERVED
                 unreserved_counter += 1
+                blade_intf_data[blade_intf][const.TENANTID] = None
+                blade_intf_data[blade_intf][const.PORTID] = None
+                blade_intf_data[blade_intf][const.PROFILE_ID] = None
+                blade_intf_data[blade_intf][const.INSTANCE_ID] = None
+                blade_intf_data[blade_intf][const.VIF_ID] = None
             else:
                 blade_intf_data[blade_intf][const.BLADE_INTF_RESERVATION] = \
                         const.BLADE_INTF_RESERVED
-            blade_intf_data[blade_intf][const.TENANTID] = None
-            blade_intf_data[blade_intf][const.PORTID] = None
-            blade_intf_data[blade_intf][const.PROFILE_ID] = None
-            blade_intf_data[blade_intf][const.INSTANCE_ID] = None
-            blade_intf_data[blade_intf][const.VIF_ID] = None
+                port_binding = udb.get_portbinding_dn(dist_name)
+                blade_intf_data[blade_intf][const.TENANTID] = \
+                        port_binding[const.TENANTID]
+                blade_intf_data[blade_intf][const.PORTID] = \
+                        port_binding[const.PORTID]
+                blade_intf_data[blade_intf][const.PROFILE_ID] = \
+                        port_binding[const.PORTPROFILENAME]
+                blade_intf_data[blade_intf][const.INSTANCE_ID] = \
+                        port_binding[const.INSTANCE_ID]
+                blade_intf_data[blade_intf][const.VIF_ID] = \
+                        port_binding[const.VIF_ID]
 
         blade_data = {const.BLADE_INTF_DATA: blade_intf_data,
                      const.BLADE_UNRESERVED_INTF_COUNT: unreserved_counter}
@@ -287,8 +300,8 @@ class UCSInventory(object):
                         const.BLADE_INTF_RESERVED
                 blade_intf_data[blade_intf][const.TENANTID] = tenant_id
                 blade_intf_data[blade_intf][const.PORTID] = port_id
-                blade_intf_data[blade_intf][const.PROFILE_ID] = \
-                        portprofile_name
+                #blade_intf_data[blade_intf][const.PROFILE_ID] = \
+                #        portprofile_name
                 blade_intf_data[blade_intf][const.INSTANCE_ID] = None
                 dev_eth_name = blade_intf_data[blade_intf] \
                         [const.BLADE_INTF_RHEL_DEVICE_NAME]
@@ -304,6 +317,11 @@ class UCSInventory(object):
                 reserved_nic_dict = {const.RESERVED_NIC_HOSTNAME: host_name,
                                    const.RESERVED_NIC_NAME: dev_eth_name,
                                    const.BLADE_INTF_DN: blade_intf}
+                port_binding = udb.add_portbinding(port_id, blade_intf, None,
+                                                   None, None, None)
+                udb.update_portbinding(port_id,
+                                       tenant_id=blade_intf_data[blade_intf]\
+                                       [const.TENANTID])
                 LOG.debug("Reserved blade interface: %s\n" % reserved_nic_dict)
                 return reserved_nic_dict
 
@@ -379,6 +397,10 @@ class UCSInventory(object):
                             host_name = self._get_host_name(ucsm_ip,
                                                             chassis_id,
                                                             blade_id)
+                            port_binding = udb.get_portbinding_dn(blade_intf)
+                            port_id = port_binding[const.PORTID]
+                            udb.update_portbinding(port_id,
+                                                   instance_id=instance_id)
                             return host_name
         return None
 
@@ -402,7 +424,10 @@ class UCSInventory(object):
                            [const.INSTANCE_ID] == instance_id:
                             blade_intf_data[blade_intf][const.VIF_ID] = \
                                     vif_id
-
+                            port_binding = udb.get_portbinding_dn(blade_intf)
+                            port_id = port_binding[const.PORTID]
+                            udb.update_portbinding(port_id,
+                                                   vif_id=vif_id)
                             return blade_intf_data[blade_intf]\
                                     [const.BLADE_INTF_RHEL_DEVICE_NAME]
         return None
