@@ -371,7 +371,8 @@ def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
         return port_binding
     except exc.NoResultFound:
         raise c_exc.PortVnicNotFound(port_id=port_id)
-    
+
+
 def get_portbinding_dn(blade_intf_dn):
     """Lists a port binding"""
     LOG.debug("get_portbinding_dn() called")
