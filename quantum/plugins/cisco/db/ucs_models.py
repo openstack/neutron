@@ -53,6 +53,12 @@ class DynamicVnic(BASE, L2NetworkBase):
     blade_id = Column(String(255), ForeignKey("ucs_blades.uuid"),
                                                     nullable=False)
     vnic_state = Column(String(255))
+    blade_intf_dn = Column(String(255))
+    blade_intf_order = Column(String(255))
+    blade_int_link_state = Column(String(255))
+    blade_intf_oper_state = Column(String(255))
+    blade_intf_inst_type = Column(String(255))
+    blade_intf_reservation = Column(String(255))
 
     def __init__(self, device_name, blade_id, vnic_state):
         self.uuid = uuid.uuid4()
@@ -105,19 +111,20 @@ class PortBinding(BASE, L2NetworkBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     port_id = Column(String(255), ForeignKey("ports.uuid"),
                      nullable=False)
-    dynamic_vnic_id = Column(String(255), ForeignKey("dynamic_vnics.uuid"),
-                             nullable=False)
+    blade_intf_dn = Column(String(255), nullable=False)
     portprofile_name = Column(String(255))
     vlan_name = Column(String(255))
     vlan_id = Column(Integer)
     qos = Column(String(255))
+    tenant_id = Column(String(255))
+    instance_id = Column(String(255))
+    vif_id = Column(String(255))
     ports = relation(models.Port, uselist=False)
-    dynamic_vnics = relation(DynamicVnic, uselist=False)
 
-    def __init__(self, port_id, dynamic_vnic_id, portprofile_name,
+    def __init__(self, port_id, blade_intf_dn, portprofile_name,
                  vlan_name, vlan_id, qos):
         self.port_id = port_id
-        self.dynamic_vnic_id = dynamic_vnic_id
+        self.blade_intf_dn = blade_intf_dn
         self.portprofile_name = portprofile_name
         self.vlan_name = vlan_name
         self.vlan_id = vlan_id
@@ -125,5 +132,5 @@ class PortBinding(BASE, L2NetworkBase):
 
     def __repr__(self):
         return "<PortProfile Binding(%s,%s,%s,%s,%s,%s)>" % \
-          (self.port_id, self.dynamic_vnic_id, self.portprofile_name,
+          (self.port_id, self.blade_intf_dn, self.portprofile_name,
                                 self.vlan_name, self.vlan_id, self.qos)

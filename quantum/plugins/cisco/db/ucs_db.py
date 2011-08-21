@@ -155,7 +155,10 @@ def remove_dynamicvnic(vnic_id):
 
 
 def update_dynamicvnic(vnic_id, new_device_name=None, new_blade_id=None,
-                       vnic_state=None):
+                       vnic_state=None, blade_intf_dn=None,
+                       blade_intf_order=None, blade_int_link_state=None,
+                       blade_intf_oper_state=None, blade_intf_inst_type=None,
+                       blade_intf_reservation=None):
     """Updates dynamic vnic"""
     LOG.debug("update_dynamicvnic() called")
     session = db.get_session()
@@ -169,6 +172,18 @@ def update_dynamicvnic(vnic_id, new_device_name=None, new_blade_id=None,
             vnic.blade_id = new_blade_id
         if vnic_state:
             vnic.vnic_state = vnic_state
+        if blade_intf_dn:
+            vnic.blade_intf_dn = blade_intf_dn
+        if blade_intf_order:
+            vnic.blade_intf_order = blade_intf_order
+        if blade_int_link_state:
+            vnic.blade_int_link_state = blade_int_link_state
+        if blade_intf_oper_state:
+            vnic.blade_intf_oper_state = blade_intf_oper_state
+        if blade_intf_inst_type:
+            vnic.blade_intf_inst_type = blade_intf_inst_type
+        if blade_intf_reservation:
+            vnic.blade_intf_reservation = blade_intf_reservation
         session.merge(vnic)
         session.flush()
         return vnic
@@ -291,7 +306,7 @@ def get_portbinding(port_id):
         raise c_exc.PortVnicNotFound(port_id=port_id)
 
 
-def add_portbinding(port_id, dynamic_vnic_id, portprofile_name,
+def add_portbinding(port_id, blade_intf_dn, portprofile_name,
                                         vlan_name, vlan_id, qos):
     """Adds a port binding"""
     LOG.debug("add_portbinding() called")
@@ -302,7 +317,7 @@ def add_portbinding(port_id, dynamic_vnic_id, portprofile_name,
           one()
         raise c_exc.PortVnicBindingAlreadyExists(port_id=port_id)
     except exc.NoResultFound:
-        port_binding = ucs_models.PortBinding(port_id, dynamic_vnic_id, \
+        port_binding = ucs_models.PortBinding(port_id, blade_intf_dn, \
                                     portprofile_name, vlan_name, vlan_id, qos)
         session.add(port_binding)
         session.flush()
@@ -324,8 +339,10 @@ def remove_portbinding(port_id):
         pass
 
 
-def update_portbinding(port_id, dynamic_vnic_id=None, portprofile_name=None,
-                       vlan_name=None, vlan_id=None, qos=None):
+def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
+                       vlan_name=None, vlan_id=None, qos=None,
+                       tenant_id=None, instance_id=None,
+                       vif_id=None):
     """Updates port binding"""
     LOG.debug("db update_portbinding() called")
     session = db.get_session()
@@ -333,8 +350,8 @@ def update_portbinding(port_id, dynamic_vnic_id=None, portprofile_name=None,
         port_binding = session.query(ucs_models.PortBinding).\
           filter_by(port_id=port_id).\
           one()
-        if dynamic_vnic_id:
-            port_binding.dynamic_vnic_id = dynamic_vnic_id
+        if blade_intf_dn:
+            port_binding.blade_intf_dn = blade_intf_dn
         if portprofile_name:
             port_binding.portprofile_name = portprofile_name
         if vlan_name:
@@ -343,6 +360,12 @@ def update_portbinding(port_id, dynamic_vnic_id=None, portprofile_name=None,
             port_binding.vlan_id = vlan_id
         if qos:
             port_binding.qos = qos
+        if tenant_id:
+            port_binding.tenant_id = tenant_id
+        if instance_id:
+            port_binding.instance_id = instance_id
+        if vif_id:
+            port_binding.vif_id = vif_id
         session.merge(port_binding)
         session.flush()
         return port_binding
