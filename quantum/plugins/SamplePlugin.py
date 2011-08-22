@@ -352,7 +352,7 @@ class FakePlugin(object):
         LOG.debug("FakePlugin.get_port_details() called")
         port = self._get_port(tenant_id, net_id, port_id)
         return {'port-id': str(port.uuid),
-                'attachment-id': port.interface_id,
+                'attachment': port.interface_id,
                 'port-state': port.state}
 
     def create_port(self, tenant_id, net_id, port_state=None):

@@ -31,7 +31,7 @@ class ViewBuilder(object):
 
     def build(self, attachment_data):
         """Generic method used to generate an attachment entity."""
-        if attachment_data['attachment-id']:
-            return dict(attachment=dict(id=attachment_data['attachment-id']))
+        if attachment_data['attachment']:
+            return dict(attachment=dict(id=attachment_data['attachment']))
         else:
             return dict(attachment={})

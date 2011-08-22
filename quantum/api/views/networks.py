@@ -54,6 +54,6 @@ class ViewBuilder(object):
         """Return details about a specific logical port."""
         port_dict = dict(id=port_data['port-id'],
                          state=port_data['port-state'])
-        if port_data['attachment-id']:
-            port_dict['attachment'] = dict(id=port_data['attachment-id'])
+        if port_data['attachment']:
+            port_dict['attachment'] = dict(id=port_data['attachment'])
         return port_dict

@@ -34,6 +34,6 @@ class ViewBuilder(object):
         port = dict(port=dict(id=port_data['port-id']))
         if port_details:
             port['port']['state'] = port_data['port-state']
-        if att_details and port_data['attachment-id']:
-            port['port']['attachment'] = dict(id=port_data['attachment-id'])
+        if att_details and port_data['attachment']:
+            port['port']['attachment'] = dict(id=port_data['attachment'])
         return port
