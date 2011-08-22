@@ -109,27 +109,6 @@ class QosNotFound(NotFound):
     message = _("QoS %(_id)s could not be found")
     
 
-"""
-    
-
-class PortprofileInUse(ExtensionException):
-    message = _("Unable to complete operation on Portprofile %(net_id)s. " \
-                "There is one or more attachments plugged into its ports.")
-
-
-class PortInUse(ExtensionException):
-    message = _("Unable to complete operation on port %(port_id)s " \
-                "for Portprofile %(net_id)s. The attachment '%(att_id)s" \
-                "is plugged into the logical port.")
-
-class AlreadyAttached(ExtensionException):
-    message = _("Unable to plug the attachment %(att_id)s into port " \
-                "%(port_id)s for Portprofile %(net_id)s. The attachment is " \
-                "already plugged into port %(att_port_id)s")
-    
-"""
-
-
 class Duplicate(Error):
     """Duplication Error"""
     pass

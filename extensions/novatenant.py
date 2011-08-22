@@ -22,7 +22,6 @@ from webob import exc
 
 from extensions import _novatenant_view as novatenant_view
 from quantum.common import exceptions as qexception
-#from extensions import _exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
@@ -42,27 +41,27 @@ class Novatenant(object):
     
     @classmethod
     def get_alias(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource alias"""
         return "Cisco Nova Tenant"
     
     @classmethod
     def get_description(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Description """
         return "novatenant resource is used by nova side to invoke quantum api"
     
     @classmethod
     def get_namespace(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Namespace """
         return "http://docs.ciscocloud.com/api/ext/novatenant/v1.0"
     
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Updated Time """
         return "2011-08-09T13:25:27-06:00"
     
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'get_host': "PUT",
@@ -144,7 +143,6 @@ class NovatenantsController(common.QuantumController):
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_host(host)
             return result
-            #return exc.HTTPAccepted()
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         
