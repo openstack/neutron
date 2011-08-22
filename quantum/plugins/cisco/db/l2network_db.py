@@ -24,6 +24,8 @@ from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 import l2network_models
 import logging as LOG
 import quantum.plugins.cisco.db.api as db
+from quantum.plugins.cisco.db import nexus_db as ndb
+from quantum.plugins.cisco.db import ucs_db as udb
 
 
 def initialize():
