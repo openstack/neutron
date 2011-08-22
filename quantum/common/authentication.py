@@ -103,6 +103,7 @@ class AuthProtocol(object):
         self.auth_host = conf.get('auth_host')
         self.auth_port = int(conf.get('auth_port'))
         self.auth_protocol = conf.get('auth_protocol', 'https')
+        self.auth_api_version = conf.get('auth_version', '2.0')
         self.auth_location = "%s://%s:%s" % (self.auth_protocol,
                                              self.auth_host,
                                              self.auth_port)
@@ -112,6 +113,11 @@ class AuthProtocol(object):
         self.admin_user = conf.get('admin_user')
         self.admin_password = conf.get('admin_password')
         self.admin_token = conf.get('admin_token')
+
+    def _build_token_uri(self, claims=None):
+        uri = "/v" + self.auth_api_version + "/tokens" + \
+              (claims and '/' + claims or '')
+        return uri
 
     def __init__(self, app, conf):
         """ Common initialization code """
@@ -204,7 +210,7 @@ class AuthProtocol(object):
                                           "password": password}}
         conn = httplib.HTTPConnection("%s:%s" \
             % (self.auth_host, self.auth_port))
-        conn.request("POST", "/v2.0/tokens", json.dumps(params), \
+        conn.request("POST", self._build_token_uri(), json.dumps(params), \
             headers=headers)
         response = conn.getresponse()
         data = response.read()
@@ -251,7 +257,7 @@ class AuthProtocol(object):
                     # "X-Auth-Token": admin_token}
                     # we're using a test token from the ini file for now
         conn = http_connect(self.auth_host, self.auth_port, 'GET',
-                            '/v2.0/tokens/%s' % claims, headers=headers)
+                            self._build_token_uri(claims), headers=headers)
         resp = conn.getresponse()
         # data = resp.read()
         conn.close()
@@ -277,7 +283,8 @@ class AuthProtocol(object):
                     # "X-Auth-Token": admin_token}
                     # we're using a test token from the ini file for now
         conn = http_connect(self.auth_host, self.auth_port, 'GET',
-                            '/v2.0/tokens/%s' % self.claims, headers=headers)
+                            self._build_token_uri(self.claims),
+                            headers=headers)
         resp = conn.getresponse()
         data = resp.read()
         conn.close()
