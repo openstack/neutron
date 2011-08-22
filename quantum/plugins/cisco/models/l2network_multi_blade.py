@@ -72,11 +72,15 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         device_params = self._invoke_inventory(plugin_key, function_name,
                                                args)
         device_ips = device_params[const.DEVICE_IP]
-        for device_ip in device_ips:
-            new_device_params = deepcopy(device_params)
-            new_device_params[const.DEVICE_IP] = device_ip
+        if not device_ips:
             self._invoke_plugin(plugin_key, function_name, args,
-                                new_device_params)
+                                device_params)
+        else:
+            for device_ip in device_ips:
+                new_device_params = deepcopy(device_params)
+                new_device_params[const.DEVICE_IP] = device_ip
+                self._invoke_plugin(plugin_key, function_name, args,
+                                    new_device_params)
 
     def _invoke_inventory(self, plugin_key, function_name, args):
         """Invoke only the inventory implementation"""
@@ -84,8 +88,9 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
             LOG.warn("No %s inventory loaded" % plugin_key)
             LOG.warn("%s: %s with args %s ignored" \
                      % (plugin_key, function_name, args))
-            return
-        return getattr(self._inventory[plugin_key], function_name)(args)
+            return {const.DEVICE_IP: []}
+        else:
+            return getattr(self._inventory[plugin_key], function_name)(args)
 
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
         """Invoke only the device plugin"""
