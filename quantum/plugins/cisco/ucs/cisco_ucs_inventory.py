@@ -22,6 +22,8 @@ from copy import deepcopy
 import logging as LOG
 
 from quantum.common import exceptions as exc
+from quantum.plugins.cisco.l2device_inventory_base \
+        import L2NetworkDeviceInventoryBase
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
@@ -32,7 +34,7 @@ from quantum.plugins.cisco.ucs \
 from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
 
 LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG.getLogger(__name__)
 
 """
 The _inventory data strcuture contains a nested disctioary:
@@ -79,7 +81,7 @@ const.VIF_ID
 """
 
 
-class UCSInventory(object):
+class UCSInventory(L2NetworkDeviceInventoryBase):
     """
     Manages the state of all the UCS chasses, and blades in
     the system
@@ -202,9 +204,85 @@ class UCSInventory(object):
                      const.BLADE_UNRESERVED_INTF_COUNT: unreserved_counter}
         return blade_data
 
-    def get_all_ucsms(self):
-        """Get the IPs of all the UCSMs in the system"""
-        return self._inventory.keys()
+    def _get_all_ucsms(self):
+        """Return a list of the IPs of all the UCSMs in the system"""
+        return {const.DEVICE_IP: self._inventory.keys()}
+
+    def _get_blade_for_port(self, args):
+        """
+        Return the a dict with IP address of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        tenant_id = args[0]
+        net_id = args[1]
+        port_id = args[2]
+        rsvd_info = self.get_rsvd_blade_intf_by_port(tenant_id, port_id)
+        if not rsvd_info:
+            raise exc.PortNotFound(net_id=net_id, port_id=port_id)
+        device_params = {const.DEVICE_IP: [rsvd_info[const.UCSM_IP]]}
+        return device_params
+
+    def _get_host_name_for_rsvd_intf(self, tenant_id, instance_id):
+        """
+        Return the hostname of the blade with a reserved instance
+        for this tenant
+        """
+        for ucsm_ip in self._inventory_state.keys():
+            ucsm = self._inventory_state[ucsm_ip]
+            for chassis_id in ucsm.keys():
+                for blade_id in ucsm[chassis_id]:
+                    blade_data = ucsm[chassis_id][blade_id]
+                    blade_intf_data = blade_data[const.BLADE_INTF_DATA]
+                    for blade_intf in blade_intf_data.keys():
+                        if blade_intf_data[blade_intf]\
+                           [const.BLADE_INTF_RESERVATION] == \
+                           const.BLADE_INTF_RESERVED and \
+                           blade_intf_data[blade_intf]\
+                           [const.TENANTID] == tenant_id and \
+                           blade_intf_data[blade_intf]\
+                           [const.INSTANCE_ID] == None:
+                            blade_intf_data[blade_intf]\
+                                    [const.INSTANCE_ID] = instance_id
+                            host_name = self._get_host_name(ucsm_ip,
+                                                            chassis_id,
+                                                            blade_id)
+                            port_binding = udb.get_portbinding_dn(blade_intf)
+                            port_id = port_binding[const.PORTID]
+                            udb.update_portbinding(port_id,
+                                                   instance_id=instance_id)
+                            return host_name
+        return None
+
+    def _get_instance_port(self, tenant_id, instance_id, vif_id=None):
+        """
+        Return the device name for a reserved interface
+        """
+        for ucsm_ip in self._inventory_state.keys():
+            ucsm = self._inventory_state[ucsm_ip]
+            for chassis_id in ucsm.keys():
+                for blade_id in ucsm[chassis_id]:
+                    blade_data = ucsm[chassis_id][blade_id]
+                    blade_intf_data = blade_data[const.BLADE_INTF_DATA]
+                    for blade_intf in blade_intf_data.keys():
+                        if blade_intf_data[blade_intf]\
+                           [const.BLADE_INTF_RESERVATION] == \
+                           const.BLADE_INTF_RESERVED and \
+                           blade_intf_data[blade_intf]\
+                           [const.TENANTID] == tenant_id and \
+                           blade_intf_data[blade_intf]\
+                           [const.INSTANCE_ID] == instance_id:
+                            blade_intf_data[blade_intf][const.VIF_ID] = \
+                                    vif_id
+                            port_binding = udb.get_portbinding_dn(blade_intf)
+                            port_id = port_binding[const.PORTID]
+                            udb.update_portbinding(port_id,
+                                                   vif_id=vif_id)
+                            device_name = blade_intf_data[blade_intf]\
+                                    [const.BLADE_INTF_RHEL_DEVICE_NAME]
+                            profile_name = port_binding[const.PORTPROFILENAME]
+                            return {const.DEVICENAME: device_name,
+                                    const.UCSPROFILE: profile_name}
+        return None
 
     def reload_inventory(self):
         """Reload the inventory from a conf file"""
@@ -385,69 +463,126 @@ class UCSInventory(object):
                             return blade_intf_info
         return None
 
-    def get_host_name(self, tenant_id, instance_id):
-        """
-        Return the hostname of the blade with a reserved instance
-        for this tenant
-        """
-        for ucsm_ip in self._inventory_state.keys():
-            ucsm = self._inventory_state[ucsm_ip]
-            for chassis_id in ucsm.keys():
-                for blade_id in ucsm[chassis_id]:
-                    blade_data = ucsm[chassis_id][blade_id]
-                    blade_intf_data = blade_data[const.BLADE_INTF_DATA]
-                    for blade_intf in blade_intf_data.keys():
-                        if blade_intf_data[blade_intf]\
-                           [const.BLADE_INTF_RESERVATION] == \
-                           const.BLADE_INTF_RESERVED and \
-                           blade_intf_data[blade_intf]\
-                           [const.TENANTID] == tenant_id and \
-                           blade_intf_data[blade_intf]\
-                           [const.INSTANCE_ID] == None:
-                            blade_intf_data[blade_intf]\
-                                    [const.INSTANCE_ID] = instance_id
-                            host_name = self._get_host_name(ucsm_ip,
-                                                            chassis_id,
-                                                            blade_id)
-                            port_binding = udb.get_portbinding_dn(blade_intf)
-                            port_id = port_binding[const.PORTID]
-                            udb.update_portbinding(port_id,
-                                                   instance_id=instance_id)
-                            return host_name
-        return None
-
-    def get_instance_port(self, tenant_id, instance_id, vif_id=None):
-        """
-        Return the device name for a reserved interface
-        """
-        for ucsm_ip in self._inventory_state.keys():
-            ucsm = self._inventory_state[ucsm_ip]
-            for chassis_id in ucsm.keys():
-                for blade_id in ucsm[chassis_id]:
-                    blade_data = ucsm[chassis_id][blade_id]
-                    blade_intf_data = blade_data[const.BLADE_INTF_DATA]
-                    for blade_intf in blade_intf_data.keys():
-                        if blade_intf_data[blade_intf]\
-                           [const.BLADE_INTF_RESERVATION] == \
-                           const.BLADE_INTF_RESERVED and \
-                           blade_intf_data[blade_intf]\
-                           [const.TENANTID] == tenant_id and \
-                           blade_intf_data[blade_intf]\
-                           [const.INSTANCE_ID] == instance_id:
-                            blade_intf_data[blade_intf][const.VIF_ID] = \
-                                    vif_id
-                            port_binding = udb.get_portbinding_dn(blade_intf)
-                            port_id = port_binding[const.PORTID]
-                            udb.update_portbinding(port_id,
-                                                   vif_id=vif_id)
-                            device_name = blade_intf_data[blade_intf]\
-                                    [const.BLADE_INTF_RHEL_DEVICE_NAME]
-                            profile_name = port_binding[const.PORTPROFILENAME]
-                            return {const.DEVICENAME: device_name,
-                                    const.UCSPROFILE: profile_name}
-        return None
-
     def add_blade(self, ucsm_ip, chassis_id, blade_id):
         """Add a blade to the inventory"""
         # TODO (Sumit)
         pass
+
+    def get_all_networks(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("get_all_networks() called\n")
+        return self._get_all_ucsms()
+
+    def create_network(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("create_network() called\n")
+        return self._get_all_ucsms()
+
+    def delete_network(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("delete_network() called\n")
+        return self._get_all_ucsms()
+
+    def get_network_details(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("get_network_details() called\n")
+        return self._get_all_ucsms()
+
+    def rename_network(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("rename_network() called\n")
+        return self._get_all_ucsms()
+
+    def get_all_ports(self, args):
+        """Return all UCSM IPs"""
+        LOG.debug("get_all_ports() called\n")
+        return self._get_all_ucsms()
+
+    def create_port(self, args):
+        """
+        Return the a dict with information of the blade
+        on which a dynamic vnic is available
+        """
+        LOG.debug("create_port() called\n")
+        least_reserved_blade_dict = self.get_least_reserved_blade()
+        if not least_reserved_blade_dict:
+            raise cexc.NoMoreNics()
+        ucsm_ip = least_reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
+        device_params = {const.DEVICE_IP: [ucsm_ip],
+                         const.UCS_INVENTORY: self,
+                         const.LEAST_RSVD_BLADE_DICT:\
+                         least_reserved_blade_dict}
+        return device_params
+
+    def delete_port(self, args):
+        """
+        Return the a dict with information of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        LOG.debug("delete_port() called\n")
+        tenant_id = args[0]
+        net_id = args[1]
+        port_id = args[2]
+        rsvd_info = self.get_rsvd_blade_intf_by_port(tenant_id, port_id)
+        if not rsvd_info:
+            raise exc.PortNotFound(net_id=net_id, port_id=port_id)
+        device_params = \
+                {const.DEVICE_IP: [rsvd_info[const.UCSM_IP]],
+                 const.UCS_INVENTORY: self,
+                 const.CHASSIS_ID: rsvd_info[const.CHASSIS_ID],
+                 const.BLADE_ID: rsvd_info[const.BLADE_ID],
+                 const.BLADE_INTF_DN: rsvd_info[const.BLADE_INTF_DN]}
+        return device_params
+
+    def update_port(self, args):
+        """
+        Return the a dict with IP address of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        LOG.debug("update_port() called\n")
+        return self._get_blade_for_port(args)
+
+    def get_port_details(self, args):
+        """
+        Return the a dict with IP address of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        LOG.debug("get_port_details() called\n")
+        return self._get_blade_for_port(args)
+
+    def plug_interface(self, args):
+        """
+        Return the a dict with IP address of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        LOG.debug("plug_interface() called\n")
+        return self._get_blade_for_port(args)
+
+    def unplug_interface(self, args):
+        """
+        Return the a dict with IP address of the blade
+        on which a dynamic vnic was reserved for this port
+        """
+        LOG.debug("unplug_interface() called\n")
+        return self._get_blade_for_port(args)
+
+    def get_host(self, args):
+        """Provides the hostname on which a dynamic vnic is reserved"""
+        LOG.debug("get_host() called\n")
+        tenant_id = args[0]
+        instance_id = args[1]
+        host_name = self._get_host_name_for_rsvd_intf(tenant_id, instance_id)
+        host_list = {const.HOST_LIST: {const.HOST_1: host_name}}
+        return host_list
+
+    def get_instance_port(self, args):
+        """
+        Get the portprofile name and the device name for the dynamic vnic
+        """
+        LOG.debug("get_instance_port() called\n")
+        tenant_id = args[0]
+        instance_id = args[1]
+        vif_id = args[2]
+        vif_info = self._get_instance_port(tenant_id, instance_id, vif_id)
+        vif_desc = {const.VIF_DESC: vif_info}
+        return vif_desc
