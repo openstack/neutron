@@ -20,6 +20,7 @@
 """
 
 PLUGINS = 'PLUGINS'
+INVENTORY = 'INVENTORY'
 
 PORT_STATE = 'port-state'
 PORT_UP = "ACTIVE"
@@ -116,11 +117,13 @@ RHEL_DEVICE_NAME_REPFIX = "eth"
 
 UCS_PLUGIN = 'ucs_plugin'
 NEXUS_PLUGIN = 'nexus_plugin'
+UCS_INVENTORY = 'ucs_inventory'
+NEXUS_INVENTORY = 'nexus_inventory'
 
 PLUGIN_OBJ_REF = 'plugin-obj-ref'
 PARAM_LIST = 'param-list'
 
-DEVICE_IP = 'device-ip'
+DEVICE_IP = 'device_ip'
 
 NO_VLAN_ID = 0
 

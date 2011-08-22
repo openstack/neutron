@@ -19,6 +19,7 @@
 #
 """
 
+from copy import deepcopy
 import inspect
 import logging as LOG
 import platform
@@ -29,10 +30,9 @@ from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv
 
 LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG.getLogger(__name__)
 
 
 class L2NetworkMultiBlade(L2NetworkModelBase):
@@ -44,6 +44,7 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
     All UCSM connected to a single Nexus Switch
     """
     _plugins = {}
+    _inventory = {}
 
     def __init__(self):
         for key in conf.PLUGINS[const.PLUGINS].keys():
@@ -51,41 +52,45 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
                 conf.PLUGINS[const.PLUGINS][key])
             LOG.debug("Loaded device plugin %s\n" % \
                     conf.PLUGINS[const.PLUGINS][key])
-
-        self._ucs_inventory = ucsinv.UCSInventory()
+            if key in conf.PLUGINS[const.INVENTORY].keys():
+                self._inventory[key] = utils.import_object(
+                    conf.PLUGINS[const.INVENTORY][key])
+                LOG.debug("Loaded device inventory %s\n" % \
+                        conf.PLUGINS[const.INVENTORY][key])
 
     def _func_name(self, offset=0):
         """Get the name of the calling function"""
         return inspect.stack()[1 + offset][3]
 
-    def _invoke_all_device_plugins(self, function_name, args, kwargs):
-        """Invoke all device plugins for this model implementation"""
-        for plugin_obj_ref in self._plugins.values():
-            getattr(plugin_obj_ref, function_name)(*args, **kwargs)
+    def _invoke_plugin_per_device(self, plugin_key, function_name, args):
+        """Invoke only device plugin for all the devices in the system"""
+        if not plugin_key in self._plugins.keys():
+            LOG.info("No %s Plugin loaded" % plugin_key)
+            LOG.info("%s: %s with args %s ignored" \
+                     % (plugin_key, function_name, args))
+            return
+        device_params = self._invoke_inventory(plugin_key, function_name,
+                                               args)
+        device_ips = device_params[const.DEVICE_IP]
+        for device_ip in device_ips:
+            new_device_params = deepcopy(device_params)
+            new_device_params[const.DEVICE_IP] = device_ip
+            self._invoke_plugin(plugin_key, function_name, args,
+                                new_device_params)
 
-    def _invoke_ucs_plugin(self, function_name, args, kwargs):
-        """Invoke only the UCS plugin"""
-        if const.UCS_PLUGIN in self._plugins.keys():
-            getattr(self._plugins[const.UCS_PLUGIN],
-                    function_name)(*args, **kwargs)
+    def _invoke_inventory(self, plugin_key, function_name, args):
+        """Invoke only the inventory implementation"""
+        if not plugin_key in self._inventory.keys():
+            LOG.warn("No %s inventory loaded" % plugin_key)
+            LOG.warn("%s: %s with args %s ignored" \
+                     % (plugin_key, function_name, args))
+            return
+        return getattr(self._inventory[plugin_key], function_name)(args)
 
-    def _invoke_ucs_plugin_per_device(self, function_name, args):
-        """Invoke only UCS plugin for all the UCSMs in the system"""
-        ucsm_ips = self._ucs_inventory.get_all_ucsms()
-        for ucsm_ip in ucsm_ips:
-            device_params = {const.DEVICE_IP: ucsm_ip}
-            self._invoke_ucs_plugin(function_name, args, device_params)
-
-    def _invoke_nexus_plugin(self, function_name, args, kwargs):
-        """Invoke only the Nexus plugin"""
-        if const.NEXUS_PLUGIN in self._plugins.keys():
-            getattr(self._plugins[const.NEXUS_PLUGIN],
-                    function_name)(*args, **kwargs)
-
-    def _invoke_nexus_plugin_per_device(self, function_name, args):
-        """Invoke only the nexus plugin for all the switches in the system"""
-        device_params = {const.DEVICE_IP: ""}
-        self._invoke_nexus_plugin(self._func_name(), args, device_params)
+    def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
+        """Invoke only the device plugin"""
+        return getattr(self._plugins[plugin_key], function_name)(*args,
+                                                                 **kwargs)
 
     def get_all_networks(self, args):
         """Not implemented for this model"""
@@ -93,13 +98,17 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def create_network(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_ucs_plugin_per_device(self._func_name(), args)
-        self._invoke_nexus_plugin_per_device(self._func_name(), args)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
+        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
 
     def delete_network(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_ucs_plugin_per_device(self._func_name(), args)
-        self._invoke_nexus_plugin_per_device(self._func_name(), args)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
+        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
 
     def get_network_details(self, args):
         """Not implemented for this model"""
@@ -107,8 +116,10 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def rename_network(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_ucs_plugin_per_device(self._func_name(), args)
-        self._invoke_nexus_plugin_per_device(self._func_name(), args)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
+        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
 
     def get_all_ports(self, args):
         """Not implemented for this model"""
@@ -116,35 +127,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def create_port(self, args):
         """Support for the Quantum core API call"""
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        least_reserved_blade_dict = \
-                self._ucs_inventory.get_least_reserved_blade()
-        if not least_reserved_blade_dict:
-            raise cexc.NoMoreNics()
-        ucsm_ip = least_reserved_blade_dict[const.LEAST_RSVD_BLADE_UCSM]
-        device_params = {const.DEVICE_IP: ucsm_ip,
-                         const.UCS_INVENTORY: self._ucs_inventory,
-                         const.LEAST_RSVD_BLADE_DICT:\
-                         least_reserved_blade_dict}
-        self._invoke_ucs_plugin(self._func_name(), args, device_params)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
 
     def delete_port(self, args):
         """Support for the Quantum core API call"""
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        rsvd_info = \
-                self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
-                                                                args[2])
-        if not rsvd_info:
-            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
-        device_params = \
-                {const.DEVICE_IP: rsvd_info[const.UCSM_IP],
-                 const.UCS_INVENTORY: self._ucs_inventory,
-                 const.CHASSIS_ID: rsvd_info[const.CHASSIS_ID],
-                 const.BLADE_ID: rsvd_info[const.BLADE_ID],
-                 const.BLADE_INTF_DN: rsvd_info[const.BLADE_INTF_DN]}
-        self._invoke_ucs_plugin(self._func_name(), args, device_params)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
 
     def update_port(self, args):
         """Not implemented for this model"""
@@ -156,51 +145,24 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def plug_interface(self, args):
         """Support for the Quantum core API call"""
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        rsvd_info = \
-                self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
-                                                                args[2])
-        if not rsvd_info:
-            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
-        device_params = {const.DEVICE_IP: rsvd_info[const.UCSM_IP]}
-        self._invoke_ucs_plugin(self._func_name(), args, device_params)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
 
     def unplug_interface(self, args):
         """Support for the Quantum core API call"""
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        rsvd_info = \
-                self._ucs_inventory.get_rsvd_blade_intf_by_port(args[0],
-                                                                args[2])
-        if not rsvd_info:
-            raise exc.PortNotFound(net_id=args[1], port_id=args[2])
-        device_params = {const.DEVICE_IP: rsvd_info[const.UCSM_IP]}
-        self._invoke_ucs_plugin(self._func_name(), args, device_params)
+        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
+                                       args)
 
     def get_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("get_host() called\n")
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        tenant_id = args[0]
-        instance_id = args[1]
-        host_name = self._ucs_inventory.get_host_name(tenant_id, instance_id)
-        host_list = {const.HOST_LIST: {const.HOST_1: host_name}}
-        return host_list
+        return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
+                                      args)
 
     def get_instance_port(self, args):
         """
         Get the portprofile name and the device namei for the dynamic vnic
         """
         LOG.debug("get_instance_port() called\n")
-        if not const.UCS_PLUGIN in self._plugins.keys():
-            return
-        tenant_id = args[0]
-        instance_id = args[1]
-        vif_id = args[2]
-        vif_info = self._ucs_inventory.get_instance_port(tenant_id,
-                                                         instance_id,
-                                                         vif_id)
-        vif_desc = {const.VIF_DESC: vif_info}
-        return vif_desc
+        return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
+                                      args)
