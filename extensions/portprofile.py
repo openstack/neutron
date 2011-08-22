@@ -81,7 +81,6 @@ class PortprofilesController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'portprofile'
         self._plugin = plugin
-        #super(PortprofilesController, self).__init__(plugin)
         
         self._portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
@@ -209,7 +208,6 @@ class PortprofilesController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
-        #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
         try:
             self._plugin. \

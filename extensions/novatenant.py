@@ -97,7 +97,6 @@ class NovatenantsController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'novatenant'
         self._plugin = plugin
-        #super(NovatenantsController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of novatenant ids """

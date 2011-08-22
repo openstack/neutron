@@ -94,7 +94,6 @@ class QosController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'qos'
         self._plugin = plugin
-        #super(QosController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of qos ids """
