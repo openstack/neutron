@@ -241,7 +241,7 @@ def api_plug_iface(client, *args):
         res = client.attach_resource(nid, pid, data)
     except Exception, e:
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,
-          pid, output))
+          pid, e))
         return
     LOG.debug(res)
     print "Plugged interface \"%s\" to port:%s on network:%s" % (vid, pid, nid)
@@ -387,6 +387,6 @@ if __name__ == "__main__":
         commands[cmd]["api_func"](client, *args)
     else:
         quantum = QuantumManager()
-        manager = quantum.get_manager()
+        manager = quantum.get_plugin()
         commands[cmd]["func"](manager, *args)
     sys.exit(0)

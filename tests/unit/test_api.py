@@ -24,8 +24,8 @@ import unittest
 import tests.unit.testlib_api as testlib
 from quantum import api as server
 from quantum.db import api as db
+from quantum.common.test_lib import test_config
 from quantum.common.wsgi import Serializer
-
 
 LOG = logging.getLogger('quantum.tests.test_api')
 
@@ -763,7 +763,7 @@ class APITest(unittest.TestCase):
 
     def setUp(self):
         options = {}
-        options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
+        options['plugin_provider'] = test_config['plugin_name']
         self.api = server.APIRouterV01(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
