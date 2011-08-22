@@ -122,7 +122,8 @@ nexus_ip_address=10.0.0.1
 # Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10".
 nexus_first_port=1/10
 nexus_second_port=1/11
-#Port number where the SSH will be running at Nexus Switch, e.g.: 22 (Default) 
+#Port number where SSH will be running on the Nexus switch.  Typically this is 22
+#unless you've configured your switch otherwise.
 nexus_ssh_port=22
 
 [DRIVER]
