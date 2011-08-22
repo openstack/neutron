@@ -27,8 +27,6 @@ class NexusPortBinding(BASE, L2NetworkBase):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     port_id = Column(String(255))
-    #vlan_id = Column(Integer, ForeignKey("vlan_bindings.vlan_id"), \
-    #                  nullable=False)
     vlan_id = Column(Integer, nullable=False)
 
     def __init__(self, port_id, vlan_id):

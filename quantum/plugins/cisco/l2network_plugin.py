@@ -462,7 +462,7 @@ class L2Network(QuantumPluginBase):
         cred.Store.deleteCredential(credential_id)
 
     def rename_credential(self, tenant_id, credential_id, new_name):
-        """Do nothing for this resource"""
+        """Rename the particular credential resource"""
         LOG.debug("rename_credential() called\n")
         try:
             credential = self._get_credential(tenant_id, credential_id)
@@ -528,13 +528,13 @@ class L2Network(QuantumPluginBase):
         return inspect.stack()[1 + offset][3]
 
     def _make_net_dict(self, net_id, net_name, ports):
-        """Helper funciton"""
+        """Helper funciton to create network resource dictionary"""
         res = {const.NET_ID: net_id, const.NET_NAME: net_name}
         res[const.NET_PORTS] = ports
         return res
 
     def _make_port_dict(self, port_id, port_state, net_id, attachment):
-        """Helper funciton"""
+        """Helper function to create port resource dictionary"""
         res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
         res[const.NET_ID] = net_id
         res[const.ATTACHMENT] = attachment
@@ -542,7 +542,7 @@ class L2Network(QuantumPluginBase):
 
     def _make_portprofile_dict(self, tenant_id, profile_id, profile_name,
                                qos):
-        """Helper funciton"""
+        """Helper funciton to create port-profile resource dictionary"""
         profile_associations = self._make_portprofile_assc_list(tenant_id,
                                                                 profile_id)
         res = {const.PROFILE_ID: str(profile_id),
