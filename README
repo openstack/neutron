@@ -84,6 +84,43 @@ $ export TENANT=t1
 $ PYTHONPATH=. python quantum/cli.py -v create_net $TENANT network1
 Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
 
+# -- Authentication and Authorization
+
+Requests to Quantum API are authenticated with the Keystone identity service
+using a token-based authentication protocol. 
+
+A user should first authenticate with Keystone, supplying user credentials;
+the Keystone service will return an authentication token, together with
+informations concerning token expirations and endpoint where that token can
+be used. 
+
+The authentication token must be included in every request for the Quantum
+API, in the 'X_AUTH_TOKEN' header. Quantum will look for the authentication
+token in this header, and validate it with the Keystone service.
+
+In order to validate authentication tokens, Quantum uses Keystone's
+administrative API. It therefore requires credentials for an administrative
+user, which can be specified in Quantum's configuration file
+(etc/quantum.conf)
+Either username and password, or an authentication token for an administrative
+user can be specified in the configuration file: 
+
+- Credentials:
+
+admin_user = admin
+admin_password = secrete
+
+- Admin token:
+
+admin_token = 9a82c95a-99e9-4c3a-b5ee-199f6ba7ff04
+
+As of the current release, any user for a tenant is allowed to perform
+every operation on the networks owned by the tenant itself, except for
+plugging interfaces. In order to perform such operation, the user must have
+the Quantum:NetworkAdmin roles. Roles can be configured in Keystone using 
+the administrative API.
+
+
 # -- Writing your own Quantum plug-in
 
 If you wish the write your own Quantum plugin, please refer to some concrete as

@@ -223,13 +223,11 @@ class AuthProtocol(object):
 
     def _reject_request(self):
         """Redirect client to auth server"""
-        return HTTPUseProxy(location=self.auth_location)(self.env,
-            self.start_response)
+        return HTTPUnauthorized()(self.env, self.start_response)
 
     def _reject_claims(self):
         """Client sent bad claims"""
-        return HTTPUnauthorized()(self.env,
-            self.start_response)
+        return HTTPUnauthorized()(self.env, self.start_response)
 
     def _validate_claims(self, claims):
         """Validate claims, and provide identity information if applicable """

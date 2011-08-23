@@ -31,6 +31,9 @@ import logging
 from webob.exc import HTTPUnauthorized, HTTPForbidden
 
 LOG = logging.getLogger('quantum.common.authorization')
+TENANT_HEADER = "HTTP_X_TENANT"
+ROLE_HEADER = "HTTP_X_ROLE"
+ADMIN_ROLE = "Quantum:NetworkAdmin"
 
 
 #TODO(salvatore-orlando): This class should extend Middleware class
@@ -54,12 +57,11 @@ class QuantumAuthorization(object):
         # should already have been authenticated with Keystone
         self.headers = req.copy()
         LOG.debug("Looking for X_TENANT header")
-        LOG.debug("Headers:%s" % self.headers)
-        if not "HTTP_X_TENANT" in self.headers:
+        if not TENANT_HEADER in self.headers:
             # This is bad, very bad
             return self._reject()
-        LOG.debug("X_TENANT header found:%s", self.headers['HTTP_X_TENANT'])
-        auth_tenant_id = self.headers['HTTP_X_TENANT']
+        LOG.debug("X_TENANT header found:%s", self.headers[TENANT_HEADER])
+        auth_tenant_id = self.headers[TENANT_HEADER]
         path = self.req['PATH_INFO']
         parts = path.split('/')
         LOG.debug("Request parts:%s", parts)
@@ -70,7 +72,19 @@ class QuantumAuthorization(object):
         if auth_tenant_id != req_tenant_id:
             # This is bad, very bad
             return self._forbid()
-
+        # Are you trying to operate on an attachment?
+        # If yes, you must be Quantum:NetworkAdmin
+        if parts[len(parts) - 1] == "attachment":
+            LOG.debug("Looking for X_ROLE header")
+            LOG.debug("Headers:%s", self.headers)
+            if not ROLE_HEADER in self.headers:
+                #This is bad as you definetely are not an administrator
+                return self._forbid()
+            LOG.debug("X_ROLE header found:%s", self.headers[ROLE_HEADER])
+            roles = self.headers[ROLE_HEADER].split(',')
+            if not ADMIN_ROLE in roles:
+                # Sorry, you're not and admin
+                return self._forbid()
         # Okay, authorize it - pass downstream
         return self.app(self.req, self.start_response)
 
