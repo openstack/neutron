@@ -43,7 +43,7 @@ class L2NetworkModel(L2NetworkModelBase):
         for key in conf.PLUGINS[const.PLUGINS].keys():
             self._plugins[key] = utils.import_object(
                 conf.PLUGINS[const.PLUGINS][key])
-            LOG.debug("Loaded device plugin %s\n" % \
+            LOG.debug("Loaded device plugin %s" % \
                     conf.PLUGINS[const.PLUGINS][key])
 
     def _func_name(self, offset=0):

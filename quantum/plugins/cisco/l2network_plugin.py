@@ -333,20 +333,6 @@ class L2Network(QuantumPluginBase):
 
         cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
 
-    def create_default_port_profile(self, tenant_id, network_id, profile_name,
-                                    qos):
-        "Create default port profile"""
-        portprofile = cdb.add_portprofile(tenant_id, profile_name,
-                                 const.NO_VLAN_ID, qos)
-        new_pp = self._make_portprofile_dict(tenant_id,
-                                             portprofile[const.UUID],
-                                             portprofile[const.PPNAME],
-                                             portprofile[const.PPQOS])
-        # TODO (Sumit): Need to check the following
-        port_id = None
-        cdb.add_pp_binding(tenant_id, port_id, portprofile[const.UUID], True)
-        return new_pp
-
     """
     Private functions
     """

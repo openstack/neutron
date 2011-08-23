@@ -313,7 +313,6 @@ class UCSVICTestPlugin(unittest.TestCase):
              self.tenant_id, self.net_id, self.port_id)
         self.assertEqual(port[const.ATTACHMENT], remote_interface_id)
         port_profile = port[const.PORT_PROFILE]
-        #profile_name = port_profile[const.PROFILE_NAME]
         new_vlan_name = self._cisco_ucs_plugin._get_vlan_name_for_network(
              self.tenant_id, self.net_id)
         new_vlan_id = self._cisco_ucs_plugin._get_vlan_id_for_network(
@@ -346,7 +345,6 @@ class UCSVICTestPlugin(unittest.TestCase):
              self.tenant_id, self.net_id, self.port_id)
         self.assertEqual(port[const.ATTACHMENT], None)
         port_profile = port[const.PORT_PROFILE]
-        #profile_name = port_profile[const.PROFILE_NAME]
         self.assertEqual(port_profile[const.PROFILE_VLAN_NAME],
                               conf.DEFAULT_VLAN_NAME)
         self.assertEqual(port_profile[const.PROFILE_VLAN_ID],

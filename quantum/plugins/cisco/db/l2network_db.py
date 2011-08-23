@@ -20,8 +20,8 @@ from sqlalchemy.orm import exc
 from quantum.common import exceptions as q_exc
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
+from quantum.plugins.cisco.db import l2network_models
 
-import l2network_models
 import quantum.plugins.cisco.db.api as db
 
 
@@ -108,17 +108,16 @@ def reserve_vlanid():
     """Reserves the first unused vlanid"""
     session = db.get_session()
     try:
-        vlanids = session.query(l2network_models.VlanID).\
+        rvlan = session.query(l2network_models.VlanID).\
          filter_by(vlan_used=False).\
-          all()
-        rvlan = vlanids[0]
+          first()
         rvlanid = session.query(l2network_models.VlanID).\
          filter_by(vlan_id=rvlan["vlan_id"]).\
           one()
         rvlanid["vlan_used"] = True
         session.merge(rvlanid)
         session.flush()
-        return vlanids[0]["vlan_id"]
+        return rvlan["vlan_id"]
     except exc.NoResultFound:
         raise c_exc.VlanIDNotAvailable()
 
