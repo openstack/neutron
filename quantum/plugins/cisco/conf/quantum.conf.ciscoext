@@ -12,7 +12,7 @@ bind_host = 0.0.0.0
 bind_port = 9696
 
 # Path to the extensions
-api_extensions_path = ../extensions
+api_extensions_path = ../../../../extensions
 
 [pipeline:extensions_app_with_filter]
 pipeline = extensions extensions_test_app
@@ -21,4 +21,4 @@ pipeline = extensions extensions_test_app
 paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
 
 [app:extensions_test_app]
-paste.app_factory = tests.unit.test_cisco_extension:app_factory
+paste.app_factory = quantum.plugins.cisco.tests.unit.test_cisco_extension:app_factory

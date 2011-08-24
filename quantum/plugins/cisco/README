@@ -186,7 +186,8 @@ result the quantum/plugins/cisco/run_tests.py script.
    Set the environment variable PLUGIN_DIR to the location of the plugin 
    directory. This is manadatory if the run_tests.sh script is used.
 
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    or
@@ -197,7 +198,8 @@ result the quantum/plugins/cisco/run_tests.py script.
 2. Specific Plugin unit test (needs environment setup as indicated in the 
    pre-requisites):
 
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
    ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the file>
 
    or 
@@ -211,7 +213,9 @@ result the quantum/plugins/cisco/run_tests.py script.
 
 3. All unit tests (needs environment setup as indicated in the pre-requisites):
    
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
+
    ./run_tests.sh quantum.plugins.cisco.tests.unit
 
    or 
@@ -222,6 +226,13 @@ result the quantum/plugins/cisco/run_tests.py script.
    The script is placed alongwith the other cisco unit tests. The location may
    change later.
    Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
+
+   The script can be executed by :
+    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_cisco_extension
+
+    or
+
+    python run_tests.py quantum.plugins.cisco.tests.unit.test_cisco_extension
 
 Additional installation required on Nova Compute
 ------------------------------------------------
