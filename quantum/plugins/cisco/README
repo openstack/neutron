@@ -1,8 +1,8 @@
-=====================================================================
-README: A Framework for a Quantum Plugin Supporting Multiple Switches
-=====================================================================
+=========================================================================================
+README: A Quantum Plugin Framework for Supporting L2 Networks Spannning Multiple Switches
+=========================================================================================
 
-:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu
+:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu, Debo Dutta
 :Contact: netstack@lists.launchpad.net
 :Web site: https://launchpad.net/~cisco-openstack
 :Copyright: 2011 Cisco Systems, Inc.
@@ -15,9 +15,11 @@ Introduction
 This plugin implementation provides the following capabilities
 to help you take your Layer 2 network for a Quantum leap:
 
-* A reference implementation a framework for a Quantum Plugin 
-to use multiple devices/switches in a L2 network
+* A reference implementation for a Quantum Plugin Framework
+(For details see: http://wiki.openstack.org/quantum-multi-switch-plugin)
+* Supports multiple switches in the network
 * Supports multiple models of switches concurrently
+* Supports use of multiple L2 technologies
 * Supports Cisco UCS blade servers with M81KR Virtual Interface Cards 
   (aka "Palo adapters") via 802.1Qbh.
 * Supports the Cisco Nexus family of switches.
@@ -119,6 +121,8 @@ nexus_ip_address=10.0.0.1
 # Port number on the Nexus switch to which the UCSM 6120 is connected
 # Use shortened interface syntax, e.g. "3/23" not "Ethernet3/23".
 nexus_port=3/23
+#Port number where the SSH will be running at Nexus Switch, e.g.: 22 (Default) 
+nexus_ssh_port=22
 
 [DRIVER]
 name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
@@ -130,8 +134,23 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
          host key changes (e.g. due to replacement of the supervisor or
          clearing of the SSH config on the switch), you may need to repeat
          this step and remove the old hostkey from ~/.ssh/known_hosts.
+         
+5.  Plugin Persistence framework setup:
+	5a.  Create quantum_l2network database in mysql with the following command -
+	
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-5.  Verify that you have the correct credentials for each IP address listed
+	5b.  Enter the quantum_l2network database configuration info in the 
+         quantum/plugins/cisco/conf/db_conn.ini file.
+         
+    5c.  If there is a change in the plugin configuration, service would need 
+         to be restarted after dropping and re-creating the database using
+         the following commands -
+
+mysql -u<mysqlusername> -p<mysqlpassword> -e "drop database quantum_l2network"
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
+
+6.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
 
 # Provide the UCSM credentials
@@ -152,7 +171,7 @@ password=mySecretPasswordForNova
 username=admin
 password=mySecretPasswordForNexus
 
-6.  Start the Quantum service.  If something doesn't work, verify that
+7.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
 
@@ -160,7 +179,8 @@ password=mySecretPasswordForNexus
 How to test the installation
 ----------------------------
 The unit tests are located at quantum/plugins/cisco/tests/unit. They can be
-executed from quantum/plugins/cisco/ using the run_tests.py script.
+executed from the main folder using the run_tests.sh or to get a more detailed
+result the quantum/plugins/cisco/run_tests.py script.
 
 1. Testing the core API (without UCS/Nexus/RHEL hardware, and can be run on
    Ubuntu):
@@ -168,18 +188,41 @@ executed from quantum/plugins/cisco/ using the run_tests.py script.
    quantum/plugins/cisco/conf/plugins.ini
    Then run the test script:
 
-python run_tests.py unit.test_l2networkApi
+   Set the environment variable PLUGIN_DIR to the location of the plugin 
+   directory. This is manadatory if the run_tests.sh script is used.
+
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+
+   or
+
+   python quantum/plugins/cisco/run_tests.py 
+	quantum.plugins.cisco.tests.unit.test_l2networkApi
 
 2. Specific Plugin unit test (needs environment setup as indicated in the 
    pre-requisites):
-   python run_tests.py unit.<name_of_the file>
+
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the file>
+
+   or 
+
+   python <path to the plugin directory>/run_tests.py 
+          quantum.plugins.cisco.tests.unit.<name_of_the file>
    E.g.:
 
-python run_tests.py unit.test_ucs_plugin.py
+   python quantum/plugins/cisco/run_tests.py 
+          quantum.plugins.cisco.tests.unit.test_ucs_plugin.py
 
 3. All unit tests (needs environment setup as indicated in the pre-requisites):
    
-python run_tests.py unit
+   export PLUGIN_DIR=quantum/plugins/cisco
+   ./run_tests.sh quantum.plugins.cisco.tests.unit
+
+   or 
+
+   python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
+
 
 
 Additional installation required on Nova Compute

@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,25 +17,23 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import logging as LOG
-import os
-
 from configobj import ConfigObj
-from validate import Validator
-
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class CiscoConfigParser(ConfigObj):
+    """Config Parser based on the ConfigObj module"""
 
     def __init__(self, filename):
         super(CiscoConfigParser, self).__init__(filename, raise_errors=True,
                                                 file_error=True)
 
     def dummy(self, section, key):
+        """Dummy function to return the same key, used in walk"""
         return section[key]

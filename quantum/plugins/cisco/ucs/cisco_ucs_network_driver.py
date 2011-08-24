@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,15 +18,14 @@
 # @author: Sumit Naiksatam, Cisco Systems Inc.
 #
 """
+
+"""
 Implements a UCSM XML API Client
 """
 
 import httplib
 import logging as LOG
-import string
-import subprocess
 from xml.etree import ElementTree as et
-import urllib
 
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
@@ -114,11 +114,13 @@ PROFILE_NAME + "\" status=\"deleted\"> </vnicProfile>" \
 
 
 class CiscoUCSMDriver():
+    """UCSM Driver"""
 
     def __init__(self):
         pass
 
     def _post_data(self, ucsm_ip, ucsm_username, ucsm_password, data):
+        """Send command to UCSM in http request"""
         conn = httplib.HTTPConnection(ucsm_ip)
         login_data = "<aaaLogin inName=\"" + ucsm_username + \
         "\" inPassword=\"" + ucsm_password + "\" />"
@@ -129,8 +131,8 @@ class CiscoUCSMDriver():
         LOG.debug(response.reason)
         LOG.debug(response_data)
         # TODO (Sumit): If login is not successful, throw exception
-        xmlTree = et.XML(response_data)
-        cookie = xmlTree.attrib["outCookie"]
+        xml_tree = et.XML(response_data)
+        cookie = xml_tree.attrib["outCookie"]
 
         data = data.replace(COOKIE_VALUE, cookie)
         LOG.debug("POST: %s" % data)
@@ -150,65 +152,76 @@ class CiscoUCSMDriver():
         LOG.debug(response_data)
 
     def _create_vlan_post_data(self, vlan_name, vlan_id):
+        """Create command"""
         data = CREATE_VLAN.replace(VLAN_NAME, vlan_name)
         data = data.replace(VLAN_ID, vlan_id)
         return data
 
     def _create_profile_post_data(self, profile_name, vlan_name):
+        """Create command"""
         data = CREATE_PROFILE.replace(PROFILE_NAME, profile_name)
         data = data.replace(VLAN_NAME, vlan_name)
         return data
 
-    def _create_profile_client_post_data(self, profile_name,
+    def _create_pclient_post_data(self, profile_name,
                                          profile_client_name):
+        """Create command"""
         data = ASSOCIATE_PROFILE.replace(PROFILE_NAME, profile_name)
         data = data.replace(PROFILE_CLIENT, profile_client_name)
         return data
 
-    def _change_vlan_in_profile_post_data(self, profile_name, old_vlan_name,
+    def _change_vlaninprof_post_data(self, profile_name, old_vlan_name,
                                           new_vlan_name):
+        """Create command"""
         data = CHANGE_VLAN_IN_PROFILE.replace(PROFILE_NAME, profile_name)
         data = data.replace(OLD_VLAN_NAME, old_vlan_name)
         data = data.replace(VLAN_NAME, new_vlan_name)
         return data
 
     def _delete_vlan_post_data(self, vlan_name):
+        """Create command"""
         data = DELETE_VLAN.replace(VLAN_NAME, vlan_name)
         return data
 
     def _delete_profile_post_data(self, profile_name):
+        """Create command"""
         data = DELETE_PROFILE.replace(PROFILE_NAME, profile_name)
         return data
 
     def _get_next_dynamic_nic(self):
+        """Get an avaialble dynamic nic on the host"""
         dynamic_nic_id = gvif.get_next_dynic()
         if len(dynamic_nic_id) > 0:
             return dynamic_nic_id
         else:
-            raise cisco_exceptions.NoMoreNics(net_id=net_id, port_id=port_id)
+            raise cexc.NoMoreNics()
 
     def create_vlan(self, vlan_name, vlan_id, ucsm_ip, ucsm_username,
                     ucsm_password):
+        """Create request for UCSM"""
         data = self._create_vlan_post_data(vlan_name, vlan_id)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def create_profile(self, profile_name, vlan_name, ucsm_ip, ucsm_username,
                        ucsm_password):
+        """Create request for UCSM"""
         data = self._create_profile_post_data(profile_name, vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-        data = self._create_profile_client_post_data(profile_name,
+        data = self._create_pclient_post_data(profile_name,
                                                      profile_name[-16:])
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def change_vlan_in_profile(self, profile_name, old_vlan_name,
                                new_vlan_name, ucsm_ip, ucsm_username,
                                ucsm_password):
-        data = self._change_vlan_in_profile_post_data(profile_name,
+        """Create request for UCSM"""
+        data = self._change_vlaninprof_post_data(profile_name,
                                                       old_vlan_name,
                                                       new_vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def get_dynamic_nic(self, host):
+        """Get an avaialble dynamic nic on the host"""
         # TODO (Sumit): Check availability per host
         # TODO (Sumit): If not available raise exception
         # TODO (Sumit): This simple logic assumes that create-port and
@@ -222,14 +235,17 @@ class CiscoUCSMDriver():
         return dynamic_nic_name
 
     def delete_vlan(self, vlan_name, ucsm_ip, ucsm_username, ucsm_password):
+        """Create request for UCSM"""
         data = self._delete_vlan_post_data(vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def delete_profile(self, profile_name, ucsm_ip, ucsm_username,
                        ucsm_password):
+        """Create request for UCSM"""
         data = self._delete_profile_post_data(profile_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def release_dynamic_nic(self, host):
+        """Release a reserved dynamic nic on the host"""
         # TODO (Sumit): Release on a specific host
         pass

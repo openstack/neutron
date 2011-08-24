@@ -20,8 +20,8 @@
 import logging
 import unittest
 
-
 import tests.unit.testlib_api as testlib
+
 from quantum import api as server
 from quantum.db import api as db
 from quantum.common.test_lib import test_config
@@ -523,7 +523,6 @@ class APITest(unittest.TestCase):
                         show_port_res.body, content_type)
         self.assertEqual({'id': port_id, 'state': new_port_state},
                          port_data['port'])
-
         # now set it back to the original value
         update_port_req = testlib.update_port_request(self.tenant_id,
                                                         network_id, port_id,
