@@ -63,8 +63,6 @@ class Client(object):
 
     """A base client class - derived from Glance.BaseClient"""
 
-    action_prefix = '/v0.1/tenants/{tenant_id}'
-
     # Action query strings
     networks_path = "/networks"
     network_path = "/networks/%s"
@@ -74,7 +72,7 @@ class Client(object):
 
     def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
                 format="xml", testingStub=None, key_file=None, cert_file=None,
-                logger=None):
+                logger=None, action_prefix="/v0.1/tenants/{tenant_id}"):
         """
         Creates a new client to some service.
 
@@ -97,6 +95,7 @@ class Client(object):
         self.key_file = key_file
         self.cert_file = cert_file
         self.logger = logger
+        self.action_prefix = action_prefix
 
     def get_connection_type(self):
         """
@@ -130,7 +129,7 @@ class Client(object):
 
         # Add format and tenant_id
         action += ".%s" % self.format
-        action = Client.action_prefix + action
+        action = self.action_prefix + action
         action = action.replace('{tenant_id}', self.tenant)
 
         if type(params) is dict:
