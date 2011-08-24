@@ -17,12 +17,12 @@
 # @authors: Shweta Padubidri, Cisco Systems, Inc.
 #           Peter Strunk , Cisco Systems, Inc.
 #           Shubhangi Satras , Cisco Systems, Inc.
-import json
-import os.path
-import routes
 import unittest
 import logging
 import webob
+import json
+import os.path
+import routes
 from webtest import TestApp
 from extensions import credential
 from extensions import portprofile
@@ -41,9 +41,9 @@ from quantum.manager import QuantumManager
 from quantum.plugins.cisco import l2network_plugin
 
 TEST_CONF_FILE = os.path.join(os.path.dirname(__file__), os.pardir,
-                              os.pardir, 'etc', 'quantum.conf.ciscoext')
-EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir,
-                               os.pardir, "extensions")
+                              os.pardir, 'conf', 'quantum.conf.ciscoext')
+EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
+                               os.pardir, os.pardir, os.pardir, "extensions")
 
 LOG = logging.getLogger('quantum.plugins.cisco.tests.test_cisco_extensions')
 
@@ -62,6 +62,9 @@ class ExtensionsTestApp(wsgi.Router):
 class PortprofileExtensionTest(unittest.TestCase):
 
     def setUp(self):
+
+        """ Set up function """
+
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
@@ -88,6 +91,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_portprofile(self):
+
+        """ Test List Portprofile"""
 
         LOG.debug("test_list_portprofile - START")
         req_body1 = json.dumps(self.test_port_profile)
@@ -121,6 +126,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_create_portprofile(self):
 
+        """ Test create Portprofile"""
+
         LOG.debug("test_create_portprofile - START")
         req_body = json.dumps(self.test_port_profile)
         index_response = self.test_app.post(self.profile_path, req_body,
@@ -138,6 +145,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_create_portprofileBADRequest(self):
 
+        """ Test create Portprofile Bad Request"""
+
         LOG.debug("test_create_portprofileBADRequest - START")
         index_response = self.test_app.post(self.profile_path, 'BAD_REQUEST',
                                             content_type=self.contenttype,
@@ -146,6 +155,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_create_portprofileBADRequest - END")
 
     def test_show_portprofile(self):
+
+        """ Test show Portprofile """
 
         LOG.debug("test_show_portprofile - START")
         req_body = json.dumps(self.test_port_profile)
@@ -165,6 +176,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_show_portprofileDNE(self, portprofile_id='100'):
 
+        """ Test show Portprofile does not exist"""
+
         LOG.debug("test_show_portprofileDNE - START")
         show_path_temp = self.portprofile_path + portprofile_id
         show_port_path = str(show_path_temp)
@@ -173,6 +186,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_show_portprofileDNE - END")
 
     def test_update_portprofile(self):
+
+        """ Test update Portprofile"""
 
         LOG.debug("test_update_portprofile - START")
         req_body = json.dumps(self.test_port_profile)
@@ -197,6 +212,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_update_portprofileBADRequest(self):
 
+        """ Test update Portprofile Bad Request"""
+
         LOG.debug("test_update_portprofileBADRequest - START")
         req_body = json.dumps(self.test_port_profile)
         index_response = self.test_app.post(
@@ -217,6 +234,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_update_portprofileDNE(self, portprofile_id='100'):
 
+        """ Test update Portprofile does not exist"""
+
         LOG.debug("test_update_portprofileiDNE - START")
         rename_port_profile = {'portprofile':
                               {'portprofile_name': 'cisco_rename_portprofile',
@@ -230,6 +249,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_update_portprofileDNE - START")
 
     def test_delete_portprofile(self):
+
+        """ Test delete Portprofile"""
 
         LOG.debug("test_delete_portprofile - START")
         req_body = json.dumps(self.test_port_profile)
@@ -248,6 +269,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_delete_portprofileDNE(self, portprofile_id='100'):
 
+        """ Test delete Portprofile does not exist"""
+
         LOG.debug("test_delete_portprofileDNE - START")
         delete_path_temp = self.portprofile_path + portprofile_id
         delete_path = str(delete_path_temp)
@@ -256,6 +279,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_delete_portprofileDNE - END")
 
     def create_request(self, path, body, content_type, method='GET'):
+
+        """ Test create request"""
 
         LOG.debug("test_create_request - START")
         req = webob.Request.blank(path)
@@ -267,6 +292,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_create_request - END")
 
     def _create_network(self, name=None):
+
+        """ Test create network"""
 
         LOG.debug("Creating network - START")
         if name:
@@ -286,6 +313,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def _create_port(self, network_id, port_state):
 
+        """ Test create port"""
+
         LOG.debug("Creating port for network %s - START", network_id)
         port_path = "/tenants/tt/networks/%s/ports" % network_id
         port_req_data = {'port': {'port-state': '%s' % port_state}}
@@ -300,6 +329,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("Creating port for network - END")
 
     def test_associate_portprofile(self):
+
+        """ Test associate portprofile"""
 
         LOG.debug("test_associate_portprofile - START")
         net_id = self._create_network()
@@ -336,6 +367,8 @@ class PortprofileExtensionTest(unittest.TestCase):
 
     def test_associate_portprofileDNE(self, portprofile_id='100'):
 
+        """ Test associate portprofile does not exist"""
+
         LOG.debug("test_associate_portprofileDNE - START")
         test_port_assign_data = {'portprofile': {'network-id': '001',
                                          'port-id': '1'}}
@@ -349,6 +382,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_associate_portprofileDNE - END")
 
     def test_disassociate_portprofile(self):
+
+        """ Test disassociate portprofile"""
 
         LOG.debug("test_disassociate_portprofile - START")
         net_id = self._create_network()
@@ -388,21 +423,33 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_disassociate_portprofile - END")
 
     def tear_down_profile(self, delete_profile_path):
+
+        """ Tear down profile"""
+
         self.test_app.delete(delete_profile_path)
 
     def tear_down_associate_profile(self, delete_profile_path,
                                  dissociate_profile_path, req_body):
+
+        """ Tear down associate profile"""
+
         self.test_app.post(dissociate_profile_path, req_body,
                            content_type=self.contenttype)
         self.tear_down_profile(delete_profile_path)
 
     def tearDown(self):
+
+        """ Tear down """
+
         db.clear_db()
 
 
 class NovatenantExtensionTest(unittest.TestCase):
 
     def setUp(self):
+
+        """ Set up function"""
+
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'get_host': "PUT",
@@ -421,6 +468,9 @@ class NovatenantExtensionTest(unittest.TestCase):
                                    'key2': '2'}}}
 
     def test_get_host(self):
+
+        """ Test get host"""
+
         LOG.debug("test_get_host - START")
         req_body = json.dumps(self.test_instance_data)
         host_path = self.novatenants_path + "001/get_host"
@@ -431,6 +481,9 @@ class NovatenantExtensionTest(unittest.TestCase):
         LOG.debug("test_get_host - END")
 
     def test_get_hostBADRequest(self):
+
+        """ Test get host bad request"""
+
         LOG.debug("test_get_hostBADRequest - START")
         host_path = self.novatenants_path + "001/get_host"
         host_response = self.test_app.put(
@@ -440,6 +493,9 @@ class NovatenantExtensionTest(unittest.TestCase):
         LOG.debug("test_get_hostBADRequest - END")
 
     def test_instance_port(self):
+
+        """ Test get instance port """
+
         LOG.debug("test_instance_port - START")
         req_body = json.dumps(self.test_instance_data)
         instance_port_path = self.novatenants_path + "001/get_instance_port"
@@ -453,6 +509,8 @@ class NovatenantExtensionTest(unittest.TestCase):
 class QosExtensionTest(unittest.TestCase):
 
     def setUp(self):
+
+        """ Set up function """
 
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
@@ -469,6 +527,8 @@ class QosExtensionTest(unittest.TestCase):
                                'qos_desc': {'PPS': 50, 'TTL': 5}}}
 
     def test_create_qos(self):
+
+        """ Test create qos """
 
         LOG.debug("test_create_qos - START")
         req_body = json.dumps(self.test_qos_data)
@@ -488,6 +548,8 @@ class QosExtensionTest(unittest.TestCase):
 
     def test_create_qosBADRequest(self):
 
+        """ Test create qos bad request """
+
         LOG.debug("test_create_qosBADRequest - START")
         index_response = self.test_app.post(self.qos_path,
                                             'BAD_REQUEST',
@@ -497,6 +559,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_create_qosBADRequest - END")
 
     def test_list_qoss(self):
+
+        """ Test list qoss """
+
         LOG.debug("test_list_qoss - START")
         req_body1 = json.dumps(self.test_qos_data)
         create_resp1 = self.test_app.post(self.qos_path, req_body1,
@@ -524,6 +589,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_list_qoss - END")
 
     def test_show_qos(self):
+
+        """ Test show qos """
+
         LOG.debug("test_show_qos - START")
         req_body = json.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path, req_body,
@@ -541,6 +609,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_show_qos - END")
 
     def test_show_qosDNE(self, qos_id='100'):
+
+        """ Test show qos does not exist"""
+
         LOG.debug("test_show_qosDNE - START")
         show_path_temp = self.qos_second_path + qos_id
         show_qos_path = str(show_path_temp)
@@ -549,6 +620,8 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_show_qosDNE - END")
 
     def test_update_qos(self):
+
+        """ Test update qos """
 
         LOG.debug("test_update_qos - START")
         req_body = json.dumps(self.test_qos_data)
@@ -567,6 +640,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_update_qos - END")
 
     def test_update_qosDNE(self, qos_id='100'):
+
+        """ Test update qos does not exist """
+
         LOG.debug("test_update_qosDNE - START")
         rename_req_body = json.dumps({'qos': {'qos_name': 'cisco_rename_qos',
                  'qos_desc': {'PPS': 50, 'TTL': 5}}})
@@ -578,6 +654,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_update_qosDNE - END")
 
     def test_update_qosBADRequest(self):
+
+        """ Test update qos bad request """
+
         LOG.debug("test_update_qosBADRequest - START")
         req_body = json.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path, req_body,
@@ -597,6 +676,8 @@ class QosExtensionTest(unittest.TestCase):
 
     def test_delete_qos(self):
 
+        """ Test delte qos """
+
         LOG.debug("test_delete_qos - START")
         req_body = json.dumps({'qos': {'qos_name': 'cisco_test_qos',
                                'qos_desc': {'PPS': 50, 'TTL': 5}}})
@@ -612,6 +693,9 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_delete_qos - END")
 
     def test_delete_qosDNE(self, qos_id='100'):
+
+        """ Test delte qos does not exist"""
+
         LOG.debug("test_delete_qosDNE - START")
         delete_path_temp = self.qos_second_path + qos_id
         delete_path = str(delete_path_temp)
@@ -620,12 +704,18 @@ class QosExtensionTest(unittest.TestCase):
         LOG.debug("test_delete_qosDNE - END")
 
     def tearDownQos(self, delete_profile_path):
+
+        """ Tear Down Qos """
+
         self.test_app.delete(delete_profile_path)
 
 
 class CredentialExtensionTest(unittest.TestCase):
 
     def setUp(self):
+
+        """ Set up function """
+
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         controller = credential.CredentialController(
@@ -640,10 +730,12 @@ class CredentialExtensionTest(unittest.TestCase):
         self.test_credential_data = {'credential':
                                     {'credential_name': 'cred8',
                                     'user_name': 'newUser2',
-                                    'password': 'newPasswd1'
-                                    }}
+                                    'password': 'newPasswd1'}}
 
     def test_list_credentials(self):
+
+        """ Test list credentials """
+
         #Create Credential before listing
         LOG.debug("test_list_credentials - START")
         req_body1 = json.dumps(self.test_credential_data)
@@ -653,8 +745,7 @@ class CredentialExtensionTest(unittest.TestCase):
         req_body2 = json.dumps({'credential':
                                 {'credential_name': 'cred9',
                                 'user_name': 'newUser2',
-                                'password': 'newPasswd2'
-                                }})
+                                'password': 'newPasswd2'}})
         create_response2 = self.test_app.post(
                            self.credential_path, req_body2,
                            content_type=self.contenttype)
@@ -677,6 +768,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_list_credentials - END")
 
     def test_create_credential(self):
+
+        """ Test create credential """
+
         LOG.debug("test_create_credential - START")
         req_body = json.dumps(self.test_credential_data)
         index_response = self.test_app.post(
@@ -693,6 +787,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_create_credential - END")
 
     def test_create_credentialBADRequest(self):
+
+        """ Test create credential bad request """
+
         LOG.debug("test_create_credentialBADRequest - START")
         index_response = self.test_app.post(
                               self.credential_path, 'BAD_REQUEST',
@@ -701,6 +798,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_create_credentialBADRequest - END")
 
     def test_show_credential(self):
+
+        """ Test show credential """
+
         LOG.debug("test_show_credential - START")
         req_body = json.dumps(self.test_credential_data)
         index_response = self.test_app.post(
@@ -716,6 +816,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_show_credential - END")
 
     def test_show_credentialDNE(self, credential_id='100'):
+
+        """ Test show credential does not exist """
+
         LOG.debug("test_show_credentialDNE - START")
         show_path_temp = self.cred_second_path + credential_id
         show_cred_path = str(show_path_temp)
@@ -724,6 +827,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_show_credentialDNE - END")
 
     def test_update_credential(self):
+
+        """ Test update credential """
+
         LOG.debug("test_update_credential - START")
         req_body = json.dumps(self.test_credential_data)
 
@@ -735,8 +841,7 @@ class CredentialExtensionTest(unittest.TestCase):
         rename_req_body = json.dumps({'credential':
                                       {'credential_name': 'cred3',
                                           'user_name': 'RenamedUser',
-                                          'password': 'Renamedpassword'
-                                      }})
+                                          'password': 'Renamedpassword'}})
         rename_path_temp = self.cred_second_path +\
                            resp_body['credentials']['credential']['id']
         rename_path = str(rename_path_temp)
@@ -747,6 +852,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_update_credential - END")
 
     def test_update_credBADReq(self):
+
+        """ Test update credential bad request """
+
         LOG.debug("test_update_credBADReq - START")
         req_body = json.dumps(self.test_credential_data)
         index_response = self.test_app.post(
@@ -763,12 +871,14 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_update_credBADReq - END")
 
     def test_update_credentialDNE(self, credential_id='100'):
+
+        """ Test update credential does not exist"""
+
         LOG.debug("test_update_credentialDNE - START")
         rename_req_body = json.dumps({'credential':
                                       {'credential_name': 'cred3',
                                           'user_name': 'RenamedUser',
-                                          'password': 'Renamedpassword'
-                                      }})
+                                          'password': 'Renamedpassword'}})
         rename_path_temp = self.cred_second_path + credential_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,
@@ -777,6 +887,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_update_credentialDNE - END")
 
     def test_delete_credential(self):
+
+        """ Test delete credential """
+
         LOG.debug("test_delete_credential - START")
         req_body = json.dumps(self.test_credential_data)
         index_response = self.test_app.post(
@@ -792,6 +905,9 @@ class CredentialExtensionTest(unittest.TestCase):
         LOG.debug("test_delete_credential - END")
 
     def test_delete_credentialDNE(self, credential_id='100'):
+
+        """ Test delete credential does not exist """
+
         LOG.debug("test_delete_credentialDNE - START")
         delete_path_temp = self.cred_second_path + credential_id
         delete_path = str(delete_path_temp)
