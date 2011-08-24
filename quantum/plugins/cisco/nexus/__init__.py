@@ -15,4 +15,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
+# @author: Edgar Magana, Cisco Systems, Inc.
+"""
+Init module for Nexus Driver
+"""

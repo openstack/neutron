@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,12 +17,19 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import inspect
 from abc import ABCMeta, abstractmethod
 
 
 class L2DevicePluginBase(object):
+    """
+    Base class for a device-specific plugin.
+    An example of a device-specific plugin is a Nexus switch plugin.
+    The network model relies on device-category-specific plugins to perform
+    the configuration on each device.
+    """
 
     __metaclass__ = ABCMeta
 
@@ -133,7 +141,7 @@ class L2DevicePluginBase(object):
         marked with the abstractmethod decorator is
         provided by the plugin class.
         """
-        if cls is QuantumPluginBase:
+        if cls is L2DevicePluginBase:
             for method in cls.__abstractmethods__:
                 method_ok = False
                 for base in klass.__mro__:

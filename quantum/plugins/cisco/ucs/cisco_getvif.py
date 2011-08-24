@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,11 +17,13 @@
 #
 # @author: Rohit Agarwalla, Cisco Systems Inc.
 #
-import sys
+"""
+
 import subprocess
 
 
 def get_next_dynic(argv=[]):
+    """Get the next available dynamic nic on this host"""
     cmd = ["ifconfig", "-a"]
     f_cmd_output = subprocess.Popen(cmd, stdout=subprocess.PIPE).\
                    communicate()[0]

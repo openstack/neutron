@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,27 +17,36 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
-import MySQLdb
+import hashlib
 import logging as LOG
-import sys
+import MySQLdb
 import traceback
 
-from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_nova_configuration as conf
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
+def get16ByteUUID(uuid):
+    """
+    Return a 16 byte has of the UUID, used when smaller unique
+    ID is required.
+    """
+    return hashlib.md5(uuid).hexdigest()[:16]
+
+
 class DBUtils(object):
+    """Utilities to use connect to MySQL DB and execute queries"""
 
     def __init__(self):
         pass
 
     def _get_db_connection(self):
+        """Get a connection to the DB"""
         db_ip = conf.DB_SERVER_IP
         db_username = conf.DB_USERNAME
         db_password = conf.DB_PASSWORD
@@ -45,6 +55,7 @@ class DBUtils(object):
         return self.db
 
     def execute_db_query(self, sql_query):
+        """Execute a DB query"""
         db = self._get_db_connection()
         cursor = db.cursor()
         try:
@@ -52,6 +63,7 @@ class DBUtils(object):
             results = cursor.fetchall()
             db.commit()
             LOG.debug("DB query execution succeeded: %s" % sql_query)
+            db.close()
         except:
             db.rollback()
             LOG.debug("DB query execution failed: %s" % sql_query)

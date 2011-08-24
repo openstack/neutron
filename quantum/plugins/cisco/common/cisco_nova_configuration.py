@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import os
 
@@ -23,13 +25,13 @@ from quantum.plugins.cisco.common import cisco_configparser as confp
 
 CONF_FILE = "../conf/nova.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
                              + "/" + CONF_FILE)
 
-section = cp['NOVA']
-DB_SERVER_IP = section['db_server_ip']
-DB_NAME = section['db_name']
-DB_USERNAME = section['db_username']
-DB_PASSWORD = section['db_password']
-NOVA_HOST_NAME = section['nova_host_name']
-NOVA_PROJ_NAME = section['nova_proj_name']
+SECTION = CP['NOVA']
+DB_SERVER_IP = SECTION['db_server_ip']
+DB_NAME = SECTION['db_name']
+DB_USERNAME = SECTION['db_username']
+DB_PASSWORD = SECTION['db_password']
+NOVA_HOST_NAME = SECTION['nova_host_name']
+NOVA_PROJ_NAME = SECTION['nova_proj_name']
