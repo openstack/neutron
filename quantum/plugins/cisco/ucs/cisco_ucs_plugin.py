@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import logging as LOG
 
@@ -33,6 +35,7 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class UCSVICPlugin(L2DevicePluginBase):
+    """UCS Device Plugin"""
     _networks = {}
 
     def __init__(self):
@@ -238,41 +241,48 @@ class UCSVICPlugin(L2DevicePluginBase):
         port_profile[const.PROFILE_VLAN_ID] = conf.DEFAULT_VLAN_ID
 
     def _get_profile_name(self, port_id):
-        profile_name = conf.PROFILE_NAME_PREFIX + port_id
+        """Returns the port profile name based on the port UUID"""
+        profile_name = conf.PROFILE_NAME_PREFIX \
+                + cutil.get16ByteUUID(port_id)
         return profile_name
 
     def _validate_port_state(self, port_state):
+        """Check the port state"""
         if port_state.upper() not in (const.PORT_UP, const.PORT_DOWN):
             raise exc.StateInvalid(port_state=port_state)
         return True
 
     def _validate_attachment(self, tenant_id, network_id, port_id,
                              remote_interface_id):
+        """Check if the VIF can be attached"""
         network = self._get_network(tenant_id, network_id)
         for port in network[const.NET_PORTS].values():
             if port[const.ATTACHMENT] == remote_interface_id:
-                raise exc.AlreadyAttached(net_id=network_id,
-                                          port_id=port_id,
-                                          att_id=port[const.ATTACHMENT],
-                                          att_port_id=port[const.PORT_ID])
+                raise exc.PortInUse(net_id=network_id,
+                                    port_id=port_id,
+                                    att_id=port[const.ATTACHMENT])
 
     def _get_network(self, tenant_id, network_id):
+        """Get the network object ref"""
         network = self._networks.get(network_id)
         if not network:
             raise exc.NetworkNotFound(net_id=network_id)
         return network
 
     def _get_vlan_name_for_network(self, tenant_id, network_id):
+        """Return the VLAN name as set by the L2 network plugin"""
         net = self._get_network(tenant_id, network_id)
         vlan_name = net[const.NET_VLAN_NAME]
         return vlan_name
 
     def _get_vlan_id_for_network(self, tenant_id, network_id):
+        """Return the VLAN id as set by the L2 network plugin"""
         net = self._get_network(tenant_id, network_id)
         vlan_id = net[const.NET_VLAN_ID]
         return vlan_id
 
     def _get_port(self, tenant_id, network_id, port_id):
+        """Get the port object ref"""
         net = self._get_network(tenant_id, network_id)
         port = net[const.NET_PORTS].get(port_id)
         if not port:
@@ -281,6 +291,7 @@ class UCSVICPlugin(L2DevicePluginBase):
 
     def _create_port_profile(self, tenant_id, net_id, port_id, vlan_name,
                              vlan_id):
+        """Create port profile in UCSM"""
         if self._port_profile_counter >= int(conf.MAX_UCSM_PORT_PROFILES):
             raise cexc.UCSMPortProfileLimit(net_id=net_id, port_id=port_id)
         profile_name = self._get_profile_name(port_id)
@@ -293,6 +304,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         return new_port_profile
 
     def _delete_port_profile(self, port_id, profile_name):
+        """Delete port profile in UCSM"""
         self._client.delete_profile(profile_name, self._ucsm_ip,
                                     self._ucsm_username, self._ucsm_password)
         self._port_profile_counter -= 1

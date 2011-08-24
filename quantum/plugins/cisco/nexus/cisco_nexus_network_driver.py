@@ -22,11 +22,9 @@ Implements a Nexus-OS NETCONF over SSHv2 API Client
 """
 
 import logging as LOG
-import string
-import subprocess
 
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
+from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
 from ncclient import manager
 
@@ -34,193 +32,101 @@ LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
-# The following are standard strings, messages used to communicate with Nexus,
-#only place holder values change for each message
-exec_conf_prefix = """
-      <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
-        <configure xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
-          <__XML__MODE__exec_configure>
-"""
-
-
-exec_conf_postfix = """
-          </__XML__MODE__exec_configure>
-        </configure>
-      </config>
-"""
-
-
-cmd_vlan_conf_snippet = """
-            <vlan>
-              <vlan-id-create-delete>
-                <__XML__PARAM_value>%s</__XML__PARAM_value>
-                <__XML__MODE_vlan>
-                  <name>
-                    <vlan-name>%s</vlan-name>
-                  </name>
-                  <state>
-                    <vstate>active</vstate>
-                  </state>
-                  <no>
-                    <shutdown/>
-                  </no>
-                </__XML__MODE_vlan>
-              </vlan-id-create-delete>
-            </vlan>
-"""
-
-cmd_no_vlan_conf_snippet = """
-          <no>
-          <vlan>
-            <vlan-id-create-delete>
-              <__XML__PARAM_value>%s</__XML__PARAM_value>
-            </vlan-id-create-delete>
-          </vlan>
-          </no>
-"""
-
-cmd_vlan_int_snippet = """
-          <interface>
-            <ethernet>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <switchport></switchport>
-                <switchport>
-                  <trunk>
-                    <allowed>
-                      <vlan>
-                        <__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                          <allow-vlans>%s</allow-vlans>
-                        </__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                      </vlan>
-                    </allowed>
-                  </trunk>
-                </switchport>
-              </__XML__MODE_if-ethernet-switch>
-            </ethernet>
-          </interface>
-"""
-
-cmd_port_trunk = """
-          <interface>
-            <ethernet>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <switchport></switchport>
-                <switchport>
-                  <mode>
-                    <trunk>
-                    </trunk>
-                  </mode>
-                </switchport>
-              </__XML__MODE_if-ethernet-switch>
-            </ethernet>
-          </interface>
-"""
-
-cmd_no_switchport = """
-          <interface>
-            <ethernet>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <no>
-                  <switchport>
-                  </switchport>
-                </no>
-              </__XML__MODE_if-ethernet-switch>
-            </ethernet>
-          </interface>
-"""
-
-
-cmd_no_vlan_int_snippet = """
-          <interface>
-            <ethernet>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <switchport></switchport>
-                <no>
-                <switchport>
-                  <trunk>
-                    <allowed>
-                      <vlan>
-                        <__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                          <allow-vlans>%s</allow-vlans>
-                        </__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                      </vlan>
-                    </allowed>
-                  </trunk>
-                </switchport>
-               </no>
-              </__XML__MODE_if-ethernet-switch>
-            </ethernet>
-          </interface>
-"""
-
-
-filter_show_vlan_brief_snippet = """
-      <show xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
-        <vlan>
-          <brief/>
-        </vlan>
-      </show> """
-
-
 class CiscoNEXUSDriver():
-
+    """
+    Nexus Driver Main Class
+    """
     def __init__(self):
         pass
 
-    def nxos_connect(self, nexus_host, port, nexus_user, nexus_password):
-            m = manager.connect(host=nexus_host, port=22, username=nexus_user,
-                                password=nexus_password)
-            return m
+    def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
+                     nexus_password):
+        """
+        Makes the SSH connection to the Nexus Switch
+        """
+        man = manager.connect(host=nexus_host, port=nexus_ssh_port,
+                                username=nexus_user, password=nexus_password)
+        return man
+
+    def create_xml_snippet(self, cutomized_config):
+        """
+        Creates the Proper XML structure for the Nexus Switch Configuration
+        """
+        conf_xml_snippet = snipp.EXEC_CONF_SNIPPET % (cutomized_config)
+        return conf_xml_snippet
 
     def enable_vlan(self, mgr, vlanid, vlanname):
-        confstr = cmd_vlan_conf_snippet % (vlanid, vlanname)
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
+        """
+        Creates a VLAN on Nexus Switch given the VLAN ID and Name
+        """
+        confstr = snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname)
+        confstr = self.create_xml_snippet(confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan(self, mgr, vlanid):
-        confstr = cmd_no_vlan_conf_snippet % vlanid
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
+        """
+        Delete a VLAN on Nexus Switch given the VLAN ID
+        """
+        confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
+        confstr = self.create_xml_snippet(confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def enable_port_trunk(self, mgr, interface):
-        confstr = cmd_port_trunk % (interface)
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
-        print confstr
+        """
+        Enables trunk mode an interface on Nexus Switch
+        """
+        confstr = snipp.CMD_PORT_TRUNK % (interface)
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_switch_port(self, mgr, interface):
-        confstr = cmd_no_switchport % (interface)
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
-        print confstr
+        """
+        Disables trunk mode an interface on Nexus Switch
+        """
+        confstr = snipp.CMD_NO_SWITCHPORT % (interface)
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        confstr = cmd_vlan_int_snippet % (interface, vlanid)
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
-        print confstr
+        """
+        Enables trunk mode vlan access an interface on Nexus Switch given
+        VLANID
+        """
+        confstr = snipp.CMD_VLAN_INT_SNIPPET % (interface, vlanid)
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        confstr = cmd_no_vlan_int_snippet % (interface, vlanid)
-        confstr = exec_conf_prefix + confstr + exec_conf_postfix
-        print confstr
+        """
+        Enables trunk mode vlan access an interface on Nexus Switch given
+        VLANID
+        """
+        confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_interface):
-        #TODO (Edgar) Move the SSH port to the configuration file
-        with self.nxos_connect(nexus_host, 22, nexus_user,
-                               nexus_password) as m:
-            self.enable_vlan(m, vlan_id, vlan_name)
-            self.enable_vlan_on_trunk_int(m, nexus_interface, vlan_id)
+                    nexus_password, nexus_interface, nexus_ssh_port):
+        """
+        Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
+        given the VLAN ID and Name and Interface Number
+        """
+        with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
+                               nexus_password) as man:
+            self.enable_vlan(man, vlan_id, vlan_name)
+            self.enable_vlan_on_trunk_int(man, nexus_interface, vlan_id)
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_interface):
-        with self.nxos_connect(nexus_host, 22, nexus_user,
-                               nexus_password) as m:
-            self.disable_vlan(m, vlan_id)
-            self.disable_switch_port(m, nexus_interface)
+                    nexus_password, nexus_interface, nexus_ssh_port):
+        """
+        Delete a VLAN and Disables trunk mode an interface on Nexus Switch
+        given the VLAN ID and Interface Number
+        """
+        with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
+                               nexus_password) as man:
+            self.disable_vlan(man, vlan_id)
+            self.disable_switch_port(man, nexus_interface)

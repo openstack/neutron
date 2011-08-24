@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
+"""
 
 import os
 
@@ -23,15 +25,15 @@ from quantum.plugins.cisco.common import cisco_configparser as confp
 
 CONF_FILE = "../conf/ucs.ini"
 
-cp = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
+CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
                              + "/" + CONF_FILE)
 
-section = cp['UCSM']
-UCSM_IP_ADDRESS = section['ip_address']
-DEFAULT_VLAN_NAME = section['default_vlan_name']
-DEFAULT_VLAN_ID = section['default_vlan_id']
-MAX_UCSM_PORT_PROFILES = section['max_ucsm_port_profiles']
-PROFILE_NAME_PREFIX = section['profile_name_prefix']
+SECTION = CP['UCSM']
+UCSM_IP_ADDRESS = SECTION['ip_address']
+DEFAULT_VLAN_NAME = SECTION['default_vlan_name']
+DEFAULT_VLAN_ID = SECTION['default_vlan_id']
+MAX_UCSM_PORT_PROFILES = SECTION['max_ucsm_port_profiles']
+PROFILE_NAME_PREFIX = SECTION['profile_name_prefix']
 
-section = cp['DRIVER']
-UCSM_DRIVER = section['name']
+SECTION = CP['DRIVER']
+UCSM_DRIVER = SECTION['name']
