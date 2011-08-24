@@ -79,8 +79,7 @@ class QuantumScheduler(driver.Scheduler):
                  {'instance_id': instance_id,
                   'instance_desc': \
                   {'user_id': user_id,
-                   'project_id': project_id
-                  }}}
+                   'project_id': project_id}}}
 
         client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
                         action_prefix=ACTION_PREFIX_CSCO)
@@ -93,5 +92,5 @@ class QuantumScheduler(driver.Scheduler):
                                        " for this request. Is the appropriate"
                                        " service running?"))
 
-        LOG.debug(_("Quantum service returned host: %s\n") % hostname)
+        LOG.debug(_("Quantum service returned host: %s") % hostname)
         return hostname

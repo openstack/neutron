@@ -83,8 +83,7 @@ class Libvirt802dot1QbhDriver(VIFDriver):
                   'instance_desc': \
                   {'user_id': user_id,
                    'project_id': project_id,
-                   'vif_id': vif_id
-                  }}}
+                   'vif_id': vif_id}}}
 
         client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
                         action_prefix=ACTION_PREFIX_CSCO)
