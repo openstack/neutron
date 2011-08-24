@@ -48,12 +48,19 @@ class CiscoNEXUSDriver():
                                 username=nexus_user, password=nexus_password)
         return man
 
+    def create_xml_snippet(self, cutomized_config):
+        """
+        Creates the Proper XML structure for the Nexus Switch Configuration
+        """
+        conf_xml_snippet = snipp.EXEC_CONF_SNIPPET % (cutomized_config)
+        return conf_xml_snippet
+
     def enable_vlan(self, mgr, vlanid, vlanname):
         """
         Creates a VLAN on Nexus Switch given the VLAN ID and Name
         """
         confstr = snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname)
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan(self, mgr, vlanid):
@@ -61,7 +68,7 @@ class CiscoNEXUSDriver():
         Delete a VLAN on Nexus Switch given the VLAN ID
         """
         confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def enable_port_trunk(self, mgr, interface):
@@ -69,7 +76,7 @@ class CiscoNEXUSDriver():
         Enables trunk mode an interface on Nexus Switch
         """
         confstr = snipp.CMD_PORT_TRUNK % (interface)
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
@@ -78,7 +85,7 @@ class CiscoNEXUSDriver():
         Disables trunk mode an interface on Nexus Switch
         """
         confstr = snipp.CMD_NO_SWITCHPORT % (interface)
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
@@ -88,7 +95,7 @@ class CiscoNEXUSDriver():
         VLANID
         """
         confstr = snipp.CMD_VLAN_INT_SNIPPET % (interface, vlanid)
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 
@@ -98,7 +105,7 @@ class CiscoNEXUSDriver():
         VLANID
         """
         confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
-        confstr = snipp.EXEC_CONF_PREFIX + confstr + snipp.EXEC_CONF_POSTFIX
+        confstr = self.create_xml_snippet(confstr)
         LOG.debug("NexusDriver: %s" % confstr)
         mgr.edit_config(target='running', config=confstr)
 

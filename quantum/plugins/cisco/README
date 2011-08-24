@@ -142,8 +142,15 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 	
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-	5b.  Enter the quantum_l2netowrk database configuration info in the 
+	5b.  Enter the quantum_l2network database configuration info in the 
          quantum/plugins/cisco/conf/db_conn.ini file.
+         
+    5c.  If there is a change in the plugin configuration, service would need 
+         to be restarted after dropping and re-creating the database using
+         the following commands -
+
+mysql -u<mysqlusername> -p<mysqlpassword> -e "drop database quantum_l2network"
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
 6.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
