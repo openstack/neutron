@@ -107,7 +107,7 @@ class L2Network(QuantumPluginBase):
                     if port[const.INTERFACEID]:
                         raise exc.NetworkInUse(net_id=net_id)
                 for port in ports_on_net:
-                    self.delete_port(tenant_id, net_id, port[const.PORTID])
+                    self.delete_port(tenant_id, net_id, port[const.UUID])
 
             self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
             net_dict = cutil.make_net_dict(net[const.UUID],
@@ -488,9 +488,10 @@ class L2Network(QuantumPluginBase):
     def get_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("get_host() called\n")
-        return self._invoke_device_plugins(self._func_name(), [tenant_id,
+        host_list = self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
+        return host_list
 
     def get_instance_port(self, tenant_id, instance_id, instance_desc):
         """
@@ -508,7 +509,7 @@ class L2Network(QuantumPluginBase):
         """
         All device-specific calls are delegated to the model
         """
-        getattr(self._model, function_name)(args)
+        return getattr(self._model, function_name)(args)
 
     def _get_vlan_for_tenant(self, tenant_id, net_name):
         """Get vlan ID"""
