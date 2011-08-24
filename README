@@ -89,6 +89,32 @@ Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
 Requests to Quantum API are authenticated with the Keystone identity service
 using a token-based authentication protocol. 
 
+1) Enabling Authentication and Authorization
+The Keystone identity service is a requirement. It must be installed, although
+not necessarily on the same machine where Quantum is running; both Keystone's
+admin API and service API should be running
+
+Authentication and Authorization middleware should be enabled in the Quantum
+pipeline. To this aim, uncomment the following line in /etc/quantum.conf:
+
+pipeline = authN authZ extensions quantumapiapp
+
+The final step concerns configuring access to Keystone. The following attributes
+must be specified in the [filter:authN] section of quantum.conf:
+
+auth_host			IP address or host name of the server where Keystone is running
+auth_port			Port where the Keystone Admin API is listening
+auth_protocol		Protocol used for communicating with Keystone (http/https)
+auth_version		Keystone API version (default: 2.0)
+auth_admin_token	Keystone token for administrative access
+auth_admin_user		Keystone user with administrative rights
+auth_admin_password Password for the user specified with auth_admin_user
+
+NOTE: aut_admin_token and auth_admin_user/password are exclusive. 
+If both are specified, auth_admin_token has priority.
+
+2) Authenticating and Authorizing request for Quantum API 
+
 A user should first authenticate with Keystone, supplying user credentials;
 the Keystone service will return an authentication token, together with
 informations concerning token expirations and endpoint where that token can

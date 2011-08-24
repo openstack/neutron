@@ -110,9 +110,9 @@ class AuthProtocol(object):
         LOG.debug("AUTH SERVICE LOCATION:%s", self.auth_location)
         # Credentials used to verify this component with the Auth service since
         # validating tokens is a priviledged call
-        self.admin_user = conf.get('admin_user')
-        self.admin_password = conf.get('admin_password')
-        self.admin_token = conf.get('admin_token')
+        self.admin_user = conf.get('auth_admin_user')
+        self.admin_password = conf.get('auth_admin_password')
+        self.admin_token = conf.get('auth_admin_token')
 
     def _build_token_uri(self, claims=None):
         uri = "/v" + self.auth_api_version + "/tokens" + \
