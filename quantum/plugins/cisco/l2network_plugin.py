@@ -42,15 +42,12 @@ class L2Network(QuantumPluginBase):
     """ L2 Network Framework Plugin """
     supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
                                    "Cisco qos", "Cisco Nova Tenant"]
-    _qos_levels = {}
-    _credentials = {}
 
     def __init__(self):
         cdb.initialize()
+        cred.Store.initialize()
         self._model = utils.import_object(conf.MODEL_CLASS)
         self._vlan_mgr = utils.import_object(conf.MANAGER_CLASS)
-        self._qoslevels_counter = 0
-        self._credentials_counter = 0
         LOG.debug("L2Network plugin initialization done successfully\n")
 
     """
@@ -365,84 +362,60 @@ class L2Network(QuantumPluginBase):
 
         cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
 
-    def create_default_portprofile(self, tenant_id, network_id, profile_name,
-                                    qos):
-        "Create default port profile"""
-        LOG.debug("create_default_portprofile() called\n")
-        portprofile = cdb.add_portprofile(tenant_id, profile_name,
-                                 const.NO_VLAN_ID, qos)
-        new_pp = cutil.make_portprofile_dict(tenant_id,
-                                             portprofile[const.UUID],
-                                             portprofile[const.PPNAME],
-                                             portprofile[const.PPQOS])
-        # TODO (Sumit): Need to check the following
-        port_id = None
-        cdb.add_pp_binding(tenant_id, port_id, portprofile[const.UUID], True)
-        return new_pp
-
     def get_all_qoss(self, tenant_id):
         """Get all QoS levels"""
         LOG.debug("get_all_qoss() called\n")
-        return self._qos_levels.values()
+        qoslist = cdb.get_all_qoss(tenant_id)
+        return qoslist
 
     def get_qos_details(self, tenant_id, qos_id):
         """Get QoS Details"""
         LOG.debug("get_qos_details() called\n")
         try:
-            qos_level = self._get_qos_level(tenant_id, qos_id)
+            qos_level = cdb.get_qos(tenant_id, qos_id)
         except Exception, excp:
             raise cexc.QosNotFound(tenant_id=tenant_id,
-                                        qos_id=qos_id)
+                                   qos_id=qos_id)
         return qos_level
 
     def create_qos(self, tenant_id, qos_name, qos_desc):
         """Create a QoS level"""
         LOG.debug("create_qos() called\n")
-        qos_id = self._get_unique_qos_id(tenant_id)
-        new_qos_level_dict = {const.QOS_LEVEL_ID: qos_id,
-                              const.QOS_LEVEL_NAME: qos_name,
-                              const.QOS_LEVEL_ASSOCIATIONS: [],
-                              const.QOS_LEVEL_DESCRIPTION: qos_desc}
-        self._qos_levels[qos_id] = new_qos_level_dict
-        return new_qos_level_dict
+        qos = cdb.add_qos(tenant_id, qos_name, qos_desc)
+        return qos
 
     def delete_qos(self, tenant_id, qos_id):
         """Delete a QoS level"""
         LOG.debug("delete_qos() called\n")
         try:
-            qos_level = self._get_qos_level(tenant_id, qos_id)
+            qos_level = cdb.get_qos(tenant_id, qos_id)
         except Exception, excp:
             raise cexc.QosNotFound(tenant_id=tenant_id,
-                                        qos_id=qos_id)
-        associations = qos_level[const.QOS_LEVEL_ASSOCIATIONS]
-        if len(associations) > 0:
-            raise cexc.QoSLevelInvalidDelete(tenant_id=tenant_id,
-                                             qos_id=qos_id)
-        else:
-            self._qos_levels.pop(qos_id)
+                                   qos_id=qos_id)
+        return cdb.remove_qos(tenant_id, qos_id)
 
     def rename_qos(self, tenant_id, qos_id, new_name):
         """Rename QoS level"""
         LOG.debug("rename_qos() called\n")
-        qos_level = self._get_qos_level(tenant_id, qos_id)
         try:
-            qos_level = self._get_qos_level(tenant_id, qos_id)
+            qos_level = cdb.get_qos(tenant_id, qos_id)
         except Exception, excp:
             raise cexc.QosNotFound(tenant_id=tenant_id,
-                                        qos_id=qos_id)
-        qos_level[const.QOS_LEVEL_NAME] = new_name
-        return qos_level
+                                   qos_id=qos_id)
+        qos = cdb.update_qos(tenant_id, qos_id, new_name)
+        return qos
 
     def get_all_credentials(self, tenant_id):
         """Get all credentials"""
         LOG.debug("get_all_credentials() called\n")
-        return self._credentials.values()
+        credential_list = cdb.get_all_credentials(tenant_id)
+        return credential_list
 
     def get_credential_details(self, tenant_id, credential_id):
         """Get a particular credential"""
         LOG.debug("get_credential_details() called\n")
         try:
-            credential = self._get_credential(tenant_id, credential_id)
+            credential = cdb.get_credential(tenant_id, credential_id)
         except Exception, excp:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
@@ -452,37 +425,30 @@ class L2Network(QuantumPluginBase):
                           password):
         """Create a new credential"""
         LOG.debug("create_credential() called\n")
-        credential_id = self._get_unique_credential_id(tenant_id)
-        masked_password = const.MASKED_PASSWORD
-        new_credential_dict = {const.CREDENTIAL_ID: credential_id,
-                               const.CREDENTIAL_NAME: credential_name,
-                               const.CREDENTIAL_USERNAME: user_name,
-                               const.CREDENTIAL_PASSWORD: masked_password}
-        self._credentials[credential_id] = new_credential_dict
-        cred.Store.putCredential(credential_id, user_name, password)
-        return new_credential_dict
+        credential = cdb.add_credential(tenant_id, credential_name,
+                                        user_name, password)
+        return credential
 
     def delete_credential(self, tenant_id, credential_id):
         """Delete a credential"""
         LOG.debug("delete_credential() called\n")
         try:
-            credential = self._get_credential(tenant_id, credential_id)
+            credential = cdb.get_credential(tenant_id, credential_id)
         except Exception, excp:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
-        self._credentials.pop(credential_id)
-        cred.Store.deleteCredential(credential_id)
+        credential = cdb.remove_credential(tenant_id, credential_id)
+        return credential
 
     def rename_credential(self, tenant_id, credential_id, new_name):
         """Do nothing for this resource"""
         LOG.debug("rename_credential() called\n")
         try:
-            credential = self._get_credential(tenant_id, credential_id)
+            credential = cdb.get_credential(tenant_id, credential_id)
         except Exception, excp:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
-
-        credential[const.CREDENTIAL_NAME] = new_name
+        credential = cdb.update_credential(tenant_id, credential_id, new_name)
         return credential
 
     def get_host(self, tenant_id, instance_id, instance_desc):
@@ -533,35 +499,3 @@ class L2Network(QuantumPluginBase):
     def _func_name(self, offset=0):
         """Getting the name of the calling funciton"""
         return inspect.stack()[1 + offset][3]
-
-    def _get_qos_level(self, tenant_id, qos_id):
-        """Return a QoS level based on the ID"""
-        qos_level = self._qos_levels.get(qos_id)
-        if not qos_level:
-            raise cexc.QosNotFound(tenant_id=tenant_id,
-                                        qos_id=qos_id)
-        return qos_level
-
-    def _get_credential(self, tenant_id, credential_id):
-        """Return a credential based on the ID"""
-        credential = self._credentials.get(credential_id)
-        if not credential:
-            raise cexc.CredentialNotFound(tenant_id=tenant_id,
-                                          credetial_id=credential_id)
-        return credential
-
-    def _get_unique_qos_id(self, tenant_id):
-        """Get a unique QoS ID"""
-        self._qoslevels_counter += 1
-        self._qoslevels_counter %= int(const.MAX_QOS_LEVELS)
-        qos_id = tenant_id[16:] + "-qos-" + str(self._qoslevels_counter)
-        # TODO (Sumit): Need to check if the ID has already been allocated
-        return qos_id
-
-    def _get_unique_credential_id(self, tenant_id):
-        """Get a unique credential ID"""
-        self._credentials_counter += 1
-        self._credentials_counter %= int(const.MAX_CREDENTIALS)
-        cred_id = tenant_id[16:] + "-crd-" + str(self._credentials_counter)
-        # TODO (Sumit): Need to check if the ID has already been allocated
-        return cred_id
