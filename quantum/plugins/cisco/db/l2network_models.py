@@ -145,3 +145,45 @@ class PortProfileBinding(BASE, L2NetworkBase):
     def __repr__(self):
         return "<PortProfile Binding(%s,%s,%s,%s)>" % \
           (self.tenant_id, self.port_id, self.portprofile_id, self.default)
+
+
+class QoS(BASE, L2NetworkBase):
+    """Represents QoS for a tenant"""
+    __tablename__ = 'QoS'
+
+    uuid = Column(String(255), primary_key=True)
+    tenant_id = Column(String(255))
+    name = Column(String(255))
+    desc = Column(String(255))
+
+    def __init__(self, tenant_id, qos_name, qos_desc):
+        self.uuid = uuid.uuid4()
+        self.tenant_id = tenant_id
+        self.name = qos_name
+        self.desc = qos_desc
+
+    def __repr__(self):
+        return "<QoS(%s,%s,%s)>" % \
+          (self.tenant_id, self.name, self.desc)
+
+
+class Credential(BASE, L2NetworkBase):
+    """Represents credentials for a tenant"""
+    __tablename__ = 'QoS'
+
+    uuid = Column(String(255))
+    tenant_id = Column(String(255), primary_key=True)
+    name = Column(String(255), primary_key=True)
+    user_name = Column(String(255))
+    password = Column(String(255))
+
+    def __init__(self, tenant_id, name, user_name, password):
+        self.uuid = uuid.uuid4()
+        self.tenant_id = tenant_id
+        self.name = name
+        self.user_name = user_name
+        self.password = password
+
+    def __repr__(self):
+        return "<Credentials(%s,%s,%s,%s)>" % \
+          (self.tenant_id, self.name, self.user_name, self.password)

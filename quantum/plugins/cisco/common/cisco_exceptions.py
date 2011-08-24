@@ -100,8 +100,23 @@ class QoSLevelInvalidDelete(exceptions.QuantumException):
                 "for tenant %(tenant_id)s since association exists")
 
 
+class QosNameAlreadyExists(exceptions.QuantumException):
+    message = _("QoS level with name %(qos_name)s already exists " \
+                "for tenant %(tenant_id)s")
+
+
 class CredentialNotFound(exceptions.QuantumException):
     message = _("Credential %(credential_id)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class CredentialNameNotFound(exceptions.QuantumException):
+    message = _("Credential %(credential_name)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class CredentialAlreadyExists(exceptions.QuantumException):
+    message = _("Credential %(credential_id)s already exists " \
                 "for tenant %(tenant_id)s")
 
 
