@@ -148,6 +148,7 @@ class Client(object):
                                httplib.NO_CONTENT):
                 return self.deserialize(res)
             else:
+                # Create exception with HTTP status code and message
                 ex = Exception("Server returned error: %s" % status_code)
                 ex.args = ([dict(status_code=status_code, message=res.read())],)
                 raise ex
