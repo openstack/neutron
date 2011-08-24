@@ -404,7 +404,7 @@ def get_qos(tenant_id, qos_id):
     try:
         qos = session.query(l2network_models.QoS).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(uuid=qos_id).\
+          filter_by(qos_id=qos_id).\
           one()
         return qos
     except exc.NoResultFound:
@@ -419,7 +419,7 @@ def add_qos(tenant_id, qos_name, qos_desc):
     try:
         qos = session.query(l2network_models.QoS).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(name=qos_name).\
+          filter_by(qos_name=qos_name).\
           one()
         raise c_exc.QosNameAlreadyExists(qos_name=qos_name,
                                         tenant_id=tenant_id)
@@ -436,7 +436,7 @@ def remove_qos(tenant_id, qos_id):
     try:
         qos = session.query(l2network_models.QoS).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(uuid=qos_id).\
+          filter_by(qos_id=qos_id).\
           one()
         session.delete(qos)
         session.flush()
@@ -451,10 +451,10 @@ def update_qos(tenant_id, qos_id, new_qos_name=None):
     try:
         qos = session.query(l2network_models.QoS).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(uuid=qos_id).\
+          filter_by(qos_id=qos_id).\
           one()
         if new_qos_name:
-            qos["name"] = new_qos_name
+            qos["qos_name"] = new_qos_name
         session.merge(qos)
         session.flush()
         return qos
@@ -475,17 +475,17 @@ def get_all_credentials(tenant_id):
         return []
 
 
-def get_credential(tenant_id, credential_name):
+def get_credential(tenant_id, credential_id):
     """Lists the creds for given a cred_id and tenant_id"""
     session = db.get_session()
     try:
         cred = session.query(l2network_models.Credential).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(name=credential_name).\
+          filter_by(credential_id=credential_id).\
           one()
         return cred
     except exc.NoResultFound:
-        raise c_exc.CredentialNameNotFound(credential_name=credential_name,
+        raise c_exc.CredentialNotFound(credential_id=credential_id,
                                          tenant_id=tenant_id)
 
 
@@ -495,7 +495,7 @@ def add_credential(tenant_id, credential_name, user_name, password):
     try:
         cred = session.query(l2network_models.Credential).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(name=credential_name).\
+          filter_by(credential_name=credential_name).\
           one()
         raise c_exc.CredentialAlreadyExists(credential_name=credential_name,
                                             tenant_id=tenant_id)
@@ -507,13 +507,13 @@ def add_credential(tenant_id, credential_name, user_name, password):
         return cred
 
 
-def remove_credential(tenant_id, credential_name):
+def remove_credential(tenant_id, credential_id):
     """Removes a credential from a  tenant"""
     session = db.get_session()
     try:
         cred = session.query(l2network_models.Credential).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(name=credential_name).\
+          filter_by(credential_id=credential_id).\
           one()
         session.delete(cred)
         session.flush()
@@ -522,14 +522,14 @@ def remove_credential(tenant_id, credential_name):
         pass
 
 
-def update_credential(tenant_id, credential_name,
+def update_credential(tenant_id, credential_id,
                       new_user_name=None, new_password=None):
     """Updates a credential for a tenant"""
     session = db.get_session()
     try:
         cred = session.query(l2network_models.Credential).\
           filter_by(tenant_id=tenant_id).\
-          filter_by(name=credential_name).\
+          filter_by(credential_id=credential_id).\
           one()
         if new_user_name:
             cred["user_name"] = new_user_name
@@ -539,5 +539,5 @@ def update_credential(tenant_id, credential_name,
         session.flush()
         return cred
     except exc.NoResultFound:
-        raise c_exc.CredentialNameNotFound(credential_name=credential_name,
+        raise c_exc.CredentialNotFound(credential_id=credential_id,
                                          tenant_id=tenant_id)
