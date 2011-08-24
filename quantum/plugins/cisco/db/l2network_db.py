@@ -408,7 +408,7 @@ def get_qos(tenant_id, qos_id):
           one()
         return qos
     except exc.NoResultFound:
-        raise c_exc.QoSNotFound(qos_id=qos_id,
+        raise c_exc.QosNotFound(qos_id=qos_id,
                                 tenant_id=tenant_id)
 
 
@@ -459,7 +459,7 @@ def update_qos(tenant_id, qos_id, new_qos_name=None):
         session.flush()
         return qos
     except exc.NoResultFound:
-        raise c_exc.QoSNotFound(qos_id=qos_id,
+        raise c_exc.QosNotFound(qos_id=qos_id,
                                 tenant_id=tenant_id)
 
 
@@ -486,6 +486,20 @@ def get_credential(tenant_id, credential_id):
         return cred
     except exc.NoResultFound:
         raise c_exc.CredentialNotFound(credential_id=credential_id,
+                                         tenant_id=tenant_id)
+
+
+def get_credential_name(tenant_id, credential_name):
+    """Lists the creds for given a cred_name and tenant_id"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_name=credential_name).\
+          one()
+        return cred
+    except exc.NoResultFound:
+        raise c_exc.CredentialNameNotFound(credential_name=credential_name,
                                          tenant_id=tenant_id)
 
 

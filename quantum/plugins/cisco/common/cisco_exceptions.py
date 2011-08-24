@@ -114,6 +114,12 @@ class CredentialNotFound(exceptions.QuantumException):
                 "for tenant %(tenant_id)s")
 
 
+class CredentialNameNotFound(exceptions.QuantumException):
+    """Credential Name could not be found"""
+    message = _("Credential %(credential_name)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
 class CredentialAlreadyExists(exceptions.QuantumException):
     """Credential ID already exists"""
     message = _("Credential %(credential_id)s already exists " \
