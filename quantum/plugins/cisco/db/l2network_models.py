@@ -77,7 +77,7 @@ class VlanID(BASE, L2NetworkBase):
         self.vlan_used = False
 
     def __repr__(self):
-        return "<VlanBinding(%d,%s)>" % \
+        return "<VlanID(%d,%s)>" % \
           (self.vlan_id, self.vlan_used)
 
 
@@ -145,3 +145,46 @@ class PortProfileBinding(BASE, L2NetworkBase):
     def __repr__(self):
         return "<PortProfile Binding(%s,%s,%s,%s)>" % \
           (self.tenant_id, self.port_id, self.portprofile_id, self.default)
+
+
+class QoS(BASE, L2NetworkBase):
+    """Represents QoS for a tenant"""
+    __tablename__ = 'qoss'
+
+    qos_id = Column(String(255))
+    tenant_id = Column(String(255), primary_key=True)
+    qos_name = Column(String(255), primary_key=True)
+    qos_desc = Column(String(255))
+
+    def __init__(self, tenant_id, qos_name, qos_desc):
+        self.qos_id = uuid.uuid4()
+        self.tenant_id = tenant_id
+        self.qos_name = qos_name
+        self.qos_desc = qos_desc
+
+    def __repr__(self):
+        return "<QoS(%s,%s,%s,%s)>" % \
+          (self.qos_id, self.tenant_id, self.qos_name, self.qos_desc)
+
+
+class Credential(BASE, L2NetworkBase):
+    """Represents credentials for a tenant"""
+    __tablename__ = 'credentials'
+
+    credential_id = Column(String(255))
+    tenant_id = Column(String(255), primary_key=True)
+    credential_name = Column(String(255), primary_key=True)
+    user_name = Column(String(255))
+    password = Column(String(255))
+
+    def __init__(self, tenant_id, credential_name, user_name, password):
+        self.credential_id = uuid.uuid4()
+        self.tenant_id = tenant_id
+        self.credential_name = credential_name
+        self.user_name = user_name
+        self.password = password
+
+    def __repr__(self):
+        return "<Credentials(%s,%s,%s,%s)>" % \
+          (self.credential_id, self.tenant_id, self.credential_name,
+           self.user_name, self.password)

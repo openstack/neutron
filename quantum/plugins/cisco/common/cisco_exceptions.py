@@ -91,17 +91,38 @@ class VlanIDNotAvailable(exceptions.QuantumException):
 
 
 class QosNotFound(exceptions.QuantumException):
+    """QoS ID could not be found"""
     message = _("QoS level %(qos_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 
 
 class QoSLevelInvalidDelete(exceptions.QuantumException):
+    """QoS ID could not be deleted"""
     message = _("QoS level %(qos_id)s could not be deleted " \
                 "for tenant %(tenant_id)s since association exists")
 
 
+class QosNameAlreadyExists(exceptions.QuantumException):
+    """QoS Name already exists"""
+    message = _("QoS level with name %(qos_name)s already exists " \
+                "for tenant %(tenant_id)s")
+
+
 class CredentialNotFound(exceptions.QuantumException):
+    """Credential ID could not be found"""
     message = _("Credential %(credential_id)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class CredentialNameNotFound(exceptions.QuantumException):
+    """Credential Name could not be found"""
+    message = _("Credential %(credential_name)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class CredentialAlreadyExists(exceptions.QuantumException):
+    """Credential ID already exists"""
+    message = _("Credential %(credential_id)s already exists " \
                 "for tenant %(tenant_id)s")
 
 

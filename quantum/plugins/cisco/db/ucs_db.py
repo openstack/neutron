@@ -20,9 +20,9 @@ import logging as LOG
 from sqlalchemy.orm import exc
 
 import quantum.plugins.cisco.db.api as db
-import ucs_models
 
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
+from quantum.plugins.cisco.db import ucs_models
 
 
 def get_all_ucsmbinding():
