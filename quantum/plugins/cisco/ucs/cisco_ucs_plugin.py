@@ -23,9 +23,9 @@ import logging as LOG
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
