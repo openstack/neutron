@@ -143,4 +143,6 @@ class CiscoNEXUSDriver():
         vlans = ''
         for vlanid in assigned_vlan:
             vlans = str(vlanid["vlan_id"]) + ',' + vlans
+        if vlans == '':
+            vlans = 'none'
         return vlans.strip(',')
