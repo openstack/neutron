@@ -30,6 +30,11 @@ for tenant: $tenant_id
 Deleted Logical Port with ID: $port_id
 on Virtual Network: $network_id
 for tenant: $tenant_id
+#elif $cmd == 'set_port_state'
+Updated state for Logical Port with ID: $port.id
+New state is: $port['port-state']
+on Virtual Network: $network_id
+for tenant: $tenant_id
 #elif $cmd == 'detail_port'
 Logical Port ID: $port.id
 On Virtual Network: $network_id

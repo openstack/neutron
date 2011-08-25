@@ -130,7 +130,9 @@ def list_ports(client, *args):
     try:
         ports = client.list_ports(network_id)
         LOG.debug("Operation 'list_ports' executed.")
-        output = prepare_output("list_ports", tenant_id, dict(ports=ports))
+        data = ports
+        data['network_id'] = network_id
+        output = prepare_output("list_ports", tenant_id, data)
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -167,7 +169,7 @@ def delete_port(client, *args):
 def detail_port(client, *args):
     tenant_id, network_id, port_id = args
     try:
-        port = client.list_port_details(network_id, port_id)["ports"]["port"]
+        port = client.list_port_details(network_id, port_id)["port"]
         LOG.debug("Operation 'list_port_details' executed.")
         #NOTE(salvatore-orland): current API implementation does not
         #return attachment with GET operation on port. Once API alignment
@@ -188,9 +190,9 @@ def set_port_state(client, *args):
         client.set_port_state(network_id, port_id, data)
         LOG.debug("Operation 'set_port_state' executed.")
         # Response has no body. Use data for populating output
-        data['id'] = port_id
-        output = prepare_output("set_port_state", tenant_id,
-                                dict(network_id=network_id, port=data))
+        data['network_id'] = network_id
+        data['port']['id'] = port_id
+        output = prepare_output("set_port_state", tenant_id, data)
         print output
     except Exception as ex:
         _handle_exception(ex)
