@@ -148,5 +148,4 @@ LEAST_RSVD_BLADE_DICT = 'least_rsvd_blade_dict'
 
 UCSM_IP = 'ucsm_ip_address'
 
-MAX_CREDENTIALS = 65568
-MAX_QOS_LEVELS = 1024
+NETWORK_ADMIN = 'network_admin'
