@@ -15,93 +15,12 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import uuid
-
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relation
 
-from quantum.plugins.cisco.db.l2network_models import L2NetworkBase
 from quantum.plugins.cisco.db import models
+from quantum.plugins.cisco.db.l2network_models import L2NetworkBase
 from quantum.plugins.cisco.db.models import BASE
-
-
-class UcsmBinding(BASE, L2NetworkBase):
-    """Represents a binding of ucsm to network_id"""
-    __tablename__ = 'ucsm_bindings'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    ucsm_ip = Column(String(255))
-    network_id = Column(String(255), ForeignKey("networks.uuid"),
-                        nullable=False)
-    network = relation(models.Network)
-
-    def __init__(self, ucsm_ip, network_id):
-        self.ucsm_ip = ucsm_ip
-        self.network_id = network_id
-
-    def __repr__(self):
-        return "<UcsmBinding(%s,%s)>" % \
-          (self.ucsm_ip, self.network_id)
-
-
-class DynamicVnic(BASE, L2NetworkBase):
-    """Represents Cisco UCS Dynamic Vnics"""
-    __tablename__ = 'dynamic_vnics'
-
-    uuid = Column(String(255), primary_key=True)
-    device_name = Column(String(255))
-    blade_id = Column(String(255), ForeignKey("ucs_blades.uuid"),
-                                                    nullable=False)
-    vnic_state = Column(String(255))
-    blade_intf_dn = Column(String(255))
-    blade_intf_order = Column(String(255))
-    blade_int_link_state = Column(String(255))
-    blade_intf_oper_state = Column(String(255))
-    blade_intf_inst_type = Column(String(255))
-    blade_intf_reservation = Column(String(255))
-
-    def __init__(self, device_name, blade_id, vnic_state):
-        self.uuid = uuid.uuid4()
-        self.device_name = device_name
-        self.blade_id = blade_id
-        self.vnic_state = vnic_state
-
-    def __repr__(self):
-        return "<Dyanmic Vnic(%s,%s,%s,%s)>" % \
-          (self.uuid, self.device_name, self.blade_id,
-           self.vnic_state)
-
-
-class UcsBlade(BASE, L2NetworkBase):
-    """Represents details of ucs blades"""
-    __tablename__ = 'ucs_blades'
-
-    uuid = Column(String(255), primary_key=True)
-    mgmt_ip = Column(String(255))
-    mac_addr = Column(String(255))
-    chassis_id = Column(String(255))
-    ucsm_ip = Column(String(255))
-    blade_state = Column(String(255))
-    vnics_used = Column(Integer)
-    hostname = Column(String(255))
-    dynamic_vnics = relation(DynamicVnic, order_by=DynamicVnic.uuid,
-                                                      backref="blade")
-
-    def __init__(self, mgmt_ip, mac_addr, chassis_id, ucsm_ip,
-                 blade_state, vnics_used, hostname):
-        self.uuid = uuid.uuid4()
-        self.mgmt_ip = mgmt_ip
-        self.mac_addr = mac_addr
-        self.chassis_id = chassis_id
-        self.ucsm_ip = ucsm_ip
-        self.blade_state = blade_state
-        self.vnics_used = vnics_used
-        self.hostname = hostname
-
-    def __repr__(self):
-        return "<UcsBlades (%s,%s,%s,%s,%s,%s,%s,%s)>" % \
-       (self.uuid, self.mgmt_ip, self.mac_addr, self.chassis_id,
-        self.ucsm_ip, self.blade_state, self.vnics_used, self.hostname)
 
 
 class PortBinding(BASE, L2NetworkBase):

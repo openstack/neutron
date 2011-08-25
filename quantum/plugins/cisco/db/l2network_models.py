@@ -157,7 +157,7 @@ class QoS(BASE, L2NetworkBase):
     qos_desc = Column(String(255))
 
     def __init__(self, tenant_id, qos_name, qos_desc):
-        self.qos_id = uuid.uuid4()
+        self.qos_id = str(uuid.uuid4())
         self.tenant_id = tenant_id
         self.qos_name = qos_name
         self.qos_desc = qos_desc
@@ -178,7 +178,7 @@ class Credential(BASE, L2NetworkBase):
     password = Column(String(255))
 
     def __init__(self, tenant_id, credential_name, user_name, password):
-        self.credential_id = uuid.uuid4()
+        self.credential_id = str(uuid.uuid4())
         self.tenant_id = tenant_id
         self.credential_name = credential_name
         self.user_name = user_name

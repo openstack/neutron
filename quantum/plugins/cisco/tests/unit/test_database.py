@@ -35,235 +35,6 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 class UcsDB(object):
     """Class consisting of methods to call ucs db methods"""
-    def get_all_ucsmbindings(self):
-        """get all ucsm bindings"""
-        bindings = []
-        try:
-            for res in ucs_db.get_all_ucsmbinding():
-                LOG.debug("Getting ucsm binding : %s" % res.ucsm_ip)
-                bind_dict = {}
-                bind_dict["ucsm-ip"] = str(res.ucsm_ip)
-                bind_dict["network-id"] = str(res.network_id)
-                bindings.append(bind_dict)
-        except Exception, exc:
-            LOG.error("Failed to get all bindings: %s" % str(exc))
-        return bindings
-
-    def get_ucsmbinding(self, ucsm_ip):
-        """get ucsm binding"""
-        binding = []
-        try:
-            for res in ucs_db.get_ucsmbinding(ucsm_ip):
-                LOG.debug("Getting ucsm binding : %s" % res.ucsm_ip)
-                bind_dict = {}
-                bind_dict["ucsm-ip"] = str(res.ucsm_ip)
-                bind_dict["network-id"] = str(res.network_id)
-                binding.append(bind_dict)
-        except Exception, exc:
-            LOG.error("Failed to get binding: %s" % str(exc))
-        return binding
-
-    def create_ucsmbinding(self, ucsm_ip, network_id):
-        """create ucsm binding"""
-        bind_dict = {}
-        try:
-            res = ucs_db.add_ucsmbinding(ucsm_ip, network_id)
-            LOG.debug("Created ucsm binding: %s" % res.ucsm_ip)
-            bind_dict["ucsm-ip"] = str(res.ucsm_ip)
-            bind_dict["network-id"] = str(res.network_id)
-            return bind_dict
-        except Exception, exc:
-            LOG.error("Failed to create ucsm binding: %s" % str(exc))
-
-    def delete_ucsmbinding(self, ucsm_ip):
-        """delete ucsm binding"""
-        try:
-            res = ucs_db.remove_ucsmbinding(ucsm_ip)
-            LOG.debug("Deleted ucsm binding : %s" % res.ucsm_ip)
-            bind_dict = {}
-            bind_dict["ucsm-ip"] = str(res.ucsm_ip)
-            return bind_dict
-        except Exception, exc:
-            raise Exception("Failed to delete dynamic vnic: %s" % str(exc))
-
-    def update_ucsmbinding(self, ucsm_ip, network_id):
-        """update ucsm binding"""
-        try:
-            res = ucs_db.update_ucsmbinding(ucsm_ip, network_id)
-            LOG.debug("Updating ucsm binding : %s" % res.ucsm_ip)
-            bind_dict = {}
-            bind_dict["ucsm-ip"] = str(res.ucsm_ip)
-            bind_dict["network-id"] = str(res.network_id)
-            return bind_dict
-        except Exception, exc:
-            raise Exception("Failed to update dynamic vnic: %s" % str(exc))
-
-    def get_all_dynamicvnics(self):
-        """get all dynamic vnics"""
-        vnics = []
-        try:
-            for res in ucs_db.get_all_dynamicvnics():
-                LOG.debug("Getting dynamic vnic : %s" % res.uuid)
-                vnic_dict = {}
-                vnic_dict["vnic-id"] = str(res.uuid)
-                vnic_dict["device-name"] = res.device_name
-                vnic_dict["blade-id"] = str(res.blade_id)
-                vnic_dict["vnic_state"] = res.vnic_state
-                vnics.append(vnic_dict)
-        except Exception, exc:
-            LOG.error("Failed to get all dynamic vnics: %s" % str(exc))
-        return vnics
-
-    def get_dynamicvnic(self, vnic_id):
-        """get dynamic vnic"""
-        vnic = []
-        try:
-            for res in ucs_db.get_dynamicvnic(vnic_id):
-                LOG.debug("Getting dynamic vnic : %s" % res.uuid)
-                vnic_dict = {}
-                vnic_dict["vnic-id"] = str(res.uuid)
-                vnic_dict["device-name"] = res.device_name
-                vnic_dict["blade-id"] = str(res.blade_id)
-                vnic_dict["vnic_state"] = res.vnic_state
-                vnic.append(vnic_dict)
-        except Exception, exc:
-            LOG.error("Failed to get dynamic vnic: %s" % str(exc))
-        return vnic
-
-    def create_dynamicvnic(self, device_name, blade_id, vnic_state):
-        """create dynamic vnic"""
-        vnic_dict = {}
-        try:
-            res = ucs_db.add_dynamicvnic(device_name, blade_id, vnic_state)
-            LOG.debug("Created dynamic vnic: %s" % res.uuid)
-            vnic_dict["vnic-id"] = str(res.uuid)
-            vnic_dict["device-name"] = res.device_name
-            vnic_dict["blade-id"] = str(res.blade_id)
-            vnic_dict["vnic_state"] = res.vnic_state
-            return vnic_dict
-        except Exception, exc:
-            LOG.error("Failed to create dynamic vnic: %s" % str(exc))
-
-    def delete_dynamicvnic(self, vnic_id):
-        """delete dynamic vnic"""
-        try:
-            res = ucs_db.remove_dynamicvnic(vnic_id)
-            LOG.debug("Deleted dynamic vnic : %s" % res.uuid)
-            vnic_dict = {}
-            vnic_dict["vnic-id"] = str(res.uuid)
-            return vnic_dict
-        except Exception, exc:
-            raise Exception("Failed to delete dynamic vnic: %s" % str(exc))
-
-    def update_dynamicvnic(self, vnic_id, device_name=None, blade_id=None,
-                           vnic_state=None):
-        """update dynamic vnic"""
-        try:
-            res = ucs_db.update_dynamicvnic(vnic_id, device_name, blade_id,
-                                            vnic_state)
-            LOG.debug("Updating dynamic vnic : %s" % res.uuid)
-            vnic_dict = {}
-            vnic_dict["vnic-id"] = str(res.uuid)
-            vnic_dict["device-name"] = res.device_name
-            vnic_dict["blade-id"] = str(res.blade_id)
-            vnic_dict["vnic_state"] = res.vnic_state
-            return vnic_dict
-        except Exception, exc:
-            raise Exception("Failed to update dynamic vnic: %s" % str(exc))
-
-    def get_all_blades(self):
-        """get all blades"""
-        blades = []
-        try:
-            for res in ucs_db.get_all_blades():
-                LOG.debug("Getting blade : %s" % res.uuid)
-                blade_dict = {}
-                blade_dict["blade-id"] = str(res.uuid)
-                blade_dict["mgmt-ip"] = str(res.mgmt_ip)
-                blade_dict["mac-addr"] = str(res.mac_addr)
-                blade_dict["chassis-id"] = str(res.chassis_id)
-                blade_dict["ucsm-ip"] = str(res.ucsm_ip)
-                blade_dict["blade_state"] = str(res.blade_state)
-                blade_dict["vnics_used"] = str(res.vnics_used)
-                blade_dict["hostname"] = str(res.hostname)
-                blades.append(blade_dict)
-        except Exception, exc:
-            LOG.error("Failed to get all blades: %s" % str(exc))
-        return blades
-
-    def get_blade(self, blade_id):
-        """get blade"""
-        blade = []
-        try:
-            for res in ucs_db.get_blade(blade_id):
-                LOG.debug("Getting blade : %s" % res.uuid)
-                blade_dict = {}
-                blade_dict["blade-id"] = str(res.uuid)
-                blade_dict["mgmt-ip"] = str(res.mgmt_ip)
-                blade_dict["mac-addr"] = str(res.mac_addr)
-                blade_dict["chassis-id"] = str(res.chassis_id)
-                blade_dict["ucsm-ip"] = str(res.ucsm_ip)
-                blade_dict["blade_state"] = str(res.blade_state)
-                blade_dict["vnics_used"] = str(res.vnics_used)
-                blade_dict["hostname"] = str(res.hostname)
-                blade.append(blade_dict)
-        except Exception, exc:
-            LOG.error("Failed to get all blades: %s" % str(exc))
-        return blade
-
-    def create_blade(self, mgmt_ip, mac_addr, chassis_id, ucsm_ip,
-                     blade_state, vnics_used, hostname):
-        """create blade"""
-        blade_dict = {}
-        try:
-            res = ucs_db.add_blade(mgmt_ip, mac_addr, chassis_id, ucsm_ip,
-                                   blade_state, vnics_used, hostname)
-            LOG.debug("Created blade: %s" % res.uuid)
-            blade_dict["blade-id"] = str(res.uuid)
-            blade_dict["mgmt-ip"] = str(res.mgmt_ip)
-            blade_dict["mac-addr"] = str(res.mac_addr)
-            blade_dict["chassis-id"] = str(res.chassis_id)
-            blade_dict["ucsm-ip"] = str(res.ucsm_ip)
-            blade_dict["blade_state"] = str(res.blade_state)
-            blade_dict["vnics_used"] = str(res.vnics_used)
-            blade_dict["hostname"] = str(res.hostname)
-            return blade_dict
-        except Exception, exc:
-            LOG.error("Failed to create blade: %s" % str(exc))
-
-    def delete_blade(self, blade_id):
-        """delete blade"""
-        try:
-            res = ucs_db.remove_blade(blade_id)
-            LOG.debug("Deleted blade : %s" % res.uuid)
-            blade_dict = {}
-            blade_dict["blade-id"] = str(res.uuid)
-            return blade_dict
-        except Exception, exc:
-            raise Exception("Failed to delete blade: %s" % str(exc))
-
-    def update_blade(self, blade_id, mgmt_ip=None, mac_addr=None,
-                     chassis_id=None, ucsm_ip=None, blade_state=None,
-                     vnics_used=None, hostname=None):
-        """update blade"""
-        try:
-            res = ucs_db.update_blade(blade_id, mgmt_ip, mac_addr,
-                                      chassis_id, ucsm_ip, blade_state,
-                                      vnics_used, hostname)
-            LOG.debug("Updating blade : %s" % res.uuid)
-            blade_dict = {}
-            blade_dict["blade-id"] = str(res.uuid)
-            blade_dict["mgmt-ip"] = str(res.mgmt_ip)
-            blade_dict["mac-addr"] = str(res.mac_addr)
-            blade_dict["chassis-id"] = str(res.chassis_id)
-            blade_dict["ucsm-ip"] = str(res.ucsm_ip)
-            blade_dict["blade_state"] = str(res.blade_state)
-            blade_dict["vnics_used"] = str(res.vnics_used)
-            blade_dict["hostname"] = str(res.hostname)
-            return blade_dict
-        except Exception, exc:
-            raise Exception("Failed to update blade: %s" % str(exc))
-
     def get_all_port_bindings(self):
         """get all port binding"""
         port_bindings = []
@@ -824,177 +595,14 @@ class UcsDBTest(unittest.TestCase):
         """Tear Down"""
         db.clear_db()
 
-    def testa_create_ucsmbinding(self):
-        """create ucsm binding"""
-        net1 = self.quantum.create_network("t1", "netid1")
-        binding1 = self.dbtest.create_ucsmbinding("1.2.3.4", net1["net-id"])
-        self.assertTrue(binding1["ucsm-ip"] == "1.2.3.4")
-        self.teardown_ucsmbinding()
-        self.teardown_network()
-
-    def testb_getall_ucsmbindings(self):
-        """get all ucsm bindings"""
-        net1 = self.quantum.create_network("t1", "netid1")
-        binding1 = self.dbtest.create_ucsmbinding("1.2.3.4", net1["net-id"])
-        binding2 = self.dbtest.create_ucsmbinding("2.3.4.5", net1["net-id"])
-        bindings = self.dbtest.get_all_ucsmbindings()
-        count = 0
-        for bind in bindings:
-            if net1["net-id"] == bind["network-id"]:
-                count += 1
-        self.assertTrue(count == 2)
-        self.teardown_ucsmbinding()
-        self.teardown_network()
-
-    def testc_delete_ucsmbinding(self):
-        """delete ucsm binding"""
-        net1 = self.quantum.create_network("t1", "netid1")
-        binding1 = self.dbtest.create_ucsmbinding("1.2.3.4", net1["net-id"])
-        self.dbtest.delete_ucsmbinding(binding1["ucsm-ip"])
-        bindings = self.dbtest.get_all_ucsmbindings()
-        count = 0
-        for bind in bindings:
-            if "net " in bind["network-id"]:
-                count += 1
-        self.assertTrue(count == 0)
-        self.teardown_ucsmbinding()
-        self.teardown_network()
-
-    def testd_update_ucsmbinding(self):
-        """update ucsm binding"""
-        net1 = self.quantum.create_network("t1", "netid1")
-        net2 = self.quantum.create_network("t1", "netid2")
-        binding1 = self.dbtest.create_ucsmbinding("1.2.3.4", net1["net-id"])
-        binding1 = self.dbtest.update_ucsmbinding(binding1["ucsm-ip"],
-                                                             net2["net-id"])
-        bindings = self.dbtest.get_all_ucsmbindings()
-        count = 0
-        for bind in bindings:
-            if net2["net-id"] == bind["network-id"]:
-                count += 1
-        self.assertTrue(count == 1)
-        self.teardown_ucsmbinding()
-        self.teardown_network()
-
-    def teste_create_dynamicvnic(self):
-        """create dynamic vnic"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
-        self.assertTrue(vnic1["device-name"] == "eth1")
-        self.teardown_dyanmicvnic()
-
-    def testf_getall_dyanmicvnics(self):
-        """get all dynamic vnics"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
-        vnic2 = self.dbtest.create_dynamicvnic("eth2", blade1["blade-id"],
-                                               "UP")
-        vnics = self.dbtest.get_all_dynamicvnics()
-        count = 0
-        for vnic in vnics:
-            if "eth" in vnic["device-name"]:
-                count += 1
-        self.assertTrue(count == 2)
-        self.teardown_dyanmicvnic()
-
-    def testg_delete_dyanmicvnic(self):
-        """delete dynamic vnic"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
-        self.dbtest.delete_dynamicvnic(vnic1["vnic-id"])
-        vnics = self.dbtest.get_all_dynamicvnics()
-        count = 0
-        for vnic in vnics:
-            if "eth " in vnic["device-name"]:
-                count += 1
-        self.assertTrue(count == 0)
-        self.teardown_dyanmicvnic()
-
-    def testh_updatedynamicvnic(self):
-        """update dynamic vnic"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
-        vnic1 = self.dbtest.update_dynamicvnic(vnic1["vnic-id"], "neweth1",
-                                            blade1["blade-id"], "DOWN")
-        vnics = self.dbtest.get_all_dynamicvnics()
-        count = 0
-        for vnic in vnics:
-            if "new" in vnic["device-name"]:
-                count += 1
-        self.assertTrue(count == 1)
-        self.teardown_dyanmicvnic()
-
-    def testi_create_ucsblade(self):
-        """create ucs blade"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        self.assertTrue(blade1["mgmt-ip"] == "1.2.3.4")
-        self.teardown_ucsblade()
-
-    def testj_getall_ucsblade(self):
-        """get all ucs blades"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        blade2 = self.dbtest.create_blade("2.3.4.5", "efgh", "chassis1",
-                                          "9.8.7.6", "UP", 3, "blade2")
-        blades = self.dbtest.get_all_blades()
-        count = 0
-        for blade in blades:
-            if "chassis" in blade["chassis-id"]:
-                count += 1
-        self.assertTrue(count == 2)
-        self.teardown_ucsblade()
-
-    def testk_delete_ucsblade(self):
-        """delete ucs blades"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        self.dbtest.delete_blade(blade1["blade-id"])
-        blades = self.dbtest.get_all_blades()
-        count = 0
-        for blade in blades:
-            if "chassis " in blade["chassis-id"]:
-                count += 1
-        self.assertTrue(count == 0)
-        self.teardown_ucsblade()
-
-    def testl_update_ucsblade(self):
-        """update ucs blade"""
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        blade2 = self.dbtest.update_blade(blade1["blade-id"], "2.3.4.5",
-                                          "newabcd", "chassis1", "9.8.7.6",
-                                          "UP", 3, "blade1")
-        blades = self.dbtest.get_all_blades()
-        count = 0
-        for blade in blades:
-            if "new" in blade["mac-addr"]:
-                count += 1
-        self.assertTrue(count == 1)
-        self.teardown_ucsblade()
-
     def testm_create_portbinding(self):
         """create port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
         port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                vnic1["vnic-id"], "pp1", "vlan1", 10, "qos1")
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
         self.assertTrue(port_bind1["port-id"] == port1["port-id"])
         self.teardown_portbinding()
-        self.teardown_dyanmicvnic()
-        self.teardown_ucsblade()
         self.teardown_network_port()
 
     def testn_getall_portbindings(self):
@@ -1002,16 +610,10 @@ class UcsDBTest(unittest.TestCase):
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
         port2 = self.quantum.create_port(net1["net-id"])
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
-        vnic2 = self.dbtest.create_dynamicvnic("eth2", blade1["blade-id"],
-                                               "UP")
         port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                vnic1["vnic-id"], "pp1", "vlan1", 10, "qos1")
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
         port_bind2 = self.dbtest.create_port_binding(port2["port-id"],
-                                vnic2["vnic-id"], "pp2", "vlan2", 20, "qos2")
+                                "vnic2", "pp2", "vlan2", 20, "qos2")
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
         for pbind in port_bindings:
@@ -1019,20 +621,14 @@ class UcsDBTest(unittest.TestCase):
                 count += 1
         self.assertTrue(count == 2)
         self.teardown_portbinding()
-        self.teardown_dyanmicvnic()
-        self.teardown_ucsblade()
         self.teardown_network_port()
 
     def testo_delete_portbinding(self):
         """delete port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
         port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                vnic1["vnic-id"], "pp1", "vlan1", 10, "qos1")
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
         self.dbtest.delete_port_binding(port1["port-id"])
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
@@ -1041,22 +637,16 @@ class UcsDBTest(unittest.TestCase):
                 count += 1
         self.assertTrue(count == 0)
         self.teardown_portbinding()
-        self.teardown_dyanmicvnic()
-        self.teardown_ucsblade()
         self.teardown_network_port()
 
     def testp_update_portbinding(self):
         """update port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        blade1 = self.dbtest.create_blade("1.2.3.4", "abcd", "chassis1",
-                                          "9.8.7.6", "UP", 2, "blade1")
-        vnic1 = self.dbtest.create_dynamicvnic("eth1", blade1["blade-id"],
-                                               "UP")
         port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                vnic1["vnic-id"], "pp1", "vlan1", 10, "qos1")
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
         port_bind1 = self.dbtest.update_port_binding(port1["port-id"],
-                        vnic1["vnic-id"], "newpp1", "newvlan1", 11, "newqos1")
+                        "vnic1", "newpp1", "newvlan1", 11, "newqos1")
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
         for pbind in port_bindings:
@@ -1064,34 +654,7 @@ class UcsDBTest(unittest.TestCase):
                 count += 1
         self.assertTrue(count == 1)
         self.teardown_portbinding()
-        self.teardown_dyanmicvnic()
-        self.teardown_ucsblade()
         self.teardown_network_port()
-
-    def teardown_ucsmbinding(self):
-        """tear down ucsm binding"""
-        LOG.debug("Tearing Down Ucsm Bindings")
-        binds = self.dbtest.get_all_ucsmbindings()
-        for bind in binds:
-            ucsmip = bind["ucsm-ip"]
-            self.dbtest.delete_ucsmbinding(ucsmip)
-
-    def teardown_dyanmicvnic(self):
-        """tear down dynamic vnics"""
-        LOG.debug("Tearing Down Dynamic Vnics")
-        vnics = self.dbtest.get_all_dynamicvnics()
-        for vnic in vnics:
-            vnicid = vnic["vnic-id"]
-            self.dbtest.delete_dynamicvnic(vnicid)
-        self.teardown_ucsblade()
-
-    def teardown_ucsblade(self):
-        """tear down ucs blades"""
-        LOG.debug("Tearing Down Blades")
-        blades = self.dbtest.get_all_blades()
-        for blade in blades:
-            bladeid = blade["blade-id"]
-            self.dbtest.delete_blade(bladeid)
 
     def teardown_portbinding(self):
         """tear down port binding"""
@@ -1100,14 +663,6 @@ class UcsDBTest(unittest.TestCase):
         for port_binding in port_bindings:
             portid = port_binding["port-id"]
             self.dbtest.delete_port_binding(portid)
-
-    def teardown_network(self):
-        """tearDown Network table"""
-        LOG.debug("Tearing Down Network")
-        nets = self.quantum.get_all_networks("t1")
-        for net in nets:
-            netid = net["net-id"]
-            self.quantum.delete_network(netid)
 
     def teardown_network_port(self):
         """tearDown for Network and Port table"""
@@ -1391,7 +946,7 @@ class L2networkDBTest(unittest.TestCase):
         self.assertTrue(used == True)
         used = l2network_db.release_vlanid(vlanid)
         self.assertTrue(used == False)
-        self.teardown_vlanid()
+        #counting on default teardown here to clear db
 
     def teardown_network(self):
         """tearDown Network table"""
@@ -1436,14 +991,6 @@ class L2networkDBTest(unittest.TestCase):
             ppid = pp_binding["portprofile-id"]
             portid = pp_binding["port-id"]
             self.dbtest.delete_pp_binding("t1", portid, ppid)
-
-    def teardown_vlanid(self):
-        """tearDown VlanID table"""
-        LOG.debug("Tearing Down Vlan IDs")
-        vlanids = l2network_db.get_all_vlanids()
-        for vlanid in vlanids:
-            vlan_id = vlanid["vlan_id"]
-            l2network_db.delete_vlanid(vlan_id)
 
 
 class QuantumDBTest(unittest.TestCase):
