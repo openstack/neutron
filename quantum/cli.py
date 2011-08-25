@@ -69,7 +69,7 @@ def api_create_net(client, *args):
     LOG.debug(res)
     nid = None
     try:
-        nid = res["networks"]["network"]["id"]
+        nid = res["network"]["id"]
     except Exception, e:
         print "Failed to create network"
         # TODO(bgh): grab error details from ws request result
@@ -104,7 +104,7 @@ def detail_net(manager, *args):
 def api_detail_net(client, *args):
     tid, nid = args
     try:
-        res = client.show_network_details(nid)["networks"]["network"]
+        res = client.show_network_details(nid)["network"]
     except Exception, e:
         LOG.error("Failed to get network details: %s" % e)
         return
@@ -121,7 +121,7 @@ def api_detail_net(client, *args):
         pid = port["id"]
         res = client.show_port_attachment(nid, pid)
         LOG.debug(res)
-        remote_iface = res["attachment"]
+        remote_iface = res["attachment"]["id"]
         print "\tRemote interface:%s" % remote_iface
 
 
@@ -133,7 +133,7 @@ def rename_net(manager, *args):
 
 def api_rename_net(client, *args):
     tid, nid, name = args
-    data = {'network': {'net-name': '%s' % name}}
+    data = {'network': {'name': '%s' % name}}
     try:
         res = client.update_network(nid, data)
     except Exception, e:
@@ -179,7 +179,7 @@ def api_create_port(client, *args):
     except Exception, e:
         LOG.error("Failed to create port: %s" % e)
         return
-    new_port = res["ports"]["port"]["id"]
+    new_port = res["port"]["id"]
     print "Created Virtual Port:%s " \
           "on Virtual Network:%s" % (new_port, nid)
 
@@ -214,16 +214,17 @@ def detail_port(manager, *args):
 def api_detail_port(client, *args):
     tid, nid, pid = args
     try:
-        port = client.show_port_details(nid, pid)["ports"]["port"]
+        port = client.show_port_details(nid, pid)["port"]
+        att = client.show_port_attachment(nid, pid)
     except Exception, e:
         LOG.error("Failed to get port details: %s" % e)
         return
 
-    id = port["id"]
-    attachment = port["attachment"]
+    id = port['id']
+    interface_id = att['id']
     LOG.debug(port)
     print "Virtual Port:%s on Virtual Network:%s " \
-          "contains remote interface:%s" % (pid, nid, attachment)
+          "contains remote interface:%s" % (pid, nid, interface_id)
 
 
 def plug_iface(manager, *args):
@@ -236,7 +237,7 @@ def plug_iface(manager, *args):
 def api_plug_iface(client, *args):
     tid, nid, pid, vid = args
     try:
-        data = {'port': {'attachment-id': '%s' % vid}}
+        data = {'attachment': {'id': '%s' % vid}}
         res = client.attach_resource(nid, pid, data)
     except Exception, e:
         LOG.error("Failed to plug iface \"%s\" to port \"%s\": %s" % (vid,

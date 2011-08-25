@@ -38,7 +38,7 @@ class QuantumController(wsgi.Controller):
         for param in params:
             param_name = param['param-name']
             param_value = None
-            # 1- parse request body
+            # Parameters are expected to be in request body only
             if req.body:
                 des_body = self._deserialize(req.body,
                                              req.best_match_content_type())
@@ -50,22 +50,13 @@ class QuantumController(wsgi.Controller):
                         LOG.error(line)
                     raise exc.HTTPBadRequest(msg)
                 param_value = data.get(param_name, None)
-            if not param_value:
-                # 2- parse request headers
-                # prepend param name with a 'x-' prefix
-                param_value = req.headers.get("x-" + param_name, None)
-                # 3- parse request query parameters
-                if not param_value:
-                    try:
-                        param_value = req.str_GET[param_name]
-                    except KeyError:
-                        #param not found
-                        pass
-                if not param_value and param['required']:
-                    msg = ("Failed to parse request. " +
-                           "Parameter: " + param_name + " not specified")
-                    for line in msg.split('\n'):
-                        LOG.error(line)
-                    raise exc.HTTPBadRequest(msg)
+
+            # If the parameter wasn't found and it was required, return 400
+            if not param_value and param['required']:
+                msg = ("Failed to parse request. " +
+                       "Parameter: " + param_name + " not specified")
+                for line in msg.split('\n'):
+                    LOG.error(line)
+                raise exc.HTTPBadRequest(msg)
             results[param_name] = param_value or param.get('default-value')
         return results

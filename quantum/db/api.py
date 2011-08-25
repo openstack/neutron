@@ -17,6 +17,8 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
+import logging
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
 
@@ -27,6 +29,7 @@ from quantum.db import models
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
+LOG = logging.getLogger('quantum.db.api')
 
 
 def configure_db(options):
@@ -78,6 +81,11 @@ def unregister_models():
 
 
 def _check_duplicate_net_name(tenant_id, net_name):
+    """Checks whether a network with the same name
+       already exists for the tenant.
+    """
+
+    #TODO(salvatore-orlando): Not used anymore - candidate for removal
     session = get_session()
     try:
         net = session.query(models.Network).\
@@ -94,7 +102,6 @@ def _check_duplicate_net_name(tenant_id, net_name):
 def network_create(tenant_id, name):
     session = get_session()
 
-    _check_duplicate_net_name(tenant_id, name)
     with session.begin():
         net = models.Network(tenant_id, name)
         session.add(net)

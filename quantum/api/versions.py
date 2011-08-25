@@ -31,11 +31,11 @@ class Versions(wsgi.Application):
         """Respond to a request for all Quantum API versions."""
         version_objs = [
             {
-                "id": "v0.1",
+                "id": "v1.0",
                 "status": "CURRENT",
             },
             {
-                "id": "v1.0",
+                "id": "v1.1",
                 "status": "FUTURE",
             },
         ]
