@@ -24,8 +24,8 @@ Implements a Nexus-OS NETCONF over SSHv2 API Client
 import logging as LOG
 
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
 from ncclient import manager
 

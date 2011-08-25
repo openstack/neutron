@@ -26,9 +26,9 @@ from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.db import nexus_db as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
-from quantum.plugins.cisco.db import nexus_db as nxos_db
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

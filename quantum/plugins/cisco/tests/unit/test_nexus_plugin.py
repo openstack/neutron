@@ -14,13 +14,13 @@
 #
 # @author: Shweta Padubidri, Peter Strunk, Cisco Systems, Inc.
 #
-import unittest
 import logging
+import unittest
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.nexus import cisco_nexus_plugin
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.nexus import cisco_nexus_plugin
 
 LOG = logging.getLogger('quantum.tests.test_nexus')
 
