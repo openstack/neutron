@@ -25,6 +25,7 @@ import logging as LOG
 
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
+from quantum.plugins.cisco.db import l2network_db as cdb
 
 from ncclient import manager
 
@@ -112,8 +113,12 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
                                nexus_password) as man:
             self.enable_vlan(man, vlan_id, vlan_name)
-            self.enable_vlan_on_trunk_int(man, nexus_first_interface, vlan_id)
-            self.enable_vlan_on_trunk_int(man, nexus_second_interface, vlan_id)
+            vlan_ids = self.build_vlans_cmd()
+            LOG.debug("NexusDriver VLAN IDs: %s" % vlan_ids)
+            self.enable_vlan_on_trunk_int(man, nexus_first_interface,
+                                          vlan_ids)
+            self.enable_vlan_on_trunk_int(man, nexus_second_interface,
+                                          vlan_ids)
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
                     nexus_first_interface, nexus_second_interface,
@@ -125,5 +130,17 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
                                nexus_password) as man:
             self.disable_vlan(man, vlan_id)
-            self.disable_switch_port(man, nexus_first_interface)
-            self.disable_switch_port(man, nexus_second_interface)
+            self.disable_vlan_on_trunk_int(man, nexus_first_interface,
+                                           vlan_id)
+            self.disable_vlan_on_trunk_int(man, nexus_second_interface,
+                                           vlan_id)
+
+    def build_vlans_cmd(self):
+        """
+        Builds a string with all the VLANs on the same Switch
+        """
+        assigned_vlan = cdb.get_all_vlanids_used()
+        vlans = ''
+        for vlanid in assigned_vlan:
+            vlans = str(vlanid["vlan_id"]) + ',' + vlans
+        return vlans.strip(',')
