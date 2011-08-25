@@ -21,6 +21,7 @@ New name is: $network.name
 Ports on Virtual Network: $network_id
 #for $port in $ports
 \tLogical Port: $port.id
+#end for
 #elif $cmd == 'create_port'
 Created new Logical Port with ID: $port_id 
 on Virtual Network: $network_id 

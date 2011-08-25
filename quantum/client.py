@@ -97,8 +97,7 @@ class Client(object):
         # facilitate stubout for testing
         conn.request(method, action, body, headers)
         return conn.getresponse()
-        
-        
+
     def do_request(self, method, action, body=None,
                    headers=None, params=None):
         """
@@ -150,7 +149,8 @@ class Client(object):
             else:
                 # Create exception with HTTP status code and message
                 ex = Exception("Server returned error: %s" % status_code)
-                ex.args = ([dict(status_code=status_code, message=res.read())],)
+                ex.args = ([dict(status_code=status_code,
+                                 message=res.read())],)
                 raise ex
 
         except (socket.error, IOError), e:

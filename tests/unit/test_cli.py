@@ -16,9 +16,9 @@
 #    under the License.
 #    @author: Salvatore Orlando, Citrix Systems
 
-""" Module containing unit tests for Quantum 
+""" Module containing unit tests for Quantum
     command line interface
-    
+
 """
 
 
@@ -30,11 +30,11 @@ from quantum import api as server
 from quantum import cli
 from quantum.client import Client
 from quantum.db import api as db
-from quantum.manager import QuantumManager
 from tests.unit.client_tools import stubs as client_stubs
 
 LOG = logging.getLogger('quantum.tests.test_cli')
 FORMAT = 'json'
+
 
 class CLITest(unittest.TestCase):
 
@@ -48,23 +48,21 @@ class CLITest(unittest.TestCase):
         self.network_name_1 = "test_network_1"
         self.network_name_2 = "test_network_2"
         # Prepare client and plugin manager
-        self.client = Client(tenant = self.tenant_id, format = FORMAT,
-                             testingStub = client_stubs.FakeHTTPConnection)
-        self.manager = QuantumManager(options).get_plugin()
+        self.client = Client(tenant=self.tenant_id, format=FORMAT,
+                             testingStub=client_stubs.FakeHTTPConnection)
         # Redirect stdout
         self.fake_stdout = client_stubs.FakeStdout()
         sys.stdout = self.fake_stdout
-    
+
     def tearDown(self):
         """Clear the test environment"""
         db.clear_db()
         sys.stdout = sys.__stdout__
-        
-    
+
     def _verify_list_networks(self):
             # Verification - get raw result from db
             nw_list = db.network_list(self.tenant_id)
-            networks=[dict(id=nw.uuid, name=nw.name) for nw in nw_list]
+            networks = [dict(id=nw.uuid, name=nw.name) for nw in nw_list]
             # Fill CLI template
             output = cli.prepare_output('list_nets', self.tenant_id,
                                         dict(networks=networks))
@@ -96,89 +94,52 @@ class CLITest(unittest.TestCase):
             # Verify!
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
-        
-    def test_list_networks(self):
-        try: 
+
+    def test_list_networks_api(self):
+        try:
             # Pre-populate data for testing using db api
             db.network_create(self.tenant_id, self.network_name_1)
             db.network_create(self.tenant_id, self.network_name_2)
-            
-            cli.list_nets(self.manager, self.tenant_id)
+
+            cli.list_nets(self.client, self.tenant_id)
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
             self._verify_list_networks()
-        except: 
-            LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_list_network failed due to an exception")
-
-    
-    def test_list_networks_api(self):
-        try: 
-            # Pre-populate data for testing using db api
-            db.network_create(self.tenant_id, self.network_name_1)
-            db.network_create(self.tenant_id, self.network_name_2)
-            
-            cli.api_list_nets(self.client, self.tenant_id)
-            LOG.debug("Operation completed. Verifying result")
-            LOG.debug(self.fake_stdout.content)
-            self._verify_list_networks()  
-        except: 
+        except:
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_list_network_api failed due to an exception")
 
-    def test_create_network(self):
-        try: 
-            cli.create_net(self.manager, self.tenant_id, "test")
+    def test_create_network_api(self):
+        try:
+            cli.create_net(self.client, self.tenant_id, "test")
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
             self._verify_create_network()
-        except: 
-            LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_create_network failed due to an exception")
-    
-    def test_create_network_api(self):
-        try: 
-            cli.api_create_net(self.client, self.tenant_id, "test")
-            LOG.debug("Operation completed. Verifying result")
-            LOG.debug(self.fake_stdout.content)
-            self._verify_create_network()  
-        except: 
+        except:
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_create_network_api failed due to an exception")
-    
+
     def _prepare_test_delete_network(self):
         # Pre-populate data for testing using db api
         db.network_create(self.tenant_id, self.network_name_1)
         net_id = db.network_list(self.tenant_id)[0]['uuid']
         return net_id
 
-    def test_delete_network(self):
-        try: 
+    def test_delete_network_api(self):
+        try:
             network_id = self._prepare_test_delete_network()
-            cli.delete_net(self.manager, self.tenant_id, network_id)
+            cli.delete_net(self.client, self.tenant_id, network_id)
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
             self._verify_delete_network(network_id)
-        except: 
-            LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_delete_network failed due to an exception")
-
-    
-    def test_delete_network_api(self):
-        try: 
-            network_id = self._prepare_test_delete_network()
-            cli.api_delete_net(self.client, self.tenant_id, network_id)
-            LOG.debug("Operation completed. Verifying result")
-            LOG.debug(self.fake_stdout.content)
-            self._verify_delete_network(network_id)  
-        except: 
+        except:
             LOG.exception("Exception caught: %s", sys.exc_info())
             self.fail("test_delete_network_api failed due to an exception")
-            
+
     def test_detail_network_api(self):
             # Load some data into the datbase
             net = db.network_create(self.tenant_id, self.network_name_1)
-            db.port_create(net['uuid'])       
+            db.port_create(net['uuid'])
             port = db.port_create(net['uuid'])
-            cli.api_detail_net(self.client, self.tenant_id, net['uuid'])
+            cli.detail_net(self.client, self.tenant_id, net['uuid'])
             db.port_set_attachment(port['uuid'], net['uuid'], "test_iface_id")
