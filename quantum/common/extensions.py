@@ -226,9 +226,22 @@ class ExtensionMiddleware(wsgi.Middleware):
         for resource in self.ext_mgr.get_resources():
             LOG.debug(_('Extended resource: %s'),
                         resource.collection)
+            for action, method in resource.collection_actions.iteritems():
+                path_prefix = ""
+                parent = resource.parent
+                conditions = dict(method=[method])
+                path = "/%s/%s" % (resource.collection, action)
+                if parent:
+                    path_prefix = "/%s/{%s_id}" % (parent["collection_name"],
+                                                   parent["member_name"])
+                with mapper.submapper(controller=resource.controller,
+                                      action=action,
+                                      path_prefix=path_prefix,
+                                      conditions=conditions) as submap:
+                    submap.connect(path)
+                    submap.connect("%s.:(format)" % path)
             mapper.resource(resource.collection, resource.collection,
                             controller=resource.controller,
-                            collection=resource.collection_actions,
                             member=resource.member_actions,
                             parent_resource=resource.parent)
 

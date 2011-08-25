@@ -118,10 +118,12 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 # This will be the address at which Quantum sends and receives configuration
 # information via SSHv2.
 nexus_ip_address=10.0.0.1
-# Port number on the Nexus switch to which the UCSM 6120 is connected
-# Use shortened interface syntax, e.g. "3/23" not "Ethernet3/23".
-nexus_port=3/23
-#Port number where the SSH will be running at Nexus Switch, e.g.: 22 (Default) 
+# Port numbers on the Nexus switch to each one of the UCSM 6120s is connected
+# Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10".
+nexus_first_port=1/10
+nexus_second_port=1/11
+#Port number where SSH will be running on the Nexus switch.  Typically this is 22
+#unless you've configured your switch otherwise.
 nexus_ssh_port=22
 
 [DRIVER]
@@ -140,8 +142,15 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 	
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-	5b.  Enter the quantum_l2netowrk database configuration info in the 
+	5b.  Enter the quantum_l2network database configuration info in the 
          quantum/plugins/cisco/conf/db_conn.ini file.
+         
+    5c.  If there is a change in the plugin configuration, service would need 
+         to be restarted after dropping and re-creating the database using
+         the following commands -
+
+mysql -u<mysqlusername> -p<mysqlpassword> -e "drop database quantum_l2network"
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
 6.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
@@ -184,7 +193,8 @@ result the quantum/plugins/cisco/run_tests.py script.
    Set the environment variable PLUGIN_DIR to the location of the plugin 
    directory. This is manadatory if the run_tests.sh script is used.
 
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    or
@@ -195,7 +205,8 @@ result the quantum/plugins/cisco/run_tests.py script.
 2. Specific Plugin unit test (needs environment setup as indicated in the 
    pre-requisites):
 
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
    ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the file>
 
    or 
@@ -205,18 +216,30 @@ result the quantum/plugins/cisco/run_tests.py script.
    E.g.:
 
    python quantum/plugins/cisco/run_tests.py 
-          quantum.plugins.cisco.tests.unit.test_ucs_plugin.py
+          quantum.plugins.cisco.tests.unit.test_ucs_plugin
 
 3. All unit tests (needs environment setup as indicated in the pre-requisites):
    
-   export PLUGIN_DIR=quantum/plugins/cisco
+   In bash : export PLUGIN_DIR=quantum/plugins/cisco
+      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
+
    ./run_tests.sh quantum.plugins.cisco.tests.unit
 
    or 
 
    python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
 
+4. Testing the Extension API
+   The script is placed alongwith the other cisco unit tests. The location may
+   change later.
+   Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
 
+   The script can be executed by :
+    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_cisco_extension
+
+    or
+
+    python run_tests.py quantum.plugins.cisco.tests.unit.test_cisco_extension
 
 Additional installation required on Nova Compute
 ------------------------------------------------

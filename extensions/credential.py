@@ -22,7 +22,7 @@ import logging
 
 from webob import exc
 from extensions import _credential_view as credential_view
-from extensions import _exceptions as exception
+from quantum.plugins.cisco.common import cisco_exceptions as exception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
@@ -59,7 +59,7 @@ class Credential(object):
 
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Update Time """
         return "2011-07-25T13:25:27-06:00"
 
     @classmethod
@@ -96,7 +96,6 @@ class CredentialController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'credential'
         self._plugin = plugin
-        #super(CredentialController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of credential ids """
@@ -125,7 +124,6 @@ class CredentialController(common.QuantumController):
 
     def create(self, request, tenant_id):
         """ Creates a new credential for a given tenant """
-        #look for credential name in request
         try:
             req_params = \
                 self._parse_request_params(request, 

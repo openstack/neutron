@@ -22,7 +22,8 @@
 from webob import exc
 
 from extensions import _pprofiles as pprofiles_view
-from extensions import _exceptions as exception
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.common import exceptions as qexception
 from extensions import _faults as faults
 
 from quantum.api import api_common as common
@@ -57,7 +58,7 @@ class Portprofile(object):
     
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Updateed time """
+        """ Returns Ext Resource Updated time """
         return "2011-07-23T13:25:27-06:00"
     
     @classmethod
@@ -80,7 +81,6 @@ class PortprofilesController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'portprofile'
         self._plugin = plugin
-        #super(PortprofilesController, self).__init__(plugin)
         
         self._portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
@@ -126,9 +126,8 @@ class PortprofilesController(common.QuantumController):
             #build response with details
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-            #return faults.Fault(exp)
 
     def create(self, request, tenant_id):
         """ Creates a new portprofile for a given tenant """
@@ -163,7 +162,7 @@ class PortprofilesController(common.QuantumController):
             builder = pprofiles_view.get_view_builder(request)
             result = builder.build(portprofile, True)
             return dict(portprofiles=result)
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
 
     def delete(self, request, tenant_id, id):
@@ -171,7 +170,7 @@ class PortprofilesController(common.QuantumController):
         try:
             self._plugin.delete_portprofile(tenant_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
          
     def associate_portprofile(self, request, tenant_id, id):
@@ -186,16 +185,15 @@ class PortprofilesController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
-        #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
         try:
             self._plugin.associate_portprofile(tenant_id,
                                                 net_id, port_id,
                                                 id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         
     def disassociate_portprofile(self, request, tenant_id, id):
@@ -210,14 +208,13 @@ class PortprofilesController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
-        #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
         try:
             self._plugin. \
             disassociate_portprofile(tenant_id,
                                     net_id, port_id, id)
             return exc.HTTPAccepted()
-        except exception.PortprofileNotFound as exp:
+        except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-        except exception.PortNotFound as exp:
+        except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
