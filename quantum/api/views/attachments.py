@@ -29,11 +29,9 @@ class ViewBuilder(object):
         """
         self.base_url = base_url
 
-    def build(self, port_data, port_details=False, att_details=False):
-        """Generic method used to generate a port entity."""
-        port = dict(port=dict(id=port_data['port-id']))
-        if port_details:
-            port['port']['state'] = port_data['port-state']
-        if att_details and port_data['attachment']:
-            port['port']['attachment'] = dict(id=port_data['attachment'])
-        return port
+    def build(self, attachment_data):
+        """Generic method used to generate an attachment entity."""
+        if attachment_data['attachment']:
+            return dict(attachment=dict(id=attachment_data['attachment']))
+        else:
+            return dict(attachment={})

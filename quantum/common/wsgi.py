@@ -122,6 +122,7 @@ class Request(webob.Request):
         Based on the query extension then the Accept header.
 
         """
+        # First lookup http request
         parts = self.path.rsplit('.', 1)
         LOG.debug("Request parts:%s", parts)
         if len(parts) > 1:
@@ -129,21 +130,26 @@ class Request(webob.Request):
             if format in ['json', 'xml']:
                 return 'application/{0}'.format(parts[1])
 
+        #Then look up content header
+        type_from_header = self.get_content_type()
+        if type_from_header:
+            return type_from_header
         ctypes = ['application/json', 'application/xml']
+
+        #Finally search in Accept-* headers
         bm = self.accept.best_match(ctypes)
         return bm or 'application/json'
 
     def get_content_type(self):
         allowed_types = ("application/xml", "application/json")
         if not "Content-Type" in self.headers:
-            msg = _("Missing Content-Type")
-            LOG.debug(msg)
-            raise webob.exc.HTTPBadRequest(msg)
+            LOG.debug(_("Missing Content-Type"))
+            return None
         type = self.content_type
         if type in allowed_types:
             return type
         LOG.debug(_("Wrong Content-Type: %s") % type)
-        raise webob.exc.HTTPBadRequest("Invalid content type")
+        return None
 
 
 class Application(object):

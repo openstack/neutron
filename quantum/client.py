@@ -27,13 +27,10 @@ EXCEPTIONS = {
     401: exceptions.NotAuthorized,
     420: exceptions.NetworkNotFound,
     421: exceptions.NetworkInUse,
-    422: exceptions.NetworkNameExists,
     430: exceptions.PortNotFound,
     431: exceptions.StateInvalid,
     432: exceptions.PortInUse,
-    440: exceptions.AlreadyAttached,
-    441: exceptions.AttachmentNotReady,
-}
+    440: exceptions.AlreadyAttached}
 
 
 class ApiCall(object):
@@ -72,7 +69,7 @@ class Client(object):
 
     def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
                 format="xml", testingStub=None, key_file=None, cert_file=None,
-                logger=None, action_prefix="/v0.1/tenants/{tenant_id}"):
+                logger=None, action_prefix="/v1.0/tenants/{tenant_id}"):
         """
         Creates a new client to some service.
 

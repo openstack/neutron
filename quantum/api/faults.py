@@ -31,7 +31,6 @@ class Fault(webob.exc.HTTPException):
             401: "unauthorized",
             420: "networkNotFound",
             421: "networkInUse",
-            422: "networkNameExists",
             430: "portNotFound",
             431: "requestedStateInvalid",
             432: "portInUse",
@@ -90,22 +89,6 @@ class NetworkInUse(webob.exc.HTTPClientError):
     code = 421
     title = 'Network in Use'
     explanation = ('Unable to remove the network: attachments still plugged.')
-
-
-class NetworkNameExists(webob.exc.HTTPClientError):
-    """
-    subclass of :class:`~HTTPClientError`
-
-    This indicates that the server could not set the network name to the
-    specified value because another network for the same tenant already has
-    that name.
-
-    code: 422, title: Network Name Exists
-    """
-    code = 422
-    title = 'Network Name Exists'
-    explanation = ('Unable to set network name: tenant already has network' \
-                        ' with same name.')
 
 
 class PortNotFound(webob.exc.HTTPClientError):
