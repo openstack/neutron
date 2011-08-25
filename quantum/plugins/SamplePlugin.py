@@ -119,6 +119,11 @@ class QuantumEchoPlugin(object):
         """
         print("unplug_interface() called\n")
 
+    supported_extension_aliases = ["FOXNSOX"]
+
+    def method_to_support_foxnsox_extension(self):
+        print("method_to_support_foxnsox_extension() called\n")
+
 
 class DummyDataPlugin(object):
 
@@ -347,7 +352,7 @@ class FakePlugin(object):
         LOG.debug("FakePlugin.get_port_details() called")
         port = self._get_port(tenant_id, net_id, port_id)
         return {'port-id': str(port.uuid),
-                'attachment-id': port.interface_id,
+                'attachment': port.interface_id,
                 'port-state': port.state}
 
     def create_port(self, tenant_id, net_id, port_state=None):
@@ -402,10 +407,10 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.plug_interface() called")
+        port = self._get_port(tenant_id, net_id, port_id)
         # Validate attachment
         self._validate_attachment(tenant_id, net_id, port_id,
                                   remote_interface_id)
-        port = self._get_port(tenant_id, net_id, port_id)
         if port['interface_id']:
             raise exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])

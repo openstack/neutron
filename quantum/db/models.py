@@ -19,9 +19,11 @@
 
 import uuid
 
+
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
+
 
 BASE = declarative_base()
 
@@ -68,13 +70,14 @@ class Port(BASE, QuantumBase):
     uuid = Column(String(255), primary_key=True)
     network_id = Column(String(255), ForeignKey("networks.uuid"),
                         nullable=False)
-    interface_id = Column(String(255))
+    interface_id = Column(String(255), nullable=True)
     # Port state - Hardcoding string value at the moment
     state = Column(String(8))
 
     def __init__(self, network_id):
         self.uuid = str(uuid.uuid4())
         self.network_id = network_id
+        self.interface_id = None
         self.state = "DOWN"
 
     def __repr__(self):

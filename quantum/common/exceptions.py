@@ -111,12 +111,6 @@ class AlreadyAttached(QuantumException):
                 "already plugged into port %(att_port_id)s")
 
 
-class NetworkNameExists(QuantumException):
-    message = _("Unable to set network name to %(net_name). " \
-                "Network with id %(net_id) already has this name for " \
-                "tenant %(tenant_id)")
-
-
 class Duplicate(Error):
     pass
 

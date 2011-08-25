@@ -29,54 +29,78 @@ class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
 
     _port_ops_param_list = [{
-        'param-name': 'port-state',
+        'param-name': 'state',
         'default-value': 'DOWN',
         'required': False}, ]
-
-    _attachment_ops_param_list = [{
-        'param-name': 'attachment-id',
-        'required': True}, ]
 
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "port": ["id", "state"], },
-            "plurals": {"ports": "port"}
-        },
+                "port": ["id", "state"],
+                "attachment": ["id"]},
+            "plurals": {"ports": "port"}},
     }
 
     def __init__(self, plugin):
         self._resource_name = 'port'
         super(Controller, self).__init__(plugin)
 
-    def index(self, request, tenant_id, network_id):
-        """ Returns a list of port ids for a given network """
-        return self._items(request, tenant_id, network_id, is_detail=False)
-
-    def _items(self, request, tenant_id, network_id, is_detail):
-        """ Returns a list of networks. """
+    def _items(self, request, tenant_id, network_id,
+               port_details=False):
+        """ Returns a list of ports. """
         try:
-            ports = self._plugin.get_all_ports(tenant_id, network_id)
+            port_list = self._plugin.get_all_ports(tenant_id, network_id)
             builder = ports_view.get_view_builder(request)
-            result = [builder.build(port, is_detail)['port']
-                      for port in ports]
+
+            # Load extra data for ports if required.
+            if port_details:
+                port_list_detail = \
+                    [self._plugin.get_port_details(
+                                tenant_id, network_id, port['port-id'])
+                      for port in port_list]
+                port_list = port_list_detail
+
+            result = [builder.build(port, port_details)['port']
+                      for port in port_list]
             return dict(ports=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
 
+    def _item(self, request, tenant_id, network_id, port_id,
+              att_details=False):
+        """ Returns a specific port. """
+        port = self._plugin.get_port_details(
+                        tenant_id, network_id, port_id)
+        builder = ports_view.get_view_builder(request)
+        result = builder.build(port, port_details=True,
+                               att_details=att_details)['port']
+        return dict(port=result)
+
+    def index(self, request, tenant_id, network_id):
+        """ Returns a list of port ids for a given network """
+        return self._items(request, tenant_id, network_id, port_details=False)
+
     def show(self, request, tenant_id, network_id, id):
         """ Returns port details for given port and network """
         try:
-            port = self._plugin.get_port_details(
-                            tenant_id, network_id, id)
-            builder = ports_view.get_view_builder(request)
-            #build response with details
-            result = builder.build(port, True)['port']
-            return dict(port=result)
+            return self._item(request, tenant_id, network_id, id)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
+
+    def detail(self, request, **kwargs):
+        tenant_id = kwargs.get('tenant_id')
+        network_id = kwargs.get('network_id')
+        port_id = kwargs.get('id')
+        if port_id:
+            # show details for a given network
+            return self._item(request, tenant_id,
+                              network_id, port_id, att_details=True)
+        else:
+            # show details for all port
+            return self._items(request, tenant_id,
+                               network_id, port_details=True)
 
     def create(self, request, tenant_id, network_id):
         """ Creates a new port for a given network """
@@ -89,10 +113,10 @@ class Controller(common.QuantumController):
         try:
             port = self._plugin.create_port(tenant_id,
                                             network_id,
-                                            request_params['port-state'])
+                                            request_params['state'])
             builder = ports_view.get_view_builder(request)
-            result = builder.build(port)
-            return dict(ports=result)
+            result = builder.build(port)['port']
+            return dict(port=result)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.StateInvalid as e:
@@ -107,11 +131,9 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            port = self._plugin.update_port(tenant_id, network_id, id,
-                                            request_params['port-state'])
-            builder = ports_view.get_view_builder(request)
-            result = builder.build(port, True)
-            return dict(ports=result)
+            self._plugin.update_port(tenant_id, network_id, id,
+                                     request_params['state'])
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
@@ -124,53 +146,10 @@ class Controller(common.QuantumController):
         #look for port state in request
         try:
             self._plugin.delete_port(tenant_id, network_id, id)
-            return exc.HTTPAccepted()
-            # TODO(salvatore-orlando): Handle portInUse error
+            return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.PortNotFound as e:
             return faults.Fault(faults.PortNotFound(e))
         except exception.PortInUse as e:
             return faults.Fault(faults.PortInUse(e))
-
-    def get_resource(self, request, tenant_id, network_id, id):
-        try:
-            result = self._plugin.get_port_details(
-                            tenant_id, network_id, id).get('attachment-id',
-                                                           None)
-            return dict(attachment=result)
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
-
-    def attach_resource(self, request, tenant_id, network_id, id):
-        try:
-            request_params = \
-                self._parse_request_params(request,
-                                           self._attachment_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            self._plugin.plug_interface(tenant_id,
-                                            network_id, id,
-                                            request_params['attachment-id'])
-            return exc.HTTPAccepted()
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))
-        except exception.PortInUse as e:
-            return faults.Fault(faults.PortInUse(e))
-        except exception.AlreadyAttached as e:
-            return faults.Fault(faults.AlreadyAttached(e))
-
-    def detach_resource(self, request, tenant_id, network_id, id):
-        try:
-            self._plugin.unplug_interface(tenant_id,
-                                          network_id, id)
-            return exc.HTTPAccepted()
-        except exception.NetworkNotFound as e:
-            return faults.Fault(faults.NetworkNotFound(e))
-        except exception.PortNotFound as e:
-            return faults.Fault(faults.PortNotFound(e))

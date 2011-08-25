@@ -43,7 +43,7 @@ class ServerStub():
             return self.content
 
         def status(self):
-            return status
+            return self.status
 
     # To test error codes, set the host to 10.0.0.1, and the port to the code
     def __init__(self, host, port=9696, key_file="", cert_file=""):
@@ -131,19 +131,19 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_list_networks - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-    def _test_list_network_details(self,
+    def _test_show_network_details(self,
                                    tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_network_details - tenant:%s "\
+        LOG.debug("_test_show_network_details - tenant:%s "\
                   "- format:%s - START", format, tenant)
 
-        self._assert_sanity(self.client.list_network_details,
+        self._assert_sanity(self.client.show_network_details,
                             status,
                             "GET",
                             "networks/001",
                             data=["001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_network_details - tenant:%s "\
+        LOG.debug("_test_show_network_details - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
     def _test_create_network(self, tenant=TENANT_1, format='json', status=200):
@@ -203,19 +203,19 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_list_ports - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-    def _test_list_port_details(self,
+    def _test_show_port_details(self,
                                 tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_port_details - tenant:%s "\
+        LOG.debug("_test_show_port_details - tenant:%s "\
                   "- format:%s - START", format, tenant)
 
-        self._assert_sanity(self.client.list_port_details,
+        self._assert_sanity(self.client.show_port_details,
                             status,
                             "GET",
                             "networks/001/ports/001",
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_port_details - tenant:%s "\
+        LOG.debug("_test_show_port_details - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
     def _test_create_port(self, tenant=TENANT_1, format='json', status=200):
@@ -261,19 +261,19 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_set_port_state - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-    def _test_list_port_attachments(self,
+    def _test_show_port_attachment(self,
                                    tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_list_port_attachments - tenant:%s "\
+        LOG.debug("_test_show_port_attachment - tenant:%s "\
                   "- format:%s - START", format, tenant)
 
-        self._assert_sanity(self.client.list_port_attachments,
+        self._assert_sanity(self.client.show_port_attachment,
                             status,
                             "GET",
                             "networks/001/ports/001/attachment",
                             data=["001", "001"],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_list_port_attachments - tenant:%s "\
+        LOG.debug("_test_show_port_attachment - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
     def _test_attach_resource(self, tenant=TENANT_1,
@@ -345,23 +345,23 @@ class APITest(unittest.TestCase):
     def test_list_networks_error_401(self):
         self._test_list_networks(status=401)
 
-    def test_list_network_details_json(self):
-        self._test_list_network_details(format='json')
+    def test_show_network_details_json(self):
+        self._test_show_network_details(format='json')
 
-    def test_list_network_details_xml(self):
-        self._test_list_network_details(format='xml')
+    def test_show_network_details_xml(self):
+        self._test_show_network_details(format='xml')
 
-    def test_list_network_details_alt_tenant(self):
-        self._test_list_network_details(tenant=TENANT_2)
+    def test_show_network_details_alt_tenant(self):
+        self._test_show_network_details(tenant=TENANT_2)
 
-    def test_list_network_details_error_470(self):
-        self._test_list_network_details(status=470)
+    def test_show_network_details_error_470(self):
+        self._test_show_network_details(status=470)
 
-    def test_list_network_details_error_401(self):
-        self._test_list_network_details(status=401)
+    def test_show_network_details_error_401(self):
+        self._test_show_network_details(status=401)
 
-    def test_list_network_details_error_420(self):
-        self._test_list_network_details(status=420)
+    def test_show_network_details_error_420(self):
+        self._test_show_network_details(status=420)
 
     def test_create_network_json(self):
         self._test_create_network(format='json')
@@ -447,26 +447,26 @@ class APITest(unittest.TestCase):
     def test_list_ports_error_420(self):
         self._test_list_ports(status=420)
 
-    def test_list_port_details_json(self):
+    def test_show_port_details_json(self):
         self._test_list_ports(format='json')
 
-    def test_list_port_details_xml(self):
+    def test_show_port_details_xml(self):
         self._test_list_ports(format='xml')
 
-    def test_list_port_details_alt_tenant(self):
+    def test_show_port_details_alt_tenant(self):
         self._test_list_ports(tenant=TENANT_2)
 
-    def test_list_port_details_error_470(self):
-        self._test_list_port_details(status=470)
+    def test_show_port_details_error_470(self):
+        self._test_show_port_details(status=470)
 
-    def test_list_port_details_error_401(self):
-        self._test_list_ports(status=401)
+    def test_show_port_details_error_401(self):
+        self._test_show_port_details(status=401)
 
-    def test_list_port_details_error_420(self):
-        self._test_list_ports(status=420)
+    def test_show_port_details_error_420(self):
+        self._test_show_port_details(status=420)
 
-    def test_list_port_details_error_430(self):
-        self._test_list_ports(status=430)
+    def test_show_port_details_error_430(self):
+        self._test_show_port_details(status=430)
 
     def test_create_port_json(self):
         self._test_create_port(format='json')
@@ -546,29 +546,29 @@ class APITest(unittest.TestCase):
     def test_set_port_state_error_431(self):
         self._test_set_port_state(status=431)
 
-    def test_list_port_attachments_json(self):
-        self._test_list_port_attachments(format='json')
+    def test_show_port_attachment_json(self):
+        self._test_show_port_attachment(format='json')
 
-    def test_list_port_attachments_xml(self):
-        self._test_list_port_attachments(format='xml')
+    def test_show_port_attachment_xml(self):
+        self._test_show_port_attachment(format='xml')
 
-    def test_list_port_attachments_alt_tenant(self):
-        self._test_list_port_attachments(tenant=TENANT_2)
+    def test_show_port_attachment_alt_tenant(self):
+        self._test_show_port_attachment(tenant=TENANT_2)
 
-    def test_list_port_attachments_error_470(self):
-        self._test_list_port_attachments(status=470)
+    def test_show_port_attachment_error_470(self):
+        self._test_show_port_attachment(status=470)
 
-    def test_list_port_attachments_error_401(self):
-        self._test_list_port_attachments(status=401)
+    def test_show_port_attachment_error_401(self):
+        self._test_show_port_attachment(status=401)
 
-    def test_list_port_attachments_error_400(self):
-        self._test_list_port_attachments(status=400)
+    def test_show_port_attachment_error_400(self):
+        self._test_show_port_attachment(status=400)
 
-    def test_list_port_attachments_error_420(self):
-        self._test_list_port_attachments(status=420)
+    def test_show_port_attachment_error_420(self):
+        self._test_show_port_attachment(status=420)
 
-    def test_list_port_attachments_error_430(self):
-        self._test_list_port_attachments(status=430)
+    def test_show_port_attachment_error_430(self):
+        self._test_show_port_attachment(status=430)
 
     def test_attach_resource_json(self):
         self._test_attach_resource(format='json')

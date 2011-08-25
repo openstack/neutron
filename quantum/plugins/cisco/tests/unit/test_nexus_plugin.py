@@ -1,0 +1,281 @@
+# copyright 2011 Cisco Systems, Inc.  All rights reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+# @author: Shweta Padubidri, Peter Strunk, Cisco Systems, Inc.
+#
+import unittest
+import logging
+from quantum.common import exceptions as exc
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.nexus import cisco_nexus_plugin
+
+LOG = logging.getLogger('quantum.tests.test_nexus')
+
+
+class TestNexusPlugin(unittest.TestCase):
+
+    def setUp(self):
+
+        self.tenant_id = "test_tenant_cisco1"
+        self.net_name = "test_network_cisco1"
+        self.net_id = 000007
+        self.vlan_name = "q-" + str(self.net_id) + "vlan"
+        self.vlan_id = 267
+        self.port_id = "9"
+        self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
+
+    def test_create_network(self, net_tenant_id=None, network_name=None,
+                            network_id=None, net_vlan_name=None,
+                            net_vlan_id=None):
+        """
+        Tests creation of new Virtual Network.
+        """
+
+        LOG.debug("test_create_network - START")
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_name:
+            net_name = network_name
+        else:
+            net_name = self.net_name
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+        if net_vlan_name:
+            vlan_name = net_vlan_name
+        else:
+            vlan_name = self.vlan_name
+        if net_vlan_id:
+            vlan_id = net_vlan_id
+        else:
+            vlan_id = self.vlan_id
+
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+                tenant_id, net_name, net_id, vlan_name, vlan_id)
+
+        self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
+        self.assertEqual(new_net_dict[const.NET_NAME], self.net_name)
+        self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
+        self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.vlan_id)
+        self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
+        LOG.debug("test_create_network - END")
+
+    def test_delete_network(self, net_tenant_id=None, network_id=None):
+        """
+        Tests deletion of a Virtual Network.
+        """
+
+        LOG.debug("test_delete_network - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+                tenant_id, self.net_name, net_id, self.vlan_name, self.vlan_id)
+        deleted_net_dict = self._cisco_nexus_plugin.delete_network(
+                        tenant_id, new_net_dict[const.NET_ID])
+        self.assertEqual(deleted_net_dict[const.NET_ID], net_id)
+        LOG.debug("test_delete_network - END")
+
+    def test_delete_network_DNE(self, net_tenant_id=None, net_id='0005'):
+        """
+        Tests deletion of a Virtual Network when Network does not exist.
+        """
+
+        LOG.debug("test_delete_network_DNE - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+
+        self.assertRaises(exc.NetworkNotFound,
+                          self._cisco_nexus_plugin.delete_network,
+                          tenant_id, net_id)
+
+        LOG.debug("test_delete_network_DNE - END")
+
+    def test_get_network_details(self, net_tenant_id=None, network_id=None):
+        """
+        Tests displays details of a Virtual Network .
+        """
+
+        LOG.debug("test_get_network_details - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+                tenant_id, self.net_name, net_id, self.vlan_name, self.vlan_id)
+        check_net_dict = self._cisco_nexus_plugin.get_network_details(
+                                        tenant_id, net_id)
+
+        self.assertEqual(check_net_dict[const.NET_ID], net_id)
+        self.assertEqual(check_net_dict[const.NET_NAME], self.net_name)
+        self.assertEqual(check_net_dict[const.NET_VLAN_NAME], self.vlan_name)
+        self.assertEqual(check_net_dict[const.NET_VLAN_ID], self.vlan_id)
+        self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
+        LOG.debug("test_get_network_details - END")
+
+    def test_get_networkDNE(self, net_tenant_id=None, net_id='0005'):
+        """
+        Tests display of a Virtual Network when Network does not exist.
+        """
+
+        LOG.debug("test_get_network_details_network_does_not_exist - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+
+        self.assertRaises(exc.NetworkNotFound,
+                          self._cisco_nexus_plugin.get_network_details,
+                          tenant_id, net_id)
+
+        LOG.debug("test_get_network_details_network_does_not_exist - END")
+
+    def test_rename_network(self, new_name="new_network_name",
+                            net_tenant_id=None, network_id=None):
+        """
+        Tests rename of a Virtual Network .
+        """
+
+        LOG.debug("test_rename_network - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+                        tenant_id, self.net_name, net_id, self.vlan_name,
+                        self.vlan_id)
+        rename_net_dict = self._cisco_nexus_plugin.rename_network(
+                        tenant_id, new_net_dict[const.NET_ID], new_name)
+        self.assertEqual(rename_net_dict[const.NET_NAME], new_name)
+        self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
+        LOG.debug("test_rename_network - END")
+
+    def test_rename_network_DNE(self, new_name="new_network_name",
+                                net_tenant_id=None, network_id='0005'):
+        """
+        Tests rename of a Virtual Network when Network does not exist.
+        """
+
+        LOG.debug("test_rename_network_DNE - START")
+
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+
+        self.assertRaises(exc.NetworkNotFound,
+                          self._cisco_nexus_plugin.rename_network,
+                          new_name, tenant_id, net_id)
+
+        LOG.debug("test_rename_network_DNE - END")
+
+    def test_list_all_networks(self, net_tenant_id=None):
+        """
+        Tests listing of all the Virtual Networks .
+        """
+
+        LOG.debug("test_list_all_networks - START")
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        new_net_dict1 = self._cisco_nexus_plugin.create_network(
+                                tenant_id, self.net_name, self.net_id,
+                                self.vlan_name, self.vlan_id)
+        new_net_dict2 = self._cisco_nexus_plugin.create_network(
+                                tenant_id, "New_Network2", "0011",
+                                "second_vlan", "2003")
+        list_net_dict = self._cisco_nexus_plugin.get_all_networks(tenant_id)
+        net_temp_list = [new_net_dict1, new_net_dict2]
+        self.assertEqual(len(list_net_dict), 2)
+        self.assertTrue(list_net_dict[0] in net_temp_list)
+        self.assertTrue(list_net_dict[1] in net_temp_list)
+        self.tearDownNetwork(tenant_id, new_net_dict1[const.NET_ID])
+        self.tearDownNetwork(tenant_id, new_net_dict2[const.NET_ID])
+        LOG.debug("test_list_all_networks - END")
+
+    def test_get_vlan_id_for_network(self, net_tenant_id=None,
+                                     network_id=None):
+        """
+        Tests retrieval of vlan id for a Virtual Networks .
+        """
+
+        LOG.debug("test_get_vlan_id_for_network - START")
+        if net_tenant_id:
+            tenant_id = net_tenant_id
+        else:
+            tenant_id = self.tenant_id
+        if network_id:
+            net_id = network_id
+        else:
+            net_id = self.net_id
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+                        tenant_id, self.net_name, net_id, self.vlan_name,
+                        self.vlan_id)
+        result_vlan_id = self._cisco_nexus_plugin._get_vlan_id_for_network(
+                        tenant_id, net_id)
+        self.assertEqual(result_vlan_id, self.vlan_id)
+        self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
+        LOG.debug("test_get_vlan_id_for_network - END")
+
+    def tearDownNetwork(self, tenant_id, network_dict_id):
+        """
+        Clean up functions after the tests
+        """
+        self._cisco_nexus_plugin.delete_network(tenant_id, network_dict_id)
+
+#    def test_create_network(self):
+#        _test_create_network(self._cisco_nexus_plugin)
+
+#    def test_delete_network(self):
+#        _test_delete_network(self._cisco_nexus_plugin)
+
+#    def test_rename_network(self):
+#        _test_rename_network(self._cisco_nexus_plugin)
+
+#    def test_show_network(self):
+#        _test_get_network_details(self._cisco_nexus_plugin)
+
+#    def test_list_networks(self):
+#        _test_list_all_networks(self._cisco_nexus_plugin)

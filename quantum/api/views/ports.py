@@ -29,19 +29,11 @@ class ViewBuilder(object):
         """
         self.base_url = base_url
 
-    def build(self, port_data, is_detail=False):
+    def build(self, port_data, port_details=False, att_details=False):
         """Generic method used to generate a port entity."""
-        if is_detail:
-            port = self._build_detail(port_data)
-        else:
-            port = self._build_simple(port_data)
+        port = dict(port=dict(id=port_data['port-id']))
+        if port_details:
+            port['port']['state'] = port_data['port-state']
+        if att_details and port_data['attachment']:
+            port['port']['attachment'] = dict(id=port_data['attachment'])
         return port
-
-    def _build_simple(self, port_data):
-        """Return a simple model of a port."""
-        return dict(port=dict(id=port_data['port-id']))
-
-    def _build_detail(self, port_data):
-        """Return a simple model of a port (with its state)."""
-        return dict(port=dict(id=port_data['port-id'],
-                              state=port_data['port-state']))

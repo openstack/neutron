@@ -2,7 +2,7 @@
 #if $cmd == 'list_nets'
 Virtual Networks on Tenant $tenant_id
 #for $network in $networks
-\tNetwork ID: $network.id
+    Network ID: $network.id
 #end for 
 #elif $cmd == 'create_net'
 Created a new Virtual Network with ID: $network_id for Tenant $tenant_id
@@ -11,16 +11,16 @@ Deleted Virtual Network with ID: $network_id for Tenant $tenant_id
 #elif $cmd == 'detail_net'
 Network: $network.name ($network.id)
 Remote Interfaces on Virtual Network
-#for $port in $network.port
-\tLogical Port $port.id: $port.attachment
+#for $port in $network.ports
+    Logical Port $port.id: $port.attachment
 #end for
 #elif $cmd == 'rename_net'
 Renamed Virtual Network with ID: $network.id for Tenant $tenant_id, 
-New name is: $network['net-name']
+New name is: $network.name
 #elif $cmd == 'list_ports'
 Ports on Virtual Network: $network_id
 #for $port in $ports
-\tLogical Port: $port.id
+    Logical Port: $port.id
 #end for
 #elif $cmd == 'create_port'
 Created new Logical Port with ID: $port_id 
@@ -32,7 +32,7 @@ on Virtual Network: $network_id
 for tenant: $tenant_id
 #elif $cmd == 'set_port_state'
 Updated state for Logical Port with ID: $port.id
-New state is: $port['port-state']
+New state is: $port.state
 on Virtual Network: $network_id
 for tenant: $tenant_id
 #elif $cmd == 'detail_port'

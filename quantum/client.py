@@ -21,19 +21,31 @@ import httplib
 import socket
 import urllib
 
+from quantum.common import exceptions
 from quantum.common.wsgi import Serializer
 
-LOG = logging.getLogger('client')
+LOG = logging.getLogger('quantum.client')
+EXCEPTIONS = {
+    400: exceptions.BadInputError,
+    401: exceptions.NotAuthorized,
+    420: exceptions.NetworkNotFound,
+    421: exceptions.NetworkInUse,
+    430: exceptions.PortNotFound,
+    431: exceptions.StateInvalid,
+    432: exceptions.PortInUse,
+    440: exceptions.AlreadyAttached}
 
 
-class api_call(object):
+class ApiCall(object):
     """A Decorator to add support for format and tenant overriding"""
-    def __init__(self, f):
-        self.f = f
+    def __init__(self, function):
+        self.function = function
 
     def __get__(self, instance, owner):
         def with_params(*args, **kwargs):
-            # Temporarily set format and tenant for this request
+            """
+            Temporarily sets the format and tenant for this request
+            """
             (format, tenant) = (instance.format, instance.tenant)
 
             if 'format' in kwargs:
@@ -41,7 +53,7 @@ class api_call(object):
             if 'tenant' in kwargs:
                 instance.tenant = kwargs['tenant']
 
-            ret = self.f(instance, *args)
+            ret = self.function(instance, *args)
             (instance.format, instance.tenant) = (format, tenant)
             return ret
         return with_params
@@ -51,9 +63,18 @@ class Client(object):
 
     """A base client class - derived from Glance.BaseClient"""
 
-    action_prefix = '/v0.1/tenants/{tenant_id}'
+    #Metadata for deserializing xml
+    _serialization_metadata = {
+        "application/xml": {
+            "attributes": {
+                "network": ["id", "name"],
+                "port": ["id", "state"],
+                "attachment": ["id"]},
+            "plurals": {"networks": "network",
+                        "ports": "port"}},
+    }
 
-    """Action query strings"""
+    # Action query strings
     networks_path = "/networks"
     network_path = "/networks/%s"
     ports_path = "/networks/%s/ports"
@@ -61,7 +82,8 @@ class Client(object):
     attachment_path = "/networks/%s/ports/%s/attachment"
 
     def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
-                format="xml", testingStub=None, key_file=None, cert_file=None):
+                format="xml", testingStub=None, key_file=None, cert_file=None,
+                logger=None, action_prefix="/v1.0/tenants/{tenant_id}"):
         """
         Creates a new client to some service.
 
@@ -83,6 +105,8 @@ class Client(object):
         self.testingStub = testingStub
         self.key_file = key_file
         self.cert_file = cert_file
+        self.logger = logger
+        self.action_prefix = action_prefix
 
     def get_connection_type(self):
         """
@@ -98,6 +122,11 @@ class Client(object):
     def _send_request(self, conn, method, action, body, headers):
         # Salvatore: Isolating this piece of code in its own method to
         # facilitate stubout for testing
+        if self.logger:
+            self.logger.debug("Quantum Client Request:\n" \
+                    + method + " " + action + "\n")
+            if body:
+                self.logger.debug(body)
         conn.request(method, action, body, headers)
         return conn.getresponse()
 
@@ -122,11 +151,14 @@ class Client(object):
 
         # Add format and tenant_id
         action += ".%s" % self.format
-        action = Client.action_prefix + action
+        action = self.action_prefix + action
         action = action.replace('{tenant_id}', self.tenant)
 
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
+        if body:
+            body = self.serialize(body)
+
         try:
             connection_type = self.get_connection_type()
             headers = headers or {"Content-Type":
@@ -136,28 +168,38 @@ class Client(object):
             certs = dict((x, certs[x]) for x in certs if certs[x] != None)
 
             if self.use_ssl and len(certs):
-                c = connection_type(self.host, self.port, **certs)
+                conn = connection_type(self.host, self.port, **certs)
             else:
-                c = connection_type(self.host, self.port)
-            res = self._send_request(c, method, action, body, headers)
+                conn = connection_type(self.host, self.port)
+            res = self._send_request(conn, method, action, body, headers)
             status_code = self.get_status_code(res)
+            data = res.read()
+
+            if self.logger:
+                self.logger.debug("Quantum Client Reply (code = %s) :\n %s" \
+                        % (str(status_code), data))
+
             if status_code in (httplib.OK,
                                httplib.CREATED,
                                httplib.ACCEPTED,
                                httplib.NO_CONTENT):
-                return self.deserialize(res)
+                return self.deserialize(data, status_code)
             else:
-                # Create exception with HTTP status code and message
                 error_message = res.read()
                 LOG.debug("Server returned error: %s", status_code)
                 LOG.debug("Error message: %s", error_message)
+                # Create exception with HTTP status code and message
+                if res.status in EXCEPTIONS:
+                    raise EXCEPTIONS[res.status]()
+                # Add error code and message to exception arguments
                 ex = Exception("Server returned error: %s" % status_code)
                 ex.args = ([dict(status_code=status_code,
                                  message=error_message)],)
                 raise ex
         except (socket.error, IOError), e:
-            raise Exception("Unable to connect to "
-                            "server. Got error: %s" % e)
+            msg = "Unable to connect to server. Got error: %s" % e
+            LOG.exception(msg)
+            raise Exception(msg)
 
     def get_status_code(self, response):
         """
@@ -170,113 +212,128 @@ class Client(object):
             return response.status
 
     def serialize(self, data):
-        if type(data) is dict:
+        """
+        Serializes a dictionary with a single key (which can contain any
+        structure) into either xml or json
+        """
+        if data is None:
+            return None
+        elif type(data) is dict:
             return Serializer().serialize(data, self.content_type())
+        else:
+            raise Exception("unable to deserialize object of type = '%s'" \
+                                % type(data))
 
-    def deserialize(self, data):
-        if self.get_status_code(data) in (202, 204):
-            return data.read()
-        return Serializer().deserialize(data.read(), self.content_type())
+    def deserialize(self, data, status_code):
+        """
+        Deserializes a an xml or json string into a dictionary
+        """
+        if status_code in (202, 204):
+            return data
+        #server.networks.Controller._serialization_metadata
+        return Serializer(self._serialization_metadata).\
+                    deserialize(data, self.content_type())
 
     def content_type(self, format=None):
+        """
+        Returns the mime-type for either 'xml' or 'json'.  Defaults to the
+        currently set format
+        """
         if not format:
             format = self.format
         return "application/%s" % (format)
 
-    @api_call
+    @ApiCall
     def list_networks(self):
         """
-        Queries the server for a list of networks
+        Fetches a list of all networks for a tenant
         """
         return self.do_request("GET", self.networks_path)
 
-    @api_call
-    def list_network_details(self, network):
+    @ApiCall
+    def show_network_details(self, network):
         """
-        Queries the server for the details of a certain network
+        Fetches the details of a certain network
         """
         return self.do_request("GET", self.network_path % (network))
 
-    @api_call
+    @ApiCall
     def create_network(self, body=None):
         """
-        Creates a new network on the server
+        Creates a new network
         """
-        body = self.serialize(body)
         return self.do_request("POST", self.networks_path, body=body)
 
-    @api_call
+    @ApiCall
     def update_network(self, network, body=None):
         """
-        Updates a network on the server
+        Updates a network
         """
-        body = self.serialize(body)
         return self.do_request("PUT", self.network_path % (network), body=body)
 
-    @api_call
+    @ApiCall
     def delete_network(self, network):
         """
-        Deletes a network on the server
+        Deletes the specified network
         """
         return self.do_request("DELETE", self.network_path % (network))
 
-    @api_call
+    @ApiCall
     def list_ports(self, network):
         """
-        Queries the server for a list of ports on a given network
+        Fetches a list of ports on a given network
         """
         return self.do_request("GET", self.ports_path % (network))
 
-    @api_call
-    def list_port_details(self, network, port):
+    @ApiCall
+    def show_port_details(self, network, port):
         """
-        Queries the server for a list of ports on a given network
+        Fetches the details of a certain port
         """
         return self.do_request("GET", self.port_path % (network, port))
 
-    @api_call
-    def create_port(self, network):
+    @ApiCall
+    def create_port(self, network, body=None):
         """
-        Creates a new port on a network on the server
+        Creates a new port on a given network
         """
-        return self.do_request("POST", self.ports_path % (network))
+        body = self.serialize(body)
+        return self.do_request("POST", self.ports_path % (network), body=body)
 
-    @api_call
+    @ApiCall
     def delete_port(self, network, port):
         """
-        Deletes a port from a network on the server
+        Deletes the specified port from a network
         """
         return self.do_request("DELETE", self.port_path % (network, port))
 
-    @api_call
+    @ApiCall
     def set_port_state(self, network, port, body=None):
         """
-        Sets the state of a port on the server
+        Sets the state of the specified port
         """
-        body = self.serialize(body)
         return self.do_request("PUT",
             self.port_path % (network, port), body=body)
 
-    @api_call
-    def list_port_attachments(self, network, port):
+    @ApiCall
+    def show_port_attachment(self, network, port):
         """
-        Deletes a port from a network on the server
+        Fetches the attachment-id associated with the specified port
         """
         return self.do_request("GET", self.attachment_path % (network, port))
 
-    @api_call
+    @ApiCall
     def attach_resource(self, network, port, body=None):
         """
-        Deletes a port from a network on the server
+        Sets the attachment-id of the specified port
         """
-        body = self.serialize(body)
         return self.do_request("PUT",
             self.attachment_path % (network, port), body=body)
 
-    @api_call
+    @ApiCall
     def detach_resource(self, network, port):
         """
-        Deletes a port from a network on the server
+        Removes the attachment-id of the specified port
         """
         return self.do_request("DELETE",
                                self.attachment_path % (network, port))
