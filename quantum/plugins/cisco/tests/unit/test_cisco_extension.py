@@ -68,7 +68,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
-                          'disassociate_portprofile': "POST"}
+                          'disassociate_portprofile': "PUT"}
         controller = portprofile.PortprofilesController(
                                QuantumManager.get_plugin())
         res_ext = extensions.ResourceExtension('portprofiles', controller,
@@ -206,7 +206,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         rename_response = self.test_app.put(rename_path, rename_req_body)
         self.assertEqual(200, rename_response.status_int)
 
-         # Clean Up - Delete the Port Profile
+        # Clean Up - Delete the Port Profile
         self.tear_down_profile(rename_path)
         LOG.debug("test_update_portprofile - END")
 
@@ -410,7 +410,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                             "/disassociate_portprofile"
 
         disassociate_path = str(disassociate_path_temp)
-        disassociate_response = self.test_app.post(
+        disassociate_response = self.test_app.put(
                                      disassociate_path, req_assign_body,
                                      content_type=self.contenttype)
         self.assertEqual(202, disassociate_response.status_int)
@@ -433,7 +433,7 @@ class PortprofileExtensionTest(unittest.TestCase):
 
         """ Tear down associate profile"""
 
-        self.test_app.post(dissociate_profile_path, req_body,
+        self.test_app.put(dissociate_profile_path, req_body,
                            content_type=self.contenttype)
         self.tear_down_profile(delete_profile_path)
 
@@ -475,8 +475,8 @@ class NovatenantExtensionTest(unittest.TestCase):
         req_body = json.dumps(self.test_instance_data)
         host_path = self.novatenants_path + "001/get_host"
         host_response = self.test_app.put(
-                                  host_path, req_body,
-                                  content_type=self.contenttype)
+                                 host_path, req_body,
+                                 content_type=self.contenttype)
         self.assertEqual(200, host_response.status_int)
         LOG.debug("test_get_host - END")
 
@@ -487,8 +487,8 @@ class NovatenantExtensionTest(unittest.TestCase):
         LOG.debug("test_get_hostBADRequest - START")
         host_path = self.novatenants_path + "001/get_host"
         host_response = self.test_app.put(
-                                  host_path, 'BAD_REQUEST',
-                                  content_type=self.contenttype, status='*')
+                                 host_path, 'BAD_REQUEST',
+                                content_type=self.contenttype, status='*')
         self.assertEqual(400, host_response.status_int)
         LOG.debug("test_get_hostBADRequest - END")
 

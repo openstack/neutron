@@ -21,13 +21,13 @@
 import logging
 
 from webob import exc
-from extensions import _credential_view as credential_view
-from quantum.plugins.cisco.common import cisco_exceptions as exception
-from extensions import _faults as faults
 
+from extensions import _credential_view as credential_view
 from quantum.api import api_common as common
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.plugins.cisco.common import cisco_faults as faults
 
 LOG = logging.getLogger('quantum.api.credentials')
 
@@ -36,7 +36,7 @@ class Credential(object):
     """extension class Credential"""
     def __init__(self):
         pass
-    
+
     @classmethod
     def get_name(cls):
         """ Returns Ext Resource Name """
@@ -67,7 +67,6 @@ class Credential(object):
         """ Returns Ext Resources """
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
-       
         controller = CredentialController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('credentials', controller,
                                              parent=parent_resource)]
@@ -84,7 +83,7 @@ class CredentialController(common.QuantumController):
         'required': True}, {
         'param-name': 'password',
         'required': True}]
-   
+
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
@@ -96,7 +95,7 @@ class CredentialController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'credential'
         self._plugin = plugin
-             
+
     def index(self, request, tenant_id):
         """ Returns a list of credential ids """
         return self._items(request, tenant_id, is_detail=False)
@@ -165,4 +164,3 @@ class CredentialController(common.QuantumController):
             return exc.HTTPAccepted()
         except exception.CredentialNotFound as exp:
             return faults.Fault(faults.CredentialNotFound(exp))
-        

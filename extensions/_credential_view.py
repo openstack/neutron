@@ -47,11 +47,11 @@ class ViewBuilder(object):
         return credential
     
     def _build_simple(self, credential_data):
-        """Return a simple model of a server."""
+        """Return a simple description of credential."""
         return dict(credential=dict(id=credential_data['credential_id']))
     
     def _build_detail(self, credential_data):
-        """Return a simple model of a server."""
+        """Return a detailed description of credential."""
         
         return dict(credential=dict(id=credential_data['credential_id'],
                                 name=credential_data['user_name'],

@@ -22,13 +22,12 @@
 from webob import exc
 
 from extensions import _pprofiles as pprofiles_view
-from quantum.plugins.cisco.common import cisco_exceptions as exception
-from quantum.common import exceptions as qexception
-from extensions import _faults as faults
-
 from quantum.api import api_common as common
+from quantum.common import exceptions as qexception
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.plugins.cisco.common import cisco_faults as faults
 
 
 class Portprofile(object):
@@ -67,7 +66,7 @@ class Portprofile(object):
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
-                          'disassociate_portprofile': "POST"}
+                          'disassociate_portprofile': "PUT"}
         controller = PortprofilesController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('portprofiles', controller,
                                              parent=parent_resource,

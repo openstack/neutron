@@ -21,12 +21,11 @@
 from webob import exc
 
 from extensions import _novatenant_view as novatenant_view
-from quantum.common import exceptions as qexception
-from extensions import _faults as faults
-
 from quantum.api import api_common as common
+from quantum.common import exceptions as qexception
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_faults as faults
 
 
 class Novatenant(object):
@@ -97,33 +96,9 @@ class NovatenantsController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'novatenant'
         self._plugin = plugin
-             
-    def index(self, request, tenant_id):
-        """ Returns a list of novatenant ids """
-        return "novatenant is a dummy resource"
-
-    def _items(self, request, tenant_id, is_detail):
-        """ Returns a list of novatenants. """
-        return "novatenant is a dummy resource"
-
-    # pylint: disable-msg=E1101,W0613
-    def show(self, request, tenant_id, id):
-        """ Returns novatenant details for the given novatenant id """
-        return "novatenant is a dummy resource"
-
-    def create(self, request, tenant_id):
-        """ Creates a new novatenant for a given tenant """
-        return "novatenant is a dummy resource"
-
-    def update(self, request, tenant_id, id):
-        """ Updates the name for the novatenant with the given id """
-        return "novatenant is a dummy resource"
-
-    def delete(self, request, tenant_id, id):
-        """ Destroys the Novatenant with the given id """
-        return "novatenant is a dummy resource"
-         
+                  
     #added for cisco's extension
+    # pylint: disable-msg=E1101,W0613
     def get_host(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
