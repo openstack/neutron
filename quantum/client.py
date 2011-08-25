@@ -16,11 +16,14 @@
 #    under the License.
 #    @author: Tyler Smith, Cisco Systems
 
+import logging
 import httplib
 import socket
 import urllib
 
 from quantum.common.wsgi import Serializer
+
+LOG = logging.getLogger('client')
 
 
 class api_call(object):
@@ -112,7 +115,7 @@ class Client(object):
                              to action
 
         """
-
+        LOG.debug("Client issuing request: %s", action)
         # Ensure we have a tenant id
         if not self.tenant:
             raise Exception("Tenant ID not set")
@@ -124,12 +127,10 @@ class Client(object):
 
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
-
         try:
             connection_type = self.get_connection_type()
             headers = headers or {"Content-Type":
                                       "application/%s" % self.format}
-
             # Open connection and send request, handling SSL certs
             certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
             certs = dict((x, certs[x]) for x in certs if certs[x] != None)
@@ -138,7 +139,6 @@ class Client(object):
                 c = connection_type(self.host, self.port, **certs)
             else:
                 c = connection_type(self.host, self.port)
-
             res = self._send_request(c, method, action, body, headers)
             status_code = self.get_status_code(res)
             if status_code in (httplib.OK,
@@ -148,11 +148,13 @@ class Client(object):
                 return self.deserialize(res)
             else:
                 # Create exception with HTTP status code and message
+                error_message = res.read()
+                LOG.debug("Server returned error: %s", status_code)
+                LOG.debug("Error message: %s", error_message)
                 ex = Exception("Server returned error: %s" % status_code)
                 ex.args = ([dict(status_code=status_code,
-                                 message=res.read())],)
+                                 message=error_message)],)
                 raise ex
-
         except (socket.error, IOError), e:
             raise Exception("Unable to connect to "
                             "server. Got error: %s" % e)
@@ -172,7 +174,7 @@ class Client(object):
             return Serializer().serialize(data, self.content_type())
 
     def deserialize(self, data):
-        if self.get_status_code(data) == 202:
+        if self.get_status_code(data) in (202, 204):
             return data.read()
         return Serializer().deserialize(data.read(), self.content_type())
 

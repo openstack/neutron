@@ -16,7 +16,7 @@ Remote Interfaces on Virtual Network
 #end for
 #elif $cmd == 'rename_net'
 Renamed Virtual Network with ID: $network.id for Tenant $tenant_id, 
-New name is: $network.name
+New name is: $network['net-name']
 #elif $cmd == 'list_ports'
 Ports on Virtual Network: $network_id
 #for $port in $ports

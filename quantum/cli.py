@@ -38,8 +38,8 @@ def _handle_exception(ex):
     if ex.args and isinstance(ex.args[-1][0], dict):
         status_code = ex.args[-1][0].get('status_code', None)
         message = ex.args[-1][0].get('message', None)
-    msg_1 = "Command failed with error code: %s" % status_code or '<missing>'
-    msg_2 = "Error message:%s" % message or '<missing>'
+    msg_1 = "Command failed with error code: %s" % (status_code or '<missing>')
+    msg_2 = "Error message:%s" % (message or '<missing>')
     LOG.exception(msg_1 + "-" + msg_2)
     print msg_1
     print msg_2
@@ -118,8 +118,8 @@ def rename_net(client, *args):
         client.update_network(network_id, data)
         LOG.debug("Operation 'update_network' executed.")
         # Response has no body. Use data for populating output
-        data['id'] = network_id
-        output = prepare_output("rename_net", tenant_id, dict(network=data))
+        data['network']['id'] = network_id
+        output = prepare_output("rename_net", tenant_id, data)
         print output
     except Exception as ex:
         _handle_exception(ex)

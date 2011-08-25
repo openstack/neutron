@@ -95,7 +95,19 @@ class CLITest(unittest.TestCase):
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
 
-    def test_list_networks_api(self):
+    def _verify_rename_network(self):
+            # Verification - get raw result from db
+            nw_list = db.network_list(self.tenant_id)
+            network_data = {'id': nw_list[0].uuid,
+                            'net-name': nw_list[0].name}
+            # Fill CLI template
+            output = cli.prepare_output('rename_net', self.tenant_id,
+                                        dict(network=network_data))
+            # Verify!
+            # Must add newline at the end to match effect of print call
+            self.assertEquals(self.fake_stdout.make_string(), output + '\n')
+
+    def test_list_networks(self):
         try:
             # Pre-populate data for testing using db api
             db.network_create(self.tenant_id, self.network_name_1)
@@ -107,9 +119,9 @@ class CLITest(unittest.TestCase):
             self._verify_list_networks()
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_list_network_api failed due to an exception")
+            self.fail("test_list_networks failed due to an exception")
 
-    def test_create_network_api(self):
+    def test_create_network(self):
         try:
             cli.create_net(self.client, self.tenant_id, "test")
             LOG.debug("Operation completed. Verifying result")
@@ -117,29 +129,35 @@ class CLITest(unittest.TestCase):
             self._verify_create_network()
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_create_network_api failed due to an exception")
+            self.fail("test_create_network failed due to an exception")
 
-    def _prepare_test_delete_network(self):
-        # Pre-populate data for testing using db api
-        db.network_create(self.tenant_id, self.network_name_1)
-        net_id = db.network_list(self.tenant_id)[0]['uuid']
-        return net_id
-
-    def test_delete_network_api(self):
+    def test_delete_network(self):
         try:
-            network_id = self._prepare_test_delete_network()
+            db.network_create(self.tenant_id, self.network_name_1)
+            network_id = db.network_list(self.tenant_id)[0]['uuid']
             cli.delete_net(self.client, self.tenant_id, network_id)
             LOG.debug("Operation completed. Verifying result")
             LOG.debug(self.fake_stdout.content)
             self._verify_delete_network(network_id)
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_delete_network_api failed due to an exception")
+            self.fail("test_delete_network failed due to an exception")
 
-    def test_detail_network_api(self):
-            # Load some data into the datbase
+    def test_detail_network(self):
+        # Load some data into the datbase
+        net = db.network_create(self.tenant_id, self.network_name_1)
+        db.port_create(net['uuid'])
+        port = db.port_create(net['uuid'])
+        cli.detail_net(self.client, self.tenant_id, net['uuid'])
+        db.port_set_attachment(port['uuid'], net['uuid'], "test_iface_id")
+
+    def test_rename_network(self):
+        try:
             net = db.network_create(self.tenant_id, self.network_name_1)
-            db.port_create(net['uuid'])
-            port = db.port_create(net['uuid'])
-            cli.detail_net(self.client, self.tenant_id, net['uuid'])
-            db.port_set_attachment(port['uuid'], net['uuid'], "test_iface_id")
+            network_id = net['uuid']
+            cli.rename_net(self.client, self.tenant_id,
+                           network_id, self.network_name_2)
+            self._verify_rename_network()
+        except:
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_rename_network failed due to an exception")
