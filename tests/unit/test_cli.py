@@ -176,7 +176,10 @@ class CLITest(unittest.TestCase):
             # attachment in separate bug fix.
             port = db.port_get(port_id, network_id)
             port_data = {'id': port.uuid, 'state': port.state,
-                         'attachment': '<unavailable>'}
+                         'attachment': "<none>"}
+            if port.interface_id is not None:
+                port_data['attachment'] = port.interface_id
+
             # Fill CLI template
             output = cli.prepare_output('show_port', self.tenant_id,
                                         dict(network_id=network_id,
@@ -340,7 +343,7 @@ class CLITest(unittest.TestCase):
         LOG.debug(self.fake_stdout.content)
         self._verify_set_port_state(network_id, port_id)
 
-    def test_show_port(self):
+    def test_show_port_no_attach(self):
         network_id = None
         port_id = None
         try:
@@ -352,7 +355,27 @@ class CLITest(unittest.TestCase):
             cli.show_port(self.client, self.tenant_id, network_id, port_id)
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_detail_port failed due to an exception")
+            self.fail("test_show_port_no_attach failed due to an exception")
+
+        LOG.debug("Operation completed. Verifying result")
+        LOG.debug(self.fake_stdout.content)
+        self._verify_show_port(network_id, port_id)
+
+    def test_show_port_with_attach(self):
+        network_id = None
+        port_id = None
+        iface_id = "flavor crystals"
+        try:
+            # Pre-populate data for testing using db api
+            net = db.network_create(self.tenant_id, self.network_name_1)
+            network_id = net['uuid']
+            port = db.port_create(network_id)
+            port_id = port['uuid']
+            db.port_set_attachment(port_id, network_id, iface_id)
+            cli.show_port(self.client, self.tenant_id, network_id, port_id)
+        except:
+            LOG.exception("Exception caught: %s", sys.exc_info())
+            self.fail("test_show_port_with_attach failed due to an exception")
 
         LOG.debug("Operation completed. Verifying result")
         LOG.debug(self.fake_stdout.content)

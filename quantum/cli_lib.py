@@ -170,8 +170,13 @@ def show_port(client, *args):
         LOG.debug("Operation 'list_port_details' executed.")
         #NOTE(salvatore-orland): current API implementation does not
         #return attachment with GET operation on port. Once API alignment
-        #branch is merged, update client to use the detail action
-        port['attachment'] = '<unavailable>'
+        #branch is merged, update client to use the detail action.
+        # (danwent) Until then, just make additonal webservice call.
+        attach = client.show_port_attachment(network_id, port_id)['attachment']
+        if "id" in attach:
+            port['attachment'] = attach['id']
+        else:
+            port['attachment'] = '<none>'
         output = prepare_output("show_port", tenant_id,
                                 dict(network_id=network_id,
                                      port=port))
