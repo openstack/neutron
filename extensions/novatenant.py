@@ -35,33 +35,33 @@ class Novatenant(object):
 
     @classmethod
     def get_name(cls):
-        """ Returns Ext Resource Name """   
+        """ Returns Ext Resource Name """
         return "Cisco Nova Tenant"
-    
+
     @classmethod
     def get_alias(cls):
         """ Returns Ext Resource alias"""
         return "Cisco Nova Tenant"
-    
+
     @classmethod
     def get_description(cls):
         """ Returns Ext Resource Description """
         return "novatenant resource is used by nova side to invoke quantum api"
-    
+
     @classmethod
     def get_namespace(cls):
         """ Returns Ext Resource Namespace """
         return "http://docs.ciscocloud.com/api/ext/novatenant/v1.0"
-    
+
     @classmethod
     def get_updated(cls):
         """ Returns Ext Resource Updated Time """
         return "2011-08-09T13:25:27-06:00"
-    
+
     @classmethod
     def get_resources(cls):
         """ Returns Ext Resource """
-        parent_resource = dict(member_name="tenant", 
+        parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'schedule_host': "PUT",
                           'associate_port': "PUT"}
@@ -78,13 +78,13 @@ class NovatenantsController(common.QuantumController):
     _Novatenant_ops_param_list = [{
         'param-name': 'novatenant_name',
         'required': True}]
-    
+
     _schedule_host_ops_param_list = [{
         'param-name': 'instance_id',
         'required': True}, {
         'param-name': 'instance_desc',
         'required': True}]
-    
+
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
@@ -96,7 +96,7 @@ class NovatenantsController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'novatenant'
         self._plugin = plugin
-                  
+
     #added for cisco's extension
     # pylint: disable-msg=E1101,W0613
     def show(self, request, tenant_id, id):
@@ -114,12 +114,11 @@ class NovatenantsController(common.QuantumController):
     def delete(self, request, tenant_id, id):
         """ Destroys the Novatenant with the given id """
         return "novatenant is a dummy resource"
-         
+
     #added for cisco's extension
     def schedule_host(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
-        
         try:
             req_params = \
                 self._parse_request_params(request,
@@ -127,20 +126,19 @@ class NovatenantsController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
-        
         instance_desc = req_params['instance_desc']
         try:
-            host = self._plugin.schedule_host(tenant_id, instance_id, instance_desc)
+            host = self._plugin.\
+            schedule_host(tenant_id, instance_id, instance_desc)
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_host(host)
             return result
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
-        
+
     def associate_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
-        
         try:
             req_params = \
                 self._parse_request_params(request,
@@ -148,7 +146,6 @@ class NovatenantsController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
-       
         instance_desc = req_params['instance_desc']
         try:
             vif = self._plugin. \
@@ -156,6 +153,6 @@ class NovatenantsController(common.QuantumController):
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_vif(vif)
             return result
-            
+
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))

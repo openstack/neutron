@@ -28,7 +28,7 @@ def get_view_builder(req):
 
 class ViewBuilder(object):
     """
-    ViewBuilder for Portprofile, 
+    ViewBuilder for Portprofile,
     derived from quantum.views.networks
     """
     def __init__(self, base_url):
@@ -39,17 +39,16 @@ class ViewBuilder(object):
 
     def build(self, portprofile_data, is_detail=False):
         """Generic method used to generate a portprofile entity."""
-        
         if is_detail:
             portprofile = self._build_detail(portprofile_data)
         else:
             portprofile = self._build_simple(portprofile_data)
         return portprofile
-    
+
     def _build_simple(self, portprofile_data):
         """Return a simple description of a portprofile"""
         return dict(portprofile=dict(id=portprofile_data['profile_id']))
-    
+
     def _build_detail(self, portprofile_data):
         """Return a detailed info of a portprofile."""
         if (portprofile_data['assignment'] == None):

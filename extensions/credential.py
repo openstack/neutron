@@ -125,7 +125,7 @@ class CredentialController(common.QuantumController):
         """ Creates a new credential for a given tenant """
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._credential_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
@@ -142,7 +142,7 @@ class CredentialController(common.QuantumController):
         """ Updates the name for the credential with the given id """
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._credential_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
