@@ -155,13 +155,3 @@ class TestUCSDriver(unittest.TestCase):
                                 self.profile_name, self.profile_client_name)
         self.assertEqual(profile_details, expected_output)
         LOG.debug("test_create_profile_post - END")
-
-    def test_get_next_dynamic_nic(self):
-        """
-        Tests get next dynamic nic
-        """
-
-        LOG.debug("test_get_next_dynamic_nic - START")
-        dynamic_nic_id = self.ucsm_driver._get_next_dynamic_nic()
-        self.assertTrue(len(dynamic_nic_id) > 0)
-        LOG.debug("test_get_next_dynamic_nic - END")

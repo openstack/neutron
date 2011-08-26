@@ -285,6 +285,10 @@ result the quantum/plugins/cisco/run_tests.py script.
 
     python run_tests.py quantum.plugins.cisco.tests.unit.test_cisco_extension
 
+   To run specific tests
+   python run_tests.py 
+    quantum.plugins.cisco.tests.unit.test_cisco_extension:<ClassName>.<funcName>
+
 Bingo bango bongo!  That's it!  Thanks for taking the leap into Quantum.
 
 ...Oh, boy!
