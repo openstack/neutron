@@ -149,16 +149,16 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
                                        args)
 
-    def get_host(self, args):
+    def schedule_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
-        LOG.debug("get_host() called\n")
+        LOG.debug("schedule_host() called\n")
         return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
                                       args)
 
-    def get_instance_port(self, args):
+    def associate_port(self, args):
         """
         Get the portprofile name and the device namei for the dynamic vnic
         """
-        LOG.debug("get_instance_port() called\n")
+        LOG.debug("associate_port() called\n")
         return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
                                       args)
