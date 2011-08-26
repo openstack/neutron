@@ -47,7 +47,7 @@ class ViewBuilder(object):
         return portprofile
     
     def _build_simple(self, portprofile_data):
-        """Return a simple model of a portprofile"""
+        """Return a simple description of a portprofile"""
         return dict(portprofile=dict(id=portprofile_data['profile_id']))
     
     def _build_detail(self, portprofile_data):

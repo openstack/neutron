@@ -26,10 +26,11 @@ import platform
 from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.quantum_plugin_base import QuantumPluginBase
+
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
@@ -441,7 +442,7 @@ class L2Network(QuantumPluginBase):
         return credential
 
     def rename_credential(self, tenant_id, credential_id, new_name):
-        """Do nothing for this resource"""
+        """Rename the particular credential resource"""
         LOG.debug("rename_credential() called\n")
         try:
             credential = cdb.get_credential(tenant_id, credential_id)

@@ -73,6 +73,7 @@ ASSOCIATE_PROFILE_OUTPUT = "<configConfMos cookie=\"cookie_placeholder\" "\
 class TestUCSDriver(unittest.TestCase):
 
     def setUp(self):
+        """ Set up function"""
         self.ucsm_driver = cisco_ucs_network_driver.CiscoUCSMDriver()
         self.vlan_name = 'New Vlan'
         self.vlan_id = '200'
@@ -136,8 +137,6 @@ class TestUCSDriver(unittest.TestCase):
         """
 
         LOG.debug("test_create_profile_post_data - START")
-        #profile_details = self.ucsm_driver._create_profile_post_data(
-        #                        self.profile_name, self.vlan_name)
         self.ucsm_driver._create_profile_post_data(
                                 self.profile_name, self.vlan_name)
         profile_delete_details = self.ucsm_driver._delete_profile_post_data(

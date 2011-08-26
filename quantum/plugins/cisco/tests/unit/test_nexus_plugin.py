@@ -28,6 +28,9 @@ LOG = logging.getLogger('quantum.tests.test_nexus')
 class TestNexusPlugin(unittest.TestCase):
 
     def setUp(self):
+        """
+        Set up function
+        """
 
         self.tenant_id = "test_tenant_cisco1"
         self.net_name = "test_network_cisco1"
@@ -281,18 +284,3 @@ class TestNexusPlugin(unittest.TestCase):
         Clean up functions after the tests
         """
         self._cisco_nexus_plugin.delete_network(tenant_id, network_dict_id)
-
-#    def test_create_network(self):
-#        _test_create_network(self._cisco_nexus_plugin)
-
-#    def test_delete_network(self):
-#        _test_delete_network(self._cisco_nexus_plugin)
-
-#    def test_rename_network(self):
-#        _test_rename_network(self._cisco_nexus_plugin)
-
-#    def test_show_network(self):
-#        _test_get_network_details(self._cisco_nexus_plugin)
-
-#    def test_list_networks(self):
-#        _test_list_all_networks(self._cisco_nexus_plugin)

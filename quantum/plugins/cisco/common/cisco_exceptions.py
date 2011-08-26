@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,7 +16,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
-"""
+
 """
 Exceptions used by the Cisco plugin
 """
@@ -86,18 +85,18 @@ class VlanIDNotFound(exceptions.QuantumException):
 
 
 class VlanIDNotAvailable(exceptions.QuantumException):
-    """VLAN ID is reserved"""
-    message = _("No available Vlan ID found")
+    """No VLAN ID available"""
+    message = _("No Vlan ID available")
 
 
 class QosNotFound(exceptions.QuantumException):
-    """QoS ID could not be found"""
+    """QoS level with this ID cannot be found"""
     message = _("QoS level %(qos_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 
 
 class QoSLevelInvalidDelete(exceptions.QuantumException):
-    """QoS ID could not be deleted"""
+    """QoS is associated with a port profile, hence cannot be deleted"""
     message = _("QoS level %(qos_id)s could not be deleted " \
                 "for tenant %(tenant_id)s since association exists")
 
@@ -109,7 +108,7 @@ class QosNameAlreadyExists(exceptions.QuantumException):
 
 
 class CredentialNotFound(exceptions.QuantumException):
-    """Credential ID could not be found"""
+    """Credential with this ID cannot be found"""
     message = _("Credential %(credential_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 

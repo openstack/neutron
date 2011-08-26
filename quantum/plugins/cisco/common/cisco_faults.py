@@ -20,7 +20,6 @@
 """
 import webob.dec
 
-from quantum.api import api_common as common
 from quantum.common import wsgi
 
 
@@ -30,12 +29,7 @@ class Fault(webob.exc.HTTPException):
     _fault_names = {
             400: "malformedRequest",
             401: "unauthorized",
-            420: "networkNotFound",
             421: "PortprofileInUse",
-            430: "portNotFound",
-            431: "requestedStateInvalid",
-            432: "portInUse",
-            440: "alreadyAttached",
             450: "PortprofileNotFound",
             451: "CredentialNotFound",
             452: "QoSNotFound",
@@ -49,21 +43,19 @@ class Fault(webob.exc.HTTPException):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
-        """Generate a WSGI response based on the exception passed to ctor."""
+        """Generate a WSGI response based on the
+         exception passed to constructor."""
         # Replace the body with fault details.
         code = self.wrapped_exc.status_int
         fault_name = self._fault_names.get(code, "quantumServiceFault")
         fault_data = {
             fault_name: {
                 'code': code,
-                'message': self.wrapped_exc.explanation, 
-                'detail': self.wrapped_exc.detail}}
+                'message': self.wrapped_exc.explanation}}
         # 'code' is an attribute on the fault tag itself
-        metadata = {'application/xml': {'attributes': {fault_name: 'code'}}}
-        default_xmlns = common.XML_NS_V10
-        serializer = wsgi.Serializer(metadata, default_xmlns)
         content_type = req.best_match_content_type()
-        #self.wrapped_exc.body = serializer.serialize(fault_data, content_type)
+        self.wrapped_exc.body = wsgi.Serializer().\
+        serialize(fault_data, content_type)
         self.wrapped_exc.content_type = content_type
         return self.wrapped_exc
 
@@ -79,7 +71,7 @@ class PortprofileNotFound(webob.exc.HTTPClientError):
     """
     code = 450
     title = 'Portprofile Not Found'
-    explanation = ('Unable to find a Portprofile with' 
+    explanation = ('Unable to find a Portprofile with'
                    + ' the specified identifier.')
 
 
@@ -95,8 +87,8 @@ class PortNotFound(webob.exc.HTTPClientError):
     code = 430
     title = 'Port not Found'
     explanation = ('Unable to find a port with the specified identifier.')
-    
-    
+
+
 class CredentialNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -108,10 +100,10 @@ class CredentialNotFound(webob.exc.HTTPClientError):
     """
     code = 451
     title = 'Credential Not Found'
-    explanation = ('Unable to find a Credential with' 
+    explanation = ('Unable to find a Credential with'
                    + ' the specified identifier.')
-  
-    
+
+
 class QosNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -123,10 +115,10 @@ class QosNotFound(webob.exc.HTTPClientError):
     """
     code = 452
     title = 'QoS Not Found'
-    explanation = ('Unable to find a QoS with' 
+    explanation = ('Unable to find a QoS with'
                    + ' the specified identifier.')
-  
-    
+
+
 class NovatenantNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -138,7 +130,7 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     """
     code = 453
     title = 'Nova tenant Not Found'
-    explanation = ('Unable to find a Novatenant with' 
+    explanation = ('Unable to find a Novatenant with'
                    + ' the specified identifier.')
 
 

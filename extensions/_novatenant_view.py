@@ -18,6 +18,7 @@
 # @author: Ying Liu, Cisco Systems, Inc.
 #
 """
+from quantum.plugins.cisco.common import cisco_constants as const
 
 
 def get_view_builder(req):
@@ -39,8 +40,8 @@ class ViewBuilder(object):
     
     def build_host(self, host_data):
         """Return host description."""
-        return dict(host_list=host_data['host_list'])
+        return dict(host_list=host_data[const.HOST_LIST])
     
     def build_vif(self, vif_data):
         """Return VIF description."""
-        return dict(vif_desc=vif_data['vif_desc'])   
+        return dict(vif_desc=vif_data[const.VIF_DESC])   

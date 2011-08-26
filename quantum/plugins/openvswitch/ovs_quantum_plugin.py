@@ -22,7 +22,6 @@ import logging as LOG
 from optparse import OptionParser
 import os
 import sys
-import unittest
 
 from quantum.common import exceptions as q_exc
 from quantum.quantum_plugin_base import QuantumPluginBase
@@ -200,41 +199,3 @@ class OVSQuantumPlugin(QuantumPluginBase):
     def get_interface_details(self, tenant_id, net_id, port_id):
         res = db.port_get(port_id, net_id)
         return res.interface_id
-
-
-class VlanMapTest(unittest.TestCase):
-
-    def setUp(self):
-        self.vmap = VlanMap()
-
-    def tearDown(self):
-        pass
-
-    def testAddVlan(self):
-        vlan_id = self.vmap.acquire("foobar")
-        self.assertTrue(vlan_id == 2)
-
-    def testReleaseVlan(self):
-        vlan_id = self.vmap.acquire("foobar")
-        self.vmap.release("foobar")
-        self.assertTrue(self.vmap.get(vlan_id) == None)
-
-
-if __name__ == "__main__":
-    usagestr = "Usage: %prog [OPTIONS] <command> [args]"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
-
-    options, args = parser.parse_args()
-
-    if options.verbose:
-        LOG.basicConfig(level=LOG.DEBUG)
-    else:
-        LOG.basicConfig(level=LOG.WARN)
-
-    # Make sqlalchemy quieter
-    LOG.getLogger('sqlalchemy.engine').setLevel(LOG.WARN)
-    # Run the tests
-    suite = unittest.TestLoader().loadTestsFromTestCase(VlanMapTest)
-    unittest.TextTestRunner(verbosity=2).run(suite)

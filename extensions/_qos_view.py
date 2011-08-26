@@ -46,11 +46,11 @@ class ViewBuilder(object):
         return qos
     
     def _build_simple(self, qos_data):
-        """Return a simple model of a server."""
+        """Return a simple description of qos."""
         return dict(qos=dict(id=qos_data['qos_id']))
     
     def _build_detail(self, qos_data):
-        """Return a simple model of a server."""
+        """Return a detailed description of qos."""
         return dict(qos=dict(id=qos_data['qos_id'],
                                 name=qos_data['qos_name'],
                                 description=qos_data['qos_desc']))

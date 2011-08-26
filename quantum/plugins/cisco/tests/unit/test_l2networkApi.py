@@ -19,13 +19,11 @@
 
 import logging
 import unittest
-#import time
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco import l2network_plugin
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-#from quantum.plugins.cisco.common import cisco_utils as utils
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 
@@ -72,7 +70,6 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, new_net_dict[const.NET_ID])
         self.assertRaises(exc.NetworkNotFound, db.network_get,
                           new_net_dict[const.NET_ID])
-        #self.assertEqual(net, None)
         self.assertEqual(
                 new_net_dict[const.NET_ID], delete_net_dict[const.NET_ID])
         LOG.debug("test_delete_network - END")
@@ -303,11 +300,6 @@ class CoreAPITestFunc(unittest.TestCase):
                                 port_dict[const.PORT_ID])
         self.assertRaises(exc.PortNotFound, db.port_get,
                           new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
-        #self.assertEqual(port, None)
-       # self.assertEqual(delete_port_dict[const.PORT_STATE], port_state)
-#        self.assertEqual(delete_port_dict[const.NET_ID], new_net_dict[NET_ID])
-#        self.assertEqual(delete_port_dict[const.PORT_ID],
-#        new_net_dict[PORT_ID])
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         self.assertEqual(delete_port_dict[const.PORT_ID],
                          port_dict[const.PORT_ID])
@@ -470,10 +462,6 @@ class CoreAPITestFunc(unittest.TestCase):
                         port_dict[const.PORT_ID], remote_interface)
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
-   #     self.assertEqual(
-    #            self._l2network_plugin._networks[new_net_dict[const.NET_ID]]
-     #                   [const.NET_PORTS][port_dict[const.PORT_ID]]
-      #                  [const.ATTACHMENT], remote_interface)
         self.assertEqual(port[const.INTERFACEID], remote_interface)
         self.tearDownNetworkPortInterface(
                         tenant_id, new_net_dict[const.NET_ID],
@@ -553,9 +541,6 @@ class CoreAPITestFunc(unittest.TestCase):
                         port_dict[const.PORT_ID])
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
-    #    self.assertEqual(self._l2network_plugin._networks
-     #           [new_net_dict[const.NET_ID]][const.NET_PORTS]
-      #          [port_dict[const.PORT_ID]][const.ATTACHMENT], None)
         self.assertEqual(port[const.INTERFACEID], None)
         self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID],
                                  port_dict[const.PORT_ID])
@@ -616,12 +601,6 @@ class CoreAPITestFunc(unittest.TestCase):
         port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
         self.assertEqual(port_profile[const.PPNAME], profile_name)
         self.assertEqual(port_profile[const.PPQOS], qos)
-       # self.assertEqual(
-        #    self._l2network_plugin._portprofiles[port_profile_id]['vlan-id'],
-         #                                                       vlan_id)
-        #self.assertEqual(
-         #   self._l2network_plugin._portprofiles[port_profile_id]
-          #  ['profile-name'], profile_name)
         self.tearDownPortProfile(tenant_id, port_profile_id)
         LOG.debug("test_create_portprofile - tenant id: %s - END",
                                                 net_tenant_id)
@@ -641,10 +620,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.profile_name, self.qos)
         port_profile_id = port_profile_dict['profile_id']
         self._l2network_plugin.delete_portprofile(tenant_id, port_profile_id)
-#        port_profile = cdb.get_portprofile(tenant_id, port_profile_id)
         self.assertRaises(Exception, cdb.get_portprofile, port_profile_id)
-#        self.assertEqual(port_profile, {})
-#        self.assertEqual(self._l2network_plugin._portprofiles, {})
         LOG.debug("test_delete_portprofile - tenant id: %s - END",
                                                      net_tenant_id)
 
@@ -714,14 +690,6 @@ class CoreAPITestFunc(unittest.TestCase):
             new_pplist.append(new_pp)
         self.assertTrue(new_pplist[0] in port_profile_list)
         self.assertTrue(new_pplist[1] in port_profile_list)
-#        self.assertEqual(self._l2network_plugin._portprofiles
- #                               [port_profile_id1]['vlan-id'], self.vlan_id)
-  #      self.assertEqual(self._l2network_plugin._portprofiles
-   #                     [port_profile_id1]['profile-name'], self.profile_name)
-    #    self.assertEqual(self._l2network_plugin._portprofiles
-     #                   [port_profile_id2]['vlan-id'], vlan_id2)
-      #  self.assertEqual(self._l2network_plugin._portprofiles
-       #                 [port_profile_id2]['profile-name'], profile_name2)
         self.tearDownPortProfile(tenant_id, port_profile_id1)
         self.tearDownPortProfile(tenant_id, port_profile_id2)
 
@@ -816,9 +784,6 @@ class CoreAPITestFunc(unittest.TestCase):
         port_profile_associate = cdb.get_pp_binding(tenant_id, port_profile_id)
         self.assertEqual(port_profile_associate[const.PORTID],
                          port_dict[const.PORT_ID])
-        #self.assertEqual(
-         #       self._l2network_plugin._portprofiles[port_profile_id]
-          #      [const.PROFILE_ASSOCIATIONS][0], port_id)
         self.tearDownAssociatePortProfile(
                      tenant_id, new_net_dict[const.NET_ID],
                      port_dict[const.PORT_ID], port_profile_id)
@@ -863,8 +828,6 @@ class CoreAPITestFunc(unittest.TestCase):
                           port_dict[const.PORT_ID], port_profile_id)
         port_profile_associate = cdb.get_pp_binding(tenant_id, port_profile_id)
         self.assertEqual(port_profile_associate, [])
-#        self.assertEqual(self._l2network_plugin._portprofiles
- #                       [port_profile_id][const.PROFILE_ASSOCIATIONS], [])
         self.tearDownPortProfile(tenant_id, port_profile_id)
         self.tearDownNetworkPort(
                           tenant_id, new_net_dict[const.NET_ID],
@@ -883,7 +846,6 @@ class CoreAPITestFunc(unittest.TestCase):
                           tenant_id, net_id, port_id, profile_id)
         LOG.debug("test_disassociate_portprofileDNE - END")
 
-#    def test_disassociate_portprofile_Unassociated
     def test_get_vlan_name(self, net_tenant_id=None, vlan_id="NewVlan",
                            vlan_prefix=conf.VLAN_NAME_PREFIX):
         """
@@ -923,22 +885,17 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_validate_port_state - END")
 
     def setUp(self):
+        """
+        Set up function
+        """
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         self.profile_name = "test_tenant_port_profile"
-       # self.vlan_id = "test_tenant_vlanid300"
         self.qos = "test_qos"
         self.port_state = const.PORT_UP
         self.net_id = '00005'
         self.port_id = 'p0005'
         self.remote_interface = 'new_interface'
-        #sql_query = "drop database quantum_l2network"
-        #sql_query_2 = "create database quantum_l2network"
-        #self._utils = utils.DBUtils()
-        #self._utils.execute_db_query(sql_query)
-        #time.sleep(10)
-        #self._utils.execute_db_query(sql_query_2)
-        #time.sleep(10)
         self._l2network_plugin = l2network_plugin.L2Network()
 
     """
@@ -950,29 +907,50 @@ class CoreAPITestFunc(unittest.TestCase):
         db.clear_db()
 
     def tearDownNetwork(self, tenant_id, network_dict_id):
+        """
+        Tear down the Network
+        """
         self._l2network_plugin.delete_network(tenant_id, network_dict_id)
 
     def tearDownPortOnly(self, tenant_id, network_dict_id, port_id):
+        """
+        Tear doen the port
+        """
         self._l2network_plugin.delete_port(tenant_id, network_dict_id, port_id)
 
     def tearDownNetworkPort(self, tenant_id, network_dict_id, port_id):
+        """
+        Tear down Network Port
+        """
         self._l2network_plugin.delete_port(tenant_id, network_dict_id, port_id)
         self.tearDownNetwork(tenant_id, network_dict_id)
 
     def tearDownNetworkPortInterface(self, tenant_id, network_dict_id,
                                      port_id):
+        """
+        Tear down Network Port Interface
+        """
         self._l2network_plugin.unplug_interface(tenant_id,
                                                 network_dict_id, port_id)
         self.tearDownNetworkPort(tenant_id, network_dict_id, port_id)
 
     def tearDownPortProfile(self, tenant_id, port_profile_id):
+        """
+        Tear down Port Profile
+        """
         self._l2network_plugin.delete_portprofile(tenant_id, port_profile_id)
 
     def tearDownPortProfileBinding(self, tenant_id, port_profile_id):
+        """
+        Tear down port profile binding
+        """
         self._l2network_plugin.delete_portprofile(tenant_id, port_profile_id)
 
     def tearDownAssociatePortProfile(self, tenant_id, net_id, port_id,
                                      port_profile_id):
+        """
+        Tear down associate port profile
+        """
         self._l2network_plugin.disassociate_portprofile(
                         tenant_id, net_id, port_id, port_profile_id)
         self.tearDownPortProfile(tenant_id, port_profile_id)

@@ -22,13 +22,12 @@ import logging
 
 from webob import exc
 from extensions import _qos_view as qos_view
-from quantum.plugins.cisco.common import cisco_exceptions as exception
-from extensions import _exceptions as exte
-from extensions import _faults as faults
-
 from quantum.api import api_common as common
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.plugins.cisco.common import cisco_faults as faults
+
 
 LOG = logging.getLogger('quantum.api.qoss')
 
@@ -94,7 +93,6 @@ class QosController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'qos'
         self._plugin = plugin
-        #super(QosController, self).__init__(plugin)
              
     def index(self, request, tenant_id):
         """ Returns a list of qos ids """
