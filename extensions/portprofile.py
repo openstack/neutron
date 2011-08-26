@@ -22,14 +22,12 @@
 from webob import exc
 
 from extensions import _pprofiles as pprofiles_view
-from quantum.plugins.cisco.common import cisco_exceptions as exception
-from quantum.common import exceptions as qexception
-#from extensions import _exceptions as exception
-from extensions import _faults as faults
-
 from quantum.api import api_common as common
+from quantum.common import exceptions as qexception
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_exceptions as exception
+from quantum.plugins.cisco.common import cisco_faults as faults
 
 
 class Portprofile(object):
@@ -59,7 +57,7 @@ class Portprofile(object):
     
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Updateed time """
+        """ Returns Ext Resource Updated time """
         return "2011-07-23T13:25:27-06:00"
     
     @classmethod
@@ -68,7 +66,7 @@ class Portprofile(object):
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
-                          'disassociate_portprofile': "POST"}
+                          'disassociate_portprofile': "PUT"}
         controller = PortprofilesController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('portprofiles', controller,
                                              parent=parent_resource,
@@ -82,7 +80,6 @@ class PortprofilesController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'portprofile'
         self._plugin = plugin
-        #super(PortprofilesController, self).__init__(plugin)
         
         self._portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
@@ -130,7 +127,6 @@ class PortprofilesController(common.QuantumController):
             return dict(portprofiles=result)
         except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-            #return faults.Fault(exp)
 
     def create(self, request, tenant_id):
         """ Creates a new portprofile for a given tenant """
@@ -188,7 +184,6 @@ class PortprofilesController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
-        #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
         try:
             self._plugin.associate_portprofile(tenant_id,
@@ -212,7 +207,6 @@ class PortprofilesController(common.QuantumController):
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
-        #print "*****net id "+net_id
         port_id = req_params['port-id'].strip()
         try:
             self._plugin. \

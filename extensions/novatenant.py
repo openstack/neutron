@@ -21,13 +21,11 @@
 from webob import exc
 
 from extensions import _novatenant_view as novatenant_view
-from quantum.common import exceptions as qexception
-#from extensions import _exceptions as exception
-from extensions import _faults as faults
-
 from quantum.api import api_common as common
+from quantum.common import exceptions as qexception
 from quantum.common import extensions
 from quantum.manager import QuantumManager
+from quantum.plugins.cisco.common import cisco_faults as faults
 
 
 class Novatenant(object):
@@ -42,27 +40,27 @@ class Novatenant(object):
     
     @classmethod
     def get_alias(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource alias"""
         return "Cisco Nova Tenant"
     
     @classmethod
     def get_description(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Description """
         return "novatenant resource is used by nova side to invoke quantum api"
     
     @classmethod
     def get_namespace(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Namespace """
         return "http://docs.ciscocloud.com/api/ext/novatenant/v1.0"
     
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource Updated Time """
         return "2011-08-09T13:25:27-06:00"
     
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resource Name """
+        """ Returns Ext Resource """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
         member_actions = {'schedule_host': "PUT",
@@ -98,16 +96,8 @@ class NovatenantsController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'novatenant'
         self._plugin = plugin
-        #super(NovatenantsController, self).__init__(plugin)
-             
-    def index(self, request, tenant_id):
-        """ Returns a list of novatenant ids """
-        return "novatenant is a dummy resource"
-
-    def _items(self, request, tenant_id, is_detail):
-        """ Returns a list of novatenants. """
-        return "novatenant is a dummy resource"
-
+                  
+    #added for cisco's extension
     # pylint: disable-msg=E1101,W0613
     def show(self, request, tenant_id, id):
         """ Returns novatenant details for the given novatenant id """
@@ -144,7 +134,6 @@ class NovatenantsController(common.QuantumController):
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_host(host)
             return result
-            #return exc.HTTPAccepted()
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         

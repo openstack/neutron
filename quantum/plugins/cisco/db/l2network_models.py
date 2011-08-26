@@ -185,6 +185,6 @@ class Credential(BASE, L2NetworkBase):
         self.password = password
 
     def __repr__(self):
-        return "<Credentials(%s,%s,%s,%s)>" % \
+        return "<Credentials(%s,%s,%s,%s,%s)>" % \
           (self.credential_id, self.tenant_id, self.credential_name,
            self.user_name, self.password)

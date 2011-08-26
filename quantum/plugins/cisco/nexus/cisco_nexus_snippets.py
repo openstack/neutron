@@ -29,14 +29,10 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 # The following are standard strings, messages used to communicate with Nexus,
-EXEC_CONF_PREFIX = """
+EXEC_CONF_SNIPPET = """
       <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         <configure xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
-          <__XML__MODE__exec_configure>
-"""
-
-
-EXEC_CONF_POSTFIX = """
+          <__XML__MODE__exec_configure>%s
           </__XML__MODE__exec_configure>
         </configure>
       </config>
@@ -156,4 +152,5 @@ FILTER_SHOW_VLAN_BRIEF_SNIPPET = """
         <vlan>
           <brief/>
         </vlan>
-      </show> """
+      </show>
+"""

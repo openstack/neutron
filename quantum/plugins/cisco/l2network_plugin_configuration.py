@@ -29,6 +29,9 @@ CONF_PARSER_OBJ = confp.\
 CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
 "/" + CONF_FILE)
 
+"""
+Reading the conf for the l2network_plugin
+"""
 SECTION_CONF = CONF_PARSER_OBJ['VLANS']
 VLAN_NAME_PREFIX = SECTION_CONF['vlan_name_prefix']
 VLAN_START = SECTION_CONF['vlan_start']
@@ -55,6 +58,9 @@ CONF_PARSER_OBJ = confp.\
 CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
 "/" + CONF_FILE)
 
+"""
+Reading the config for the device plugins
+"""
 PLUGINS = CONF_PARSER_OBJ.walk(CONF_PARSER_OBJ.dummy)
 
 CONF_FILE = "conf/db_conn.ini"
@@ -63,6 +69,9 @@ CONF_PARSER_OBJ = confp.\
 CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) + \
 "/" + CONF_FILE)
 
+"""
+Reading DB config for the Quantum DB
+"""
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
 DB_NAME = SECTION_CONF['name']
 DB_USER = SECTION_CONF['user']
