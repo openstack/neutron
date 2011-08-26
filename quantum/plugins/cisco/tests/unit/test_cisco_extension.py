@@ -405,8 +405,8 @@ class NovatenantExtensionTest(unittest.TestCase):
     def setUp(self):
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
-        member_actions = {'get_host': "PUT",
-                          'get_instance_port': "PUT"}
+        member_actions = {'schedule_host': "PUT",
+                          'associate_port': "PUT"}
         controller = novatenant.NovatenantsController(
                                QuantumManager.get_plugin())
         res_ext = extensions.ResourceExtension('novatenants', controller,
@@ -420,29 +420,29 @@ class NovatenantExtensionTest(unittest.TestCase):
                                    'instance_desc': {'key1': '1',
                                    'key2': '2'}}}
 
-    def test_get_host(self):
-        LOG.debug("test_get_host - START")
+    def test_schedule_host(self):
+        LOG.debug("test_schedule_host - START")
         req_body = json.dumps(self.test_instance_data)
-        host_path = self.novatenants_path + "001/get_host"
+        host_path = self.novatenants_path + "001/schedule_host"
         host_response = self.test_app.put(
                                   host_path, req_body,
                                   content_type=self.contenttype)
         self.assertEqual(200, host_response.status_int)
-        LOG.debug("test_get_host - END")
+        LOG.debug("test_schedule_host - END")
 
-    def test_get_hostBADRequest(self):
-        LOG.debug("test_get_hostBADRequest - START")
-        host_path = self.novatenants_path + "001/get_host"
+    def test_schedule_hostBADRequest(self):
+        LOG.debug("test_schedule_hostBADRequest - START")
+        host_path = self.novatenants_path + "001/schedule_host"
         host_response = self.test_app.put(
                                   host_path, 'BAD_REQUEST',
                                   content_type=self.contenttype, status='*')
         self.assertEqual(400, host_response.status_int)
-        LOG.debug("test_get_hostBADRequest - END")
+        LOG.debug("test_schedule_hostBADRequest - END")
 
     def test_instance_port(self):
         LOG.debug("test_instance_port - START")
         req_body = json.dumps(self.test_instance_data)
-        instance_port_path = self.novatenants_path + "001/get_instance_port"
+        instance_port_path = self.novatenants_path + "001/associate_port"
         instance_port_response = self.test_app.put(
                                   instance_port_path, req_body,
                                   content_type=self.contenttype)

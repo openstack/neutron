@@ -65,8 +65,8 @@ class Novatenant(object):
         """ Returns Ext Resource Name """
         parent_resource = dict(member_name="tenant", 
                                collection_name="extensions/csco/tenants")
-        member_actions = {'get_host': "PUT",
-                          'get_instance_port': "PUT"}
+        member_actions = {'schedule_host': "PUT",
+                          'associate_port': "PUT"}
         controller = NovatenantsController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('novatenants', controller,
                                              parent=parent_resource,
@@ -81,7 +81,7 @@ class NovatenantsController(common.QuantumController):
         'param-name': 'novatenant_name',
         'required': True}]
     
-    _get_host_ops_param_list = [{
+    _schedule_host_ops_param_list = [{
         'param-name': 'instance_id',
         'required': True}, {
         'param-name': 'instance_desc',
@@ -126,21 +126,21 @@ class NovatenantsController(common.QuantumController):
         return "novatenant is a dummy resource"
          
     #added for cisco's extension
-    def get_host(self, request, tenant_id, id):
+    def schedule_host(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
         
         try:
             req_params = \
                 self._parse_request_params(request,
-                                           self._get_host_ops_param_list)
+                                           self._schedule_host_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
         
         instance_desc = req_params['instance_desc']
         try:
-            host = self._plugin.get_host(tenant_id, instance_id, instance_desc)
+            host = self._plugin.schedule_host(tenant_id, instance_id, instance_desc)
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_host(host)
             return result
@@ -148,14 +148,14 @@ class NovatenantsController(common.QuantumController):
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
         
-    def get_instance_port(self, request, tenant_id, id):
+    def associate_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
         
         try:
             req_params = \
                 self._parse_request_params(request,
-                                           self._get_host_ops_param_list)
+                                           self._schedule_host_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
@@ -163,7 +163,7 @@ class NovatenantsController(common.QuantumController):
         instance_desc = req_params['instance_desc']
         try:
             vif = self._plugin. \
-            get_instance_port(tenant_id, instance_id, instance_desc)
+            associate_port(tenant_id, instance_id, instance_desc)
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_vif(vif)
             return result
