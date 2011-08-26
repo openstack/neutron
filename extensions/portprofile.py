@@ -34,36 +34,36 @@ class Portprofile(object):
     """extension class Portprofile"""
     def __init__(self):
         pass
-    
+
     @classmethod
     def get_name(cls):
         """ Returns Ext Resource Name """
         return "Cisco Port Profile"
-    
+
     @classmethod
     def get_alias(cls):
         """ Returns Ext Resource alias """
         return "Cisco Port Profile"
-    
+
     @classmethod
     def get_description(cls):
         """ Returns Ext Resource Description """
         return "Portprofile include QoS information"
-    
+
     @classmethod
     def get_namespace(cls):
         """ Returns Ext Resource Namespace """
         return "http://docs.ciscocloud.com/api/ext/portprofile/v1.0"
-    
+
     @classmethod
     def get_updated(cls):
         """ Returns Ext Resource Updated time """
         return "2011-07-23T13:25:27-06:00"
-    
+
     @classmethod
     def get_resources(cls):
         """ Returns all defined resources """
-        parent_resource = dict(member_name="tenant", 
+        parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'associate_portprofile': "PUT",
                           'disassociate_portprofile': "PUT"}
@@ -71,16 +71,16 @@ class Portprofile(object):
         return [extensions.ResourceExtension('portprofiles', controller,
                                              parent=parent_resource,
                                              member_actions=member_actions)]
-    
-     
+
+
 class PortprofilesController(common.QuantumController):
     """ portprofile API controller
         based on QuantumController """
-   
+
     def __init__(self, plugin):
         self._resource_name = 'portprofile'
         self._plugin = plugin
-        
+
         self._portprofile_ops_param_list = [{
         'param-name': 'portprofile_name',
         'required': True}, {
@@ -88,13 +88,13 @@ class PortprofilesController(common.QuantumController):
         'required': True}, {
         'param-name': 'assignment',
         'required': False}]
-    
+
         self._assignprofile_ops_param_list = [{
         'param-name': 'network-id',
         'required': True}, {
         'param-name': 'port-id',
         'required': True}]
-    
+
         self._serialization_metadata = {
         "application/xml": {
             "attributes": {
@@ -102,7 +102,7 @@ class PortprofilesController(common.QuantumController):
             },
         },
     }
-      
+
     def index(self, request, tenant_id):
         """ Returns a list of portprofile ids """
         return self._items(request, tenant_id, is_detail=False)
@@ -114,7 +114,7 @@ class PortprofilesController(common.QuantumController):
         result = [builder.build(portprofile, is_detail)['portprofile']
                   for portprofile in portprofiles]
         return dict(portprofiles=result)
-    
+
     # pylint: disable-msg=E1101
     def show(self, request, tenant_id, id):
         """ Returns portprofile details for the given portprofile id """
@@ -133,7 +133,7 @@ class PortprofilesController(common.QuantumController):
         #look for portprofile name in request
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._portprofile_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
@@ -149,7 +149,7 @@ class PortprofilesController(common.QuantumController):
         """ Updates the name for the portprofile with the given id """
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._portprofile_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
@@ -171,12 +171,12 @@ class PortprofilesController(common.QuantumController):
             return exc.HTTPAccepted()
         except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
-         
+
     def associate_portprofile(self, request, tenant_id, id):
         """ associate a portprofile to the port """
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
-        
+
         try:
             req_params = \
                 self._parse_request_params(request,
@@ -194,12 +194,11 @@ class PortprofilesController(common.QuantumController):
             return faults.Fault(faults.PortprofileNotFound(exp))
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))
-        
+
     def disassociate_portprofile(self, request, tenant_id, id):
         """ Disassociate a portprofile from a port """
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
-        
         try:
             req_params = \
                 self._parse_request_params(request,

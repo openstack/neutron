@@ -36,7 +36,7 @@ class Qos(object):
     """Qos extension file"""
     def __init__(self):
         pass
-    
+
     @classmethod
     def get_name(cls):
         """ Returns Ext Resource Name """
@@ -56,7 +56,7 @@ class Qos(object):
     def get_namespace(cls):
         """ Returns Ext Resource Namespace """
         return "http://docs.ciscocloud.com/api/ext/qos/v1.0"
-    
+
     @classmethod
     def get_updated(cls):
         """ Returns Ext Resource update """
@@ -65,9 +65,9 @@ class Qos(object):
     @classmethod
     def get_resources(cls):
         """ Returns Ext Resources """
-        parent_resource = dict(member_name="tenant", 
+        parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
-       
+
         controller = QosController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('qoss', controller,
                                              parent=parent_resource)]
@@ -93,7 +93,7 @@ class QosController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'qos'
         self._plugin = plugin
-             
+
     def index(self, request, tenant_id):
         """ Returns a list of qos ids """
         return self._items(request, tenant_id, is_detail=False)
@@ -124,7 +124,7 @@ class QosController(common.QuantumController):
         #look for qos name in request
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._qos_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
@@ -140,7 +140,7 @@ class QosController(common.QuantumController):
         """ Updates the name for the qos with the given id """
         try:
             req_params = \
-                self._parse_request_params(request, 
+                self._parse_request_params(request,
                                            self._qos_ops_param_list)
         except exc.HTTPError as exp:
             return faults.Fault(exp)
