@@ -21,13 +21,15 @@
 
 import inspect
 import logging as LOG
+import platform
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.quantum_plugin_base import QuantumPluginBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 
@@ -37,6 +39,10 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 class L2Network(QuantumPluginBase):
     """ L2 Network Framework Plugin """
+    supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
+                                   "Cisco qos", "Cisco Nova Tenant"]
+    _qos_levels = {}
+    _credentials = {}
 
     def __init__(self):
         self._vlan_counter = int(conf.VLAN_START) - 1
@@ -44,6 +50,8 @@ class L2Network(QuantumPluginBase):
         cdb.initialize()
         # TODO (Sumit): The following should move to the segmentation module
         cdb.create_vlanids()
+        self._qoslevels_counter = 0
+        self._credentials_counter = 0
 
     """
     Core API implementation
@@ -252,6 +260,7 @@ class L2Network(QuantumPluginBase):
     """
     def get_all_portprofiles(self, tenant_id):
         """Get all port profiles"""
+        LOG.debug("get_all_portprofiles() called\n")
         pplist = cdb.get_all_portprofiles()
         new_pplist = []
         for portprofile in pplist:
@@ -265,7 +274,13 @@ class L2Network(QuantumPluginBase):
 
     def get_portprofile_details(self, tenant_id, profile_id):
         """Get port profile details"""
-        portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        LOG.debug("get_portprofile_details() called\n")
+        try:
+            portprofile = cdb.get_portprofile(tenant_id, profile_id)
+        except Exception, excp:
+            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
+                                           portprofile_id=profile_id)
+
         new_pp = self._make_portprofile_dict(tenant_id,
                                              portprofile[const.UUID],
                                              portprofile[const.PPNAME],
@@ -274,6 +289,7 @@ class L2Network(QuantumPluginBase):
 
     def create_portprofile(self, tenant_id, profile_name, qos):
         """Create port profile"""
+        LOG.debug("create_portprofile() called\n")
         portprofile = cdb.add_portprofile(tenant_id, profile_name,
                                  const.NO_VLAN_ID, qos)
         new_pp = self._make_portprofile_dict(tenant_id,
@@ -284,9 +300,10 @@ class L2Network(QuantumPluginBase):
 
     def delete_portprofile(self, tenant_id, profile_id):
         """Delete portprofile"""
+        LOG.debug("delete_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
 
@@ -299,9 +316,10 @@ class L2Network(QuantumPluginBase):
 
     def rename_portprofile(self, tenant_id, profile_id, new_name):
         """Rename port profile"""
+        LOG.debug("rename_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
         portprofile = cdb.update_portprofile(tenant_id, profile_id, new_name)
@@ -314,9 +332,10 @@ class L2Network(QuantumPluginBase):
     def associate_portprofile(self, tenant_id, net_id,
                               port_id, portprofile_id):
         """Associate port profile"""
+        LOG.debug("associate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=portprofile_id)
 
@@ -325,13 +344,134 @@ class L2Network(QuantumPluginBase):
     def disassociate_portprofile(self, tenant_id, net_id,
                                  port_id, portprofile_id):
         """Disassociate port profile"""
+        LOG.debug("disassociate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, exc:
+        except Exception, excp:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                       portprofile_id=portprofile_id)
 
         cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
+
+    def get_all_qoss(self, tenant_id):
+        """Get all QoS levels"""
+        LOG.debug("get_all_qoss() called\n")
+        return self._qos_levels.values()
+
+    def get_qos_details(self, tenant_id, qos_id):
+        """Get QoS Details"""
+        LOG.debug("get_qos_details() called\n")
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
+        return qos_level
+
+    def create_qos(self, tenant_id, qos_name, qos_desc):
+        """Create a QoS level"""
+        LOG.debug("create_qos() called\n")
+        qos_id = self._get_unique_qos_id(tenant_id)
+        new_qos_level_dict = {const.QOS_LEVEL_ID: qos_id,
+                              const.QOS_LEVEL_NAME: qos_name,
+                              const.QOS_LEVEL_ASSOCIATIONS: [],
+                              const.QOS_LEVEL_DESCRIPTION: qos_desc}
+        self._qos_levels[qos_id] = new_qos_level_dict
+        return new_qos_level_dict
+
+    def delete_qos(self, tenant_id, qos_id):
+        """Delete a QoS level"""
+        LOG.debug("delete_qos() called\n")
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
+        associations = qos_level[const.QOS_LEVEL_ASSOCIATIONS]
+        if len(associations) > 0:
+            raise cexc.QoSLevelInvalidDelete(tenant_id=tenant_id,
+                                             qos_id=qos_id)
+        else:
+            self._qos_levels.pop(qos_id)
+
+    def rename_qos(self, tenant_id, qos_id, new_name):
+        """Rename QoS level"""
+        LOG.debug("rename_qos() called\n")
+        qos_level = self._get_qos_level(tenant_id, qos_id)
+        try:
+            qos_level = self._get_qos_level(tenant_id, qos_id)
+        except Exception, excp:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
+        qos_level[const.QOS_LEVEL_NAME] = new_name
+        return qos_level
+
+    def get_all_credentials(self, tenant_id):
+        """Get all credentials"""
+        LOG.debug("get_all_credentials() called\n")
+        return self._credentials.values()
+
+    def get_credential_details(self, tenant_id, credential_id):
+        """Get a particular credential"""
+        LOG.debug("get_credential_details() called\n")
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
+        return credential
+
+    def create_credential(self, tenant_id, credential_name, user_name,
+                          password):
+        """Create a new credential"""
+        LOG.debug("create_credential() called\n")
+        credential_id = self._get_unique_credential_id(tenant_id)
+        masked_password = const.MASKED_PASSWORD
+        new_credential_dict = {const.CREDENTIAL_ID: credential_id,
+                               const.CREDENTIAL_NAME: credential_name,
+                               const.CREDENTIAL_USERNAME: user_name,
+                               const.CREDENTIAL_PASSWORD: masked_password}
+        self._credentials[credential_id] = new_credential_dict
+        cred.Store.putCredential(credential_id, user_name, password)
+        return new_credential_dict
+
+    def delete_credential(self, tenant_id, credential_id):
+        """Delete a credential"""
+        LOG.debug("delete_credential() called\n")
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
+        self._credentials.pop(credential_id)
+        cred.Store.deleteCredential(credential_id)
+
+    def rename_credential(self, tenant_id, credential_id, new_name):
+        """Rename the particular credential resource"""
+        LOG.debug("rename_credential() called\n")
+        try:
+            credential = self._get_credential(tenant_id, credential_id)
+        except Exception, excp:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credential_id=credential_id)
+
+        credential[const.CREDENTIAL_NAME] = new_name
+        return credential
+
+    def get_host(self, tenant_id, instance_id, instance_desc):
+        """Provides the hostname on which a dynamic vnic is reserved"""
+        LOG.debug("get_host() called\n")
+        host_list = {const.HOST_LIST: {const.HOST_1: platform.node()}}
+        return host_list
+
+    def get_instance_port(self, tenant_id, instance_id, instance_desc):
+        """
+        Get the portprofile name and the device namei for the dynamic vnic
+        """
+        LOG.debug("get_instance_port() called\n")
+        vif_desc = {const.VIF_DESC:
+                    {const.DEVICENAME: "eth2", const.UCSPROFILE: "default"}}
+        return vif_desc
 
     """
     Private functions
@@ -373,13 +513,13 @@ class L2Network(QuantumPluginBase):
         return inspect.stack()[1 + offset][3]
 
     def _make_net_dict(self, net_id, net_name, ports):
-        """Helper funciton"""
+        """Helper funciton to create network resource dictionary"""
         res = {const.NET_ID: net_id, const.NET_NAME: net_name}
         res[const.NET_PORTS] = ports
         return res
 
     def _make_port_dict(self, port_id, port_state, net_id, attachment):
-        """Helper funciton"""
+        """Helper function to create port resource dictionary"""
         res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
         res[const.NET_ID] = net_id
         res[const.ATTACHMENT] = attachment
@@ -387,7 +527,7 @@ class L2Network(QuantumPluginBase):
 
     def _make_portprofile_dict(self, tenant_id, profile_id, profile_name,
                                qos):
-        """Helper funciton"""
+        """Helper funciton to create port-profile resource dictionary"""
         profile_associations = self._make_portprofile_assc_list(tenant_id,
                                                                 profile_id)
         res = {const.PROFILE_ID: str(profile_id),
@@ -405,3 +545,35 @@ class L2Network(QuantumPluginBase):
             assc_list.append(port[const.PORTID])
 
         return assc_list
+
+    def _get_qos_level(self, tenant_id, qos_id):
+        """Return a QoS level based on the ID"""
+        qos_level = self._qos_levels.get(qos_id)
+        if not qos_level:
+            raise cexc.QosNotFound(tenant_id=tenant_id,
+                                        qos_id=qos_id)
+        return qos_level
+
+    def _get_credential(self, tenant_id, credential_id):
+        """Return a credential based on the ID"""
+        credential = self._credentials.get(credential_id)
+        if not credential:
+            raise cexc.CredentialNotFound(tenant_id=tenant_id,
+                                          credetial_id=credential_id)
+        return credential
+
+    def _get_unique_qos_id(self, tenant_id):
+        """Get a unique QoS ID"""
+        self._qoslevels_counter += 1
+        self._qoslevels_counter %= int(const.MAX_QOS_LEVELS)
+        qos_id = tenant_id[16:] + "-qos-" + str(self._qoslevels_counter)
+        # TODO (Sumit): Need to check if the ID has already been allocated
+        return qos_id
+
+    def _get_unique_credential_id(self, tenant_id):
+        """Get a unique credential ID"""
+        self._credentials_counter += 1
+        self._credentials_counter %= int(const.MAX_CREDENTIALS)
+        cred_id = tenant_id[16:] + "-crd-" + str(self._credentials_counter)
+        # TODO (Sumit): Need to check if the ID has already been allocated
+        return cred_id

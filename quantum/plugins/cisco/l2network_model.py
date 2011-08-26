@@ -23,9 +23,9 @@ import inspect
 import logging as LOG
 
 from quantum.common import utils
-from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)

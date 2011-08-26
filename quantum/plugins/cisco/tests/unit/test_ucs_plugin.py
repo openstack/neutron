@@ -29,6 +29,9 @@ LOG.getLogger("cisco_plugin")
 class UCSVICTestPlugin(unittest.TestCase):
 
     def setUp(self):
+        """
+        Set up function.
+        """
 
         self.tenant_id = "test_tenant_cisco12"
         self.net_name = "test_network_cisco12"
@@ -141,6 +144,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_rename_network(self):
+        """
+        Tests rename network.
+        """
         self._test_rename_network("new_test_network1")
 
     def _test_create_port(self, port_state):
@@ -166,6 +172,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
     def test_create_port(self):
+        """
+        Tests create port.
+        """
         self._test_create_port(const.PORT_UP)
 
     def _test_delete_port(self, port_state):
@@ -188,6 +197,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_delete_port(self):
+        """
+        Tests delete port.
+        """
         self._test_delete_port(const.PORT_UP)
 
     def _test_update_port(self, port_state):
@@ -207,9 +219,15 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
     def test_update_port_state_up(self):
+        """
+        Tests update port state up
+        """
         self._test_update_port(const.PORT_UP)
 
     def test_update_port_state_down(self):
+        """
+        Tests update port state down
+        """
         self._test_update_port(const.PORT_DOWN)
 
     def _test_get_port_details_state_up(self, port_state):
@@ -266,12 +284,21 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
     def test_get_port_details_state_up(self):
+        """
+        Tests get port details state up
+        """
         self._test_get_port_details_state_up(const.PORT_UP)
 
     def test_show_port_state_down(self):
+        """
+        Tests show port state down
+        """
         self._test_show_port_state_down(const.PORT_DOWN)
 
     def test_create_port_profile(self):
+        """
+        Tests create port profile
+        """
         LOG.debug("UCSVICTestPlugin:test_create_port_profile() called\n")
         new_port_profile = self._cisco_ucs_plugin._create_port_profile(
                                 self.tenant_id, self.net_id, self.port_id,
@@ -284,6 +311,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self._cisco_ucs_plugin._delete_port_profile(self.port_id, profile_name)
 
     def test_delete_port_profile(self):
+        """
+        Tests delete port profile
+        """
         LOG.debug("UCSVICTestPlugin:test_delete_port_profile() called\n")
         self._cisco_ucs_plugin._create_port_profile(
                 self.tenant_id, self.net_id, self.port_id, self.vlan_name,
@@ -322,7 +352,10 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
                                           self.port_id)
 
-    def  test_plug_interface(self):
+    def test_plug_interface(self):
+        """
+        Tests test plug interface
+        """
         self._test_plug_interface("4")
 
     def _test_unplug_interface(self, remote_interface_id):
@@ -351,10 +384,16 @@ class UCSVICTestPlugin(unittest.TestCase):
                           conf.DEFAULT_VLAN_ID)
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
-    def  test_unplug_interface(self):
+    def test_unplug_interface(self):
+        """
+        Tests unplug interface
+        """
         self._test_unplug_interface("4")
 
     def test_get_vlan_name_for_network(self):
+        """
+        Tests get vlan name for network
+        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_name_for_network() called\n")
         net = self._cisco_ucs_plugin.create_network(
              self.tenant_id, self.net_name, self.net_id,
@@ -363,6 +402,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_get_vlan_id_for_network(self):
+        """
+        Tests get vlan id for network
+        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_id_for_network() called\n")
         net = self._cisco_ucs_plugin.create_network(
              self.tenant_id, self.net_name, self.net_id, self.vlan_name,
@@ -371,6 +413,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_get_network(self):
+        """
+        Tests get network
+        """
         LOG.debug("UCSVICTestPlugin:test_get_network() called\n")
         net = self._cisco_ucs_plugin.create_network(
              self.tenant_id, self.net_name, self.net_id, self.vlan_name,
@@ -379,6 +424,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_get_port(self):
+        """
+        Tests get port
+        """
         LOG.debug("UCSVICTestPlugin:test_get_port() called\n")
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                                    self.net_id, self.vlan_name,
@@ -390,19 +438,31 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
     def test_get_network_NetworkNotFound(self):
+        """
+        Tests get network not found
+        """
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin._get_network,
                           self.tenant_id, self.net_id)
 
     def test_delete_network_NetworkNotFound(self):
+        """
+        Tests delete network not found
+        """
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin.delete_network,
                           self.tenant_id, self.net_id)
 
     def test_delete_port_PortInUse(self):
+        """
+        Tests delete port in use
+        """
         self._test_delete_port_PortInUse("4")
 
     def _test_delete_port_PortInUse(self, remote_interface_id):
+        """
+        Tests delete port in use
+        """
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                                self.net_id, self.vlan_name,
                                                self.vlan_id)
@@ -417,6 +477,9 @@ class UCSVICTestPlugin(unittest.TestCase):
                                                self.port_id)
 
     def test_delete_port_PortNotFound(self):
+        """
+        Tests delete port not found
+        """
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                                    self.net_id, self.vlan_name,
                                               self.vlan_id)
@@ -425,10 +488,16 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.tearDownNetwork(self.tenant_id, self.net_id)
 
     def test_plug_interface_PortInUse(self):
+        """
+        Tests plug interface port in use
+        """
         self._test_plug_interface_PortInUse("6", "5")
 
     def _test_plug_interface_PortInUse(self, remote_interface_id1,
                                        remote_interface_id2):
+        """
+        Tests plug interface port in use
+        """
         LOG.debug("UCSVICTestPlugin:_test_plug_interface_PortInUse() called\n")
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                               self.net_id, self.vlan_name,
@@ -445,10 +514,16 @@ class UCSVICTestPlugin(unittest.TestCase):
                                           self.port_id)
 
     def test_attachment_exists(self):
+        """
+        Tests attachment exists
+        """
         LOG.debug("UCSVICTestPlugin:testValidateAttachmentAlreadyAttached")
         self._test_attachment_exists("4")
 
     def _test_attachment_exists(self, remote_interface_id):
+        """
+        Tests attachment exists
+        """
         LOG.debug("UCSVICTestPlugin:_test_validate_attachmentAlreadyAttached")
         self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
                                               self.net_id, self.vlan_name,
@@ -465,14 +540,23 @@ class UCSVICTestPlugin(unittest.TestCase):
                                           self.port_id)
 
     def tearDownNetwork(self, tenant_id, net_id):
+        """
+        Tear down network
+        """
         self._cisco_ucs_plugin.delete_network(tenant_id, net_id)
 
     def tearDownNetworkPort(self, tenant_id, net_id, port_id):
+        """
+        Tear down network port
+        """
         self._cisco_ucs_plugin.delete_port(tenant_id, net_id,
                                            port_id)
         self.tearDownNetwork(tenant_id, net_id)
 
     def tearDownNetworkPortInterface(self, tenant_id, net_id, port_id):
+        """
+        Tear down network port interface
+        """
         self._cisco_ucs_plugin.unplug_interface(tenant_id, net_id,
                                                 port_id)
         self.tearDownNetworkPort(tenant_id, net_id, port_id)

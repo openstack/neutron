@@ -110,7 +110,8 @@ class CiscoNEXUSDriver():
         mgr.edit_config(target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_interface, nexus_ssh_port):
+                    nexus_password, nexus_first_interface,
+                    nexus_second_interface, nexus_ssh_port):
         """
         Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
         given the VLAN ID and Name and Interface Number
@@ -118,10 +119,12 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
                                nexus_password) as man:
             self.enable_vlan(man, vlan_id, vlan_name)
-            self.enable_vlan_on_trunk_int(man, nexus_interface, vlan_id)
+            self.enable_vlan_on_trunk_int(man, nexus_first_interface, vlan_id)
+            self.enable_vlan_on_trunk_int(man, nexus_second_interface, vlan_id)
 
-    def delete_vlan(self, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_interface, nexus_ssh_port):
+    def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                    nexus_first_interface, nexus_second_interface,
+                    nexus_ssh_port):
         """
         Delete a VLAN and Disables trunk mode an interface on Nexus Switch
         given the VLAN ID and Interface Number
@@ -129,4 +132,5 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
                                nexus_password) as man:
             self.disable_vlan(man, vlan_id)
-            self.disable_switch_port(man, nexus_interface)
+            self.disable_switch_port(man, nexus_first_interface)
+            self.disable_switch_port(man, nexus_second_interface)
