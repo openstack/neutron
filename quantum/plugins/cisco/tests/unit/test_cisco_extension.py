@@ -80,8 +80,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         self.profile_path = '/extensions/csco/tenants/tt/portprofiles'
         self.portprofile_path = '/extensions/csco/tenants/tt/portprofiles/'
         self.test_port_profile = {'portprofile':
-                                 {'portprofile_name': 'cisco_test_portprofile',
-                                 'qos_name': 'test-qos1'}}
+                            {'portprofile_name': 'cisco_test_portprofile',
+                             'qos_name': 'test-qos1'}}
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         options = {}
@@ -107,9 +107,10 @@ class PortprofileExtensionTest(unittest.TestCase):
                                 content_type=self.contenttype)
 
         index_response = self.test_app.get(self.profile_path)
+        index_resp_body = wsgi.Serializer().deserialize(index_response.body,
+                                                        self.contenttype)
         self.assertEqual(200, index_response.status_int)
 
-        # Clean Up - Delete the Port Profiles
         resp_body1 = wsgi.Serializer().deserialize(create_response1.body,
                                                    self.contenttype)
         portprofile_path1_temp = self.portprofile_path +\
@@ -117,9 +118,17 @@ class PortprofileExtensionTest(unittest.TestCase):
         portprofile_path1 = str(portprofile_path1_temp)
         resp_body2 = wsgi.Serializer().deserialize(create_response2.body,
                                                    self.contenttype)
+        list_all_portprofiles = [resp_body1['portprofiles']['portprofile'],
+                                 resp_body2['portprofiles']['portprofile']]
+        self.assertTrue(index_resp_body['portprofiles'][0] in
+                                                 list_all_portprofiles)
+        self.assertTrue(index_resp_body['portprofiles'][1] in
+                                                 list_all_portprofiles)
         portprofile_path2_temp = self.portprofile_path +\
                               resp_body2['portprofiles']['portprofile']['id']
         portprofile_path2 = str(portprofile_path2_temp)
+
+        # Clean Up - Delete the Port Profiles
         self.tear_down_profile(portprofile_path1)
         self.tear_down_profile(portprofile_path2)
         LOG.debug("test_list_portprofile - END")
@@ -168,6 +177,14 @@ class PortprofileExtensionTest(unittest.TestCase):
                             resp_body['portprofiles']['portprofile']['id']
         show_port_path = str(show_path_temp)
         show_response = self.test_app.get(show_port_path)
+        show_resp_dict = wsgi.Serializer().deserialize(show_response.body,
+                                                      self.contenttype)
+        self.assertEqual(
+                     show_resp_dict['portprofiles']['portprofile']['qos_name'],
+                     self.test_port_profile['portprofile']['qos_name'])
+        self.assertEqual(
+                     show_resp_dict['portprofiles']['portprofile']['name'],
+                     self.test_port_profile['portprofile']['portprofile_name'])
         self.assertEqual(200, show_response.status_int)
 
         # Clean Up - Delete the Port Profile
@@ -204,6 +221,14 @@ class PortprofileExtensionTest(unittest.TestCase):
                                 resp_body['portprofiles']['portprofile']['id']
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body)
+        rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
+                                                         self.contenttype)
+        self.assertEqual(
+                rename_resp_dict['portprofiles']['portprofile']['qos_name'],
+                self.test_port_profile['portprofile']['qos_name'])
+        self.assertEqual(
+                rename_resp_dict['portprofiles']['portprofile']['name'],
+                rename_port_profile['portprofile']['portprofile_name'])
         self.assertEqual(200, rename_response.status_int)
 
         # Clean Up - Delete the Port Profile
@@ -288,8 +313,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         req.headers = {}
         req.headers['Accept'] = content_type
         req.body = body
-        return req
         LOG.debug("test_create_request - END")
+        return req
 
     def _create_network(self, name=None):
 
@@ -308,8 +333,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         network_res = network_req.get_response(self.api)
         network_data = wsgi.Serializer().deserialize(network_res.body,
                                                      self.contenttype)
-        return network_data['networks']['network']['id']
         LOG.debug("Creating network - END")
+        return network_data['networks']['network']['id']
 
     def _create_port(self, network_id, port_state):
 
@@ -325,8 +350,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         port_res = port_req.get_response(self.api)
         port_data = wsgi.Serializer().deserialize(port_res.body,
                                                   self.contenttype)
-        return port_data['ports']['port']['id']
         LOG.debug("Creating port for network - END")
+        return port_data['ports']['port']['id']
 
     def test_associate_portprofile(self):
 
@@ -463,9 +488,13 @@ class NovatenantExtensionTest(unittest.TestCase):
                                           SimpleExtensionManager(res_ext))
         self.contenttype = 'application/json'
         self.novatenants_path = '/extensions/csco/tenants/tt/novatenants/'
+        self.test_associate_port_data = {'novatenant': {'instance_id': 1,
+                                       'instance_desc': {'project_id': 'demo',
+                                     'user_id': 'root', 'vif_id': '23432423'}}}
         self.test_associate_data = {'novatenant': {'instance_id': 1,
-                                   'instance_desc': {'key1': '1',
-                                   'key2': '2'}}}
+                                   'instance_desc': {'project_id': 'demo',
+                                   'user_id': 'root'}}}
+        self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_schedule_host(self):
         """ Test get host"""
@@ -473,8 +502,8 @@ class NovatenantExtensionTest(unittest.TestCase):
         req_body = json.dumps(self.test_associate_data)
         host_path = self.novatenants_path + "001/schedule_host"
         host_response = self.test_app.put(
-                                 host_path, req_body,
-                                 content_type=self.contenttype)
+                                  host_path, req_body,
+                                  content_type=self.contenttype)
         self.assertEqual(200, host_response.status_int)
         LOG.debug("test_schedule_host - END")
 
@@ -491,13 +520,18 @@ class NovatenantExtensionTest(unittest.TestCase):
     def test_associate_port(self):
         """ Test get associate port """
         LOG.debug("test_associate_port - START")
-        req_body = json.dumps(self.test_associate_data)
+        req_body = json.dumps(self.test_associate_port_data)
         associate_port_path = self.novatenants_path + "001/associate_port"
         associate_port_response = self.test_app.put(
                                   associate_port_path, req_body,
                                   content_type=self.contenttype)
         self.assertEqual(200, associate_port_response.status_int)
         LOG.debug("test_associate_port - END")
+
+    def tearDown(self):
+
+        """ Tear down """
+        db.clear_db()
 
 
 class QosExtensionTest(unittest.TestCase):
@@ -519,6 +553,7 @@ class QosExtensionTest(unittest.TestCase):
         self.qos_second_path = '/extensions/csco/tenants/tt/qos/'
         self.test_qos_data = {'qos': {'qos_name': 'cisco_test_qos',
                                'qos_desc': {'PPS': 50, 'TTL': 5}}}
+        self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_create_qos(self):
 
@@ -565,6 +600,8 @@ class QosExtensionTest(unittest.TestCase):
         create_resp2 = self.test_app.post(self.qos_path, req_body2,
                                           content_type=self.contenttype)
         index_response = self.test_app.get(self.qos_path)
+        index_resp_body = wsgi.Serializer().deserialize(index_response.body,
+                                                        self.contenttype)
         self.assertEqual(200, index_response.status_int)
 
         # Clean Up - Delete the qos's
@@ -575,6 +612,9 @@ class QosExtensionTest(unittest.TestCase):
         qos_path1 = str(qos_path1_temp)
         resp_body2 = wsgi.Serializer().deserialize(create_resp2.body,
                                                    self.contenttype)
+        list_all_qos = [resp_body1['qoss']['qos'], resp_body2['qoss']['qos']]
+        self.assertTrue(index_resp_body['qoss'][0] in list_all_qos)
+        self.assertTrue(index_resp_body['qoss'][1] in list_all_qos)
         qos_path2_temp = self.qos_second_path +\
                 resp_body2['qoss']['qos']['id']
         qos_path2 = str(qos_path2_temp)
@@ -596,6 +636,12 @@ class QosExtensionTest(unittest.TestCase):
                 resp_body['qoss']['qos']['id']
         show_qos_path = str(show_path_temp)
         show_response = self.test_app.get(show_qos_path)
+        show_resp_dict = wsgi.Serializer().deserialize(show_response.body,
+                                                      self.contenttype)
+        self.assertEqual(
+                     show_resp_dict['qoss']['qos']['name'],
+                     self.test_qos_data['qos']['qos_name'])
+
         self.assertEqual(200, show_response.status_int)
 
         # Clean Up - Delete the qos
@@ -630,6 +676,11 @@ class QosExtensionTest(unittest.TestCase):
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body)
         self.assertEqual(200, rename_response.status_int)
+        rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
+                                                      self.contenttype)
+        self.assertEqual(
+                     rename_resp_dict['qoss']['qos']['name'],
+                     'cisco_rename_qos')
         self.tearDownQos(rename_path)
         LOG.debug("test_update_qos - END")
 
@@ -703,6 +754,9 @@ class QosExtensionTest(unittest.TestCase):
 
         self.test_app.delete(delete_profile_path)
 
+    def tearDown(self):
+        db.clear_db()
+
 
 class CredentialExtensionTest(unittest.TestCase):
 
@@ -725,6 +779,7 @@ class CredentialExtensionTest(unittest.TestCase):
                                     {'credential_name': 'cred8',
                                     'user_name': 'newUser2',
                                     'password': 'newPasswd1'}}
+        self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_credentials(self):
 
@@ -745,6 +800,8 @@ class CredentialExtensionTest(unittest.TestCase):
                            content_type=self.contenttype)
         index_response = self.test_app.get(
                          self.credential_path)
+        index_resp_body = wsgi.Serializer().deserialize(index_response.body,
+                                                        self.contenttype)
         self.assertEqual(200, index_response.status_int)
         #CLean Up - Deletion of the Credentials
         resp_body1 = wsgi.Serializer().deserialize(
@@ -754,6 +811,12 @@ class CredentialExtensionTest(unittest.TestCase):
         delete_path1 = str(delete_path1_temp)
         resp_body2 = wsgi.Serializer().deserialize(
                      create_response2.body, self.contenttype)
+        list_all_credential = [resp_body1['credentials']['credential'],
+                               resp_body2['credentials']['credential']]
+        self.assertTrue(index_resp_body['credentials'][0] in
+                                               list_all_credential)
+        self.assertTrue(index_resp_body['credentials'][1] in
+                                               list_all_credential)
         delete_path2_temp = self.cred_second_path +\
                             resp_body2['credentials']['credential']['id']
         delete_path2 = str(delete_path2_temp)
@@ -806,6 +869,14 @@ class CredentialExtensionTest(unittest.TestCase):
                          resp_body['credentials']['credential']['id']
         show_cred_path = str(show_path_temp)
         show_response = self.test_app.get(show_cred_path)
+        show_resp_dict = wsgi.Serializer().deserialize(show_response.body,
+                                                      self.contenttype)
+        self.assertEqual(
+                     show_resp_dict['credentials']['credential']['name'],
+                     self.test_credential_data['credential']['user_name'])
+        self.assertEqual(
+                     show_resp_dict['credentials']['credential']['password'],
+                     self.test_credential_data['credential']['password'])
         self.assertEqual(200, show_response.status_int)
         LOG.debug("test_show_credential - END")
 
@@ -840,6 +911,14 @@ class CredentialExtensionTest(unittest.TestCase):
                            resp_body['credentials']['credential']['id']
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body)
+        rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
+                                                      self.contenttype)
+        self.assertEqual(
+                     rename_resp_dict['credentials']['credential']['name'],
+                     'cred3')
+        self.assertEqual(
+                     rename_resp_dict['credentials']['credential']['password'],
+                     self.test_credential_data['credential']['password'])
         self.assertEqual(200, rename_response.status_int)
         # Clean Up - Delete the Credentials
         self.tearDownCredential(rename_path)
@@ -911,6 +990,9 @@ class CredentialExtensionTest(unittest.TestCase):
 
     def tearDownCredential(self, delete_path):
         self.test_app.delete(delete_path)
+
+    def tearDown(self):
+        db.clear_db()
 
 
 def app_factory(global_conf, **local_conf):
