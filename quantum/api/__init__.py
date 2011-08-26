@@ -26,6 +26,7 @@ import webob.exc
 
 from quantum import manager
 from quantum.api import faults
+from quantum.api import attachments
 from quantum.api import networks
 from quantum.api import ports
 from quantum.common import flags
@@ -58,24 +59,29 @@ class APIRouterV01(wsgi.Router):
                         path_prefix=uri_prefix)
         mapper.resource('port', 'ports',
                         controller=ports.Controller(plugin),
+                        collection={'detail': 'GET'},
+                        member={'detail': 'GET'},
                         parent_resource=dict(member_name='network',
                                              collection_name=uri_prefix +\
                                                  'networks'))
+
+        attachments_ctrl = attachments.Controller(plugin)
+
         mapper.connect("get_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(plugin),
+                       controller=attachments_ctrl,
                        action="get_resource",
                        conditions=dict(method=['GET']))
         mapper.connect("attach_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(plugin),
+                       controller=attachments_ctrl,
                        action="attach_resource",
                        conditions=dict(method=['PUT']))
         mapper.connect("detach_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',
-                       controller=ports.Controller(plugin),
+                       controller=attachments_ctrl,
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))
