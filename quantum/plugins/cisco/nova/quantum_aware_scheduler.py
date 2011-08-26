@@ -40,6 +40,7 @@ ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
         '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
+ACTION = '/schedule_host'
 
 
 class QuantumScheduler(driver.Scheduler):
@@ -83,7 +84,7 @@ class QuantumScheduler(driver.Scheduler):
 
         client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
                         action_prefix=ACTION_PREFIX_CSCO)
-        request_url = "/novatenants/" + project_id + "/get_host"
+        request_url = "/novatenants/" + project_id + ACTION
         data = client.do_request('PUT', request_url, body=instance_data_dict)
 
         hostname = data["host_list"]["host_1"]
