@@ -597,9 +597,9 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         LOG.debug("unplug_interface() called\n")
         return self._get_blade_for_port(args)
 
-    def get_host(self, args):
+    def schedule_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
-        LOG.debug("get_host() called\n")
+        LOG.debug("schedule_host() called\n")
         instance_id = args[1]
         tenant_id = args[2][const.PROJECT_ID]
         host_name = self._get_host_name_for_rsvd_intf(tenant_id, instance_id)
@@ -607,11 +607,11 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         LOG.debug("host_list is: %s" % host_list)
         return host_list
 
-    def get_instance_port(self, args):
+    def associate_port(self, args):
         """
         Get the portprofile name and the device name for the dynamic vnic
         """
-        LOG.debug("get_instance_port() called\n")
+        LOG.debug("associate_port() called\n")
         instance_id = args[1]
         tenant_id = args[2][const.PROJECT_ID]
         vif_id = args[2][const.VIF_ID]

@@ -381,7 +381,7 @@ class L2Network(QuantumPluginBase):
     def create_qos(self, tenant_id, qos_name, qos_desc):
         """Create a QoS level"""
         LOG.debug("create_qos() called\n")
-        qos = cdb.add_qos(tenant_id, qos_name, qos_desc)
+        qos = cdb.add_qos(tenant_id, qos_name, str(qos_desc))
         return qos
 
     def delete_qos(self, tenant_id, qos_id):
@@ -451,19 +451,19 @@ class L2Network(QuantumPluginBase):
         credential = cdb.update_credential(tenant_id, credential_id, new_name)
         return credential
 
-    def get_host(self, tenant_id, instance_id, instance_desc):
+    def schedule_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
-        LOG.debug("get_host() called\n")
+        LOG.debug("schedule_host() called\n")
         host_list = self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
         return host_list
 
-    def get_instance_port(self, tenant_id, instance_id, instance_desc):
+    def associate_port(self, tenant_id, instance_id, instance_desc):
         """
         Get the portprofile name and the device namei for the dynamic vnic
         """
-        LOG.debug("get_instance_port() called\n")
+        LOG.debug("associate_port() called\n")
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
