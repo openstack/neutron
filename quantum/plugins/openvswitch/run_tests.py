@@ -65,6 +65,9 @@ if __name__ == '__main__':
     # we should only invoked the tests once
     invoke_once = len(sys.argv) > 1
 
+    test_config['plugin_name'] = "quantum.plugins.openvswitch." + \
+                "ovs_quantum_plugin.OVSQuantumPlugin"
+
     cwd = os.getcwd()
 
     working_dir = os.path.abspath("tests")

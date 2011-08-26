@@ -133,7 +133,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
         # Verify that no attachments are plugged into the network
         for port in db.port_list(net_id):
-            if port['interface_id']:
+            if port.interface_id:
                 raise q_exc.NetworkInUse(net_id=net_id)
         net = db.network_destroy(net_id)
         ovs_db.remove_vlan_binding(net_id)
@@ -150,31 +150,31 @@ class OVSQuantumPlugin(QuantumPluginBase):
         return self._make_net_dict(str(net.uuid), net.name, None)
 
     def _make_port_dict(self, port_id, port_state, net_id, attachment):
-        res = {'port-id': port_id,
-               'port-state': port_state}
-        if net_id:
-            res['net-id'] = net_id
-        if attachment:
-            res['attachment-id'] = attachment
-        return res
+        return {'port-id': port_id,
+                'port-state': port_state,
+                'net-id': net_id,
+                'attachment': attachment}
 
     def get_all_ports(self, tenant_id, net_id):
         ids = []
         ports = db.port_list(net_id)
         for p in ports:
             LOG.debug("Appending port: %s" % p.uuid)
-            d = self._make_port_dict(str(p.uuid), p.state, None, None)
+            d = self._make_port_dict(str(p.uuid), p.state, p.network_id,
+                                                    p.interface_id)
             ids.append(d)
         return ids
 
     def create_port(self, tenant_id, net_id, port_state=None):
         LOG.debug("Creating port with network_id: %s" % net_id)
         port = db.port_create(net_id, port_state)
-        return self._make_port_dict(str(port.uuid), port.state, None, None)
+        return self._make_port_dict(str(port.uuid), port.state,
+                                        port.network_id, port.interface_id)
 
     def delete_port(self, tenant_id, net_id, port_id):
         port = db.port_destroy(port_id, net_id)
-        return self._make_port_dict(str(port.uuid), port.state, None, None)
+        return self._make_port_dict(str(port.uuid), port.state,
+                                        port.network_id, port.interface_id)
 
     def update_port(self, tenant_id, net_id, port_id, port_state):
         """
@@ -183,7 +183,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
         LOG.debug("update_port() called\n")
         port = db.port_get(port_id, net_id)
         db.port_set_state(port_id, net_id, port_state)
-        return self._make_port_dict(str(port.uuid), port.state, None, None)
+        return self._make_port_dict(str(port.uuid), port.state,
+                                        port.network_id, port.interface_id)
 
     def get_port_details(self, tenant_id, net_id, port_id):
         port = db.port_get(port_id, net_id)
