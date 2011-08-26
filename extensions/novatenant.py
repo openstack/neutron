@@ -119,6 +119,7 @@ class NovatenantsController(common.QuantumController):
     def schedule_host(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         print "Content type:%s" % content_type
+
         try:
             req_params = \
                 self._parse_request_params(request,
@@ -153,6 +154,5 @@ class NovatenantsController(common.QuantumController):
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_vif(vif)
             return result
-
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))

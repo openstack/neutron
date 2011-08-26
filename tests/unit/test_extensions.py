@@ -72,10 +72,10 @@ class ResourceExtensionTest(unittest.TestCase):
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
         self.assertEqual("resource index", index_response.body)
-        
+
         show_response = test_app.get("/tweedles/25266")
         self.assertEqual({'data': {'id': "25266"}}, show_response.json)
-        
+
     def test_resource_extension_with_custom_member_action(self):
         controller = self.ResourceExtensionController()
         member = {'custom_member_action': "GET"}
