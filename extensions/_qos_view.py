@@ -28,7 +28,7 @@ def get_view_builder(req):
 
 class ViewBuilder(object):
     """
-    ViewBuilder for QoS, 
+    ViewBuilder for QoS,
     derived from quantum.views.networks
     """
     def __init__(self, base_url):
@@ -44,11 +44,11 @@ class ViewBuilder(object):
         else:
             qos = self._build_simple(qos_data)
         return qos
-    
+
     def _build_simple(self, qos_data):
         """Return a simple description of qos."""
         return dict(qos=dict(id=qos_data['qos_id']))
-    
+
     def _build_detail(self, qos_data):
         """Return a detailed description of qos."""
         return dict(qos=dict(id=qos_data['qos_id'],
