@@ -326,7 +326,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         else:
             net_name = self.network_name
         net_path = "/tenants/tt/networks"
-        net_data = {'network': {'net-name': '%s' % net_name}}
+        net_data = {'network': {'name': '%s' % net_name}}
         req_body = wsgi.Serializer().serialize(net_data, self.contenttype)
         network_req = self.create_request(net_path, req_body,
                                           self.contenttype, 'POST')
@@ -334,7 +334,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         network_data = wsgi.Serializer().deserialize(network_res.body,
                                                      self.contenttype)
         LOG.debug("Creating network - END")
-        return network_data['networks']['network']['id']
+        return network_data['network']['id']
 
     def _create_port(self, network_id, port_state):
 
@@ -342,7 +342,7 @@ class PortprofileExtensionTest(unittest.TestCase):
 
         LOG.debug("Creating port for network %s - START", network_id)
         port_path = "/tenants/tt/networks/%s/ports" % network_id
-        port_req_data = {'port': {'port-state': '%s' % port_state}}
+        port_req_data = {'port': {'state': '%s' % port_state}}
         req_body = wsgi.Serializer().serialize(port_req_data,
                                                self.contenttype)
         port_req = self.create_request(port_path, req_body,
@@ -351,7 +351,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         port_data = wsgi.Serializer().deserialize(port_res.body,
                                                   self.contenttype)
         LOG.debug("Creating port for network - END")
-        return port_data['ports']['port']['id']
+        return port_data['port']['id']
 
     def test_associate_portprofile(self):
 
