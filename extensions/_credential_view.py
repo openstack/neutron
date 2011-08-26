@@ -28,7 +28,7 @@ def get_view_builder(req):
 
 class ViewBuilder(object):
     """
-    ViewBuilder for Credential, 
+    ViewBuilder for Credential,
     derived from quantum.views.networks
     """
     def __init__(self, base_url):
@@ -39,20 +39,18 @@ class ViewBuilder(object):
 
     def build(self, credential_data, is_detail=False):
         """Generic method used to generate a credential entity."""
-        
         if is_detail:
             credential = self._build_detail(credential_data)
         else:
             credential = self._build_simple(credential_data)
         return credential
-    
+
     def _build_simple(self, credential_data):
         """Return a simple description of credential."""
         return dict(credential=dict(id=credential_data['credential_id']))
-    
+
     def _build_detail(self, credential_data):
         """Return a detailed description of credential."""
-        
         return dict(credential=dict(id=credential_data['credential_id'],
                                 name=credential_data['user_name'],
                                 password=credential_data['password']))

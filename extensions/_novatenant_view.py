@@ -29,7 +29,7 @@ def get_view_builder(req):
 
 class ViewBuilder(object):
     """
-    ViewBuilder for novatenant, 
+    ViewBuilder for novatenant,
     derived from quantum.views.networks
     """
     def __init__(self, base_url):
@@ -37,11 +37,11 @@ class ViewBuilder(object):
         :param base_url: url of the root wsgi application
         """
         self.base_url = base_url
-    
+
     def build_host(self, host_data):
         """Return host description."""
         return dict(host_list=host_data[const.HOST_LIST])
-    
+
     def build_vif(self, vif_data):
         """Return VIF description."""
-        return dict(vif_desc=vif_data[const.VIF_DESC])   
+        return dict(vif_desc=vif_data[const.VIF_DESC])
