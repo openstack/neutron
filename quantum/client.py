@@ -230,7 +230,6 @@ class Client(object):
         """
         if status_code in (202, 204):
             return data
-        #server.networks.Controller._serialization_metadata
         return Serializer(self._serialization_metadata).\
                     deserialize(data, self.content_type())
 

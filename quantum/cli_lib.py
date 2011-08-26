@@ -95,22 +95,14 @@ def delete_net(client, *args):
         _handle_exception(ex)
 
 
-def detail_net(client, *args):
+def show_net(client, *args):
     tenant_id, network_id = args
     try:
-        #NOTE(salvatore-orlando): Implementing non-efficient version
-        #for now, at least until plugins will not provide correct behaviour
-        #for the show_network_details operation
+        #NOTE(salvatore-orlando) changed for returning exclusively
+        # output for GET /networks/{net-id} API operation
         res = client.show_network_details(network_id)["network"]
         LOG.debug("Operation 'show_network_details' executed.")
-        ports = client.list_ports(network_id)
-        LOG.debug("Operation 'list_ports' executed.")
-        res.update(ports)
-        for port in ports['ports']:
-            att_data = client.show_port_attachment(network_id, port['id'])
-            LOG.debug("Operation 'show_port_attachment' executed.")
-            port['attachment'] = att_data['attachment'].get('id', None)
-        output = prepare_output("detail_net", tenant_id, dict(network=res))
+        output = prepare_output("show_net", tenant_id, dict(network=res))
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -171,7 +163,7 @@ def delete_port(client, *args):
         return
 
 
-def detail_port(client, *args):
+def show_port(client, *args):
     tenant_id, network_id, port_id = args
     try:
         port = client.show_port_details(network_id, port_id)["port"]
@@ -180,7 +172,7 @@ def detail_port(client, *args):
         #return attachment with GET operation on port. Once API alignment
         #branch is merged, update client to use the detail action
         port['attachment'] = '<unavailable>'
-        output = prepare_output("detail_port", tenant_id,
+        output = prepare_output("show_port", tenant_id,
                                 dict(network_id=network_id,
                                      port=port))
         print output
@@ -209,7 +201,7 @@ def plug_iface(client, *args):
         data = {'attachment': {'id': '%s' % attachment}}
         client.attach_resource(network_id, port_id, data)
         LOG.debug("Operation 'attach_resource' executed.")
-        output = prepare_output("plug_interface", tenant_id,
+        output = prepare_output("plug_iface", tenant_id,
                                 dict(network_id=network_id,
                                      port_id=port_id,
                                      attachment=attachment))
@@ -223,7 +215,7 @@ def unplug_iface(client, *args):
     try:
         client.detach_resource(network_id, port_id)
         LOG.debug("Operation 'detach_resource' executed.")
-        output = prepare_output("unplug_interface", tenant_id,
+        output = prepare_output("unplug_iface", tenant_id,
                                 dict(network_id=network_id,
                                      port_id=port_id))
         print output

@@ -55,7 +55,7 @@ class FakeHTTPConnection:
         res = self._req.get_response(self._api)
 
         def _fake_read():
-            """ Trick for macking a webob.Response look like a
+            """ Trick for making a webob.Response look like a
                 httplib.Response
 
             """

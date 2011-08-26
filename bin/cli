@@ -55,8 +55,8 @@ commands = {
   "delete_net": {
     "func": cli_lib.delete_net,
     "args": ["tenant-id", "net-id"]},
-  "detail_net": {
-    "func": cli_lib.detail_net,
+  "show_net": {
+    "func": cli_lib.show_net,
     "args": ["tenant-id", "net-id"]},
   "rename_net": {
     "func": cli_lib.rename_net,
@@ -73,8 +73,8 @@ commands = {
   "set_port_state": {
     "func": cli_lib.set_port_state,
     "args": ["tenant-id", "net-id", "port-id", "new_state"]},
-  "detail_port": {
-    "func": cli_lib.detail_port,
+  "show_port": {
+    "func": cli_lib.show_port,
     "args": ["tenant-id", "net-id", "port-id"]},
   "plug_iface": {
     "func": cli_lib.plug_iface,
