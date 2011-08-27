@@ -63,6 +63,7 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
+            LOG.debug("PLUGGING INTERFACE:%s", request_params['id'])
             self._plugin.plug_interface(tenant_id, network_id, id,
                                         request_params['id'])
             return exc.HTTPNoContent()
