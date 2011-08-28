@@ -287,7 +287,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                            blade_intf_data[blade_intf]\
                            [const.TENANTID] == tenant_id and \
                            blade_intf_data[blade_intf]\
-                           [const.INSTANCE_ID] == instance_id :
+                           [const.INSTANCE_ID] == instance_id:
                             found_blade_intf_data = blade_intf_data
                             LOG.debug("Found blade %s associated with this" \
                                       " instance: %s" % \
