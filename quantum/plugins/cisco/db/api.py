@@ -252,3 +252,46 @@ def port_destroy(net_id, port_id):
         return port
     except exc.NoResultFound:
         raise q_exc.PortNotFound(port_id=port_id)
+
+
+#methods using just port_id
+def port_get_by_id(port_id):
+    session = get_session()
+    try:
+        return  session.query(models.Port).\
+          filter_by(uuid=port_id).one()
+    except exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id)
+
+
+def port_set_attachment_by_id(port_id, new_interface_id):
+    session = get_session()
+    port = port_get_by_id(port_id)
+
+    if new_interface_id != "":
+        if port['interface_id']:
+            raise q_exc.PortInUse(port_id=port_id,
+                                  att_id=port['interface_id'])
+
+        try:
+            port = session.query(models.Port).\
+            filter_by(interface_id=new_interface_id).\
+            one()
+            raise q_exc.AlreadyAttached(port_id=port_id,
+                                    att_id=new_interface_id,
+                                    att_port_id=port['uuid'])
+        except exc.NoResultFound:
+            pass
+    port.interface_id = new_interface_id
+    session.merge(port)
+    session.flush()
+    return port
+
+
+def port_unset_attachment_by_id(port_id):
+    session = get_session()
+    port = port_get_by_id(port_id)
+    port.interface_id = None
+    session.merge(port)
+    session.flush()
+    return port
