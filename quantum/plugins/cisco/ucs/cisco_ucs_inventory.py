@@ -28,6 +28,7 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import ucs_db as udb
 from quantum.plugins.cisco.ucs \
         import cisco_ucs_inventory_configuration as conf
@@ -268,7 +269,68 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                  tenant_id)
         return None
 
-    def _get_instance_port(self, tenant_id, instance_id, vif_id=None):
+    def _get_instance_port(self, tenant_id, instance_id, vif_id):
+        """
+        Return the device name for a reserved interface
+        """
+        found_blade_intf_data = None
+        for ucsm_ip in self._inventory_state.keys():
+            ucsm = self._inventory_state[ucsm_ip]
+            for chassis_id in ucsm.keys():
+                for blade_id in ucsm[chassis_id]:
+                    blade_data = ucsm[chassis_id][blade_id]
+                    blade_intf_data = blade_data[const.BLADE_INTF_DATA]
+                    for blade_intf in blade_intf_data.keys():
+                        if blade_intf_data[blade_intf]\
+                           [const.BLADE_INTF_RESERVATION] == \
+                           const.BLADE_INTF_RESERVED and \
+                           blade_intf_data[blade_intf]\
+                           [const.TENANTID] == tenant_id and \
+                           blade_intf_data[blade_intf]\
+                           [const.INSTANCE_ID] == instance_id :
+                            found_blade_intf_data = blade_intf_data
+                            LOG.debug("Found blade %s associated with this" \
+                                      " instance: %s" % \
+                                      (blade_id,
+                                       instance_id))
+                            break
+
+        if found_blade_intf_data:
+            blade_intf_data = found_blade_intf_data
+            for blade_intf in blade_intf_data.keys():
+                if blade_intf_data[blade_intf]\
+                   [const.BLADE_INTF_RESERVATION] == \
+                   const.BLADE_INTF_RESERVED and \
+                   blade_intf_data[blade_intf]\
+                   [const.TENANTID] == tenant_id and \
+                   (not blade_intf_data[blade_intf][const.VIF_ID]):
+                    blade_intf_data[blade_intf][const.VIF_ID] = \
+                            vif_id
+                    blade_intf_data[blade_intf]\
+                            [const.INSTANCE_ID] = instance_id
+                    port_binding = udb.get_portbinding_dn(blade_intf)
+                    port_id = port_binding[const.PORTID]
+                    udb.update_portbinding(port_id, instance_id=instance_id,
+                                           vif_id=vif_id)
+                    db.port_set_attachment_by_id(port_id, vif_id)
+                    device_name = blade_intf_data[blade_intf]\
+                            [const.BLADE_INTF_RHEL_DEVICE_NAME]
+                    profile_name = port_binding[const.PORTPROFILENAME]
+                    dynamicnic_details = \
+                            {const.DEVICENAME: device_name,
+                             const.UCSPROFILE: profile_name}
+                    LOG.debug("Found reserved dynamic nic: %s" \
+                              "associated with port %s" %
+                              (blade_intf_data[blade_intf], port_id))
+                    LOG.debug("Returning dynamic nic details: %s" %
+                              dynamicnic_details)
+                    return dynamicnic_details
+
+        LOG.warn("Could not find a reserved dynamic nic for tenant: %s" %
+                 tenant_id)
+        return None
+
+    def _disassociate_vifid_from_port(self, tenant_id, port_id):
         """
         Return the device name for a reserved interface
         """
@@ -284,28 +346,24 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                            const.BLADE_INTF_RESERVED and \
                            blade_intf_data[blade_intf]\
                            [const.TENANTID] == tenant_id and \
-                           blade_intf_data[blade_intf]\
-                           [const.INSTANCE_ID] == instance_id:
+                           blade_intf_data[blade_intf][const.PORTID] == \
+                           port_id:
+                            vif_id = blade_intf_data[blade_intf][const.VIF_ID]
                             blade_intf_data[blade_intf][const.VIF_ID] = \
-                                    vif_id
-                            port_binding = udb.get_portbinding_dn(blade_intf)
-                            port_id = port_binding[const.PORTID]
-                            udb.update_portbinding(port_id,
-                                                   vif_id=vif_id)
-                            device_name = blade_intf_data[blade_intf]\
-                                    [const.BLADE_INTF_RHEL_DEVICE_NAME]
-                            profile_name = port_binding[const.PORTPROFILENAME]
-                            dynamicnic_details = \
-                                    {const.DEVICENAME: device_name,
-                                     const.UCSPROFILE: profile_name}
-                            LOG.debug("Found reserved dynamic nic: %s" \
-                                      "associated with port %s" %
-                                      (blade_intf_data[blade_intf], port_id))
-                            LOG.debug("Returning dynamic nic details: %s" %
-                                      dynamicnic_details)
-                            return dynamicnic_details
-        LOG.warn("Could not find a reserved dynamic nic for tenant: %s" %
-                 tenant_id)
+                                    None
+                            blade_intf_data[blade_intf][const.INSTANCE_ID] = \
+                                    None
+                            udb.update_portbinding(port_id, instance_id=None,
+                                                   vif_id=None)
+                            LOG.debug("Disassociated VIF-ID: %s " \
+                                      "from port: %s" \
+                                      "in UCS inventory state for blade: %s" %
+                                      (vif_id, port_id,
+                                       blade_intf_data[blade_intf]))
+                            return
+        LOG.warn("Disassociating VIF-ID %s in UCS inventory failed. " \
+                 "Could not find a reserved dynamic nic for tenant: %s" %
+                 (vif_id, tenant_id))
         return None
 
     def reload_inventory(self):
@@ -595,6 +653,9 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         on which a dynamic vnic was reserved for this port
         """
         LOG.debug("unplug_interface() called\n")
+        tenant_id = args[0]
+        port_id = args[2]
+        self._disassociate_vifid_from_port(tenant_id, port_id)
         return self._get_blade_for_port(args)
 
     def schedule_host(self, args):
