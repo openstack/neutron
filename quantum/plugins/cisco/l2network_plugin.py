@@ -21,7 +21,7 @@
 
 import inspect
 import logging as LOG
-import platform
+import re
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
@@ -178,6 +178,10 @@ class L2Network(QuantumPluginBase):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("create_port() called\n")
+
+        if re.search(const.DELIMITERS, net_id):
+            return self.create_ports(tenant_id, net_id, port_state)
+
         port = db.port_create(net_id, port_state)
         unique_port_id_string = port[const.UUID]
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
@@ -287,7 +291,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("get_portprofile_details() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
 
@@ -313,7 +317,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("delete_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
 
@@ -329,7 +333,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("rename_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=profile_id)
         portprofile = cdb.update_portprofile(tenant_id, profile_id, new_name)
@@ -345,7 +349,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("associate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                            portprofile_id=portprofile_id)
 
@@ -357,7 +361,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("disassociate_portprofile() called\n")
         try:
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
                                       portprofile_id=portprofile_id)
 
@@ -374,7 +378,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("get_qos_details() called\n")
         try:
             qos_level = cdb.get_qos(tenant_id, qos_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.QosNotFound(tenant_id=tenant_id,
                                    qos_id=qos_id)
         return qos_level
@@ -390,7 +394,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("delete_qos() called\n")
         try:
             qos_level = cdb.get_qos(tenant_id, qos_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.QosNotFound(tenant_id=tenant_id,
                                    qos_id=qos_id)
         return cdb.remove_qos(tenant_id, qos_id)
@@ -400,7 +404,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("rename_qos() called\n")
         try:
             qos_level = cdb.get_qos(tenant_id, qos_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.QosNotFound(tenant_id=tenant_id,
                                    qos_id=qos_id)
         qos = cdb.update_qos(tenant_id, qos_id, new_name)
@@ -417,7 +421,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("get_credential_details() called\n")
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
         return credential
@@ -435,7 +439,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("delete_credential() called\n")
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
         credential = cdb.remove_credential(tenant_id, credential_id)
@@ -446,7 +450,7 @@ class L2Network(QuantumPluginBase):
         LOG.debug("rename_credential() called\n")
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
-        except Exception, excp:
+        except Exception:
             raise cexc.CredentialNotFound(tenant_id=tenant_id,
                                           credential_id=credential_id)
         credential = cdb.update_credential(tenant_id, credential_id, new_name)
@@ -468,6 +472,33 @@ class L2Network(QuantumPluginBase):
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
+
+    def create_ports(self, tenant_id, net_id, port_state=None):
+        """
+        Creates multiple ports on the specified Virtual Network.
+        """
+        LOG.debug("create_ports() called\n")
+        net_id_list = re.split(const.DELIMITERS, net_id)
+        ports_num = len(net_id_list)
+        ports_id_list = []
+        ports_list_str = ""
+
+        for net_id in net_id_list:
+            port = db.port_create(net_id, port_state)
+            ports_id_list.append(port[const.UUID])
+            if ports_list_str != "":
+                ports_list_str = ports_list_str + "," + \
+                        str(port[const.UUID])
+            else:
+                ports_list_str = str(port[const.UUID])
+
+        self._invoke_device_plugins(self._func_name(), [tenant_id,
+                                                        net_id_list,
+                                                        ports_num,
+                                                        ports_id_list])
+        new_ports_dict = cutil.make_port_dict(ports_list_str, port_state,
+                                              net_id, None)
+        return new_ports_dict
 
     """
     Private functions
