@@ -623,7 +623,6 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         port_id = args[2]
         rsvd_info = self._get_rsvd_blade_intf_by_port(tenant_id, port_id)
         if not rsvd_info:
-            raise exc.PortNotFound(net_id=net_id, port_id=port_id)
             LOG.warn("UCSInventory: Port not found: net_id: %s, port_id: %s" %
                      (net_id, port_id))
             return {const.DEVICE_IP: []}
