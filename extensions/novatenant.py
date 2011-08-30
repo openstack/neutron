@@ -118,7 +118,6 @@ class NovatenantsController(common.QuantumController):
     #added for cisco's extension
     def schedule_host(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
 
         try:
             req_params = \
@@ -139,7 +138,6 @@ class NovatenantsController(common.QuantumController):
 
     def associate_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
         try:
             req_params = \
                 self._parse_request_params(request,
