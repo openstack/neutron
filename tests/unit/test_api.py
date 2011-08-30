@@ -218,8 +218,8 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_delete_network - format:%s - START", format)
         content_type = "application/%s" % format
         network_id = self._create_network(format)
-        LOG.debug("Deleting network %(network_id)s"\
-                  " of tenant %(tenant_id)s", locals())
+        LOG.debug("Deleting network %s"\
+                  " of tenant %s" % (network_id, self.tenant_id))
         delete_network_req = testlib.network_delete_request(self.tenant_id,
                                                             network_id,
                                                             format)
@@ -240,8 +240,8 @@ class APITest(unittest.TestCase):
         port_state = "ACTIVE"
         attachment_id = "test_attachment"
         network_id = self._create_network(format)
-        LOG.debug("Deleting network %(network_id)s"\
-                  " of tenant %(tenant_id)s", locals())
+        LOG.debug("Deleting network %s"\
+                  " of tenant %s" % (network_id, self.tenant_id))
         port_id = self._create_port(network_id, port_state, format)
         #plug an attachment into the port
         LOG.debug("Putting attachment into port %s", port_id)
@@ -252,14 +252,34 @@ class APITest(unittest.TestCase):
         attachment_res = attachment_req.get_response(self.api)
         self.assertEquals(attachment_res.status_int, 204)
 
-        LOG.debug("Deleting network %(network_id)s"\
-                  " of tenant %(tenant_id)s", locals())
+        LOG.debug("Deleting network %s"\
+                  " of tenant %s" % (network_id, self.tenant_id))
         delete_network_req = testlib.network_delete_request(self.tenant_id,
                                                             network_id,
                                                             format)
         delete_network_res = delete_network_req.get_response(self.api)
         self.assertEqual(delete_network_res.status_int, 421)
         LOG.debug("_test_delete_network_in_use - format:%s - END", format)
+
+    def _test_delete_network_with_unattached_port(self, format):
+        LOG.debug("_test_delete_network_with_unattached_port "\
+                    "- format:%s - START", format)
+        content_type = "application/%s" % format
+        port_state = "ACTIVE"
+        network_id = self._create_network(format)
+        LOG.debug("Deleting network %s"\
+                  " of tenant %s" % (network_id, self.tenant_id))
+        port_id = self._create_port(network_id, port_state, format)
+
+        LOG.debug("Deleting network %s"\
+                  " of tenant %s" % (network_id, self.tenant_id))
+        delete_network_req = testlib.network_delete_request(self.tenant_id,
+                                                            network_id,
+                                                            format)
+        delete_network_res = delete_network_req.get_response(self.api)
+        self.assertEqual(delete_network_res.status_int, 204)
+        LOG.debug("_test_delete_network_with_unattached_port "\
+                    "- format:%s - END", format)
 
     def _test_list_ports(self, format):
         LOG.debug("_test_list_ports - format:%s - START", format)
@@ -433,8 +453,9 @@ class APITest(unittest.TestCase):
         port_state = "ACTIVE"
         network_id = self._create_network(format)
         port_id = self._create_port(network_id, port_state, format)
-        LOG.debug("Deleting port %(port_id)s for network %(network_id)s"\
-                  " of tenant %(tenant_id)s", locals())
+        LOG.debug("Deleting port %s for network %s"\
+                  " of tenant %s" % (port_id, network_id,
+                    self.tenant_id))
         delete_port_req = testlib.port_delete_request(self.tenant_id,
                                                       network_id, port_id,
                                                       format)
@@ -464,8 +485,9 @@ class APITest(unittest.TestCase):
                                                         attachment_id)
         attachment_res = attachment_req.get_response(self.api)
         self.assertEquals(attachment_res.status_int, 204)
-        LOG.debug("Deleting port %(port_id)s for network %(network_id)s"\
-                  " of tenant %(tenant_id)s", locals())
+        LOG.debug("Deleting port %s for network %s"\
+                  " of tenant %s" % (port_id, network_id,
+                    self.tenant_id))
         delete_port_req = testlib.port_delete_request(self.tenant_id,
                                                       network_id, port_id,
                                                       format)
@@ -763,7 +785,7 @@ class APITest(unittest.TestCase):
     def setUp(self):
         options = {}
         options['plugin_provider'] = test_config['plugin_name']
-        self.api = server.APIRouterV01(options)
+        self.api = server.APIRouterV1(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         self._net_serializer = \
@@ -847,6 +869,12 @@ class APITest(unittest.TestCase):
 
     def test_delete_network_in_use_xml(self):
         self._test_delete_network_in_use('xml')
+
+    def test_delete_network_with_unattached_port_xml(self):
+        self._test_delete_network_with_unattached_port('xml')
+
+    def test_delete_network_with_unattached_port_json(self):
+        self._test_delete_network_with_unattached_port('json')
 
     def test_list_ports_json(self):
         self._test_list_ports('json')

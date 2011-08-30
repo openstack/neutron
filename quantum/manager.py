@@ -26,7 +26,7 @@ The caller should make sure that QuantumManager is a singleton.
 import gettext
 import logging
 import os
-import logging
+
 gettext.install('quantum', unicode=1)
 
 from common import utils

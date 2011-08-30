@@ -37,7 +37,7 @@ LOG = logging.getLogger('quantum.api')
 FLAGS = flags.FLAGS
 
 
-class APIRouterV01(wsgi.Router):
+class APIRouterV1(wsgi.Router):
     """
     Routes requests on the Quantum API to the appropriate controller
     """
@@ -45,7 +45,7 @@ class APIRouterV01(wsgi.Router):
     def __init__(self, options=None):
         mapper = routes.Mapper()
         self._setup_routes(mapper, options)
-        super(APIRouterV01, self).__init__(mapper)
+        super(APIRouterV1, self).__init__(mapper)
 
     def _setup_routes(self, mapper, options):
         # Loads the quantum plugin
@@ -64,9 +64,7 @@ class APIRouterV01(wsgi.Router):
                         parent_resource=dict(member_name='network',
                                              collection_name=uri_prefix +\
                                                  'networks'))
-
         attachments_ctrl = attachments.Controller(plugin)
-
         mapper.connect("get_resource",
                        uri_prefix + 'networks/{network_id}/' \
                                     'ports/{id}/attachment{.format}',

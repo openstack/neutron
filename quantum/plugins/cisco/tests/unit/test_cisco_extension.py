@@ -87,7 +87,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.cisco.l2network_plugin'\
                                      '.L2Network'
-        self.api = server.APIRouterV01(options)
+        self.api = server.APIRouterV1(options)
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_portprofile(self):

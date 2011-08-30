@@ -32,8 +32,8 @@ EXCEPTIONS = {
     421: exceptions.NetworkInUse,
     430: exceptions.PortNotFound,
     431: exceptions.StateInvalid,
-    432: exceptions.PortInUse,
-    440: exceptions.AlreadyAttached}
+    432: exceptions.PortInUseClient,
+    440: exceptions.AlreadyAttachedClient}
 
 
 class ApiCall(object):
@@ -131,7 +131,7 @@ class Client(object):
         return conn.getresponse()
 
     def do_request(self, method, action, body=None,
-                   headers=None, params=None):
+                   headers=None, params=None, exception_args={}):
         """
         Connects to the server and issues a request.
         Returns the result data, or raises an appropriate exception if
@@ -190,7 +190,7 @@ class Client(object):
                 LOG.debug("Error message: %s", error_message)
                 # Create exception with HTTP status code and message
                 if res.status in EXCEPTIONS:
-                    raise EXCEPTIONS[res.status]()
+                    raise EXCEPTIONS[res.status](**exception_args)
                 # Add error code and message to exception arguments
                 ex = Exception("Server returned error: %s" % status_code)
                 ex.args = ([dict(status_code=status_code,
@@ -254,7 +254,8 @@ class Client(object):
         """
         Fetches the details of a certain network
         """
-        return self.do_request("GET", self.network_path % (network))
+        return self.do_request("GET", self.network_path % (network),
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def create_network(self, body=None):
@@ -268,14 +269,16 @@ class Client(object):
         """
         Updates a network
         """
-        return self.do_request("PUT", self.network_path % (network), body=body)
+        return self.do_request("PUT", self.network_path % (network), body=body,
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def delete_network(self, network):
         """
         Deletes the specified network
         """
-        return self.do_request("DELETE", self.network_path % (network))
+        return self.do_request("DELETE", self.network_path % (network),
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def list_ports(self, network):
@@ -289,7 +292,8 @@ class Client(object):
         """
         Fetches the details of a certain port
         """
-        return self.do_request("GET", self.port_path % (network, port))
+        return self.do_request("GET", self.port_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def create_port(self, network, body=None):
@@ -297,14 +301,16 @@ class Client(object):
         Creates a new port on a given network
         """
         body = self.serialize(body)
-        return self.do_request("POST", self.ports_path % (network), body=body)
+        return self.do_request("POST", self.ports_path % (network), body=body,
+                       exception_args={"net_id": network})
 
     @ApiCall
     def delete_port(self, network, port):
         """
         Deletes the specified port from a network
         """
-        return self.do_request("DELETE", self.port_path % (network, port))
+        return self.do_request("DELETE", self.port_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def set_port_state(self, network, port, body=None):
@@ -312,14 +318,18 @@ class Client(object):
         Sets the state of the specified port
         """
         return self.do_request("PUT",
-            self.port_path % (network, port), body=body)
+            self.port_path % (network, port), body=body,
+                       exception_args={"net_id": network,
+                                       "port_id": port,
+                                       "port_state": str(body)})
 
     @ApiCall
     def show_port_attachment(self, network, port):
         """
         Fetches the attachment-id associated with the specified port
         """
-        return self.do_request("GET", self.attachment_path % (network, port))
+        return self.do_request("GET", self.attachment_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def attach_resource(self, network, port, body=None):
@@ -327,7 +337,10 @@ class Client(object):
         Sets the attachment-id of the specified port
         """
         return self.do_request("PUT",
-            self.attachment_path % (network, port), body=body)
+            self.attachment_path % (network, port), body=body,
+                       exception_args={"net_id": network,
+                                       "port_id": port,
+                                       "attach_id": str(body)})
 
     @ApiCall
     def detach_resource(self, network, port):
@@ -335,4 +348,5 @@ class Client(object):
         Removes the attachment-id of the specified port
         """
         return self.do_request("DELETE",
-                               self.attachment_path % (network, port))
+                               self.attachment_path % (network, port),
+                    exception_args={"net_id": network, "port_id": port})
