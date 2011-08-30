@@ -41,8 +41,9 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 class L2Network(QuantumPluginBase):
     """ L2 Network Framework Plugin """
-    supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
-                                   "Cisco qos", "Cisco Nova Tenant"]
+    supported_extension_aliases = ["Cisco Multiport", "Cisco Credential",
+                                   "Cisco Port Profile", "Cisco qos",
+                                   "Cisco Nova Tenant"]
 
     def __init__(self):
         cdb.initialize()
@@ -470,7 +471,7 @@ class L2Network(QuantumPluginBase):
                                                                instance_id,
                                                                instance_desc])
 
-    def create_ports(self, tenant_id, net_id_list, port_state, ports_desc):
+    def create_multiport(self, tenant_id, net_id_list, port_state, ports_desc):
         """
         Creates multiple ports on the specified Virtual Network.
         """

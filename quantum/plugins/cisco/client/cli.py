@@ -124,15 +124,15 @@ def schedule_host(tenant_id, instance_id, user_id=None):
     print("Quantum service returned host: %s" % hostname)
 
 
-def create_ports(tenant_id, net_id_list, *args):
+def create_multiport(tenant_id, net_id_list, *args):
     """Creates ports on a single host"""
     net_list = net_id_list.split(",")
     ports_info = {'multiport': \
                   {'status': 'ACTIVE',
                    'net_id_list': net_list,
-                   'ports_desc': {}}}
+                   'ports_desc': {'key': 'value'}}}
 
-    request_url = "/multiport/create_ports"
+    request_url = "/multiport"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=tenant_id,
                     action_prefix=ACTION_PREFIX_CSCO)
     data = client.do_request('POST', request_url, body=ports_info)
@@ -141,8 +141,8 @@ def create_ports(tenant_id, net_id_list, *args):
 
 
 COMMANDS = {
-  "create_ports": {
-    "func": create_ports,
+  "create_multiport": {
+    "func": create_multiport,
     "args": ["tenant-id",
              "net-id-list (comma separated list of netword IDs)"]},
   "list_extensions": {

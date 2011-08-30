@@ -84,11 +84,13 @@ Then run "yum install python-routes".
 Module Structure:
 -----------------
 * quantum/plugins/cisco/       - Contains the L2-Network Plugin Framework
+                       /client - CLI module for core and extensions
                        /common - Modules common to the entire plugin
                        /conf   - All configuration files
                        /db     - Persistence framework
                        /models - Class(es) which tie the logical abstractions
                                  to the physical topology
+                       /nova   - Scheduler and VIF-driver to be used by Nova
                        /nexus  - Nexus-specific modules
                        /segmentation - Implementation of segmentation manager,
                                        e.g. VLAN Manager
@@ -109,7 +111,7 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
     Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
     following entries:
 
---scheduler_driver=quantum.plugins.cisco.nova.quantum_aware_scheduler.QuantumScheduler
+--scheduler_driver=quantum.plugins.cisco.nova.quantum_port_aware_scheduler.QuantumPortAwareScheduler
 --quantum_host=127.0.0.1
 --quantum_port=9696
 --libvirt_vif_driver=quantum.plugins.cisco.nova.vifdirect.Libvirt802dot1QbhDriver
@@ -187,7 +189,7 @@ password=mySecretPasswordForNexus
 
 7.  Configure the UCS systems' information in your deployment by editing the
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
-    UCSMs per deployment, multiple chasses per UCSM, and multiple blades per
+    UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
     chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
     typically numbers like 1, 2, 3, etc.
 

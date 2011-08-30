@@ -692,7 +692,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         LOG.debug("vif_desc is: %s" % vif_desc)
         return vif_desc
 
-    def create_ports(self, args):
+    def create_multiport(self, args):
         """
         Create multiple ports for a VM
         """

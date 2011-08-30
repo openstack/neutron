@@ -163,7 +163,7 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
                                       args)
 
-    def create_ports(self, args):
+    def create_multiport(self, args):
         """Support for extension  API call"""
         self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
                                        args)

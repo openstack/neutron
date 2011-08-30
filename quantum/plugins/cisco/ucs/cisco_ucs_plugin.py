@@ -297,7 +297,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
         self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
 
-    def create_ports(self, tenant_id, net_id_list, ports_num, port_id_list,
+    def create_multiport(self, tenant_id, net_id_list, ports_num, port_id_list,
                      **kwargs):
         """
         Creates a port on the specified Virtual Network.
