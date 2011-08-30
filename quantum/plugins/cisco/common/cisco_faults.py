@@ -71,7 +71,7 @@ class PortprofileNotFound(webob.exc.HTTPClientError):
     """
     code = 450
     title = 'Portprofile Not Found'
-    explanation = ('Unable to find a Portprofile with' 
+    explanation = ('Unable to find a Portprofile with'
                    + ' the specified identifier.')
 
 
@@ -87,8 +87,8 @@ class PortNotFound(webob.exc.HTTPClientError):
     code = 430
     title = 'Port not Found'
     explanation = ('Unable to find a port with the specified identifier.')
-    
-    
+
+
 class CredentialNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -100,10 +100,10 @@ class CredentialNotFound(webob.exc.HTTPClientError):
     """
     code = 451
     title = 'Credential Not Found'
-    explanation = ('Unable to find a Credential with' 
+    explanation = ('Unable to find a Credential with'
                    + ' the specified identifier.')
-  
-    
+
+
 class QosNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -115,10 +115,10 @@ class QosNotFound(webob.exc.HTTPClientError):
     """
     code = 452
     title = 'QoS Not Found'
-    explanation = ('Unable to find a QoS with' 
+    explanation = ('Unable to find a QoS with'
                    + ' the specified identifier.')
-  
-    
+
+
 class NovatenantNotFound(webob.exc.HTTPClientError):
     """
     subclass of :class:`~HTTPClientError`
@@ -130,7 +130,7 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     """
     code = 453
     title = 'Nova tenant Not Found'
-    explanation = ('Unable to find a Novatenant with' 
+    explanation = ('Unable to find a Novatenant with'
                    + ' the specified identifier.')
 
 

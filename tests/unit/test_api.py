@@ -261,6 +261,26 @@ class APITest(unittest.TestCase):
         self.assertEqual(delete_network_res.status_int, 421)
         LOG.debug("_test_delete_network_in_use - format:%s - END", format)
 
+    def _test_delete_network_with_unattached_port(self, format):
+        LOG.debug("_test_delete_network_with_unattached_port "\
+                    "- format:%s - START", format)
+        content_type = "application/%s" % format
+        port_state = "ACTIVE"
+        network_id = self._create_network(format)
+        LOG.debug("Deleting network %(network_id)s"\
+                  " of tenant %(tenant_id)s", locals())
+        port_id = self._create_port(network_id, port_state, format)
+
+        LOG.debug("Deleting network %(network_id)s"\
+                  " of tenant %(tenant_id)s", locals())
+        delete_network_req = testlib.network_delete_request(self.tenant_id,
+                                                            network_id,
+                                                            format)
+        delete_network_res = delete_network_req.get_response(self.api)
+        self.assertEqual(delete_network_res.status_int, 204)
+        LOG.debug("_test_delete_network_with_unattached_port "\
+                    "- format:%s - END", format)
+
     def _test_list_ports(self, format):
         LOG.debug("_test_list_ports - format:%s - START", format)
         content_type = "application/%s" % format
@@ -847,6 +867,12 @@ class APITest(unittest.TestCase):
 
     def test_delete_network_in_use_xml(self):
         self._test_delete_network_in_use('xml')
+
+    def test_delete_network_with_unattached_port_xml(self):
+        self._test_delete_network_with_unattached_port('xml')
+
+    def test_delete_network_with_unattached_port_json(self):
+        self._test_delete_network_with_unattached_port('json')
 
     def test_list_ports_json(self):
         self._test_list_ports('json')

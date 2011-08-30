@@ -111,6 +111,21 @@ class AlreadyAttached(QuantumException):
                 "already plugged into port %(att_port_id)s")
 
 
+# NOTE: on the client side, we often do not know all of the information
+# that is known on the server, thus, we create separate exception for
+# those scenarios
+class PortInUseClient(QuantumException):
+    message = _("Unable to complete operation on port %(port_id)s " \
+                "for network %(net_id)s. An attachment " \
+                "is plugged into the logical port.")
+
+
+class AlreadyAttachedClient(QuantumException):
+    message = _("Unable to plug the attachment %(att_id)s into port " \
+                "%(port_id)s for network %(net_id)s. The attachment is " \
+                "already plugged into another port.")
+
+
 class Duplicate(Error):
     pass
 
