@@ -52,7 +52,7 @@ class QuantumController(wsgi.Controller):
                 param_value = data.get(param_name, None)
 
             # If the parameter wasn't found and it was required, return 400
-            if not param_value and param['required']:
+            if param_value is None and param['required']:
                 msg = ("Failed to parse request. " +
                        "Parameter: " + param_name + " not specified")
                 for line in msg.split('\n'):
