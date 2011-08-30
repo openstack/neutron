@@ -16,12 +16,15 @@
 #    under the License.
 #    @author: Tyler Smith, Cisco Systems
 
+import logging
 import httplib
 import socket
 import urllib
-from quantum.common.wsgi import Serializer
-from quantum.common import exceptions
 
+from quantum.common import exceptions
+from quantum.common.wsgi import Serializer
+
+LOG = logging.getLogger('quantum.client')
 EXCEPTIONS = {
     400: exceptions.BadInputError,
     401: exceptions.NotAuthorized,
@@ -29,8 +32,8 @@ EXCEPTIONS = {
     421: exceptions.NetworkInUse,
     430: exceptions.PortNotFound,
     431: exceptions.StateInvalid,
-    432: exceptions.PortInUse,
-    440: exceptions.AlreadyAttached}
+    432: exceptions.PortInUseClient,
+    440: exceptions.AlreadyAttachedClient}
 
 
 class ApiCall(object):
@@ -59,6 +62,17 @@ class ApiCall(object):
 class Client(object):
 
     """A base client class - derived from Glance.BaseClient"""
+
+    #Metadata for deserializing xml
+    _serialization_metadata = {
+        "application/xml": {
+            "attributes": {
+                "network": ["id", "name"],
+                "port": ["id", "state"],
+                "attachment": ["id"]},
+            "plurals": {"networks": "network",
+                        "ports": "port"}},
+    }
 
     # Action query strings
     networks_path = "/networks"
@@ -105,8 +119,19 @@ class Client(object):
         else:
             return httplib.HTTPConnection
 
+    def _send_request(self, conn, method, action, body, headers):
+        # Salvatore: Isolating this piece of code in its own method to
+        # facilitate stubout for testing
+        if self.logger:
+            self.logger.debug("Quantum Client Request:\n" \
+                    + method + " " + action + "\n")
+            if body:
+                self.logger.debug(body)
+        conn.request(method, action, body, headers)
+        return conn.getresponse()
+
     def do_request(self, method, action, body=None,
-                   headers=None, params=None):
+                   headers=None, params=None, exception_args={}):
         """
         Connects to the server and issues a request.
         Returns the result data, or raises an appropriate exception if
@@ -119,7 +144,7 @@ class Client(object):
                              to action
 
         """
-
+        LOG.debug("Client issuing request: %s", action)
         # Ensure we have a tenant id
         if not self.tenant:
             raise Exception("Tenant ID not set")
@@ -131,7 +156,6 @@ class Client(object):
 
         if type(params) is dict:
             action += '?' + urllib.urlencode(params)
-
         if body:
             body = self.serialize(body)
 
@@ -139,7 +163,6 @@ class Client(object):
             connection_type = self.get_connection_type()
             headers = headers or {"Content-Type":
                                       "application/%s" % self.format}
-
             # Open connection and send request, handling SSL certs
             certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
             certs = dict((x, certs[x]) for x in certs if certs[x] != None)
@@ -148,15 +171,7 @@ class Client(object):
                 conn = connection_type(self.host, self.port, **certs)
             else:
                 conn = connection_type(self.host, self.port)
-
-            if self.logger:
-                self.logger.debug("Quantum Client Request:\n" \
-                        + method + " " + action + "\n")
-                if body:
-                    self.logger.debug(body)
-
-            conn.request(method, action, body, headers)
-            res = conn.getresponse()
+            res = self._send_request(conn, method, action, body, headers)
             status_code = self.get_status_code(res)
             data = res.read()
 
@@ -170,13 +185,21 @@ class Client(object):
                                httplib.NO_CONTENT):
                 return self.deserialize(data, status_code)
             else:
+                error_message = res.read()
+                LOG.debug("Server returned error: %s", status_code)
+                LOG.debug("Error message: %s", error_message)
+                # Create exception with HTTP status code and message
                 if res.status in EXCEPTIONS:
-                    raise EXCEPTIONS[res.status]()
-                raise Exception("Server returned error: %s" % res.read())
-
+                    raise EXCEPTIONS[res.status](**exception_args)
+                # Add error code and message to exception arguments
+                ex = Exception("Server returned error: %s" % status_code)
+                ex.args = ([dict(status_code=status_code,
+                                 message=error_message)],)
+                raise ex
         except (socket.error, IOError), e:
-            raise Exception("Unable to connect to "
-                            "server. Got error: %s" % e)
+            msg = "Unable to connect to server. Got error: %s" % e
+            LOG.exception(msg)
+            raise Exception(msg)
 
     def get_status_code(self, response):
         """
@@ -205,9 +228,10 @@ class Client(object):
         """
         Deserializes a an xml or json string into a dictionary
         """
-        if status_code == 202:
+        if status_code in (202, 204):
             return data
-        return Serializer().deserialize(data, self.content_type())
+        return Serializer(self._serialization_metadata).\
+                    deserialize(data, self.content_type())
 
     def content_type(self, format=None):
         """
@@ -230,7 +254,8 @@ class Client(object):
         """
         Fetches the details of a certain network
         """
-        return self.do_request("GET", self.network_path % (network))
+        return self.do_request("GET", self.network_path % (network),
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def create_network(self, body=None):
@@ -244,14 +269,16 @@ class Client(object):
         """
         Updates a network
         """
-        return self.do_request("PUT", self.network_path % (network), body=body)
+        return self.do_request("PUT", self.network_path % (network), body=body,
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def delete_network(self, network):
         """
         Deletes the specified network
         """
-        return self.do_request("DELETE", self.network_path % (network))
+        return self.do_request("DELETE", self.network_path % (network),
+                                        exception_args={"net_id": network})
 
     @ApiCall
     def list_ports(self, network):
@@ -265,7 +292,8 @@ class Client(object):
         """
         Fetches the details of a certain port
         """
-        return self.do_request("GET", self.port_path % (network, port))
+        return self.do_request("GET", self.port_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def create_port(self, network, body=None):
@@ -273,14 +301,16 @@ class Client(object):
         Creates a new port on a given network
         """
         body = self.serialize(body)
-        return self.do_request("POST", self.ports_path % (network), body=body)
+        return self.do_request("POST", self.ports_path % (network), body=body,
+                       exception_args={"net_id": network})
 
     @ApiCall
     def delete_port(self, network, port):
         """
         Deletes the specified port from a network
         """
-        return self.do_request("DELETE", self.port_path % (network, port))
+        return self.do_request("DELETE", self.port_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def set_port_state(self, network, port, body=None):
@@ -288,14 +318,18 @@ class Client(object):
         Sets the state of the specified port
         """
         return self.do_request("PUT",
-            self.port_path % (network, port), body=body)
+            self.port_path % (network, port), body=body,
+                       exception_args={"net_id": network,
+                                       "port_id": port,
+                                       "port_state": str(body)})
 
     @ApiCall
     def show_port_attachment(self, network, port):
         """
         Fetches the attachment-id associated with the specified port
         """
-        return self.do_request("GET", self.attachment_path % (network, port))
+        return self.do_request("GET", self.attachment_path % (network, port),
+                       exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
     def attach_resource(self, network, port, body=None):
@@ -303,7 +337,10 @@ class Client(object):
         Sets the attachment-id of the specified port
         """
         return self.do_request("PUT",
-            self.attachment_path % (network, port), body=body)
+            self.attachment_path % (network, port), body=body,
+                       exception_args={"net_id": network,
+                                       "port_id": port,
+                                       "attach_id": str(body)})
 
     @ApiCall
     def detach_resource(self, network, port):
@@ -311,4 +348,5 @@ class Client(object):
         Removes the attachment-id of the specified port
         """
         return self.do_request("DELETE",
-                               self.attachment_path % (network, port))
+                               self.attachment_path % (network, port),
+                    exception_args={"net_id": network, "port_id": port})

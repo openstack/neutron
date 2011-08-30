@@ -28,6 +28,7 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
+from quantum.plugins.cisco.db import nexus_db as nxos_db
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -48,7 +49,8 @@ class NexusPlugin(L2DevicePluginBase):
         self._nexus_ip = conf.NEXUS_IP_ADDRESS
         self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)
         self._nexus_password = cred.Store.getPassword(conf.NEXUS_IP_ADDRESS)
-        self._nexus_port = conf.NEXUS_PORT
+        self._nexus_first_port = conf.NEXUS_FIRST_PORT
+        self._nexus_second_port = conf.NEXUS_SECOND_PORT
         self._nexus_ssh_port = conf.NEXUS_SSH_PORT
 
     def get_all_networks(self, tenant_id):
@@ -68,8 +70,11 @@ class NexusPlugin(L2DevicePluginBase):
         """
         LOG.debug("NexusPlugin:create_network() called\n")
         self._client.create_vlan(vlan_name, str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password, self._nexus_port,
+                self._nexus_username, self._nexus_password,
+                self._nexus_first_port, self._nexus_second_port,
                 self._nexus_ssh_port)
+        nxos_db.add_nexusport_binding(self._nexus_first_port, str(vlan_id))
+        nxos_db.add_nexusport_binding(self._nexus_second_port, str(vlan_id))
 
         new_net_dict = {const.NET_ID: net_id,
                         const.NET_NAME: net_name,
@@ -85,11 +90,15 @@ class NexusPlugin(L2DevicePluginBase):
         from the relevant interfaces
         """
         LOG.debug("NexusPlugin:delete_network() called\n")
-        net = self._networks.get(net_id)
         vlan_id = self._get_vlan_id_for_network(tenant_id, net_id)
+        ports_id = nxos_db.get_nexusport_binding(vlan_id)
+        LOG.debug("NexusPlugin: Interfaces to be disassociated: %s" % ports_id)
+        nxos_db.remove_nexusport_binding(vlan_id)
+        net = self._networks.get(net_id)
         if net:
             self._client.delete_vlan(str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password, self._nexus_port,
+                self._nexus_username, self._nexus_password,
+                self._nexus_first_port, self._nexus_second_port,
                 self._nexus_ssh_port)
             self._networks.pop(net_id)
             return net

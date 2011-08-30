@@ -69,7 +69,6 @@ class ResourceExtensionTest(unittest.TestCase):
         res_ext = extensions.ResourceExtension('tweedles',
                                             self.ResourceExtensionController())
         test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
-
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
         self.assertEqual("resource index", index_response.body)

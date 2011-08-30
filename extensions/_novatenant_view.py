@@ -1,7 +1,7 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 Citrix Systems
-# All Rights Reserved.
+#
+# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,26 +14,34 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Ying Liu, Cisco Systems, Inc.
+#
+"""
+from quantum.plugins.cisco.common import cisco_constants as const
 
 
 def get_view_builder(req):
+    """get view builder """
     base_url = req.application_url
     return ViewBuilder(base_url)
 
 
 class ViewBuilder(object):
-
-    def __init__(self, base_url=None):
+    """
+    ViewBuilder for novatenant,
+    derived from quantum.views.networks
+    """
+    def __init__(self, base_url):
         """
         :param base_url: url of the root wsgi application
         """
         self.base_url = base_url
 
-    def build(self, port_data, port_details=False, att_details=False):
-        """Generic method used to generate a port entity."""
-        port = dict(port=dict(id=port_data['port-id']))
-        if port_details:
-            port['port']['state'] = port_data['port-state']
-        if att_details and port_data['attachment']:
-            port['port']['attachment'] = dict(id=port_data['attachment'])
-        return port
+    def build_host(self, host_data):
+        """Return host description."""
+        return dict(host_list=host_data[const.HOST_LIST])
+
+    def build_vif(self, vif_data):
+        """Return VIF description."""
+        return dict(vif_desc=vif_data[const.VIF_DESC])
