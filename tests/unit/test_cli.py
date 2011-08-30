@@ -42,7 +42,7 @@ class CLITest(unittest.TestCase):
         """Prepare the test environment"""
         options = {}
         options['plugin_provider'] = 'quantum.plugins.SamplePlugin.FakePlugin'
-        self.api = server.APIRouterV01(options)
+        self.api = server.APIRouterV1(options)
 
         self.tenant_id = "test_tenant"
         self.network_name_1 = "test_network_1"

@@ -175,7 +175,6 @@ class PortprofilesController(common.QuantumController):
     def associate_portprofile(self, request, tenant_id, id):
         """ associate a portprofile to the port """
         content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
 
         try:
             req_params = \
@@ -198,7 +197,6 @@ class PortprofilesController(common.QuantumController):
     def disassociate_portprofile(self, request, tenant_id, id):
         """ Disassociate a portprofile from a port """
         content_type = request.best_match_content_type()
-        print "Content type:%s" % content_type
         try:
             req_params = \
                 self._parse_request_params(request,

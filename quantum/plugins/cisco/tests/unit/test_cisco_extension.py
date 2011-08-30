@@ -87,7 +87,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.cisco.l2network_plugin'\
                                      '.L2Network'
-        self.api = server.APIRouterV01(options)
+        self.api = server.APIRouterV1(options)
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_portprofile(self):
@@ -353,6 +353,25 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("Creating port for network - END")
         return port_data['port']['id']
 
+    def _delete_port(self, network_id, port_id):
+        """ Delete port """
+        LOG.debug("Deleting port for network %s - START", network_id)
+        port_path = "/tenants/tt/networks/%(network_id)s/ports/"\
+                                "%(port_id)s" % locals()
+        port_req = self.create_request(port_path, None,
+                                       self.contenttype, 'DELETE')
+        port_req.get_response(self.api)
+        LOG.debug("Deleting port for network - END")
+
+    def _delete_network(self, network_id):
+        """ Delete network """
+        LOG.debug("Deleting network %s - START", network_id)
+        network_path = "/tenants/tt/networks/%s" % network_id
+        network_req = self.create_request(network_path, None,
+                                       self.contenttype, 'DELETE')
+        network_req.get_response(self.api)
+        LOG.debug("Deleting network - END")
+
     def test_associate_portprofile(self):
 
         """ Test associate portprofile"""
@@ -388,6 +407,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         delete_path = str(delete_path_temp)
         self.tear_down_associate_profile(delete_path, disassociate_path,
                                       req_assign_body)
+        self.tear_down_port_network(net_id, port_id)
         LOG.debug("test_associate_portprofile - END")
 
     def test_associate_portprofileDNE(self, portprofile_id='100'):
@@ -445,7 +465,14 @@ class PortprofileExtensionTest(unittest.TestCase):
                                 resp_body['portprofiles']['portprofile']['id']
         delete_path = str(delete_path_temp)
         self.tear_down_profile(delete_path)
+        self.tear_down_port_network(net_id, port_id)
         LOG.debug("test_disassociate_portprofile - END")
+
+    def tear_down_port_network(self, net_id, port_id):
+        """ Tear down port and network """
+
+        self._delete_port(net_id, port_id)
+        self._delete_network(net_id)
 
     def tear_down_profile(self, delete_profile_path):
 

@@ -338,7 +338,7 @@ def plugin_aware_extension_middleware_factory(global_config, **local_config):
     def _factory(app):
         extensions_path = global_config.get('api_extensions_path', '')
         ext_mgr = PluginAwareExtensionManager(extensions_path,
-                                              QuantumManager().get_plugin())
+                                              QuantumManager.get_plugin())
         return ExtensionMiddleware(app, global_config, ext_mgr=ext_mgr)
     return _factory
 

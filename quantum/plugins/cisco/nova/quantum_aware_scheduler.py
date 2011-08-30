@@ -35,7 +35,7 @@ flags.DEFINE_integer('quantum_port', 9696,
 HOST = FLAGS.quantum_host
 PORT = FLAGS.quantum_port
 USE_SSL = False
-ACTION_PREFIX_EXT = '/v0.1'
+ACTION_PREFIX_EXT = '/v1.0'
 ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
         '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
