@@ -785,7 +785,7 @@ class APITest(unittest.TestCase):
     def setUp(self):
         options = {}
         options['plugin_provider'] = test_config['plugin_name']
-        self.api = server.APIRouterV01(options)
+        self.api = server.APIRouterV1(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         self._net_serializer = \
