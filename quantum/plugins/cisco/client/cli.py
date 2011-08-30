@@ -37,11 +37,11 @@ import subprocess
 
 from optparse import OptionParser
 
-possible_topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
+POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
                                    os.pardir,
                                    os.pardir))
-if os.path.exists(os.path.join(possible_topdir, 'quantum', '__init__.py')):
-    sys.path.insert(0, possible_topdir)
+if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'quantum', '__init__.py')):
+    sys.path.insert(0, POSSIBLE_TOPDIR)
 
 gettext.install('quantum', unicode=1)
 
@@ -60,35 +60,38 @@ CSCO_EXT_NAME = 'Cisco Nova Tenant'
 
 
 def help():
+    """Help for CLI"""
     print "\nCisco Extension Commands:"
-    for k in commands.keys():
-        print "    %s %s" % (k,
-          " ".join(["<%s>" % y for y in commands[k]["args"]]))
+    for key in COMMANDS.keys():
+        print "    %s %s" % (key,
+          " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
 
 
 def build_args(cmd, cmdargs, arglist):
+    """Building the list of args for a particular CLI"""
     args = []
     orig_arglist = arglist[:]
     try:
-        for x in cmdargs:
+        for cmdarg in cmdargs:
             args.append(arglist[0])
             del arglist[0]
     except:
         LOG.error("Not enough arguments for \"%s\" (expected: %d, got: %d)" % (
           cmd, len(cmdargs), len(orig_arglist)))
         print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in commands[cmd]["args"]]))
+          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     if len(arglist) > 0:
         LOG.error("Too many arguments for \"%s\" (expected: %d, got: %d)" % (
           cmd, len(cmdargs), len(orig_arglist)))
         print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in commands[cmd]["args"]]))
+          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     return args
 
 
 def list_extensions(*args):
+    """Invoking the action to get the supported extensions"""
     request_url = "/extensions"
     client = Client(HOST, PORT, USE_SSL, format='json',
                     action_prefix=ACTION_PREFIX_EXT, tenant="dummy")
@@ -137,7 +140,7 @@ def create_ports(tenant_id, net_id_list, *args):
     print("Created ports: %s" % data)
 
 
-commands = {
+COMMANDS = {
   "create_ports": {
     "func": create_ports,
     "args": ["tenant-id",
@@ -151,6 +154,7 @@ commands = {
 
 
 class _DynamicModule(object):
+    """Loading a string as python module"""
     def load(self, code):
         execdict = {}
         exec code in execdict
@@ -165,22 +169,22 @@ _ref, _sys.modules[__name__] = _sys.modules[__name__], _DynamicModule()
 
 if __name__ == "__main__":
     import cli
-    file_name = os.path.join("bin/", "cli")
-    module_code = open(file_name).read()
-    cli.load(module_code)
+    FILE_NAME = os.path.join("bin/", "cli")
+    MODULE_CODE = open(FILE_NAME).read()
+    cli.load(MODULE_CODE)
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-H", "--host", dest="host",
+    PARSER = OptionParser(usage=usagestr)
+    PARSER.add_option("-H", "--host", dest="host",
       type="string", default="127.0.0.1", help="ip address of api host")
-    parser.add_option("-p", "--port", dest="port",
+    PARSER.add_option("-p", "--port", dest="port",
       type="int", default=9696, help="api poort")
-    parser.add_option("-s", "--ssl", dest="ssl",
+    PARSER.add_option("-s", "--ssl", dest="ssl",
       action="store_true", default=False, help="use ssl")
-    parser.add_option("-v", "--verbose", dest="verbose",
+    PARSER.add_option("-v", "--verbose", dest="verbose",
       action="store_true", default=False, help="turn on verbose logging")
-    parser.add_option("-f", "--logfile", dest="logfile",
+    PARSER.add_option("-f", "--logfile", dest="logfile",
       type="string", default="syslog", help="log file path")
-    options, args = parser.parse_args()
+    options, args = PARSER.parse_args()
 
     if options.verbose:
         LOG.setLevel(logging.DEBUG)
@@ -194,30 +198,30 @@ if __name__ == "__main__":
         os.chmod(options.logfile, 0644)
 
     if len(args) < 1:
-        parser.print_help()
+        PARSER.print_help()
         cli.help()
         help()
         sys.exit(1)
 
-    cmd = args[0]
-    if cmd in cli.commands.keys():
-        args.insert(0, file_name)
+    CMD = args[0]
+    if CMD in cli.commands.keys():
+        args.insert(0, FILE_NAME)
         subprocess.call(args)
         sys.exit(1)
-    if cmd not in commands.keys():
-        LOG.error("Unknown command: %s" % cmd)
+    if CMD not in COMMANDS.keys():
+        LOG.error("Unknown command: %s" % CMD)
         cli.help()
         help()
         sys.exit(1)
 
-    args = build_args(cmd, commands[cmd]["args"], args[1:])
+    args = build_args(CMD, COMMANDS[CMD]["args"], args[1:])
 
-    LOG.info("Executing command \"%s\" with args: %s" % (cmd, args))
+    LOG.info("Executing command \"%s\" with args: %s" % (CMD, args))
 
     HOST = options.host
     PORT = options.port
     USE_SSL = options.ssl
-    commands[cmd]["func"](*args)
+    COMMANDS[CMD]["func"](*args)
 
     LOG.info("Command execution completed")
     sys.exit(0)

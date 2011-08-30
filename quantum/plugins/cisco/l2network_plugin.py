@@ -179,9 +179,6 @@ class L2Network(QuantumPluginBase):
         """
         LOG.debug("create_port() called\n")
 
-        if re.search(const.DELIMITERS, net_id):
-            return self.create_ports(tenant_id, net_id, port_state)
-
         port = db.port_create(net_id, port_state)
         unique_port_id_string = port[const.UUID]
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
@@ -473,32 +470,26 @@ class L2Network(QuantumPluginBase):
                                                                instance_id,
                                                                instance_desc])
 
-    def create_ports(self, tenant_id, net_id, port_state=None):
+    def create_ports(self, tenant_id, net_id_list, port_state, ports_desc):
         """
         Creates multiple ports on the specified Virtual Network.
         """
         LOG.debug("create_ports() called\n")
-        net_id_list = re.split(const.DELIMITERS, net_id)
         ports_num = len(net_id_list)
         ports_id_list = []
-        ports_list_str = ""
+        ports_dict_list = []
 
         for net_id in net_id_list:
             port = db.port_create(net_id, port_state)
             ports_id_list.append(port[const.UUID])
-            if ports_list_str != "":
-                ports_list_str = ports_list_str + "," + \
-                        str(port[const.UUID])
-            else:
-                ports_list_str = str(port[const.UUID])
+            port_dict = {const.PORT_ID: port[const.UUID]}
+            ports_dict_list.append(port_dict)
 
         self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                         net_id_list,
                                                         ports_num,
                                                         ports_id_list])
-        new_ports_dict = cutil.make_port_dict(ports_list_str, port_state,
-                                              net_id, None)
-        return new_ports_dict
+        return ports_dict_list
 
     """
     Private functions
