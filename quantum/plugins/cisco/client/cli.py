@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# Basic structure and framework of this CLI has been borrowed from Quantum,
+# Initial structure and framework of this CLI has been borrowed from Quantum,
 # written by the following authors
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
@@ -32,6 +32,8 @@ import logging
 import logging.handlers
 import os
 import sys
+import string
+import subprocess
 
 from optparse import OptionParser
 
@@ -56,8 +58,9 @@ ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
 
+
 def help():
-    print "\nCommands:"
+    print "\nCisco Extension Commands:"
     for k in commands.keys():
         print "    %s %s" % (k,
           " ".join(["<%s>" % y for y in commands[k]["args"]]))
@@ -75,14 +78,15 @@ def build_args(cmd, cmdargs, arglist):
           cmd, len(cmdargs), len(orig_arglist)))
         print "Usage:\n    %s %s" % (cmd,
           " ".join(["<%s>" % y for y in commands[cmd]["args"]]))
-        return None
+        sys.exit()
     if len(arglist) > 0:
         LOG.error("Too many arguments for \"%s\" (expected: %d, got: %d)" % (
           cmd, len(cmdargs), len(orig_arglist)))
         print "Usage:\n    %s %s" % (cmd,
           " ".join(["<%s>" % y for y in commands[cmd]["args"]]))
-        return None
+        sys.exit()
     return args
+
 
 def list_extensions(*args):
     request_url = "/extensions"
@@ -90,6 +94,7 @@ def list_extensions(*args):
                     action_prefix=ACTION_PREFIX_EXT, tenant="dummy")
     data = client.do_request('GET', request_url)
     print("Obtained supported extensions from Quantum: %s" % data)
+
 
 def schedule_host(tenant_id, instance_id, user_id=None):
     """Gets the host name from the Quantum service"""
@@ -110,32 +115,33 @@ def schedule_host(tenant_id, instance_id, user_id=None):
     hostname = data["host_list"]["host_1"]
     if not hostname:
         print("Scheduler was unable to locate a host" + \
-	      " for this request. Is the appropriate" + \
+              " for this request. Is the appropriate" + \
               " service running?")
 
     print("Quantum service returned host: %s" % hostname)
 
+
 def create_ports(tenant_id, net_id_list, *args):
     """Creates ports on a single host"""
-    net_list = net_id_list.split(",") 
-    ports_info = {'novatenant': \
+    net_list = net_id_list.split(",")
+    ports_info = {'multiport': \
                   {'status': 'ACTIVE',
-                   'net_id': "dummy",
-                   'ports_num': len(net_list),
-                   'ports_desc' : \
-                   {const.NETID_LIST: net_list}}}
+                   'net_id_list': net_list,
+                   'ports_desc': {}}}
 
-    request_url = "/novatenants/" + tenant_id + "/create_ports"
+    request_url = "/multiport/" + "create_ports"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=tenant_id,
                     action_prefix=ACTION_PREFIX_CSCO)
     data = client.do_request('POST', request_url, body=ports_info)
 
     print("Created ports: %s" % data)
 
+
 commands = {
   "create_ports": {
     "func": create_ports,
-    "args": ["tenant-id", "net-id-list"]},
+    "args": ["tenant-id",
+             "net-id-list (comma separated list of netword IDs)"]},
   "list_extensions": {
     "func": list_extensions,
     "args": []},
@@ -144,7 +150,24 @@ commands = {
     "args": ["tenant-id", "instance-id"]}, }
 
 
+class _DynamicModule(object):
+    def load(self, code):
+        execdict = {}
+        exec code in execdict
+        for key in execdict:
+            if not key.startswith('_'):
+                setattr(self, key, execdict[key])
+
+
+import sys as _sys
+_ref, _sys.modules[__name__] = _sys.modules[__name__], _DynamicModule()
+
+
 if __name__ == "__main__":
+    import cli
+    file_name = os.path.join("bin/", "cli")
+    module_code = open(file_name).read()
+    cli.load(module_code)
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-H", "--host", dest="host",
@@ -172,12 +195,18 @@ if __name__ == "__main__":
 
     if len(args) < 1:
         parser.print_help()
+        cli.help()
         help()
         sys.exit(1)
 
     cmd = args[0]
+    if cmd in cli.commands.keys():
+        args.insert(0, file_name)
+        subprocess.call(args)
+        sys.exit(1)
     if cmd not in commands.keys():
         LOG.error("Unknown command: %s" % cmd)
+        cli.help()
         help()
         sys.exit(1)
 
