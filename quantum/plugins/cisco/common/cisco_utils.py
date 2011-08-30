@@ -26,6 +26,8 @@ import traceback
 
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_nova_configuration as conf
+from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.db import l2network_db as cdb
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
@@ -37,6 +39,44 @@ def get16ByteUUID(uuid):
     ID is required.
     """
     return hashlib.md5(uuid).hexdigest()[:16]
+
+
+def make_net_dict(net_id, net_name, ports):
+    """Helper funciton"""
+    res = {const.NET_ID: net_id, const.NET_NAME: net_name}
+    res[const.NET_PORTS] = ports
+    return res
+
+
+def make_port_dict(port_id, port_state, net_id, attachment):
+    """Helper funciton"""
+    res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
+    res[const.NET_ID] = net_id
+    res[const.ATTACHMENT] = attachment
+    return res
+
+
+def make_portprofile_dict(tenant_id, profile_id, profile_name,
+                           qos):
+    """Helper funciton"""
+    profile_associations = make_portprofile_assc_list(tenant_id,
+                                                      profile_id)
+    res = {const.PROFILE_ID: str(profile_id),
+           const.PROFILE_NAME: profile_name,
+           const.PROFILE_ASSOCIATIONS: profile_associations,
+           const.PROFILE_VLAN_ID: None,
+           const.PROFILE_QOS: qos}
+    return res
+
+
+def make_portprofile_assc_list(tenant_id, profile_id):
+    """Helper function to create port profile association list"""
+    plist = cdb.get_pp_binding(tenant_id, profile_id)
+    assc_list = []
+    for port in plist:
+        assc_list.append(port[const.PORTID])
+
+    return assc_list
 
 
 class DBUtils(object):

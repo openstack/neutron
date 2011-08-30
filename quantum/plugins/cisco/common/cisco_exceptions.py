@@ -101,15 +101,73 @@ class QoSLevelInvalidDelete(exceptions.QuantumException):
                 "for tenant %(tenant_id)s since association exists")
 
 
+class QosNameAlreadyExists(exceptions.QuantumException):
+    """QoS Name already exists"""
+    message = _("QoS level with name %(qos_name)s already exists " \
+                "for tenant %(tenant_id)s")
+
+
 class CredentialNotFound(exceptions.QuantumException):
     """Credential with this ID cannot be found"""
     message = _("Credential %(credential_id)s could not be found " \
                 "for tenant %(tenant_id)s")
 
 
+class CredentialNameNotFound(exceptions.QuantumException):
+    """Credential Name could not be found"""
+    message = _("Credential %(credential_name)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
+class CredentialAlreadyExists(exceptions.QuantumException):
+    """Credential ID already exists"""
+    message = _("Credential %(credential_id)s already exists " \
+                "for tenant %(tenant_id)s")
+
+
 class NexusPortBindingNotFound(exceptions.QuantumException):
     """NexusPort Binding is not present"""
     message = _("Nexus Port Binding %(port_id) is not present")
+
+
+class UcsmBindingNotFound(exceptions.QuantumException):
+    """Ucsm Binding is not present"""
+    message = _("Ucsm Binding with ip %(ucsm_ip) is not present")
+
+
+class UcsmBindingAlreadyExists(exceptions.QuantumException):
+    """Ucsm Binding already exists"""
+    message = _("Ucsm Binding with ip %(ucsm_ip) already exists")
+
+
+class DynamicVnicNotFound(exceptions.QuantumException):
+    """Ucsm Binding is not present"""
+    message = _("Dyanmic Vnic %(vnic_id) is not present")
+
+
+class DynamicVnicAlreadyExists(exceptions.QuantumException):
+    """Ucsm Binding already exists"""
+    message = _("Dynamic Vnic with name %(device_name) already exists")
+
+
+class BladeNotFound(exceptions.QuantumException):
+    """Blade is not present"""
+    message = _("Blade %(blade_id) is not present")
+
+
+class BladeAlreadyExists(exceptions.QuantumException):
+    """Blade already exists"""
+    message = _("Blade with mgmt_ip %(mgmt_ip) already exists")
+
+
+class PortVnicBindingAlreadyExists(exceptions.QuantumException):
+    """PortVnic Binding already exists"""
+    message = _("PortVnic Binding %(port_id) already exists")
+
+
+class PortVnicNotFound(exceptions.QuantumException):
+    """PortVnic Binding is not present"""
+    message = _("PortVnic Binding %(port_id) is not present")
 
 
 try:

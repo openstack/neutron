@@ -2,7 +2,8 @@
 README: A Quantum Plugin Framework for Supporting L2 Networks Spannning Multiple Switches
 =========================================================================================
 
-:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri, Rohit Agarwalla, Ying Liu, Debo Dutta
+:Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri,
+          Rohit Agarwalla, Ying Liu, Debo Dutta
 :Contact: netstack@lists.launchpad.net
 :Web site: https://launchpad.net/~cisco-openstack
 :Copyright: 2011 Cisco Systems, Inc.
@@ -86,7 +87,11 @@ Module Structure:
                        /common - Modules common to the entire plugin
                        /conf   - All configuration files
                        /db     - Persistence framework
+                       /models - Class(es) which tie the logical abstractions
+                                 to the physical topology
                        /nexus  - Nexus-specific modules
+                       /segmentation - Implementation of segmentation manager,
+                                       e.g. VLAN Manager
                        /tests  - Tests specific to this plugin
                        /ucs    - UCS-specific modules
 
@@ -100,9 +105,16 @@ Plugin Installation Instructions
 
 provider = quantum.plugins.cisco.l2network_plugin.L2Network
 
-3.  If you are not running Quantum on the same host as the OpenStack Cloud
-    Controller, you will need to change the db_ip_address configuration
-    in nova.ini.
+3.  Configure your OpenStack installation to use the 802.1qbh VIF driver and
+    Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
+    following entries:
+
+--scheduler_driver=quantum.plugins.cisco.nova.quantum_aware_scheduler.QuantumScheduler
+--quantum_host=127.0.0.1
+--quantum_port=9696
+--libvirt_vif_driver=quantum.plugins.cisco.nova.vifdirect.Libvirt802dot1QbhDriver
+--libvirt_vif_type=802.1Qbh
+ 
 
 4.  If you want to turn on support for Cisco Nexus switches:
     4a.  Uncomment the nexus_plugin property in 
@@ -173,7 +185,39 @@ password=mySecretPasswordForNova
 username=admin
 password=mySecretPasswordForNexus
 
-7.  Start the Quantum service.  If something doesn't work, verify that
+7.  Configure the UCS systems' information in your deployment by editing the
+    quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
+    UCSMs per deployment, multiple chasses per UCSM, and multiple blades per
+    chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
+    typically numbers like 1, 2, 3, etc.
+
+[ucsm-1]
+ip_address = <put_ucsm_ip_address_here>
+[[chassis-1]]
+chassis_id = <put_the_chassis_id_here>
+[[[blade-1]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+[[[blade-2]]] 
+blade_id = <put_blade_id_here> 
+host_name = <put_hostname_here> 
+[[[blade-3]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+         
+[ucsm-2]
+ip_address = <put_ucsm_ip_address_here>
+[[chassis-1]]
+chassis_id = <put_the_chassis_id_here>
+[[[blade-1]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+[[[blade-2]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+
+
+8.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
 
@@ -241,54 +285,9 @@ result the quantum/plugins/cisco/run_tests.py script.
 
     python run_tests.py quantum.plugins.cisco.tests.unit.test_cisco_extension
 
-Additional installation required on Nova Compute
-------------------------------------------------
-1.  Create a table in the "nova" database for ports.  This can be 
-    accomplished with the following SQL statement:
-
-CREATE TABLE ports (
-   port_id           VARCHAR(255) PRIMARY KEY,
-   profile_name      VARCHAR(255),
-   dynamic_vnic      VARCHAR(255),
-   host              VARCHAR(255),
-   instance_name     VARCHAR(255),
-   instance_nic_name VARCHAR(255),
-   used              TINYINT(1)
-);
-
-    Assuming you're using MySQL, you can run the following command from a 
-    shell prompt on the Cloud Controller node to create the table:
-
-mysql -uroot -p nova -e 'create table ports (port_id VARCHAR(255) primary key, profile_name VARCHAR(255), dynamic_vnic VARCHAR(255), host VARCHAR(255), instance_name VARCHAR(255), instance_nic_name VARCHAR(255), used tinyint(1));'
-
-You'll be prompted for a password.
-
-2.  A patch is available for the Cactus release in this branch:
-    https://code.launchpad.net/~snaiksat/quantum/cactus-ucs-support 
-    replace the following file in your installation:
-    /usr/lib/python2.6/site-packages/nova/virt/libvirt_conn.py
-    with the file from the branch:
-    nova/virt/libvirt_conn.py
-
-3.  Add the following file from the Cisco Nova branch:
-    nova/virt/cisco_ucs.py
-    to:
-    /usr/lib/python2.6/site-packages/nova/virt/cisco_ucs.py
-
-4.  Add the 802.1Qbh specific libvirt template file, from:
-    nova/virt/libvirt-qbh.xml.template
-    to:
-    /usr/share/nova/libvirt-qbh.xml.template
-    
-5.  Edit /etc/nova.conf to set the libvirt XML template to the above template:
-    --libvirt_xml_template=/usr/share/nova/libvirt-qbh.xml.template
-
-6.  Restart the nova-compute service.
-
-    (Note that the requirement for the above patch is temporary and will go away
-     with the integration with OpenStack Diablo. A 802.1Qbh-specific VIF driver 
-     will be made available as per the specification here:
-     http://wiki.openstack.org/network-refactoring#VIF_driver)
+   To run specific tests
+   python run_tests.py 
+    quantum.plugins.cisco.tests.unit.test_cisco_extension:<ClassName>.<funcName>
 
 Bingo bango bongo!  That's it!  Thanks for taking the leap into Quantum.
 

@@ -20,6 +20,7 @@
 """
 
 PLUGINS = 'PLUGINS'
+INVENTORY = 'INVENTORY'
 
 PORT_STATE = 'port-state'
 PORT_UP = "ACTIVE"
@@ -39,6 +40,9 @@ PPQOS = 'qos'
 PPID = 'portprofile_id'
 PPDEFAULT = 'default'
 VLANID = 'vlan_id'
+VLANNAME = 'vlan_name'
+PORTPROFILENAME = 'portprofile_name'
+QOS = 'qos'
 
 ATTACHMENT = 'attachment'
 PORT_ID = 'port-id'
@@ -113,11 +117,13 @@ RHEL_DEVICE_NAME_REPFIX = "eth"
 
 UCS_PLUGIN = 'ucs_plugin'
 NEXUS_PLUGIN = 'nexus_plugin'
+UCS_INVENTORY = 'ucs_inventory'
+NEXUS_INVENTORY = 'nexus_inventory'
 
 PLUGIN_OBJ_REF = 'plugin-obj-ref'
 PARAM_LIST = 'param-list'
 
-DEVICE_IP = 'device-ip'
+DEVICE_IP = 'device_ip'
 
 NO_VLAN_ID = 0
 
@@ -128,5 +134,18 @@ VIF_DESC = 'vif_desc'
 DEVICENAME = 'device'
 UCSPROFILE = 'portprofile'
 
-MAX_CREDENTIALS = 65568
-MAX_QOS_LEVELS = 1024
+IP_ADDRESS = 'ip_address'
+CHASSIS_ID = 'chassis_id'
+BLADE_ID = 'blade_id'
+HOST_NAME = 'host_name'
+
+INSTANCE_ID = 'instance_id'
+VIF_ID = 'vif_id'
+PROJECT_ID = 'project_id'
+
+UCS_INVENTORY = 'ucs_inventory'
+LEAST_RSVD_BLADE_DICT = 'least_rsvd_blade_dict'
+
+UCSM_IP = 'ucsm_ip_address'
+
+NETWORK_ADMIN = 'network_admin'

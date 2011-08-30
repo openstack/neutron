@@ -41,6 +41,9 @@ PROFILE_CLIENT = "profileclient_placeholder"
 VLAN_NAME = "vlanname_placeholder"
 VLAN_ID = "vlanid_placeholder"
 OLD_VLAN_NAME = "old_vlanname_placeholder"
+BLADE_VALUE = "blade_number_placeholder"
+BLADE_DN_VALUE = "blade_dn_placeholder"
+CHASSIS_VALUE = "chassis_number_placeholder"
 DYNAMIC_NIC_PREFIX = "eth"
 
 # The following are standard strings, messages used to communicate with UCSM,
@@ -112,6 +115,27 @@ DELETE_PROFILE = "<configConfMos cookie=\"" + COOKIE_VALUE + \
 PROFILE_NAME + "\" status=\"deleted\"> </vnicProfile>" \
 "</pair> </inConfigs> </configConfMos>"
 
+GET_BLADE_INTERFACE_STATE = "<configScope cookie=\"" + COOKIE_VALUE + \
+        "\" dn=\"" + BLADE_DN_VALUE + "\" inClass=\"dcxVIf\" " +  \
+        "inHierarchical=\"false\" inRecursive=\"false\"> " + \
+        "<inFilter> </inFilter> </configScope>"
+
+GET_BLADE_INTERFACE = "<configResolveClass cookie=\"" + COOKIE_VALUE + \
+        "\" classId=\"vnicEther\"" + \
+        " inHierarchical=\"false\">" + \
+        " <inFilter> <eq class=\"vnicEther\" property=\"equipmentDn\"" + \
+        " value=\"sys/chassis-" + CHASSIS_VALUE + "/blade-" + \
+        BLADE_VALUE + "/adaptor-1/host-eth-?\"/> " +  \
+        "</inFilter> </configResolveClass>"
+
+# TODO (Sumit): Assumes "adaptor-1", check if this has to be discovered too
+GET_BLADE_INTERFACES = "<configResolveChildren cookie=\"" + \
+        COOKIE_VALUE + "\" inDn=\"sys/chassis-" + \
+        CHASSIS_VALUE + "/blade-" + BLADE_VALUE + \
+        "/adaptor-1\"" + \
+        " inHierarchical=\"false\"> <inFilter> </inFilter>" + \
+        " </configResolveChildren>"
+
 
 class CiscoUCSMDriver():
     """UCSM Driver"""
@@ -127,29 +151,31 @@ class CiscoUCSMDriver():
         conn.request(METHOD, URL, login_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug(response_data)
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug(response_data)
         # TODO (Sumit): If login is not successful, throw exception
         xml_tree = et.XML(response_data)
         cookie = xml_tree.attrib["outCookie"]
 
         data = data.replace(COOKIE_VALUE, cookie)
-        LOG.debug("POST: %s" % data)
+        #LOG.debug("POST: %s" % data)
         conn.request(METHOD, URL, data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug("UCSM Response: %s" % response_data)
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug("UCSM Response: %s" % response_data)
+        post_data_response = response_data
 
         logout_data = "<aaaLogout inCookie=\"" + cookie + "\" />"
         conn.request(METHOD, URL, logout_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        LOG.debug(response.status)
-        LOG.debug(response.reason)
-        LOG.debug(response_data)
+        #LOG.debug(response.status)
+        #LOG.debug(response.reason)
+        #LOG.debug(response_data)
+        return post_data_response
 
     def _create_vlan_post_data(self, vlan_name, vlan_id):
         """Create command"""
@@ -188,13 +214,61 @@ class CiscoUCSMDriver():
         data = DELETE_PROFILE.replace(PROFILE_NAME, profile_name)
         return data
 
-    def _get_next_dynamic_nic(self):
-        """Get an avaialble dynamic nic on the host"""
-        dynamic_nic_id = gvif.get_next_dynic()
-        if len(dynamic_nic_id) > 0:
-            return dynamic_nic_id
-        else:
-            raise cexc.NoMoreNics()
+    def _get_blade_interfaces_post_data(self, chassis_number, blade_number):
+        """Create command"""
+        data = GET_BLADE_INTERFACES.replace(CHASSIS_VALUE, chassis_number)
+        data = data.replace(BLADE_VALUE, blade_number)
+        return data
+
+    def _get_blade_intf_st_post_data(self, blade_dn):
+        """Create command"""
+        data = GET_BLADE_INTERFACE_STATE.replace(BLADE_DN_VALUE, blade_dn)
+        return data
+
+    def _get_blade_interfaces(self, chassis_number, blade_number, ucsm_ip,
+                              ucsm_username, ucsm_password):
+        """Create command"""
+        data = self._get_blade_interfaces_post_data(chassis_number,
+                                                    blade_number)
+        response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
+        elements = \
+                et.XML(response).find("outConfigs").findall("adaptorHostEthIf")
+        blade_interfaces = {}
+        for element in elements:
+            dist_name = element.get("dn", default=None)
+            if dist_name:
+                order = element.get("order", default=None)
+                blade_interface = {const.BLADE_INTF_DN: dist_name,
+                                  const.BLADE_INTF_ORDER: order,
+                                  const.BLADE_INTF_LINK_STATE: None,
+                                  const.BLADE_INTF_OPER_STATE: None,
+                                  const.BLADE_INTF_INST_TYPE: None,
+                                  const.BLADE_INTF_RHEL_DEVICE_NAME:
+                                  self._get_rhel_device_name(order)}
+                blade_interfaces[dist_name] = blade_interface
+
+        return blade_interfaces
+
+    def _get_blade_interface_state(self, blade_intf, ucsm_ip,
+                              ucsm_username, ucsm_password):
+        """Create command"""
+        data = \
+        self._get_blade_intf_st_post_data(blade_intf[const.BLADE_INTF_DN])
+        response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
+        elements = \
+                et.XML(response).find("outConfigs").findall("dcxVIf")
+        for element in elements:
+            blade_intf[const.BLADE_INTF_LINK_STATE] = element.get("linkState",
+                                                                 default=None)
+            blade_intf[const.BLADE_INTF_OPER_STATE] = element.get("operState",
+                                                                 default=None)
+            blade_intf[const.BLADE_INTF_INST_TYPE] = element.get("instType",
+                                                                default=None)
+
+    def _get_rhel_device_name(self, order):
+        """Get the device name as on the RHEL host"""
+        device_name = const.RHEL_DEVICE_NAME_REPFIX + str(int(order) - 1)
+        return device_name
 
     def create_vlan(self, vlan_name, vlan_id, ucsm_ip, ucsm_username,
                     ucsm_password):
@@ -220,19 +294,26 @@ class CiscoUCSMDriver():
                                                       new_vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
-    def get_dynamic_nic(self, host):
-        """Get an avaialble dynamic nic on the host"""
-        # TODO (Sumit): Check availability per host
-        # TODO (Sumit): If not available raise exception
-        # TODO (Sumit): This simple logic assumes that create-port and
-        #               spawn-VM happens in lock-step
-        #               But we should support multiple create-port calls,
-        #               followed by spawn-VM calls
-        #               That would require managing a pool of available
-        #               dynamic vnics per host
-        dynamic_nic_name = self._get_next_dynamic_nic()
-        LOG.debug("Reserving dynamic nic %s" % dynamic_nic_name)
-        return dynamic_nic_name
+    def get_blade_data(self, chassis_number, blade_number,
+                                         ucsm_ip, ucsm_username,
+                                         ucsm_password):
+        """
+        Returns only the dynamic interfaces on the blade
+        """
+        blade_interfaces = self._get_blade_interfaces(chassis_number,
+                                                       blade_number,
+                                                       ucsm_ip,
+                                                       ucsm_username,
+                                                       ucsm_password)
+        for blade_intf in blade_interfaces.keys():
+            self._get_blade_interface_state(blade_interfaces[blade_intf],
+                                            ucsm_ip, ucsm_username,
+                                            ucsm_password)
+            if blade_interfaces[blade_intf][const.BLADE_INTF_INST_TYPE] != \
+               const.BLADE_INTF_DYNAMIC:
+                blade_interfaces.pop(blade_intf)
+
+        return blade_interfaces
 
     def delete_vlan(self, vlan_name, ucsm_ip, ucsm_username, ucsm_password):
         """Create request for UCSM"""
@@ -244,8 +325,3 @@ class CiscoUCSMDriver():
         """Create request for UCSM"""
         data = self._delete_profile_post_data(profile_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-
-    def release_dynamic_nic(self, host):
-        """Release a reserved dynamic nic on the host"""
-        # TODO (Sumit): Release on a specific host
-        pass
