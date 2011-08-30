@@ -132,7 +132,7 @@ def create_ports(tenant_id, net_id_list, *args):
                    'net_id_list': net_list,
                    'ports_desc': {}}}
 
-    request_url = "/multiport/" + "create_ports"
+    request_url = "/multiport/create_ports"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=tenant_id,
                     action_prefix=ACTION_PREFIX_CSCO)
     data = client.do_request('POST', request_url, body=ports_info)
