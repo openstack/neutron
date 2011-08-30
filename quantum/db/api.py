@@ -142,6 +142,13 @@ def network_destroy(net_id):
         net = session.query(models.Network).\
           filter_by(uuid=net_id).\
           one()
+
+        ports = session.query(models.Port).\
+            filter_by(network_id=net_id).\
+            all()
+        for p in ports:
+            session.delete(p)
+
         session.delete(net)
         session.flush()
         return net
