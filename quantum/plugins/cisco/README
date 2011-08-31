@@ -178,7 +178,7 @@ mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 6.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
 
-# Provide the UCSM credentials
+# Provide the UCSM credentials, create a separte entry for each UCSM used in your system
 # UCSM IP address, username and password.
 [10.0.0.2]
 username=admin
@@ -189,6 +189,10 @@ password=mySecretPasswordForUCSM
 [10.0.0.1]
 username=admin
 password=mySecretPasswordForNexus
+
+    In general, make sure that every UCSM and Nexus switch  used in your system,
+    has a credential entry in the above file. This is required for the system to
+    be able to communicate with those switches.
 
 7.  Configure the UCS systems' information in your deployment by editing the
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
