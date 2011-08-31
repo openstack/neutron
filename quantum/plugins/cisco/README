@@ -125,7 +125,7 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
           Quantum ports, one for each of the networks, prior to starting the VM.
           However, in this case you will need to use the Cisco multiport extension
           API instead of the Quantum create port API. More details on using the
-          multiport extension follow in the section on mutli NIC support.
+          multiport extension follow in the section on multi NIC support.
 
 4.  If you want to turn on support for Cisco Nexus switches:
     4a.  Uncomment the nexus_plugin property in 
