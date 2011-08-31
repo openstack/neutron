@@ -24,6 +24,8 @@ from quantum.plugins.cisco.db import l2network_models
 
 import logging as LOG
 import quantum.plugins.cisco.db.api as db
+import quantum.plugins.cisco.db.nexus_db as ndb
+import quantum.plugins.cisco.db.ucs_db as udb
 
 
 def initialize():
@@ -127,6 +129,19 @@ def reserve_vlanid():
         return rvlan["vlan_id"]
     except exc.NoResultFound:
         raise c_exc.VlanIDNotAvailable()
+
+
+def get_all_vlanids_used():
+    """Gets all the vlanids used"""
+    LOG.debug("get_all_vlanids() called")
+    session = db.get_session()
+    try:
+        vlanids = session.query(l2network_models.VlanID).\
+        filter_by(vlan_used=True).\
+          all()
+        return vlanids
+    except exc.NoResultFound:
+        return []
 
 
 def get_all_vlan_bindings():
@@ -366,3 +381,176 @@ def update_pp_binding(tenantid, ppid, newtenantid=None, newportid=None,
     except exc.NoResultFound:
         raise c_exc.PortProfileNotFound(tenant_id=tenantid,
                                 portprofile_id=ppid)
+
+
+def get_all_qoss(tenant_id):
+    """Lists all the qos to tenant associations"""
+    LOG.debug("get_all_qoss() called")
+    session = db.get_session()
+    try:
+        qoss = session.query(l2network_models.QoS).\
+          filter_by(tenant_id=tenant_id).\
+          all()
+        return qoss
+    except exc.NoResultFound:
+        return []
+
+
+def get_qos(tenant_id, qos_id):
+    """Lists the qos given a tenant_id and qos_id"""
+    LOG.debug("get_qos() called")
+    session = db.get_session()
+    try:
+        qos = session.query(l2network_models.QoS).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(qos_id=qos_id).\
+          one()
+        return qos
+    except exc.NoResultFound:
+        raise c_exc.QosNotFound(qos_id=qos_id,
+                                tenant_id=tenant_id)
+
+
+def add_qos(tenant_id, qos_name, qos_desc):
+    """Adds a qos to tenant association"""
+    LOG.debug("add_qos() called")
+    session = db.get_session()
+    try:
+        qos = session.query(l2network_models.QoS).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(qos_name=qos_name).\
+          one()
+        raise c_exc.QosNameAlreadyExists(qos_name=qos_name,
+                                        tenant_id=tenant_id)
+    except exc.NoResultFound:
+        qos = l2network_models.QoS(tenant_id, qos_name, qos_desc)
+        session.add(qos)
+        session.flush()
+        return qos
+
+
+def remove_qos(tenant_id, qos_id):
+    """Removes a qos to tenant association"""
+    session = db.get_session()
+    try:
+        qos = session.query(l2network_models.QoS).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(qos_id=qos_id).\
+          one()
+        session.delete(qos)
+        session.flush()
+        return qos
+    except exc.NoResultFound:
+        pass
+
+
+def update_qos(tenant_id, qos_id, new_qos_name=None):
+    """Updates a qos to tenant association"""
+    session = db.get_session()
+    try:
+        qos = session.query(l2network_models.QoS).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(qos_id=qos_id).\
+          one()
+        if new_qos_name:
+            qos["qos_name"] = new_qos_name
+        session.merge(qos)
+        session.flush()
+        return qos
+    except exc.NoResultFound:
+        raise c_exc.QosNotFound(qos_id=qos_id,
+                                tenant_id=tenant_id)
+
+
+def get_all_credentials(tenant_id):
+    """Lists all the creds for a tenant"""
+    session = db.get_session()
+    try:
+        creds = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          all()
+        return creds
+    except exc.NoResultFound:
+        return []
+
+
+def get_credential(tenant_id, credential_id):
+    """Lists the creds for given a cred_id and tenant_id"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_id=credential_id).\
+          one()
+        return cred
+    except exc.NoResultFound:
+        raise c_exc.CredentialNotFound(credential_id=credential_id,
+                                         tenant_id=tenant_id)
+
+
+def get_credential_name(tenant_id, credential_name):
+    """Lists the creds for given a cred_name and tenant_id"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_name=credential_name).\
+          one()
+        return cred
+    except exc.NoResultFound:
+        raise c_exc.CredentialNameNotFound(credential_name=credential_name,
+                                         tenant_id=tenant_id)
+
+
+def add_credential(tenant_id, credential_name, user_name, password):
+    """Adds a qos to tenant association"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_name=credential_name).\
+          one()
+        raise c_exc.CredentialAlreadyExists(credential_name=credential_name,
+                                            tenant_id=tenant_id)
+    except exc.NoResultFound:
+        cred = l2network_models.Credential(tenant_id,
+                                        credential_name, user_name, password)
+        session.add(cred)
+        session.flush()
+        return cred
+
+
+def remove_credential(tenant_id, credential_id):
+    """Removes a credential from a  tenant"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_id=credential_id).\
+          one()
+        session.delete(cred)
+        session.flush()
+        return cred
+    except exc.NoResultFound:
+        pass
+
+
+def update_credential(tenant_id, credential_id,
+                      new_user_name=None, new_password=None):
+    """Updates a credential for a tenant"""
+    session = db.get_session()
+    try:
+        cred = session.query(l2network_models.Credential).\
+          filter_by(tenant_id=tenant_id).\
+          filter_by(credential_id=credential_id).\
+          one()
+        if new_user_name:
+            cred["user_name"] = new_user_name
+        if new_password:
+            cred["password"] = new_password
+        session.merge(cred)
+        session.flush()
+        return cred
+    except exc.NoResultFound:
+        raise c_exc.CredentialNotFound(credential_id=credential_id,
+                                         tenant_id=tenant_id)

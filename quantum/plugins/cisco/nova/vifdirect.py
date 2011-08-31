@@ -40,11 +40,12 @@ HOST = FLAGS.quantum_host
 PORT = FLAGS.quantum_port
 USE_SSL = False
 TENANT_ID = 'nova'
-ACTION_PREFIX_EXT = '/v0.1'
+ACTION_PREFIX_EXT = '/v1.0'
 ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
         '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
+ACTION = '/associate_port'
 
 
 class Libvirt802dot1QbhDriver(VIFDriver):
@@ -87,7 +88,7 @@ class Libvirt802dot1QbhDriver(VIFDriver):
 
         client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
                         action_prefix=ACTION_PREFIX_CSCO)
-        request_url = "/novatenants/" + project_id + "/get_instance_port"
+        request_url = "/novatenants/" + project_id + ACTION
         data = client.do_request('PUT', request_url, body=instance_data_dict)
 
         device = data['vif_desc']['device']

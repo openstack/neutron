@@ -27,9 +27,97 @@ from quantum.plugins.cisco.common import cisco_constants as const
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db as nexus_db
+import quantum.plugins.cisco.db.ucs_db as ucs_db
 
 
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+
+
+class UcsDB(object):
+    """Class consisting of methods to call ucs db methods"""
+    def get_all_port_bindings(self):
+        """get all port binding"""
+        port_bindings = []
+        try:
+            for bind in ucs_db.get_all_portbindings():
+                LOG.debug("Getting port binding for port: %s" % bind.port_id)
+                port_bind_dict = {}
+                port_bind_dict["port-id"] = bind.port_id
+                port_bind_dict["blade-intf-dn"] = str(bind.blade_intf_dn)
+                port_bind_dict["portprofile-name"] = bind.portprofile_name
+                port_bind_dict["vlan-name"] = bind.vlan_name
+                port_bind_dict["vlan-id"] = str(bind.vlan_id)
+                port_bind_dict["qos"] = bind.qos
+                port_bindings.append(port_bind_dict)
+        except Exception, exc:
+            LOG.error("Failed to get all port bindings: %s" % str(exc))
+        return port_bindings
+
+    def get_port_binding(self, port_id):
+        """get port binding"""
+        port_binding = []
+        try:
+            for bind in ucs_db.get_portbinding(port_id):
+                LOG.debug("Getting port binding for port: %s" % bind.port_id)
+                port_bind_dict = {}
+                port_bind_dict["port-id"] = bind.port_id
+                port_bind_dict["blade-intf-dn"] = str(bind.blade_intf_dn)
+                port_bind_dict["portprofile-name"] = bind.portprofile_name
+                port_bind_dict["vlan-name"] = bind.vlan_name
+                port_bind_dict["vlan-id"] = str(bind.vlan_id)
+                port_bind_dict["qos"] = bind.qos
+                port_binding.append(port_bind_dict)
+        except Exception, exc:
+            LOG.error("Failed to get port binding: %s" % str(exc))
+        return port_binding
+
+    def create_port_binding(self, port_id, blade_intf_dn, portprofile_name, \
+                            vlan_name, vlan_id, qos):
+        """create port binding"""
+        port_bind_dict = {}
+        try:
+            res = ucs_db.add_portbinding(port_id, blade_intf_dn, \
+                                  portprofile_name, vlan_name, vlan_id, qos)
+            LOG.debug("Created port binding: %s" % res.port_id)
+            port_bind_dict["port-id"] = res.port_id
+            port_bind_dict["blade-intf-dn"] = str(res.blade_intf_dn)
+            port_bind_dict["portprofile-name"] = res.portprofile_name
+            port_bind_dict["vlan-name"] = res.vlan_name
+            port_bind_dict["vlan-id"] = str(res.vlan_id)
+            port_bind_dict["qos"] = res.qos
+            return port_bind_dict
+        except Exception, exc:
+            LOG.error("Failed to create port binding: %s" % str(exc))
+
+    def delete_port_binding(self, port_id):
+        """delete port binding"""
+        try:
+            res = ucs_db.remove_portbinding(port_id)
+            LOG.debug("Deleted port binding : %s" % res.port_id)
+            port_bind_dict = {}
+            port_bind_dict["port-id"] = res.port_id
+            return port_bind_dict
+        except Exception, exc:
+            raise Exception("Failed to delete port profile: %s" % str(exc))
+
+    def update_port_binding(self, port_id, blade_intf_dn, \
+                         portprofile_name, vlan_name, vlan_id, qos):
+        """update port binding"""
+        try:
+            res = ucs_db.update_portbinding(port_id, blade_intf_dn, \
+                               portprofile_name, vlan_name, vlan_id, qos)
+            LOG.debug("Updating port binding: %s" % res.port_id)
+            port_bind_dict = {}
+            port_bind_dict["port-id"] = res.port_id
+            port_bind_dict["dynamic-vnic-id"] = str(res.blade_intf_dn)
+            port_bind_dict["portprofile-name"] = res.portprofile_name
+            port_bind_dict["vlan-name"] = res.vlan_name
+            port_bind_dict["vlan-id"] = str(res.vlan_id)
+            port_bind_dict["qos"] = res.qos
+            return port_bind_dict
+        except Exception, exc:
+            raise Exception("Failed to update portprofile binding:%s"
+                            % str(exc))
 
 
 class NexusDB(object):
@@ -110,7 +198,7 @@ class L2networkDB(object):
         vlans = []
         try:
             for vlan_bind in l2network_db.get_all_vlan_bindings():
-                LOG.debug("Getting vlan bindings for vlan: %s" % \
+                LOG.debug("Getting vlan bindings for vlan: %s" %
                             vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
@@ -126,7 +214,7 @@ class L2networkDB(object):
         vlan = []
         try:
             for vlan_bind in l2network_db.get_vlan_binding(network_id):
-                LOG.debug("Getting vlan binding for vlan: %s" \
+                LOG.debug("Getting vlan binding for vlan: %s"
                            % vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
@@ -164,7 +252,7 @@ class L2networkDB(object):
     def update_vlan_binding(self, network_id, vlan_id, vlan_name):
         """Update a vlan binding"""
         try:
-            res = l2network_db.update_vlan_binding(network_id, vlan_id, \
+            res = l2network_db.update_vlan_binding(network_id, vlan_id,
                                                             vlan_name)
             LOG.debug("Updating vlan binding for vlan: %s" % res.vlan_id)
             vlan_dict = {}
@@ -252,7 +340,7 @@ class L2networkDB(object):
         pp_bindings = []
         try:
             for pp_bind in l2network_db.get_all_pp_bindings():
-                LOG.debug("Getting port profile binding: %s" % \
+                LOG.debug("Getting port profile binding: %s" %
                                                pp_bind.portprofile_id)
                 ppbinding_dict = {}
                 ppbinding_dict["portprofile-id"] = str(pp_bind.portprofile_id)
@@ -269,7 +357,7 @@ class L2networkDB(object):
         pp_binding = []
         try:
             for pp_bind in l2network_db.get_pp_binding(tenant_id, pp_id):
-                LOG.debug("Getting port profile binding: %s" % \
+                LOG.debug("Getting port profile binding: %s" %
                                                  pp_bind.portprofile_id)
                 ppbinding_dict = {}
                 ppbinding_dict["portprofile-id"] = str(pp_bind.portprofile_id)
@@ -285,7 +373,7 @@ class L2networkDB(object):
         """Add a portprofile binding"""
         ppbinding_dict = {}
         try:
-            res = l2network_db.add_pp_binding(tenant_id, port_id, pp_id, \
+            res = l2network_db.add_pp_binding(tenant_id, port_id, pp_id,
                                                                 default)
             LOG.debug("Created port profile binding: %s" % res.portprofile_id)
             ppbinding_dict["portprofile-id"] = str(res.portprofile_id)
@@ -307,7 +395,7 @@ class L2networkDB(object):
         except Exception, exc:
             raise Exception("Failed to delete port profile: %s" % str(exc))
 
-    def update_pp_binding(self, tenant_id, pp_id, newtenant_id, \
+    def update_pp_binding(self, tenant_id, pp_id, newtenant_id,
                           port_id, default):
         """Update portprofile binding"""
         try:
@@ -321,7 +409,7 @@ class L2networkDB(object):
             ppbinding_dict["default"] = res.default
             return ppbinding_dict
         except Exception, exc:
-            raise Exception("Failed to update portprofile binding:%s" \
+            raise Exception("Failed to update portprofile binding:%s"
                             % str(exc))
 
 
@@ -492,6 +580,101 @@ class QuantumDB(object):
             return port_dict
         except Exception, exc:
             raise Exception("Failed to unplug interface: %s" % str(exc))
+
+
+class UcsDBTest(unittest.TestCase):
+    """Class conisting of ucs DB unit tests"""
+    def setUp(self):
+        """Setup for ucs db tests"""
+        l2network_db.initialize()
+        self.quantum = QuantumDB()
+        self.dbtest = UcsDB()
+        LOG.debug("Setup")
+
+    def tearDown(self):
+        """Tear Down"""
+        db.clear_db()
+
+    def testm_create_portbinding(self):
+        """create port binding"""
+        net1 = self.quantum.create_network("t1", "netid1")
+        port1 = self.quantum.create_port(net1["net-id"])
+        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        self.assertTrue(port_bind1["port-id"] == port1["port-id"])
+        self.teardown_portbinding()
+        self.teardown_network_port()
+
+    def testn_getall_portbindings(self):
+        """get all port binding"""
+        net1 = self.quantum.create_network("t1", "netid1")
+        port1 = self.quantum.create_port(net1["net-id"])
+        port2 = self.quantum.create_port(net1["net-id"])
+        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind2 = self.dbtest.create_port_binding(port2["port-id"],
+                                "vnic2", "pp2", "vlan2", 20, "qos2")
+        port_bindings = self.dbtest.get_all_port_bindings()
+        count = 0
+        for pbind in port_bindings:
+            if "vlan" in pbind["vlan-name"]:
+                count += 1
+        self.assertTrue(count == 2)
+        self.teardown_portbinding()
+        self.teardown_network_port()
+
+    def testo_delete_portbinding(self):
+        """delete port binding"""
+        net1 = self.quantum.create_network("t1", "netid1")
+        port1 = self.quantum.create_port(net1["net-id"])
+        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        self.dbtest.delete_port_binding(port1["port-id"])
+        port_bindings = self.dbtest.get_all_port_bindings()
+        count = 0
+        for pbind in port_bindings:
+            if "vlan " in pbind["vlan-name"]:
+                count += 1
+        self.assertTrue(count == 0)
+        self.teardown_portbinding()
+        self.teardown_network_port()
+
+    def testp_update_portbinding(self):
+        """update port binding"""
+        net1 = self.quantum.create_network("t1", "netid1")
+        port1 = self.quantum.create_port(net1["net-id"])
+        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
+                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind1 = self.dbtest.update_port_binding(port1["port-id"],
+                        "vnic1", "newpp1", "newvlan1", 11, "newqos1")
+        port_bindings = self.dbtest.get_all_port_bindings()
+        count = 0
+        for pbind in port_bindings:
+            if "new" in pbind["vlan-name"]:
+                count += 1
+        self.assertTrue(count == 1)
+        self.teardown_portbinding()
+        self.teardown_network_port()
+
+    def teardown_portbinding(self):
+        """tear down port binding"""
+        LOG.debug("Tearing Down Port Binding")
+        port_bindings = self.dbtest.get_all_port_bindings()
+        for port_binding in port_bindings:
+            portid = port_binding["port-id"]
+            self.dbtest.delete_port_binding(portid)
+
+    def teardown_network_port(self):
+        """tearDown for Network and Port table"""
+        networks = self.quantum.get_all_networks("t1")
+        for net in networks:
+            netid = net["net-id"]
+            name = net["net-name"]
+            if "net" in name:
+                ports = self.quantum.get_all_ports(netid)
+                for por in ports:
+                    self.quantum.delete_port(netid, por["port-id"])
+                self.quantum.delete_network(netid)
 
 
 class NexusDBTest(unittest.TestCase):
@@ -763,7 +946,7 @@ class L2networkDBTest(unittest.TestCase):
         self.assertTrue(used == True)
         used = l2network_db.release_vlanid(vlanid)
         self.assertTrue(used == False)
-        self.teardown_vlanid()
+        #counting on default teardown here to clear db
 
     def teardown_network(self):
         """tearDown Network table"""
@@ -808,14 +991,6 @@ class L2networkDBTest(unittest.TestCase):
             ppid = pp_binding["portprofile-id"]
             portid = pp_binding["port-id"]
             self.dbtest.delete_pp_binding("t1", portid, ppid)
-
-    def teardown_vlanid(self):
-        """tearDown VlanID table"""
-        LOG.debug("Tearing Down Vlan IDs")
-        vlanids = l2network_db.get_all_vlanids()
-        for vlanid in vlanids:
-            vlan_id = vlanid["vlan_id"]
-            l2network_db.delete_vlanid(vlan_id)
 
 
 class QuantumDBTest(unittest.TestCase):

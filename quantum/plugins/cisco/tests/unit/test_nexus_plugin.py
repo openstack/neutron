@@ -14,12 +14,13 @@
 #
 # @author: Shweta Padubidri, Peter Strunk, Cisco Systems, Inc.
 #
-import unittest
 import logging
+import unittest
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.nexus import cisco_nexus_plugin
 from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.nexus import cisco_nexus_plugin
 
 LOG = logging.getLogger('quantum.tests.test_nexus')
 
@@ -37,8 +38,8 @@ class TestNexusPlugin(unittest.TestCase):
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 267
         self.port_id = "9"
-        self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
         cdb.initialize()
+        self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
 
     def test_create_network(self, net_tenant_id=None, network_name=None,
                             network_id=None, net_vlan_name=None,
@@ -69,6 +70,8 @@ class TestNexusPlugin(unittest.TestCase):
         else:
             vlan_id = self.vlan_id
 
+        network_created = self.create_network(tenant_id, net_id)
+        cdb.add_vlan_binding(vlan_id, vlan_name, network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
                 tenant_id, net_name, net_id, vlan_name, vlan_id)
         self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
@@ -262,6 +265,19 @@ class TestNexusPlugin(unittest.TestCase):
         self.assertEqual(result_vlan_id, self.vlan_id)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_get_vlan_id_for_network - END")
+
+    def create_network(self, tenant_id, net_name):
+        """Create a network"""
+        net_dict = {}
+        try:
+            res = db.network_create(tenant_id, net_name)
+            LOG.debug("Created network: %s" % res.uuid)
+            net_dict["tenant-id"] = res.tenant_id
+            net_dict["net-id"] = str(res.uuid)
+            net_dict["net-name"] = res.name
+            return net_dict
+        except Exception, exc:
+            LOG.error("Failed to create network: %s" % str(exc))
 
     def tearDownNetwork(self, tenant_id, network_dict_id):
         """

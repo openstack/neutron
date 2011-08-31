@@ -27,6 +27,9 @@ from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.db import ucs_db as udb
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
 
@@ -36,16 +39,10 @@ LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 class UCSVICPlugin(L2DevicePluginBase):
     """UCS Device Plugin"""
-    _networks = {}
 
     def __init__(self):
-        self._client = utils.import_object(conf.UCSM_DRIVER)
+        self._driver = utils.import_object(conf.UCSM_DRIVER)
         LOG.debug("Loaded driver %s\n" % conf.UCSM_DRIVER)
-        self._utils = cutil.DBUtils()
-        # TODO (Sumit) This is for now, when using only one chassis
-        self._ucsm_ip = conf.UCSM_IP_ADDRESS
-        self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
-        self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)
         # TODO (Sumit) Make the counter per UCSM
         self._port_profile_counter = 0
 
@@ -56,7 +53,16 @@ class UCSVICPlugin(L2DevicePluginBase):
         the specified tenant.
         """
         LOG.debug("UCSVICPlugin:get_all_networks() called\n")
-        return self._networks.values()
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        networks_list = db.network_list(tenant_id)
+        new_networks_list = []
+        for network in networks_list:
+            new_network_dict = cutil.make_net_dict(network[const.UUID],
+                                                   network[const.NETWORKNAME],
+                                                   [])
+            new_networks_list.append(new_network_dict)
+
+        return new_networks_list
 
     def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
                        **kwargs):
@@ -65,15 +71,15 @@ class UCSVICPlugin(L2DevicePluginBase):
         a symbolic name.
         """
         LOG.debug("UCSVICPlugin:create_network() called\n")
-        self._client.create_vlan(vlan_name, str(vlan_id), self._ucsm_ip,
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        self._driver.create_vlan(vlan_name, str(vlan_id), self._ucsm_ip,
                                  self._ucsm_username, self._ucsm_password)
-        new_net_dict = {const.NET_ID: net_id,
-                        const.NET_NAME: net_name,
-                        const.NET_PORTS: {},
-                        const.NET_VLAN_NAME: vlan_name,
-                        const.NET_VLAN_ID: vlan_id}
-        self._networks[net_id] = new_net_dict
-        return new_net_dict
+        network = db.network_get(net_id)
+        ports_on_net = []
+        new_network_dict = cutil.make_net_dict(network[const.UUID],
+                                               network[const.NETWORKNAME],
+                                               ports_on_net)
+        return new_network_dict
 
     def delete_network(self, tenant_id, net_id, **kwargs):
         """
@@ -81,17 +87,16 @@ class UCSVICPlugin(L2DevicePluginBase):
         belonging to the specified tenant.
         """
         LOG.debug("UCSVICPlugin:delete_network() called\n")
-        net = self._networks.get(net_id)
-        # TODO (Sumit) : Verify that no attachments are plugged into the
-        # network
-        if net:
-            # TODO (Sumit) : Before deleting the network, make sure all the
-            # ports associated with this network are also deleted
-            self._client.delete_vlan(net[const.NET_VLAN_NAME], self._ucsm_ip,
-                                     self._ucsm_username, self._ucsm_password)
-            self._networks.pop(net_id)
-            return net
-        raise exc.NetworkNotFound(net_id=net_id)
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        net = db.network_get(net_id)
+        vlan_binding = cdb.get_vlan_binding(net[const.UUID])
+        vlan_name = vlan_binding[const.VLANNAME]
+        self._driver.delete_vlan(vlan_name, self._ucsm_ip,
+                                 self._ucsm_username, self._ucsm_password)
+        net_dict = cutil.make_net_dict(net[const.UUID],
+                                       net[const.NETWORKNAME],
+                                       [])
+        return net_dict
 
     def get_network_details(self, tenant_id, net_id, **kwargs):
         """
@@ -99,8 +104,22 @@ class UCSVICPlugin(L2DevicePluginBase):
         spec
         """
         LOG.debug("UCSVICPlugin:get_network_details() called\n")
-        network = self._get_network(tenant_id, net_id)
-        return network
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        network = db.network_get(net_id)
+        ports_list = network[const.NETWORKPORTS]
+        ports_on_net = []
+        for port in ports_list:
+            new_port = cutil.make_port_dict(port[const.UUID],
+                                            port[const.PORTSTATE],
+                                            port[const.NETWORKID],
+                                            port[const.INTERFACEID])
+            ports_on_net.append(new_port)
+
+        new_network = cutil.make_net_dict(network[const.UUID],
+                                              network[const.NETWORKNAME],
+                                              ports_on_net)
+
+        return new_network
 
     def rename_network(self, tenant_id, net_id, new_name, **kwargs):
         """
@@ -108,9 +127,12 @@ class UCSVICPlugin(L2DevicePluginBase):
         Virtual Network.
         """
         LOG.debug("UCSVICPlugin:rename_network() called\n")
-        network = self._get_network(tenant_id, net_id)
-        network[const.NET_NAME] = new_name
-        return network
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        network = db.network_get(net_id)
+        net_dict = cutil.make_net_dict(network[const.UUID],
+                                       network[const.NETWORKNAME],
+                                       [])
+        return net_dict
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
@@ -118,8 +140,14 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:get_all_ports() called\n")
-        network = self._get_network(tenant_id, net_id)
-        ports_on_net = network[const.NET_PORTS].values()
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        network = db.network_get(net_id)
+        ports_list = network[const.NETWORKPORTS]
+        ports_on_net = []
+        for port in ports_list:
+            port_binding = udb.get_portbinding(port[const.UUID])
+            ports_on_net.append(port_binding)
+
         return ports_on_net
 
     def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
@@ -127,28 +155,29 @@ class UCSVICPlugin(L2DevicePluginBase):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:create_port() called\n")
-        net = self._get_network(tenant_id, net_id)
-        ports = net[const.NET_PORTS]
-        # TODO (Sumit): This works on a single host deployment,
-        # in multi-host environment, dummy needs to be replaced with the
-        # hostname
-        dynamic_nic_name = self._client.get_dynamic_nic("dummy")
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        qos = None
+        ucs_inventory = kwargs[const.UCS_INVENTORY]
+        least_rsvd_blade_dict = kwargs[const.LEAST_RSVD_BLADE_DICT]
+        chassis_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_CHASSIS]
+        blade_id = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_ID]
+        blade_data_dict = least_rsvd_blade_dict[const.LEAST_RSVD_BLADE_DATA]
         new_port_profile = self._create_port_profile(tenant_id, net_id,
                                                      port_id,
                                                      conf.DEFAULT_VLAN_NAME,
                                                      conf.DEFAULT_VLAN_ID)
         profile_name = new_port_profile[const.PROFILE_NAME]
-        sql_query = "INSERT INTO ports (port_id, profile_name, dynamic_vnic," \
-        "host, instance_name, instance_nic_name, used) VALUES" \
-        "('%s', '%s', '%s', 'dummy', NULL, NULL, 0)" % \
-        (port_id, profile_name, dynamic_nic_name)
-        self._utils.execute_db_query(sql_query)
-        new_port_dict = {const.PORT_ID: port_id,
-                         const.PORT_STATE: const.PORT_UP,
-                         const.ATTACHMENT: None,
-                         const.PORT_PROFILE: new_port_profile}
-        ports[port_id] = new_port_dict
-        return new_port_dict
+        rsvd_nic_dict = ucs_inventory.\
+                reserve_blade_interface(self._ucsm_ip, chassis_id,
+                                        blade_id, blade_data_dict,
+                                        tenant_id, port_id,
+                                        profile_name)
+        port_binding = udb.update_portbinding(port_id,
+                                       portprofile_name=profile_name,
+                                       vlan_name=conf.DEFAULT_VLAN_NAME,
+                                       vlan_id=conf.DEFAULT_VLAN_ID,
+                                       qos=qos)
+        return port_binding
 
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):
         """
@@ -158,34 +187,25 @@ class UCSVICPlugin(L2DevicePluginBase):
         then the port can be deleted.
         """
         LOG.debug("UCSVICPlugin:delete_port() called\n")
-        port = self._get_port(tenant_id, net_id, port_id)
-        if port[const.ATTACHMENT]:
-            raise exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port[const.ATTACHMENT])
-        try:
-            #TODO (Sumit): Before deleting port profile make sure that there
-            # is no VM using this port profile
-            self._client.release_dynamic_nic("dummy")
-            port_profile = port[const.PORT_PROFILE]
-            self._delete_port_profile(port_id,
-                                      port_profile[const.PROFILE_NAME])
-            sql_query = "delete from ports where port_id = \"%s\"" % \
-            (port[const.PORT_ID])
-            self._utils.execute_db_query(sql_query)
-            net = self._get_network(tenant_id, net_id)
-            net[const.NET_PORTS].pop(port_id)
-        except KeyError:
-            raise exc.PortNotFound(net_id=net_id, port_id=port_id)
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        ucs_inventory = kwargs[const.UCS_INVENTORY]
+        chassis_id = kwargs[const.CHASSIS_ID]
+        blade_id = kwargs[const.BLADE_ID]
+        interface_dn = kwargs[const.BLADE_INTF_DN]
+        port_binding = udb.get_portbinding(port_id)
+        profile_name = port_binding[const.PORTPROFILENAME]
+        self._delete_port_profile(port_id, profile_name)
+        ucs_inventory.unreserve_blade_interface(self._ucsm_ip, chassis_id,
+                                                blade_id, interface_dn)
+        return udb.remove_portbinding(port_id)
 
     def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
         """
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:update_port() called\n")
-        port = self._get_port(tenant_id, net_id, port_id)
-        self._validate_port_state(port_state)
-        port[const.PORT_STATE] = port_state
-        return port
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        pass
 
     def get_port_details(self, tenant_id, net_id, port_id, **kwargs):
         """
@@ -193,7 +213,9 @@ class UCSVICPlugin(L2DevicePluginBase):
         that is attached to this particular port.
         """
         LOG.debug("UCSVICPlugin:get_port_details() called\n")
-        return self._get_port(tenant_id, net_id, port_id)
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        port_binding = udb.get_portbinding(port_id)
+        return port_binding
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
                        **kwargs):
@@ -202,24 +224,18 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:plug_interface() called\n")
-        self._validate_attachment(tenant_id, net_id, port_id,
-                                  remote_interface_id)
-        port = self._get_port(tenant_id, net_id, port_id)
-        if port[const.ATTACHMENT]:
-            raise exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port[const.ATTACHMENT])
-        port[const.ATTACHMENT] = remote_interface_id
-        port_profile = port[const.PORT_PROFILE]
-        profile_name = port_profile[const.PROFILE_NAME]
-        old_vlan_name = port_profile[const.PROFILE_VLAN_NAME]
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        port_binding = udb.get_portbinding(port_id)
+        profile_name = port_binding[const.PORTPROFILENAME]
+        old_vlan_name = port_binding[const.VLANNAME]
         new_vlan_name = self._get_vlan_name_for_network(tenant_id, net_id)
         new_vlan_id = self._get_vlan_id_for_network(tenant_id, net_id)
-        self._client.change_vlan_in_profile(profile_name, old_vlan_name,
+        self._driver.change_vlan_in_profile(profile_name, old_vlan_name,
                                             new_vlan_name, self._ucsm_ip,
                                             self._ucsm_username,
                                             self._ucsm_password)
-        port_profile[const.PROFILE_VLAN_NAME] = new_vlan_name
-        port_profile[const.PROFILE_VLAN_ID] = new_vlan_id
+        return udb.update_portbinding(port_id, vlan_name=new_vlan_name,
+                                      vlan_id=new_vlan_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id, **kwargs):
         """
@@ -227,18 +243,17 @@ class UCSVICPlugin(L2DevicePluginBase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:unplug_interface() called\n")
-        port = self._get_port(tenant_id, net_id, port_id)
-        port[const.ATTACHMENT] = None
-        port_profile = port[const.PORT_PROFILE]
-        profile_name = port_profile[const.PROFILE_NAME]
-        old_vlan_name = port_profile[const.PROFILE_VLAN_NAME]
+        self._set_ucsm(kwargs[const.DEVICE_IP])
+        port_binding = udb.get_portbinding(port_id)
+        profile_name = port_binding[const.PORTPROFILENAME]
+        old_vlan_name = port_binding[const.VLANNAME]
         new_vlan_name = conf.DEFAULT_VLAN_NAME
-        self._client.change_vlan_in_profile(profile_name, old_vlan_name,
+        self._driver.change_vlan_in_profile(profile_name, old_vlan_name,
                                             new_vlan_name, self._ucsm_ip,
                                             self._ucsm_username,
                                             self._ucsm_password)
-        port_profile[const.PROFILE_VLAN_NAME] = conf.DEFAULT_VLAN_NAME
-        port_profile[const.PROFILE_VLAN_ID] = conf.DEFAULT_VLAN_ID
+        return udb.update_portbinding(port_id, vlan_name=new_vlan_name,
+                                      vlan_id=conf.DEFAULT_VLAN_ID)
 
     def _get_profile_name(self, port_id):
         """Returns the port profile name based on the port UUID"""
@@ -246,48 +261,15 @@ class UCSVICPlugin(L2DevicePluginBase):
                 + cutil.get16ByteUUID(port_id)
         return profile_name
 
-    def _validate_port_state(self, port_state):
-        """Check the port state"""
-        if port_state.upper() not in (const.PORT_UP, const.PORT_DOWN):
-            raise exc.StateInvalid(port_state=port_state)
-        return True
-
-    def _validate_attachment(self, tenant_id, network_id, port_id,
-                             remote_interface_id):
-        """Check if the VIF can be attached"""
-        network = self._get_network(tenant_id, network_id)
-        for port in network[const.NET_PORTS].values():
-            if port[const.ATTACHMENT] == remote_interface_id:
-                raise exc.PortInUse(net_id=network_id,
-                                    port_id=port_id,
-                                    att_id=port[const.ATTACHMENT])
-
-    def _get_network(self, tenant_id, network_id):
-        """Get the network object ref"""
-        network = self._networks.get(network_id)
-        if not network:
-            raise exc.NetworkNotFound(net_id=network_id)
-        return network
-
     def _get_vlan_name_for_network(self, tenant_id, network_id):
         """Return the VLAN name as set by the L2 network plugin"""
-        net = self._get_network(tenant_id, network_id)
-        vlan_name = net[const.NET_VLAN_NAME]
-        return vlan_name
+        vlan_binding = cdb.get_vlan_binding(network_id)
+        return vlan_binding[const.VLANNAME]
 
     def _get_vlan_id_for_network(self, tenant_id, network_id):
         """Return the VLAN id as set by the L2 network plugin"""
-        net = self._get_network(tenant_id, network_id)
-        vlan_id = net[const.NET_VLAN_ID]
-        return vlan_id
-
-    def _get_port(self, tenant_id, network_id, port_id):
-        """Get the port object ref"""
-        net = self._get_network(tenant_id, network_id)
-        port = net[const.NET_PORTS].get(port_id)
-        if not port:
-            raise exc.PortNotFound(net_id=network_id, port_id=port_id)
-        return port
+        vlan_binding = cdb.get_vlan_binding(network_id)
+        return vlan_binding[const.VLANID]
 
     def _create_port_profile(self, tenant_id, net_id, port_id, vlan_name,
                              vlan_id):
@@ -295,7 +277,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         if self._port_profile_counter >= int(conf.MAX_UCSM_PORT_PROFILES):
             raise cexc.UCSMPortProfileLimit(net_id=net_id, port_id=port_id)
         profile_name = self._get_profile_name(port_id)
-        self._client.create_profile(profile_name, vlan_name, self._ucsm_ip,
+        self._driver.create_profile(profile_name, vlan_name, self._ucsm_ip,
                                     self._ucsm_username, self._ucsm_password)
         self._port_profile_counter += 1
         new_port_profile = {const.PROFILE_NAME: profile_name,
@@ -305,6 +287,12 @@ class UCSVICPlugin(L2DevicePluginBase):
 
     def _delete_port_profile(self, port_id, profile_name):
         """Delete port profile in UCSM"""
-        self._client.delete_profile(profile_name, self._ucsm_ip,
+        self._driver.delete_profile(profile_name, self._ucsm_ip,
                                     self._ucsm_username, self._ucsm_password)
         self._port_profile_counter -= 1
+
+    def _set_ucsm(self, ucsm_ip):
+        """Set the UCSM IP, username, and password"""
+        self._ucsm_ip = ucsm_ip
+        self._ucsm_username = cred.Store.getUsername(conf.UCSM_IP_ADDRESS)
+        self._ucsm_password = cred.Store.getPassword(conf.UCSM_IP_ADDRESS)

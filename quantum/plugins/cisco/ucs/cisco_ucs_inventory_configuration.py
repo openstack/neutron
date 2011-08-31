@@ -23,21 +23,6 @@ import os
 
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
-CONF_FILE = "../conf/ucs.ini"
-
-CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \
-                             + "/" + CONF_FILE)
-
-SECTION = CP['UCSM']
-UCSM_IP_ADDRESS = SECTION['ip_address']
-DEFAULT_VLAN_NAME = SECTION['default_vlan_name']
-DEFAULT_VLAN_ID = SECTION['default_vlan_id']
-MAX_UCSM_PORT_PROFILES = SECTION['max_ucsm_port_profiles']
-PROFILE_NAME_PREFIX = SECTION['profile_name_prefix']
-
-SECTION = CP['DRIVER']
-UCSM_DRIVER = SECTION['name']
-
 CONF_FILE = "../conf/ucs_inventory.ini"
 
 CP = confp.CiscoConfigParser(os.path.dirname(os.path.realpath(__file__)) \

@@ -24,9 +24,13 @@ import os
 
 from quantum.plugins.cisco.common import cisco_configparser as confp
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
+from quantum.plugins.cisco.db import l2network_db as cdb
 
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+
+TENANT = const.NETWORK_ADMIN
 
 CREDENTIALS_FILE = "../conf/credentials.ini"
 
@@ -39,32 +43,43 @@ class Store(object):
     """Credential Store"""
 
     @staticmethod
-    def putCredential(id, username, password):
+    def initialize():
+        for id in _creds_dictionary.keys():
+            try:
+                cdb.add_credential(TENANT, id,
+                                   _creds_dictionary[id][const.USERNAME],
+                                   _creds_dictionary[id][const.PASSWORD])
+            except cexc.CredentialAlreadyExists:
+                # We are quietly ignoring this, since it only happens
+                # if this class module is loaded more than once, in which
+                # case, the credentials are already populated
+                pass
+
+    @staticmethod
+    def putCredential(cred_name, username, password):
         """Set the username and password"""
-        _creds_dictionary[id] = {const.USERNAME: username,
-                                const.PASSWORD: password}
+        credential = cdb.add_credential(TENANT, cred_name, username, password)
 
     @staticmethod
-    def getUsername(id):
+    def getUsername(cred_name):
         """Get the username"""
-        return _creds_dictionary[id][const.USERNAME]
+        credential = cdb.get_credential_name(TENANT, cred_name)
+        return credential[const.CREDENTIAL_USERNAME]
 
     @staticmethod
-    def getPassword(id):
+    def getPassword(cred_name):
         """Get the password"""
-        return _creds_dictionary[id][const.PASSWORD]
+        credential = cdb.get_credential_name(TENANT, cred_name)
+        return credential[const.CREDENTIAL_PASSWORD]
 
     @staticmethod
-    def getCredential(id):
+    def getCredential(cred_name):
         """Get the username and password"""
-        return _creds_dictionary[id]
+        credential = cdb.get_credential_name(TENANT, cred_name)
+        return {const.USERNAME: const.CREDENTIAL_USERNAME,
+                const.PASSWORD: const.CREDENTIAL_PASSWORD}
 
     @staticmethod
-    def getCredentials():
-        """Get all usernames and passwords"""
-        return _creds_dictionary
-
-    @staticmethod
-    def deleteCredential(id):
+    def deleteCredential(cred_name):
         """Delete a credential"""
-        return _creds_dictionary.pop(id)
+        cdb.remove_credential(TENANT, cred_name)

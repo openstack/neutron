@@ -229,7 +229,7 @@ class AuthProtocol(object):
         """Client sent bad claims"""
         return HTTPUnauthorized()(self.env, self.start_response)
 
-    def _validate_claims(self, claims):
+    def _validate_claims(self, claims, retry=False):
         """Validate claims, and provide identity information if applicable """
 
         # Step 1: We need to auth with the keystone service, so get an
@@ -257,16 +257,27 @@ class AuthProtocol(object):
         conn = http_connect(self.auth_host, self.auth_port, 'GET',
                             self._build_token_uri(claims), headers=headers)
         resp = conn.getresponse()
-        # data = resp.read()
         conn.close()
 
         if not str(resp.status).startswith('20'):
             # Keystone rejected claim
+            # In case a 404 error it might just be that the token has expired
+            # Therefore try and get a new token
+            # of course assuming admin credentials have been specified
+            # Note(salvatore-orlando): the 404 here is not really
+            # what should be returned
+            if self.admin_user and self.admin_password and \
+               not retry and str(resp.status) == '404':
+                LOG.warn("Unable to validate token." +
+                         "Admin token possibly expired.")
+                self.admin_token = None
+                return self._validate_claims(claims, True)
             return False
         else:
             #TODO(Ziad): there is an optimization we can do here. We have just
             #received data from Keystone that we can use instead of making
             #another call in _expound_claims
+            LOG.info("Claims successfully validated")
             return True
 
     def _expound_claims(self):
