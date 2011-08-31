@@ -40,8 +40,7 @@ If you plan to just leverage the plugin framework, you do not need these.)
 * One or more UCS B200 series blade servers with M81KR VIC (aka 
   Palo adapters) installed.
 * UCSM 2.0 (Capitola) Build 230 or above.
-* OpenStack Cactus release installation (additional patch is required,
-  details follow in this document)
+* OpenStack Diablo D3 or later (should have VIF-driver support)
 * RHEL 6.1 (as of this writing, UCS only officially supports RHEL, but
   it should be noted that Ubuntu support is planned in coming releases as well)
   ** Package: python-configobj-4.6.0-3.el6.noarch (or newer)
@@ -116,7 +115,17 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
 --quantum_port=9696
 --libvirt_vif_driver=quantum.plugins.cisco.nova.vifdirect.Libvirt802dot1QbhDriver
 --libvirt_vif_type=802.1Qbh
- 
+
+    Note: To be able to bring up a VM on a UCS blade, you should first create a
+          port for that VM using the Quantum create port API. VM creation will
+          fail if an unused port is not available. If you have configured your
+          Nova project with more than one network, Nova will attempt to instantiate
+          the VM with one network interface (VIF) per configured network. To provide
+          plugin points for each of these VIFs, you will need to create multiple
+          Quantum ports, one for each of the networks, prior to starting the VM.
+          However, in this case you will need to use the Cisco multiport extension
+          API instead of the Quantum create port API. More details on using the
+          multiport extension follow in the section on mutli NIC support.
 
 4.  If you want to turn on support for Cisco Nexus switches:
     4a.  Uncomment the nexus_plugin property in 
@@ -152,11 +161,11 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
          this step and remove the old hostkey from ~/.ssh/known_hosts.
          
 5.  Plugin Persistence framework setup:
-	5a.  Create quantum_l2network database in mysql with the following command -
+    5a.  Create quantum_l2network database in mysql with the following command -
 	
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-	5b.  Enter the quantum_l2network database configuration info in the 
+    5b.  Enter the quantum_l2network database configuration info in the 
          quantum/plugins/cisco/conf/db_conn.ini file.
          
     5c.  If there is a change in the plugin configuration, service would need 
@@ -175,12 +184,6 @@ mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 username=admin
 password=mySecretPasswordForUCSM
 
-# Provide the Nova DB credentials.
-# The IP address should be the same as in nova.ini.
-[10.0.0.3]
-username=nova
-password=mySecretPasswordForNova
-
 # Provide the Nexus credentials, if you are using Nexus switches.
 # If not this will be ignored.
 [10.0.0.1]
@@ -191,7 +194,7 @@ password=mySecretPasswordForNexus
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
     UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
     chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
-    typically numbers like 1, 2, 3, etc.
+    typically be numbers like 1, 2, 3, etc.)
 
 [ucsm-1]
 ip_address = <put_ucsm_ip_address_here>
@@ -222,6 +225,42 @@ host_name = <put_hostname_here>
 8.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
+
+
+Using the Command Line Client to work with this Plugin
+------------------------------------------------------
+A command line client is packaged with this plugin. This module can be used
+to invoke the core API as well as the extensions API, so that you don't have
+to switch between different CLI modules (it internally invokes the Quantum
+CLI module for the core APIs to ensure consistency when using either). This
+command line client can be invoked as follows:
+
+PYTHONPATH=. python quantum/plugins/cisco/client/cli.py 
+
+
+Multi NIC support for VMs
+-------------------------
+As indicated earlier, if your Nova setup has a project with more than one network,
+Nova will try to create a network interface (VIF) on the VM for each of those
+networks. That in turn implies that you should have created Quantum ports for each
+of those VIFs. These ports need to be using the following rest call:
+
+POST /v1.0/extensions/csco/tenants/{tenant_id}/multiport/
+
+with request body:
+
+{'multiport': 
+ {'status': 'ACTIVE',
+  'net_id_list': net_id_list,
+  'ports_desc': {'key': 'value'}}}
+
+where,
+
+net_id_list is a list of network IDs: [netid1, netid2, ...]
+
+The corresponding CLI for this operation is as follows:
+
+PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport <tenant_id> <net_id1,net_id2,...>
 
 
 How to test the installation
