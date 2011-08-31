@@ -254,7 +254,9 @@ class L2Network(QuantumPluginBase):
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id,
                                                      remote_interface_id])
-        db.port_set_attachment(net_id, port_id, remote_interface_id)
+        #Note: The remote_interface_id gets associated with the port
+        # when the VM is instantiated. The plug interface call results
+        # in putting the port on the VLAN associated with this network
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
