@@ -256,7 +256,9 @@ with request body:
 
 where,
 
-net_id_list is a list of network IDs: [netid1, netid2, ...]
+net_id_list is a list of network IDs: [netid1, netid2, ...]. The "ports_desc" dictionary
+is reserved for later use. For now, the same structure in terms of the dictionary name, key
+and value should be used.
 
 The corresponding CLI for this operation is as follows:
 
