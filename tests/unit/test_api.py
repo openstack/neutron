@@ -33,7 +33,7 @@ LOG = logging.getLogger('quantum.tests.test_api')
 class APITest(unittest.TestCase):
 
     def _create_network(self, format, name=None, custom_req_body=None,
-                        expected_res_status=200):
+                        expected_res_status=202):
         LOG.debug("Creating network")
         content_type = "application/" + format
         if name:
@@ -45,13 +45,13 @@ class APITest(unittest.TestCase):
                                                   custom_req_body)
         network_res = network_req.get_response(self.api)
         self.assertEqual(network_res.status_int, expected_res_status)
-        if expected_res_status == 200:
+        if expected_res_status in (200, 202):
             network_data = Serializer().deserialize(network_res.body,
                                                     content_type)
             return network_data['network']['id']
 
     def _create_port(self, network_id, port_state, format,
-                     custom_req_body=None, expected_res_status=200):
+                     custom_req_body=None, expected_res_status=202):
         LOG.debug("Creating port for network %s", network_id)
         content_type = "application/%s" % format
         port_req = testlib.new_port_request(self.tenant_id, network_id,
@@ -59,7 +59,7 @@ class APITest(unittest.TestCase):
                                             custom_req_body)
         port_res = port_req.get_response(self.api)
         self.assertEqual(port_res.status_int, expected_res_status)
-        if expected_res_status == 200:
+        if expected_res_status in (200, 202):
             port_data = Serializer().deserialize(port_res.body, content_type)
             return port_data['port']['id']
 

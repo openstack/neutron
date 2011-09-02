@@ -178,7 +178,6 @@ class Client(object):
             if self.logger:
                 self.logger.debug("Quantum Client Reply (code = %s) :\n %s" \
                         % (str(status_code), data))
-
             if status_code in (httplib.OK,
                                httplib.CREATED,
                                httplib.ACCEPTED,
@@ -228,7 +227,7 @@ class Client(object):
         """
         Deserializes a an xml or json string into a dictionary
         """
-        if status_code in (202, 204):
+        if status_code == 204:
             return data
         return Serializer(self._serialization_metadata).\
                     deserialize(data, self.content_type())

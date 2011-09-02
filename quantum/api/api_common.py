@@ -16,6 +16,7 @@
 #    under the License.
 
 import logging
+import webob
 
 from webob import exc
 
@@ -60,3 +61,22 @@ class QuantumController(wsgi.Controller):
                 raise exc.HTTPBadRequest(msg)
             results[param_name] = param_value or param.get('default-value')
         return results
+
+    def _build_response(self, req, res_data, status_code=200):
+        """ A function which builds an HTTP response
+            given a status code and a dictionary containing
+            the response body to be serialized
+
+        """
+        content_type = req.best_match_content_type()
+        default_xmlns = self.get_default_xmlns(req)
+        body = self._serialize(res_data, content_type, default_xmlns)
+
+        response = webob.Response()
+        response.status = status_code
+        response.headers['Content-Type'] = content_type
+        response.body = body
+        msg_dict = dict(url=req.url, status=response.status_int)
+        msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
+        LOG.debug(msg)
+        return response
