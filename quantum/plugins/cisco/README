@@ -83,7 +83,7 @@ Then run "yum install python-routes".
 Module Structure:
 -----------------
 * quantum/plugins/cisco/       - Contains the L2-Network Plugin Framework
-                       /client - CLI module for core and extensions
+                       /client - CLI module for core and extensions API
                        /common - Modules common to the entire plugin
                        /conf   - All configuration files
                        /db     - Persistence framework
@@ -127,13 +127,20 @@ provider = quantum.plugins.cisco.l2network_plugin.L2Network
           API instead of the Quantum create port API. More details on using the
           multiport extension follow in the section on multi NIC support.
 
-4.  If you want to turn on support for Cisco Nexus switches:
-    4a.  Uncomment the nexus_plugin property in 
+4.  To support the above configuration, you will need some Quantum modules. It's easiest
+    to copy the entire quantum directory from your quantum installation into:
+
+/usr/lib/python2.6/site-packages/
+
+    This needs to be done for each nova compute node.
+
+5.  If you want to turn on support for Cisco Nexus switches:
+    5a.  Uncomment the nexus_plugin property in 
          quantum/plugins/cisco/conf/plugins.ini to read:
 
 nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin.NexusPlugin
 
-    4b.  Enter the relevant configuration in the 
+    5b.  Enter the relevant configuration in the 
          quantum/plugins/cisco/conf/nexus.ini file.  Example:
 
 [SWITCH]
@@ -152,7 +159,7 @@ nexus_ssh_port=22
 [DRIVER]
 name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 
-    4c.  Make sure that SSH host key of the Nexus switch is known to the
+    5c.  Make sure that SSH host key of the Nexus switch is known to the
          host on which you are running the Quantum service.  You can do
          this simply by logging in to your Quantum host as the user that
          Quantum runs as and SSHing to the switch at least once.  If the
@@ -160,22 +167,22 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
          clearing of the SSH config on the switch), you may need to repeat
          this step and remove the old hostkey from ~/.ssh/known_hosts.
          
-5.  Plugin Persistence framework setup:
-    5a.  Create quantum_l2network database in mysql with the following command -
+6.  Plugin Persistence framework setup:
+    6a.  Create quantum_l2network database in mysql with the following command -
 	
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-    5b.  Enter the quantum_l2network database configuration info in the 
+    6b.  Enter the quantum_l2network database configuration info in the 
          quantum/plugins/cisco/conf/db_conn.ini file.
          
-    5c.  If there is a change in the plugin configuration, service would need 
+    6c.  If there is a change in the plugin configuration, service would need 
          to be restarted after dropping and re-creating the database using
          the following commands -
 
 mysql -u<mysqlusername> -p<mysqlpassword> -e "drop database quantum_l2network"
 mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
 
-6.  Verify that you have the correct credentials for each IP address listed
+7.  Verify that you have the correct credentials for each IP address listed
     in quantum/plugins/cisco/conf/credentials.ini.  Example:
 
 # Provide the UCSM credentials, create a separte entry for each UCSM used in your system
@@ -194,7 +201,7 @@ password=mySecretPasswordForNexus
     has a credential entry in the above file. This is required for the system to
     be able to communicate with those switches.
 
-7.  Configure the UCS systems' information in your deployment by editing the
+8.  Configure the UCS systems' information in your deployment by editing the
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
     UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
     chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
@@ -226,7 +233,7 @@ blade_id = <put_blade_id_here>
 host_name = <put_hostname_here>
 
 
-8.  Start the Quantum service.  If something doesn't work, verify that
+9.  Start the Quantum service.  If something doesn't work, verify that
     your configuration of each of the above files hasn't gone a little kaka.
     Once you've put right what once went wrong, leap on.
 
