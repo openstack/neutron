@@ -80,8 +80,6 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
 
         self.ucs_count = self._inventory['ucs_plugin'].\
                              _inventory.__len__()
-        print 'asdfasdfasdfasdfasdf'
-        print self._inventory['ucs_plugin']._inventory
       
     def test_create_network(self):
         """Support for the Quantum core API call"""
@@ -113,17 +111,14 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                                                    self.net_id,
                                                    self.vlan_name,
                                                    self.vlan_id])
-        self._l2network_multiblade.delete_network([self.tenant_id,
+        networks = self._l2network_multiblade.delete_network([self.tenant_id,
                                                    self.net_id])
-        device_params = self._l2network_multiblade._invoke_inventory(
-                                self.plugin_key,
-                                self._l2network_multiblade.delete_network,
-                                [self.tenant_id,
-                                self.net_id])
-        device_ips = device_params[const.DEVICE_IP]
-        for device_ip in device_ips:
-           new_device_params[const.DEVICE_IP] = device_ip
-           self.assertEqual(test_device_ip ,new_device_params[const.DEVICE_IP])
+
+        self.assertEqual(networks.__len__(), self.ucs_count)
+        
+        for network in networks:
+            self.assertEqual(network[const.NET_ID], self.net_id)
+            self.assertEqual(network[const.NET_NAME], self.net_name)
            LOG.debug("test_delete_network - END")
 
     def test_delete_networkDNE(self):
@@ -142,21 +137,15 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
                                                    self.net_id,
                                                    self.vlan_name,
                                                    self.vlan_id])
-        self._l2network_multiblade.rename_network([self.tenant_id,
+        networks = self._l2network_multiblade.rename_network([self.tenant_id,
                                                    self.net_id,
                                                    self.new_net_name])
-        device_params = self._l2network_multiblade._invoke_inventory(
-                              self.plugin_key,
-                              self._l2network_multiblade.rename_network,
-                              [self.tenant_id,
-                              self.net_id,
-                              self.new_net_name])
 
-        device_ips = device_params[const.DEVICE_IP]
-        for device_ip in device_ips:
-            new_device_params[const.DEVICE_IP] = device_ip
-            self.assertEqual(test_device_ip ,
-                                new_device_params[const.DEVICE_IP])
+        self.assertEqual(networks.__len__(), self.ucs_count)
+        
+        for network in networks:
+            self.assertEqual(network[const.NET_ID], self.net_id)
+            self.assertEqual(network[const.NET_NAME], self.net_name)
         self.tearDownNetwork(self.tenant_id, self.net_id)
         LOG.debug("test_rename_network - END")
 
@@ -177,24 +166,17 @@ class Test_L2NetworkMultiBlade(unittest.TestCase):
         LOG.debug("test_create_port - START")
         port = db.port_create(self.net_id, self.port_state)
         port_id= port[const.UUID]
-        self._l2network_multiblade.create_port([self.tenant_id,
+        ports = self._l2network_multiblade.create_port([self.tenant_id,
                                                    self.net_id,
                                                    self.port_state,
                                                    port_id])
-        device_params = self._l2network_multiblade._invoke_inventory(
-                              self.plugin_key,
-                              self._l2network_multiblade.create_port,
-                              [self.tenant_id,
-                              self.net_id,
-                              self.port_state,
-                              self.port_id])
-        device_ips = device_params[const.DEVICE_IP]
-        print device_params
-        print "asdfasdfasdfasdf"
-        for device_ip in device_ips:
-            new_device_params[const.DEVICE_IP] = device_ip
-            self.assertEqual(self.test_device_ip,
-                 new_device_params[const.DEVICE_IP])
+        print 'asdfasdfasdfasdfasdfasdfasdfasdf'
+        print ports
+        #self.assertEqual(networks.__len__(), self.ucs_count)
+        
+        #for network in networks:
+        #    self.assertEqual(network[const.NET_ID], self.net_id)
+        #    self.assertEqual(network[const.NET_NAME], self.net_name)
         self.tearDownNetwork(self.tenant_id, self.net_id)
         LOG.debug("test_create_network - END")
 

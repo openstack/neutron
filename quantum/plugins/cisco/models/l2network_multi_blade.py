@@ -118,10 +118,14 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def delete_network(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
-        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+        output = []
+        ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
                                        self._func_name(), args)
+        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
+        output.extend(ucs_output or [])
+        output.extend(nexus_output or [])
+        return output
 
     def get_network_details(self, args):
         """Not implemented for this model"""
@@ -129,10 +133,14 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def rename_network(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
-        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+        output = []
+        ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
                                        self._func_name(), args)
+        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(), args)
+        output.extend(ucs_output or [])
+        output.extend(nexus_output or [])
+        return output
 
     def get_all_ports(self, args):
         """Not implemented for this model"""
@@ -140,13 +148,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def create_port(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
+        return self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                       self._func_name(), args)
 
     def delete_port(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
+        return self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                        self._func_name(), args)
 
     def update_port(self, args):
         """Not implemented for this model"""
@@ -158,13 +166,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def plug_interface(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
+        return self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                        self._func_name(), args)
 
     def unplug_interface(self, args):
         """Support for the Quantum core API call"""
-        self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
-                                       args)
+        return self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                        self._func_name(), args)
 
     def schedule_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
