@@ -31,7 +31,7 @@ LOG = logging.getLogger('quantum.tests.test_database')
 
 
 class QuantumDBTest(unittest.TestCase):
-    """Class conisting of Quantum DB unit tests"""
+    """Class consisting of Quantum DB unit tests"""
     def setUp(self):
         """Setup for tests"""
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
@@ -47,7 +47,6 @@ class QuantumDBTest(unittest.TestCase):
         """test to create network"""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
-        self.teardown_network_port()
 
     def testb_get_networks(self):
         """test to get all networks"""
@@ -61,7 +60,6 @@ class QuantumDBTest(unittest.TestCase):
             if "plugin_test" in net["net-name"]:
                 count += 1
         self.assertTrue(count == 2)
-        self.teardown_network_port()
 
     def testc_delete_network(self):
         """test to delete network"""
@@ -69,12 +67,8 @@ class QuantumDBTest(unittest.TestCase):
         self.assertTrue(net1["net-name"] == "plugin_test1")
         self.dbtest.delete_network(net1["net-id"])
         nets = self.dbtest.get_all_networks(self.tenant_id)
-        count = 0
-        for net in nets:
-            if "plugin_test1" in net["net-name"]:
-                count += 1
+        count = len(nets)
         self.assertTrue(count == 0)
-        self.teardown_network_port()
 
     def testd_rename_network(self):
         """test to rename network"""
@@ -83,19 +77,21 @@ class QuantumDBTest(unittest.TestCase):
         net = self.dbtest.rename_network(self.tenant_id, net1["net-id"],
           "plugin_test1_renamed")
         self.assertTrue(net["net-name"] == "plugin_test1_renamed")
-        self.teardown_network_port()
 
     def teste_create_port(self):
         """test to create port"""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         port = self.dbtest.create_port(net1["net-id"])
         self.assertTrue(port["net-id"] == net1["net-id"])
+
+    def testf_get_ports(self):
+        """test to get ports"""
+        net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
+        port = self.dbtest.create_port(net1["net-id"])
+        self.assertTrue(port["net-id"] == net1["net-id"])
         ports = self.dbtest.get_all_ports(net1["net-id"])
-        count = 0
-        for por in ports:
-            count += 1
+        count = len(ports)
         self.assertTrue(count == 1)
-        self.teardown_network_port()
 
     def testf_delete_port(self):
         """test to delete port"""
@@ -103,18 +99,11 @@ class QuantumDBTest(unittest.TestCase):
         port = self.dbtest.create_port(net1["net-id"])
         self.assertTrue(port["net-id"] == net1["net-id"])
         ports = self.dbtest.get_all_ports(net1["net-id"])
-        count = 0
-        for por in ports:
-            count += 1
-        self.assertTrue(count == 1)
         for por in ports:
             self.dbtest.delete_port(net1["net-id"], por["port-id"])
         ports = self.dbtest.get_all_ports(net1["net-id"])
-        count = 0
-        for por in ports:
-            count += 1
+        count = len(ports)
         self.assertTrue(count == 0)
-        self.teardown_network_port()
 
     def testg_plug_unplug_interface(self):
         """test to plug/unplug interface"""
@@ -126,16 +115,3 @@ class QuantumDBTest(unittest.TestCase):
         self.dbtest.unplug_interface(net1["net-id"], port1["port-id"])
         port = self.dbtest.get_port(net1["net-id"], port1["port-id"])
         self.assertTrue(port[0]["int-id"] == None)
-        self.teardown_network_port()
-
-    def teardown_network_port(self):
-        """tearDown for Network and Port table"""
-        networks = self.dbtest.get_all_networks(self.tenant_id)
-        for net in networks:
-            netid = net["net-id"]
-            name = net["net-name"]
-            if "plugin_test" in name:
-                ports = self.dbtest.get_all_ports(netid)
-                for por in ports:
-                    self.dbtest.delete_port(netid, por["port-id"])
-                self.dbtest.delete_network(netid)
