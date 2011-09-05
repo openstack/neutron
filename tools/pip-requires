@@ -1,6 +1,5 @@
 eventlet>=0.9.12
 Routes>=1.12.3
-Cheetah>=2.0.1
 nose
 Paste
 PasteDeploy
