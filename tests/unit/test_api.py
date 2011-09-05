@@ -298,6 +298,14 @@ class APITest(unittest.TestCase):
         self.assertEqual(len(port_data['ports']), 2)
         LOG.debug("_test_list_ports - format:%s - END", format)
 
+    def _test_list_ports_networknotfound(self, format):
+        LOG.debug("_test_list_ports_networknotfound - format:%s - START", format)
+        list_port_req = testlib.port_list_request(self.tenant_id,
+                                                  "A_BAD_ID", format)
+        list_port_res = list_port_req.get_response(self.api)
+        self.assertEqual(list_port_res.status_int, 420)
+        LOG.debug("_test_list_ports_networknotfound - format:%s - END", format)
+
     def _test_list_ports_detail(self, format):
         LOG.debug("_test_list_ports_detail - format:%s - START", format)
         content_type = "application/%s" % format
@@ -881,6 +889,12 @@ class APITest(unittest.TestCase):
 
     def test_list_ports_xml(self):
         self._test_list_ports('xml')
+
+    def test_list_ports_networknotfound_json(self):
+        self._test_list_ports_networknotfound('json')
+
+    def test_list_ports_networknotfound_xml(self):
+        self._test_list_ports_networknotfound('xml')
 
     def test_list_ports_detail_json(self):
         self._test_list_ports_detail('json')
