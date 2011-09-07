@@ -238,7 +238,6 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.get_all_ports() called")
-        self._get_network(tenant_id, net_id)
         port_ids = []
         ports = db.port_list(net_id)
         for x in ports:
