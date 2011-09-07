@@ -46,7 +46,7 @@ class QuantumController(wsgi.Controller):
                        self._resource_name + " not found in request body")
                 for line in msg.split('\n'):
                     LOG.error(line)
-                    raise exc.HTTPBadRequest(msg)
+                raise exc.HTTPBadRequest(msg)
 
         for param in params:
             param_name = param['param-name']
