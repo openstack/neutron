@@ -1,7 +1,7 @@
 # -- Background
 
-The quantum openvswitch plugin is a simple plugin that allows you to
-manage connectivity between VMs on hypervisors running openvswitch.
+The quantum openvswitch plugin is a plugin that allows you to manage
+connectivity between VMs on hypervisors running openvswitch.
 
 The quantum openvswitch plugin consists of three components:
 
@@ -55,10 +55,10 @@ provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin
 
 # -- Database config.
 
-The OVS quantum service requires access to a mysql database in order
-to store configuration and mappings that will be used by the agent.
-Here is how to set up the database on the host that you will be
-running the quantum service on.
+The Open vSwitch quantum service requires access to a mysql database in order
+to store configuration and mappings that will be used by the agent.  Here is
+how to set up the database on the host that you will be running the quantum
+service on.
 
 MySQL should be installed on the host, and all plugins and clients
 must be configured with access to the database.
@@ -72,8 +72,8 @@ communicate with the host running the quantum service:
 
 # log in to mysql service
 $ mysql -u root -p
-# The OVS Quantum agent running on each compute node must be able to
-  make a mysql connection back to the main database server.
+# The Open vSwitch Quantum agent running on each compute node must be able to
+# make a mysql connection back to the main database server.
 mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
 # force update of authorization changes
 mysql> FLUSH PRIVILEGES;
@@ -127,17 +127,19 @@ $ python ovs_quantum_agent.py ovs_quantum_plugin.ini
 
 This will show help all of the available commands.
 
-An example session looks like this:
+An example session (to attach a vm interface with id 'foo') looks like
+this:
 
 $ export TENANT=t1
+$ export VIF_UUID=foo # This should be the uuid of the virtual interface
 $ python bin/cli create_net $TENANT network1
 Created a new Virtual Network with ID:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export NETWORK=e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ python bin/cli create_port $TENANT $NETWORK
 Created Virtual Port:5a1e121b-ccc8-471d-9445-24f15f9f854c on Virtual Network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 $ export PORT=5a1e121b-ccc8-471d-9445-24f15f9f854c
-$ python bin/cli plug_iface $TENANT $NETWORK $PORT ubuntu1-eth1
-Plugged interface "ubuntu1-eth1" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
+$ python bin/cli plug_iface $TENANT $NETWORK $PORT $VIF_UUID
+Plugged interface "foo" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:e754e7c0-a8eb-40e5-861a-b182d30c3441
 
 (.. repeat for more ports and interface combinations..)
 
