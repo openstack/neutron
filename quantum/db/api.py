@@ -170,6 +170,8 @@ def port_create(net_id, state=None):
 
 
 def port_list(net_id):
+    # confirm network exists
+    network_get(net_id)
     session = get_session()
     return session.query(models.Port).\
       filter_by(network_id=net_id).\
