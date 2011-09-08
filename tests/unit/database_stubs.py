@@ -37,9 +37,9 @@ class QuantumDB(object):
             for net in db.network_list(tenant_id):
                 LOG.debug("Getting network: %s", net.uuid)
                 net_dict = {}
-                net_dict["tenant-id"] = net.tenant_id
-                net_dict["net-id"] = str(net.uuid)
-                net_dict["net-name"] = net.name
+                net_dict["tenant_id"] = net.tenant_id
+                net_dict["id"] = str(net.uuid)
+                net_dict["name"] = net.name
                 nets.append(net_dict)
         except Exception, exc:
             LOG.error("Failed to get all networks: %s", str(exc))
@@ -52,9 +52,9 @@ class QuantumDB(object):
             for net in db.network_get(network_id):
                 LOG.debug("Getting network: %s", net.uuid)
                 net_dict = {}
-                net_dict["tenant-id"] = net.tenant_id
-                net_dict["net-id"] = str(net.uuid)
-                net_dict["net-name"] = net.name
+                net_dict["tenant_id"] = net.tenant_id
+                net_dict["id"] = str(net.uuid)
+                net_dict["name"] = net.name
                 net.append(net_dict)
         except Exception, exc:
             LOG.error("Failed to get network: %s", str(exc))
@@ -66,9 +66,9 @@ class QuantumDB(object):
         try:
             res = db.network_create(tenant_id, net_name)
             LOG.debug("Created network: %s", res.uuid)
-            net_dict["tenant-id"] = res.tenant_id
-            net_dict["net-id"] = str(res.uuid)
-            net_dict["net-name"] = res.name
+            net_dict["tenant_id"] = res.tenant_id
+            net_dict["id"] = str(res.uuid)
+            net_dict["name"] = res.name
             return net_dict
         except Exception, exc:
             LOG.error("Failed to create network: %s", str(exc))
@@ -79,7 +79,7 @@ class QuantumDB(object):
             net = db.network_destroy(net_id)
             LOG.debug("Deleted network: %s", net.uuid)
             net_dict = {}
-            net_dict["net-id"] = str(net.uuid)
+            net_dict["id"] = str(net.uuid)
             return net_dict
         except Exception, exc:
             LOG.error("Failed to delete network: %s", str(exc))
@@ -90,8 +90,8 @@ class QuantumDB(object):
             net = db.network_rename(net_id, tenant_id, new_name)
             LOG.debug("Renamed network: %s", net.uuid)
             net_dict = {}
-            net_dict["net-id"] = str(net.uuid)
-            net_dict["net-name"] = net.name
+            net_dict["id"] = str(net.uuid)
+            net_dict["name"] = net.name
             return net_dict
         except Exception, exc:
             LOG.error("Failed to rename network: %s", str(exc))
@@ -103,9 +103,9 @@ class QuantumDB(object):
             for port in db.port_list(net_id):
                 LOG.debug("Getting port: %s", port.uuid)
                 port_dict = {}
-                port_dict["port-id"] = str(port.uuid)
+                port_dict["id"] = str(port.uuid)
                 port_dict["net-id"] = str(port.network_id)
-                port_dict["int-id"] = port.interface_id
+                port_dict["attachment"] = port.interface_id
                 port_dict["state"] = port.state
                 ports.append(port_dict)
             return ports
@@ -119,9 +119,9 @@ class QuantumDB(object):
         try:
             LOG.debug("Getting port: %s", port.uuid)
             port_dict = {}
-            port_dict["port-id"] = str(port.uuid)
+            port_dict["id"] = str(port.uuid)
             port_dict["net-id"] = str(port.network_id)
-            port_dict["int-id"] = port.interface_id
+            port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             port_list.append(port_dict)
             return port_list
@@ -134,9 +134,9 @@ class QuantumDB(object):
         try:
             port = db.port_create(net_id)
             LOG.debug("Creating port %s", port.uuid)
-            port_dict["port-id"] = str(port.uuid)
+            port_dict["id"] = str(port.uuid)
             port_dict["net-id"] = str(port.network_id)
-            port_dict["int-id"] = port.interface_id
+            port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
         except Exception, exc:
@@ -148,7 +148,7 @@ class QuantumDB(object):
             port = db.port_destroy(port_id, net_id)
             LOG.debug("Deleted port %s", port.uuid)
             port_dict = {}
-            port_dict["port-id"] = str(port.uuid)
+            port_dict["id"] = str(port.uuid)
             return port_dict
         except Exception, exc:
             LOG.error("Failed to delete port: %s", str(exc))
@@ -159,9 +159,9 @@ class QuantumDB(object):
             port = db.port_set_state(net_id, port_id, port_state)
             LOG.debug("Updated port %s", port.uuid)
             port_dict = {}
-            port_dict["port-id"] = str(port.uuid)
+            port_dict["id"] = str(port.uuid)
             port_dict["net-id"] = str(port.network_id)
-            port_dict["int-id"] = port.interface_id
+            port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
         except Exception, exc:
@@ -173,9 +173,9 @@ class QuantumDB(object):
             port = db.port_set_attachment(port_id, net_id, int_id)
             LOG.debug("Attached interface to port %s", port.uuid)
             port_dict = {}
-            port_dict["port-id"] = str(port.uuid)
+            port_dict["id"] = str(port.uuid)
             port_dict["net-id"] = str(port.network_id)
-            port_dict["int-id"] = port.interface_id
+            port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
         except Exception, exc:
