@@ -302,7 +302,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         """
         Creates a port on the specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:create_port() called\n")
+        LOG.debug("UCSVICPlugin:create_multiport() called\n")
         self._set_ucsm(kwargs[const.DEVICE_IP])
         qos = None
         ucs_inventory = kwargs[const.UCS_INVENTORY]

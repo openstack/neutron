@@ -32,7 +32,6 @@ import logging
 import logging.handlers
 import os
 import sys
-import string
 import subprocess
 
 from optparse import OptionParser
@@ -45,7 +44,6 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'quantum', '__init__.py')):
 
 gettext.install('quantum', unicode=1)
 
-from quantum import cli_lib
 from quantum.client import Client
 
 from quantum.plugins.cisco.common import cisco_constants as const
