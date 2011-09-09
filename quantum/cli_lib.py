@@ -74,7 +74,7 @@ class OutputTemplate(object):
         items = item.split('.')
         if len(items) == 1:
             return self.data[item]
-        else:
+        elif len(items) == 2:
             return self.data[items[0]][items[1]]
 
     def _make_list(self, items, inner_template):
@@ -83,7 +83,7 @@ class OutputTemplate(object):
         """
         #make sure list is subscriptable
         if not hasattr(items, '__getitem__'):
-            return inner_template % items
+            raise Exception("Element is not iterable")
         return "\n".join([inner_template % item for item in items])
 
 
@@ -131,8 +131,7 @@ class CmdOutputTemplate(OutputTemplate):
         "unplug_iface":   "Unplugged interface from Logical Port:" +
                           "%(port_id)s\n" +
                           "on Virtual Network: %(network_id)s\n" +
-                          "for Tenant: %(tenant_id)s"
-        }
+                          "for Tenant: %(tenant_id)s"}
 
     def __init__(self, cmd, data):
         super(CmdOutputTemplate, self).__init__(self._templates[cmd], data)
