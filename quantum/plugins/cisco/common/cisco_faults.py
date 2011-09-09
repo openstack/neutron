@@ -34,6 +34,7 @@ class Fault(webob.exc.HTTPException):
             451: "CredentialNotFound",
             452: "QoSNotFound",
             453: "NovatenantNotFound",
+            454: "MultiportNotFound",
             470: "serviceUnavailable",
             471: "pluginFault"}
 
@@ -96,7 +97,7 @@ class CredentialNotFound(webob.exc.HTTPClientError):
     This indicates that the server did not find the Credential specified
     in the HTTP request
 
-    code: 460, title: Credential not Found
+    code: 451, title: Credential not Found
     """
     code = 451
     title = 'Credential Not Found'
@@ -111,7 +112,7 @@ class QosNotFound(webob.exc.HTTPClientError):
     This indicates that the server did not find the QoS specified
     in the HTTP request
 
-    code: 480, title: QoS not Found
+    code: 452, title: QoS not Found
     """
     code = 452
     title = 'QoS Not Found'
@@ -126,11 +127,26 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     This indicates that the server did not find the Novatenant specified
     in the HTTP request
 
-    code: 480, title: Nova tenant not Found
+    code: 453, title: Nova tenant not Found
     """
     code = 453
     title = 'Nova tenant Not Found'
     explanation = ('Unable to find a Novatenant with'
+                   + ' the specified identifier.')
+
+
+class MultiportNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the Multiport specified
+    in the HTTP request
+
+    code: 454, title: Multiport not Found
+    """
+    code = 454
+    title = 'Multiport Not Found'
+    explanation = ('Unable to find Multiport with'
                    + ' the specified identifier.')
 
 

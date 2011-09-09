@@ -145,7 +145,7 @@ class CiscoUCSMDriver():
 
     def _post_data(self, ucsm_ip, ucsm_username, ucsm_password, data):
         """Send command to UCSM in http request"""
-        conn = httplib.HTTPConnection(ucsm_ip)
+        conn = httplib.HTTPSConnection(ucsm_ip)
         login_data = "<aaaLogin inName=\"" + ucsm_username + \
         "\" inPassword=\"" + ucsm_password + "\" />"
         conn.request(METHOD, URL, login_data, HEADERS)
