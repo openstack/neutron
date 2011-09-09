@@ -85,7 +85,7 @@ PASSWORD = 'password'
 
 LOGGER_COMPONENT_NAME = "cisco_plugin"
 
-BLADE_INTF_DN = "blade-intf-distinguished-name"
+BLADE_INTF_DN = "blade_intf_distinguished_name"
 BLADE_INTF_ORDER = "blade-intf-order"
 BLADE_INTF_LINK_STATE = "blade-intf-link-state"
 BLADE_INTF_OPER_STATE = "blade-intf-operational-state"

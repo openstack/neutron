@@ -14,6 +14,7 @@
 #    under the License.
 #
 # @author: Shubhangi Satras, Cisco Systems, Inc.
+#          Shweta Padubidri, Cisco Systems, Inc.
 #
 import unittest
 import logging as LOG
@@ -21,39 +22,54 @@ from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.ucs import cisco_ucs_plugin
 from quantum.plugins.cisco.ucs import cisco_ucs_configuration  as conf
+from quantum.plugins.cisco.common import cisco_credentials as cred
+
+from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.common import cisco_exceptions as c_exc
+
+from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv
 
 LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger("cisco_plugin")
+LOG.getLogger("cisco_ucs_plugin")
 
 
 class UCSVICTestPlugin(unittest.TestCase):
 
     def setUp(self):
-        """
-        Set up function.
-        """
 
         self.tenant_id = "test_tenant_cisco12"
         self.net_name = "test_network_cisco12"
         self.net_id = 000011
-        self.vlan_name = "q-" + str(self.net_id) + "vlan"
-        self.vlan_id = 266
+        self.vlan_name = conf.DEFAULT_VLAN_NAME
+        self.vlan_id = conf.DEFAULT_VLAN_ID
         self.port_id = "4"
+        cdb.initialize()
+        cred.Store.initialize()
         self._cisco_ucs_plugin = cisco_ucs_plugin.UCSVICPlugin()
+        self.device_ip = conf.UCSM_IP_ADDRESS
+        self._ucs_inventory = ucsinv.UCSInventory()
+        self.chassis_id = '1'
+        self.blade_id = '5'
+        self.blade_intf_distinguished_name = 'sys/chassis-1/blade-5/'\
+                                             'adaptor-1/host-eth-6'
 
     def test_create_network(self):
         """
         Tests creation of new Virtual Network.
         """
         LOG.debug("UCSVICTestPlugin:_test_create_network() called\n")
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
         new_net_dict = self._cisco_ucs_plugin.create_network(
-                self.tenant_id,        self.net_name, self.net_id,
-                self.vlan_name, self.vlan_id)
-        self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
-        self.assertEqual(new_net_dict[const.NET_NAME], self.net_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.vlan_id)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        self.assertEqual(new_net_dict[const.NET_ID], new_network[const.UUID])
+        self.assertEqual(new_net_dict[const.NET_NAME],
+                         new_network[const.NETWORKNAME])
+        self.tearDownNetwork(self.tenant_id, new_network[const.UUID])
 
     def test_delete_network(self):
         """
@@ -61,12 +77,16 @@ class UCSVICTestPlugin(unittest.TestCase):
         belonging to the specified tenant.
         """
         LOG.debug("UCSVICTestPlugin:test_delete_network() called\n")
-        self._cisco_ucs_plugin.create_network(
-            self.tenant_id, self.net_name, self.net_id,
-            self.vlan_name, self.vlan_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
         new_net_dict = self._cisco_ucs_plugin.delete_network(
-           self.tenant_id, self.net_id)
-        self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
+           self.tenant_id, new_network[const.UUID], device_ip=self.device_ip)
+        self.assertEqual(new_net_dict[const.NET_ID], new_network[const.UUID])
 
     def test_get_network_details(self):
         """
@@ -74,15 +94,20 @@ class UCSVICTestPlugin(unittest.TestCase):
         spec
         """
         LOG.debug("UCSVICTestPlugin:test_get_network_details() called\n")
-        self._cisco_ucs_plugin.create_network(
-            self.tenant_id, self.net_name, self.net_id,
-            self.vlan_name, self.vlan_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
         new_net_dict = self._cisco_ucs_plugin.get_network_details(
-                            self.tenant_id, self.net_id)
-        self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
-        self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.vlan_id)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+                   self.tenant_id, new_network[const.UUID],
+                   device_ip=self.device_ip)
+        self.assertEqual(new_net_dict[const.NET_ID], new_network[const.UUID])
+        self.assertEqual(new_net_dict[const.NET_NAME],
+                         new_network[const.NETWORKNAME])
+        self.tearDownNetwork(self.tenant_id, new_network[const.UUID])
 
     def test_get_all_networks(self):
         """
@@ -91,18 +116,28 @@ class UCSVICTestPlugin(unittest.TestCase):
         the specified tenant.
         """
         LOG.debug("UCSVICTestPlugin:test_get_all_networks() called\n")
+        new_network1 = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network1[const.UUID])
         new_net_dict1 = self._cisco_ucs_plugin.create_network(
-             self.tenant_id, self.net_name, self.net_id,
-             self.vlan_name, self.vlan_id)
+                self.tenant_id, new_network1[const.NETWORKNAME],
+                new_network1[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_network2 = db.network_create(self.tenant_id, "test_network2")
+        cdb.add_vlan_binding("6", "q-000006vlan", new_network2[const.UUID])
         new_net_dict2 = self._cisco_ucs_plugin.create_network(
-                              self.tenant_id, "test_network2",
-                              000006, "q-000006vlan", "6")
-        net_list = self._cisco_ucs_plugin.get_all_networks(self.tenant_id)
+                self.tenant_id, new_network2[const.NETWORKNAME],
+                new_network2[const.UUID], "q-000006vlan", "6",
+                device_ip=self.device_ip)
+
+        net_list = self._cisco_ucs_plugin.get_all_networks(
+                                self.tenant_id, device_ip=self.device_ip)
         net_id_list = [new_net_dict1, new_net_dict2]
+
         self.assertTrue(net_list[0] in net_id_list)
         self.assertTrue(net_list[1] in net_id_list)
-        self.tearDownNetwork(self.tenant_id, new_net_dict1[const.NET_ID])
-        self.tearDownNetwork(self.tenant_id, new_net_dict2[const.NET_ID])
+        self.tearDownNetwork(self.tenant_id, new_network1[const.UUID])
+        self.tearDownNetwork(self.tenant_id, new_network2[const.UUID])
 
     def test_get_all_ports(self):
         """
@@ -110,74 +145,81 @@ class UCSVICTestPlugin(unittest.TestCase):
         specified Virtual Network.
         """
         LOG.debug("UCSVICPlugin:get_all_ports() called\n")
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
         new_net_dict = self._cisco_ucs_plugin.create_network(
-             self.tenant_id, self.net_name, self.net_id,
-             self.vlan_name, self.vlan_id)
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port1 = db.port_create(new_network[const.UUID], const.PORT_UP)
         port_dict1 = self._cisco_ucs_plugin.create_port(
-             self.tenant_id, self.net_id, const.PORT_UP,
-             self.port_id)
+                            self.tenant_id, self.net_id, const.PORT_UP,
+                            new_port1[const.UUID], device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
+        new_port2 = db.port_create(new_network[const.UUID], const.PORT_UP)
         port_dict2 = self._cisco_ucs_plugin.create_port(
-             self.tenant_id, self.net_id,
-             const.PORT_UP, "10")
+                               self.tenant_id, self.net_id, const.PORT_UP,
+                               new_port2[const.UUID], device_ip=self.device_ip,
+                               ucs_inventory=self._ucs_inventory,
+                               least_rsvd_blade_dict=self._ucs_inventory.\
+                               _get_least_reserved_blade())
         ports_on_net = self._cisco_ucs_plugin.get_all_ports(
-                           self.tenant_id, self.net_id)
+                           self.tenant_id, new_net_dict[const.NET_ID],
+                           device_ip=self.device_ip,
+                           ucs_inventory=self._ucs_inventory,
+                           least_rsvd_blade_dict=self._ucs_inventory.\
+                           _get_least_reserved_blade())
         port_list = [port_dict1, port_dict2]
-        self.assertTrue(port_list[0] in ports_on_net)
-        self.assertTrue(port_list[1] in ports_on_net)
-        self._cisco_ucs_plugin.delete_port(self.tenant_id, self.net_id,
-                                                self.port_id)
-        self.tearDownNetworkPort(self.tenant_id, new_net_dict[const.NET_ID],
-                                 port_dict2[const.PORT_ID])
+        self.assertTrue(str(ports_on_net[1]) == str(port_list[1]) or
+                        str(ports_on_net[1]) == str(port_list[0]))
+        self.assertTrue(str(ports_on_net[0]) == str(port_list[1]) or
+                        str(ports_on_net[0]) == str(port_list[0]))
 
-    def _test_rename_network(self, new_name):
-        """
-        Tests whether symbolic name is updated for the particular
-        Virtual Network.
-        """
-        LOG.debug("UCSVICTestPlugin:_test_rename_network() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                                   self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        new_net_dict = self._cisco_ucs_plugin.rename_network(
-             self.tenant_id, self.net_id, new_name)
-        self.assertEqual(new_net_dict[const.NET_NAME], new_name)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+        self._cisco_ucs_plugin.delete_port(
+                     self.tenant_id, new_net_dict[const.NET_ID],
+                     port_dict1[const.PORTID], device_ip=self.device_ip,
+                     ucs_inventory=self._ucs_inventory,
+                     chassis_id=self.chassis_id, blade_id=self.blade_id,
+                     blade_intf_distinguished_name=self.\
+                     blade_intf_distinguished_name,
+                     least_rsvd_blade_dict=self._ucs_inventory.\
+                     _get_least_reserved_blade())
+        self.tearDownNetworkPort(
+                 self.tenant_id, new_net_dict[const.NET_ID],
+                 port_dict2[const.PORTID])
 
-    def test_rename_network(self):
-        """
-        Tests rename network.
-        """
-        self._test_rename_network("new_test_network1")
-
-    def _test_create_port(self, port_state):
+    def test_create_port(self):
         """
         Tests creation of a port on the specified Virtual Network.
         """
         LOG.debug("UCSVICTestPlugin:_test_create_port() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                                  self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        new_port_dict = self._cisco_ucs_plugin.create_port(
-             self.tenant_id, self.net_id, port_state, self.port_id)
-        self.assertEqual(new_port_dict[const.PORT_ID], self.port_id)
-        self.assertEqual(new_port_dict[const.PORT_STATE], port_state)
-        self.assertEqual(new_port_dict[const.ATTACHMENT], None)
-        profile_name = self._cisco_ucs_plugin._get_profile_name(self.port_id)
-        new_port_profile = new_port_dict[const.PORT_PROFILE]
-        self.assertEqual(new_port_profile[const.PROFILE_NAME], profile_name)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_NAME],
-                         conf.DEFAULT_VLAN_NAME)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_ID],
-                         conf.DEFAULT_VLAN_ID)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
 
-    def test_create_port(self):
-        """
-        Tests create port.
-        """
-        self._test_create_port(const.PORT_UP)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        port_dict = self._cisco_ucs_plugin.create_port(
+                            self.tenant_id, self.net_id, const.PORT_UP,
+                            new_port[const.UUID], device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
+        self.assertEqual(port_dict[const.PORTID], new_port[const.UUID])
+        profile_name = self._cisco_ucs_plugin.\
+                           _get_profile_name(port_dict[const.PORTID])
+        self.assertTrue(profile_name != None)
+        self.tearDownNetworkPort(
+                 self.tenant_id, new_net_dict[const.NET_ID],
+                 port_dict[const.PORTID])
 
-    def _test_delete_port(self, port_state):
+    def test_delete_port(self):
         """
         Tests Deletion of a port on a specified Virtual Network,
         if the port contains a remote interface attachment,
@@ -185,378 +227,255 @@ class UCSVICTestPlugin(unittest.TestCase):
         then the port can be deleted.
         """
         LOG.debug("UCSVICTestPlugin:_test_delete_port() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                               self.net_id, self.vlan_name,
-                                               self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                                port_state, self.port_id)
-        self._cisco_ucs_plugin.delete_port(self.tenant_id, self.net_id,
-                                                self.port_id)
-        net = self._cisco_ucs_plugin._get_network(self.tenant_id, self.net_id)
-        self.assertEqual(net[const.NET_PORTS], {})
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        port_dict = self._cisco_ucs_plugin.create_port(
+                            self.tenant_id, self.net_id, const.PORT_UP,
+                            new_port[const.UUID], device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
+        port_bind = self._cisco_ucs_plugin.delete_port(
+                         self.tenant_id, new_net_dict[const.NET_ID],
+                         port_dict[const.PORTID], device_ip=self.device_ip,
+                         ucs_inventory=self._ucs_inventory,
+                         chassis_id=self.chassis_id, blade_id=self.blade_id,
+                         blade_intf_distinguished_name=self.\
+                         blade_intf_distinguished_name,
+                         least_rsvd_blade_dict=self._ucs_inventory.\
+                         _get_least_reserved_blade())
 
-    def test_delete_port(self):
-        """
-        Tests delete port.
-        """
-        self._test_delete_port(const.PORT_UP)
+        self.assertEqual(port_bind[const.PORTID], new_port[const.UUID])
+        self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
 
-    def _test_update_port(self, port_state):
-        """
-        Tests Updation of the state of a port on the specified Virtual Network.
-        """
-        LOG.debug("UCSVICTestPlugin:_test_update_port() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                                   self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                                port_state, self.port_id)
-        port = self._cisco_ucs_plugin.update_port(
-             self.tenant_id, self.net_id,
-             self.port_id, port_state)
-        self.assertEqual(port[const.PORT_STATE], port_state)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
-
-    def test_update_port_state_up(self):
-        """
-        Tests update port state up
-        """
-        self._test_update_port(const.PORT_UP)
-
-    def test_update_port_state_down(self):
-        """
-        Tests update port state down
-        """
-        self._test_update_port(const.PORT_DOWN)
-
-    def _test_get_port_details_state_up(self, port_state):
+    def _test_get_port_details(self, port_state):
         """
         Tests whether  user is able  to retrieve a remote interface
         that is attached to this particular port when port state is Up.
         """
-        LOG.debug("UCSVICTestPlugin:_test_get_port_details_state_up()" +
-             "called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                               self.net_id, self.vlan_name,
-                                               self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                           port_state, self.port_id)
-        port = self._cisco_ucs_plugin.get_port_details(
-              self.tenant_id, self.net_id, self.port_id)
-        self.assertEqual(port[const.PORT_ID], self.port_id)
-        self.assertEqual(port[const.PORT_STATE], port_state)
-        self.assertEqual(port[const.ATTACHMENT], None)
-        new_port_profile = port[const.PORT_PROFILE]
-        profile_name = self._cisco_ucs_plugin._get_profile_name(self.port_id)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_NAME],
-                         conf.DEFAULT_VLAN_NAME)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_ID],
-                         conf.DEFAULT_VLAN_ID)
-        self.assertEqual(new_port_profile[const.PROFILE_NAME], profile_name)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
+        LOG.debug("UCSVICTestPlugin:_test_get_port_details() called\n")
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port = db.port_create(new_network[const.UUID], port_state)
+        port_dict = self._cisco_ucs_plugin.create_port(
+                            self.tenant_id, self.net_id, port_state,
+                            new_port[const.UUID], device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
 
-    def _test_show_port_state_down(self, port_state):
-        """
-        Tests whether  user is able  to retrieve a remote interface
-        that is attached to this particular port when port state is down.
-        """
-        LOG.debug("UCSVICTestPlugin:_test_show_port_state_down()" +
-             "called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                               self.net_id, self.vlan_name,
-                                               self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                           port_state, self.port_id)
-        port = self._cisco_ucs_plugin.get_port_details(self.tenant_id,
-                                                           self.net_id,
-                                                       self.port_id)
-        self.assertEqual(port[const.PORT_ID], self.port_id)
-        self.assertNotEqual(port[const.PORT_STATE], port_state)
-        self.assertEqual(port[const.ATTACHMENT], None)
-        new_port_profile = port[const.PORT_PROFILE]
-        profile_name = self._cisco_ucs_plugin._get_profile_name(self.port_id)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_NAME],
-                              conf.DEFAULT_VLAN_NAME)
-        self.assertEqual(new_port_profile[const.PROFILE_VLAN_ID],
-                         conf.DEFAULT_VLAN_ID)
-        self.assertEqual(new_port_profile[const.PROFILE_NAME], profile_name)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
+        port_detail = self._cisco_ucs_plugin.get_port_details(
+                            self.tenant_id, new_net_dict[const.NET_ID],
+                            port_dict[const.PORTID], device_ip=self.device_ip)
+        self.assertEqual(str(port_dict), str(port_detail))
+        self.tearDownNetworkPort(
+                 self.tenant_id, new_net_dict[const.NET_ID],
+                 port_dict[const.PORTID])
 
     def test_get_port_details_state_up(self):
-        """
-        Tests get port details state up
-        """
-        self._test_get_port_details_state_up(const.PORT_UP)
+        self._test_get_port_details(const.PORT_UP)
 
     def test_show_port_state_down(self):
-        """
-        Tests show port state down
-        """
-        self._test_show_port_state_down(const.PORT_DOWN)
+        self._test_get_port_details(const.PORT_DOWN)
 
     def test_create_port_profile(self):
-        """
-        Tests create port profile
-        """
         LOG.debug("UCSVICTestPlugin:test_create_port_profile() called\n")
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        self._cisco_ucs_plugin._set_ucsm(self.device_ip)
         new_port_profile = self._cisco_ucs_plugin._create_port_profile(
-                                self.tenant_id, self.net_id, self.port_id,
-                                self.vlan_name, self.vlan_id)
-        profile_name = self._cisco_ucs_plugin._get_profile_name(self.port_id)
+                                self.tenant_id, new_network[const.UUID],
+                                new_port[const.UUID], self.vlan_name,
+                                self.vlan_id)
+        profile_name = self._cisco_ucs_plugin.\
+                            _get_profile_name(new_port[const.UUID])
         self.assertEqual(new_port_profile[const.PROFILE_NAME], profile_name)
         self.assertEqual(new_port_profile[const.PROFILE_VLAN_NAME],
-                              self.vlan_name)
+                         self.vlan_name)
         self.assertEqual(new_port_profile[const.PROFILE_VLAN_ID], self.vlan_id)
-        self._cisco_ucs_plugin._delete_port_profile(self.port_id, profile_name)
+        self._cisco_ucs_plugin._delete_port_profile(new_port[const.UUID],
+                                                    profile_name)
 
     def test_delete_port_profile(self):
-        """
-        Tests delete port profile
-        """
         LOG.debug("UCSVICTestPlugin:test_delete_port_profile() called\n")
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        self._cisco_ucs_plugin._set_ucsm(self.device_ip)
         self._cisco_ucs_plugin._create_port_profile(
-                self.tenant_id, self.net_id, self.port_id, self.vlan_name,
-                self.vlan_id)
-        profile_name = self._cisco_ucs_plugin._get_profile_name(self.port_id)
-        counter1 = self._cisco_ucs_plugin._port_profile_counter
-        self._cisco_ucs_plugin._delete_port_profile(self.port_id,
-                                                         profile_name)
-        counter2 = self._cisco_ucs_plugin._port_profile_counter
-        self.assertNotEqual(counter1, counter2)
+                                self.tenant_id, new_network[const.UUID],
+                                new_port[const.UUID], self.vlan_name,
+                                self.vlan_id)
+        profile_name = self._cisco_ucs_plugin.\
+                            _get_profile_name(new_port[const.UUID])
 
-    def _test_plug_interface(self, remote_interface_id):
+        counter1 = self._cisco_ucs_plugin._port_profile_counter
+        self._cisco_ucs_plugin._delete_port_profile(new_port[const.UUID],
+                                                    profile_name)
+        counter2 = self._cisco_ucs_plugin._port_profile_counter
+        self.assertEqual(counter1 - 1, counter2)
+
+    def test_plug_interface(self, remote_interface_id=None,
+                            new_vlanid=10, new_vlan_name='new_vlan'):
         """
         Attaches a remote interface to the specified port on the
         specified Virtual Network.
         """
         LOG.debug("UCSVICTestPlugin:_test_plug_interface() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                              self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                                const.PORT_UP, self.port_id)
-        self._cisco_ucs_plugin.plug_interface(self.tenant_id, self.net_id,
-                                                   self.port_id,
-                                              remote_interface_id)
-        port = self._cisco_ucs_plugin._get_port(
-             self.tenant_id, self.net_id, self.port_id)
-        self.assertEqual(port[const.ATTACHMENT], remote_interface_id)
-        port_profile = port[const.PORT_PROFILE]
-        new_vlan_name = self._cisco_ucs_plugin._get_vlan_name_for_network(
-             self.tenant_id, self.net_id)
-        new_vlan_id = self._cisco_ucs_plugin._get_vlan_id_for_network(
-             self.tenant_id, self.net_id)
-        self.assertEqual(port_profile[const.PROFILE_VLAN_NAME], new_vlan_name)
-        self.assertEqual(port_profile[const.PROFILE_VLAN_ID], new_vlan_id)
-        self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
-                                          self.port_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        port_dict = self._cisco_ucs_plugin.create_port(
+                            self.tenant_id, new_net_dict[const.NET_ID],
+                            const.PORT_UP, new_port[const.UUID],
+                            device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
+        cdb.update_vlan_binding(new_network[const.UUID],
+                                str(new_vlanid), new_vlan_name)
+        port_bind = self._cisco_ucs_plugin.plug_interface(
+                           self.tenant_id, new_net_dict[const.NET_ID],
+                           port_dict[const.PORTID], remote_interface_id,
+                           device_ip=self.device_ip)
+        self.assertEqual(port_bind[const.VLANNAME], new_vlan_name)
+        self.assertEqual(port_bind[const.VLANID], new_vlanid)
+        self.tearDownNetworkPortInterface(
+                                   self.tenant_id, new_net_dict[const.NET_ID],
+                                   new_port[const.UUID])
 
-    def test_plug_interface(self):
-        """
-        Tests test plug interface
-        """
-        self._test_plug_interface("4")
-
-    def _test_unplug_interface(self, remote_interface_id):
+    def test_unplug_interface(self, remote_interface_id=None,
+                              new_vlanid=10, new_vlan_name='new_vlan'):
         """
         Tests whether remote interface detaches from the specified port on the
         specified Virtual Network.
         """
         LOG.debug("UCSVICTestPlugin:_test_unplug_interface() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                              self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                                const.PORT_UP, self.port_id)
-        self._cisco_ucs_plugin.plug_interface(self.tenant_id, self.net_id,
-                                                   self.port_id,
-                                              remote_interface_id)
-        self._cisco_ucs_plugin.unplug_interface(self.tenant_id, self.net_id,
-                                                self.port_id)
-        port = self._cisco_ucs_plugin._get_port(
-             self.tenant_id, self.net_id, self.port_id)
-        self.assertEqual(port[const.ATTACHMENT], None)
-        port_profile = port[const.PORT_PROFILE]
-        self.assertEqual(port_profile[const.PROFILE_VLAN_NAME],
-                              conf.DEFAULT_VLAN_NAME)
-        self.assertEqual(port_profile[const.PROFILE_VLAN_ID],
-                          conf.DEFAULT_VLAN_ID)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
+        new_port = db.port_create(new_network[const.UUID], const.PORT_UP)
+        port_dict = self._cisco_ucs_plugin.create_port(
+                            self.tenant_id, new_net_dict[const.NET_ID],
+                            const.PORT_UP, new_port[const.UUID],
+                            device_ip=self.device_ip,
+                            ucs_inventory=self._ucs_inventory,
+                            least_rsvd_blade_dict=self._ucs_inventory.\
+                            _get_least_reserved_blade())
+        cdb.update_vlan_binding(new_network[const.UUID],
+                                str(new_vlanid), new_vlan_name)
+        self._cisco_ucs_plugin.plug_interface(
+                           self.tenant_id, new_net_dict[const.NET_ID],
+                           port_dict[const.PORTID], remote_interface_id,
+                           device_ip=self.device_ip)
 
-    def test_unplug_interface(self):
-        """
-        Tests unplug interface
-        """
-        self._test_unplug_interface("4")
+        port_bind = self._cisco_ucs_plugin.unplug_interface(
+                           self.tenant_id, new_net_dict[const.NET_ID],
+                           port_dict[const.PORTID], device_ip=self.device_ip)
+        self.assertEqual(port_bind[const.VLANNAME], self.vlan_name)
+        self.assertEqual(port_bind[const.VLANID], self.vlan_id)
+        self.tearDownNetworkPortInterface(
+                                   self.tenant_id, new_net_dict[const.NET_ID],
+                                   new_port[const.UUID])
 
     def test_get_vlan_name_for_network(self):
-        """
-        Tests get vlan name for network
-        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_name_for_network() called\n")
-        net = self._cisco_ucs_plugin.create_network(
-             self.tenant_id, self.net_name, self.net_id,
-             self.vlan_name, self.vlan_id)
-        self.assertEqual(net[const.NET_VLAN_NAME], self.vlan_name)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        vlan_bind_name = self._cisco_ucs_plugin._get_vlan_name_for_network(
+                                    self.tenant_id, new_network[const.UUID])
+
+        self.assertEqual(vlan_bind_name, self.vlan_name)
 
     def test_get_vlan_id_for_network(self):
-        """
-        Tests get vlan id for network
-        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_id_for_network() called\n")
-        net = self._cisco_ucs_plugin.create_network(
-             self.tenant_id, self.net_name, self.net_id, self.vlan_name,
-             self.vlan_id)
-        self.assertEqual(net[const.NET_VLAN_ID], self.vlan_id)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        vlan_bind_id = self._cisco_ucs_plugin._get_vlan_id_for_network(
+                                    self.tenant_id, new_network[const.UUID])
+        self.assertEqual(str(vlan_bind_id), self.vlan_id)
 
-    def test_get_network(self):
-        """
-        Tests get network
-        """
-        LOG.debug("UCSVICTestPlugin:test_get_network() called\n")
-        net = self._cisco_ucs_plugin.create_network(
-             self.tenant_id, self.net_name, self.net_id, self.vlan_name,
-             self.vlan_id)
-        self.assertEqual(net[const.NET_ID], self.net_id)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
-
-    def test_get_port(self):
-        """
-        Tests get port
-        """
-        LOG.debug("UCSVICTestPlugin:test_get_port() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                                   self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        new_port_dict = self._cisco_ucs_plugin.create_port(
-             self.tenant_id, self.net_id,
-             const.PORT_UP, self.port_id)
-        self.assertEqual(new_port_dict[const.PORT_ID], self.port_id)
-        self.tearDownNetworkPort(self.tenant_id, self.net_id, self.port_id)
-
-    def test_get_network_NetworkNotFound(self):
-        """
-        Tests get network not found
-        """
+    def test_show_network_NetworkNotFound(self):
         self.assertRaises(exc.NetworkNotFound,
-                          self._cisco_ucs_plugin._get_network,
-                          self.tenant_id, self.net_id)
+                          self._cisco_ucs_plugin.get_network_details,
+                          self.tenant_id, self.net_id,
+                          device_ip=self.device_ip)
 
     def test_delete_network_NetworkNotFound(self):
-        """
-        Tests delete network not found
-        """
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin.delete_network,
-                          self.tenant_id, self.net_id)
-
-    def test_delete_port_PortInUse(self):
-        """
-        Tests delete port in use
-        """
-        self._test_delete_port_PortInUse("4")
-
-    def _test_delete_port_PortInUse(self, remote_interface_id):
-        """
-        Tests delete port in use
-        """
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                               self.net_id, self.vlan_name,
-                                               self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                                const.PORT_UP, self.port_id)
-        self._cisco_ucs_plugin.plug_interface(self.tenant_id, self.net_id,
-                                              self.port_id,
-                                              remote_interface_id)
-        self.assertRaises(exc.PortInUse, self._cisco_ucs_plugin.delete_port,
-                               self.tenant_id, self.net_id, self.port_id)
-        self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
-                                               self.port_id)
+                          self.tenant_id, self.net_id,
+                          device_ip=self.device_ip)
 
     def test_delete_port_PortNotFound(self):
-        """
-        Tests delete port not found
-        """
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                                   self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self.assertRaises(exc.PortNotFound, self._cisco_ucs_plugin.delete_port,
-                               self.tenant_id, self.net_id, self.port_id)
-        self.tearDownNetwork(self.tenant_id, self.net_id)
+        new_network = db.network_create(self.tenant_id, self.net_name)
+        cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
+                             new_network[const.UUID])
+        new_net_dict = self._cisco_ucs_plugin.create_network(
+                self.tenant_id, new_network[const.NETWORKNAME],
+                new_network[const.UUID], self.vlan_name, self.vlan_id,
+                device_ip=self.device_ip)
 
-    def test_plug_interface_PortInUse(self):
-        """
-        Tests plug interface port in use
-        """
-        self._test_plug_interface_PortInUse("6", "5")
+        self.assertRaises(c_exc.PortVnicNotFound,
+                          self._cisco_ucs_plugin.delete_port,
+                          self.tenant_id, new_net_dict[const.NET_ID],
+                          self.port_id, device_ip=self.device_ip,
+                          ucs_inventory=self._ucs_inventory,
+                          chassis_id=self.chassis_id, blade_id=self.blade_id,
+                          blade_intf_distinguished_name=self.\
+                          blade_intf_distinguished_name,
+                          least_rsvd_blade_dict=self._ucs_inventory.\
+                          _get_least_reserved_blade())
 
-    def _test_plug_interface_PortInUse(self, remote_interface_id1,
-                                       remote_interface_id2):
-        """
-        Tests plug interface port in use
-        """
-        LOG.debug("UCSVICTestPlugin:_test_plug_interface_PortInUse() called\n")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                              self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                           const.PORT_UP, self.port_id)
-        self._cisco_ucs_plugin.plug_interface(self.tenant_id, self.net_id,
-                                              self.port_id,
-                                              remote_interface_id1)
-        self.assertRaises(exc.PortInUse, self._cisco_ucs_plugin.plug_interface,
-                          self.tenant_id, self.net_id, self.port_id,
-                          remote_interface_id2)
-        self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
-                                          self.port_id)
+        self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
 
-    def test_attachment_exists(self):
-        """
-        Tests attachment exists
-        """
-        LOG.debug("UCSVICTestPlugin:testValidateAttachmentAlreadyAttached")
-        self._test_attachment_exists("4")
-
-    def _test_attachment_exists(self, remote_interface_id):
-        """
-        Tests attachment exists
-        """
-        LOG.debug("UCSVICTestPlugin:_test_validate_attachmentAlreadyAttached")
-        self._cisco_ucs_plugin.create_network(self.tenant_id, self.net_name,
-                                              self.net_id, self.vlan_name,
-                                              self.vlan_id)
-        self._cisco_ucs_plugin.create_port(self.tenant_id, self.net_id,
-                                           const.PORT_UP, self.port_id)
-        self._cisco_ucs_plugin.plug_interface(self.tenant_id, self.net_id,
-                                              self.port_id,
-                                              remote_interface_id)
-        self.assertRaises(
-            exc.PortInUse, self._cisco_ucs_plugin._validate_attachment,
-            self.tenant_id, self.net_id, self.port_id, remote_interface_id)
-        self.tearDownNetworkPortInterface(self.tenant_id, self.net_id,
-                                          self.port_id)
+    def tearDown(self):
+        """Clear the test environment"""
+        # Remove database contents
+        db.clear_db()
 
     def tearDownNetwork(self, tenant_id, net_id):
-        """
-        Tear down network
-        """
-        self._cisco_ucs_plugin.delete_network(tenant_id, net_id)
+        self._cisco_ucs_plugin.delete_network(tenant_id, net_id,
+                                              device_ip=self.device_ip)
 
     def tearDownNetworkPort(self, tenant_id, net_id, port_id):
-        """
-        Tear down network port
-        """
-        self._cisco_ucs_plugin.delete_port(tenant_id, net_id,
-                                           port_id)
+        self._cisco_ucs_plugin.delete_port(
+                    tenant_id, net_id, port_id, device_ip=self.device_ip,
+                    ucs_inventory=self._ucs_inventory,
+                    chassis_id=self.chassis_id, blade_id=self.blade_id,
+                    blade_intf_distinguished_name=self.\
+                    blade_intf_distinguished_name,
+                    least_rsvd_blade_dict=self._ucs_inventory.\
+                    _get_least_reserved_blade())
         self.tearDownNetwork(tenant_id, net_id)
 
     def tearDownNetworkPortInterface(self, tenant_id, net_id, port_id):
-        """
-        Tear down network port interface
-        """
-        self._cisco_ucs_plugin.unplug_interface(tenant_id, net_id,
-                                                port_id)
+        self._cisco_ucs_plugin.unplug_interface(
+                                   tenant_id, net_id, port_id,
+                                   device_ip=self.device_ip)
         self.tearDownNetworkPort(tenant_id, net_id, port_id)
