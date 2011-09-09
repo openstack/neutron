@@ -158,20 +158,20 @@ class UCSVICTestPlugin(unittest.TestCase):
                             new_port1[const.UUID], device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
         new_port2 = db.port_create(new_network[const.UUID], const.PORT_UP)
         port_dict2 = self._cisco_ucs_plugin.create_port(
                                self.tenant_id, self.net_id, const.PORT_UP,
                                new_port2[const.UUID], device_ip=self.device_ip,
                                ucs_inventory=self._ucs_inventory,
                                least_rsvd_blade_dict=self._ucs_inventory.\
-                               get_least_reserved_blade())
+                               _get_least_reserved_blade())
         ports_on_net = self._cisco_ucs_plugin.get_all_ports(
                            self.tenant_id, new_net_dict[const.NET_ID],
                            device_ip=self.device_ip,
                            ucs_inventory=self._ucs_inventory,
                            least_rsvd_blade_dict=self._ucs_inventory.\
-                           get_least_reserved_blade())
+                           _get_least_reserved_blade())
         port_list = [port_dict1, port_dict2]
         self.assertTrue(str(ports_on_net[1]) == str(port_list[1]) or
                         str(ports_on_net[1]) == str(port_list[0]))
@@ -186,7 +186,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                      blade_intf_distinguished_name=self.\
                      blade_intf_distinguished_name,
                      least_rsvd_blade_dict=self._ucs_inventory.\
-                     get_least_reserved_blade())
+                     _get_least_reserved_blade())
         self.tearDownNetworkPort(
                  self.tenant_id, new_net_dict[const.NET_ID],
                  port_dict2[const.PORTID])
@@ -210,7 +210,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                             new_port[const.UUID], device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
         self.assertEqual(port_dict[const.PORTID], new_port[const.UUID])
         profile_name = self._cisco_ucs_plugin.\
                            _get_profile_name(port_dict[const.PORTID])
@@ -240,7 +240,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                             new_port[const.UUID], device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
         port_bind = self._cisco_ucs_plugin.delete_port(
                          self.tenant_id, new_net_dict[const.NET_ID],
                          port_dict[const.PORTID], device_ip=self.device_ip,
@@ -249,7 +249,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                          blade_intf_distinguished_name=self.\
                          blade_intf_distinguished_name,
                          least_rsvd_blade_dict=self._ucs_inventory.\
-                         get_least_reserved_blade())
+                         _get_least_reserved_blade())
 
         self.assertEqual(port_bind[const.PORTID], new_port[const.UUID])
         self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
@@ -273,7 +273,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                             new_port[const.UUID], device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
 
         port_detail = self._cisco_ucs_plugin.get_port_details(
                             self.tenant_id, new_net_dict[const.NET_ID],
@@ -350,7 +350,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                             device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
         cdb.update_vlan_binding(new_network[const.UUID],
                                 str(new_vlanid), new_vlan_name)
         port_bind = self._cisco_ucs_plugin.plug_interface(
@@ -384,7 +384,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                             device_ip=self.device_ip,
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
-                            get_least_reserved_blade())
+                            _get_least_reserved_blade())
         cdb.update_vlan_binding(new_network[const.UUID],
                                 str(new_vlanid), new_vlan_name)
         self._cisco_ucs_plugin.plug_interface(
@@ -450,7 +450,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                           blade_intf_distinguished_name=self.\
                           blade_intf_distinguished_name,
                           least_rsvd_blade_dict=self._ucs_inventory.\
-                          get_least_reserved_blade())
+                          _get_least_reserved_blade())
 
         self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
 
@@ -471,7 +471,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                     blade_intf_distinguished_name=self.\
                     blade_intf_distinguished_name,
                     least_rsvd_blade_dict=self._ucs_inventory.\
-                    get_least_reserved_blade())
+                    _get_least_reserved_blade())
         self.tearDownNetwork(tenant_id, net_id)
 
     def tearDownNetworkPortInterface(self, tenant_id, net_id, port_id):

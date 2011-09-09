@@ -183,10 +183,6 @@ class TestUCSInventory(unittest.TestCase):
         """Test that the UCS Inventory returns a valid UCM"""
         self._test_with_port_creation('unplug_interface')
 
-    def test_delete_port_not_found(self):
-        """Test that the UCS Inventory raises a PortNotFound exception"""
-        self._test_port_not_found('delete_port')
-
     def test_update_port_not_found(self):
         """Test that the UCS Inventory raises a PortNotFound exception"""
         self._test_port_not_found('update_port')
