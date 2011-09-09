@@ -55,6 +55,12 @@ class PortProfileNotFound(exceptions.QuantumException):
                 "for tenant %(tenant_id)s")
 
 
+class MultiportNotFound(exceptions.QuantumException):
+    """Multiport cannot be found"""
+    message = _("Multiports %(port_id)s could not be found " \
+                "for tenant %(tenant_id)s")
+
+
 class PortProfileInvalidDelete(exceptions.QuantumException):
     """Port profile cannot be deleted since its being used"""
     message = _("Port profile %(profile_id)s could not be deleted " \

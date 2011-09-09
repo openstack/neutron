@@ -28,6 +28,7 @@ from extensions import credential
 from extensions import portprofile
 from extensions import novatenant
 from extensions import qos
+from extensions import multiport
 from quantum.plugins.cisco.db import api as db
 from quantum.common import wsgi
 from quantum.common import config
@@ -1017,6 +1018,122 @@ class CredentialExtensionTest(unittest.TestCase):
 
     def tearDownCredential(self, delete_path):
         self.test_app.delete(delete_path)
+
+    def tearDown(self):
+        db.clear_db()
+
+
+class MultiPortExtensionTest(unittest.TestCase):
+
+    def setUp(self):
+
+        """ Set up function """
+
+        parent_resource = dict(member_name="tenant",
+                               collection_name="extensions/csco/tenants")
+        controller = multiport.MultiportController(
+                               QuantumManager.get_plugin())
+        res_ext = extensions.ResourceExtension('multiport', controller,
+                                             parent=parent_resource)
+        self.test_app = setup_extensions_test_app(
+                                          SimpleExtensionManager(res_ext))
+        self.contenttype = 'application/json'
+        self.multiport_path = '/extensions/csco/tenants/tt/multiport'
+        self.multiport_path2 = '/extensions/csco/tenants/tt/multiport/'
+        self.test_multi_port = {'multiport':
+                            {'net_id_list': '1',
+                             'status': 'test-qos1',
+                             'ports_desc': 'Port Descr'}}
+        self.tenant_id = "test_tenant"
+        self.network_name = "test_network"
+        options = {}
+        options['plugin_provider'] = 'quantum.plugins.cisco.l2network_plugin'\
+                                     '.L2Network'
+        self.api = server.APIRouterV1(options)
+        self._l2network_plugin = l2network_plugin.L2Network()
+
+    def create_request(self, path, body, content_type, method='GET'):
+
+        """ Test create request"""
+
+        LOG.debug("test_create_request - START")
+        req = webob.Request.blank(path)
+        req.method = method
+        req.headers = {}
+        req.headers['Accept'] = content_type
+        req.body = body
+        LOG.debug("test_create_request - END")
+        return req
+
+    def _create_network(self, name=None):
+
+        """ Test create network"""
+
+        LOG.debug("Creating network - START")
+        if name:
+            net_name = name
+        else:
+            net_name = self.network_name
+        net_path = "/tenants/tt/networks"
+        net_data = {'network': {'name': '%s' % net_name}}
+        req_body = wsgi.Serializer().serialize(net_data, self.contenttype)
+        network_req = self.create_request(net_path, req_body,
+                                          self.contenttype, 'POST')
+        network_res = network_req.get_response(self.api)
+        network_data = wsgi.Serializer().deserialize(network_res.body,
+                                                     self.contenttype)
+        LOG.debug("Creating network - END")
+        return network_data['network']['id']
+
+    def _delete_network(self, network_id):
+        """ Delete network """
+        LOG.debug("Deleting network %s - START", network_id)
+        network_path = "/tenants/tt/networks/%s" % network_id
+        network_req = self.create_request(network_path, None,
+                                       self.contenttype, 'DELETE')
+        network_req.get_response(self.api)
+        LOG.debug("Deleting network - END")
+
+    def test_create_multiport(self):
+
+        """ Test create MultiPort"""
+
+        LOG.debug("test_create_multiport - START")
+
+        net_id = self._create_network('net1')
+        net_id2 = self._create_network('net2')
+        test_multi_port = {'multiport':
+                            {'net_id_list': [net_id, net_id2],
+                             'status': 'ACTIVE',
+                             'ports_desc': {'key': 'value'}}}
+        req_body = json.dumps(test_multi_port)
+        index_response = self.test_app.post(self.multiport_path, req_body,
+                                            content_type=self.contenttype)
+        resp_body = wsgi.Serializer().deserialize(index_response.body,
+                                                  self.contenttype)
+        self.assertEqual(200, index_response.status_int)
+        self.assertEqual(len(test_multi_port['multiport']['net_id_list']),
+                         len(resp_body['ports']))
+        # Clean Up - Delete the Port Profile
+        self._delete_network(net_id)
+        self._delete_network(net_id2)
+        LOG.debug("test_create_multiport - END")
+
+    def test_create_multiportBADRequest(self):
+
+        """ Test create MultiPort Bad Request"""
+
+        LOG.debug("test_create_multiportBADRequest - START")
+        net_id = self._create_network('net1')
+        net_id2 = self._create_network('net2')
+        index_response = self.test_app.post(self.multiport_path, 'BAD_REQUEST',
+                                            content_type=self.contenttype,
+                                            status='*')
+        self.assertEqual(400, index_response.status_int)
+        # Clean Up - Delete the Port Profile
+        self._delete_network(net_id)
+        self._delete_network(net_id2)
+        LOG.debug("test_create_multiportBADRequest - END")
 
     def tearDown(self):
         db.clear_db()
