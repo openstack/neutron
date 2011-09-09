@@ -19,14 +19,122 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Salvatore Orlando, Citrix
 
-import Cheetah.Template as cheetah_template
+""" Functions providing implementation for CLI commands. """
+
 import logging
 import os
 import sys
 
 FORMAT = "json"
-CLI_TEMPLATE = "cli_output.template"
 LOG = logging.getLogger('quantum.cli_lib')
+
+
+class OutputTemplate(object):
+    """ A class for generating simple templated output.
+        Based on Python templating mechanism.
+        Templates can also express attributes on objects, such as network.id;
+        templates can also be nested, thus allowing for iteration on inner
+        templates.
+
+        Examples:
+        1) template with class attributes
+        Name: %(person.name)s \n
+        Surname: %(person.surname)s \n
+        2) template with iteration
+        Telephone numbers: \n
+        %(phone_numbers|Telephone number:%(number)s)
+        3) template with iteration and class attributes
+        Addresses: \n
+        %(Addresses|Street:%(address.street)s\nNumber%(address.number))
+
+        Instances of this class are initialized with a template string and
+        the dictionary for performing substition. The class implements the
+        __str__ method, so it can be directly printed.
+    """
+
+    def __init__(self, template, data):
+        self._template = template
+        self.data = data
+
+    def __str__(self):
+        return self._template % self
+
+    def __getitem__(self, key):
+        items = key.split("|")
+        if len(items) == 1:
+            return self._make_attribute(key)
+        else:
+            # Note(salvatore-orlando): items[0] must be subscriptable
+            return self._make_list(self.data[items[0]], items[1])
+
+    def _make_attribute(self, item):
+        """ Renders an entity attribute key in the template.
+           e.g.: entity.attribute
+        """
+        items = item.split('.')
+        if len(items) == 1:
+            return self.data[item]
+        elif len(items) == 2:
+            return self.data[items[0]][items[1]]
+
+    def _make_list(self, items, inner_template):
+        """ Renders a list key in the template.
+            e.g.: %(list|item data:%(item))
+        """
+        #make sure list is subscriptable
+        if not hasattr(items, '__getitem__'):
+            raise Exception("Element is not iterable")
+        return "\n".join([inner_template % item for item in items])
+
+
+class CmdOutputTemplate(OutputTemplate):
+    """ This class provides templated output for CLI commands.
+        Extends OutputTemplate loading a different template for each command.
+    """
+
+    _templates = {
+        "list_nets":      "Virtual Networks for Tenant %(tenant_id)s\n" +
+                          "%(networks|\tNetwork ID: %(id)s)s",
+        "show_net":       "Network ID: %(network.id)s\n" +
+                          "network Name: %(network.name)s",
+        "create_net":     "Created a new Virtual Network with ID: " +
+                          "%(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s",
+        "rename_net":     "Renamed Virtual Network with ID: %(network.id)s\n" +
+                          "for Tenant: %(tenant_id)s\n" +
+                          "new name is: %(network.name)s",
+        "delete_net":     "Deleted Virtual Network with ID: %(network_id)s\n" +
+                          "for Tenant %(tenant_id)s",
+        "list_ports":     "Ports on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s\n" +
+                          "%(ports|\tLogical Port: %(id)s)s",
+        "create_port":    "Created new Logical Port with ID: %(port_id)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s",
+        "show_port":      "Logical Port ID: %(port.id)s\n" +
+                          "administrative State: %(port.state)s\n" +
+                          "interface: %(port.attachment)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s",
+        "set_port_state": "Updated state for Logical Port " +
+                          "with ID: %(port.id)s\n" +
+                          "new state is: %(port.state)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for tenant: %(tenant_id)s",
+        "delete_port":    "Deleted Logical Port with ID: %(port_id)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s",
+        "plug_iface":     "Plugged interface %(attachment)s\n" +
+                          "into Logical Port: %(port_id)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s",
+        "unplug_iface":   "Unplugged interface from Logical Port:" +
+                          "%(port_id)s\n" +
+                          "on Virtual Network: %(network_id)s\n" +
+                          "for Tenant: %(tenant_id)s"}
+
+    def __init__(self, cmd, data):
+        super(CmdOutputTemplate, self).__init__(self._templates[cmd], data)
 
 
 def _handle_exception(ex):
@@ -47,15 +155,9 @@ def _handle_exception(ex):
 
 
 def prepare_output(cmd, tenant_id, response):
-    """ Fills a cheetah template with the response """
-    #add command and tenant to response for output generation
     LOG.debug("Preparing output for response:%s", response)
-    response['cmd'] = cmd
     response['tenant_id'] = tenant_id
-    template_path = os.path.join(os.path.dirname(__file__), CLI_TEMPLATE)
-    template_file = open(template_path).read()
-    output = str(cheetah_template.Template(template_file,
-                                           searchList=response))
+    output = str(CmdOutputTemplate(cmd, response))
     LOG.debug("Finished preparing output for command:%s", cmd)
     return output
 
@@ -77,7 +179,7 @@ def create_net(client, *args):
         new_net_id = res["network"]["id"]
         LOG.debug("Operation 'create_network' executed.")
         output = prepare_output("create_net", tenant_id,
-                                dict(network_id=new_net_id))
+                                          dict(network_id=new_net_id))
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -102,7 +204,8 @@ def show_net(client, *args):
         # output for GET /networks/{net-id} API operation
         res = client.show_network_details(network_id)["network"]
         LOG.debug("Operation 'show_network_details' executed.")
-        output = prepare_output("show_net", tenant_id, dict(network=res))
+        output = prepare_output("show_net", tenant_id,
+                                          dict(network=res))
         print output
     except Exception as ex:
         _handle_exception(ex)
