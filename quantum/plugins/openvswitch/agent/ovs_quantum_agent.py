@@ -130,40 +130,13 @@ class OVSBridge:
     def get_port_stats(self, port_name):
         return self.db_get_map("Interface", port_name, "statistics")
 
-    # this is a hack that should go away once nova properly reports bindings
-    # to quantum.  We have this here for now as it lets us work with
-    # unmodified nova
-    def xapi_get_port(self, name):
-        external_ids = self.db_get_map("Interface", name, "external_ids")
-        if "attached-mac" not in external_ids:
-            return None
-        vm_uuid = external_ids.get("xs-vm-uuid", "")
-        if len(vm_uuid) == 0:
-            return None
-        LOG.debug("iface-id not set, got xs-vm-uuid: %s" % vm_uuid)
-        res = os.popen("xe vm-list uuid=%s params=name-label --minimal" \
-                                    % vm_uuid).readline().strip()
-        if len(res) == 0:
-            return None
-        external_ids["iface-id"] = res
-        LOG.info("Setting interface \"%s\" iface-id to \"%s\"" % (name, res))
-        self.set_db_attribute("Interface", name,
-                  "external-ids:iface-id", res)
-        ofport = self.db_get_val("Interface", name, "ofport")
-        return VifPort(name, ofport, external_ids["iface-id"],
-                        external_ids["attached-mac"], self)
-
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
             external_ids = self.db_get_map("Interface", name, "external_ids")
-            if "xs-vm-uuid" in external_ids:
-                p = xapi_get_port(name)
-                if p is not None:
-                    edge_ports.append(p)
-            elif "iface-id" in external_ids and "attached-mac" in external_ids:
+            if "iface-id" in external_ids and "attached-mac" in external_ids:
                 ofport = self.db_get_val("Interface", name, "ofport")
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
