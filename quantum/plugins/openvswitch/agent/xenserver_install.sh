@@ -18,7 +18,6 @@ fi
 
 cp ovs_quantum_agent.py /etc/xapi.d/plugins
 cp ovs_quantum_plugin.ini /etc/xapi.d/plugins
-cp set_external_ids.sh /etc/xapi.d/plugins
 
 xe network-list name-label="integration-bridge" | grep xapi >/dev/null 2>&1
 if [ $? -ne 0 ]; then
