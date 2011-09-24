@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<!-- (C) 2009-2011 Rackspace Hosting, All Rights Reserved -->
+
+<schema
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:csapi="http://docs.openstack.org/compute/api/v1.1"
+    xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://docs.openstack.org/compute/api/v1.1"
+>
+
+  <annotation>
+    <xsd:appinfo
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <xsdxt:title>Backup Schedule</xsdxt:title>
+      <xsdxt:link rel="index" href="api.xsd" />
+    </xsd:appinfo>
+    <xsd:documentation
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        This schema file defines all entities related to <a
+        href="#type_BackupSchedule" title="See definition of
+        BackupSchedule">Backup Schedules</a>.
+      </p>
+    </xsd:documentation>
+  </annotation>
+
+  <element name="backupSchedule" type="csapi:BackupSchedule">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          This element is used to create periodic daily and weekly
+          images automatically.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/backup.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/backup.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+
+  <!-- Complex Types -->
+  <complexType name="BackupSchedule">
+    <sequence>
+        <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute type="xsd:boolean" name="enabled" use="required">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            If true, both daily and weekly backup schedules are
+            disabled.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="csapi:WeeklyBackup" name="weekly" use="required">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            A <a href="#type_WeeklyBackup" title="See definition of
+            WeeklyBackup">WeeklyBackup</a> type that describes the day
+            of the week in which to perform a weekly backup or
+            DISABLED if weekly backups are disabled.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="csapi:DailyBackup" name="daily" use="required">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            A <a href="#type_DailyBackup" title="See definition of
+            DailyBackup">DailyBackup</a> type that describes an hour
+            range in which to perform a daily backup or DISABLED if
+            daily backups are disabled.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <anyAttribute namespace="##other" processContents="lax"/>
+  </complexType>
+
+  <!-- Simple Types -->
+  <simpleType name="DailyBackup">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A target GMT hour range in which to perform a daily backup
+          or DISABLED if daily backups are disabled.
+        </p>
+      </xsd:documentation>
+    </annotation>
+    <restriction base="xsd:string">
+      <enumeration value="DISABLED">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backups are disabled.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_0000_0200">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 00:00&#x2013;02:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_0200_0400">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 02:00&#x2013;04:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_0400_0600">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 04:00&#x2013;06:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_0600_0800">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 06:00&#x2013;08:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_0800_1000">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 08:00&#x2013;10:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_1000_1200">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 10:00&#x2013;12:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_1200_1400">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 12:00&#x2013;14:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_1400_1600">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 14:00&#x2013;16:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_1600_1800">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 16:00&#x2013;18:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_1800_2000">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 18:00&#x2013;20:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_2000_2200">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 20:00&#x2013;22:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="H_2200_0000">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Daily backup target of 22:00&#x2013;00:00 GMT.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+    </restriction>
+  </simpleType>
+
+  <simpleType name="WeeklyBackup">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A target day of the week in which to perform a weekly backup
+          or DISABLED if daily backups are disabled.
+        </p>
+      </xsd:documentation>
+    </annotation>
+    <restriction base="xsd:string">
+      <enumeration value="DISABLED">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              Weekly backups are disabled.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="SUNDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Sunday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="MONDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Monday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="TUESDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Tuesday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="WEDNESDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Wednesday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="THURSDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Thursday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="FRIDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Friday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="SATURDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Saturday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="SUNDAY">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A weekly backup target of Sunday.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </enumeration>
+    </restriction>
+  </simpleType>
+</schema>
+

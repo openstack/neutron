@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<!-- (C) 2011 OpenStack LLC., All Rights Reserved -->
+
+<schema
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:csapi="http://docs.openstack.org/compute/api/v1.1"
+    xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+    targetNamespace="http://docs.openstack.org/compute/api/v1.1"
+>
+
+  <annotation>
+    <xsd:appinfo
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <xsdxt:title>Common Types</xsdxt:title>
+      <xsdxt:link rel="index" href="api.xsd" />
+    </xsd:appinfo>
+    <xsd:documentation
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        This schema file defines common types used by multiple
+        entities and possibly spanning several types of requests.
+      </p>
+    </xsd:documentation>
+  </annotation>
+
+  <!-- Import ATOM specific schema definitions -->
+  <import vc:minVersion="1.1" namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom.xsd" />
+
+  <complexType name="Metadata">
+    <sequence>
+      <element name="meta" type="csapi:MetadataItem" minOccurs="0" maxOccurs="1000">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A collection of metadata items.  There may be an
+              absolute limit that imposes additional constraints on
+              the number of metadata items.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </element>
+      <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+      <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <anyAttribute namespace="##other" processContents="lax"/>
+  </complexType>
+  <complexType name="MetadataItem">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A MetadataItem is simply a name-value pair. The name is
+          specified in the key attribute and the <a
+          href="#type_MetadataValue" title="See definition of
+          MetadataValue">value</a> is included inline.
+        </p>
+        <xsdxt:code type="application/xml">
+          <![CDATA[
+            <meta xmlns="http://docs.openstack.org/compute/api/v1.0"
+                  key="Server Label">Web Head 1</meta>
+          ]]>
+        </xsdxt:code>
+      </xsd:documentation>
+    </annotation>
+    <simpleContent>
+      <extension base="csapi:MetadataValue">
+	<attribute name="key" type="csapi:MetadataKey" use="required">
+          <annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                A meta data name-value pair.
+              </p>
+            </xsd:documentation>
+          </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+      </extension>
+    </simpleContent>
+  </complexType>
+
+  <!-- Simple types that span multiple requests -->
+  <simpleType name="Progress">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          An integer between 0 and 100 that denotes the progress of an
+          operation.
+        </p>
+      </xsd:documentation>
+    </annotation>
+    <restriction base="xsd:int">
+      <minInclusive value="0"/>
+      <maxInclusive value="100" />
+    </restriction>
+  </simpleType>
+
+  <simpleType name="UUID">
+      <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                  A universally unique identifier.
+              </p>
+          </xsd:documentation>
+      </annotation>
+      <restriction base="xsd:string">
+          <length value="36" fixed="true"/>
+          <pattern value="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"/>
+      </restriction>
+  </simpleType>
+
+  <simpleType name="ExtendedStatus">
+      <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                  An extended status must contian a prefix.
+              </p>
+          </xsd:documentation>
+      </annotation>
+      <restriction base="xsd:string">
+          <pattern value="(\w|-)+:\w+"/>
+      </restriction>
+  </simpleType>
+
+  <simpleType name="MetadataKey">
+    <restriction base="xsd:string">
+      <maxLength value="255" />
+    </restriction>
+  </simpleType>
+
+  <simpleType name="MetadataValue">
+    <restriction base="xsd:string">
+      <maxLength value="255" />
+    </restriction>
+  </simpleType>
+</schema>
+

@@ -50,7 +50,7 @@ class Qos(object):
     @classmethod
     def get_description(cls):
         """ Returns Ext Resource Description """
-        return "qos include username and password"
+        return "qos includes qos_name and qos_desc"
 
     @classmethod
     def get_namespace(cls):
@@ -159,6 +159,6 @@ class QosController(common.QuantumController):
         """ Destroys the qos with the given id """
         try:
             self._plugin.delete_qos(tenant_id, id)
-            return exc.HTTPAccepted()
+            return exc.HTTPOk()
         except exception.QosNotFound as exp:
             return faults.Fault(faults.QosNotFound(exp))

@@ -144,3 +144,23 @@ Plugged interface "foo" to port:5a1e121b-ccc8-471d-9445-24f15f9f854c on network:
 (.. repeat for more ports and interface combinations..)
 
 See the main quantum documentation for more details on the commands.
+
+# -- Using the OVS plugin in multiple hosts
+
+The integration bridge specified must have a port that is a VLAN trunk
+connecting the the bridge to the outside world.  The physical network
+connecting all servers must also be configured to trunk VLANs.
+
+If the NIC (e.g., eth0) connecting to the physical network is not
+attached to a bridge, it can be added directly as a port on the
+integration bridge.  For example:
+
+ovs-vsctl add-port br-int eth0
+
+However, if the NIC is already attached to bridge (e.g., br0), then we must
+create a "patch" port to link the integration bridge with that existing bridge.
+For example:
+
+ovs-vsctl add-port br0 patch-outside -- set Interface patch-outside type=patch options:peer=patch-inside
+ovs-vsctl add-port br-int patch-inside -- set Interface patch-outside type=patch options:peer=patch-outside
+

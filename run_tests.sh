@@ -80,4 +80,13 @@ then
   fi
 fi
 
-run_tests
+# FIXME(sirp): bzr version-info is not currently pep-8. This was fixed with
+# lp701898 [1], however, until that version of bzr becomes standard, I'm just
+# excluding the vcsversion.py file
+#
+# [1] https://bugs.launchpad.net/bzr/+bug/701898
+#
+PEP8_EXCLUDE=vcsversion.py
+PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
+PEP8_INCLUDE="bin/* quantum tests tools run_tests.py"
+run_tests && pep8 $PEP8_OPTIONS $PEP8_INCLUDE || exit 1

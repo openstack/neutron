@@ -168,7 +168,7 @@ class PortprofilesController(common.QuantumController):
         """ Destroys the portprofile with the given id """
         try:
             self._plugin.delete_portprofile(tenant_id, id)
-            return exc.HTTPAccepted()
+            return exc.HTTPOk()
         except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
 
@@ -188,7 +188,7 @@ class PortprofilesController(common.QuantumController):
             self._plugin.associate_portprofile(tenant_id,
                                                 net_id, port_id,
                                                 id)
-            return exc.HTTPAccepted()
+            return exc.HTTPOk()
         except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
         except qexception.PortNotFound as exp:
@@ -209,7 +209,7 @@ class PortprofilesController(common.QuantumController):
             self._plugin. \
             disassociate_portprofile(tenant_id,
                                     net_id, port_id, id)
-            return exc.HTTPAccepted()
+            return exc.HTTPOk()
         except exception.PortProfileNotFound as exp:
             return faults.Fault(faults.PortprofileNotFound(exp))
         except qexception.PortNotFound as exp:

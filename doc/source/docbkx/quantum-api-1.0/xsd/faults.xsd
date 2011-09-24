@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<!-- (C) 2011 OpenStack LLC., All Rights Reserved -->
+
+
+<schema
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:csapi="http://docs.openstack.org/compute/api/v1.1"
+    xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    targetNamespace="http://docs.openstack.org/compute/api/v1.1">
+
+  <annotation>
+    <xsd:appinfo
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <xsdxt:title>Faults</xsdxt:title>
+      <xsdxt:link rel="index" href="api.xsd" />
+    </xsd:appinfo>
+    <xsd:documentation
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        This schema file defines faults that may be raised by the
+        OpenStack Compute API.  These faults are derived from the <a
+        href="#type_ComputeAPIFault" title="See definition of
+        ComputeAPIFault">ComputeAPIFault</a>.  Most faults extend this
+        type without adding any additional attributes or elements.
+        The only exceptions is the <a href="#type_OverLimitAPIFault"
+        title="See definition of
+        OverLimitAPIFault">OverLimitAPIFault</a> which adds a
+        <strong>retryAt</strong> attribute and the <a
+        href="#type_AsyncAPIFault" title="See definition of
+        AsyncAPIFault">AsyncAPIFault</a> which adds a
+        <strong>created</strong> timestamp.  Because all faults extend
+        a standard base type, it should be possible to capture all API
+        faults with a single <code>catch</code> statement.
+      </p>
+      <p>
+        Faults are associated with a default HTTP status code that
+        corresponds to the particular fault type.  For example an <a
+        href="#element_itemNotFound" title="see definition of
+        itemNotFound">&lt;itemNotFound&gt;</a> element is associated
+        with the HTTP status code 404.  Some elements, the <a
+        href="#element_computeFault" title="see definition of
+        computeFault">&lt;computeFault&gt;</a> element for
+        example, may be associated with multiple status codes.  It is
+        also possible for multiple fault elements to be associated
+        with the same default code.  The examples below showcase the
+        default status codes for each element type. Note that these
+        default codes are not part of the formal schema. In practice,
+        however, an element type will likely be associated with its
+        corresponding default status code.
+      </p>
+    </xsd:documentation>
+  </annotation>
+
+  <!-- Faults -->
+  <element name="computeFault"   type="csapi:ComputeAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A generic Cloud Servers API fault.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/fault.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/fault.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="itemNotFound"        type="csapi:ItemNotFoundAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The item or resource could not be found.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/notfound.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/notfound.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="buildInProgress"     type="csapi:BuildInProgressAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The operation is not allowed because the corresponding
+          server is in a build state.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/build.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/build.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="serverCapacityUnavailable" type="csapi:ServerCapacityUnavailableAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          There is not enough capacity to honor the request.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/serverCap.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/serverCap.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="backupOrResizeInProgress"  type="csapi:BackupOrResizeInProgressAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The operation is not allowed because the corresponding
+          server is being re-sized or backed up.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/backupInProgress.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/backupInProgress.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="resizeNotAllowed"    type="csapi:ResizeNotAllowedAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The re-size operation is not permitted.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/resizeNotAllowed.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/resizeNotAllowed.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="serviceUnavailable"  type="csapi:ServiceUnavailableAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The API service is currently unavailable.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/serviceNotAvailable.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/serviceNotAvailable.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="unauthorized"        type="csapi:UnauthorizedAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Insufficient privileges to honor the request, perhaps an
+          authentication token needs to be obtained or renewed.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/unauth.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/unauth.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="forbidden" type="csapi:ForbiddenAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+            Authentication has been validated, however the operation is unauthorized.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/forbidden.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/forbidden.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="overLimit"           type="csapi:OverLimitAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          An <a href="limits.xsd#type_AbsoluteLimit" title="See
+          definition of AbsoluteLimit">absolute</a> or <a
+          href="limits.xsd#type_RateLimit" title="See definition of
+          RateLimit">rate</a> limit has been exceeded.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/overlimit.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/overlimit.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="badRequest"          type="csapi:BadRequestAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The request is malformed.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/badrequest.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/badrequest.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="badMediaType"        type="csapi:BadMediaTypeAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The Content Type of the request is not supported.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/badmediatype.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/badmediatype.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="badMethod"           type="csapi:BadMethodAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The HTTP method (or <a href="limits.xsd#type_HTTPVerb"
+          title="See definition of HTTPVerb">verb</a>) is not
+          supported by the corresponding resource.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/badmethod.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/badmethod.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+  <element name="notImplemented"      type="csapi:NotImplementedAPIFault">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The operation is currently not implemented.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/notimplemented.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/notimplemented.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+
+  <!-- Complex Types -->
+  <complexType name="ComputeAPIFault">
+    <sequence>
+      <element name="message" type="xsd:string">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A human readable message that is appropriate for display
+              to the end user.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </element>
+      <element name="details" type="xsd:string" minOccurs="0">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              The optional &lt;details&gt; element may contain useful
+              information for tracking down errors (e.g a stack
+              trace).  This information may or may not be appropriate
+              for display to an end user.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </element>
+      <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute name="code" type="xsd:int" use="required">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The HTTP status code associated with the current fault.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <anyAttribute namespace="##other" processContents="lax"/>
+  </complexType>
+
+  <complexType name="ItemNotFoundAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="BuildInProgressAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ServerCapacityUnavailableAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="BackupOrResizeInProgressAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ResizeNotAllowedAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ServiceUnavailableAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="UnauthorizedAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ForbiddenAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="OverLimitAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+	<attribute name="retryAt" type="xsd:dateTime" use="optional">
+          <annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                An optional dateTime denoting when an operation should
+                be retried.
+              </p>
+            </xsd:documentation>
+          </annotation>
+        </attribute>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="AsyncAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+          <attribute name="created" type="xsd:dateTime" use="optional">
+              <annotation>
+                  <xsd:documentation
+                      xml:lang="EN"
+                      xmlns="http://www.w3.org/1999/xhtml">
+                      <p>
+                          An optional dateTime denoting when the fault
+                          was created.
+                      </p>
+                  </xsd:documentation>
+              </annotation>
+          </attribute>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="BadRequestAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="BadMediaTypeAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="BadMethodAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="NotImplementedAPIFault">
+    <complexContent>
+      <extension base="csapi:ComputeAPIFault">
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

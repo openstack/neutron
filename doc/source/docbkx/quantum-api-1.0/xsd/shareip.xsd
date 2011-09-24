@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<schema
+        elementFormDefault="qualified"
+        attributeFormDefault="unqualified"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:exapi="http://docs.rackspacecloud.com/servers/api/ext/sipe/v1.0"
+        xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://docs.rackspacecloud.com/servers/api/ext/sipe/v1.0"
+        >
+
+    <element name="shareIp" type="exapi:ShareIp">
+        <annotation>
+            <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    The element defines request to share a public IP address.
+                </p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml"
+                                    href="../samples/shareip.xml"/>
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json"
+                                    href="../samples/shareip.json"/>
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
+
+    <complexType name="ShareIp">
+        <annotation>
+            <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    This type is used to represent a request to share an IP
+                    address.
+                </p>
+            </xsd:documentation>
+        </annotation>
+        <sequence>
+            <any namespace="##other" processContents="lax" minOccurs="0"
+                 maxOccurs="unbounded"/>
+        </sequence>
+        <attribute name="sharedIpGroupId" type="xsd:int" use="required">
+            <annotation>
+                <xsd:documentation
+                        xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The
+                        <a href="ipgroup.xsd#type_SharedIpGroup" title="See
+          definition of SharedIPGroup">shared IP group
+                        </a>
+                        use to
+                        share the address.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="configureServer" type="xsd:boolean" default="false">
+            <annotation>
+                <xsd:documentation
+                        xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        If true, the server is configured with the new address
+                        though the address may not be enabled.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+</schema>

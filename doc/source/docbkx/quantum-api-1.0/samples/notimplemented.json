@@ -1,0 +1,7 @@
+{
+    "notImplemented" : {
+        "code" : 501,
+        "message" : "Not Implemented",
+        "details" : "Error Details..."
+    }
+}
