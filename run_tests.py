@@ -48,6 +48,7 @@ import sys
 
 from quantum.common.test_lib import run_tests
 from nose import config
+from nose import core
 
 
 if __name__ == '__main__':
@@ -55,5 +56,6 @@ if __name__ == '__main__':
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
-                      workingDir=working_dir)
+                      workingDir=working_dir,
+                      plugins=core.DefaultPluginManager())
     sys.exit(run_tests(c))

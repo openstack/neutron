@@ -6,6 +6,7 @@ function usage {
   echo ""
   echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
   echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
+  echo "  -c, --coverage           Generate coverage report"
   echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
   echo "  -h, --help               Print this usage message"
   echo ""
@@ -21,6 +22,8 @@ function process_option {
     -V|--virtual-env) let always_venv=1; let never_venv=0;;
     -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
     -f|--force) let force=1;;
+    -c|--coverage) coverage=1;;
+    -*) noseopts="$noseopts $1";;
     *) noseargs="$noseargs $1"
   esac
 }
@@ -32,10 +35,16 @@ never_venv=0
 force=0
 noseargs=
 wrapper=""
+coverage=0
 
 for arg in "$@"; do
   process_option $arg
 done
+
+# If enabled, tell nose to collect coverage data
+if [ $coverage -eq 1 ]; then
+    noseopts="$noseopts --with-coverage --cover-package=quantum"
+fi
 
 function run_tests {
   # Just run the test suites in current environment
@@ -43,7 +52,7 @@ function run_tests {
   ${wrapper} $NOSETESTS
 }
 
-NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseargs"
+NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseopts $noseargs"
 
 if [ -n "$PLUGIN_DIR" ]
 then
@@ -80,6 +89,11 @@ then
   fi
 fi
 
+# Delete old coverage data from previous runs
+if [ $coverage -eq 1 ]; then
+    ${wrapper} coverage erase
+fi
+
 # FIXME(sirp): bzr version-info is not currently pep-8. This was fixed with
 # lp701898 [1], however, until that version of bzr becomes standard, I'm just
 # excluding the vcsversion.py file
@@ -89,4 +103,12 @@ fi
 PEP8_EXCLUDE=vcsversion.py
 PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
 PEP8_INCLUDE="bin/* quantum tests tools run_tests.py"
-run_tests && pep8 $PEP8_OPTIONS $PEP8_INCLUDE || exit 1
+RV=0
+run_tests && pep8 $PEP8_OPTIONS $PEP8_INCLUDE || RV=1
+
+if [ $coverage -eq 1 ]; then
+    echo "Generating coverage report in covhtml/"
+    ${wrapper} coverage html -d covhtml -i
+fi
+
+exit $RV
