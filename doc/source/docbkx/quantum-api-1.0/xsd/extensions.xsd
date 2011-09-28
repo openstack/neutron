@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<!-- (C) 2011 OpenStack LLC., All Rights Reserved -->
+
+<xsd:schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+           targetNamespace="http://docs.openstack.org/common/api/v1.0"
+           xmlns:ext="http://docs.openstack.org/common/api/v1.0"
+           xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+           xmlns:html="http://www.w3.org/1999/xhtml"
+           xmlns:atom="http://www.w3.org/2005/Atom"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:annotation>
+        <xsd:appinfo
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+            <xsdxt:title>Extensions</xsdxt:title>
+            <xsdxt:link rel="index" href="api-common.xsd" />
+        </xsd:appinfo>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+                This schema file defines types related to API
+                extensions.
+            </p>
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <!-- Import ATOM specific schema definitions -->
+    <xsd:import vc:minVersion="1.1" namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom.xsd" />
+
+    <xsd:element name="extensions" type="ext:Extensions">
+        <xsd:annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    A list of supported extensions.
+                </p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/extensions.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/extensions.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:element name="extension" type="ext:Extension">
+        <xsd:annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    Detials about a specific extension.
+                </p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/extension.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/extension.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </xsd:annotation>
+    </xsd:element>
+
+    <xsd:complexType name="Extensions">
+        <xsd:annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    A list of extensions.
+                </p>
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="extension" type="ext:Extension" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:anyAttribute namespace="##other" processContents="lax"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="Extension">
+        <xsd:annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    Detials about a specific extension.
+                </p>
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="description" type="xsd:string" minOccurs="1">
+                <xsd:annotation>
+                    <xsd:documentation
+                        xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            A short description of what the extension
+                            does.
+                        </p>
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+            <xsd:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A human reabable extension name.
+                    </p>
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="namespace" type="xsd:anyURI" use="required">
+            <xsd:annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Extension namespace used for XML representations.
+                    </p>
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="alias" type="ext:Alias" use="required">
+            <xsd:annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A vendor prefix alieas used for non-XML
+                        representations.
+                    </p>
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="updated" type="xsd:dateTime" use="optional">
+            <xsd:annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The time that the extension was added or
+                        modifided.
+                    </p>
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:anyAttribute namespace="##other" processContents="lax"/>
+        <xsd:assert vc:minVersion="1.1" test="atom:link[@rel='describedby']">
+            <xsd:annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        There should be at least one atom link with a
+                        describedby relation.  This relation provides
+                        developer info for the extension.
+                    </p>
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:assert>
+    </xsd:complexType>
+
+    <xsd:simpleType name="Alias">
+        <xsd:annotation>
+            <xsd:documentation
+                xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    Vendor aliases are used to differentiate
+                    extensions in non-XML representations as well as
+                    in HTTP headers and in the URL path.  An alias is
+                    made of a vendor prefix, followed be a a dash (-)
+                    followed be a short extension ID.  For example:
+                    <code>RAX-PIE</code>.
+                </p>
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="\w+\-\w+" />
+        </xsd:restriction>
+    </xsd:simpleType>
+</xsd:schema>

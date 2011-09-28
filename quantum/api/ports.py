@@ -118,8 +118,9 @@ class Controller(common.QuantumController):
             result = builder.build(port)['port']
             # Wsgi middleware allows us to build the response
             # before returning the call.
-            # This will allow us to return a 202 status code.
-            return self._build_response(request, dict(port=result), 202)
+            # This will allow us to return a 200 status code.  NOTE: in v1.1
+            # we will be returning a 202 status code.
+            return self._build_response(request, dict(port=result), 200)
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))
         except exception.StateInvalid as e:

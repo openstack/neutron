@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xsl"?>
+
+<!-- (C) 2011 OpenStack LLC., All Rights Reserved -->
+
+<schema
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:csapi="http://docs.openstack.org/compute/api/v1.1"
+    xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+    targetNamespace="http://docs.openstack.org/compute/api/v1.1"
+>
+  <annotation>
+    <xsd:appinfo
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <xsdxt:title>Flavors</xsdxt:title>
+      <xsdxt:link rel="index" href="api.xsd" />
+    </xsd:appinfo>
+    <xsd:documentation
+        xml:lang="EN"
+        xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        This schema file defines all entities related to <a
+        href="#type_Flavor" title="See definition of
+        Flavor">Flavors</a>.
+      </p>
+    </xsd:documentation>
+  </annotation>
+
+  <!-- Import ATOM specific schema definitions -->
+  <import namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom.xsd" />
+
+  <include schemaLocation="common.xsd">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          Common types used by multiple entities and possibly spanning
+          several types of requests.
+        </p>
+      </xsd:documentation>
+    </annotation>
+  </include>
+
+  <element name="flavor" type="csapi:Flavor">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The element defines an available hardware configuration for
+          a server.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/flavor.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/flavor.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+
+  <element name="flavors" type="csapi:Flavors">
+    <annotation>
+      <xsd:documentation
+          xml:lang="EN"
+          xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          A collection of flavors.
+        </p>
+      </xsd:documentation>
+      <xsd:appinfo>
+        <xsdxt:samples>
+          <xsdxt:sample>
+            <xsdxt:code type="application/xml" href="../samples/flavors.xml" />
+          </xsdxt:sample>
+          <xsdxt:sample>
+            <xsdxt:code type="application/json" href="../samples/flavors.json" />
+          </xsdxt:sample>
+        </xsdxt:samples>
+      </xsd:appinfo>
+    </annotation>
+  </element>
+
+  <!-- Complex Types -->
+  <complexType name="Flavor">
+    <sequence>
+        <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+        <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute type="csapi:UUID" name="id" use="required">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The ID of the flavor.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="xsd:string" name="name" use="optional">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The name of the flavor.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="xsd:int"    name="ram"  use="optional">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The amount of RAM in the flavor in megabytes.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="xsd:int"    name="disk" use="optional">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The amount of disk space in the flavor in gigabytes.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <attribute type="xsd:int"    name="vcpus" use="optional">
+      <annotation>
+        <xsd:documentation
+            xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+          <p>
+            The amount of cores allocated.
+          </p>
+        </xsd:documentation>
+      </annotation>
+    </attribute>
+    <anyAttribute namespace="##other" processContents="lax"/>
+  </complexType>
+
+  <complexType name="FlavorWithOnlyIDNameLinks">
+      <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                  The only allowed attributes for this Flavor type is
+                  the name, ID, and links. This type is used for
+                  non-detailed list of flavors.
+              </p>
+          </xsd:documentation>
+      </annotation>
+      <complexContent>
+          <restriction base="csapi:Flavor">
+              <sequence>
+                  <element ref="atom:link" minOccurs="1" maxOccurs="unbounded" />
+                  <any vc:minVersion="1.1" namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+              </sequence>
+              <attribute type="csapi:UUID" name="id" use="required"/>
+              <attribute type="xsd:string" name="name" use="required"/>
+              <attribute type="xsd:int"    name="ram"  use="prohibited" />
+              <attribute type="xsd:int"    name="disk" use="prohibited"/>
+              <attribute type="xsd:int"    name="vcpus" use="prohibited"/>
+              <anyAttribute namespace="##other" processContents="lax"/>
+              <assert vc:minVersion="1.1" test="atom:link[@rel='self']/@href and atom:link[@rel='bookmark']/@href">
+                  <annotation>
+                      <xsd:documentation
+                          xml:lang="EN"
+                          xmlns="http://www.w3.org/1999/xhtml">
+                          <p>
+                              Here the flavor <strong>MUST</strong>
+                              contain a name, an ID, a bookmark link,
+                              and a self link.
+                          </p>
+                      </xsd:documentation>
+                  </annotation>
+              </assert>
+          </restriction>
+      </complexContent>
+  </complexType>
+
+  <complexType name="Flavors">
+    <sequence>
+      <element name="flavor" type="csapi:Flavor" minOccurs="0" maxOccurs="1000">
+        <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+              A collection of flavors.
+            </p>
+          </xsd:documentation>
+        </annotation>
+      </element>
+      <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+      <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <anyAttribute namespace="##other" processContents="lax"/>
+  </complexType>
+
+  <complexType name="FlavorsWithOnlyIDsNamesLinks">
+      <annotation>
+          <xsd:documentation
+              xml:lang="EN"
+              xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                  A collection of flavors with ID, names, and links
+                  only. This type is used for non-detailed list of
+                  flavors.
+              </p>
+          </xsd:documentation>
+      </annotation>
+      <complexContent>
+          <restriction base="csapi:Flavors">
+              <sequence>
+                  <element name="flavor" type="csapi:FlavorWithOnlyIDNameLinks" minOccurs="0" maxOccurs="1000"/>
+                  <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
+                  <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+              </sequence>
+              <anyAttribute namespace="##other" processContents="lax"/>
+          </restriction>
+      </complexContent>
+  </complexType>
+</schema>
+

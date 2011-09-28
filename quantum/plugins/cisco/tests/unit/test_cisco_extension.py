@@ -290,7 +290,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         delete_path = str(delete_path_temp)
         delete_response = self.test_app.delete(delete_path)
 
-        self.assertEqual(202, delete_response.status_int)
+        self.assertEqual(200, delete_response.status_int)
         LOG.debug("test_delete_portprofile - END")
 
     def test_delete_portprofileDNE(self, portprofile_id='100'):
@@ -396,7 +396,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         associate_response = self.test_app.put(
                                   associate_path, req_assign_body,
                                   content_type=self.contenttype)
-        self.assertEqual(202, associate_response.status_int)
+        self.assertEqual(200, associate_response.status_int)
 
         # Clean Up - Disassociate and Delete the Port Profile
         disassociate_path_temp = self.portprofile_path +\
@@ -459,7 +459,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         disassociate_response = self.test_app.put(
                                      disassociate_path, req_assign_body,
                                      content_type=self.contenttype)
-        self.assertEqual(202, disassociate_response.status_int)
+        self.assertEqual(200, disassociate_response.status_int)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
                                                   self.contenttype)
         delete_path_temp = self.portprofile_path +\
@@ -762,7 +762,7 @@ class QosExtensionTest(unittest.TestCase):
                 resp_body['qoss']['qos']['id']
         delete_path = str(delete_path_temp)
         delete_response = self.test_app.delete(delete_path)
-        self.assertEqual(202, delete_response.status_int)
+        self.assertEqual(200, delete_response.status_int)
         LOG.debug("test_delete_qos - END")
 
     def test_delete_qosDNE(self, qos_id='100'):
@@ -1002,7 +1002,7 @@ class CredentialExtensionTest(unittest.TestCase):
                            resp_body['credentials']['credential']['id']
         delete_path = str(delete_path_temp)
         delete_response = self.test_app.delete(delete_path)
-        self.assertEqual(202, delete_response.status_int)
+        self.assertEqual(200, delete_response.status_int)
         LOG.debug("test_delete_credential - END")
 
     def test_delete_credentialDNE(self, credential_id='100'):

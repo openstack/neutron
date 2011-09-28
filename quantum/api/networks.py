@@ -109,8 +109,9 @@ class Controller(common.QuantumController):
         result = builder.build(network)['network']
         # Wsgi middleware allows us to build the response
         # before returning the call.
-        # This will allow us to return a 202 status code.
-        return self._build_response(request, dict(network=result), 202)
+        # This will allow us to return a 200 status code.  NOTE: in v1.1 we
+        # will be returning a 202 status code.
+        return self._build_response(request, dict(network=result), 200)
 
     def update(self, request, tenant_id, id):
         """ Updates the name for the network with the given id """

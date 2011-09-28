@@ -33,7 +33,7 @@ LOG = logging.getLogger('quantum.tests.test_api')
 class APITest(unittest.TestCase):
 
     def _create_network(self, format, name=None, custom_req_body=None,
-                        expected_res_status=202):
+                        expected_res_status=200):
         LOG.debug("Creating network")
         content_type = "application/" + format
         if name:
@@ -51,7 +51,7 @@ class APITest(unittest.TestCase):
             return network_data['network']['id']
 
     def _create_port(self, network_id, port_state, format,
-                     custom_req_body=None, expected_res_status=202):
+                     custom_req_body=None, expected_res_status=200):
         LOG.debug("Creating port for network %s", network_id)
         content_type = "application/%s" % format
         port_req = testlib.new_port_request(self.tenant_id, network_id,
@@ -645,6 +645,22 @@ class APITest(unittest.TestCase):
         self.assertEqual(attachment_data['attachment']['id'], interface_id)
         LOG.debug("_test_show_attachment - format:%s - END", format)
 
+    def _test_show_attachment_none_set(self, format):
+        LOG.debug("_test_show_attachment_none_set - format:%s - START", format)
+        content_type = "application/%s" % format
+        port_state = "ACTIVE"
+        network_id = self._create_network(format)
+        port_id = self._create_port(network_id, port_state, format)
+        get_attachment_req = testlib.get_attachment_request(self.tenant_id,
+                                                            network_id,
+                                                            port_id,
+                                                            format)
+        get_attachment_res = get_attachment_req.get_response(self.api)
+        attachment_data = Serializer().deserialize(get_attachment_res.body,
+                                                   content_type)
+        self.assertTrue('id' not in attachment_data['attachment'])
+        LOG.debug("_test_show_attachment_none_set - format:%s - END", format)
+
     def _test_show_attachment_networknotfound(self, format):
         LOG.debug("_test_show_attachment_networknotfound - format:%s - START",
                   format)
@@ -1004,6 +1020,12 @@ class APITest(unittest.TestCase):
 
     def test_show_attachment_json(self):
         self._test_show_attachment('json')
+
+    def test_show_attachment_none_set_xml(self):
+        self._test_show_attachment_none_set('xml')
+
+    def test_show_attachment_none_set_json(self):
+        self._test_show_attachment_none_set('json')
 
     def test_show_attachment_networknotfound_xml(self):
         self._test_show_attachment_networknotfound('xml')

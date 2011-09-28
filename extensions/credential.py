@@ -161,6 +161,6 @@ class CredentialController(common.QuantumController):
         """ Destroys the credential with the given id """
         try:
             self._plugin.delete_credential(tenant_id, id)
-            return exc.HTTPAccepted()
+            return exc.HTTPOk()
         except exception.CredentialNotFound as exp:
             return faults.Fault(faults.CredentialNotFound(exp))
