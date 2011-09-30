@@ -54,7 +54,7 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def create_network(self, tenant_id, net_name):
+    def create_network(self, tenant_id, net_name, **kwargs):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
@@ -139,7 +139,7 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def create_port(self, tenant_id, net_id, port_state=None):
+    def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         """
         Creates a port on the specified Virtual Network.
 

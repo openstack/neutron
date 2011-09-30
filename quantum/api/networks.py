@@ -95,16 +95,22 @@ class Controller(common.QuantumController):
 
     def create(self, request, tenant_id):
         """ Creates a new network for a given tenant """
-        #look for network name in request
         try:
             request_params = \
                 self._parse_request_params(request,
                                            self._network_ops_param_list)
         except exc.HTTPError as e:
             return faults.Fault(e)
+        # NOTE(bgh): We're currently passing both request_params['name'] and
+        # the entire request_params dict because their may be pieces of
+        # information (data extensions) inside the request params that the
+        # actual plugin will want to parse.  We could just pass only
+        # request_params but that would mean all the plugins would need to
+        # change.
         network = self._plugin.\
                    create_network(tenant_id,
-                                  request_params['name'])
+                                  request_params['name'],
+                                  **request_params)
         builder = networks_view.get_view_builder(request)
         result = builder.build(network)['network']
         # Wsgi middleware allows us to build the response

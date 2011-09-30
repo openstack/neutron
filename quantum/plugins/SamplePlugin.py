@@ -42,7 +42,7 @@ class QuantumEchoPlugin(object):
         """
         print("get_all_networks() called\n")
 
-    def create_network(self, tenant_id, net_name):
+    def create_network(self, tenant_id, net_name, **kwargs):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
@@ -77,7 +77,7 @@ class QuantumEchoPlugin(object):
         """
         print("get_all_ports() called\n")
 
-    def create_port(self, tenant_id, net_id):
+    def create_port(self, tenant_id, net_id, **kwargs):
         """
         Creates a port on the specified Virtual Network.
         """
@@ -195,7 +195,7 @@ class FakePlugin(object):
                 'net-name': net.name,
                 'net-ports': ports}
 
-    def create_network(self, tenant_id, net_name):
+    def create_network(self, tenant_id, net_name, **kwargs):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
@@ -256,7 +256,7 @@ class FakePlugin(object):
                 'attachment': port.interface_id,
                 'port-state': port.state}
 
-    def create_port(self, tenant_id, net_id, port_state=None):
+    def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         """
         Creates a port on the specified Virtual Network.
         """

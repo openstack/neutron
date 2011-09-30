@@ -61,6 +61,12 @@ class QuantumController(wsgi.Controller):
                 raise exc.HTTPBadRequest(msg)
             results[param_name] = param_value or param.get('default-value')
 
+        # There may be other parameters (data extensions), so we
+        # should include those in the results dict as well.
+        for key in data.keys():
+            if key not in params:
+                results[key] = data[key]
+
         return results
 
     def _build_response(self, req, res_data, status_code=200):
