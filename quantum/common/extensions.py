@@ -419,8 +419,11 @@ class ExtensionManager(object):
         extension implementation.
 
         """
-        if os.path.exists(self.path):
-            self._load_all_extensions_from_path(self.path)
+        for path in self.path.split(':'):
+            if os.path.exists(path):
+                self._load_all_extensions_from_path(path)
+            else:
+                LOG.error("Extension path \"%s\" doesn't exist!" % path)
 
     def _load_all_extensions_from_path(self, path):
         for f in os.listdir(path):
