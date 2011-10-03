@@ -63,12 +63,8 @@ class QuantumEchoPlugin(object):
         """
         print("get_network_details() called\n")
 
-    def rename_network(self, tenant_id, net_id, new_name):
-        """
-        Updates the symbolic name belonging to a particular
-        Virtual Network.
-        """
-        print("rename_network() called\n")
+    def update_network(self, tenant_id, net_id, **kwargs):
+        print("update_network() called")
 
     def get_all_ports(self, tenant_id, net_id):
         """
@@ -92,9 +88,9 @@ class QuantumEchoPlugin(object):
         """
         print("delete_port() called\n")
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
-        Updates the state of a port on the specified Virtual Network.
+        Updates the attributes of a port on the specified Virtual Network.
         """
         print("update_port() called\n")
 
@@ -222,14 +218,12 @@ class FakePlugin(object):
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)
 
-    def rename_network(self, tenant_id, net_id, new_name):
+    def update_network(self, tenant_id, net_id, **kwargs):
         """
-        Updates the symbolic name belonging to a particular
-        Virtual Network.
+        Updates the attributes of a particular Virtual Network.
         """
-        LOG.debug("FakePlugin.rename_network() called")
-        db.network_rename(net_id, tenant_id, new_name)
-        net = self._get_network(tenant_id, net_id)
+        LOG.debug("FakePlugin.update_network() called")
+        net = db.network_update(net_id, tenant_id, **kwargs)
         return net
 
     def get_all_ports(self, tenant_id, net_id):
@@ -267,18 +261,17 @@ class FakePlugin(object):
         port_item = {'port-id': str(port.uuid)}
         return port_item
 
-    def update_port(self, tenant_id, net_id, port_id, new_state):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
-        Updates the state of a port on the specified Virtual Network.
+        Updates the attributes of a port on the specified Virtual Network.
         """
         LOG.debug("FakePlugin.update_port() called")
         #validate port and network ids
         self._get_network(tenant_id, net_id)
         self._get_port(tenant_id, net_id, port_id)
-        self._validate_port_state(new_state)
-        db.port_set_state(port_id, net_id, new_state)
+        port = db.port_update(port_id, net_id, **kwargs)
         port_item = {'port-id': port_id,
-                     'port-state': new_state}
+                     'port-state': port['state']}
         return port_item
 
     def delete_port(self, tenant_id, net_id, port_id):

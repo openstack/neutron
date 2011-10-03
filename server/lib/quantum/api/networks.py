@@ -128,8 +128,8 @@ class Controller(common.QuantumController):
         except exc.HTTPError as e:
             return faults.Fault(e)
         try:
-            self._plugin.rename_network(tenant_id, id,
-                                        request_params['name'])
+            self._plugin.update_network(tenant_id, id,
+                                        **request_params)
             return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

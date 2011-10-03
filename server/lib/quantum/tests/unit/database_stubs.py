@@ -84,17 +84,18 @@ class QuantumDB(object):
         except Exception, exc:
             LOG.error("Failed to delete network: %s", str(exc))
 
-    def rename_network(self, tenant_id, net_id, new_name):
+    def update_network(self, tenant_id, net_id, param_data):
         """Rename a network"""
         try:
-            net = db.network_rename(net_id, tenant_id, new_name)
-            LOG.debug("Renamed network: %s", net.uuid)
+            print param_data
+            net = db.network_update(net_id, tenant_id, **param_data)
+            LOG.debug("Updated network: %s", net.uuid)
             net_dict = {}
             net_dict["id"] = str(net.uuid)
             net_dict["name"] = net.name
             return net_dict
         except Exception, exc:
-            LOG.error("Failed to rename network: %s", str(exc))
+            LOG.error("Failed to update network: %s", str(exc))
 
     def get_all_ports(self, net_id):
         """Get all ports"""
@@ -153,10 +154,10 @@ class QuantumDB(object):
         except Exception, exc:
             LOG.error("Failed to delete port: %s", str(exc))
 
-    def update_port(self, net_id, port_id, port_state):
+    def update_port(self, net_id, port_id, **kwargs):
         """Update a port"""
         try:
-            port = db.port_set_state(net_id, port_id, port_state)
+            port = db.port_set_state(net_id, port_id, **kwargs)
             LOG.debug("Updated port %s", port.uuid)
             port_dict = {}
             port_dict["id"] = str(port.uuid)

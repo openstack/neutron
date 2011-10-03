@@ -85,7 +85,7 @@ class TestUCSInventory(unittest.TestCase):
         LOG.debug("test_%s - START", cmd)
         net = self._l2network.create_network(tenant, net_name)
         port = self._l2network.create_port(tenant, net[const.NET_ID],
-                                           port_state)
+                                           port_state, state=port_state)
 
         args = [tenant, net[const.NET_ID], port[const.PORT_ID]]
         if params is not None:
@@ -156,9 +156,9 @@ class TestUCSInventory(unittest.TestCase):
         """Test that the UCS Inventory returns the correct devices to use"""
         self._test_get_all_ucms('get_network_details')
 
-    def test_rename_network(self):
+    def test_update_network(self):
         """Test that the UCS Inventory returns the correct devices to use"""
-        self._test_get_all_ucms('rename_network')
+        self._test_get_all_ucms('update_network')
 
     def test_get_all_ports(self):
         """Test that the UCS Inventory returns the correct devices to use"""

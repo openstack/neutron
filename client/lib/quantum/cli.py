@@ -57,8 +57,8 @@ commands = {
   "show_net": {
     "func": cli_lib.show_net,
     "args": ["tenant-id", "net-id"]},
-  "rename_net": {
-    "func": cli_lib.rename_net,
+  "update_net": {
+    "func": cli_lib.update_net,
     "args": ["tenant-id", "net-id", "new-name"]},
   "list_ports": {
     "func": cli_lib.list_ports,
@@ -69,9 +69,9 @@ commands = {
   "delete_port": {
     "func": cli_lib.delete_port,
     "args": ["tenant-id", "net-id", "port-id"]},
-  "set_port_state": {
-    "func": cli_lib.set_port_state,
-    "args": ["tenant-id", "net-id", "port-id", "new_state"]},
+  "update_port": {
+    "func": cli_lib.update_port,
+    "args": ["tenant-id", "net-id", "port-id", "params"]},
   "show_port": {
     "func": cli_lib.show_port,
     "args": ["tenant-id", "net-id", "port-id"]},

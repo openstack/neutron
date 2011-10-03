@@ -103,10 +103,9 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def rename_network(self, tenant_id, net_id, new_name):
+    def update_network(self, tenant_id, net_id, **kwargs):
         """
-        Updates the symbolic name belonging to a particular
-        Virtual Network.
+        Updates the attributes of a particular Virtual Network.
 
         :returns: a sequence of mappings representing the new network
                     attributes, with the following signature:
@@ -153,9 +152,9 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
-        Updates the state of a specific port on the
+        Updates the attributes of a specific port on the
         specified Virtual Network.
 
         :returns: a mapping sequence with the following signature:

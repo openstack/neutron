@@ -18,6 +18,7 @@ import logging
 import unittest
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.common import cisco_credentials as cred
@@ -38,6 +39,7 @@ class TestNexusPlugin(unittest.TestCase):
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 267
         self.port_id = "9"
+        db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         cdb.initialize()
         cred.Store.initialize()
         self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
@@ -175,13 +177,13 @@ class TestNexusPlugin(unittest.TestCase):
 
         LOG.debug("test_get_network_details_network_does_not_exist - END")
 
-    def test_rename_network(self, new_name="new_network_name",
+    def test_update_network(self, new_name="new_network_name",
                             net_tenant_id=None, network_name=None):
         """
-        Tests rename of a Virtual Network .
+        Tests update of a Virtual Network .
         """
 
-        LOG.debug("test_rename_network - START")
+        LOG.debug("test_update_network - START")
 
         if net_tenant_id:
             tenant_id = net_tenant_id
@@ -199,18 +201,18 @@ class TestNexusPlugin(unittest.TestCase):
                            tenant_id, self.net_name, network_created["net-id"],
                            self.vlan_name, self.vlan_id)
         rename_net_dict = self._cisco_nexus_plugin.rename_network(
-                        tenant_id, new_net_dict[const.NET_ID], new_name)
+                        tenant_id, new_net_dict[const.NET_ID], name=new_name)
         self.assertEqual(rename_net_dict[const.NET_NAME], new_name)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
-        LOG.debug("test_rename_network - END")
+        LOG.debug("test_update_network - END")
 
-    def test_rename_network_DNE(self, new_name="new_network_name",
+    def test_update_network_DNE(self, new_name="new_network_name",
                                 net_tenant_id=None, network_id='0005'):
         """
-        Tests rename of a Virtual Network when Network does not exist.
+        Tests update of a Virtual Network when Network does not exist.
         """
 
-        LOG.debug("test_rename_network_DNE - START")
+        LOG.debug("test_update_network_DNE - START")
 
         if net_tenant_id:
             tenant_id = net_tenant_id
@@ -222,10 +224,10 @@ class TestNexusPlugin(unittest.TestCase):
             net_id = self.net_id
 
         self.assertRaises(exc.NetworkNotFound,
-                          self._cisco_nexus_plugin.rename_network,
-                          new_name, tenant_id, net_id)
+                          self._cisco_nexus_plugin.update_network,
+                          tenant_id, net_id, name=new_name)
 
-        LOG.debug("test_rename_network_DNE - END")
+        LOG.debug("test_update_network_DNE - END")
 
     def test_list_all_networks(self, net_tenant_id=None):
         """

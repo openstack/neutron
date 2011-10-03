@@ -120,12 +120,12 @@ class UCSVICPlugin(L2DevicePluginBase):
 
         return new_network
 
-    def rename_network(self, tenant_id, net_id, new_name, **kwargs):
+    def update_network(self, tenant_id, net_id, **kwargs):
         """
         Updates the symbolic name belonging to a particular
         Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:rename_network() called\n")
+        LOG.debug("UCSVICPlugin:update_network() called\n")
         self._set_ucsm(kwargs[const.DEVICE_IP])
         network = db.network_get(net_id)
         net_dict = cutil.make_net_dict(network[const.UUID],
@@ -198,7 +198,7 @@ class UCSVICPlugin(L2DevicePluginBase):
                                                 blade_id, interface_dn)
         return udb.remove_portbinding(port_id)
 
-    def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         Updates the state of a port on the specified Virtual Network.
         """

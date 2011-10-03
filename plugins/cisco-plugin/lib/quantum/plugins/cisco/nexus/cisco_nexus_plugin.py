@@ -113,14 +113,14 @@ class NexusPlugin(L2DevicePluginBase):
         network = self._get_network(tenant_id, net_id)
         return network
 
-    def rename_network(self, tenant_id, net_id, new_name, **kwargs):
+    def update_network(self, tenant_id, net_id, **kwargs):
         """
-        Updates the symbolic name belonging to a particular
+        Updates the properties of a particular
         Virtual Network.
         """
-        LOG.debug("NexusPlugin:rename_network() called\n")
+        LOG.debug("NexusPlugin:update_network() called\n")
         network = self._get_network(tenant_id, net_id)
-        network[const.NET_NAME] = new_name
+        network[const.NET_NAME] = kwargs["name"]
         return network
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):

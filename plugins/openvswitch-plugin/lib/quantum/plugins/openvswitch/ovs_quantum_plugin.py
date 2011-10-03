@@ -139,8 +139,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
         ports = self.get_all_ports(tenant_id, net_id)
         return self._make_net_dict(str(net.uuid), net.name, ports)
 
-    def rename_network(self, tenant_id, net_id, new_name):
-        net = db.network_rename(net_id, tenant_id, new_name)
+    def update_network(self, tenant_id, net_id, **kwargs):
+        net = db.network_update(net_id, tenant_id, **kwargs)
         return self._make_net_dict(str(net.uuid), net.name, None)
 
     def _make_port_dict(self, port_id, port_state, net_id, attachment):
@@ -170,13 +170,13 @@ class OVSQuantumPlugin(QuantumPluginBase):
         return self._make_port_dict(str(port.uuid), port.state,
                                         port.network_id, port.interface_id)
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
         port = db.port_get(port_id, net_id)
-        db.port_set_state(port_id, net_id, port_state)
+        db.port_update(port_id, net_id, **kwargs)
         return self._make_port_dict(str(port.uuid), port.state,
                                         port.network_id, port.interface_id)
 

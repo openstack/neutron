@@ -165,8 +165,8 @@ class APITest(unittest.TestCase):
         self.assertEqual(show_network_res.status_int, 420)
         LOG.debug("_test_show_network_not_found - format:%s - END", format)
 
-    def _test_rename_network(self, format):
-        LOG.debug("_test_rename_network - format:%s - START", format)
+    def _test_update_network(self, format):
+        LOG.debug("_test_update_network - format:%s - START", format)
         content_type = "application/%s" % format
         new_name = 'new_network_name'
         network_id = self._create_network(format)
@@ -186,10 +186,10 @@ class APITest(unittest.TestCase):
         self.assertEqual({'id': network_id,
                           'name': new_name},
                          network_data['network'])
-        LOG.debug("_test_rename_network - format:%s - END", format)
+        LOG.debug("_test_update_network - format:%s - END", format)
 
-    def _test_rename_network_badrequest(self, format):
-        LOG.debug("_test_rename_network_badrequest - format:%s - START",
+    def _test_update_network_badrequest(self, format):
+        LOG.debug("_test_update_network_badrequest - format:%s - START",
                   format)
         network_id = self._create_network(format)
         bad_body = {'network': {'bad-attribute': 'very-bad'}}
@@ -199,11 +199,11 @@ class APITest(unittest.TestCase):
                                                     custom_req_body=bad_body)
         update_network_res = update_network_req.get_response(self.api)
         self.assertEqual(update_network_res.status_int, 400)
-        LOG.debug("_test_rename_network_badrequest - format:%s - END",
+        LOG.debug("_test_update_network_badrequest - format:%s - END",
                   format)
 
-    def _test_rename_network_not_found(self, format):
-        LOG.debug("_test_rename_network_not_found - format:%s - START",
+    def _test_update_network_not_found(self, format):
+        LOG.debug("_test_update_network_not_found - format:%s - START",
                   format)
         new_name = 'new_network_name'
         update_network_req = testlib.update_network_request(self.tenant_id,
@@ -212,7 +212,7 @@ class APITest(unittest.TestCase):
                                                             format)
         update_network_res = update_network_req.get_response(self.api)
         self.assertEqual(update_network_res.status_int, 420)
-        LOG.debug("_test_rename_network_not_found - format:%s - END",
+        LOG.debug("_test_update_network_not_found - format:%s - END",
                   format)
 
     def _test_delete_network(self, format):
@@ -872,23 +872,23 @@ class APITest(unittest.TestCase):
     def test_delete_network_xml(self):
         self._test_delete_network('xml')
 
-    def test_rename_network_json(self):
-        self._test_rename_network('json')
+    def test_update_network_json(self):
+        self._test_update_network('json')
 
-    def test_rename_network_xml(self):
-        self._test_rename_network('xml')
+    def test_update_network_xml(self):
+        self._test_update_network('xml')
 
-    def test_rename_network_badrequest_json(self):
-        self._test_rename_network_badrequest('json')
+    def test_update_network_badrequest_json(self):
+        self._test_update_network_badrequest('json')
 
-    def test_rename_network_badrequest_xml(self):
-        self._test_rename_network_badrequest('xml')
+    def test_update_network_badrequest_xml(self):
+        self._test_update_network_badrequest('xml')
 
-    def test_rename_network_not_found_json(self):
-        self._test_rename_network_not_found('json')
+    def test_update_network_not_found_json(self):
+        self._test_update_network_not_found('json')
 
-    def test_rename_network_not_found_xml(self):
-        self._test_rename_network_not_found('xml')
+    def test_update_network_not_found_xml(self):
+        self._test_update_network_not_found('xml')
 
     def test_delete_network_in_use_json(self):
         self._test_delete_network_in_use('json')

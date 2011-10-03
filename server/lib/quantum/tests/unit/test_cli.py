@@ -95,13 +95,13 @@ class CLITest(unittest.TestCase):
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
 
-    def _verify_rename_network(self):
+    def _verify_update_network(self):
             # Verification - get raw result from db
             nw_list = db.network_list(self.tenant_id)
             network_data = {'id': nw_list[0].uuid,
                             'name': nw_list[0].name}
             # Fill CLI template
-            output = cli.prepare_output('rename_net', self.tenant_id,
+            output = cli.prepare_output('update_net', self.tenant_id,
                                         dict(network=network_data))
             # Verify!
             # Must add newline at the end to match effect of print call
@@ -158,12 +158,12 @@ class CLITest(unittest.TestCase):
             # Must add newline at the end to match effect of print call
             self.assertEquals(self.fake_stdout.make_string(), output + '\n')
 
-    def _verify_set_port_state(self, network_id, port_id):
+    def _verify_update_port(self, network_id, port_id):
             # Verification - get raw result from db
             port = db.port_get(port_id, network_id)
             port_data = {'id': port.uuid, 'state': port.state}
             # Fill CLI template
-            output = cli.prepare_output('set_port_state', self.tenant_id,
+            output = cli.prepare_output('update_port', self.tenant_id,
                                         dict(network_id=network_id,
                                              port=port_data))
             # Verify!
@@ -263,19 +263,19 @@ class CLITest(unittest.TestCase):
         LOG.debug(self.fake_stdout.content)
         self._verify_show_network()
 
-    def test_rename_network(self):
+    def test_update_network(self):
         try:
             net = db.network_create(self.tenant_id, self.network_name_1)
             network_id = net['uuid']
-            cli.rename_net(self.client, self.tenant_id,
-                           network_id, self.network_name_2)
+            cli.update_net(self.client, self.tenant_id,
+                           network_id, 'name=%s' % self.network_name_2)
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_rename_network failed due to an exception")
+            self.fail("test_update_network failed due to an exception")
 
         LOG.debug("Operation completed. Verifying result")
         LOG.debug(self.fake_stdout.content)
-        self._verify_rename_network()
+        self._verify_update_network()
 
     def test_list_ports(self):
         try:
@@ -326,22 +326,22 @@ class CLITest(unittest.TestCase):
         LOG.debug(self.fake_stdout.content)
         self._verify_delete_port(network_id, port_id)
 
-    def test_set_port_state(self):
+    def test_update_port(self):
         try:
             net = db.network_create(self.tenant_id, self.network_name_1)
             network_id = net['uuid']
             port = db.port_create(network_id)
             port_id = port['uuid']
             # Default state is DOWN - change to ACTIVE.
-            cli.set_port_state(self.client, self.tenant_id, network_id,
-                               port_id, 'ACTIVE')
+            cli.update_port(self.client, self.tenant_id, network_id,
+                               port_id, 'state=ACTIVE')
         except:
             LOG.exception("Exception caught: %s", sys.exc_info())
-            self.fail("test_set_port_state failed due to an exception")
+            self.fail("test_update_port failed due to an exception")
 
         LOG.debug("Operation completed. Verifying result")
         LOG.debug(self.fake_stdout.content)
-        self._verify_set_port_state(network_id, port_id)
+        self._verify_update_port(network_id, port_id)
 
     def test_show_port_no_attach(self):
         network_id = None

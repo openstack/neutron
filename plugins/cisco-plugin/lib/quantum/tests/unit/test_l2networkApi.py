@@ -101,7 +101,7 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                tenant_id, new_net_dict[const.NET_ID], self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -158,42 +158,43 @@ class CoreAPITestFunc(unittest.TestCase):
                           tenant_id, net_id)
         LOG.debug("test_show_network_not_found - END")
 
-    def test_rename_network(self, net_tenant_id=None,
+    def test_update_network(self, net_tenant_id=None,
                             new_name='new_test_network'):
         """
         Tests rename of a Virtual Network .
         """
 
-        LOG.debug("test_rename_network - START")
+        LOG.debug("test_update_network - START")
         if net_tenant_id:
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
         new_net_dict = self._l2network_plugin.create_network(
                         tenant_id, self.network_name)
-        rename_net_dict = self._l2network_plugin.rename_network(
-                        tenant_id, new_net_dict[const.NET_ID], new_name)
+        rename_net_dict = self._l2network_plugin.update_network(
+                            tenant_id, new_net_dict[const.NET_ID],
+                            name=new_name)
         net = db.network_get(new_net_dict[const.NET_ID])
         self.assertEqual(net[const.NETWORKNAME], new_name)
         self.assertEqual(new_name, rename_net_dict[const.NET_NAME])
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
-        LOG.debug("test_rename_network - END")
+        LOG.debug("test_update_network - END")
 
-    def test_rename_networkDNE(self, net_tenant_id=None,
+    def test_update_networkDNE(self, net_tenant_id=None,
                                net_id='0005', new_name='new_test_network'):
         """
-        Tests rename of a Virtual Network when Network does not exist.
+        Tests update of a Virtual Network when Network does not exist.
         """
 
-        LOG.debug("test_rename_network_not_found - START")
+        LOG.debug("test_update_network_not_found - START")
         if net_tenant_id:
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
         self.assertRaises(exc.NetworkNotFound,
-                          self._l2network_plugin.rename_network,
-                          tenant_id, net_id, new_name)
-        LOG.debug("test_rename_network_not_found - END")
+                          self._l2network_plugin.update_network,
+                          tenant_id, net_id, name=new_name)
+        LOG.debug("test_update_network_not_found - END")
 
     def test_list_networks(self, tenant_id='test_network'):
         """
@@ -232,9 +233,11 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                         tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        self.state)
         port_dict2 = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        self.state)
         port_list = self._l2network_plugin.get_all_ports(
                         tenant_id, new_net_dict[const.NET_ID])
         port_temp_list = [port_dict, port_dict2]
@@ -260,7 +263,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_list_ports - END")
 
     def test_create_port(self, tenant_id='test_network',
-                         port_state=const.PORT_UP):
+                         state=const.PORT_UP):
         """
         Tests creation of Ports.
         """
@@ -269,19 +272,19 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                tenant_id, new_net_dict[const.NET_ID], port_state)
+                tenant_id, new_net_dict[const.NET_ID], state)
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
-        self.assertEqual(port_dict[const.PORT_STATE], port_state)
+        self.assertEqual(port_dict[const.PORT_STATE], state)
         self.assertEqual(port_dict[const.NET_ID], new_net_dict[const.NET_ID])
-        self.assertEqual(port[const.PORTSTATE], port_state)
+        self.assertEqual(port[const.PORTSTATE], state)
         self.assertEqual(port[const.NETWORKID], new_net_dict[const.NET_ID])
         self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID],
                                  port_dict[const.PORT_ID])
         LOG.debug("test_create_port - END")
 
     def test_create_port_network_DNE(
-            self, net_tenant_id=None, net_id='0005', port_state=const.PORT_UP):
+            self, net_tenant_id=None, net_id='0005', state=const.PORT_UP):
 
         """
         Tests creation of Ports when network does not exist.
@@ -294,11 +297,11 @@ class CoreAPITestFunc(unittest.TestCase):
             tenant_id = self.tenant_id
         self.assertRaises(exc.NetworkNotFound,
                           self._l2network_plugin.create_port,
-                          tenant_id, net_id, port_state)
+                          tenant_id, net_id, state)
         LOG.debug("test_create_port_network_DNE - END:")
 
     def test_delete_port(self, tenant_id='test_tenant',
-                         port_state=const.PORT_UP):
+                         state=const.PORT_UP):
         """
         Tests deletion of Ports
         """
@@ -307,7 +310,8 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                            tenant_id, new_net_dict[const.NET_ID], port_state)
+                            tenant_id, new_net_dict[const.NET_ID],
+                            state=state)
         delete_port_dict = self._l2network_plugin.delete_port(
                                 tenant_id, new_net_dict[const.NET_ID],
                                 port_dict[const.PORT_ID])
@@ -356,7 +360,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                         tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                                 tenant_id, new_net_dict[const.NET_ID],
-                                self.port_state)
+                                self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -377,7 +381,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_delete_portInUse - END")
 
     def test_update_port(self, tenant_id='test_tenant',
-                         port_state=const.PORT_DOWN):
+                         state=const.PORT_DOWN):
         """
         Tests updation of Ports.
         """
@@ -386,14 +390,15 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                         tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        self.state)
         update_port_dict = self._l2network_plugin.update_port(
-                                tenant_id, new_net_dict[const.NET_ID],
-                                port_dict[const.PORT_ID], port_state)
+                              tenant_id, new_net_dict[const.NET_ID],
+                              port_dict[const.PORT_ID], state=state)
         new_port = db.port_get(new_net_dict[const.NET_ID],
                                port_dict[const.PORT_ID])
-        self.assertEqual(new_port[const.PORTSTATE], port_state)
-        self.assertEqual(update_port_dict[const.PORT_STATE], port_state)
+        self.assertEqual(new_port[const.PORTSTATE], state)
+        self.assertEqual(update_port_dict[const.PORT_STATE], state)
         self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID],
                                  port_dict[const.PORT_ID])
         LOG.debug("test_update_port - END")
@@ -407,7 +412,7 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_update_port_networkDNE - START")
         self.assertRaises(exc.NetworkNotFound,
                           self._l2network_plugin.update_port, tenant_id,
-                          net_id, port_id, const.PORT_UP)
+                          net_id, port_id, const.PORT_UP, state=const.PORT_UP)
         LOG.debug("test_update_port_networkDNE - END")
 
     def test_update_portDNE(self, tenant_id='test_tenant', port_id='p0005'):
@@ -420,7 +425,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.network_name)
         self.assertRaises(
             exc.PortNotFound, self._l2network_plugin.update_port, tenant_id,
-            new_net_dict[const.NET_ID], port_id, const.PORT_UP)
+            new_net_dict[const.NET_ID], port_id, state=const.PORT_UP)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_update_portDNE - END")
 
@@ -433,14 +438,15 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID],
+                        self.state)
         get_port_dict = self._l2network_plugin.get_port_details(
                         tenant_id, new_net_dict[const.NET_ID],
                         port_dict[const.PORT_ID])
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
-        self.assertEqual(port[const.PORTSTATE], self.port_state)
-        self.assertEqual(get_port_dict[const.PORT_STATE], self.port_state)
+        self.assertEqual(port[const.PORTSTATE], self.state)
+        self.assertEqual(get_port_dict[const.PORT_STATE], self.state)
         self.tearDownNetworkPort(tenant_id, new_net_dict[const.NET_ID],
                                  port_dict[const.PORT_ID])
         LOG.debug("test_show_port - END")
@@ -483,7 +489,7 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID], self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -552,7 +558,7 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.port_state)
+                        tenant_id, new_net_dict[const.NET_ID], self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -589,7 +595,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                                 tenant_id, new_net_dict[const.NET_ID],
-                                self.port_state)
+                                self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -721,7 +727,8 @@ class CoreAPITestFunc(unittest.TestCase):
         new_net_dict = self._l2network_plugin.create_network(
                         tenant_id, 'test_network')
         port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], 'const.PORT_UP')
+                        tenant_id, new_net_dict[const.NET_ID],
+                        const.PORT_UP)
         self._l2network_plugin.associate_portprofile(
                         tenant_id, new_net_dict[const.NET_ID],
                         port_dict[const.PORT_ID], port_profile_id)
@@ -846,7 +853,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                                 tenant_id, new_net_dict[const.NET_ID],
-                                self.port_state)
+                                self.state)
         port_profile_dict = self._l2network_plugin.create_portprofile(
                         tenant_id, self.profile_name, self.qos)
         port_profile_id = port_profile_dict['profile_id']
@@ -888,7 +895,7 @@ class CoreAPITestFunc(unittest.TestCase):
                                 tenant_id, self.network_name)
         port_dict = self._l2network_plugin.create_port(
                                 tenant_id, new_net_dict[const.NET_ID],
-                                self.port_state)
+                                self.state)
         port_profile_dict = self._l2network_plugin.create_portprofile(
                                 tenant_id, self.profile_name, self.qos)
         port_profile_id = port_profile_dict['profile_id']
@@ -935,26 +942,26 @@ class CoreAPITestFunc(unittest.TestCase):
         self.assertEqual(result_vlan_name, expected_output)
         LOG.debug("test_get_vlan_name - END")
 
-    def test_validate_port_state(self, port_state=const.PORT_UP):
+    def test_validate_state(self, state=const.PORT_UP):
         """
         Tests validate port state
         """
 
-        LOG.debug("test_validate_port_state - START")
-        result = self._l2network_plugin._validate_port_state(port_state)
+        LOG.debug("test_validate_state - START")
+        result = self._l2network_plugin._validate_state(state)
         self.assertEqual(result, True)
-        LOG.debug("test_validate_port_state - END")
+        LOG.debug("test_validate_state - END")
 
-    def test_invalid_port_state(self, port_state="BADSTATE"):
+    def test_invalid_state(self, state="BADSTATE"):
         """
         Tests invalidate port state
         """
 
-        LOG.debug("test_validate_port_state - START")
+        LOG.debug("test_validate_state - START")
         self.assertRaises(exc.StateInvalid,
-                          self._l2network_plugin._validate_port_state,
-                          port_state)
-        LOG.debug("test_validate_port_state - END")
+                          self._l2network_plugin._validate_state,
+                          state)
+        LOG.debug("test_validate_state - END")
 
     def setUp(self):
         """
@@ -964,11 +971,13 @@ class CoreAPITestFunc(unittest.TestCase):
         self.network_name = "test_network"
         self.profile_name = "test_tenant_port_profile"
         self.qos = "test_qos"
-        self.port_state = const.PORT_UP
+        self.state = const.PORT_UP
         self.net_id = '00005'
         self.port_id = 'p0005'
         self.remote_interface = 'new_interface'
         self._l2network_plugin = l2network_plugin.L2Network()
+        LOG.debug(self._l2network_plugin)
+        LOG.debug("asdfasdfasdfasdfasdf")
 
     """
         Clean up functions after the tests
@@ -1033,8 +1042,8 @@ class CoreAPITestFunc(unittest.TestCase):
         res[const.NET_PORTS] = ports
         return res
 
-    def _make_port_dict(self, port_id, port_state, net_id, attachment):
-        res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
+    def _make_port_dict(self, port_id, state, net_id, attachment):
+        res = {const.PORT_ID: port_id, const.PORT_STATE: state}
         res[const.NET_ID] = net_id
         res[const.ATTACHMENT] = attachment
         return res

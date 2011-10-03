@@ -72,7 +72,7 @@ class L2Network(QuantumPluginBase):
 
         return new_networks_list
 
-    def create_network(self, tenant_id, net_name):
+    def create_network(self, tenant_id, net_name, **kwargs):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
@@ -140,15 +140,15 @@ class L2Network(QuantumPluginBase):
 
         return new_network
 
-    def rename_network(self, tenant_id, net_id, new_name):
+    def update_network(self, tenant_id, net_id, **kwargs):
         """
         Updates the symbolic name belonging to a particular
         Virtual Network.
         """
-        LOG.debug("rename_network() called\n")
-        network = db.network_rename(tenant_id, net_id, new_name)
+        LOG.debug("update_network() called\n")
+        network = db.network_update(net_id, tenant_id, **kwargs)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     new_name])
+                                                     kwargs])
         net_dict = cutil.make_net_dict(network[const.UUID],
                                        network[const.NETWORKNAME],
                                        [])
@@ -173,7 +173,7 @@ class L2Network(QuantumPluginBase):
 
         return ports_on_net
 
-    def create_port(self, tenant_id, net_id, port_state=None):
+    def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         """
         Creates a port on the specified Virtual Network.
         """
@@ -212,17 +212,18 @@ class L2Network(QuantumPluginBase):
             raise exc.PortInUse(port_id=port_id, net_id=net_id,
                                 att_id=attachment_id)
 
-    def update_port(self, tenant_id, net_id, port_id, port_state):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     port_id, port_state])
-        self._validate_port_state(port_state)
-        db.port_set_state(net_id, port_id, port_state)
-        new_port_dict = cutil.make_port_dict(port_id, port_state, net_id,
+                                        port_id, kwargs])
+        self._validate_port_state(kwargs["state"])
+        db.port_update(port_id, net_id, **kwargs)
+
+        new_port_dict = cutil.make_port_dict(port_id, kwargs["state"], net_id,
                                              None)
         return new_port_dict
 

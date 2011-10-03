@@ -126,11 +126,13 @@ def network_get(net_id):
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 
-def network_rename(net_id, tenant_id, new_name):
+def network_update(net_id, tenant_id, **kwargs):
     session = get_session()
     net = network_get(net_id)
-    _check_duplicate_net_name(tenant_id, new_name)
-    net.name = new_name
+    for key in kwargs.keys():
+        if key == "name":
+            _check_duplicate_net_name(tenant_id, kwargs[key])
+        net[key] = kwargs[key]
     session.merge(net)
     session.flush()
     return net
@@ -191,16 +193,16 @@ def port_get(port_id, net_id):
         raise q_exc.PortNotFound(net_id=net_id, port_id=port_id)
 
 
-def port_set_state(port_id, net_id, new_state):
-    if new_state not in ('ACTIVE', 'DOWN'):
-        raise q_exc.StateInvalid(port_state=new_state)
-
+def port_update(port_id, net_id, **kwargs):
     # confirm network exists
     network_get(net_id)
-
     port = port_get(port_id, net_id)
     session = get_session()
-    port.state = new_state
+    for key in kwargs.keys():
+        if key == "state":
+            if kwargs[key] not in ('ACTIVE', 'DOWN'):
+                raise q_exc.StateInvalid(port_state=kwargs[key])
+        port[key] = kwargs[key]
     session.merge(port)
     session.flush()
     return port

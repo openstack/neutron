@@ -469,17 +469,17 @@ class QuantumDB(object):
         except Exception, exc:
             raise Exception("Failed to delete port: %s" % str(exc))
 
-    def rename_network(self, tenant_id, net_id, new_name):
-        """Rename a network"""
+    def update_network(self, tenant_id, net_id, **kwargs):
+        """Update a network"""
         try:
-            net = db.network_rename(tenant_id, net_id, new_name)
-            LOG.debug("Renamed network: %s" % net.uuid)
+            net = db.network_update(net_id, tenant_id, **kwargs)
+            LOG.debug("Updated network: %s" % net.uuid)
             net_dict = {}
             net_dict["net-id"] = str(net.uuid)
             net_dict["net-name"] = net.name
             return net_dict
         except Exception, exc:
-            raise Exception("Failed to rename network: %s" % str(exc))
+            raise Exception("Failed to update network: %s" % str(exc))
 
     def get_all_ports(self, net_id):
         """Get all ports"""
@@ -1039,12 +1039,12 @@ class QuantumDBTest(unittest.TestCase):
         self.assertTrue(count == 0)
         self.teardown_network_port()
 
-    def testd_rename_network(self):
-        """test to rename network"""
+    def testd_update_network(self):
+        """test to update (rename) network"""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
-        net = self.dbtest.rename_network(self.tenant_id, net1["net-id"],
-          "plugin_test1_renamed")
+        net = self.dbtest.update_network(self.tenant_id, net1["net-id"],
+          name="plugin_test1_renamed")
         self.assertTrue(net["net-name"] == "plugin_test1_renamed")
         self.teardown_network_port()
 

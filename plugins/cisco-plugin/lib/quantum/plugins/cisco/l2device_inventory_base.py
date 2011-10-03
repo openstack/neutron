@@ -131,7 +131,7 @@ class L2NetworkDeviceInventoryBase(object):
         pass
 
     @abstractmethod
-    def rename_network(self, args):
+    def update_network(self, args):
         """
         Returns a dictionary containing the first element as a device
         IP address list. The model then invokes the device-specific plugin

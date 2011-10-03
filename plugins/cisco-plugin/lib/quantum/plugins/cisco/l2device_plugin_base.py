@@ -67,7 +67,7 @@ class L2DevicePluginBase(object):
         pass
 
     @abstractmethod
-    def rename_network(self, tenant_id, net_id, new_name, **kwargs):
+    def update_network(self, tenant_id, net_id, name, **kwargs):
         """
         :returns:
         :raises:
@@ -99,7 +99,7 @@ class L2DevicePluginBase(object):
         pass
 
     @abstractmethod
-    def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
+    def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
         :returns:
         :raises:

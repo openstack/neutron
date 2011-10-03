@@ -246,11 +246,11 @@ class APITest(unittest.TestCase):
         LOG.debug("_test_delete_port - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-    def _test_set_port_state(self, tenant=TENANT_1, format='json', status=200):
-        LOG.debug("_test_set_port_state - tenant:%s "\
+    def _test_update_port(self, tenant=TENANT_1, format='json', status=200):
+        LOG.debug("_test_update_port - tenant:%s "\
                   "- format:%s - START", format, tenant)
 
-        self._assert_sanity(self.client.set_port_state,
+        self._assert_sanity(self.client.update_port,
                             status,
                             "PUT",
                             "networks/001/ports/001",
@@ -258,7 +258,7 @@ class APITest(unittest.TestCase):
                                   {'port': {'state': 'ACTIVE'}}],
                             params={'tenant': tenant, 'format': format})
 
-        LOG.debug("_test_set_port_state - tenant:%s "\
+        LOG.debug("_test_update_port - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
     def _test_show_port_attachment(self,
@@ -519,32 +519,32 @@ class APITest(unittest.TestCase):
     def test_delete_port_error_432(self):
         self._test_delete_port(status=432)
 
-    def test_set_port_state_json(self):
-        self._test_set_port_state(format='json')
+    def test_update_port_json(self):
+        self._test_update_port(format='json')
 
-    def test_set_port_state_xml(self):
-        self._test_set_port_state(format='xml')
+    def test_update_port_xml(self):
+        self._test_update_port(format='xml')
 
-    def test_set_port_state_alt_tenant(self):
-        self._test_set_port_state(tenant=TENANT_2)
+    def test_update_port_alt_tenant(self):
+        self._test_update_port(tenant=TENANT_2)
 
-    def test_set_port_state_error_470(self):
-        self._test_set_port_state(status=470)
+    def test_update_port_error_470(self):
+        self._test_update_port(status=470)
 
-    def test_set_port_state_error_401(self):
-        self._test_set_port_state(status=401)
+    def test_update_port_error_401(self):
+        self._test_update_port(status=401)
 
-    def test_set_port_state_error_400(self):
-        self._test_set_port_state(status=400)
+    def test_update_port_error_400(self):
+        self._test_update_port(status=400)
 
-    def test_set_port_state_error_420(self):
-        self._test_set_port_state(status=420)
+    def test_update_port_error_420(self):
+        self._test_update_port(status=420)
 
-    def test_set_port_state_error_430(self):
-        self._test_set_port_state(status=430)
+    def test_update_port_error_430(self):
+        self._test_update_port(status=430)
 
-    def test_set_port_state_error_431(self):
-        self._test_set_port_state(status=431)
+    def test_update_port_error_431(self):
+        self._test_update_port(status=431)
 
     def test_show_port_attachment_json(self):
         self._test_show_port_attachment(format='json')

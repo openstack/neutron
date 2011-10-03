@@ -67,7 +67,7 @@ class L2NetworkModelBase(object):
         pass
 
     @abstractmethod
-    def rename_network(self, args):
+    def update_network(self, args):
         """
         :returns:
         :raises:

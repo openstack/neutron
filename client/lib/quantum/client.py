@@ -320,15 +320,14 @@ class Client(object):
                        exception_args={"net_id": network, "port_id": port})
 
     @ApiCall
-    def set_port_state(self, network, port, body=None):
+    def update_port(self, network, port, body=None):
         """
-        Sets the state of the specified port
+        Sets the attributes of the specified port
         """
         return self.do_request("PUT",
             self.port_path % (network, port), body=body,
                        exception_args={"net_id": network,
-                                       "port_id": port,
-                                       "port_state": str(body)})
+                                       "port_id": port})
 
     @ApiCall
     def show_port_attachment(self, network, port):

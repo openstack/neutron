@@ -135,7 +135,7 @@ class Controller(common.QuantumController):
             return faults.Fault(e)
         try:
             self._plugin.update_port(tenant_id, network_id, id,
-                                     request_params['state'])
+                                     **request_params)
             return exc.HTTPNoContent()
         except exception.NetworkNotFound as e:
             return faults.Fault(faults.NetworkNotFound(e))

@@ -70,12 +70,13 @@ class QuantumDBTest(unittest.TestCase):
         count = len(nets)
         self.assertTrue(count == 0)
 
-    def testd_rename_network(self):
+    def testd_update_network(self):
         """test to rename network"""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["name"] == "plugin_test1")
-        net = self.dbtest.rename_network(self.tenant_id, net1["id"],
-          "plugin_test1_renamed")
+        net = self.dbtest.update_network(self.tenant_id, net1["id"],
+          {'name': "plugin_test1_renamed"})
+        print net
         self.assertTrue(net["name"] == "plugin_test1_renamed")
 
     def teste_create_port(self):

@@ -576,9 +576,9 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         LOG.debug("get_network_details() called\n")
         return self._get_all_ucsms()
 
-    def rename_network(self, args):
+    def update_network(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("rename_network() called\n")
+        LOG.debug("update_network() called\n")
         return self._get_all_ucsms()
 
     def get_all_ports(self, args):

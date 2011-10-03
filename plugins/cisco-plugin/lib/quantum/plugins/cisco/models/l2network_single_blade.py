@@ -90,6 +90,10 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
 
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
         """Invoke only the device plugin"""
+        # If the last param is a dict, add it to kwargs
+        if args and type(args[-1]) is dict:
+            kwargs.update(args.pop())
+
         return getattr(self._plugins[plugin_key], function_name)(*args,
                                                                  **kwargs)
 
@@ -111,7 +115,7 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         """Not implemented for this model"""
         pass
 
-    def rename_network(self, args):
+    def update_network(self, args):
         """Support for the Quantum core API call"""
         self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
                                        args)

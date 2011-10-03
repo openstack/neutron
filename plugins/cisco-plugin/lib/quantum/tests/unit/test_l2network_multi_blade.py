@@ -170,35 +170,36 @@ class TestMultiBlade(unittest.TestCase):
 
         LOG.debug("test_delete_networkDNE - END")
 
-    def test_rename_network(self):
+    def test_update_network(self):
         """Support for the Quantum core API call"""
-        LOG.debug("test_rename_network - START")
+        LOG.debug("test_update_network - START")
 
         self.net_id = db.network_create(tenant_id, net_name)[const.UUID]
+
         self._l2network_multiblade.create_network([tenant_id,
                                                    net_name,
                                                    self.net_id,
                                                    vlan_name(self.net_id),
                                                    vlan_id])
 
-        db.network_rename(tenant_id, self.net_id, new_net_name)
-        networks = self._l2network_multiblade.rename_network([tenant_id,
+        db.network_update(self.net_id, tenant_id, name=new_net_name)
+        networks = self._l2network_multiblade.update_network([tenant_id,
                                                    self.net_id,
-                                                   new_net_name])
+                                                   {'name': new_net_name}])
 
         self.assertEqual(networks.__len__(), self.ucs_count)
         for network in networks:
             self.assertEqual(network[const.NET_ID], self.net_id)
             self.assertEqual(network[const.NET_NAME], new_net_name)
-        LOG.debug("test_rename_network - END")
+        LOG.debug("test_update_network - END")
 
-    def test_rename_networkDNE(self):
+    def test_update_networkDNE(self):
         """Support for the Quantum core API call"""
-        LOG.debug("test_rename_networkDNE - START")
+        LOG.debug("test_update_networkDNE - START")
         self.assertRaises(exc.NetworkNotFound,
-                          self._l2network_multiblade.rename_network,
-                          [tenant_id, net_id, new_net_name])
-        LOG.debug("test_rename_networkDNE - END")
+                          self._l2network_multiblade.update_network,
+                          [tenant_id, net_id, {'name': new_net_name}])
+        LOG.debug("test_update_networkDNE - END")
 
     def test_get_all_networks(self):
         """Not implemented for this model"""

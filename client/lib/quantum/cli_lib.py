@@ -100,9 +100,8 @@ class CmdOutputTemplate(OutputTemplate):
         "create_net":     "Created a new Virtual Network with ID: " +
                           "%(network_id)s\n" +
                           "for Tenant: %(tenant_id)s",
-        "rename_net":     "Renamed Virtual Network with ID: %(network.id)s\n" +
-                          "for Tenant: %(tenant_id)s\n" +
-                          "new name is: %(network.name)s",
+        "update_net":     "Updated Virtual Network with ID: %(network.id)s\n" +
+                          "for Tenant: %(tenant_id)s\n",
         "delete_net":     "Deleted Virtual Network with ID: %(network_id)s\n" +
                           "for Tenant %(tenant_id)s",
         "list_ports":     "Ports on Virtual Network: %(network_id)s\n" +
@@ -116,9 +115,8 @@ class CmdOutputTemplate(OutputTemplate):
                           "interface: %(port.attachment)s\n" +
                           "on Virtual Network: %(network_id)s\n" +
                           "for Tenant: %(tenant_id)s",
-        "set_port_state": "Updated state for Logical Port " +
+        "update_port":    "Updated Logical Port " +
                           "with ID: %(port.id)s\n" +
-                          "new state is: %(port.state)s\n" +
                           "on Virtual Network: %(network_id)s\n" +
                           "for tenant: %(tenant_id)s",
         "delete_port":    "Deleted Logical Port with ID: %(port_id)s\n" +
@@ -211,15 +209,18 @@ def show_net(client, *args):
         _handle_exception(ex)
 
 
-def rename_net(client, *args):
-    tenant_id, network_id, name = args
-    data = {'network': {'name': '%s' % name}}
+def update_net(client, *args):
+    tenant_id, network_id, param_data = args
+    data = {'network': {}}
+    for kv in param_data.split(","):
+        k, v = kv.split("=")
+        data['network'][k] = v
+    data['network']['id'] = network_id
     try:
         client.update_network(network_id, data)
         LOG.debug("Operation 'update_network' executed.")
         # Response has no body. Use data for populating output
-        data['network']['id'] = network_id
-        output = prepare_output("rename_net", tenant_id, data)
+        output = prepare_output("update_net", tenant_id, data)
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -288,16 +289,19 @@ def show_port(client, *args):
         _handle_exception(ex)
 
 
-def set_port_state(client, *args):
-    tenant_id, network_id, port_id, new_state = args
-    data = {'port': {'state': '%s' % new_state}}
+def update_port(client, *args):
+    tenant_id, network_id, port_id, param_data = args
+    data = {'port': {}}
+    for kv in param_data.split(","):
+        k, v = kv.split("=")
+        data['port'][k] = v
+    data['network_id'] = network_id
+    data['port']['id'] = port_id
     try:
-        client.set_port_state(network_id, port_id, data)
-        LOG.debug("Operation 'set_port_state' executed.")
+        client.update_port(network_id, port_id, data)
+        LOG.debug("Operation 'udpate_port' executed.")
         # Response has no body. Use data for populating output
-        data['network_id'] = network_id
-        data['port']['id'] = port_id
-        output = prepare_output("set_port_state", tenant_id, data)
+        output = prepare_output("update_port", tenant_id, data)
         print output
     except Exception as ex:
         _handle_exception(ex)
