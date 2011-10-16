@@ -229,7 +229,7 @@ class Client(object):
         elif type(data) is dict:
             return Serializer().serialize(data, self.content_type())
         else:
-            raise Exception("unable to deserialize object of type = '%s'" \
+            raise Exception("unable to serialize object of type = '%s'" \
                                 % type(data))
 
     def deserialize(self, data, status_code):
@@ -308,7 +308,6 @@ class Client(object):
         """
         Creates a new port on a given network
         """
-        body = self.serialize(body)
         return self.do_request("POST", self.ports_path % (network), body=body,
                        exception_args={"net_id": network})
 
