@@ -19,7 +19,6 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Salvatore Orlando, Citrix
 
-import Cheetah.Template as cheetah_template
 import gettext
 import logging
 import logging.handlers
