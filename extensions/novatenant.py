@@ -64,7 +64,8 @@ class Novatenant(object):
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         member_actions = {'schedule_host': "PUT",
-                          'associate_port': "PUT"}
+                          'associate_port': "PUT",
+                          'detach_port': "PUT"}
         controller = NovatenantsController(QuantumManager.get_plugin())
         return [extensions.ResourceExtension('novatenants', controller,
                                              parent=parent_resource,
@@ -151,6 +152,27 @@ class NovatenantsController(common.QuantumController):
             associate_port(tenant_id, instance_id, instance_desc)
             builder = novatenant_view.get_view_builder(request)
             result = builder.build_vif(vif)
+            return result
+        except qexception.PortNotFound as exp:
+            return faults.Fault(faults.PortNotFound(exp))
+
+    def detach_port(self, request, tenant_id, id):
+        content_type = request.best_match_content_type()
+        try:
+            req_params = \
+                self._parse_request_params(request,
+                                           self._schedule_host_ops_param_list)
+        except exc.HTTPError as exp:
+            return faults.Fault(exp)
+
+        instance_id = req_params['instance_id']
+        instance_desc = req_params['instance_desc']
+
+        try:
+            vif = self._plugin. \
+            detach_port(tenant_id, instance_id, instance_desc)
+            builder = novatenant_view.get_view_builder(request)
+            result = builder.build_result(True)
             return result
         except qexception.PortNotFound as exp:
             return faults.Fault(faults.PortNotFound(exp))

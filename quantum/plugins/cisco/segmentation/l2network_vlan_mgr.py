@@ -19,15 +19,14 @@
 #
 """
 
-import logging as LOG
+import logging
 
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.l2network_segmentation_base \
         import L2NetworkSegmentationMgrBase
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 
 class L2NetworkVLANMgr(L2NetworkSegmentationMgrBase):

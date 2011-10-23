@@ -20,7 +20,7 @@
 """
 
 import hashlib
-import logging as LOG
+import logging
 import MySQLdb
 import traceback
 
@@ -28,8 +28,7 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 
 def get16ByteUUID(uuid):

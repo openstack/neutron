@@ -176,6 +176,14 @@ class PortVnicNotFound(exceptions.QuantumException):
     message = _("PortVnic Binding %(port_id) is not present")
 
 
+class InvalidAttach(exceptions.QuantumException):
+    message = _("Unable to plug the attachment %(att_id)s into port " \
+                "%(port_id)s for network %(net_id)s. Association of " \
+                "attachment ID with port ID happens implicitly when " \
+                "VM is instantiated; attach operation can be " \
+                "performed subsequently.")
+
+
 try:
     _("test")
 except NameError:

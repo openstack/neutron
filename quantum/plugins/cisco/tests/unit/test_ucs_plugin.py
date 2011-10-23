@@ -35,6 +35,9 @@ LOG.getLogger("cisco_ucs_plugin")
 
 
 class UCSVICTestPlugin(unittest.TestCase):
+    """
+    Unit Tests for the UCS Plugin functions
+    """
 
     def setUp(self):
 
@@ -49,10 +52,14 @@ class UCSVICTestPlugin(unittest.TestCase):
         self._cisco_ucs_plugin = cisco_ucs_plugin.UCSVICPlugin()
         self.device_ip = conf.UCSM_IP_ADDRESS
         self._ucs_inventory = ucsinv.UCSInventory()
-        self.chassis_id = '1'
-        self.blade_id = '5'
-        self.blade_intf_distinguished_name = 'sys/chassis-1/blade-5/'\
-                                             'adaptor-1/host-eth-6'
+        self._ucs_inventory._load_inventory()
+        self.chassis_id_list = self._ucs_inventory._inventory[\
+                               self.device_ip].keys()
+        self.chassis_id = self.chassis_id_list[0]
+        self.blade_id_list = self._ucs_inventory._inventory[\
+                             self.device_ip][self.chassis_id]
+        self.blade_id = self._ucs_inventory._inventory[\
+                             self.device_ip][self.chassis_id][0]
 
     def test_create_network(self):
         """
@@ -69,7 +76,7 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertEqual(new_net_dict[const.NET_ID], new_network[const.UUID])
         self.assertEqual(new_net_dict[const.NET_NAME],
                          new_network[const.NETWORKNAME])
-        self.tearDownNetwork(self.tenant_id, new_network[const.UUID])
+        self.tear_down_network(self.tenant_id, new_network[const.UUID])
 
     def test_delete_network(self):
         """
@@ -107,7 +114,7 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertEqual(new_net_dict[const.NET_ID], new_network[const.UUID])
         self.assertEqual(new_net_dict[const.NET_NAME],
                          new_network[const.NETWORKNAME])
-        self.tearDownNetwork(self.tenant_id, new_network[const.UUID])
+        self.tear_down_network(self.tenant_id, new_network[const.UUID])
 
     def test_get_all_networks(self):
         """
@@ -136,8 +143,8 @@ class UCSVICTestPlugin(unittest.TestCase):
 
         self.assertTrue(net_list[0] in net_id_list)
         self.assertTrue(net_list[1] in net_id_list)
-        self.tearDownNetwork(self.tenant_id, new_network1[const.UUID])
-        self.tearDownNetwork(self.tenant_id, new_network2[const.UUID])
+        self.tear_down_network(self.tenant_id, new_network1[const.UUID])
+        self.tear_down_network(self.tenant_id, new_network2[const.UUID])
 
     def test_get_all_ports(self):
         """
@@ -178,16 +185,18 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertTrue(str(ports_on_net[0]) == str(port_list[1]) or
                         str(ports_on_net[0]) == str(port_list[0]))
 
+        blade_intf_details = self._ucs_inventory._get_rsvd_blade_intf_by_port(
+                                      self.tenant_id, port_dict1[const.PORTID])
         self._cisco_ucs_plugin.delete_port(
                      self.tenant_id, new_net_dict[const.NET_ID],
                      port_dict1[const.PORTID], device_ip=self.device_ip,
                      ucs_inventory=self._ucs_inventory,
                      chassis_id=self.chassis_id, blade_id=self.blade_id,
-                     blade_intf_distinguished_name=self.\
-                     blade_intf_distinguished_name,
+                     blade_intf_distinguished_name=blade_intf_details[\
+                     const.BLADE_INTF_DN],
                      least_rsvd_blade_dict=self._ucs_inventory.\
                      _get_least_reserved_blade())
-        self.tearDownNetworkPort(
+        self.tear_down_network_port(
                  self.tenant_id, new_net_dict[const.NET_ID],
                  port_dict2[const.PORTID])
 
@@ -215,7 +224,7 @@ class UCSVICTestPlugin(unittest.TestCase):
         profile_name = self._cisco_ucs_plugin.\
                            _get_profile_name(port_dict[const.PORTID])
         self.assertTrue(profile_name != None)
-        self.tearDownNetworkPort(
+        self.tear_down_network_port(
                  self.tenant_id, new_net_dict[const.NET_ID],
                  port_dict[const.PORTID])
 
@@ -241,18 +250,21 @@ class UCSVICTestPlugin(unittest.TestCase):
                             ucs_inventory=self._ucs_inventory,
                             least_rsvd_blade_dict=self._ucs_inventory.\
                             _get_least_reserved_blade())
+
+        blade_intf_details = self._ucs_inventory._get_rsvd_blade_intf_by_port(
+                                       self.tenant_id, port_dict[const.PORTID])
         port_bind = self._cisco_ucs_plugin.delete_port(
                          self.tenant_id, new_net_dict[const.NET_ID],
                          port_dict[const.PORTID], device_ip=self.device_ip,
                          ucs_inventory=self._ucs_inventory,
                          chassis_id=self.chassis_id, blade_id=self.blade_id,
-                         blade_intf_distinguished_name=self.\
-                         blade_intf_distinguished_name,
+                         blade_intf_distinguished_name=blade_intf_details[\
+                         const.BLADE_INTF_DN],
                          least_rsvd_blade_dict=self._ucs_inventory.\
                          _get_least_reserved_blade())
 
         self.assertEqual(port_bind[const.PORTID], new_port[const.UUID])
-        self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
+        self.tear_down_network(self.tenant_id, new_net_dict[const.NET_ID])
 
     def _test_get_port_details(self, port_state):
         """
@@ -279,17 +291,26 @@ class UCSVICTestPlugin(unittest.TestCase):
                             self.tenant_id, new_net_dict[const.NET_ID],
                             port_dict[const.PORTID], device_ip=self.device_ip)
         self.assertEqual(str(port_dict), str(port_detail))
-        self.tearDownNetworkPort(
+        self.tear_down_network_port(
                  self.tenant_id, new_net_dict[const.NET_ID],
                  port_dict[const.PORTID])
 
     def test_get_port_details_state_up(self):
+        """
+        Tests if the port details is retrieved when port is up
+        """
         self._test_get_port_details(const.PORT_UP)
 
     def test_show_port_state_down(self):
+        """
+        Tests if the port details is retrieved when port is down
+        """
         self._test_get_port_details(const.PORT_DOWN)
 
     def test_create_port_profile(self):
+        """
+        Tests creation of port profile
+        """
         LOG.debug("UCSVICTestPlugin:test_create_port_profile() called\n")
         new_network = db.network_create(self.tenant_id, self.net_name)
         cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
@@ -310,6 +331,9 @@ class UCSVICTestPlugin(unittest.TestCase):
                                                     profile_name)
 
     def test_delete_port_profile(self):
+        """
+        Tests deletion of port profile
+        """
         LOG.debug("UCSVICTestPlugin:test_delete_port_profile() called\n")
         new_network = db.network_create(self.tenant_id, self.net_name)
         cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
@@ -359,7 +383,7 @@ class UCSVICTestPlugin(unittest.TestCase):
                            device_ip=self.device_ip)
         self.assertEqual(port_bind[const.VLANNAME], new_vlan_name)
         self.assertEqual(port_bind[const.VLANID], new_vlanid)
-        self.tearDownNetworkPortInterface(
+        self.tear_down_network_port_interface(
                                    self.tenant_id, new_net_dict[const.NET_ID],
                                    new_port[const.UUID])
 
@@ -397,11 +421,14 @@ class UCSVICTestPlugin(unittest.TestCase):
                            port_dict[const.PORTID], device_ip=self.device_ip)
         self.assertEqual(port_bind[const.VLANNAME], self.vlan_name)
         self.assertEqual(port_bind[const.VLANID], self.vlan_id)
-        self.tearDownNetworkPortInterface(
+        self.tear_down_network_port_interface(
                                    self.tenant_id, new_net_dict[const.NET_ID],
                                    new_port[const.UUID])
 
     def test_get_vlan_name_for_network(self):
+        """
+        Tests retrieval of vlan name
+        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_name_for_network() called\n")
         new_network = db.network_create(self.tenant_id, self.net_name)
         cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
@@ -412,6 +439,9 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertEqual(vlan_bind_name, self.vlan_name)
 
     def test_get_vlan_id_for_network(self):
+        """
+        Tests retrieval of vlan id
+        """
         LOG.debug("UCSVICTestPlugin:test_get_vlan_id_for_network() called\n")
         new_network = db.network_create(self.tenant_id, self.net_name)
         cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
@@ -420,19 +450,28 @@ class UCSVICTestPlugin(unittest.TestCase):
                                     self.tenant_id, new_network[const.UUID])
         self.assertEqual(str(vlan_bind_id), self.vlan_id)
 
-    def test_show_network_NetworkNotFound(self):
+    def test_show_network_not_found(self):
+        """
+        Negative Test for show network details when network not found
+        """
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin.get_network_details,
                           self.tenant_id, self.net_id,
                           device_ip=self.device_ip)
 
-    def test_delete_network_NetworkNotFound(self):
+    def test_delete_network_not_found(self):
+        """
+        Negative Test for delete network when network not found
+        """
         self.assertRaises(exc.NetworkNotFound,
                           self._cisco_ucs_plugin.delete_network,
                           self.tenant_id, self.net_id,
                           device_ip=self.device_ip)
 
     def test_delete_port_PortNotFound(self):
+        """
+        Negative Test for delete port when port not found
+        """
         new_network = db.network_create(self.tenant_id, self.net_name)
         cdb.add_vlan_binding(str(self.vlan_id), self.vlan_name,
                              new_network[const.UUID])
@@ -447,35 +486,36 @@ class UCSVICTestPlugin(unittest.TestCase):
                           self.port_id, device_ip=self.device_ip,
                           ucs_inventory=self._ucs_inventory,
                           chassis_id=self.chassis_id, blade_id=self.blade_id,
-                          blade_intf_distinguished_name=self.\
-                          blade_intf_distinguished_name,
+                          blade_intf_distinguished_name=None,
                           least_rsvd_blade_dict=self._ucs_inventory.\
                           _get_least_reserved_blade())
 
-        self.tearDownNetwork(self.tenant_id, new_net_dict[const.NET_ID])
+        self.tear_down_network(self.tenant_id, new_net_dict[const.NET_ID])
 
     def tearDown(self):
         """Clear the test environment"""
         # Remove database contents
         db.clear_db()
 
-    def tearDownNetwork(self, tenant_id, net_id):
+    def tear_down_network(self, tenant_id, net_id):
         self._cisco_ucs_plugin.delete_network(tenant_id, net_id,
                                               device_ip=self.device_ip)
 
-    def tearDownNetworkPort(self, tenant_id, net_id, port_id):
+    def tear_down_network_port(self, tenant_id, net_id, port_id):
+        blade_intf_details = self._ucs_inventory._get_rsvd_blade_intf_by_port(
+                                                 tenant_id, port_id)
         self._cisco_ucs_plugin.delete_port(
                     tenant_id, net_id, port_id, device_ip=self.device_ip,
                     ucs_inventory=self._ucs_inventory,
                     chassis_id=self.chassis_id, blade_id=self.blade_id,
-                    blade_intf_distinguished_name=self.\
-                    blade_intf_distinguished_name,
+                    blade_intf_distinguished_name=blade_intf_details[\
+                    const.BLADE_INTF_DN],
                     least_rsvd_blade_dict=self._ucs_inventory.\
                     _get_least_reserved_blade())
-        self.tearDownNetwork(tenant_id, net_id)
+        self.tear_down_network(tenant_id, net_id)
 
-    def tearDownNetworkPortInterface(self, tenant_id, net_id, port_id):
+    def tear_down_network_port_interface(self, tenant_id, net_id, port_id):
         self._cisco_ucs_plugin.unplug_interface(
                                    tenant_id, net_id, port_id,
                                    device_ip=self.device_ip)
-        self.tearDownNetworkPort(tenant_id, net_id, port_id)
+        self.tear_down_network_port(tenant_id, net_id, port_id)

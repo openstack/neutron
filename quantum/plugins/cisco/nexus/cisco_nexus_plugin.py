@@ -26,6 +26,8 @@ from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.db import nexus_db as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
@@ -94,13 +96,12 @@ class NexusPlugin(L2DevicePluginBase):
         ports_id = nxos_db.get_nexusport_binding(vlan_id)
         LOG.debug("NexusPlugin: Interfaces to be disassociated: %s" % ports_id)
         nxos_db.remove_nexusport_binding(vlan_id)
-        net = self._networks.get(net_id)
+        net = self._get_network(tenant_id, net_id)
         if net:
             self._client.delete_vlan(str(vlan_id), self._nexus_ip,
                 self._nexus_username, self._nexus_password,
                 self._nexus_first_port, self._nexus_second_port,
                 self._nexus_ssh_port)
-            self._networks.pop(net_id)
             return net
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)
@@ -185,7 +186,11 @@ class NexusPlugin(L2DevicePluginBase):
         """
         Gets the NETWORK ID
         """
-        network = self._networks.get(network_id)
+        network = db.network_get(network_id)
         if not network:
             raise exc.NetworkNotFound(net_id=network_id)
-        return network
+        vlan = cdb.get_vlan_binding(network_id)
+        return {const.NET_ID: network_id, const.NET_NAME: network.name,
+                const.NET_PORTS: network.ports,
+                const.NET_VLAN_NAME: vlan.vlan_name,
+                const.NET_VLAN_ID: vlan.vlan_id}

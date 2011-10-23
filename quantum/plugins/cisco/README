@@ -205,7 +205,9 @@ password=mySecretPasswordForNexus
     quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
     UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
     chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
-    typically be numbers like 1, 2, 3, etc.)
+    typically be numbers like 1, 2, 3, etc.). Also make sure that you put the exact
+    hostname as nova sees it (the host column in the services table of the nova
+    DB will give you that information).
 
 [ucsm-1]
 ip_address = <put_ucsm_ip_address_here>
@@ -241,8 +243,8 @@ host_name = <put_hostname_here>
 Multi NIC support for VMs
 -------------------------
 As indicated earlier, if your Nova setup has a project with more than one network,
-Nova will try to create a vritual network interface (VIF) on the VM for each of those
-networks. That implies that,
+Nova will try to create a virtual network interface (VIF) on the VM for each of those
+networks. That implies -
 
     (1) You should create the same number of networks in Quantum as in your Nova
         project.
@@ -325,12 +327,18 @@ for Tenant: demo
     Note that when using UCS and the 802.1Qbh features, the association of the
     VIF-ID (also referred to as interface ID) on the VM's NIC with a port will
     happen automatically when the VM is instantiated. At this point, doing a
-    show_port will reveal the VIF-ID associated with the port.
+    show_port will reveal the VIF-ID associated with the port. To indicate that
+    this VIF-ID is still detached from the network it would eventually be on, you
+    will see the suffix "(detached)" on the VIF-ID. This indicates that although
+    the VIF-ID and the port have been associated, the VIF still does not have
+    connectivity to the network on which the port resides. That connectivity
+    will be established only after the plug/attach operation is performed (as
+    described in the next step).
 
 # PYTHONPATH=. python quantum/plugins/cisco/client/cli.py show_port demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
 Logical Port ID: 118ac473-294d-480e-8f6d-425acbbe81ae
 administrative State: ACTIVE
-interface: b73e3585-d074-4379-8dde-931c0fc4db0e
+interface: b73e3585-d074-4379-8dde-931c0fc4db0e(detached)
 on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
 for Tenant: demo
 
@@ -347,16 +355,22 @@ for Tenant: demo
 
 
 8.  Unplug an interface and port from the network
-    Note: Before unplugging, make a note of the interface ID (you can use the
-    show_port CLI as before). While the VM, which has a VIF  with this interface
-    ID still exists, you can only plug that same interface back into this port.
-    So the subsequent plug interface operation on this port will have to make
-    use of the same interface ID.
 
 # PYTHONPATH=. python quantum/plugins/cisco/client/cli.py unplug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
 Unplugged interface from Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae
 on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
 for Tenant: demo
+
+    Note: After unplugging, if you check the details of the port, you will
+    see the VIF-IF associated with the port (but now suffixed with the state
+    "detached"). At this point, it is possible to plug the VIF into the network
+    again making use of the same VIF-ID. In general, once associated, the VIF-ID
+    cannot be disassociated with the port until the VM is terminated. After the
+    VM is terminated, the VIF-ID will be automatically disassociated from the
+    port. To summarize, association and disassociation of the VIF-ID with a port
+    happens automatically at the time of creating and terminating the VM. The
+    connectivity of the VIF to the network is controlled by the user via the
+    plug and unplug operations.
 
 
 How to test the installation

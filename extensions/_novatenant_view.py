@@ -45,3 +45,7 @@ class ViewBuilder(object):
     def build_vif(self, vif_data):
         """Return VIF description."""
         return dict(vif_desc=vif_data[const.VIF_DESC])
+
+    def build_result(self, result_data):
+        """Return result True/False"""
+        return dict(result=result_data)

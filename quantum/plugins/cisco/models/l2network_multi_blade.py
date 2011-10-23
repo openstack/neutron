@@ -21,7 +21,7 @@
 
 from copy import deepcopy
 import inspect
-import logging as LOG
+import logging
 import platform
 
 from quantum.common import exceptions as exc
@@ -31,8 +31,7 @@ from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class L2NetworkMultiBlade(L2NetworkModelBase):
@@ -182,11 +181,19 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def associate_port(self, args):
         """
-        Get the portprofile name and the device namei for the dynamic vnic
+        Get the portprofile name and the device name for the dynamic vnic
         """
         LOG.debug("associate_port() called\n")
         return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
                                       args)
+
+    def detach_port(self, args):
+        """
+        Remove the association of the VIF with the dynamic vnic
+        """
+        LOG.debug("detach_port() called\n")
+        return self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                              self._func_name(), args)
 
     def create_multiport(self, args):
         """Support for extension  API call"""
