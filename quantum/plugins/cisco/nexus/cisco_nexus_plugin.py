@@ -20,7 +20,7 @@
 """
 PlugIn for Nexus OS driver
 """
-import logging as LOG
+import logging
 
 from quantum.common import exceptions as exc
 from quantum.common import utils
@@ -32,8 +32,7 @@ from quantum.plugins.cisco.db import nexus_db as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 
 class NexusPlugin(L2DevicePluginBase):

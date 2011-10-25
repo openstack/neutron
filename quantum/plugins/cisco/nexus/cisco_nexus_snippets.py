@@ -20,12 +20,11 @@
 Nexus-OS XML-based configuration snippets
 """
 
-import logging as LOG
+import logging
 
 from quantum.plugins.cisco.common import cisco_constants as const
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 
 # The following are standard strings, messages used to communicate with Nexus,
