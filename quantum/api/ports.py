@@ -104,7 +104,6 @@ class Controller(common.QuantumController):
 
     def create(self, request, tenant_id, network_id):
         """ Creates a new port for a given network """
-        #look for port state in request
         try:
             request_params = \
                 self._parse_request_params(request, self._port_ops_param_list)
@@ -113,7 +112,8 @@ class Controller(common.QuantumController):
         try:
             port = self._plugin.create_port(tenant_id,
                                             network_id,
-                                            request_params['state'])
+                                            request_params['state'],
+                                            **request_params)
             builder = ports_view.get_view_builder(request)
             result = builder.build(port)['port']
             # Wsgi middleware allows us to build the response
@@ -128,7 +128,6 @@ class Controller(common.QuantumController):
 
     def update(self, request, tenant_id, network_id, id):
         """ Updates the state of a port for a given network """
-        #look for port state in request
         try:
             request_params = \
                 self._parse_request_params(request, self._port_ops_param_list)
