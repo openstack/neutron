@@ -117,6 +117,38 @@ def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
         raise c_exc.PortVnicNotFound(port_id=port_id)
 
 
+def update_portbinding_instance_id(port_id, instance_id):
+    """Updates port binding for the instance ID"""
+    LOG.debug("db update_portbinding_instance_id() called")
+    session = db.get_session()
+    try:
+        port_binding = session.query(ucs_models.PortBinding).\
+          filter_by(port_id=port_id).\
+          one()
+        port_binding.instance_id = instance_id
+        session.merge(port_binding)
+        session.flush()
+        return port_binding
+    except exc.NoResultFound:
+        raise c_exc.PortVnicNotFound(port_id=port_id)
+
+
+def update_portbinding_vif_id(port_id, vif_id):
+    """Updates port binding for the VIF ID"""
+    LOG.debug("db update_portbinding_vif_id() called")
+    session = db.get_session()
+    try:
+        port_binding = session.query(ucs_models.PortBinding).\
+          filter_by(port_id=port_id).\
+          one()
+        port_binding.vif_id = vif_id
+        session.merge(port_binding)
+        session.flush()
+        return port_binding
+    except exc.NoResultFound:
+        raise c_exc.PortVnicNotFound(port_id=port_id)
+
+
 def get_portbinding_dn(blade_intf_dn):
     """Lists a port binding"""
     LOG.debug("get_portbinding_dn() called")

@@ -24,16 +24,14 @@ Implements a UCSM XML API Client
 """
 
 import httplib
-import logging as LOG
+import logging
 from xml.etree import ElementTree as et
 
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.ucs import cisco_getvif as gvif
 
-
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 COOKIE_VALUE = "cookie_placeholder"
 PROFILE_NAME = "profilename_placeholder"

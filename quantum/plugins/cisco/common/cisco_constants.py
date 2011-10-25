@@ -153,3 +153,13 @@ NETWORK_ADMIN = 'network_admin'
 NETID_LIST = 'net_id_list'
 
 DELIMITERS = "[,;:\b\s]"
+
+UUID_LENGTH = 36
+
+UNPLUGGED = '(detached)'
+
+ASSOCIATION_STATUS = 'association_status'
+
+ATTACHED = 'attached'
+
+DETACHED = 'detached'

@@ -120,6 +120,8 @@ def reserve_vlanid():
         rvlan = session.query(l2network_models.VlanID).\
          filter_by(vlan_used=False).\
           first()
+        if not rvlan:
+            raise exc.NoResultFound
         rvlanid = session.query(l2network_models.VlanID).\
          filter_by(vlan_id=rvlan["vlan_id"]).\
           one()

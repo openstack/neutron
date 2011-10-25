@@ -19,12 +19,8 @@
 #
 """
 
-import logging as LOG
 from configobj import ConfigObj
 from quantum.plugins.cisco.common import cisco_constants as const
-
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
 
 class CiscoConfigParser(ConfigObj):

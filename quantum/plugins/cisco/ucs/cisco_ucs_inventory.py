@@ -19,7 +19,7 @@
 #
 """
 from copy import deepcopy
-import logging as LOG
+import logging
 
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.l2device_inventory_base \
@@ -34,8 +34,7 @@ from quantum.plugins.cisco.ucs \
         import cisco_ucs_inventory_configuration as conf
 from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 """
 The _inventory data strcuture contains a nested disctioary:
@@ -208,7 +207,6 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                         port_binding[const.INSTANCE_ID]
                 intf_data[const.VIF_ID] = \
                         port_binding[const.VIF_ID]
-
         host_name = self._get_host_name(ucsm_ip, chassis_id, blade_id)
         blade_data = {const.BLADE_INTF_DATA: blade_intf_data,
                       const.BLADE_UNRESERVED_INTF_COUNT: unreserved_counter,
@@ -328,7 +326,8 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                     port_id = port_binding[const.PORTID]
                     udb.update_portbinding(port_id, instance_id=instance_id,
                                            vif_id=vif_id)
-                    db.port_set_attachment_by_id(port_id, vif_id)
+                    db.port_set_attachment_by_id(port_id, vif_id +
+                                                 const.UNPLUGGED)
                     device_name = intf_data[const.BLADE_INTF_RHEL_DEVICE_NAME]
                     profile_name = port_binding[const.PORTPROFILENAME]
                     dynamicnic_details = \
@@ -336,7 +335,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                              const.UCSPROFILE: profile_name}
                     LOG.debug("Found reserved dynamic nic: %s" \
                               "associated with port %s" %
-                              (blade_intf_data[blade_intf], port_id))
+                              (intf_data, port_id))
                     LOG.debug("Returning dynamic nic details: %s" %
                               dynamicnic_details)
                     return dynamicnic_details
@@ -345,9 +344,10 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                  tenant_id)
         return None
 
-    def _disassociate_vifid_from_port(self, tenant_id, port_id):
+    def _disassociate_vifid_from_port(self, tenant_id, instance_id, vif_id):
         """
-        Return the device name for a reserved interface
+        Disassociate a VIF-ID from a port, this happens when a
+        VM is destroyed
         """
         for ucsm_ip in self._inventory_state.keys():
             ucsm = self._inventory_state[ucsm_ip]
@@ -360,17 +360,24 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                         if intf_data[const.BLADE_INTF_RESERVATION] == \
                            const.BLADE_INTF_RESERVED and \
                            intf_data[const.TENANTID] == tenant_id and \
-                           intf_data[const.PORTID] == port_id:
-                            vif_id = intf_data[const.VIF_ID]
+                           blade_intf_data[blade_intf][const.INSTANCE_ID] == \
+                           instance_id and \
+                           intf_data[const.VIF_ID][:const.UUID_LENGTH] == \
+                           vif_id:
                             intf_data[const.VIF_ID] = None
                             intf_data[const.INSTANCE_ID] = None
+                            port_binding = udb.get_portbinding_dn(blade_intf)
+                            port_id = port_binding[const.PORTID]
                             udb.update_portbinding(port_id, instance_id=None,
                                                    vif_id=None)
+                            db.port_unset_attachment_by_id(port_id)
                             LOG.debug("Disassociated VIF-ID: %s " \
                                       "from port: %s" \
                                       "in UCS inventory state for blade: %s" %
                                       (vif_id, port_id, intf_data))
-                            return
+                            device_params = {const.DEVICE_IP: [ucsm_ip],
+                                             const.PORTID: port_id}
+                            return device_params
         LOG.warn("Disassociating VIF-ID in UCS inventory failed. " \
                  "Could not find a reserved dynamic nic for tenant: %s" %
                  tenant_id)
@@ -641,9 +648,6 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         on which a dynamic vnic was reserved for this port
         """
         LOG.debug("unplug_interface() called\n")
-        tenant_id = args[0]
-        port_id = args[2]
-        self._disassociate_vifid_from_port(tenant_id, port_id)
         return self._get_blade_for_port(args)
 
     def schedule_host(self, args):
@@ -666,8 +670,23 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         vif_id = args[2][const.VIF_ID]
         vif_info = self._get_instance_port(tenant_id, instance_id, vif_id)
         vif_desc = {const.VIF_DESC: vif_info}
+
         LOG.debug("vif_desc is: %s" % vif_desc)
         return vif_desc
+
+    def detach_port(self, args):
+        """
+        Remove the VIF-ID and instance name association
+        with the port
+        """
+        LOG.debug("detach_port() called\n")
+        instance_id = args[1]
+        tenant_id = args[2][const.PROJECT_ID]
+        vif_id = args[2][const.VIF_ID]
+        device_params = self._disassociate_vifid_from_port(tenant_id,
+                                                           instance_id,
+                                                           vif_id)
+        return device_params
 
     def create_multiport(self, args):
         """

@@ -20,7 +20,7 @@
 """
 
 import inspect
-import logging as LOG
+import logging
 import re
 
 from quantum.common import exceptions as exc
@@ -35,8 +35,7 @@ from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(const.LOGGER_COMPONENT_NAME)
+LOG = logging.getLogger(__name__)
 
 
 class L2Network(QuantumPluginBase):
@@ -246,35 +245,50 @@ class L2Network(QuantumPluginBase):
     def plug_interface(self, tenant_id, net_id, port_id,
                        remote_interface_id):
         """
-        Attaches a remote interface to the specified port on the
+        Provides connectivity to a remote interface to the
         specified Virtual Network.
         """
         LOG.debug("plug_interface() called\n")
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
-        if attachment_id and remote_interface_id != attachment_id:
+        if attachment_id == None:
+            raise cexc.InvalidAttach(port_id=port_id, net_id=net_id,
+                                    att_id=remote_interface_id)
+        attachment_id = attachment_id[:const.UUID_LENGTH]
+        remote_interface_id = remote_interface_id[:const.UUID_LENGTH]
+        if remote_interface_id != attachment_id:
+            LOG.debug("Existing attachment_id:%s, remote_interface_id:%s" % \
+                      (attachment_id, remote_interface_id))
             raise exc.PortInUse(port_id=port_id, net_id=net_id,
                                 att_id=attachment_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                         net_id, port_id,
-                                                        remote_interface_id])
-        if attachment_id == None:
-            db.port_set_attachment(net_id, port_id, remote_interface_id)
+                                                        attachment_id])
+        db.port_unset_attachment(net_id, port_id)
+        db.port_set_attachment(net_id, port_id, attachment_id)
         #Note: The remote_interface_id gets associated with the port
         # when the VM is instantiated. The plug interface call results
         # in putting the port on the VLAN associated with this network
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
-        Detaches a remote interface from the specified port on the
+        Removes connectivity of a remote interface to the
         specified Virtual Network.
         """
         LOG.debug("unplug_interface() called\n")
         network = db.network_get(net_id)
+        port = db.port_get(net_id, port_id)
+        attachment_id = port[const.INTERFACEID]
+        if attachment_id == None:
+            raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
+                                    att_id=remote_interface_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
+        attachment_id = attachment_id[:const.UUID_LENGTH]
+        attachment_id = attachment_id + const.UNPLUGGED
         db.port_unset_attachment(net_id, port_id)
+        db.port_set_attachment(net_id, port_id, attachment_id)
 
     """
     Extension API implementation
@@ -473,9 +487,18 @@ class L2Network(QuantumPluginBase):
 
     def associate_port(self, tenant_id, instance_id, instance_desc):
         """
-        Get the portprofile name and the device namei for the dynamic vnic
+        Get the portprofile name and the device name for the dynamic vnic
         """
         LOG.debug("associate_port() called\n")
+        return self._invoke_device_plugins(self._func_name(), [tenant_id,
+                                                               instance_id,
+                                                               instance_desc])
+
+    def detach_port(self, tenant_id, instance_id, instance_desc):
+        """
+        Remove the association of the VIF with the dynamic vnic
+        """
+        LOG.debug("detach_port() called\n")
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])

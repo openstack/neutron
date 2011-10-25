@@ -45,11 +45,12 @@ ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
         '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
-ACTION = '/associate_port'
+ASSOCIATE_ACTION = '/associate_port'
+DETACH_ACTION = '/detach_port'
 
 
 class Libvirt802dot1QbhDriver(VIFDriver):
-    """VIF driver for Linux bridge."""
+    """VIF driver for 802.1Qbh"""
     def __init__(self):
         # We have to send a dummy tenant name here since the client
         # needs some tenant name, but the tenant name will not be used
@@ -70,7 +71,7 @@ class Libvirt802dot1QbhDriver(VIFDriver):
                   % CSCO_EXT_NAME)
         raise excp.ServiceUnavailable()
 
-    def _get_configurations(self, instance, network, mapping):
+    def _update_configurations(self, instance, network, mapping, action):
         """Gets the device name and the profile name from Quantum"""
 
         instance_id = instance['id']
@@ -88,26 +89,31 @@ class Libvirt802dot1QbhDriver(VIFDriver):
 
         client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
                         action_prefix=ACTION_PREFIX_CSCO)
-        request_url = "/novatenants/" + project_id + ACTION
+        request_url = "/novatenants/" + project_id + action
         data = client.do_request('PUT', request_url, body=instance_data_dict)
 
-        device = data['vif_desc']['device']
-        portprofile = data['vif_desc']['portprofile']
-        LOG.debug(_("Quantum provided the device: %s") % device)
-        LOG.debug(_("Quantum provided the portprofile: %s") % portprofile)
-        mac_id = mapping['mac'].replace(':', '')
+        if action == ASSOCIATE_ACTION:
+            device = data['vif_desc']['device']
+            portprofile = data['vif_desc']['portprofile']
+            LOG.debug(_("Quantum provided the device: %s") % device)
+            LOG.debug(_("Quantum provided the portprofile: %s") % portprofile)
+            mac_id = mapping['mac'].replace(':', '')
 
-        result = {
-            'id': mac_id,
-            'mac_address': mapping['mac'],
-            'device_name': device,
-            'profile_name': portprofile,
-        }
+            result = {
+                'id': mac_id,
+                'mac_address': mapping['mac'],
+                'device_name': device,
+                'profile_name': portprofile,
+            }
 
-        return result
+            return result
+        else:
+            return data
 
     def plug(self, instance, network, mapping):
-        return self._get_configurations(instance, network, mapping)
+        return self._update_configurations(instance, network, mapping,
+                                           ASSOCIATE_ACTION)
 
     def unplug(self, instance, network, mapping):
-        pass
+        self._update_configurations(instance, network, mapping,
+                                    DETACH_ACTION)

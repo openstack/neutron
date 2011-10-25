@@ -20,6 +20,7 @@ from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.db import api as db
+from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin
 
 LOG = logging.getLogger('quantum.tests.test_nexus')
@@ -31,7 +32,6 @@ class TestNexusPlugin(unittest.TestCase):
         """
         Set up function
         """
-
         self.tenant_id = "test_tenant_cisco1"
         self.net_name = "test_network_cisco1"
         self.net_id = 000007
@@ -39,11 +39,11 @@ class TestNexusPlugin(unittest.TestCase):
         self.vlan_id = 267
         self.port_id = "9"
         cdb.initialize()
+        cred.Store.initialize()
         self._cisco_nexus_plugin = cisco_nexus_plugin.NexusPlugin()
 
     def test_create_network(self, net_tenant_id=None, network_name=None,
-                            network_id=None, net_vlan_name=None,
-                            net_vlan_id=None):
+                            net_vlan_name=None, net_vlan_id=None):
         """
         Tests creation of new Virtual Network.
         """
@@ -57,10 +57,6 @@ class TestNexusPlugin(unittest.TestCase):
             net_name = network_name
         else:
             net_name = self.net_name
-        if network_id:
-            net_id = network_id
-        else:
-            net_id = self.net_id
         if net_vlan_name:
             vlan_name = net_vlan_name
         else:
@@ -70,18 +66,20 @@ class TestNexusPlugin(unittest.TestCase):
         else:
             vlan_id = self.vlan_id
 
-        network_created = self.create_network(tenant_id, net_id)
+        network_created = self.create_network(tenant_id, net_name)
         cdb.add_vlan_binding(vlan_id, vlan_name, network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
-                tenant_id, net_name, net_id, vlan_name, vlan_id)
-        self.assertEqual(new_net_dict[const.NET_ID], self.net_id)
+                            tenant_id, net_name, network_created["net-id"],
+                            vlan_name, vlan_id)
+        self.assertEqual(new_net_dict[const.NET_ID],
+                         network_created["net-id"])
         self.assertEqual(new_net_dict[const.NET_NAME], self.net_name)
         self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
         self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.vlan_id)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_create_network - END")
 
-    def test_delete_network(self, net_tenant_id=None, network_id=None):
+    def test_delete_network(self, net_tenant_id=None, network_name=None):
         """
         Tests deletion of a Virtual Network.
         """
@@ -92,16 +90,21 @@ class TestNexusPlugin(unittest.TestCase):
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
-        if network_id:
-            net_id = network_id
+        if network_name:
+            net_name = network_name
         else:
-            net_id = self.net_id
+            net_name = self.net_name
 
+        network_created = self.create_network(tenant_id, net_name)
+        cdb.add_vlan_binding(self.vlan_id, self.vlan_name,
+                             network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
-                tenant_id, self.net_name, net_id, self.vlan_name, self.vlan_id)
+                           tenant_id, self.net_name, network_created["net-id"],
+                           self.vlan_name, self.vlan_id)
         deleted_net_dict = self._cisco_nexus_plugin.delete_network(
                         tenant_id, new_net_dict[const.NET_ID])
-        self.assertEqual(deleted_net_dict[const.NET_ID], net_id)
+        self.assertEqual(deleted_net_dict[const.NET_ID],
+                         network_created["net-id"])
         LOG.debug("test_delete_network - END")
 
     def test_delete_network_DNE(self, net_tenant_id=None, net_id='0005'):
@@ -122,7 +125,7 @@ class TestNexusPlugin(unittest.TestCase):
 
         LOG.debug("test_delete_network_DNE - END")
 
-    def test_get_network_details(self, net_tenant_id=None, network_id=None):
+    def test_get_network_details(self, net_tenant_id=None, network_name=None):
         """
         Tests displays details of a Virtual Network .
         """
@@ -133,17 +136,21 @@ class TestNexusPlugin(unittest.TestCase):
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
-        if network_id:
-            net_id = network_id
+        if network_name:
+            net_name = network_name
         else:
-            net_id = self.net_id
+            net_name = self.net_name
 
+        network_created = self.create_network(tenant_id, net_name)
+        cdb.add_vlan_binding(self.vlan_id, self.vlan_name,
+                             network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
-                tenant_id, self.net_name, net_id, self.vlan_name, self.vlan_id)
+                           tenant_id, self.net_name, network_created["net-id"],
+                           self.vlan_name, self.vlan_id)
         check_net_dict = self._cisco_nexus_plugin.get_network_details(
-                                        tenant_id, net_id)
-
-        self.assertEqual(check_net_dict[const.NET_ID], net_id)
+                                        tenant_id, network_created["net-id"])
+        self.assertEqual(check_net_dict[const.NET_ID],
+                         network_created["net-id"])
         self.assertEqual(check_net_dict[const.NET_NAME], self.net_name)
         self.assertEqual(check_net_dict[const.NET_VLAN_NAME], self.vlan_name)
         self.assertEqual(check_net_dict[const.NET_VLAN_ID], self.vlan_id)
@@ -169,7 +176,7 @@ class TestNexusPlugin(unittest.TestCase):
         LOG.debug("test_get_network_details_network_does_not_exist - END")
 
     def test_rename_network(self, new_name="new_network_name",
-                            net_tenant_id=None, network_id=None):
+                            net_tenant_id=None, network_name=None):
         """
         Tests rename of a Virtual Network .
         """
@@ -180,14 +187,17 @@ class TestNexusPlugin(unittest.TestCase):
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
-        if network_id:
-            net_id = network_id
+        if network_name:
+            net_name = network_name
         else:
-            net_id = self.net_id
+            net_name = self.net_name
 
+        network_created = self.create_network(tenant_id, net_name)
+        cdb.add_vlan_binding(self.vlan_id, self.vlan_name,
+                             network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
-                        tenant_id, self.net_name, net_id, self.vlan_name,
-                        self.vlan_id)
+                           tenant_id, self.net_name, network_created["net-id"],
+                           self.vlan_name, self.vlan_id)
         rename_net_dict = self._cisco_nexus_plugin.rename_network(
                         tenant_id, new_net_dict[const.NET_ID], new_name)
         self.assertEqual(rename_net_dict[const.NET_NAME], new_name)
@@ -227,23 +237,28 @@ class TestNexusPlugin(unittest.TestCase):
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
+
+        network_created = self.create_network(tenant_id, self.net_name)
+        cdb.add_vlan_binding(self.vlan_id, self.vlan_name,
+                             network_created["net-id"])
         new_net_dict1 = self._cisco_nexus_plugin.create_network(
-                                tenant_id, self.net_name, self.net_id,
-                                self.vlan_name, self.vlan_id)
+                           tenant_id, self.net_name, network_created["net-id"],
+                           self.vlan_name, self.vlan_id)
+        network_created2 = self.create_network(tenant_id, 'test_network2')
+        cdb.add_vlan_binding(265, 'second_vlan', network_created2["net-id"])
         new_net_dict2 = self._cisco_nexus_plugin.create_network(
-                                tenant_id, "New_Network2", "0011",
-                                "second_vlan", "2003")
+                           tenant_id, "New_Network2",
+                           network_created2["net-id"], "second_vlan", "2003")
         list_net_dict = self._cisco_nexus_plugin.get_all_networks(tenant_id)
         net_temp_list = [new_net_dict1, new_net_dict2]
-        self.assertEqual(len(list_net_dict), 2)
-        self.assertTrue(list_net_dict[0] in net_temp_list)
-        self.assertTrue(list_net_dict[1] in net_temp_list)
+        self.assertTrue(net_temp_list[0] in list_net_dict)
+        self.assertTrue(net_temp_list[1] in list_net_dict)
         self.tearDownNetwork(tenant_id, new_net_dict1[const.NET_ID])
         self.tearDownNetwork(tenant_id, new_net_dict2[const.NET_ID])
         LOG.debug("test_list_all_networks - END")
 
     def test_get_vlan_id_for_network(self, net_tenant_id=None,
-                                     network_id=None):
+                                     network_name=None):
         """
         Tests retrieval of vlan id for a Virtual Networks .
         """
@@ -253,15 +268,19 @@ class TestNexusPlugin(unittest.TestCase):
             tenant_id = net_tenant_id
         else:
             tenant_id = self.tenant_id
-        if network_id:
-            net_id = network_id
+        if network_name:
+            net_name = network_name
         else:
-            net_id = self.net_id
+            net_name = self.net_name
+
+        network_created = self.create_network(tenant_id, net_name)
+        cdb.add_vlan_binding(self.vlan_id, self.vlan_name,
+                             network_created["net-id"])
         new_net_dict = self._cisco_nexus_plugin.create_network(
-                        tenant_id, self.net_name, net_id, self.vlan_name,
-                        self.vlan_id)
+                          tenant_id, self.net_name, network_created["net-id"],
+                          self.vlan_name, self.vlan_id)
         result_vlan_id = self._cisco_nexus_plugin._get_vlan_id_for_network(
-                        tenant_id, net_id)
+                        tenant_id, network_created["net-id"])
         self.assertEqual(result_vlan_id, self.vlan_id)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_get_vlan_id_for_network - END")
@@ -284,3 +303,8 @@ class TestNexusPlugin(unittest.TestCase):
         Clean up functions after the tests
         """
         self._cisco_nexus_plugin.delete_network(tenant_id, network_dict_id)
+
+    def tearDown(self):
+        """Clear the test environment"""
+        # Remove database contents
+        db.clear_db()
