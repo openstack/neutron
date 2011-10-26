@@ -121,7 +121,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
             res['net-ports'] = ports
         return res
 
-    def create_network(self, tenant_id, net_name):
+    def create_network(self, tenant_id, net_name, **kwargs):
         net = db.network_create(tenant_id, net_name)
         LOG.debug("Created network: %s" % net)
         vlan_id = self.vmap.acquire(str(net.uuid))
@@ -165,7 +165,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
             ids.append(d)
         return ids
 
-    def create_port(self, tenant_id, net_id, port_state=None):
+    def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         LOG.debug("Creating port with network_id: %s" % net_id)
         port = db.port_create(net_id, port_state)
         return self._make_port_dict(str(port.uuid), port.state,
