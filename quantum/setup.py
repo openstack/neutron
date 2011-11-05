@@ -7,7 +7,7 @@ except ImportError:
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
-Version = '2012.1-dev'
+Version = '2012.1dev'
 License = 'Apache License 2.0'
 Author = 'Netstack'
 AuthorEmail = 'netstack@lists.launchpad.net'
