@@ -15,7 +15,7 @@
 #    under the License.
 
 import unittest
-from quantum.plugins.openvswitch.ovs_quantum_plugin import VlanMap
+from ovs_quantum_plugin import VlanMap
 
 
 class VlanMapTest(unittest.TestCase):

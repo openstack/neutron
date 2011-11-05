@@ -52,10 +52,13 @@ import unittest
 import sys
 
 from nose import config
+from nose import core
 
 sys.path.append(os.getcwd())
+sys.path.append(os.path.dirname(__file__))
 
-import tools.source_environment
+import tools.source_nonplugin_environment
+import quantum.tests.unit
 
 from quantum.common.test_lib import run_tests, test_config
 from tests.unit.test_vlan_map import VlanMapTest
@@ -67,23 +70,16 @@ if __name__ == '__main__':
     # we should only invoked the tests once
     invoke_once = len(sys.argv) > 1
 
-    test_config['plugin_name'] = "quantum.plugins.openvswitch." + \
-                "ovs_quantum_plugin.OVSQuantumPlugin"
+    test_config['plugin_name'] = "ovs_quantum_plugin.OVSQuantumPlugin"
 
     cwd = os.getcwd()
-
-    working_dir = os.path.abspath("server/lib/quantum/tests")
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
-                      workingDir=working_dir)
-    exit_status = run_tests(c)
-
-    working_dir = os.path.abspath("%s/client/lib/quantum/tests" % cwd)
-    c = config.Config(stream=sys.stdout,
-                      env=os.environ,
-                      verbosity=3,
-                      workingDir=working_dir)
+                      includeExe=True,
+                      traverseNamespace=True,
+                      plugins=core.DefaultPluginManager())
+    c.configureWhere(quantum.tests.unit.__path__)
     exit_status = run_tests(c)
 
     if invoke_once:
