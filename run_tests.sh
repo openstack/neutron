@@ -23,6 +23,7 @@ function process_option {
     -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
     -f|--force) let force=1;;
     -c|--coverage) coverage=1;;
+    -v|--verbose) verbose=1;;
     -*) noseopts="$noseopts $1";;
     *) noseargs="$noseargs $1"
   esac
@@ -36,6 +37,7 @@ force=0
 noseargs=
 wrapper=""
 coverage=0
+verbose=0
 
 for arg in "$@"; do
   process_option $arg
@@ -49,7 +51,22 @@ fi
 function run_tests {
   # Just run the test suites in current environment
   ${wrapper} rm -f ./$PLUGIN_DIR/tests.sqlite
-  ${wrapper} $NOSETESTS
+  if [ $verbose -eq 1 ]; then
+    ${wrapper} $NOSETESTS
+  else
+    ${wrapper} $NOSETESTS 2> run_tests.log
+  fi
+  # If we get some short import error right away, print the error log directly
+  RESULT=$?
+  if [ "$RESULT" -ne "0" ];
+  then
+    ERRSIZE=`wc -l run_tests.log | awk '{print \$1}'`
+    if [ $verbose -eq 0 -a "$ERRSIZE" -lt "40" ];
+    then
+        cat run_tests.log
+    fi
+  fi
+  return $RESULT
 }
 
 NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseopts $noseargs"
@@ -83,7 +100,7 @@ then
       if [ "x$use_ve" = "xY" -o "x$use_ve" = "x" -o "x$use_ve" = "xy" ]; then
         # Install the virtualenv and run the test suite in it
         python tools/install_venv.py
-		    wrapper=${with_venv}
+        wrapper=${with_venv}
       fi
     fi
   fi
