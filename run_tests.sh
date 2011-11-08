@@ -100,7 +100,7 @@ fi
 #
 # [1] https://bugs.launchpad.net/bzr/+bug/701898
 #
-PEP8_EXCLUDE=vcsversion.py
+PEP8_EXCLUDE="vcsversion.py,*.pyc"
 PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
 PEP8_INCLUDE="bin/* quantum server client common plugins tools run_tests.py setup.py"
 RV=0
