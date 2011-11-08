@@ -20,7 +20,12 @@
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
 import __init__
-import source_environment
+
+try:
+    import source_environment
+except ImportError:
+    pass
+
 from quantum.cli import main as cli
 
 cli()
