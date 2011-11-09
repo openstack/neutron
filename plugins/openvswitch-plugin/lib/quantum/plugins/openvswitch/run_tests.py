@@ -55,8 +55,10 @@ from nose import config
 
 sys.path.append(os.getcwd())
 
+import tools.source_environment
+
 from quantum.common.test_lib import run_tests, test_config
-from quantum.plugins.openvswitch.tests.test_vlan_map import VlanMapTest
+from tests.unit.test_vlan_map import VlanMapTest
 
 if __name__ == '__main__':
     exit_status = False
@@ -70,7 +72,14 @@ if __name__ == '__main__':
 
     cwd = os.getcwd()
 
-    working_dir = os.path.abspath("tests")
+    working_dir = os.path.abspath("server/lib/quantum/tests")
+    c = config.Config(stream=sys.stdout,
+                      env=os.environ,
+                      verbosity=3,
+                      workingDir=working_dir)
+    exit_status = run_tests(c)
+
+    working_dir = os.path.abspath("%s/client/lib/quantum/tests" % cwd)
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
@@ -82,7 +91,8 @@ if __name__ == '__main__':
 
     os.chdir(cwd)
 
-    working_dir = os.path.abspath("quantum/plugins/openvswitch/tests")
+    working_dir = os.path.abspath("plugins/openvswitch-plugin/" +
+            "lib/quantum/plugins/openvswitch")
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
