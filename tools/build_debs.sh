@@ -13,15 +13,10 @@ if [ `id -u` != 0 ]; then
 	fi
 fi
 
-ls $@/dist/*.rpm >/dev/null 2>&1
+ls dist/*.rpm >/dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "You must build rpms before building debian packages"
 	exit 1
 fi
 
-cd $@
-if [ $? -ne 0 ]; then
-	echo "Directory $@ doesn't exist -- what do you want me to build?"
-	exit 1
-fi
 $FAKEROOT $ALIEN -c -v -d dist/*.noarch.rpm

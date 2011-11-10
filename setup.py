@@ -9,8 +9,7 @@ from tools import install_venv
 ROOT = path.abspath(path.dirname(__file__))
 CONFIG_PATH = path.abspath('/etc/quantum')
 BASE_PACKAGES = ['common', 'server', 'client']
-PLUGINS = ['plugins/sample-plugin', 'plugins/cisco-plugin',
-           'plugins/openvswitch-plugin']
+PLUGINS = ['sample_plugin', 'openvswitch_plugin', 'cisco_plugin']
 
 RELATIVE = False
 

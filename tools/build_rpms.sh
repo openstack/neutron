@@ -1,2 +1,2 @@
 #!/bin/bash
-cd $@ && python setup.py bdist_rpm
+python setup_$@.py bdist_rpm

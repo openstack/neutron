@@ -17,40 +17,24 @@
 #    limitations under the License.
 
 
-"""Unittest runner for quantum
+"""
+Unittest runner for quantum Cisco plugin
 
-To run all test::
-    python run_tests.py
-
-To run all unit tests::
-    python run_tests.py unit
-
-To run all functional tests::
-    python run_tests.py functional
-
-To run a single unit test::
-    python run_tests.py unit.test_stores:TestSwiftBackend.test_get
-
-To run a single functional test::
-    python run_tests.py functional.test_service:TestController.test_create
-
-To run a single unit test module::
-    python run_tests.py unit.test_stores
-
-To run a single functional test module::
-    python run_tests.py functional.test_stores
+export PLUGIN_DIR=plugins/cisco-plugin/lib/quantum/plugins/cisco/
+./run_tests.sh -N
 """
 
-import gettext
 import os
 import unittest
 import sys
-
-from quantum.common.test_lib import run_tests
 from nose import config
 from nose import core
 
-import quantum.tests.unit
+sys.path.append(os.getcwd())
+
+from quantum.common.test_lib import run_tests
+
+import quantum.plugins.cisco.tests.unit
 
 
 def main():
@@ -60,8 +44,8 @@ def main():
                       includeExe=True,
                       traverseNamespace=True,
                       plugins=core.DefaultPluginManager())
-    c.configureWhere(quantum.tests.unit.__path__)
+    c.configureWhere(quantum.plugins.cisco.tests.unit.__path__)
     sys.exit(run_tests(c))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

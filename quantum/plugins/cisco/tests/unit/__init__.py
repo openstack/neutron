@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Nicira Neworks, Inc.
+# Copyright 2011 OpenStack LLC.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,9 +15,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-import sys
-sys.path.insert(0, os.getcwd())
-from quantum.server import main as server
+# See http://code.google.com/p/python-nose/issues/detail?id=373
+# The code below enables nosetests to work with i18n _() blocks
 
-server()
+import __builtin__
+import unittest
+setattr(__builtin__, '_', lambda x: x)
+
+
+class BaseTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+
+def setUp():
+    pass
