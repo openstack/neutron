@@ -8,6 +8,9 @@ function usage {
   echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
   echo "  -c, --coverage           Generate coverage report"
   echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
+  echo "  -p, --pep8               Just run pep8"
+  echo "  -l, --pylint             Just run pylint"
+  echo "  -v, --verbose            Run verbose pylint analysis"
   echo "  -h, --help               Print this usage message"
   echo ""
   echo "Note: with no options specified, the script will try to run the tests in a virtual environment,"
@@ -22,6 +25,8 @@ function process_option {
     -V|--virtual-env) let always_venv=1; let never_venv=0;;
     -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
     -f|--force) let force=1;;
+    -p|--pep8) let just_pep8=1;let never_venv=1; let always_venv=0;;
+    -l|--pylint) let just_pylint=1; let never_venv=1; let always_venv=0;;
     -c|--coverage) coverage=1;;
     -v|--verbose) verbose=1;;
     -*) noseopts="$noseopts $1";;
@@ -33,6 +38,8 @@ venv=.quantum-venv
 with_venv=tools/with_venv.sh
 always_venv=0
 never_venv=0
+just_pep8=0
+just_pylint=0
 force=0
 noseargs=
 wrapper=""
@@ -67,6 +74,30 @@ function run_tests {
     fi
   fi
   return $RESULT
+}
+
+function run_pylint {
+  echo "Running pylint ..."
+  PYLINT_OPTIONS="--rcfile=.pylintrc --output-format=parseable"
+  PYLINT_INCLUDE="quantum"
+  OLD_PYTHONPATH=$PYTHONPATH
+  export PYTHONPATH=$PYTHONPATH:.quantum:./client/lib/quantum:./common/lib/quantum
+
+  BASE_CMD="pylint $PYLINT_OPTIONS $PYLINT_INCLUDE"
+  [ $verbose -eq 1 ] && $BASE_CMD || msg_count=`$BASE_CMD | grep 'quantum/' | wc -l`
+  if [ $verbose -eq 0 ]; then
+    echo "Pylint messages count: " $msg_count
+  fi
+  export PYTHONPATH=$OLD_PYTHONPATH
+}
+
+function run_pep8 {
+  echo "Running pep8 ..."
+
+  PEP8_EXCLUDE="vcsversion.py,*.pyc"
+  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
+  PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py version.py"
+  ${wrapper} pep8 $PEP8_OPTIONS $PEP8_INCLUDE
 }
 
 NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseopts $noseargs"
@@ -111,17 +142,17 @@ if [ $coverage -eq 1 ]; then
     ${wrapper} coverage erase
 fi
 
-# FIXME(sirp): bzr version-info is not currently pep-8. This was fixed with
-# lp701898 [1], however, until that version of bzr becomes standard, I'm just
-# excluding the vcsversion.py file
-#
-# [1] https://bugs.launchpad.net/bzr/+bug/701898
-#
-PEP8_EXCLUDE="vcsversion.py,*.pyc"
-PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
-PEP8_INCLUDE="bin/* quantum tools run_tests.py setup.py"
+if [ $just_pep8 -eq 1 ]; then
+    run_pep8
+    exit
+fi
+if [ $just_pylint -eq 1 ]; then
+    run_pylint
+    exit
+fi
+
 RV=0
-run_tests && pep8 $PEP8_OPTIONS $PEP8_INCLUDE || RV=1
+run_tests && run_pep8 || RV=1
 
 if [ $coverage -eq 1 ]; then
     echo "Generating coverage report in covhtml/"
