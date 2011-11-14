@@ -1,4 +1,5 @@
 coverage
+distribute>=0.6.24
 eventlet>=0.9.12
 Routes>=1.12.3
 nose
