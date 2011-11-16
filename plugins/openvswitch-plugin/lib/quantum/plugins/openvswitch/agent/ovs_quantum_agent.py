@@ -130,17 +130,34 @@ class OVSBridge:
     def get_port_stats(self, port_name):
         return self.db_get_map("Interface", port_name, "statistics")
 
+    def get_xapi_iface_id(self, xs_vif_uuid):
+        return self.run_cmd(
+                        ["xe",
+                        "vif-param-get",
+                        "param-name=other-config",
+                        "param-key=nicira-iface-id",
+                        "uuid=%s" % xs_vif_uuid]).strip()
+
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
             external_ids = self.db_get_map("Interface", name, "external_ids")
+            ofport = self.db_get_val("Interface", name, "ofport")
             if "iface-id" in external_ids and "attached-mac" in external_ids:
-                ofport = self.db_get_val("Interface", name, "ofport")
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
                 edge_ports.append(p)
+            elif "xs-vif-uuid" in external_ids and \
+                 "attached-mac" in external_ids:
+                # if this is a xenserver and iface-id is not automatically
+                # synced to OVS from XAPI, we grab it from XAPI directly
+                iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
+                p = VifPort(name, ofport, iface_id,
+                            external_ids["attached-mac"], self)
+                edge_ports.append(p)
+
         return edge_ports
 
 
