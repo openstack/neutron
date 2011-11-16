@@ -98,8 +98,8 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
     def _load_inventory(self):
         """Load the inventory from a config file"""
         inventory = deepcopy(conf.INVENTORY)
-        #LOG.info("Loaded UCS inventory: %s\n" % inventory)
-        #LOG.info("Building UCS inventory state (this may take a while)...")
+        LOG.info("Loaded UCS inventory: %s\n" % inventory)
+        LOG.info("Building UCS inventory state (this may take a while)...")
 
         for ucsm in inventory.keys():
             ucsm_ip = inventory[ucsm][const.IP_ADDRESS]
@@ -142,7 +142,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                                                                ucsm_password)
                     blades_dict[blade_id] = blade_data
 
-        #LOG.debug("UCS Inventory state is: %s\n" % self._inventory_state)
+        LOG.debug("UCS Inventory state is: %s\n" % self._inventory_state)
         return True
 
     def _get_host_name(self, ucsm_ip, chassis_id, blade_id):
