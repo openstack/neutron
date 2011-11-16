@@ -29,8 +29,11 @@ import sys
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-VENV = os.path.expanduser('~/.quantum-venv')
+VENV = os.path.join(ROOT, '.quantum-venv')
+PY_VERSION = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+
 VENV_EXISTS = bool(os.path.exists(VENV))
+
 
 # Find all pip-requires in the project
 PIP_REQUIRES = []
@@ -107,7 +110,7 @@ def install_dependencies(venv=VENV):
     run_command(cmd, redirect_output=False)
 
     # Tell the virtual env how to "import quantum"
-    pthfile = os.path.join(venv, "lib", "python2.6", "site-packages",
+    pthfile = os.path.join(venv, "lib", PY_VERSION, "site-packages",
                                  "quantum.pth")
     f = open(pthfile, 'w')
     f.write("%s\n" % ROOT)

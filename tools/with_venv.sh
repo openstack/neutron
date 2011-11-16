@@ -17,5 +17,5 @@
 #    under the License.
 
 TOOLS=`dirname $0`
-VENV=~/.quantum-venv
+VENV=$TOOLS/../.quantum-venv
 source $VENV/bin/activate && $@
