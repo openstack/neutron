@@ -85,12 +85,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
         config.read(configfile)
         LOG.debug("Config: %s" % config)
 
-        DB_NAME = config.get("DATABASE", "name")
-        DB_USER = config.get("DATABASE", "user")
-        DB_PASS = config.get("DATABASE", "pass")
-        DB_HOST = config.get("DATABASE", "host")
-        options = {"sql_connection": "mysql://%s:%s@%s/%s" % (DB_USER,
-          DB_PASS, DB_HOST, DB_NAME)}
+        options = {"sql_connection": config.get("DATABASE", "sql_connection")}
         db.configure_db(options)
 
         self.vmap = VlanMap()

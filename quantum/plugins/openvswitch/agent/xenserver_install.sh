@@ -7,12 +7,12 @@ if [ ! -d /etc/xapi.d/plugins ]; then
 	exit 1
 fi
 
-# Make sure we have mysql-python
-rpm -qa | grep MySQL-python >/dev/null 2>&1
+# Make sure we have sqlalchemy-python
+rpm -qa | grep sqlalchemy-python >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-	echo "MySQL-python not found"
-    echo "Please enable the centos repositories and install mysql-python:"
-    echo "yum --enablerepo=base -y install MySQL-python"
+        echo "sqlalchemy-python not found"
+    echo "Please enable the centos repositories and install sqlalchemy-python:"
+    echo "yum --enablerepo=base -y install sqlalchemy-python"
     exit 1
 fi
 

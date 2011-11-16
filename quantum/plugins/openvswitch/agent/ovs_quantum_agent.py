@@ -20,14 +20,14 @@
 
 import ConfigParser
 import logging as LOG
-import MySQLdb
-import os
 import sys
 import time
 import signal
 
 from optparse import OptionParser
 from subprocess import *
+
+from sqlalchemy.ext.sqlsoup import SqlSoup
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -186,27 +186,28 @@ class OVSQuantumAgent:
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
 
-    def daemon_loop(self, conn):
+    def daemon_loop(self, db):
         self.local_vlan_map = {}
         old_local_bindings = {}
         old_vif_ports = {}
 
         while True:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM ports where state = 'ACTIVE'")
-            rows = cursor.fetchall()
-            cursor.close()
-            all_bindings = {}
-            for r in rows:
-                all_bindings[r[2]] = r[1]
 
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM vlan_bindings")
-            rows = cursor.fetchall()
-            cursor.close()
+            all_bindings = {}
+            try:
+                ports = db.ports.all()
+            except:
+                ports = []
+            for port in ports:
+                all_bindings[port.interface_id] = port.network_id
+
             vlan_bindings = {}
-            for r in rows:
-                vlan_bindings[r[1]] = r[0]
+            try:
+                vlan_binds = db.vlan_bindings.all()
+            except:
+                vlan_binds = []
+            for bind in vlan_binds:
+                vlan_bindings[bind.network_id] = bind.vlan_id
 
             new_vif_ports = {}
             new_local_bindings = {}
@@ -276,19 +277,12 @@ if __name__ == "__main__":
 
     integ_br = config.get("OVS", "integration-bridge")
 
-    db_name = config.get("DATABASE", "name")
-    db_user = config.get("DATABASE", "user")
-    db_pass = config.get("DATABASE", "pass")
-    db_host = config.get("DATABASE", "host")
-    conn = None
-    try:
-        LOG.info("Connecting to database \"%s\" on %s" % (db_name, db_host))
-        conn = MySQLdb.connect(host=db_host, user=db_user,
-          passwd=db_pass, db=db_name)
-        plugin = OVSQuantumAgent(integ_br)
-        plugin.daemon_loop(conn)
-    finally:
-        if conn:
-            conn.close()
+    options = {"sql_connection": config.get("DATABASE", "sql_connection")}
+    db = SqlSoup(options["sql_connection"])
+
+    LOG.info("Connecting to database \"%s\" on %s" %
+             (db.engine.url.database, db.engine.url.host))
+    plugin = OVSQuantumAgent(integ_br)
+    plugin.daemon_loop(db)
 
     sys.exit(0)

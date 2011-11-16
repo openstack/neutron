@@ -55,10 +55,16 @@ provider = quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPlugin
 
 # -- Database config.
 
-The Open vSwitch quantum service requires access to a mysql database in order
-to store configuration and mappings that will be used by the agent.  Here is
-how to set up the database on the host that you will be running the quantum
-service on.
+The Open vSwitch quantum service requires access to a mysql database or any
+other database engine supported by sqlalchemy in order to store configuration
+and mappings that will be used by the agent.
+
+A new database, "ovs_quantum", should be created, and servers running the
+ovs quantum agent must be able to communicate with the host running the
+quantum service.
+
+Here is how to set up the database using MySQL on the host that you will be
+running the quantum service on.
 
 MySQL should be installed on the host, and all plugins and clients
 must be configured with access to the database.
@@ -85,6 +91,9 @@ mysql> FLUSH PRIVILEGES;
   the addresses and credentials to access the database.  This file
   will be included in the agent distribution tarball (see below) and
   the agent will use the credentials here to access the database.
+
+  The credentials must be specified using sqlalchemy url as
+  sql_connection = mysql://user:pass@127.0.0.1/ovs_quantum
 
 # -- XenServer Agent configuration
 
