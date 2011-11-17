@@ -24,6 +24,7 @@ import MySQLdb
 import os
 import sys
 import time
+import signal
 
 from optparse import OptionParser
 from subprocess import *
@@ -51,10 +52,14 @@ class OVSBridge:
 
     def run_cmd(self, args):
         # LOG.debug("## running command: " + " ".join(args))
-        return Popen(args, stdout=PIPE).communicate()[0]
+        p = Popen(args, stdout=PIPE)
+        retval = p.communicate()[0]
+        if p.returncode == -(signal.SIGALRM):
+            LOG.debug("## timeout running command: " + " ".join(args))
+        return retval
 
     def run_vsctl(self, args):
-        full_args = ["ovs-vsctl"] + args
+        full_args = ["ovs-vsctl", "--timeout=2"] + args
         return self.run_cmd(full_args)
 
     def reset_bridge(self):
