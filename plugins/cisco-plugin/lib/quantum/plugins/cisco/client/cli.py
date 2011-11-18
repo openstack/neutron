@@ -36,6 +36,9 @@ import subprocess
 
 from optparse import OptionParser
 
+from tools import source_environment
+import quantum.cli as qcli
+
 POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
                                    os.pardir,
                                    os.pardir))
@@ -151,25 +154,8 @@ COMMANDS = {
     "args": ["tenant-id", "instance-id"]}, }
 
 
-class _DynamicModule(object):
-    """Loading a string as python module"""
-    def load(self, code):
-        execdict = {}
-        exec code in execdict
-        for key in execdict:
-            if not key.startswith('_'):
-                setattr(self, key, execdict[key])
-
-
-import sys as _sys
-_ref, _sys.modules[__name__] = _sys.modules[__name__], _DynamicModule()
-
-
 if __name__ == "__main__":
     import cli
-    FILE_NAME = os.path.join("bin/", "cli")
-    MODULE_CODE = open(FILE_NAME).read()
-    cli.load(MODULE_CODE)
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     PARSER = OptionParser(usage=usagestr)
     PARSER.add_option("-H", "--host", dest="host",
@@ -197,18 +183,17 @@ if __name__ == "__main__":
 
     if len(args) < 1:
         PARSER.print_help()
-        cli.help()
+        qcli.help()
         help()
         sys.exit(1)
 
     CMD = args[0]
-    if CMD in cli.commands.keys():
-        args.insert(0, FILE_NAME)
-        subprocess.call(args)
+    if CMD in qcli.commands.keys():
+        qcli.main()
         sys.exit(1)
     if CMD not in COMMANDS.keys():
         LOG.error("Unknown command: %s" % CMD)
-        cli.help()
+        qcli.help()
         help()
         sys.exit(1)
 

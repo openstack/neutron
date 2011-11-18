@@ -269,7 +269,7 @@ and value should be used.
 
 The corresponding CLI for this operation is as follows:
 
-PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport <tenant_id> <net_id1,net_id2,...>
+PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py create_multiport <tenant_id> <net_id1,net_id2,...>
     
     (Note that you should not be using the create port core API in the above case.)
 
@@ -282,18 +282,18 @@ to switch between different CLI modules (it internally invokes the Quantum
 CLI module for the core APIs to ensure consistency when using either). This
 command line client can be invoked as follows:
 
-PYTHONPATH=. python quantum/plugins/cisco/client/cli.py 
+PYTHONPATH=.:tools python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py
 
 1.  Creating the network
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_net -H 10.10.2.6 demo net1
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py create_net -H 10.10.2.6 demo net1
 Created a new Virtual Network with ID: c4a2bea7-a528-4caf-b16e-80397cd1663a
 for Tenant demo
 
 
 2.  Listing the networks
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py list_nets -H 10.10.2.6 demo
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py list_nets -H 10.10.2.6 demo
 Virtual Networks for Tenant demo
     Network ID: 0e85e924-6ef6-40c1-9f7a-3520ac6888b3
     Network ID: c4a2bea7-a528-4caf-b16e-80397cd1663a
@@ -301,13 +301,13 @@ Virtual Networks for Tenant demo
 
 3.  Creating one port on each of the networks
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a,0e85e924-6ef6-40c1-9f7a-3520ac6888b3
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py create_multiport -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a,0e85e924-6ef6-40c1-9f7a-3520ac6888b3
 Created ports: {u'ports': [{u'id': u'118ac473-294d-480e-8f6d-425acbbe81ae'}, {u'id': u'996e84b8-2ed3-40cf-be75-de17ff1214c4'}]}
 
 
 4.  List all the ports on a network
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py list_ports -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py list_ports -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a
 Ports on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
 for Tenant: demo
     Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae
@@ -315,7 +315,7 @@ for Tenant: demo
 
 5.  Show the details of a port
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py show_port -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py show_port -H 10.10.2.6 demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
 Logical Port ID: 118ac473-294d-480e-8f6d-425acbbe81ae
 administrative State: ACTIVE
 interface: <none>
@@ -335,7 +335,7 @@ for Tenant: demo
     will be established only after the plug/attach operation is performed (as
     described in the next step).
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py show_port demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py show_port demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
 Logical Port ID: 118ac473-294d-480e-8f6d-425acbbe81ae
 administrative State: ACTIVE
 interface: b73e3585-d074-4379-8dde-931c0fc4db0e(detached)
@@ -347,7 +347,7 @@ for Tenant: demo
     Use the interface information obtained in step 6 to plug the interface into
     the network.
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py plug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae b73e3585-d074-4379-8dde-931c0fc4db0e
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py plug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae b73e3585-d074-4379-8dde-931c0fc4db0e
 Plugged interface b73e3585-d074-4379-8dde-931c0fc4db0e
 into Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae 
 on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
@@ -356,7 +356,7 @@ for Tenant: demo
 
 8.  Unplug an interface and port from the network
 
-# PYTHONPATH=. python quantum/plugins/cisco/client/cli.py unplug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
+# PYTHONPATH=. python plugins/cisco-plugin/lib/quantum/plugins/cisco/client/cli.py unplug_iface demo c4a2bea7-a528-4caf-b16e-80397cd1663a 118ac473-294d-480e-8f6d-425acbbe81ae
 Unplugged interface from Logical Port: 118ac473-294d-480e-8f6d-425acbbe81ae
 on Virtual Network: c4a2bea7-a528-4caf-b16e-80397cd1663a
 for Tenant: demo
