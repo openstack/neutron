@@ -30,6 +30,7 @@ from quantum.tests.unit.extension_stubs import (StubExtension, StubPlugin,
                                         StubPluginInterface,
                                         StubBaseAppController,
                                         ExtensionExpectingPluginInterface)
+import quantum.tests.unit.extensions
 from quantum.common.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
@@ -37,7 +38,7 @@ from quantum.common.extensions import (ExtensionManager,
 LOG = logging.getLogger('test_extensions')
 
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
-extensions_path = os.path.join(os.path.dirname(__file__), "extensions")
+extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
 
 
 class ExtensionsTestApp(wsgi.Router):

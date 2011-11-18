@@ -26,6 +26,7 @@ import webob.exc
 from gettext import gettext as _
 from abc import ABCMeta
 from quantum.common import exceptions
+import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum import wsgi
 
@@ -219,7 +220,7 @@ class ExtensionMiddleware(wsgi.Middleware):
 
         self.ext_mgr = (ext_mgr
                         or ExtensionManager(
-                config_params.get('api_extensions_path', '')))
+                        get_extensions_path(config_params)))
         mapper = routes.Mapper()
 
         # extended resources
@@ -336,7 +337,7 @@ class ExtensionMiddleware(wsgi.Middleware):
 def plugin_aware_extension_middleware_factory(global_config, **local_config):
     """Paste factory."""
     def _factory(app):
-        extensions_path = global_config.get('api_extensions_path', '')
+        extensions_path = get_extensions_path(global_config)
         ext_mgr = PluginAwareExtensionManager(extensions_path,
                                               QuantumManager.get_plugin())
         return ExtensionMiddleware(app, global_config, ext_mgr=ext_mgr)
@@ -532,3 +533,13 @@ class ResourceExtension(object):
         self.parent = parent
         self.collection_actions = collection_actions
         self.member_actions = member_actions
+
+
+# Returns the extention paths from a config entry and the __path__
+# of quantum.extensions
+def get_extensions_path(config=None):
+    paths = ':'.join(quantum.extensions.__path__)
+    if config:
+        paths = ':'.join([config.get('api_extensions_path', ''), paths])
+
+    return paths
