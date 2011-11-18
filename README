@@ -64,7 +64,7 @@ this)
    library.  It should specify the class path to the plugin and the
    class name (i.e. for a plugin class FooPlugin in
    plugins/foo-plugin/lib/quantum/plugins/foo/foo_plugin.py the
-   provider would be: quantum.plugins.foo_plugin.FooPlugin)
+   provider would be: quantum.plugins.foo.foo_plugin.FooPlugin)
 
 3) Read the plugin specific README, this is usually found in the same
    directory as your Quantum plug-in, and follow configuration instructions.
