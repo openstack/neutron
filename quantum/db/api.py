@@ -91,6 +91,11 @@ def network_create(tenant_id, name, op_status=OperationalStatus.UNKNOWN):
         return net
 
 
+def network_all_tenant_list():
+    session = get_session()
+    return session.query(models.Network).all()
+
+
 def network_list(tenant_id):
     session = get_session()
     return session.query(models.Network).\

@@ -13,6 +13,7 @@ webtest
 distribute>=0.6.24
 
 coverage
+mock>=0.7.1
 nose
 nosexcover
 pep8==0.6.1

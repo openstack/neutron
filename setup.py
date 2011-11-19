@@ -72,6 +72,7 @@ ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
+ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 
 DataFiles = [
     (config_path,
@@ -90,6 +91,7 @@ DataFiles = [
         ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
     (nvp_plugin_config_path,
         ['etc/quantum/plugins/nicira/nvp.ini']),
+    (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
 ]
 
 setup(
@@ -109,10 +111,12 @@ setup(
     eager_resources=EagerResources,
     entry_points={
         'console_scripts': [
-            'quantum-linuxbridge-agent = \
-quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
-            'quantum-openvswitch-agent = \
-quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
+            'quantum-linuxbridge-agent =' \
+            'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
+            'quantum-openvswitch-agent =' \
+            'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
+            'quantum-ryu-agent = ' \
+            'quantum.plugins.ryu.agent.ryu_quantum_agent:main',
             'quantum-server = quantum.server:main',
         ]
     },

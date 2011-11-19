@@ -1,0 +1,28 @@
+Quantum plugin for Ryu Network Operating System
+This directory includes quantum plugin for Ryu Network Operating System.
+
+# -- Installation
+
+For how to install/set up this plugin with Ryu and Open Stack, please refer to
+http://www.osrg.net/ryu/using_with_openstack.html
+
+# -- Ryu General
+
+For general Ryu stuff, please refer to
+http://www.osrg.net/ryu/
+
+Ryu is available at github
+git://github.com/osrg/ryu.git
+https://github.com/osrg/ryu
+
+The mailing is at
+ryu-devel@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/ryu-devel
+
+# -- unit test
+
+In order to run unit tests for Ryu plugin
+PLUGIN_DIR=quantum/plugins/ryu ./run_tests.sh
+NOTE: In order to run unit tests, sqlite3 is additionally needed.
+
+Enjoy!
