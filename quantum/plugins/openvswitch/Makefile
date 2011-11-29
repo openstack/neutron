@@ -10,7 +10,7 @@ agent-dist: distclean
 	cp agent/*.py $(AGENT_DIST_DIR)
 	cp agent/*.sh $(AGENT_DIST_DIR)
 	cp README $(AGENT_DIST_DIR)
-	cp ovs_quantum_plugin.ini $(AGENT_DIST_DIR)
+	cp ../../../etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini $(AGENT_DIST_DIR)
 	tar -zcvf $(AGENT_DIST_TARBALL) $(AGENT_DIST_DIR)/
 	@echo "Agent tarball created: $(AGENT_DIST_TARBALL)"
 	@echo "See README for installation details"
@@ -24,7 +24,4 @@ distclean:
 	-rm -rf $(AGENT_DIST_DIR)
 	-rm -f $(AGENT_DIST_TARBALL)
 
-check:
-	PYTHONPATH=$(QUANTUM_PATH):. python ovs_quantum_plugin.py
-
-PHONY: agent-dist check clean distclean
+PHONY: agent-dist clean distclean
