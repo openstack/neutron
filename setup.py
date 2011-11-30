@@ -1,169 +1,85 @@
-from copy import deepcopy
-from optparse import OptionParser
-from os import path
-import re
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages
+
 import sys
+import version
 
-from tools import install_venv
+Name = 'quantum'
+Url = "https://launchpad.net/quantum"
+Version = version.get_git_version()
+License = 'Apache License 2.0'
+Author = 'Netstack'
+AuthorEmail = 'netstack@lists.launchpad.net'
+Maintainer = ''
+Summary = 'Quantum (virtual network service)'
+ShortDescription = Summary
+Description = Summary
 
-ROOT = path.abspath(path.dirname(__file__))
-CONFIG_PATH = path.abspath('/etc/quantum')
-BASE_PACKAGES = ['common', 'server', 'client']
-PLUGINS = ['sample_plugin', 'openvswitch_plugin', 'cisco_plugin']
+requires = [
+    'eventlet>=0.9.12',
+    'Routes>=1.12.3',
+    'nose',
+    'Paste',
+    'PasteDeploy',
+    'pep8>=0.6.1',
+    'python-gflags',
+    'simplejson',
+    'sqlalchemy',
+    'webob',
+    'webtest'
+]
 
-RELATIVE = False
+EagerResources = [
+    'quantum',
+]
 
+ProjectScripts = [
+]
 
-def clean_path(dirty):
-    """Makes sure path delimiters are OS compliant"""
-    return path.join(*dirty.split('/'))
+config_path = 'etc/quantum/'
+init_path = 'etc/init.d'
+ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
+cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 
+print "config_path: %s" % config_path
+DataFiles = [
+    (config_path,
+        ['etc/quantum.conf', 'etc/quantum.conf.test', 'etc/plugins.ini']),
+    (init_path, ['etc/init.d/quantum-server']),
+    (ovs_plugin_config_path,
+        ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),
+    (cisco_plugin_config_path,
+        ['etc/quantum/plugins/cisco/credentials.ini',
+         'etc/quantum/plugins/cisco/l2network_plugin.ini',
+         'etc/quantum/plugins/cisco/nexus.ini',
+         'etc/quantum/plugins/cisco/ucs.ini',
+         'etc/quantum/plugins/cisco/cisco_plugins.ini',
+         'etc/quantum/plugins/cisco/db_conn.ini']),
+]
 
-def script_dir():
-    global RELATIVE
-    script_dir = '/usr/sbin/'
-    if RELATIVE:
-        script_dir = 'usr/sbin/'
-    return script_dir
-
-
-def etc_dir():
-    global RELATIVE
-    etc_dir = '/etc/'
-    if RELATIVE:
-        etc_dir = 'etc/'
-    return etc_dir
-
-
-def create_parser():
-    """Setup the option parser"""
-    usagestr = "Usage: %prog [OPTIONS] <command> [args]"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-V", "--virtualenv", "--venv", dest="venv",
-        action="store_true", default=False, help="Install to a virtual-env")
-    parser.add_option("-U", "--user", dest="user", action="store_true",
-        default=False, help="Install to users's home")
-    options, args = parser.parse_args()
-
-    if args.__len__() is 0:
-        print usagestr
-        print "Commands:\ninstall\nuninstall\nbuild\nclean"
-        exit(0)
-
-    cmd = args[0]
-    args = args[1:]
-    return (options, cmd, args)
-
-
-def install_packages(options, args=None):
-    """Builds and installs packages"""
-    # Start building a command list
-    cmd = ['python']
-
-    # If no options, just a regular install.  If venv, create, prepare and
-    # install in venv.  If --user install in user's local dir.  Usually
-    # ~/.local/
-    if options.venv:
-        if install_venv.VENV_EXISTS:
-            print "Virtual-env exists"
-        else:
-            install_venv.create_virtualenv(install_pip=False)
-        install_venv.install_dependencies()
-        cmd.insert(0, "tools/with_venv.sh")
-
-    # Install packages
-    # TODO(Tyler) allow users to pass in packages in cli
-    for package in BASE_PACKAGES + PLUGINS:
-        print "Installing %s" % package
-        # Each package needs its own command list, and it needs the path
-        # in the correct place (after "pip install")
-        pcmd = deepcopy(cmd)
-        pcmd.extend(["setup_%s.py" % package, "install"])
-
-        if options.venv:
-            pcmd.append("--root=%s" % install_venv.VENV)
-
-        if options.user:
-            pcmd.append('--user')
-
-        if package is 'client':
-            pcmd.append("--install-scripts=%s" % script_dir())
-
-        if package is 'server':
-            pcmd.append("--install-scripts=%s" % script_dir())
-            pcmd.append("--install-data=%s" % etc_dir())
-        print pcmd
-        install_venv.run_command(pcmd)
-        print "done."
-
-
-def uninstall_packages(options, args=None):
-    """Removes packages"""
-    cmd = ['pip', 'uninstall', '-y']
-
-    for package in ['quantum-' + x.split('/')[-1] \
-                    for x in BASE_PACKAGES + PLUGINS]:
-        print "Uninstalling %s" % package
-        # Each package needs its own command list, and it needs the path
-        # in the correct place (after "pip uninstall"
-        pcmd = deepcopy(cmd)
-        pcmd.insert(2, package)
-        print pcmd
-        install_venv.run_command(pcmd)
-        print "done."
-
-
-def build_packages(options, args=None):
-    """Build RPM and/or deb packages"""
-    if not args:
-        print "To build packages you must specifiy either 'rpm', " \
-              "'deb', or 'all'"
-        exit(0)
-    if args[0] not in ['rpm', 'deb', 'all']:
-        raise Exception("Packge type must be rpm, deb, or all")
-
-    if 'rpm' in args or 'all' in args:
-        # Since we need to cd to build rpms, we call this sh script
-        cmd = ['tools/build_rpms.sh']
-        for package in BASE_PACKAGES + PLUGINS:
-            print "Building %s rpm" % package
-            pcmd = deepcopy(cmd)
-            pcmd.append(package)
-            install_venv.run_command(pcmd)
-            print "done."
-
-    if 'deb' in args or 'all' in args:
-        cmd = ['tools/build_debs.sh']
-        for p in BASE_PACKAGES + PLUGINS:
-            print "Building %s deb" % p
-            pcmd = deepcopy(cmd)
-            pcmd.append(p)
-            install_venv.run_command(pcmd)
-        print "done."
-
-
-def clean_packages(options, args):
-    """Cleans build packages"""
-    cmd = ["tools/clean.sh"]
-    install_venv.run_command(cmd)
-
-
-def main():
-    """Main Build script for Quantum"""
-    global RELATIVE
-    options, cmd, args = create_parser()
-
-    if options.user:
-        RELATIVE = True
-
-    print "Checking for virtual-env and easy_install"
-    install_venv.check_dependencies()
-
-    # Execute command
-    try:
-        globals()["%s_packages" % cmd](options, args)
-    except KeyError as exc:
-        print "Command %s' not found" % exc.__str__().split('_')[0]
-
-if __name__ == "__main__":
-    main()
+setup(
+    name=Name,
+    version=Version,
+    url=Url,
+    author=Author,
+    author_email=AuthorEmail,
+    description=ShortDescription,
+    long_description=Description,
+    license=License,
+    scripts=ProjectScripts,
+    install_requires=requires,
+    include_package_data=False,
+    packages=find_packages('.'),
+    data_files=DataFiles,
+    eager_resources=EagerResources,
+    entry_points={
+        'console_scripts': [
+            'quantum-server = quantum.server:main',
+            'quantum = quantum.client.cli:main',
+        ]
+    },
+)

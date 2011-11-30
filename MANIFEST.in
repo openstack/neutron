@@ -1,3 +1,4 @@
+include bin/*
 include etc/*
 include etc/init.d/*
 include etc/quantum/plugins/openvswitch/*
