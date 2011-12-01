@@ -42,7 +42,7 @@ class FakeHTTPConnection:
         self._req = None
         plugin = 'quantum.plugins.sample.SamplePlugin.FakePlugin'
         options = dict(plugin_provider=plugin)
-        self._api = server.APIRouterV1(options)
+        self._api = server.APIRouterV11(options)
 
     def request(self, method, action, body, headers):
         # TODO: remove version prefix from action!

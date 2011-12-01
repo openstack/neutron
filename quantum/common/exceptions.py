@@ -126,6 +126,10 @@ class AlreadyAttachedClient(QuantumException):
                 "already plugged into another port.")
 
 
+class MalformedRequestBody(QuantumException):
+    message = _("Malformed request body: %(reason)s")
+
+
 class Duplicate(Error):
     pass
 

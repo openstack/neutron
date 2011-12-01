@@ -36,7 +36,7 @@ class Versions(wsgi.Application):
             },
             {
                 "id": "v1.1",
-                "status": "FUTURE",
+                "status": "PROPOSED",
             },
         ]
 
