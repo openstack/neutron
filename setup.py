@@ -69,12 +69,11 @@ def install_packages(options, args=None):
     for package in BASE_PACKAGES + PLUGINS:
         print "Installing %s" % package
         # Each package needs its own command list, and it needs the path
-        # in the correct place (after "pip install")
-        pcmd = deepcopy(cmd)
-        pcmd.insert(2, path.join(ROOT, clean_path(package)))
+        # in the correct place
+        pcmd = ["python", path.join(ROOT, "setup_%s.py" % package), "install"]
 
         if package is 'server':
-            pcmd.append("--install-option=--install-scripts=%s" %\
+            pcmd.append("--install-scripts=%s" %\
                         script_dir())
         print pcmd
         install_venv.run_command(pcmd)
