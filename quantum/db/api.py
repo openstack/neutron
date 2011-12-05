@@ -80,25 +80,6 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def _check_duplicate_net_name(tenant_id, net_name):
-    """Checks whether a network with the same name
-       already exists for the tenant.
-    """
-
-    #TODO(salvatore-orlando): Not used anymore - candidate for removal
-    session = get_session()
-    try:
-        net = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id, name=net_name).\
-          one()
-        raise q_exc.NetworkNameExists(tenant_id=tenant_id,
-                        net_name=net_name, net_id=net.uuid)
-    except exc.NoResultFound:
-        # this is the "normal" path, as API spec specifies
-        # that net-names are unique within a tenant
-        pass
-
-
 def network_create(tenant_id, name):
     session = get_session()
 
@@ -130,8 +111,6 @@ def network_update(net_id, tenant_id, **kwargs):
     session = get_session()
     net = network_get(net_id)
     for key in kwargs.keys():
-        if key == "name":
-            _check_duplicate_net_name(tenant_id, kwargs[key])
         net[key] = kwargs[key]
     session.merge(net)
     session.flush()
