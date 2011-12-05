@@ -15,13 +15,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from quantum.api.api_common import OperationalStatus
 
-def get_view_builder(req):
+
+def get_view_builder(req, version):
     base_url = req.application_url
-    return ViewBuilder(base_url)
+    view_builder = {
+        '1.0': ViewBuilder10,
+        '1.1': ViewBuilder11,
+    }[version](base_url)
+    return view_builder
 
 
-class ViewBuilder(object):
+class ViewBuilder10(object):
 
     def __init__(self, base_url=None):
         """
@@ -34,6 +40,20 @@ class ViewBuilder(object):
         port = dict(port=dict(id=port_data['port-id']))
         if port_details:
             port['port']['state'] = port_data['port-state']
+        if att_details and port_data['attachment']:
+            port['port']['attachment'] = dict(id=port_data['attachment'])
+        return port
+
+
+class ViewBuilder11(ViewBuilder10):
+
+    def build(self, port_data, port_details=False, att_details=False):
+        """Generates a port entity with operation status info"""
+        port = dict(port=dict(id=port_data['port-id']))
+        if port_details:
+            port['port']['state'] = port_data['port-state']
+            port['port']['op-status'] = port_data.get('port-op-status',
+                                        OperationalStatus.UNKNOWN)
         if att_details and port_data['attachment']:
             port['port']['attachment'] = dict(id=port_data['attachment'])
         return port

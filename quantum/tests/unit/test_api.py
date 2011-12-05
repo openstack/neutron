@@ -21,8 +21,32 @@ import quantum.api.networks as nets
 import quantum.api.ports as ports
 import quantum.tests.unit._test_api as test_api
 
+from quantum.common.test_lib import test_config
+
 
 class APITestV10(test_api.AbstractAPITest):
+
+    def assert_network(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'name': kwargs['name']},
+                          kwargs['network_data'])
+
+    def assert_network_details(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'name': kwargs['name'],
+                          'ports': [{'id': kwargs['port_id'],
+                                     'state': 'ACTIVE'}]},
+                         kwargs['network_data'])
+
+    def assert_port(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'state': kwargs['state']},
+                         kwargs['port_data'])
+
+    def assert_port_attachment(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'], 'state': kwargs['state'],
+                          'attachment': {'id': kwargs['interface_id']}},
+                         kwargs['port_data'])
 
     def setUp(self):
         super(APITestV10, self).setUp('quantum.api.APIRouterV10',
@@ -33,7 +57,38 @@ class APITestV10(test_api.AbstractAPITest):
 
 class APITestV11(test_api.AbstractAPITest):
 
+    def assert_network(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'name': kwargs['name'],
+                          'op-status': self.net_op_status},
+                          kwargs['network_data'])
+
+    def assert_network_details(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'name': kwargs['name'],
+                          'op-status': self.net_op_status,
+                          'ports': [{'id': kwargs['port_id'],
+                                     'state': 'ACTIVE',
+                                     'op-status': self.port_op_status}]},
+                         kwargs['network_data'])
+
+    def assert_port(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'],
+                          'state': kwargs['state'],
+                          'op-status': self.port_op_status},
+                         kwargs['port_data'])
+
+    def assert_port_attachment(self, **kwargs):
+        self.assertEqual({'id': kwargs['id'], 'state': kwargs['state'],
+                          'op-status': self.port_op_status,
+                          'attachment': {'id': kwargs['interface_id']}},
+                         kwargs['port_data'])
+
     def setUp(self):
+        self.net_op_status = test_config.get('default_net_op_status',
+                                             'UNKNOWN')
+        self.port_op_status = test_config.get('default_port_op_status',
+                                              'UNKNOWN')
         super(APITestV11, self).setUp('quantum.api.APIRouterV11',
              {test_api.NETS: nets.ControllerV11._serialization_metadata,
               test_api.PORTS: ports.ControllerV11._serialization_metadata,

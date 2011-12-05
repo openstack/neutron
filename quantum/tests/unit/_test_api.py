@@ -157,9 +157,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_network_res.status_int, 200)
         network_data = self._deserialize_net_response(content_type,
                                                       show_network_res)
-        self.assertEqual({'id': network_id,
-                          'name': self.network_name},
-                         network_data['network'])
+        self.assert_network(id=network_id, name=self.network_name,
+                            network_data=network_data['network'])
         LOG.debug("_test_show_network - fmt:%s - END", fmt)
 
     def _test_show_network_detail(self, fmt):
@@ -174,11 +173,9 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_network_res.status_int, 200)
         network_data = self._deserialize_net_response(content_type,
                                                       show_network_res)
-        self.assertEqual({'id': network_id,
-                          'name': self.network_name,
-                          'ports': [{'id': port_id,
-                                     'state': 'ACTIVE'}]},
-                         network_data['network'])
+        self.assert_network_details(id=network_id, name=self.network_name,
+                                    port_id=port_id, port_state='ACTIVE',
+                                    network_data=network_data['network'])
         LOG.debug("_test_show_network_detail - fmt:%s - END", fmt)
 
     def _test_show_network_not_found(self, fmt):
@@ -208,9 +205,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_network_res.status_int, 200)
         network_data = self._deserialize_net_response(content_type,
                                                       show_network_res)
-        self.assertEqual({'id': network_id,
-                          'name': new_name},
-                         network_data['network'])
+        self.assert_network(id=network_id, name=new_name,
+                            network_data=network_data['network'])
         LOG.debug("_test_rename_network - fmt:%s - END", fmt)
 
     def _test_rename_network_badrequest(self, fmt):
@@ -365,8 +361,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 200)
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
-        self.assertEqual({'id': port_id, 'state': port_state},
-                         port_data['port'])
+        self.assert_port(id=port_id, state=port_state,
+                        port_data=port_data['port'])
         LOG.debug("_test_show_port - fmt:%s - END", fmt)
 
     def _test_show_port_detail(self, fmt):
@@ -383,8 +379,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 200)
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
-        self.assertEqual({'id': port_id, 'state': port_state},
-                         port_data['port'])
+        self.assert_port(id=port_id, state=port_state,
+                        port_data=port_data['port'])
 
         # Part 2 - plug attachment into port
         interface_id = "test_interface"
@@ -401,9 +397,9 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 200)
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
-        self.assertEqual({'id': port_id, 'state': port_state,
-                          'attachment': {'id': interface_id}},
-                         port_data['port'])
+        self.assert_port_attachment(id=port_id, state=port_state,
+                                    interface_id=interface_id,
+                                    port_data=port_data['port'])
 
         LOG.debug("_test_show_port_detail - fmt:%s - END", fmt)
 
@@ -575,8 +571,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 200)
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
-        self.assertEqual({'id': port_id, 'state': new_port_state},
-                         port_data['port'])
+        self.assert_port(id=port_id, state=new_port_state,
+                         port_data=port_data['port'])
         # now set it back to the original value
         update_port_req = testlib.update_port_request(self.tenant_id,
                                                         network_id, port_id,
@@ -591,8 +587,8 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(show_port_res.status_int, 200)
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
-        self.assertEqual({'id': port_id, 'state': port_state},
-                         port_data['port'])
+        self.assert_port(id=port_id, state=port_state,
+                         port_data=port_data['port'])
         LOG.debug("_test_set_port_state - fmt:%s - END", fmt)
 
     def _test_set_port_state_networknotfound(self, fmt):

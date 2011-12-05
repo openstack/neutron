@@ -22,6 +22,7 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
 
+from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.db import models
 
@@ -80,11 +81,11 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def network_create(tenant_id, name):
+def network_create(tenant_id, name, op_status=OperationalStatus.UNKNOWN):
     session = get_session()
 
     with session.begin():
-        net = models.Network(tenant_id, name)
+        net = models.Network(tenant_id, name, op_status)
         session.add(net)
         session.flush()
         return net
@@ -137,13 +138,13 @@ def network_destroy(net_id):
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 
-def port_create(net_id, state=None):
+def port_create(net_id, state=None, op_status=OperationalStatus.UNKNOWN):
     # confirm network exists
     network_get(net_id)
 
     session = get_session()
     with session.begin():
-        port = models.Port(net_id)
+        port = models.Port(net_id, op_status)
         port['state'] = state or 'DOWN'
         session.add(port)
         session.flush()

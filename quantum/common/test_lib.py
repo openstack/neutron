@@ -286,4 +286,6 @@ def run_tests(c=None):
 # quantum/plugins/openvswitch/ )
 test_config = {
     "plugin_name": "quantum.plugins.sample.SamplePlugin.FakePlugin",
+    "default_net_op_status": "UP",
+    "default_port_op_status": "UP",
 }

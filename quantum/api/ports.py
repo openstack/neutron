@@ -50,7 +50,7 @@ class Controller(common.QuantumController):
                port_details=False):
         """ Returns a list of ports. """
         port_list = self._plugin.get_all_ports(tenant_id, network_id)
-        builder = ports_view.get_view_builder(request)
+        builder = ports_view.get_view_builder(request, self.version)
 
         # Load extra data for ports if required.
         if port_details:
@@ -69,7 +69,7 @@ class Controller(common.QuantumController):
         """ Returns a specific port. """
         port = self._plugin.get_port_details(
                         tenant_id, network_id, port_id)
-        builder = ports_view.get_view_builder(request)
+        builder = ports_view.get_view_builder(request, self.version)
         result = builder.build(port, port_details=True,
                                att_details=att_details)['port']
         return dict(port=result)
@@ -111,7 +111,7 @@ class Controller(common.QuantumController):
         port = self._plugin.create_port(tenant_id,
                                         network_id, body['port']['state'],
                                         **body)
-        builder = ports_view.get_view_builder(request)
+        builder = ports_view.get_view_builder(request, self.version)
         result = builder.build(port)['port']
         return dict(port=result)
 
@@ -151,7 +151,7 @@ class ControllerV11(Controller):
 
     _serialization_metadata = {
             "attributes": {
-                "port": ["id", "state"],
+                "port": ["id", "state", "op-status"],
                 "attachment": ["id"]},
             "plurals": {"ports": "port"}
     }
