@@ -412,19 +412,22 @@ result the run_tests.py script.
 3. Specific Plugin unit test (needs environment setup as indicated in the
    pre-requisites):
 
-   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.<name_of_the file>
+   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.<name_of_the_module>
 
    or
 
-   python run_tests.py quantum.plugins.cisco.tests.unit.<name_of_the file>
+   python run_tests.py quantum.plugins.cisco.tests.unit.<name_of_the_module>
    E.g.:
 
    python run_tests.py quantum.plugins.cisco.tests.unit.test_ucs_plugin
 
    To run specific tests, use the following:
    python run_tests.py
-    quantum.plugins.cisco.tests.unit.<name_of_the file>:<ClassName>.<funcName>
+    quantum.plugins.cisco.tests.unit.<name_of_the_module>:<ClassName>.<funcName>
 
+   Eg:
+   python run_tests.py
+    quantum.plugins.cisco.tests.unit.test_ucs_plugin:UCSVICTestPlugin.test_create_port
 
 4. Testing the Extension API
    The script is placed alongwith the other cisco unit tests. The location may
