@@ -50,7 +50,7 @@ setup(
     eager_resources=EagerResources,
     entry_points={
         'console_scripts': [
-            'quantum = quantum.cli:main'
+            'quantum = quantum.client.cli:main'
         ]
     },
 )

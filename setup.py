@@ -20,10 +20,19 @@ def clean_path(dirty):
 
 
 def script_dir():
+    global RELATIVE
     script_dir = '/usr/sbin/'
     if RELATIVE:
         script_dir = 'usr/sbin/'
     return script_dir
+
+
+def etc_dir():
+    global RELATIVE
+    etc_dir = '/etc/'
+    if RELATIVE:
+        etc_dir = 'etc/'
+    return etc_dir
 
 
 def create_parser():
@@ -49,7 +58,7 @@ def create_parser():
 def install_packages(options, args=None):
     """Builds and installs packages"""
     # Start building a command list
-    cmd = ['pip', 'install']
+    cmd = ['python']
 
     # If no options, just a regular install.  If venv, create, prepare and
     # install in venv.  If --user install in user's local dir.  Usually
@@ -60,9 +69,7 @@ def install_packages(options, args=None):
         else:
             install_venv.create_virtualenv(install_pip=False)
         install_venv.install_dependencies()
-        cmd.extend(['-E', install_venv.VENV])
-    elif options.user:
-        cmd.append('--user')
+        cmd.insert(0, "tools/with_venv.sh")
 
     # Install packages
     # TODO(Tyler) allow users to pass in packages in cli
@@ -71,11 +78,20 @@ def install_packages(options, args=None):
         # Each package needs its own command list, and it needs the path
         # in the correct place (after "pip install")
         pcmd = deepcopy(cmd)
-        pcmd.insert(2, path.join(ROOT, clean_path(package)))
+        pcmd.extend(["setup_%s.py" % package, "install"])
+
+        if options.venv:
+            pcmd.append("--root=%s" % install_venv.VENV)
+
+        if options.user:
+            pcmd.append('--user')
+
+        if package is 'client':
+            pcmd.append("--install-scripts=%s" % script_dir())
 
         if package is 'server':
-            pcmd.append("--install-option=--install-scripts=%s" %\
-                        script_dir())
+            pcmd.append("--install-scripts=%s" % script_dir())
+            pcmd.append("--install-data=%s" % etc_dir())
         print pcmd
         install_venv.run_command(pcmd)
         print "done."
@@ -134,6 +150,7 @@ def clean_packages(options, args):
 
 def main():
     """Main Build script for Quantum"""
+    global RELATIVE
     options, cmd, args = create_parser()
 
     if options.user:
