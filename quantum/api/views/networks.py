@@ -16,12 +16,16 @@
 #    under the License.
 
 
-def get_view_builder(req):
+def get_view_builder(req, version):
     base_url = req.application_url
-    return ViewBuilder(base_url)
+    view_builder = {
+        '1.0': ViewBuilder10,
+        '1.1': ViewBuilder11,
+    }[version](base_url)
+    return view_builder
 
 
-class ViewBuilder(object):
+class ViewBuilder10(object):
 
     def __init__(self, base_url=None):
         """
@@ -57,3 +61,9 @@ class ViewBuilder(object):
         if port_data['attachment']:
             port_dict['attachment'] = dict(id=port_data['attachment'])
         return port_dict
+
+
+class ViewBuilder11(ViewBuilder10):
+    #TODO(salvatore-orlando): will extend for Operational status
+    # in appropriate branch
+    pass

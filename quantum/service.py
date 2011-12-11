@@ -109,7 +109,7 @@ def _run_wsgi(app_name, paste_conf, paste_config_file):
         LOG.error(_('No known API applications configured in %s.'),
                       paste_config_file)
         return
-    server = wsgi.Server()
+    server = wsgi.Server("Quantum")
     server.start(app,
                  int(paste_conf['bind_port']), paste_conf['bind_host'])
     return server

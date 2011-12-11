@@ -16,39 +16,122 @@
 #    under the License.
 
 import logging
-import webob
 
 from webob import exc
 
 from quantum import wsgi
+from quantum.api import faults
 
-XML_NS_V01 = 'http://netstack.org/quantum/api/v0.1'
-XML_NS_V10 = 'http://netstack.org/quantum/api/v1.0'
+XML_NS_V10 = 'http://openstack.org/quantum/api/v1.0'
+XML_NS_V11 = 'http://openstack.org/quantum/api/v1.1'
 LOG = logging.getLogger('quantum.api.api_common')
 
 
-class QuantumController(wsgi.Controller):
+def create_resource(version, controller_dict):
+    """
+    Generic function for creating a wsgi resource
+    The function takes as input:
+     - desired version
+     - controller and metadata dictionary
+       e.g.: {'1.0': [ctrl_v10, meta_v10, xml_ns],
+              '1.1': [ctrl_v11, meta_v11, xml_ns]}
+
+    """
+    # the first element of the iterable is expected to be the controller
+    controller = controller_dict[version][0]
+    # the second element should be the metadata
+    metadata = controller_dict[version][1]
+    # and the third element the xml namespace
+    xmlns = controller_dict[version][2]
+
+    headers_serializer = HeaderSerializer()
+    xml_serializer = wsgi.XMLDictSerializer(metadata, xmlns)
+    json_serializer = wsgi.JSONDictSerializer()
+    xml_deserializer = wsgi.XMLDeserializer(metadata)
+    json_deserializer = wsgi.JSONDeserializer()
+
+    body_serializers = {
+        'application/xml': xml_serializer,
+        'application/json': json_serializer,
+    }
+
+    body_deserializers = {
+        'application/xml': xml_deserializer,
+        'application/json': json_deserializer,
+    }
+
+    serializer = wsgi.ResponseSerializer(body_serializers, headers_serializer)
+    deserializer = wsgi.RequestDeserializer(body_deserializers)
+
+    return wsgi.Resource(controller, deserializer, serializer)
+
+
+def APIFaultWrapper(errors=None):
+
+    def wrapper(func, **kwargs):
+
+        def the_func(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if errors != None and type(e) in errors:
+                    raise faults.QuantumHTTPError(e)
+                # otherwise just re-raise
+                raise
+        the_func.__name__ = func.__name__
+        return the_func
+
+    return wrapper
+
+
+class HeaderSerializer(wsgi.ResponseHeaderSerializer):
+    """
+    Defines default respone status codes for Quantum API operations
+        create - 202 ACCEPTED
+        update - 204 NOCONTENT
+        delete - 204 NOCONTENT
+        others - 200 OK (defined in base class)
+
+    """
+
+    def create(self, response, data):
+        response.status_int = 202
+
+    def delete(self, response, data):
+        response.status_int = 204
+
+    def update(self, response, data):
+        response.status_int = 204
+
+    def attach_resource(self, response, data):
+        response.status_int = 204
+
+    def detach_resource(self, response, data):
+        response.status_int = 204
+
+
+class QuantumController(object):
     """ Base controller class for Quantum API """
 
     def __init__(self, plugin):
         self._plugin = plugin
         super(QuantumController, self).__init__()
 
-    def _parse_request_params(self, req, params):
-        results = {}
-        data = {}
-        # Parameters are expected to be in request body only
-        if req.body:
-            des_body = self._deserialize(req.body,
-                                         req.best_match_content_type())
-            data = des_body and des_body.get(self._resource_name, None)
-            if not data:
-                msg = ("Failed to parse request. Resource: " +
-                       self._resource_name + " not found in request body")
-                for line in msg.split('\n'):
-                    LOG.error(line)
-                raise exc.HTTPBadRequest(msg)
+    def _prepare_request_body(self, body, params):
+        """ verifies required parameters are in request body.
+            sets default value for missing optional parameters.
 
+            body argument must be the deserialized body
+        """
+        try:
+            if body is None:
+                # Initialize empty resource for setting default value
+                body = {self._resource_name: {}}
+            data = body[self._resource_name]
+        except KeyError:
+            # raise if _resource_name is not in req body.
+            raise exc.HTTPBadRequest("Unable to find '%s' in request body"\
+                                     % self._resource_name)
         for param in params:
             param_name = param['param-name']
             param_value = data.get(param_name, None)
@@ -59,31 +142,5 @@ class QuantumController(wsgi.Controller):
                 for line in msg.split('\n'):
                     LOG.error(line)
                 raise exc.HTTPBadRequest(msg)
-            results[param_name] = param_value or param.get('default-value')
-
-        # There may be other parameters (data extensions), so we
-        # should include those in the results dict as well.
-        for key in data.keys():
-            if key not in params:
-                results[key] = data[key]
-
-        return results
-
-    def _build_response(self, req, res_data, status_code=200):
-        """ A function which builds an HTTP response
-            given a status code and a dictionary containing
-            the response body to be serialized
-
-        """
-        content_type = req.best_match_content_type()
-        default_xmlns = self.get_default_xmlns(req)
-        body = self._serialize(res_data, content_type, default_xmlns)
-
-        response = webob.Response()
-        response.status = status_code
-        response.headers['Content-Type'] = content_type
-        response.body = body
-        msg_dict = dict(url=req.url, status=response.status_int)
-        msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
-        LOG.debug(msg)
-        return response
+            data[param_name] = param_value or param.get('default-value')
+        return body
