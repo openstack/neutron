@@ -159,12 +159,13 @@ def port_list(net_id):
       all()
 
 
-def port_get(port_id, net_id):
+def port_get(port_id, net_id, session=None):
     # confirm network exists
     network_get(net_id)
-    session = get_session()
+    if not session:
+        session = get_session()
     try:
-        return  session.query(models.Port).\
+        return session.query(models.Port).\
           filter_by(uuid=port_id).\
           filter_by(network_id=net_id).\
           one()
@@ -222,9 +223,9 @@ def port_unset_attachment(port_id, net_id):
     network_get(net_id)
 
     session = get_session()
-    port = port_get(port_id, net_id)
+    port = port_get(port_id, net_id, session)
     port.interface_id = None
-    session.merge(port)
+    session.add(port)
     session.flush()
 
 
