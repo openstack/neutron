@@ -16,14 +16,15 @@
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
+# @author: Salvatore Orlando, Citrix Systems
 
 import uuid
-
 
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
 
+from quantum.api import api_common as common
 
 BASE = declarative_base()
 
@@ -73,16 +74,20 @@ class Port(BASE, QuantumBase):
     interface_id = Column(String(255), nullable=True)
     # Port state - Hardcoding string value at the moment
     state = Column(String(8))
+    op_status = Column(String(16))
 
-    def __init__(self, network_id):
+    def __init__(self, network_id,
+                 op_status=common.OperationalStatus.UNKNOWN):
         self.uuid = str(uuid.uuid4())
         self.network_id = network_id
         self.interface_id = None
         self.state = "DOWN"
+        self.op_status = op_status
 
     def __repr__(self):
-        return "<Port(%s,%s,%s,%s)>" % (self.uuid, self.network_id,
-                                     self.state, self.interface_id)
+        return "<Port(%s,%s,%s,%s,%s)>" % (self.uuid, self.network_id,
+                                           self.state, self.op_status,
+                                           self.interface_id)
 
 
 class Network(BASE, QuantumBase):
@@ -93,12 +98,15 @@ class Network(BASE, QuantumBase):
     tenant_id = Column(String(255), nullable=False)
     name = Column(String(255))
     ports = relation(Port, order_by=Port.uuid, backref="network")
+    op_status = Column(String(16))
 
-    def __init__(self, tenant_id, name):
+    def __init__(self, tenant_id, name,
+                 op_status=common.OperationalStatus.UNKNOWN):
         self.uuid = str(uuid.uuid4())
         self.tenant_id = tenant_id
         self.name = name
+        self.op_status = op_status
 
     def __repr__(self):
-        return "<Network(%s,%s,%s)>" % \
-          (self.uuid, self.name, self.tenant_id)
+        return "<Network(%s,%s,%s,%s)>" % \
+          (self.uuid, self.name, self.op_status, self.tenant_id)

@@ -146,12 +146,18 @@ class ControllerV10(Controller):
 
 
 class ControllerV11(Controller):
-    """Network resources controller for Quantum v1.1 API"""
+    """Network resources controller for Quantum v1.1 API
+
+       Note: at this state this class only adds serialization
+       metadata for the operational status concept.
+       API filters, pagination, and atom links will be handled by
+       this class as well.
+    """
 
     _serialization_metadata = {
             "attributes": {
-                "network": ["id", "name"],
-                "port": ["id", "state"],
+                "network": ["id", "name", "op-status"],
+                "port": ["id", "state", "op-status"],
                 "attachment": ["id"]},
             "plurals": {"networks": "network",
                         "ports": "port"}

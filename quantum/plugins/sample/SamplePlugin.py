@@ -18,6 +18,7 @@
 
 import logging
 
+from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as exc
 from quantum.db import api as db
 
@@ -174,7 +175,8 @@ class FakePlugin(object):
         nets = []
         for net in db.network_list(tenant_id):
             net_item = {'net-id': str(net.uuid),
-                        'net-name': net.name}
+                        'net-name': net.name,
+                        'net-op-status': net.op_status}
             nets.append(net_item)
         return nets
 
@@ -189,6 +191,7 @@ class FakePlugin(object):
         ports = self.get_all_ports(tenant_id, net_id)
         return {'net-id': str(net.uuid),
                 'net-name': net.name,
+                'net-op-status': net.op_status,
                 'net-ports': ports}
 
     def create_network(self, tenant_id, net_name, **kwargs):
@@ -198,8 +201,11 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.create_network() called")
         new_net = db.network_create(tenant_id, net_name)
+        # Put operational status UP
+        db.network_update(new_net.uuid, net_name,
+                          op_status=OperationalStatus.UP)
         # Return uuid for newly created network as net-id.
-        return {'net-id': new_net['uuid']}
+        return {'net-id': new_net.uuid}
 
     def delete_network(self, tenant_id, net_id):
         """
@@ -248,7 +254,8 @@ class FakePlugin(object):
         port = self._get_port(tenant_id, net_id, port_id)
         return {'port-id': str(port.uuid),
                 'attachment': port.interface_id,
-                'port-state': port.state}
+                'port-state': port.state,
+                'port-op-status': port.op_status}
 
     def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         """
@@ -258,6 +265,9 @@ class FakePlugin(object):
         # verify net_id
         self._get_network(tenant_id, net_id)
         port = db.port_create(net_id, port_state)
+        # Put operational status UP
+        db.port_update(port.uuid, net_id,
+                       op_status=OperationalStatus.UP)
         port_item = {'port-id': str(port.uuid)}
         return port_item
 

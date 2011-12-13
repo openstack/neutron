@@ -49,7 +49,12 @@ if __name__ == '__main__':
     # we should only invoked the tests once
     invoke_once = len(sys.argv) > 1
 
+    # NOTE (salvatore-orlando):
+    # please update default values for operational status according to
+    # the plugin behavior.
     test_config['plugin_name'] = "ovs_quantum_plugin.OVSQuantumPlugin"
+    test_config['default_net_op_status'] = "UNKNOWN"
+    test_config['default_port_op_status'] = "UNKNOWN"
 
     cwd = os.getcwd()
     c = config.Config(stream=sys.stdout,

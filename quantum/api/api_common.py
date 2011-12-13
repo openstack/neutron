@@ -27,6 +27,22 @@ XML_NS_V11 = 'http://openstack.org/quantum/api/v1.1'
 LOG = logging.getLogger('quantum.api.api_common')
 
 
+class OperationalStatus:
+    """ Enumeration for operational status
+
+        UP : the resource is available (operationall up)
+        DOWN : the resource is not operational; this might indicate
+               a failure in the underlying switching fabric.
+        PROVISIONING: the plugin is creating or updating the resource
+                      in the underlying switching fabric
+        UNKNOWN: the plugin does not support the operational status concept.
+    """
+    UP = "UP"
+    DOWN = "DOWN"
+    PROVISIONING = "PROVISIONING"
+    UNKNOWN = "UNKNOWN"
+
+
 def create_resource(version, controller_dict):
     """
     Generic function for creating a wsgi resource
