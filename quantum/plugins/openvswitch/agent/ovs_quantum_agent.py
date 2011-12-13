@@ -25,9 +25,12 @@ import time
 import signal
 
 from optparse import OptionParser
+from sqlalchemy.ext.sqlsoup import SqlSoup
 from subprocess import *
 
-from sqlalchemy.ext.sqlsoup import SqlSoup
+
+OP_STATUS_UP = "UP"
+OP_STATUS_DOWN = "DOWN"
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -199,7 +202,7 @@ class OVSQuantumAgent:
             except:
                 ports = []
             for port in ports:
-                all_bindings[port.interface_id] = port.network_id
+                all_bindings[port.interface_id] = port
 
             vlan_bindings = {}
             try:
@@ -215,7 +218,8 @@ class OVSQuantumAgent:
             for p in vif_ports:
                 new_vif_ports[p.vif_id] = p
                 if p.vif_id in all_bindings:
-                    new_local_bindings[p.vif_id] = all_bindings[p.vif_id]
+                    net_id = all_bindings[p.vif_id].network_id
+                    new_local_bindings[p.vif_id] = net_id
                 else:
                     # no binding, put him on the 'dead vlan'
                     self.int_br.set_db_attribute("Port", p.port_name, "tag",
@@ -231,23 +235,31 @@ class OVSQuantumAgent:
                         LOG.info("Removing binding to net-id = %s for %s"
                           % (old_b, str(p)))
                         self.port_unbound(p, True)
+                        if p.vif_id in all_bindings:
+                            all_bindings[p.vif_id].op_status = OP_STATUS_DOWN
                     if new_b is not None:
                         # If we don't have a binding we have to stick it on
                         # the dead vlan
-                        vlan_id = vlan_bindings.get(all_bindings[p.vif_id],
-                          "4095")
+                        net_id = all_bindings[p.vif_id].network_id
+                        vlan_id = vlan_bindings.get(net_id, "4095")
                         self.port_bound(p, vlan_id)
+                        if p.vif_id in all_bindings:
+                            all_bindings[p.vif_id].op_status = OP_STATUS_UP
                         LOG.info("Adding binding to net-id = %s " \
                              "for %s on vlan %s" % (new_b, str(p), vlan_id))
+
             for vif_id in old_vif_ports.keys():
                 if vif_id not in new_vif_ports:
                     LOG.info("Port Disappeared: %s" % vif_id)
                     if vif_id in old_local_bindings:
                         old_b = old_local_bindings[vif_id]
                         self.port_unbound(old_vif_ports[vif_id], False)
+                    if vif_id in all_bindings:
+                        all_bindings[vif_id].op_status = OP_STATUS_DOWN
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
+            db.commit()
             time.sleep(2)
 
 if __name__ == "__main__":

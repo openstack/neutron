@@ -23,6 +23,7 @@ from optparse import OptionParser
 import os
 import sys
 
+from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.common.config import find_config_file
 from quantum.quantum_plugin_base import QuantumPluginBase
@@ -102,22 +103,26 @@ class OVSQuantumPlugin(QuantumPluginBase):
         nets = []
         for x in db.network_list(tenant_id):
             LOG.debug("Adding network: %s" % x.uuid)
-            nets.append(self._make_net_dict(str(x.uuid), x.name, None))
+            nets.append(self._make_net_dict(str(x.uuid), x.name,
+                                            None, x.op_status))
         return nets
 
-    def _make_net_dict(self, net_id, net_name, ports):
+    def _make_net_dict(self, net_id, net_name, ports, op_status):
         res = {'net-id': net_id,
-                'net-name': net_name}
+                'net-name': net_name,
+                'net-op-status': op_status}
         if ports:
             res['net-ports'] = ports
         return res
 
     def create_network(self, tenant_id, net_name, **kwargs):
-        net = db.network_create(tenant_id, net_name)
+        net = db.network_create(tenant_id, net_name,
+                          op_status=OperationalStatus.UP)
         LOG.debug("Created network: %s" % net)
         vlan_id = self.vmap.acquire(str(net.uuid))
         ovs_db.add_vlan_binding(vlan_id, str(net.uuid))
-        return self._make_net_dict(str(net.uuid), net.name, [])
+        return self._make_net_dict(str(net.uuid), net.name, [],
+                                        net.op_status)
 
     def delete_network(self, tenant_id, net_id):
         net = db.network_get(net_id)
@@ -129,43 +134,46 @@ class OVSQuantumPlugin(QuantumPluginBase):
         net = db.network_destroy(net_id)
         ovs_db.remove_vlan_binding(net_id)
         self.vmap.release(net_id)
-        return self._make_net_dict(str(net.uuid), net.name, [])
+        return self._make_net_dict(str(net.uuid), net.name, [],
+                                        net.op_status)
 
     def get_network_details(self, tenant_id, net_id):
         net = db.network_get(net_id)
         ports = self.get_all_ports(tenant_id, net_id)
-        return self._make_net_dict(str(net.uuid), net.name, ports)
+        return self._make_net_dict(str(net.uuid), net.name,
+                                    ports, net.op_status)
 
     def update_network(self, tenant_id, net_id, **kwargs):
         net = db.network_update(net_id, tenant_id, **kwargs)
-        return self._make_net_dict(str(net.uuid), net.name, None)
+        return self._make_net_dict(str(net.uuid), net.name,
+                                        None, net.op_status)
 
-    def _make_port_dict(self, port_id, port_state, net_id, attachment):
-        return {'port-id': port_id,
-                'port-state': port_state,
-                'net-id': net_id,
-                'attachment': attachment}
+    def _make_port_dict(self, port):
+        if port.state == "ACTIVE":
+            op_status = port.op_status
+        else:
+            op_status = OperationalStatus.DOWN
+
+        return {'port-id': str(port.uuid),
+                'port-state': port.state,
+                'port-op-status': op_status,
+                'net-id': port.network_id,
+                'attachment': port.interface_id}
 
     def get_all_ports(self, tenant_id, net_id):
         ids = []
         ports = db.port_list(net_id)
-        for p in ports:
-            LOG.debug("Appending port: %s" % p.uuid)
-            d = self._make_port_dict(str(p.uuid), p.state, p.network_id,
-                                                    p.interface_id)
-            ids.append(d)
-        return ids
+        return [{'port-id': str(p.uuid)} for p in ports]
 
     def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         LOG.debug("Creating port with network_id: %s" % net_id)
-        port = db.port_create(net_id, port_state)
-        return self._make_port_dict(str(port.uuid), port.state,
-                                        port.network_id, port.interface_id)
+        port = db.port_create(net_id, port_state,
+                                op_status=OperationalStatus.DOWN)
+        return self._make_port_dict(port)
 
     def delete_port(self, tenant_id, net_id, port_id):
         port = db.port_destroy(port_id, net_id)
-        return self._make_port_dict(str(port.uuid), port.state,
-                                        port.network_id, port.interface_id)
+        return self._make_port_dict(port)
 
     def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """
@@ -174,19 +182,18 @@ class OVSQuantumPlugin(QuantumPluginBase):
         LOG.debug("update_port() called\n")
         port = db.port_get(port_id, net_id)
         db.port_update(port_id, net_id, **kwargs)
-        return self._make_port_dict(str(port.uuid), port.state,
-                                        port.network_id, port.interface_id)
+        return self._make_port_dict(port)
 
     def get_port_details(self, tenant_id, net_id, port_id):
         port = db.port_get(port_id, net_id)
-        return self._make_port_dict(str(port.uuid), port.state,
-                                port.network_id, port.interface_id)
+        return self._make_port_dict(port)
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):
         db.port_set_attachment(port_id, net_id, remote_iface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         db.port_set_attachment(port_id, net_id, "")
+        db.port_update(port_id, net_id, op_status=OperationalStatus.DOWN)
 
     def get_interface_details(self, tenant_id, net_id, port_id):
         res = db.port_get(port_id, net_id)
