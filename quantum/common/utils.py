@@ -132,28 +132,6 @@ def bool_from_string(subject):
     return False
 
 
-def import_class(import_str):
-    """Returns a class from a string including module and class"""
-    mod_str, _sep, class_str = import_str.rpartition('.')
-    try:
-        #mod_str = os.path.join(FLAGS.state_path, mod_str)
-        __import__(mod_str)
-        return getattr(sys.modules[mod_str], class_str)
-    except (ImportError, ValueError, AttributeError) as e:
-        print e
-        raise exception.ClassNotFound(class_name=class_str)
-
-
-def import_object(import_str):
-    """Returns an object including a module or module and class"""
-    try:
-        __import__(import_str)
-        return sys.modules[import_str]
-    except ImportError:
-        cls = import_class(import_str)
-        return cls()
-
-
 def fetchfile(url, target):
     logging.debug("Fetching %s" % url)
 #    c = pycurl.Curl()
