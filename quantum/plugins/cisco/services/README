@@ -1,0 +1,70 @@
+=========================================================================================
+README: L2 Network Services Insertion Utility
+=========================================================================================
+:Authors:  Edgar Magana, Mani Ramasamy, Ram Durairaj
+:Collaborators: Deepak Khanorkar, Sumit Naiksatam, Nat Chidambaram, Dan Wendlandt
+:Contact: netstack@lists.launchpad.net
+:Web site: https://blueprints.launchpad.net/quantum/+spec/services-insertion-wrapper
+
+Introduction
+------------
+This utility offers a simplify way to insert and remove network services
+in the path of the traffic to the server VMs, by splitting the network into two,
+and having the service bridge between the two, in the process applying the service.
+This model is called In-Path (Bump in the Wire)
+
+Pre-requisites
+--------------
+This integration uses Quantum APIs offered on diablo realease and Nova compute
+functionality, basically to create new service instances.
+
+Instructions
+------------------------------------------------------
+This utility offer four functionalities:
+
+1. insert_inpath_service <tenant_id> <service_image_id>
+    <management_net_name> <northbound_net_name> <southbound_net_name>
+Creates two networks and insert a service vm between them bridging the traffic
+path. It also creates a management network to access the service configuration.
+
+2. delete_service <tenant_id> <service_instance_id>
+Deletes the service prevopusly inserted as well as the network dependencies.
+
+connect_vm <tenant_id> <vm_image_id> <service_instance_id>
+Instanciate a VM which is connected to the southbound network created by
+insert_inpath_service. Facilitates the connections of server vms into the
+tenant's network.
+
+4. disconnect_vm <vm_instance_id>
+Disconnect from the southbound network and terminates the server vm.
+
+Example
+------------------------------------------------------
+Let's insert a Firewall service between northbound and southbound networks,
+the management network will be called mng_net:
+
+#PYTHONPATH=. python quantum/services/service_insertion.py insert_inpath_service
+naas ami-00000029 mng_net northnet southnet
+
+"ami-00000029" is the reference id provided by Glance for the Firewall image
+service instance id: i-00000091
+
+Now, we can connect a fresh web server in to the southbound network with:
+#PYTHONPATH=. python quantum/services/service_insertion.py connect_vm
+naas ami-0000002b i-00000091
+
+"ami-0000002b" is the reference id provided by Glace for the Web Server image
+and "i-00000091" is the instance id provided by Nova for the FW service instance
+previously created.
+server instance id: i-00000092
+
+If we want to disconnect and shutdown the vm instance server:
+#PYTHONPATH=. python quantum/plugins/cisco/services/service_insertion.py disconnect_vm i-00000092
+
+We can delete the service instance and the network configuration with:
+#PYTHONPATH=. python quantum/plugins/cisco/services/service_insertion.py delete_service naas i-00000091
+
+Caveats
+------------------------------------------------------
+nova-compute service should be running in the same server that Quantum.
+Nova API calls will be implemented in the next release (essex-3)

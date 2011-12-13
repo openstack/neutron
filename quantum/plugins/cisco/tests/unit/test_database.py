@@ -27,6 +27,7 @@ from quantum.plugins.cisco.common import cisco_constants as const
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db as nexus_db
+import quantum.plugins.cisco.db.services_db as services_db
 import quantum.plugins.cisco.db.ucs_db as ucs_db
 
 
@@ -189,6 +190,59 @@ class NexusDB(object):
         except Exception, exc:
             raise Exception("Failed to update nexus port binding vnic: %s"
                             % str(exc))
+
+
+class ServicesDB(object):
+    """Class consisting of methods to call services db methods"""
+    def get_all_servicesbindings(self):
+        """get all services port bindings"""
+        bindings = []
+        try:
+            for bind in services_db.get_all_services_bindings():
+                LOG.debug("Getting services bindings : %s" % bind.service_id)
+                bind_dict = {}
+                bind_dict["service_id"] = str(bind.service_id)
+                bind_dict["mngnet_id"] = str(bind.mngnet_id)
+                bind_dict["nbnet_id"] = str(bind.nbnet_id)
+                bind_dict["sbnet_id"] = str(bind.sbnet_id)
+                bindings.append(bind_dict)
+        except Exception, exc:
+            LOG.error("Failed to get all bindings: %s" % str(exc))
+        return bindings
+
+    def get_servicebindings(self, service_id):
+        """get service binding"""
+        try:
+            bind = services_db.get_service_bindings(service_id)
+            LOG.debug("Getting service binding : %s" % bind.service_id)
+            return bind
+        except Exception, exc:
+            LOG.error("Failed to get service binding: %s" % str(exc))
+
+    def create_servicebinding(self, service_id, mngnet_id, nbnet_id, sbnet_id):
+        """create service binding"""
+        bind_dict = {}
+        try:
+            res = services_db.add_services_binding(service_id, mngnet_id, \
+                                                   nbnet_id, sbnet_id)
+            LOG.debug("Created service binding : %s" % res.service_id)
+            bind_dict["service_id"] = str(res.service_id)
+            bind_dict["mngnet_id"] = str(res.mngnet_id)
+            bind_dict["nbnet_id"] = str(res.nbnet_id)
+            bind_dict["sbnet_id"] = str(res.sbnet_id)
+            return bind_dict
+        except Exception, exc:
+            LOG.error("Failed to create service binding: %s" % str(exc))
+
+    def delete_servicebinding(self, service_id):
+        """delete service binding"""
+        try:
+            bind = services_db.remove_services_binding(service_id)
+            for res in bind:
+                LOG.debug("Deleted service binding: %s" % res.service_id)
+        except Exception, exc:
+            raise Exception("Failed to delete service binding: %s"
+                             % str(exc))
 
 
 class L2networkDB(object):
@@ -739,6 +793,72 @@ class NexusDBTest(unittest.TestCase):
         for bind in binds:
             vlan_id = bind["vlan-id"]
             self.dbtest.delete_nexusportbinding(vlan_id)
+
+
+class ServicesDBTest(unittest.TestCase):
+    """Class conisting of services DB unit tests"""
+    def setUp(self):
+        """Setup for services db tests"""
+        l2network_db.initialize()
+        self.dbtest = ServicesDB()
+        LOG.debug("Setup")
+
+    def tearDown(self):
+        """Tear Down"""
+        db.clear_db()
+
+    def testa_create_servicebinding(self):
+        """create service binding"""
+        service_id = self.dbtest.create_servicebinding("i-00001", \
+                                    "mng_net", "northb_net", "northb_net")
+        self.assertTrue(service_id["service_id"] == "i-00001")
+        self.tearDown_servicebinding()
+
+    def testb_get_servicesbindings(self):
+        """get all services binding"""
+        service_id = self.dbtest.create_servicebinding("i-00001", \
+                                    "mng_net", "northb_net", "northb_net")
+        bindings = self.dbtest.get_servicebindings("i-00001")
+        count = 0
+        if bindings:
+            count += 1
+        self.assertTrue(count == 1)
+        self.tearDown_servicebinding()
+
+    def testb_getall_servicesbindings(self):
+        """get all services binding"""
+        service_id = self.dbtest.create_servicebinding("i-00001", \
+                                    "mng_net", "northb_net", "northb_net")
+        service_id = self.dbtest.create_servicebinding("i-00002", \
+                                    "mng_net", "northb_net", "northb_net")
+        bindings = self.dbtest.get_all_servicesbindings()
+        count = 0
+        for bind in bindings:
+            if "mng_net" in bind["mngnet_id"]:
+                count += 1
+        self.assertTrue(count == 2)
+        self.tearDown_servicebinding()
+
+    def testc_delete_servicesbinding(self):
+        """delete services binding"""
+        binding_serv = self.dbtest.create_servicebinding("i-00001", \
+                                    "mng_net", "northb_net", "northb_net")
+        self.dbtest.delete_servicebinding("i-00001")
+        bindings = self.dbtest.get_all_servicesbindings()
+        count = 0
+        for bind in bindings:
+            if "mng_net" in bind["mngnet_id"]:
+                count += 1
+        self.assertTrue(count == 0)
+        self.tearDown_servicebinding()
+
+    def tearDown_servicebinding(self):
+        """tear down nexusport binding table"""
+        LOG.debug("Tearing Down Nexus port Bindings")
+        binds = self.dbtest.get_all_servicesbindings()
+        for bind in binds:
+            service_id = bind["service_id"]
+            self.dbtest.delete_servicebinding(service_id)
 
 
 class L2networkDBTest(unittest.TestCase):
