@@ -47,13 +47,14 @@ if [x for x in relative_locations if x in sys.argv]:
 import os
 from distutils.command.build_py import build_py as _build_py
 
+
 class build_py(_build_py):
     def find_data_files(self, package, src_dir):
         files = []
         for p in _build_py.find_data_files(self, package, src_dir):
             if os.path.isdir(p):
-                files.extend(os.path.join(par,f)
-                             for par,dirs,files in os.walk(p) 
+                files.extend(os.path.join(par, f)
+                             for par, dirs, files in os.walk(p)
                              for f in files)
             else:
                 files.append(p)

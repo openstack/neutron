@@ -35,7 +35,8 @@ __all__ = ("get_git_version")
 
 from subprocess import Popen, PIPE
 
-FALLBACK_VERSION="2012.1dev"
+FALLBACK_VERSION = "2012.1dev"
+
 
 def call_git_describe(abbrev=4):
     try:
