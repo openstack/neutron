@@ -208,7 +208,7 @@ def find_config_file(options, args, config_file='quantum.conf'):
     root = os.path.join(dir_to_common, '..', '..', '..', '..')
     # Handle standard directory search for the config file
     config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'etc')),
-                        fix_path(os.path.join('~', '.quantum-venv', 'etc',
+                        fix_path(os.path.join('~', '.venv', 'etc',
                                  'quantum')),
                         fix_path('~'),
                         os.path.join(FLAGS.state_path, 'etc'),

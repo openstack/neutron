@@ -3,6 +3,7 @@ quantum.egg-info
 quantum_tests.sqlite
 quantum.sqlite
 *.quantum-venv
+.venv
 dist/
 ChangeLog
 *.pid

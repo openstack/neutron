@@ -29,7 +29,7 @@ import sys
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-VENV = os.path.join(ROOT, '.quantum-venv')
+VENV = os.path.join(ROOT, '.venv')
 PIP_REQUIRES = os.path.join(ROOT, 'tools', 'pip-requires')
 PY_VERSION = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
 
@@ -110,7 +110,7 @@ def print_help():
  To activate the Quantum virtualenv for the extent of your current shell
  session you can run:
 
- $ source .quantum-venv/bin/activate
+ $ source .venv/bin/activate
 
  Or, if you prefer, you can run commands in the virtualenv on a case by case
  basis by running:
