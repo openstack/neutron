@@ -83,7 +83,8 @@ def create_virtualenv(venv=VENV, install_pip=False):
     print 'done.'
     print 'Installing pip in virtualenv...',
     if install_pip and \
-            not run_command(['tools/with_venv.sh', 'easy_install', 'pip']):
+            not run_command(['tools/with_venv.sh', 'easy_install',
+                             'pip>1.0']):
         die("Failed to install pip.")
     print 'done.'
 
