@@ -253,7 +253,7 @@ class L2Network(QuantumPluginBase):
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
-        if attachment_id == None:
+        if attachment_id is None:
             raise cexc.InvalidAttach(port_id=port_id, net_id=net_id,
                                     att_id=remote_interface_id)
         attachment_id = attachment_id[:const.UUID_LENGTH]
@@ -281,7 +281,7 @@ class L2Network(QuantumPluginBase):
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
-        if attachment_id == None:
+        if attachment_id is None:
             raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
                                     att_id=remote_interface_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,

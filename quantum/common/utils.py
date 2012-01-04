@@ -37,7 +37,6 @@ import re
 import string
 import struct
 import time
-import types
 
 from quantum.common import flags
 from quantum.common import exceptions as exception
@@ -66,12 +65,12 @@ def import_object(import_str):
 
 
 def to_primitive(value):
-    if type(value) is type([]) or type(value) is type((None,)):
+    if isinstance(value, (list, tuple)):
         o = []
         for v in value:
             o.append(to_primitive(v))
         return o
-    elif type(value) is type({}):
+    elif isinstance(value, dict):
         o = {}
         for k, v in value.iteritems():
             o[k] = to_primitive(v)
@@ -124,7 +123,7 @@ def bool_from_string(subject):
 
     Useful for JSON-decoded stuff and config file parsing
     """
-    if type(subject) == type(bool):
+    if isinstance(subject, bool):
         return subject
     if hasattr(subject, 'startswith'):  # str or unicode...
         if subject.strip().lower() in ('true', 'on', '1'):
@@ -152,7 +151,7 @@ def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
     obj = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     result = None
-    if process_input != None:
+    if process_input is not None:
         result = obj.communicate(process_input)
     else:
         result = obj.communicate()
@@ -252,7 +251,7 @@ class LazyPluggable(object):
                 raise exception.Error('Invalid backend: %s' % backend_name)
 
             backend = self.__backends[backend_name]
-            if type(backend) == type(tuple()):
+            if isinstance(backend, tuple):
                 name = backend[0]
                 fromlist = backend[1]
             else:

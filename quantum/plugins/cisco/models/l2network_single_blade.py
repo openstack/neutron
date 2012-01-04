@@ -91,7 +91,7 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
         """Invoke only the device plugin"""
         # If the last param is a dict, add it to kwargs
-        if args and type(args[-1]) is dict:
+        if args and isinstance(args[-1], dict):
             kwargs.update(args.pop())
 
         return getattr(self._plugins[plugin_key], function_name)(*args,

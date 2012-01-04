@@ -90,7 +90,7 @@ def APIFaultWrapper(errors=None):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                if errors != None and type(e) in errors:
+                if errors is not None and type(e) in errors:
                     raise faults.QuantumHTTPError(e)
                 # otherwise just re-raise
                 raise

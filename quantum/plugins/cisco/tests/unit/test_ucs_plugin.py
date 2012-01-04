@@ -223,7 +223,7 @@ class UCSVICTestPlugin(unittest.TestCase):
         self.assertEqual(port_dict[const.PORTID], new_port[const.UUID])
         profile_name = self._cisco_ucs_plugin.\
                            _get_profile_name(port_dict[const.PORTID])
-        self.assertTrue(profile_name != None)
+        self.assertTrue(profile_name is not None)
         self.tear_down_network_port(
                  self.tenant_id, new_net_dict[const.NET_ID],
                  port_dict[const.PORTID])

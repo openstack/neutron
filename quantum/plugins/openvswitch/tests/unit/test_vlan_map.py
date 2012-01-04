@@ -33,4 +33,4 @@ class VlanMapTest(unittest.TestCase):
     def testReleaseVlan(self):
         vlan_id = self.vmap.acquire("foobar")
         self.vmap.release("foobar")
-        self.assertTrue(self.vmap.get(vlan_id) == None)
+        self.assertTrue(self.vmap.get(vlan_id) is None)

@@ -228,7 +228,7 @@ class XMLDictSerializer(DictSerializer):
             result.setAttribute('xmlns', xmlns)
 
         #TODO(bcwaldon): accomplish this without a type-check
-        if type(data) is list:
+        if isinstance(data, list):
             collections = metadata.get('list_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -247,7 +247,7 @@ class XMLDictSerializer(DictSerializer):
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
         #TODO(bcwaldon): accomplish this without a type-check
-        elif type(data) is dict:
+        elif isinstance(data, dict):
             collections = metadata.get('dict_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -744,7 +744,7 @@ class Resource(Application):
             LOG.info(_("HTTP exception thrown: %s"), unicode(ex))
             action_result = Fault(ex, self._xmlns)
 
-        if type(action_result) is dict or action_result is None:
+        if isinstance(action_result, dict) or action_result is None:
             response = self.serializer.serialize(action_result,
                                                  accept,
                                                  action=action)
@@ -839,7 +839,7 @@ class Controller(object):
         arg_dict['request'] = req
         result = method(**arg_dict)
 
-        if type(result) is dict:
+        if isinstance(result, dict):
             content_type = req.best_match_content_type()
             default_xmlns = self.get_default_xmlns(req)
             body = self._serialize(result, content_type, default_xmlns)
@@ -993,7 +993,7 @@ class Serializer(object):
         xmlns = metadata.get('xmlns', None)
         if xmlns:
             result.setAttribute('xmlns', xmlns)
-        if type(data) is list:
+        if isinstance(data, list):
             collections = metadata.get('list_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -1011,7 +1011,7 @@ class Serializer(object):
             for item in data:
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
-        elif type(data) is dict:
+        elif isinstance(data, dict):
             collections = metadata.get('dict_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
