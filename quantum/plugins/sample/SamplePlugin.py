@@ -165,13 +165,17 @@ class FakePlugin(object):
                                           att_id=port['interface_id'],
                                           att_port_id=port['uuid'])
 
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         """
         Returns a dictionary containing all
         <network_uuid, network_name> for
         the specified tenant.
         """
         LOG.debug("FakePlugin.get_all_networks() called")
+        filter_opts = kwargs.get('filter_opts', None)
+        if not filter_opts is None and len(filter_opts) > 0:
+            LOG.debug("filtering options were passed to the plugin"
+                      "but the Fake plugin does not support them")
         nets = []
         for net in db.network_list(tenant_id):
             net_item = {'net-id': str(net.uuid),
@@ -232,12 +236,16 @@ class FakePlugin(object):
         net = db.network_update(net_id, tenant_id, **kwargs)
         return net
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.get_all_ports() called")
+        filter_opts = kwargs.get('filter_opts', None)
+        if not filter_opts is None and len(filter_opts) > 0:
+            LOG.debug("filtering options were passed to the plugin"
+                      "but the Fake plugin does not support them")
         port_ids = []
         ports = db.port_list(net_id)
         for x in ports:

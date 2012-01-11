@@ -54,7 +54,7 @@ class L2Network(QuantumPluginBase):
     """
     Core API implementation
     """
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         """
         Returns a dictionary containing all
         <network_uuid, network_name> for
@@ -154,7 +154,7 @@ class L2Network(QuantumPluginBase):
                                        [])
         return net_dict
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.

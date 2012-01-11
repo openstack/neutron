@@ -106,7 +106,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
             #                                   % (vlan_id, network_id))
             self.vmap.set_vlan(vlan_id, network_id)
 
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         nets = []
         for x in db.network_list(tenant_id):
             LOG.debug("Adding network: %s" % x.uuid)
@@ -167,9 +167,10 @@ class OVSQuantumPlugin(QuantumPluginBase):
                 'net-id': port.network_id,
                 'attachment': port.interface_id}
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         ids = []
         ports = db.port_list(net_id)
+        # This plugin does not perform filtering at the moment
         return [{'port-id': str(p.uuid)} for p in ports]
 
     def create_port(self, tenant_id, net_id, port_state=None, **kwargs):

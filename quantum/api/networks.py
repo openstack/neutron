@@ -20,6 +20,7 @@ from webob import exc
 from quantum.api import api_common as common
 from quantum.api import faults
 from quantum.api.views import networks as networks_view
+from quantum.api.views import filters
 from quantum.common import exceptions as exception
 
 LOG = logging.getLogger('quantum.api.networks')
@@ -53,8 +54,10 @@ class Controller(common.QuantumController):
         # concerning logical ports as well.
         network = self._plugin.get_network_details(
                             tenant_id, network_id)
-        port_list = self._plugin.get_all_ports(
-                            tenant_id, network_id)
+        # Doing this in the API is inefficient
+        # TODO(salvatore-orlando): This should be fixed with Bug #834012
+        # Don't pass filter options
+        port_list = self._plugin.get_all_ports(tenant_id, network_id)
         ports_data = [self._plugin.get_port_details(
                                    tenant_id, network_id, port['port-id'])
                       for port in port_list]
@@ -64,8 +67,27 @@ class Controller(common.QuantumController):
         return dict(network=result)
 
     def _items(self, request, tenant_id, net_details=False):
-        """ Returns a list of networks. """
-        networks = self._plugin.get_all_networks(tenant_id)
+        """ Returns a list of networks.
+        Ideally, the plugin would perform filtering,
+        returning only the items matching filters specified
+        on the request query string.
+        However, plugins are not required to support filtering.
+        In this case, this function will filter the complete list
+        of networks returned by the plugin
+
+        """
+        filter_opts = {}
+        filter_opts.update(request.str_GET)
+        networks = self._plugin.get_all_networks(tenant_id,
+                                                 filter_opts=filter_opts)
+        # Inefficient, API-layer filtering
+        # will be performed only for the filters not implemented by the plugin
+        # NOTE(salvatore-orlando): the plugin is supposed to leave only filters
+        # it does not implement in filter_opts
+        networks = filters.filter_networks(networks,
+                                           self._plugin,
+                                           tenant_id,
+                                           filter_opts)
         builder = networks_view.get_view_builder(request, self.version)
         result = [builder.build(network, net_details)['network']
                   for network in networks]

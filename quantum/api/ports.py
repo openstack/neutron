@@ -16,6 +16,7 @@
 import logging
 
 from quantum.api import api_common as common
+from quantum.api.views import filters
 from quantum.api.views import ports as ports_view
 from quantum.common import exceptions as exception
 
@@ -48,17 +49,41 @@ class Controller(common.QuantumController):
 
     def _items(self, request, tenant_id, network_id,
                port_details=False):
-        """ Returns a list of ports. """
-        port_list = self._plugin.get_all_ports(tenant_id, network_id)
+        """ Returns a list of ports.
+        Ideally, the plugin would perform filtering,
+        returning only the items matching filters specified
+        on the request query string.
+        However, plugins are not required to support filtering.
+        In this case, this function will filter the complete list
+        of ports returned by the plugin
+        """
+        filter_opts = {}
+        filter_opts.update(request.str_GET)
+        port_list = self._plugin.get_all_ports(tenant_id,
+                                               network_id,
+                                               filter_opts=filter_opts)
+
         builder = ports_view.get_view_builder(request, self.version)
 
         # Load extra data for ports if required.
+        # This can be inefficient.
+        # TODO(salvatore-orlando): the fix for bug #834012 should deal with it
         if port_details:
             port_list_detail = \
                 [self._plugin.get_port_details(
                             tenant_id, network_id, port['port-id'])
                   for port in port_list]
             port_list = port_list_detail
+
+        # Perform manual filtering if not supported by plugin
+        # Inefficient, API-layer filtering
+        # will be performed only if the plugin does
+        # not support filtering
+        # NOTE(salvatore-orlando): the plugin is supposed to leave only filters
+        # it does not implement in filter_opts
+        port_list = filters.filter_ports(port_list, self._plugin,
+                                         tenant_id, network_id,
+                                         filter_opts)
 
         result = [builder.build(port, port_details)['port']
                   for port in port_list]

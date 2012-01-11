@@ -34,10 +34,7 @@ ATTS = "attachments"
 
 
 class AbstractAPITest(unittest.TestCase):
-    """Abstract base class for Quantum API unit tests
-    Defined according to operations defined for Quantum API v1.0
-
-    """
+    """ Base class definiting some methods for API tests """
 
     def _deserialize_net_response(self, content_type, response):
         network_data = self._net_deserializers[content_type].\
@@ -85,9 +82,56 @@ class AbstractAPITest(unittest.TestCase):
         if expected_res_status in (200, 202):
             port_data = self._deserialize_port_response(content_type,
                                                         port_res)
-            LOG.debug("PORT RESPONSE:%s", port_res.body)
-            LOG.debug("PORT DATA:%s", port_data)
             return port_data['port']['id']
+
+    def _set_attachment(self, network_id, port_id, interface_id, fmt,
+                        expected_res_status=204):
+        put_attachment_req = testlib.put_attachment_request(self.tenant_id,
+                                                            network_id,
+                                                            port_id,
+                                                            interface_id,
+                                                            fmt)
+        put_attachment_res = put_attachment_req.get_response(self.api)
+        self.assertEqual(put_attachment_res.status_int, expected_res_status)
+
+    def setUp(self, api_router_klass, xml_metadata_dict):
+        options = {}
+        options['plugin_provider'] = test_config['plugin_name']
+        api_router_cls = utils.import_class(api_router_klass)
+        self.api = api_router_cls(options)
+        self.tenant_id = "test_tenant"
+        self.network_name = "test_network"
+
+        # Prepare XML & JSON deserializers
+        net_xml_deserializer = XMLDeserializer(xml_metadata_dict[NETS])
+        port_xml_deserializer = XMLDeserializer(xml_metadata_dict[PORTS])
+        att_xml_deserializer = XMLDeserializer(xml_metadata_dict[ATTS])
+
+        json_deserializer = JSONDeserializer()
+
+        self._net_deserializers = {
+            'application/xml': net_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+        self._port_deserializers = {
+            'application/xml': port_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+        self._att_deserializers = {
+            'application/xml': att_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+
+    def tearDown(self):
+        """Clear the test environment"""
+        # Remove database contents
+        db.clear_db()
+
+
+class BaseAPIOperationsTest(AbstractAPITest):
+    """Abstract base class for Quantum API unit tests
+    Defined according to operations defined for Quantum API v1.0
+    """
 
     def _test_create_network(self, fmt):
         LOG.debug("_test_create_network - fmt:%s - START", fmt)
@@ -843,39 +887,6 @@ class AbstractAPITest(unittest.TestCase):
 
         LOG.debug("_test_unparsable_data - " \
                   "fmt:%s - END", fmt)
-
-    def setUp(self, api_router_klass, xml_metadata_dict):
-        options = {}
-        options['plugin_provider'] = test_config['plugin_name']
-        api_router_cls = utils.import_class(api_router_klass)
-        self.api = api_router_cls(options)
-        self.tenant_id = "test_tenant"
-        self.network_name = "test_network"
-
-        # Prepare XML & JSON deserializers
-        net_xml_deserializer = XMLDeserializer(xml_metadata_dict[NETS])
-        port_xml_deserializer = XMLDeserializer(xml_metadata_dict[PORTS])
-        att_xml_deserializer = XMLDeserializer(xml_metadata_dict[ATTS])
-
-        json_deserializer = JSONDeserializer()
-
-        self._net_deserializers = {
-            'application/xml': net_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-        self._port_deserializers = {
-            'application/xml': port_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-        self._att_deserializers = {
-            'application/xml': att_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-
-    def tearDown(self):
-        """Clear the test environment"""
-        # Remove database contents
-        db.clear_db()
 
     def test_list_networks_json(self):
         self._test_list_networks('json')
