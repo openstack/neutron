@@ -70,7 +70,7 @@ this)
        # Install into $HOME/.local/...
 
     c) python setup.py install --venv
-       # Creates and installs into a virtual-env at ~/.quantum-venv
+       # Creates and installs into a virtual-env at ~/.venv
 
 # -- Configuring Quantum plug-in
 
