@@ -3,4 +3,3 @@ include etc/*
 include etc/init.d/*
 include etc/quantum/plugins/openvswitch/*
 include etc/quantum/plugins/cisco/*
-include version.py
