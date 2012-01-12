@@ -50,7 +50,7 @@ class ServicesLogistics():
             service_args.append(image_name)
             counter = 0
             flag = False
-            while flag == False and counter <= 5:
+            while not flag and counter <= 5:
                 counter = counter + 1
                 time.sleep(2.5)
                 process = subprocess.Popen(service_args, \
@@ -71,7 +71,7 @@ class ServicesLogistics():
             service_args.append(image_name)
             counter = 0
             flag = False
-            while flag == False and counter <= 10:
+            while not flag and counter <= 10:
                 counter = counter + 1
                 time.sleep(2.5)
                 process = subprocess.Popen(service_args, \

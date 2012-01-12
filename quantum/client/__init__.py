@@ -160,7 +160,7 @@ class Client(object):
         action = self.action_prefix + action
         action = action.replace('{tenant_id}', self.tenant)
 
-        if type(params) is dict:
+        if isinstance(params, dict):
             action += '?' + urllib.urlencode(params)
         if body:
             body = self.serialize(body)
@@ -174,7 +174,7 @@ class Client(object):
                 headers[AUTH_TOKEN_HEADER] = self.auth_token
             # Open connection and send request, handling SSL certs
             certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
-            certs = dict((x, certs[x]) for x in certs if certs[x] != None)
+            certs = dict((x, certs[x]) for x in certs if certs[x] is not None)
 
             if self.use_ssl and len(certs):
                 conn = connection_type(self.host, self.port, **certs)
@@ -226,7 +226,7 @@ class Client(object):
         """
         if data is None:
             return None
-        elif type(data) is dict:
+        elif isinstance(data, dict):
             return Serializer().serialize(data, self.content_type())
         else:
             raise Exception("unable to serialize object of type = '%s'" \

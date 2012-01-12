@@ -51,7 +51,7 @@ class ViewBuilder(object):
 
     def _build_detail(self, portprofile_data):
         """Return a detailed info of a portprofile."""
-        if (portprofile_data['assignment'] == None):
+        if (portprofile_data['assignment'] is None):
             return dict(portprofile=dict(id=portprofile_data['profile_id'],
                                 name=portprofile_data['profile_name'],
                                 qos_name=portprofile_data['qos_name']))

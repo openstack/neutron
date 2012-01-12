@@ -135,7 +135,7 @@ class FlagValues(gflags.FlagValues):
         if self.IsDirty(name):
             self.ParseNewFlags()
         val = gflags.FlagValues.__getattr__(self, name)
-        if type(val) is str:
+        if isinstance(val, str):
             tmpl = string.Template(val)
             context = [self, self.__dict__['__extra_context']]
             return tmpl.substitute(StrWrapper(context))

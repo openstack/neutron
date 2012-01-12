@@ -1063,9 +1063,9 @@ class L2networkDBTest(unittest.TestCase):
         self.assertTrue(len(vlanids) > 0)
         vlanid = l2network_db.reserve_vlanid()
         used = l2network_db.is_vlanid_used(vlanid)
-        self.assertTrue(used == True)
+        self.assertTrue(used)
         used = l2network_db.release_vlanid(vlanid)
-        self.assertTrue(used == False)
+        self.assertFalse(used)
         #counting on default teardown here to clear db
 
     def teardown_network(self):
@@ -1208,7 +1208,7 @@ class QuantumDBTest(unittest.TestCase):
         self.assertTrue(port[0]["int-id"] == "vif1.1")
         self.dbtest.unplug_interface(net1["net-id"], port1["port-id"])
         port = self.dbtest.get_port(net1["net-id"], port1["port-id"])
-        self.assertTrue(port[0]["int-id"] == None)
+        self.assertTrue(port[0]["int-id"] is None)
         self.teardown_network_port()
 
     def testh_joined_test(self):

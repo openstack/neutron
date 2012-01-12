@@ -51,7 +51,7 @@ class VlanMap(object):
 
     def acquire(self, network_id):
         for x in xrange(2, 4094):
-            if self.vlans[x] == None:
+            if self.vlans[x] is None:
                 self.vlans[x] = network_id
                 # LOG.debug("VlanMap::acquire %s -> %s" % (x, network_id))
                 return x
@@ -73,13 +73,13 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
         config = ConfigParser.ConfigParser()
-        if configfile == None:
+        if configfile is None:
             if os.path.exists(CONF_FILE):
                 configfile = CONF_FILE
             else:
                 configfile = find_config(os.path.abspath(
                         os.path.dirname(__file__)))
-        if configfile == None:
+        if configfile is None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
               (configfile))
         LOG.debug("Using configuration file: %s" % configfile)

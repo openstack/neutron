@@ -277,10 +277,10 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                     for blade_intf in blade_intf_data.keys():
                         tmp = deepcopy(blade_intf_data[blade_intf])
                         intf_data = blade_intf_data[blade_intf]
-                        if intf_data[const.BLADE_INTF_RESERVATION] == \
-                           const.BLADE_INTF_RESERVED and \
-                           intf_data[const.TENANTID] == tenant_id and \
-                           intf_data[const.INSTANCE_ID] == None:
+                        if (intf_data[const.BLADE_INTF_RESERVATION] ==
+                           const.BLADE_INTF_RESERVED and
+                           intf_data[const.TENANTID] == tenant_id and
+                           intf_data[const.INSTANCE_ID] is None):
                             intf_data[const.INSTANCE_ID] = instance_id
                             host_name = self._get_host_name(ucsm_ip,
                                                             chassis_id,

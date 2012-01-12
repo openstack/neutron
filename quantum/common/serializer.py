@@ -110,7 +110,7 @@ class Serializer(object):
         xmlns = metadata.get('xmlns', None)
         if xmlns:
             result.setAttribute('xmlns', xmlns)
-        if type(data) is list:
+        if isinstance(data, list):
             collections = metadata.get('list_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]
@@ -128,7 +128,7 @@ class Serializer(object):
             for item in data:
                 node = self._to_xml_node(doc, metadata, singular, item)
                 result.appendChild(node)
-        elif type(data) is dict:
+        elif isinstance(data, dict):
             collections = metadata.get('dict_collections', {})
             if nodename in collections:
                 metadata = collections[nodename]

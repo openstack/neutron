@@ -115,4 +115,4 @@ class QuantumDBTest(unittest.TestCase):
         self.assertTrue(port[0]["attachment"] == "vif1.1")
         self.dbtest.unplug_interface(net1["id"], port1["id"])
         port = self.dbtest.get_port(net1["id"], port1["id"])
-        self.assertTrue(port[0]["attachment"] == None)
+        self.assertTrue(port[0]["attachment"] is None)
