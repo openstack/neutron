@@ -6,11 +6,11 @@ except ImportError:
     from setuptools import setup, find_packages
 
 import sys
-import version
+from quantum import version
 
 Name = 'quantum-cisco-plugin'
 ProjecUrl = ""
-Version = version.get_git_version()
+Version = version.version_string()
 License = 'Apache License 2.0'
 Author = 'Cisco Systems'
 AuthorEmail = ''

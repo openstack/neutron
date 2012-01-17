@@ -7,11 +7,11 @@ except ImportError:
 
 import os
 import sys
-import version
+from quantum import version
 
 Name = 'quantum-server'
 Url = "https://launchpad.net/quantum"
-Version = version.get_git_version()
+Version = version.version_string()
 License = 'Apache License 2.0'
 Author = 'Netstatck'
 AuthorEmail = 'netstack@lists.launchpad.net'

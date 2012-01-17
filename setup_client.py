@@ -5,11 +5,11 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-import version
+from quantum import version
 
 Name = 'quantum-client'
 Url = "https://launchpad.net/quantum"
-Version = version.get_git_version()
+Version = version.version_string()
 License = 'Apache License 2.0'
 Author = 'Netstack'
 AuthorEmail = 'netstack@lists.launchpad.net'

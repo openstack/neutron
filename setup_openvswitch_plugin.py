@@ -5,13 +5,13 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-import version
+from quantum import version
 
 import sys
 
 Name = 'quantum-openvswitch-plugin'
 ProjecUrl = ""
-Version = version.get_git_version()
+Version = version.version_string()
 License = 'Apache License 2.0'
 Author = 'Open vSwitch Team'
 AuthorEmail = 'discuss@openvswitch.org'
