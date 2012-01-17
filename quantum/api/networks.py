@@ -76,16 +76,13 @@ class Controller(common.QuantumController):
         """ Returns a list of network ids """
         return self._items(request, tenant_id)
 
-    @common.APIFaultWrapper()
+    @common.APIFaultWrapper([exception.NetworkNotFound])
     def show(self, request, tenant_id, id):
         """ Returns network details for the given network id """
-        try:
-            return self._item(request, tenant_id, id,
-                              net_details=True, port_details=False)
-        except exception.NetworkNotFound as e:
-            raise faults.QuantumHTTPError(e)
+        return self._item(request, tenant_id, id,
+                          net_details=True, port_details=False)
 
-    @common.APIFaultWrapper()
+    @common.APIFaultWrapper([exception.NetworkNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         network_id = kwargs.get('id')

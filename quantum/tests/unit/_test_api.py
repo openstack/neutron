@@ -184,7 +184,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID",
                                                         fmt)
         show_network_res = show_network_req.get_response(self.api)
-        self.assertEqual(show_network_res.status_int, 420)
+        self.assertEqual(show_network_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_network_not_found - fmt:%s - END", fmt)
 
     def _test_rename_network(self, fmt):
@@ -232,7 +233,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             new_name,
                                                             fmt)
         update_network_res = update_network_req.get_response(self.api)
-        self.assertEqual(update_network_res.status_int, 420)
+        self.assertEqual(update_network_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_rename_network_not_found - fmt:%s - END",
                   fmt)
 
@@ -279,7 +281,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             network_id,
                                                             fmt)
         delete_network_res = delete_network_req.get_response(self.api)
-        self.assertEqual(delete_network_res.status_int, 421)
+        self.assertEqual(delete_network_res.status_int,
+                         self._network_in_use_code)
         LOG.debug("_test_delete_network_in_use - fmt:%s - END", fmt)
 
     def _test_delete_network_with_unattached_port(self, fmt):
@@ -324,7 +327,8 @@ class AbstractAPITest(unittest.TestCase):
         list_port_req = testlib.port_list_request(self.tenant_id,
                                                   "A_BAD_ID", fmt)
         list_port_res = list_port_req.get_response(self.api)
-        self.assertEqual(list_port_res.status_int, 420)
+        self.assertEqual(list_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_list_ports_networknotfound - fmt:%s - END", fmt)
 
     def _test_list_ports_detail(self, fmt):
@@ -413,7 +417,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID", port_id,
                                                         fmt)
         show_port_res = show_port_req.get_response(self.api)
-        self.assertEqual(show_port_res.status_int, 420)
+        self.assertEqual(show_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -425,7 +430,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID",
                                                         fmt)
         show_port_res = show_port_req.get_response(self.api)
-        self.assertEqual(show_port_res.status_int, 430)
+        self.assertEqual(show_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_show_port_portnotfound - fmt:%s - END", fmt)
 
     def _test_create_port_noreqbody(self, fmt):
@@ -463,7 +469,7 @@ class AbstractAPITest(unittest.TestCase):
                   fmt)
         port_state = "ACTIVE"
         self._create_port("A_BAD_ID", port_state, fmt,
-                          expected_res_status=420)
+                          expected_res_status=self._network_not_found_code)
         LOG.debug("_test_create_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -520,7 +526,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       network_id, port_id,
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 432)
+        self.assertEqual(delete_port_res.status_int,
+                         self._port_in_use_code)
         LOG.debug("_test_delete_port_in_use - fmt:%s - END", fmt)
 
     def _test_delete_port_with_bad_id(self, fmt):
@@ -534,7 +541,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       network_id, "A_BAD_ID",
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 430)
+        self.assertEqual(delete_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_delete_port_with_bad_id - fmt:%s - END", fmt)
 
     def _test_delete_port_networknotfound(self, fmt):
@@ -547,7 +555,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       "A_BAD_ID", port_id,
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 420)
+        self.assertEqual(delete_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_delete_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -603,7 +612,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 420)
+        self.assertEqual(update_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_set_port_state_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -620,7 +630,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 430)
+        self.assertEqual(update_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_set_port_state_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -636,7 +647,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 431)
+        self.assertEqual(update_port_res.status_int,
+                         self._port_state_invalid_code)
         LOG.debug("_test_set_port_state_stateinvalid - fmt:%s - END",
                   fmt)
 
@@ -691,7 +703,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             port_id,
                                                             fmt)
         get_attachment_res = get_attachment_req.get_response(self.api)
-        self.assertEqual(get_attachment_res.status_int, 420)
+        self.assertEqual(get_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_attachment_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -706,7 +719,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             "A_BAD_ID",
                                                             fmt)
         get_attachment_res = get_attachment_req.get_response(self.api)
-        self.assertEqual(get_attachment_res.status_int, 430)
+        self.assertEqual(get_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_show_attachment_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -738,7 +752,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             interface_id,
                                                             fmt)
         put_attachment_res = put_attachment_req.get_response(self.api)
-        self.assertEqual(put_attachment_res.status_int, 420)
+        self.assertEqual(put_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_put_attachment_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -755,7 +770,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             interface_id,
                                                             fmt)
         put_attachment_res = put_attachment_req.get_response(self.api)
-        self.assertEqual(put_attachment_res.status_int, 430)
+        self.assertEqual(put_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_put_attachment_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -791,7 +807,8 @@ class AbstractAPITest(unittest.TestCase):
                                                                port_id,
                                                                fmt)
         del_attachment_res = del_attachment_req.get_response(self.api)
-        self.assertEqual(del_attachment_res.status_int, 420)
+        self.assertEqual(del_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_delete_attachment_networknotfound -" \
                   " fmt:%s - END", fmt)
 
@@ -806,7 +823,8 @@ class AbstractAPITest(unittest.TestCase):
                                                                "A_BAD_ID",
                                                                fmt)
         del_attachment_res = del_attachment_req.get_response(self.api)
-        self.assertEqual(del_attachment_res.status_int, 430)
+        self.assertEqual(del_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_delete_attachment_portnotfound - " \
                   "fmt:%s - END", fmt)
 

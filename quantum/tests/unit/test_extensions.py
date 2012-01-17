@@ -67,7 +67,7 @@ class ResourceExtensionTest(unittest.TestCase):
             return {'data': {'id': id}}
 
         def notimplemented_function(self, request, id):
-            return faults.QuantumHTTPError(
+            return faults.Quantum10HTTPError(
                 exceptions.NotImplementedError("notimplemented_function"))
 
         def custom_member_action(self, request, id):
