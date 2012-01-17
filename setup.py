@@ -71,7 +71,6 @@ init_path = 'etc/init.d'
 ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 
-print "config_path: %s" % config_path
 DataFiles = [
     (config_path,
         ['etc/quantum.conf', 'etc/quantum.conf.test', 'etc/plugins.ini']),
