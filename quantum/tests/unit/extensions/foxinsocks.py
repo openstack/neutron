@@ -18,7 +18,7 @@
 import json
 
 from quantum import wsgi
-from quantum.common import extensions
+from quantum.extensions import extensions
 from abc import  abstractmethod
 
 

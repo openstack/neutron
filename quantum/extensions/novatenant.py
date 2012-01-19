@@ -23,7 +23,7 @@ from webob import exc
 from quantum.extensions import _novatenant_view as novatenant_view
 from quantum.api import api_common as common
 from quantum.common import exceptions as qexception
-from quantum.common import extensions
+from quantum.extensions import extensions
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_faults as faults
 

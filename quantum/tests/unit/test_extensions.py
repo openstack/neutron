@@ -27,7 +27,7 @@ from quantum import wsgi
 from quantum.api import faults
 from quantum.common import config
 from quantum.common import exceptions
-from quantum.common import extensions
+from quantum.extensions import extensions
 import sys
 print sys.path
 from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
@@ -36,11 +36,18 @@ from quantum.tests.unit.extension_stubs import (StubExtension, StubPlugin,
                                         StubBaseAppController,
                                         ExtensionExpectingPluginInterface)
 import quantum.tests.unit.extensions
-from quantum.common.extensions import (ExtensionManager,
+from quantum.extensions.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
 
 LOG = logging.getLogger('test_extensions')
+
+from quantum.common import flags
+FLAGS = flags.FLAGS
+
+quantum_dir = os.path.dirname(os.path.abspath(quantum.__file__))
+src_dir = os.path.abspath(os.path.join(quantum_dir, ".."))
+FLAGS.state_path = src_dir
 
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
 extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
