@@ -1,0 +1,155 @@
+# -- Background
+
+The Quantum Linux Bridge plugin is a plugin that allows you to manage
+connectivity between VMs on hosts that are capable of running a Linux Bridge.
+
+The Quantum Linux Bridge plugin consists of three components:
+
+1) The plugin itself: The plugin uses a database backend (mysql for
+   now) to store configuration and mappings that are used by the
+   agent.  The mysql server runs on a central server (often the same
+   host as nova itself).
+
+2) The quantum service host which will be running quantum.  This can
+   be run on the server running nova.
+
+3) An agent which runs on the host and communicates with the host operating
+   system. The agent gathers the configuration and mappings from
+   the mysql database running on the quantum host.
+
+The sections below describe how to configure and run the quantum
+service with the Linux Bridge plugin.
+
+# -- Python library dependencies
+
+   Make sure you have the following package(s) installedi on quantum server
+   host as well as any hosts which run the agent:
+   python-configobj
+   bridge-utils
+   python-mysqldb
+   sqlite3
+
+# -- Nova configuration (controller node)
+
+1) Make sure to set up nova using the quantum network manager in the
+   nova.conf on the node that will be running nova-network.
+
+--network_manager=nova.network.quantum.manager.QuantumManager
+
+# -- Nova configuration (compute node(s))
+
+1) Configure the vif driver, and libvirt/vif type
+
+--connection_type=libvirt
+--libvirt_type=qemu
+--libvirt_vif_type=ethernet
+--libvirt_vif_driver=nova.virt.libvirt.vif_linuxbridge_quantum.QuantumLibvirtLinuxBridgeDriver
+--linuxnet_interface_driver=nova.network.quantum.linux_net_linux_bridge.QuantumLibvirtLinuxBridgeDriver
+
+The above two drivers are packaged with Quantum in the location:
+quantum/plugins/linuxbridge/nova
+
+These need to copied to the compute node in the appropriate locations.
+
+a) Copy:
+   quantum/plugins/linuxbridge/nova/vif_linuxbridge_quantum.py
+   to:
+   nova/virt/libvirt/vif_linuxbridge_quantum.py
+
+b) Copy:
+   quantum/plugins/linuxbridge/nova/linux_net_linux_bridge.py
+   to:
+   nova/network/quantum/linux_net_linux_bridge.py
+
+2) If you want a DHCP server to be run for the VMs to acquire IPs,
+   add the following flag to your nova.conf file:
+
+--quantum_use_dhcp
+
+(Note: For more details on how to work with Quantum using Nova, i.e. how to create networks and such,
+ please refer to the top level Quantum README which points to the relevant documentation.)
+
+# -- Quantum configuration
+
+Make the Linux Bridge plugin the current quantum plugin
+
+- edit etc/plugins.ini and change the provider line to be:
+provider = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin
+
+# -- Database config.
+
+(Note: The plugin ships with a default SQLite in-memory database configuration,
+ and can be used to run tests without performing the suggested DB config below.)
+
+The Linux Bridge quantum plugin requires access to a mysql database in order
+to store configuration and mappings that will be used by the agent.  Here is
+how to set up the database on the host that you will be running the quantum
+service on.
+
+MySQL should be installed on the host, and all plugins and clients
+must be configured with access to the database.
+
+To prep mysql, run:
+
+$ mysql -u root -p -e "create database quantum_linux_bridge"
+
+# log in to mysql service
+$ mysql -u root -p
+# The Linux Bridge Quantum agent running on each compute node must be able to
+# make a mysql connection back to the main database server.
+mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
+# force update of authorization changes
+mysql> FLUSH PRIVILEGES;
+
+(Note: If the remote connection fails to MySQL, you might need to add the IP address,
+ and/or fully-qualified hostname, and/or unqualified hostname in the above GRANT sql
+ command. Also, you might need to specify "ALL" instead of "USAGE".)
+
+# -- Plugin configuration
+
+- Edit the configuration file:
+  etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
+  Make sure it matches your mysql configuration.  This file must be updated
+  with the addresses and credentials to access the database.
+
+  Note: When running the tests, set the connection type to sqlite, and when
+  actually running the server set it to mysql. At any given time, only one
+  of these should be active in the conf file (you can comment out the other).
+
+- Remember to change the interface configuration to indicate the correct
+  ethernet interface on that particular host which is being used to participate
+  in the Quantum networks. This configuration has to be applied on each host
+  on which the agent runs.
+
+# -- Agent configuration
+
+- Edit the configuration file:
+  etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
+
+- Copy quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
+  and etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
+  to the compute node.
+
+$ Run the following:
+  sudo python linuxbridge_quantum_agent.py linuxbridge_conf.ini
+  (Use --verbose option to see the logs)
+
+# -- Running Tests
+
+(Note: The plugin ships with a default SQLite in-memory database configuration,
+ and can be used to run tests out of the box. Alternatively you can perform the
+ DB configuration for a persistent database as mentioned in the Database
+ Configuration section.)
+
+- To run tests related to the Plugin and the VLAN management (run the
+  following from the top level Quantum directory):
+  PLUGIN_DIR=quantum/plugins/linuxbridge ./run_tests.sh -N
+
+- The above will not however run the tests for the agent (which deals
+  with creating the bridge and interfaces). To run the agent tests, run the
+  following from the top level Quantum directory:
+  sudo PLUGIN_DIR=quantum/plugins/linuxbridge ./run_tests.sh -N tests.unit._test_linuxbridgeAgent
+
+  (Note: To run the agent tests you should have the environment setup as
+   indicated in the Agent Configuration, and also have the necessary dependencies
+   insalled.)
