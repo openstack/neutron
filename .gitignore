@@ -8,3 +8,4 @@ tests/
 .quantum-venv/
 .venv/
 quantum/vcsversion.py
+.tox/
