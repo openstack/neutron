@@ -34,3 +34,12 @@ class VlanMapTest(unittest.TestCase):
         vlan_id = self.vmap.acquire("foobar")
         self.vmap.release("foobar")
         self.assertTrue(self.vmap.get(vlan_id) is None)
+
+    def testAddRelease4kVlans(self):
+        vlan_id = None
+        for id in range(2, 4000):
+            vlan_id = self.vmap.acquire(id)
+            self.assertTrue(vlan_id == id)
+        for id in range(2, 4000):
+            self.vmap.release(id)
+            self.assertTrue(self.vmap.get(id) is None)
