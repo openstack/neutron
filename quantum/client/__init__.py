@@ -33,7 +33,8 @@ EXCEPTIONS = {
     430: exceptions.PortNotFound,
     431: exceptions.StateInvalid,
     432: exceptions.PortInUseClient,
-    440: exceptions.AlreadyAttachedClient}
+    440: exceptions.AlreadyAttachedClient,
+    501: exceptions.NotImplementedError}
 AUTH_TOKEN_HEADER = "X-Auth-Token"
 
 

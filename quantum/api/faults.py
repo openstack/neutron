@@ -26,6 +26,7 @@ _PORTNOTFOUND_EXPL = 'Unable to find a port with the specified identifier.'
 _STATEINVALID_EXPL = 'Unable to update port state with specified value.'
 _PORTINUSE_EXPL = 'A resource is currently attached to the logical port'
 _ALREADYATTACHED_EXPL = 'The resource is already attached to another port'
+_NOTIMPLEMENTED_EXPL = 'Not implemented'
 
 
 class QuantumHTTPError(webob.exc.HTTPClientError):
@@ -60,6 +61,11 @@ class QuantumHTTPError(webob.exc.HTTPClientError):
                 'code': 440,
                 'title': 'alreadyAttached',
                 'explanation': _ALREADYATTACHED_EXPL
+            },
+            exceptions.NotImplementedError: {
+                'code': 501,
+                'title': 'notImplemented',
+                'explanation': _NOTIMPLEMENTED_EXPL
             }
     }
 

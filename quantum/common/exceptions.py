@@ -159,6 +159,10 @@ class MissingArgumentError(Error):
     pass
 
 
+class NotImplementedError(Error):
+    pass
+
+
 def wrap_exception(f):
     def _wrap(*args, **kw):
         try:
