@@ -59,6 +59,8 @@ def create_resource(version, controller_dict):
     metadata = controller_dict[version][1]
     # and the third element the xml namespace
     xmlns = controller_dict[version][2]
+    # and also the function for building the fault body
+    fault_body_function = faults.fault_body_function(version)
 
     headers_serializer = HeaderSerializer()
     xml_serializer = wsgi.XMLDictSerializer(metadata, xmlns)
@@ -79,21 +81,35 @@ def create_resource(version, controller_dict):
     serializer = wsgi.ResponseSerializer(body_serializers, headers_serializer)
     deserializer = wsgi.RequestDeserializer(body_deserializers)
 
-    return wsgi.Resource(controller, deserializer, serializer)
+    return wsgi.Resource(controller,
+                         fault_body_function,
+                         deserializer,
+                         serializer)
 
 
 def APIFaultWrapper(errors=None):
+
+    quantum_error_dict = {
+        '1.0': faults.Quantum10HTTPError,
+        '1.1': faults.Quantum11HTTPError
+    }
 
     def wrapper(func, **kwargs):
 
         def the_func(*args, **kwargs):
             try:
+                # Grab API version from type of controller
+                controller = args[0]
+                version = controller.version
                 return func(*args, **kwargs)
             except Exception as e:
                 if errors is not None and type(e) in errors:
-                    raise faults.QuantumHTTPError(e)
+                    # Version-specific behaviour
+                    quantum_error_class = quantum_error_dict[version]
+                    raise quantum_error_class(e)
                 # otherwise just re-raise
                 raise
+
         the_func.__name__ = func.__name__
         return the_func
 

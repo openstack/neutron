@@ -16,6 +16,8 @@
 #    under the License.
 #    @author: Salvatore Orlando, Citrix Systems
 
+from webob import exc
+
 import quantum.api.attachments as atts
 import quantum.api.networks as nets
 import quantum.api.ports as ports
@@ -53,6 +55,12 @@ class APITestV10(test_api.AbstractAPITest):
              {test_api.NETS: nets.ControllerV10._serialization_metadata,
               test_api.PORTS: ports.ControllerV10._serialization_metadata,
               test_api.ATTS: atts.ControllerV10._serialization_metadata})
+        self._network_not_found_code = 420
+        self._network_in_use_code = 421
+        self._port_not_found_code = 430
+        self._port_state_invalid_code = 431
+        self._port_in_use_code = 432
+        self._already_attached_code = 440
 
 
 class APITestV11(test_api.AbstractAPITest):
@@ -93,3 +101,9 @@ class APITestV11(test_api.AbstractAPITest):
              {test_api.NETS: nets.ControllerV11._serialization_metadata,
               test_api.PORTS: ports.ControllerV11._serialization_metadata,
               test_api.ATTS: atts.ControllerV11._serialization_metadata})
+        self._network_not_found_code = exc.HTTPNotFound.code
+        self._network_in_use_code = exc.HTTPConflict.code
+        self._port_not_found_code = exc.HTTPNotFound.code
+        self._port_state_invalid_code = exc.HTTPBadRequest.code
+        self._port_in_use_code = exc.HTTPConflict.code
+        self._already_attached_code = exc.HTTPConflict.code

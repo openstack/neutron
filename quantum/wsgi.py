@@ -701,18 +701,23 @@ class Resource(Application):
 
     """
 
-    def __init__(self, controller, deserializer=None, serializer=None):
+    def __init__(self, controller, fault_body_function,
+                 deserializer=None, serializer=None):
         """
         :param controller: object that implement methods created by routes lib
         :param deserializer: object that can serialize the output of a
                              controller into a webob response
         :param serializer: object that can deserialize a webob request
                            into necessary pieces
+        :param fault_body_function: a function that will build the response
+                                    body for HTTP errors raised by operations
+                                    on this resource object
 
         """
         self.controller = controller
         self.deserializer = deserializer or RequestDeserializer()
         self.serializer = serializer or ResponseSerializer()
+        self._fault_body_function = fault_body_function
         # use serializer's xmlns for populating Fault generator xmlns
         xml_serializer = self.serializer.body_serializers['application/xml']
         if hasattr(xml_serializer, 'xmlns'):
@@ -742,7 +747,9 @@ class Resource(Application):
             action_result = self.dispatch(request, action, args)
         except webob.exc.HTTPException as ex:
             LOG.info(_("HTTP exception thrown: %s"), unicode(ex))
-            action_result = Fault(ex, self._xmlns)
+            action_result = Fault(ex,
+                                  self._xmlns,
+                                  self._fault_body_function)
 
         if isinstance(action_result, dict) or action_result is None:
             response = self.serializer.serialize(action_result,
@@ -776,29 +783,32 @@ class Resource(Application):
                          self._xmlns)
 
 
+def _default_body_function(wrapped_exc):
+    code = wrapped_exc.status_int
+    fault_data = {
+        'Error': {
+            'code': code,
+            'message': wrapped_exc.explanation}}
+    # 'code' is an attribute on the fault tag itself
+    metadata = {'attributes': {'Error': 'code'}}
+    return fault_data, metadata
+
+
 class Fault(webob.exc.HTTPException):
     """ Generates an HTTP response from a webob HTTP exception"""
 
-    def __init__(self, exception, xmlns=None):
+    def __init__(self, exception, xmlns=None, body_function=None):
         """Creates a Fault for the given webob.exc.exception."""
         self.wrapped_exc = exception
         self.status_int = self.wrapped_exc.status_int
         self._xmlns = xmlns
+        self._body_function = body_function or _default_body_function
 
     @webob.dec.wsgify(RequestClass=Request)
     def __call__(self, req):
         """Generate a WSGI response based on the exception passed to ctor."""
         # Replace the body with fault details.
-        code = self.wrapped_exc.status_int
-        fault_name = hasattr(self.wrapped_exc, 'title') and \
-                     self.wrapped_exc.title or "quantumServiceFault"
-        fault_data = {
-            fault_name: {
-                'code': code,
-                'message': self.wrapped_exc.explanation,
-                'detail': str(self.wrapped_exc.detail)}}
-        # 'code' is an attribute on the fault tag itself
-        metadata = {'application/xml': {'attributes': {fault_name: 'code'}}}
+        fault_data, metadata = self._body_function(self.wrapped_exc)
         xml_serializer = XMLDictSerializer(metadata, self._xmlns)
         content_type = req.best_match_content_type()
         serializer = {
