@@ -3,8 +3,12 @@ import webob
 from quantum.common.serializer import Serializer
 
 
-def create_request(path, body, content_type, method='GET'):
-    req = webob.Request.blank(path)
+def create_request(path, body, content_type, method='GET', query_string=None):
+    if query_string:
+        url = "%s?%s" % (path, query_string)
+    else:
+        url = path
+    req = webob.Request.blank(url)
     req.method = method
     req.headers = {}
     req.headers['Accept'] = content_type
@@ -12,17 +16,18 @@ def create_request(path, body, content_type, method='GET'):
     return req
 
 
-def _network_list_request(tenant_id, format='xml', detail=False):
+def _network_list_request(tenant_id, format='xml', detail=False,
+                          query_string=None):
     method = 'GET'
     detail_str = detail and '/detail' or ''
     path = "/tenants/%(tenant_id)s/networks" \
            "%(detail_str)s.%(format)s" % locals()
     content_type = "application/%s" % format
-    return create_request(path, None, content_type, method)
+    return create_request(path, None, content_type, method, query_string)
 
 
-def network_list_request(tenant_id, format='xml'):
-    return _network_list_request(tenant_id, format)
+def network_list_request(tenant_id, format='xml', query_string=None):
+    return _network_list_request(tenant_id, format, query_string=query_string)
 
 
 def network_list_detail_request(tenant_id, format='xml'):
@@ -75,17 +80,21 @@ def network_delete_request(tenant_id, network_id, format='xml'):
     return create_request(path, None, content_type, method)
 
 
-def _port_list_request(tenant_id, network_id, format='xml', detail=False):
+def _port_list_request(tenant_id, network_id, format='xml',
+                       detail=False, query_string=None):
     method = 'GET'
     detail_str = detail and '/detail' or ''
     path = "/tenants/%(tenant_id)s/networks/" \
            "%(network_id)s/ports%(detail_str)s.%(format)s" % locals()
     content_type = "application/%s" % format
-    return create_request(path, None, content_type, method)
+    return create_request(path, None, content_type, method, query_string)
 
 
-def port_list_request(tenant_id, network_id, format='xml'):
-    return _port_list_request(tenant_id, network_id, format)
+def port_list_request(tenant_id, network_id, format='xml', query_string=None):
+    return _port_list_request(tenant_id,
+                              network_id,
+                              format,
+                              query_string=query_string)
 
 
 def port_list_detail_request(tenant_id, network_id, format='xml'):

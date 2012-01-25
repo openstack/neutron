@@ -31,11 +31,16 @@ class QuantumPluginBase(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         """
         Returns a dictionary containing all
         <network_uuid, network_name> for
         the specified tenant.
+        :param tenant_id: unique identifier for the tenant whose networks
+            are being retrieved by this method
+        :param **kwargs: options to be passed to the plugin. The following
+            keywork based-options can be specified:
+            filter_opts - options for filtering network list
         :returns: a list of mapping sequences with the following signature:
                      [ {'net-id': uuid that uniquely identifies
                                       the particular quantum network,
@@ -119,11 +124,17 @@ class QuantumPluginBase(object):
         pass
 
     @abstractmethod
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
-
+        :param tenant_id: unique identifier for the tenant for which this
+            method is going to retrieve ports
+        :param net_id: unique identifiers for the network whose ports are
+            about to be retrieved
+        :param **kwargs: options to be passed to the plugin. The following
+            keywork based-options can be specified:
+            filter_opts - options for filtering network list
         :returns: a list of mapping sequences with the following signature:
                      [ {'port-id': uuid representing a particular port
                                     on the specified quantum network
