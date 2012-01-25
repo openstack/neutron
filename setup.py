@@ -46,11 +46,11 @@ ShortDescription = Summary
 Description = Summary
 
 requires = [
-    'eventlet>=0.9.12',
-    'Routes>=1.12.3',
-    'nose',
     'Paste',
     'PasteDeploy',
+    'Routes>=1.12.3',
+    'eventlet>=0.9.12',
+    'lxml==2.3',
     'pep8>=0.6.1',
     'python-gflags',
     'simplejson',
