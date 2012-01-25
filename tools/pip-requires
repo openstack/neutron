@@ -1,16 +1,17 @@
 Paste
-PasteDeploy
+PasteDeploy==1.5.0
 Routes>=1.12.3
-coverage
-distribute>=0.6.24
 eventlet>=0.9.12
 lxml==2.3
-python-gflags
+python-gflags==1.3
 simplejson
 sqlalchemy
-webob
+webob==1.0.8
 webtest
 
+distribute>=0.6.24
+
+coverage
 nose
 nosexcover
 pep8==0.6.1
