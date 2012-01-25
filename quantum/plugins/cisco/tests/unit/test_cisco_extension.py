@@ -32,12 +32,12 @@ from quantum.extensions import multiport
 from quantum.plugins.cisco.db import api as db
 from quantum import wsgi
 from quantum.common import config
-from quantum.common import extensions
+from quantum.extensions import extensions
 from quantum import api as server
 from quantum.plugins.cisco.l2network_plugin import L2Network
 from quantum.tests.unit.extension_stubs import StubBaseAppController
-from quantum.common.extensions import (PluginAwareExtensionManager,
-                                       ExtensionMiddleware)
+from quantum.extensions.extensions import (PluginAwareExtensionManager,
+                                           ExtensionMiddleware)
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco import l2network_plugin
 

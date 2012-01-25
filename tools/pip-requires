@@ -1,15 +1,19 @@
+Paste
+PasteDeploy
+Routes>=1.12.3
 coverage
 distribute>=0.6.24
 eventlet>=0.9.12
-Routes>=1.12.3
 lxml==2.3
-nose
-nosexcover
-Paste
-PasteDeploy
-pep8>=0.5.0
 python-gflags
 simplejson
 sqlalchemy
 webob
 webtest
+
+nose
+nosexcover
+pep8==0.6.1
+
+-e git+https://review.openstack.org/p/openstack/python-quantumclient#egg=python-quantumclient-dev
+-e git+https://review.openstack.org/p/openstack-dev/openstack-nose.git#egg=openstack.nose_plugin

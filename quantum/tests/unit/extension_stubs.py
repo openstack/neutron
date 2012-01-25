@@ -15,7 +15,7 @@
 #    under the License.
 from abc import  abstractmethod
 
-from quantum.common import extensions
+from quantum.extensions import extensions
 from quantum import wsgi
 
 

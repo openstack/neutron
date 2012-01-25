@@ -18,7 +18,7 @@ api_extensions_path = ../../../../extensions
 pipeline = extensions extensions_test_app
 
 [filter:extensions]
-paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
+paste.filter_factory = quantum.extensions.extensions:plugin_aware_extension_middleware_factory
 
 [app:extensions_test_app]
 paste.app_factory = quantum.plugins.cisco.tests.unit.test_cisco_extension:app_factory

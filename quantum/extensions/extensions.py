@@ -30,7 +30,7 @@ import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum import wsgi
 
-LOG = logging.getLogger('quantum.common.extensions')
+LOG = logging.getLogger('quantum.extensions.extensions')
 
 
 class PluginInterface(object):
