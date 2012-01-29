@@ -57,8 +57,10 @@ class Controller(common.QuantumController):
         # Doing this in the API is inefficient
         # TODO(salvatore-orlando): This should be fixed with Bug #834012
         # Don't pass filter options
-        port_list = self._plugin.get_all_ports(tenant_id, network_id)
-        ports_data = [self._plugin.get_port_details(
+        ports_data = None
+        if port_details:
+            port_list = self._plugin.get_all_ports(tenant_id, network_id)
+            ports_data = [self._plugin.get_port_details(
                                    tenant_id, network_id, port['port-id'])
                       for port in port_list]
         builder = networks_view.get_view_builder(request, self.version)
