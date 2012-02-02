@@ -79,7 +79,7 @@ class Controller(common.QuantumController):
 
         """
         filter_opts = {}
-        filter_opts.update(request.str_GET)
+        filter_opts.update(request.GET)
         networks = self._plugin.get_all_networks(tenant_id,
                                                  filter_opts=filter_opts)
         # Inefficient, API-layer filtering
