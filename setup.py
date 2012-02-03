@@ -104,7 +104,6 @@ setup(
     entry_points={
         'console_scripts': [
             'quantum-server = quantum.server:main',
-            'quantum = quantum.client.cli:main',
         ]
     },
 )
