@@ -32,7 +32,7 @@ import quantum.db.api as db
 import ovs_db
 
 CONF_FILE = find_config_file(
-  {"config_file": "etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini"},
+  {"plugin": "openvswitch"},
   None, "ovs_quantum_plugin.ini")
 
 LOG.basicConfig(level=LOG.WARN)
