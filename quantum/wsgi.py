@@ -284,6 +284,7 @@ class XMLDictSerializer(DictSerializer):
 
     def _to_xml(self, root):
         """Convert the xml object to an xml string."""
+        # we use lxml here instead of xml.minidom for performance reasons
         return etree.tostring(root, encoding='UTF-8', xml_declaration=True)
 
 
