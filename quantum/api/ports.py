@@ -58,7 +58,7 @@ class Controller(common.QuantumController):
         of ports returned by the plugin
         """
         filter_opts = {}
-        filter_opts.update(request.str_GET)
+        filter_opts.update(request.GET)
         port_list = self._plugin.get_all_ports(tenant_id,
                                                network_id,
                                                filter_opts=filter_opts)
