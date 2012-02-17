@@ -106,6 +106,10 @@ setup(
     eager_resources=EagerResources,
     entry_points={
         'console_scripts': [
+            'quantum-linuxbridge-agent = \
+quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
+            'quantum-openvswitch-agent = \
+quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
             'quantum-server = quantum.server:main',
         ]
     },

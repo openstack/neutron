@@ -262,7 +262,8 @@ class OVSQuantumAgent:
             db.commit()
             time.sleep(2)
 
-if __name__ == "__main__":
+
+def main():
     usagestr = "%prog [OPTIONS] <config file>"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-v", "--verbose", dest="verbose",
@@ -298,3 +299,6 @@ if __name__ == "__main__":
     plugin.daemon_loop(db)
 
     sys.exit(0)
+
+if __name__ == "__main__":
+    main()

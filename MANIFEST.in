@@ -1,6 +1,13 @@
+include README LICENSE TESTING
+include run_tests.py run_tests.sh
+include .pylintrc
 include bin/*
 include etc/*
 include etc/init.d/*
-include etc/quantum/plugins/openvswitch/*
-include etc/quantum/plugins/cisco/*
-include etc/quantum/plugins/linuxbridge/*
+include etc/quantum/plugins/openvswitch/*.ini
+include etc/quantum/plugins/cisco/*.ini
+include etc/quantum/plugins/cisco/quantum.conf.ciscoext
+include etc/quantum/plugins/linuxbridge/*.ini
+include quantum/plugins/*/README
+include quantum/plugins/openvswitch/Makefile
+include quantum/plugins/openvswitch/agent/xenserver_install.sh

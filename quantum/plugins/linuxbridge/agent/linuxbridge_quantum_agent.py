@@ -411,7 +411,8 @@ class LinuxBridgeQuantumAgent:
             old_port_bindings = bindings[PORT_BINDINGS]
             time.sleep(self.polling_interval)
 
-if __name__ == "__main__":
+
+def main():
     usagestr = "%prog [OPTIONS] <config file>"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-v", "--verbose", dest="verbose",
@@ -439,6 +440,7 @@ if __name__ == "__main__":
         physical_interface = config.get("LINUX_BRIDGE", "physical_interface")
         polling_interval = config.get("AGENT", "polling_interval")
         'Establish database connection and load models'
+        global DB_CONNECTION
         DB_CONNECTION = config.get("DATABASE", "connection")
         if DB_CONNECTION == 'sqlite':
             LOG.info("Connecting to sqlite DB")
@@ -468,3 +470,6 @@ if __name__ == "__main__":
             conn.close()
 
     sys.exit(0)
+
+if __name__ == "__main__":
+    main()

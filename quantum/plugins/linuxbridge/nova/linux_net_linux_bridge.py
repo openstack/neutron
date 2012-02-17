@@ -46,7 +46,7 @@ def _device_exists(device):
 
 
 # plugs interfaces using Linux Bridge when using QuantumManager
-class QuantumLibvirtLinuxBridgeDriver(LinuxNetInterfaceDriver):
+class QuantumLinuxBridgeInterfaceDriver(LinuxNetInterfaceDriver):
 
     def plug(self, network, mac_address, gateway=True):
         LOG.debug(_("inside plug()"))

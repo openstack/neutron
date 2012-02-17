@@ -43,23 +43,8 @@ service with the Linux Bridge plugin.
 --connection_type=libvirt
 --libvirt_type=qemu
 --libvirt_vif_type=ethernet
---libvirt_vif_driver=nova.virt.libvirt.vif_linuxbridge_quantum.QuantumLibvirtLinuxBridgeDriver
---linuxnet_interface_driver=nova.network.quantum.linux_net_linux_bridge.QuantumLibvirtLinuxBridgeDriver
-
-The above two drivers are packaged with Quantum in the location:
-quantum/plugins/linuxbridge/nova
-
-These need to copied to the compute node in the appropriate locations.
-
-a) Copy:
-   quantum/plugins/linuxbridge/nova/vif_linuxbridge_quantum.py
-   to:
-   nova/virt/libvirt/vif_linuxbridge_quantum.py
-
-b) Copy:
-   quantum/plugins/linuxbridge/nova/linux_net_linux_bridge.py
-   to:
-   nova/network/quantum/linux_net_linux_bridge.py
+--libvirt_vif_driver=quantum.plugins.linuxbridge.nova.vif_linuxbridge_quantum.QuantumLibvirtLinuxBridgeVIFDriver
+--linuxnet_interface_driver=quantum.plugins.linuxbridge.nova.linux_net_linux_bridge.QuantumLinuxBridgeInterfaceDriver
 
 2) If you want a DHCP server to be run for the VMs to acquire IPs,
    add the following flag to your nova.conf file:

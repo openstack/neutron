@@ -31,12 +31,12 @@ from nova import utils
 from nova.virt.vif import VIFDriver
 from nova import exception
 
-LOG = logging.getLogger('nova.virt.libvirt.vif_linuxbridge_quantum')
+LOG = logging.getLogger(__name__)
 
 FLAGS = flags.FLAGS
 
 
-class QuantumLibvirtLinuxBridgeDriver(VIFDriver):
+class QuantumLibvirtLinuxBridgeVIFDriver(VIFDriver):
     """VIF driver for Linux Bridge."""
 
     def get_dev_name(_self, iface_id):
