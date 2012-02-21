@@ -16,6 +16,7 @@
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
+# @author: Dave Lapsley, Nicira Networks, Inc.
 
 import ConfigParser
 import logging as LOG
