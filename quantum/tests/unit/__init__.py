@@ -22,6 +22,14 @@ import __builtin__
 import unittest
 setattr(__builtin__, '_', lambda x: x)
 
+import os
+from quantum.common import flags
+
+FLAGS = flags.FLAGS
+reldir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+absdir = os.path.abspath(reldir)
+FLAGS.state_path = absdir
+
 
 class BaseTest(unittest.TestCase):
 

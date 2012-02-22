@@ -41,14 +41,6 @@ from quantum.extensions.extensions import (ExtensionManager,
                                        ExtensionMiddleware)
 
 LOG = logging.getLogger('test_extensions')
-
-from quantum.common import flags
-FLAGS = flags.FLAGS
-
-quantum_dir = os.path.dirname(os.path.abspath(quantum.__file__))
-src_dir = os.path.abspath(os.path.join(quantum_dir, ".."))
-FLAGS.state_path = src_dir
-
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
 extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
 
