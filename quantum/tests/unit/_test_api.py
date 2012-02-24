@@ -526,6 +526,14 @@ class BaseAPIOperationsTest(AbstractAPITest):
                           custom_req_body=bad_body, expected_res_status=400)
         LOG.debug("_test_create_port_badrequest - fmt:%s - END", fmt)
 
+    def _test_create_port_badportstate(self, fmt):
+        LOG.debug("_test_create_port_badportstate - fmt:%s - START", fmt)
+        network_id = self._create_network(fmt)
+        port_state = "BADSTATE"
+        self._create_port(network_id, port_state, fmt,
+                          expected_res_status=self._port_state_invalid_code)
+        LOG.debug("_test_create_port_badportstate - fmt:%s - END", fmt)
+
     def _test_delete_port(self, fmt):
         LOG.debug("_test_delete_port - fmt:%s - START", fmt)
         content_type = "application/%s" % fmt
@@ -1031,6 +1039,12 @@ class BaseAPIOperationsTest(AbstractAPITest):
 
     def test_create_port_badrequest_xml(self):
         self._test_create_port_badrequest('xml')
+
+    def test_create_port_badportstate_json(self):
+        self._test_create_port_badportstate('json')
+
+    def test_create_port_badportstate_xml(self):
+        self._test_create_port_badportstate('xml')
 
     def test_delete_port_xml(self):
         self._test_delete_port('xml')

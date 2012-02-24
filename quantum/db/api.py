@@ -145,7 +145,11 @@ def port_create(net_id, state=None, op_status=OperationalStatus.UNKNOWN):
     session = get_session()
     with session.begin():
         port = models.Port(net_id, op_status)
-        port['state'] = state or 'DOWN'
+        if state is None:
+            state = 'DOWN'
+        elif state not in ('ACTIVE', 'DOWN'):
+            raise q_exc.StateInvalid(port_state=state)
+        port['state'] = state
         session.add(port)
         session.flush()
         return port
