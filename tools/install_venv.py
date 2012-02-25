@@ -91,7 +91,7 @@ def create_virtualenv(venv=VENV, install_pip=False):
 
 def install_dependencies(venv=VENV):
     print 'Installing dependencies with pip (this can take a while)...'
-    run_command(['tools/with_venv.sh', 'pip', 'install', '-E', venv, '-r',
+    run_command(['tools/with_venv.sh', 'pip', 'install', '-r',
                  PIP_REQUIRES], redirect_output=False)
 
     # Tell the virtual env how to "import quantum"
