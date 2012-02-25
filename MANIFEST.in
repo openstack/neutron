@@ -8,6 +8,7 @@ include etc/quantum/plugins/openvswitch/*.ini
 include etc/quantum/plugins/cisco/*.ini
 include etc/quantum/plugins/cisco/quantum.conf.ciscoext
 include etc/quantum/plugins/linuxbridge/*.ini
+include etc/quantum/plugins/nicira/*
 include quantum/plugins/*/README
 include quantum/plugins/openvswitch/Makefile
 include quantum/plugins/openvswitch/agent/xenserver_install.sh

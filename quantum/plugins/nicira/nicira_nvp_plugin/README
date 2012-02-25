@@ -1,0 +1,24 @@
+nvp-plugin
+-----------------------------------------------------------------------------
+
+Overview and pre-requisites
+
+    This is a Quantum plugin that can talk to a set of NVP controllers and
+    implements the core Quantum L2 api.  In order to use it you must have
+    Nicira NVP running and configured.  You must also have Quantum installed
+    and configured.
+
+Installation and Configuration
+
+    Edit nvp.ini to match your controller configuration and then modify your
+    Quantum plugins.ini provider path:
+
+    provider = quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPlugin
+
+Testing
+
+    Edit etc/quantum/plugins/nicira/nvp.ini to match your nvp configuration
+    (nvp must be up and running). Then:
+
+    $ cd quantum/plugins/nicira
+    $ PYTHONPATH=../../../:. nosetests -v
