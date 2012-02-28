@@ -143,6 +143,17 @@ def network_destroy(net_id):
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 
+def validate_network_ownership(tenant_id, net_id):
+    session = get_session()
+    try:
+        return  session.query(models.Network).\
+            filter_by(uuid=net_id).\
+            filter_by(tenant_id=tenant_id).\
+            one()
+    except exc.NoResultFound, e:
+        raise q_exc.NetworkNotFound(net_id=net_id)
+
+
 def port_create(net_id, state=None, op_status=OperationalStatus.UNKNOWN):
     # confirm network exists
     network_get(net_id)
@@ -257,3 +268,8 @@ def port_destroy(port_id, net_id):
         return port
     except exc.NoResultFound:
         raise q_exc.PortNotFound(port_id=port_id)
+
+
+def validate_port_ownership(tenant_id, net_id, port_id, session=None):
+    validate_network_ownership(tenant_id, net_id)
+    port_get(port_id, net_id)

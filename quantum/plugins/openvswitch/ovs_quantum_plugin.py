@@ -133,6 +133,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
                                         net.op_status)
 
     def delete_network(self, tenant_id, net_id):
+        db.validate_network_ownership(tenant_id, net_id)
         net = db.network_get(net_id)
 
         # Verify that no attachments are plugged into the network
@@ -146,12 +147,14 @@ class OVSQuantumPlugin(QuantumPluginBase):
                                         net.op_status)
 
     def get_network_details(self, tenant_id, net_id):
+        db.validate_network_ownership(tenant_id, net_id)
         net = db.network_get(net_id)
         ports = self.get_all_ports(tenant_id, net_id)
         return self._make_net_dict(str(net.uuid), net.name,
                                     ports, net.op_status)
 
     def update_network(self, tenant_id, net_id, **kwargs):
+        db.validate_network_ownership(tenant_id, net_id)
         net = db.network_update(net_id, tenant_id, **kwargs)
         return self._make_net_dict(str(net.uuid), net.name,
                                         None, net.op_status)
@@ -170,17 +173,20 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):
         ids = []
+        db.validate_network_ownership(tenant_id, net_id)
         ports = db.port_list(net_id)
         # This plugin does not perform filtering at the moment
         return [{'port-id': str(p.uuid)} for p in ports]
 
     def create_port(self, tenant_id, net_id, port_state=None, **kwargs):
         LOG.debug("Creating port with network_id: %s" % net_id)
+        db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state,
                                 op_status=OperationalStatus.DOWN)
         return self._make_port_dict(port)
 
     def delete_port(self, tenant_id, net_id, port_id):
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         port = db.port_destroy(port_id, net_id)
         return self._make_port_dict(port)
 
@@ -188,22 +194,26 @@ class OVSQuantumPlugin(QuantumPluginBase):
         """
         Updates the state of a port on the specified Virtual Network.
         """
-        LOG.debug("update_port() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         port = db.port_get(port_id, net_id)
         db.port_update(port_id, net_id, **kwargs)
         return self._make_port_dict(port)
 
     def get_port_details(self, tenant_id, net_id, port_id):
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         port = db.port_get(port_id, net_id)
         return self._make_port_dict(port)
 
     def plug_interface(self, tenant_id, net_id, port_id, remote_iface_id):
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         db.port_set_attachment(port_id, net_id, remote_iface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         db.port_set_attachment(port_id, net_id, "")
         db.port_update(port_id, net_id, op_status=OperationalStatus.DOWN)
 
     def get_interface_details(self, tenant_id, net_id, port_id):
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         res = db.port_get(port_id, net_id)
         return res.interface_id

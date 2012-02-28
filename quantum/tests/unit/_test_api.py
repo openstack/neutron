@@ -896,6 +896,56 @@ class BaseAPIOperationsTest(AbstractAPITest):
         LOG.debug("_test_unparsable_data - " \
                   "fmt:%s - END", fmt)
 
+    def _test_multitenancy(self, fmt):
+        LOG.debug("_test_multitenancy - " \
+                  " fmt:%s - START", fmt)
+
+        # creates a network for tenant self.tenant_id
+        net_id = self._create_network(fmt)
+        port_id = self._create_port(net_id, "ACTIVE", fmt)
+
+        invalid_tenant = self.tenant_id + "-invalid"
+
+        def assert_net_not_found(base_path, method, fmt):
+            content_type = "application/%s" % fmt
+            full_path = "%s.%s" % (base_path, fmt)
+            req = testlib.create_request(full_path, None, content_type)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, self._network_not_found_code)
+
+        # new tenant should NOT see this network UUID
+        net_path = "/tenants/%(invalid_tenant)s/networks/%(net_id)s" % locals()
+        net_detail_path = net_path + "/detail"
+
+        assert_net_not_found(net_path, 'GET', fmt)
+        assert_net_not_found(net_path, 'PUT', fmt)
+        assert_net_not_found(net_path, 'DELETE', fmt)
+        assert_net_not_found(net_detail_path, 'GET', fmt)
+
+        # new tenant should NOT see this network + port UUID
+        port_all_path = net_path + "/ports"
+        port_path = "%s/%s" % (port_all_path, port_id)
+        port_detail_path = port_path + "/detail"
+
+        # NOTE: we actually still check for a network not found
+        # error here, as both the network and port in the URL are
+        # invalid.  This is consistent with the test
+        # _test_show_port_networknotfound
+        assert_net_not_found(port_all_path, 'POST', fmt)
+        assert_net_not_found(port_all_path, 'GET', fmt)
+        assert_net_not_found(port_path, 'GET', fmt)
+        assert_net_not_found(port_path, 'PUT', fmt)
+        assert_net_not_found(port_path, 'DELETE', fmt)
+        assert_net_not_found(port_detail_path, 'GET', fmt)
+
+        attach_path = port_path + "/attachment"
+        assert_net_not_found(attach_path, 'GET', fmt)
+        assert_net_not_found(attach_path, 'PUT', fmt)
+        assert_net_not_found(attach_path, 'DELETE', fmt)
+
+        LOG.debug("_test_multitenancy - " \
+                  "fmt:%s - END", fmt)
+
     def test_list_networks_json(self):
         self._test_list_networks('json')
 
@@ -1159,3 +1209,9 @@ class BaseAPIOperationsTest(AbstractAPITest):
 
     def test_unparsable_data_json(self):
         self._test_unparsable_data('json')
+
+    def test_multitenancy_xml(self):
+        self._test_multitenancy('xml')
+
+    def test_multitenancy_json(self):
+        self._test_multitenancy('json')

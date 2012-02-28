@@ -85,6 +85,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         are attached to the network
         """
         LOG.debug("LinuxBridgePlugin.get_network_details() called")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_get(net_id)
         ports_list = db.port_list(net_id)
         ports_on_net = []
@@ -122,6 +123,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         belonging to the specified tenant.
         """
         LOG.debug("LinuxBridgePlugin.delete_network() called")
+        db.validate_network_ownership(tenant_id, net_id)
         net = db.network_get(net_id)
         if net:
             ports_on_net = db.port_list(net_id)
@@ -152,6 +154,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         Updates the attributes of a particular Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.update_network() called")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_update(net_id, tenant_id, **kwargs)
         net_dict = cutil.make_net_dict(network[const.UUID],
                                        network[const.NETWORKNAME],
@@ -164,6 +167,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.get_all_ports() called")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_get(net_id)
         ports_list = db.port_list(net_id)
         ports_on_net = []
@@ -180,6 +184,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         that is attached to this particular port.
         """
         LOG.debug("LinuxBridgePlugin.get_port_details() called")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         new_port_dict = cutil.make_port_dict(port)
@@ -190,6 +195,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         Creates a port on the specified Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.create_port() called")
+        db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state,
                                 op_status=OperationalStatus.DOWN)
         unique_port_id_string = port[const.UUID]
@@ -201,6 +207,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         Updates the attributes of a port on the specified Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.update_port() called")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         self._validate_port_state(kwargs["state"])
         port = db.port_update(port_id, net_id, **kwargs)
@@ -216,6 +223,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         is deleted.
         """
         LOG.debug("LinuxBridgePlugin.delete_port() called")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
@@ -233,6 +241,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.plug_interface() called")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
@@ -247,6 +256,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("LinuxBridgePlugin.unplug_interface() called")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]

@@ -134,6 +134,8 @@ class FakePlugin(object):
         FakePlugin._net_counter = 0
 
     def _get_network(self, tenant_id, network_id):
+
+        db.validate_network_ownership(tenant_id, network_id)
         try:
             network = db.network_get(network_id)
         except:
@@ -141,6 +143,8 @@ class FakePlugin(object):
         return network
 
     def _get_port(self, tenant_id, network_id, port_id):
+
+        db.validate_port_ownership(tenant_id, network_id, port_id)
         net = self._get_network(tenant_id, network_id)
         try:
             port = db.port_get(port_id, network_id)
@@ -242,6 +246,7 @@ class FakePlugin(object):
         specified Virtual Network.
         """
         LOG.debug("FakePlugin.get_all_ports() called")
+        db.validate_network_ownership(tenant_id, net_id)
         filter_opts = kwargs.get('filter_opts', None)
         if not filter_opts is None and len(filter_opts) > 0:
             LOG.debug("filtering options were passed to the plugin"
