@@ -8,4 +8,6 @@ run_tests.log
 .quantum-venv/
 .venv/
 quantum/vcsversion.py
+requirements.txt
+ChangeLog
 .tox/
