@@ -97,6 +97,7 @@ class L2Network(QuantumPluginBase):
         belonging to the specified tenant.
         """
         LOG.debug("delete_network() called\n")
+        db.validate_network_ownership(tenant_id, net_id)
         net = db.network_get(net_id)
         if net:
             if len(net[const.NETWORKPORTS]) > 0:
@@ -123,6 +124,7 @@ class L2Network(QuantumPluginBase):
         Gets the details of a particular network
         """
         LOG.debug("get_network_details() called\n")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         ports_list = network[const.NETWORKPORTS]
@@ -146,6 +148,7 @@ class L2Network(QuantumPluginBase):
         Virtual Network.
         """
         LOG.debug("update_network() called\n")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_update(net_id, tenant_id, **kwargs)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      kwargs])
@@ -160,6 +163,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("get_all_ports() called\n")
+        db.validate_network_ownership(tenant_id, net_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id])
         ports_list = network[const.NETWORKPORTS]
@@ -179,6 +183,7 @@ class L2Network(QuantumPluginBase):
         """
         LOG.debug("create_port() called\n")
 
+        db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state)
         unique_port_id_string = port[const.UUID]
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
@@ -198,6 +203,7 @@ class L2Network(QuantumPluginBase):
         then the port can be deleted.
         """
         LOG.debug("delete_port() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
@@ -217,6 +223,7 @@ class L2Network(QuantumPluginBase):
         Updates the state of a port on the specified Virtual Network.
         """
         LOG.debug("update_port() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                         port_id, kwargs])
@@ -233,6 +240,7 @@ class L2Network(QuantumPluginBase):
         that is attached to this particular port.
         """
         LOG.debug("get_port_details() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                      port_id])
@@ -250,6 +258,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("plug_interface() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
@@ -278,6 +287,7 @@ class L2Network(QuantumPluginBase):
         specified Virtual Network.
         """
         LOG.debug("unplug_interface() called\n")
+        db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
@@ -514,6 +524,7 @@ class L2Network(QuantumPluginBase):
         ports_dict_list = []
 
         for net_id in net_id_list:
+            db.validate_network_ownership(tenant_id, net_id)
             port = db.port_create(net_id, port_state)
             ports_id_list.append(port[const.UUID])
             port_dict = {const.PORT_ID: port[const.UUID]}
