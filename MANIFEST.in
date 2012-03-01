@@ -13,3 +13,4 @@ include etc/quantum/plugins/ryu/*.ini
 include quantum/plugins/*/README
 include quantum/plugins/openvswitch/Makefile
 include quantum/plugins/openvswitch/agent/xenserver_install.sh
+include tools/pip-requires
