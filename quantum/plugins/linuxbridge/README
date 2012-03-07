@@ -31,25 +31,25 @@ service with the Linux Bridge plugin.
 
 # -- Nova configuration (controller node)
 
-1) Make sure to set up nova using the quantum network manager in the
+1) Ensure that the quantum network manager is configured in the
    nova.conf on the node that will be running nova-network.
 
---network_manager=nova.network.quantum.manager.QuantumManager
+network_manager=nova.network.quantum.manager.QuantumManager
 
 # -- Nova configuration (compute node(s))
 
 1) Configure the vif driver, and libvirt/vif type
 
---connection_type=libvirt
---libvirt_type=qemu
---libvirt_vif_type=ethernet
---libvirt_vif_driver=quantum.plugins.linuxbridge.nova.vif_linuxbridge_quantum.QuantumLibvirtLinuxBridgeVIFDriver
---linuxnet_interface_driver=quantum.plugins.linuxbridge.nova.linux_net_linux_bridge.QuantumLinuxBridgeInterfaceDriver
+connection_type=libvirt
+libvirt_type=qemu
+libvirt_vif_type=ethernet
+libvirt_vif_driver=nova.virt.libvirt.vif.QuantumLinuxBridgeVIFDriver
+linuxnet_interface_driver=nova.network.linux_net.QuantumLinuxBridgeInterfaceDriver
 
 2) If you want a DHCP server to be run for the VMs to acquire IPs,
    add the following flag to your nova.conf file:
 
---quantum_use_dhcp
+quantum_use_dhcp=true
 
 (Note: For more details on how to work with Quantum using Nova, i.e. how to create networks and such,
  please refer to the top level Quantum README which points to the relevant documentation.)
