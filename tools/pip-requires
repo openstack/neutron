@@ -7,7 +7,7 @@ mox==0.5.3
 python-gflags==1.3
 simplejson
 sqlalchemy
-webob==1.1.1
+webob==1.0.8
 webtest
 
 distribute>=0.6.24
