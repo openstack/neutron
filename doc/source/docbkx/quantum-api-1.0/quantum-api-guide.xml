@@ -659,7 +659,7 @@ Content-Type	application/json
                     </programlisting>
                 </example>
                 <example>
-                    <title>"Network not found" fault Response (XML)</title>
+                    <title>"Network not found" fault Response (JSON)</title>
                     <programlisting language="javascript"><xi:include href="samples/fault.json" parse="text"/>
                     </programlisting>
                 </example>
