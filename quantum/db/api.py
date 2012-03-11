@@ -18,8 +18,9 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
 import logging
-
+import sqlalchemy as sql
 from sqlalchemy import create_engine
+from sqlalchemy.exc import DisconnectionError
 from sqlalchemy.orm import sessionmaker, exc
 
 from quantum.api.api_common import OperationalStatus
@@ -33,6 +34,27 @@ BASE = models.BASE
 LOG = logging.getLogger('quantum.db.api')
 
 
+class MySQLPingListener(object):
+
+    """
+    Ensures that MySQL connections checked out of the
+    pool are alive.
+
+    Borrowed from:
+    http://groups.google.com/group/sqlalchemy/msg/a4ce563d802c929f
+    """
+
+    def checkout(self, dbapi_con, con_record, con_proxy):
+        try:
+            dbapi_con.cursor().execute('select 1')
+        except dbapi_con.OperationalError, ex:
+            if ex.args[0] in (2006, 2013, 2014, 2045, 2055):
+                LOG.warn('Got mysql server has gone away: %s', ex)
+                raise DisconnectionError("Database server went away")
+            else:
+                raise
+
+
 def configure_db(options):
     """
     Establish the database, create an engine if needed, and
@@ -42,10 +64,17 @@ def configure_db(options):
     """
     global _ENGINE
     if not _ENGINE:
-        _ENGINE = create_engine(options['sql_connection'],
-                                echo=False,
-                                echo_pool=True,
-                                pool_recycle=3600)
+        connection_dict = sql.engine.url.make_url(options['sql_connection'])
+        engine_args = {
+            'pool_recycle': 3600,
+            'echo': False,
+            'convert_unicode': True,
+        }
+
+        if 'mysql' in connection_dict.drivername:
+            engine_args['listeners'] = [MySQLPingListener()]
+
+        _ENGINE = create_engine(options['sql_connection'], **engine_args)
         register_models()
 
 
