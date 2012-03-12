@@ -21,7 +21,7 @@
 import logging
 
 from webob import exc
-
+from quantum import wsgi
 from quantum.api import api_common as common
 from quantum.api.views import ports as port_view
 from quantum.extensions import extensions
@@ -72,7 +72,7 @@ class Multiport(object):
                                              parent=parent_resource)]
 
 
-class MultiportController(common.QuantumController):
+class MultiportController(common.QuantumController, wsgi.Controller):
     """ multiport API controller
         based on QuantumController """
 
@@ -95,14 +95,18 @@ class MultiportController(common.QuantumController):
     def __init__(self, plugin):
         self._resource_name = 'multiport'
         self._plugin = plugin
+        self.version = "1.0"
 
     # pylint: disable-msg=E1101,W0613
     def create(self, request, tenant_id):
         """ Creates a new multiport for a given tenant """
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._multiport_ops_param_list)
+            req_params = req_body[self._resource_name]
+
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         multiports = self._plugin.\
@@ -110,7 +114,7 @@ class MultiportController(common.QuantumController):
                                           req_params['net_id_list'],
                                           req_params['status'],
                                           req_params['ports_desc'])
-        builder = port_view.get_view_builder(request)
+        builder = port_view.get_view_builder(request, self.version)
         result = [builder.build(port)['port']
                       for port in multiports]
         return dict(ports=result)

@@ -44,7 +44,7 @@ from quantum.plugins.cisco import l2network_plugin
 TEST_CONF_FILE = config.find_config_file({'plugin': 'cisco'}, None,
                                          'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-                               os.pardir, os.pardir, os.pardir, "extensions")
+                               os.pardir, os.pardir, "extensions")
 
 LOG = logging.getLogger('quantum.plugins.cisco.tests.test_cisco_extensions')
 
@@ -88,7 +88,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.cisco.l2network_plugin'\
                                      '.L2Network'
-        self.api = server.APIRouterV1(options)
+        self.api = server.APIRouterV10(options)
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_portprofile(self):
@@ -221,7 +221,8 @@ class PortprofileExtensionTest(unittest.TestCase):
         rename_path_temp = self.portprofile_path +\
                                 resp_body['portprofiles']['portprofile']['id']
         rename_path = str(rename_path_temp)
-        rename_response = self.test_app.put(rename_path, rename_req_body)
+        rename_response = self.test_app.put(rename_path, rename_req_body,
+                                            content_type=self.contenttype)
         rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
                                                          self.contenttype)
         self.assertEqual(
@@ -270,6 +271,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         update_path_temp = self.portprofile_path + portprofile_id
         update_path = str(update_path_temp)
         update_response = self.test_app.put(update_path, rename_req_body,
+                                            content_type=self.contenttype,
                                             status='*')
         self.assertEqual(450, update_response.status_int)
         LOG.debug("test_update_portprofileDNE - START")
@@ -702,7 +704,8 @@ class QosExtensionTest(unittest.TestCase):
         rename_path_temp = self.qos_second_path +\
                 resp_body['qoss']['qos']['id']
         rename_path = str(rename_path_temp)
-        rename_response = self.test_app.put(rename_path, rename_req_body)
+        rename_response = self.test_app.put(rename_path, rename_req_body,
+                                            content_type=self.contenttype)
         self.assertEqual(200, rename_response.status_int)
         rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
                                                       self.contenttype)
@@ -722,6 +725,7 @@ class QosExtensionTest(unittest.TestCase):
         rename_path_temp = self.qos_second_path + qos_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,
+                                            content_type=self.contenttype,
                                             status='*')
         self.assertEqual(452, rename_response.status_int)
         LOG.debug("test_update_qosDNE - END")
@@ -938,7 +942,8 @@ class CredentialExtensionTest(unittest.TestCase):
         rename_path_temp = self.cred_second_path +\
                            resp_body['credentials']['credential']['id']
         rename_path = str(rename_path_temp)
-        rename_response = self.test_app.put(rename_path, rename_req_body)
+        rename_response = self.test_app.put(rename_path, rename_req_body,
+                                            content_type=self.contenttype)
         rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
                                                       self.contenttype)
         self.assertEqual(
@@ -983,6 +988,7 @@ class CredentialExtensionTest(unittest.TestCase):
         rename_path_temp = self.cred_second_path + credential_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,
+                                            content_type=self.contenttype,
                                             status='*')
         self.assertEqual(451, rename_response.status_int)
         LOG.debug("test_update_credentialDNE - END")
@@ -1049,7 +1055,7 @@ class MultiPortExtensionTest(unittest.TestCase):
         options = {}
         options['plugin_provider'] = 'quantum.plugins.cisco.l2network_plugin'\
                                      '.L2Network'
-        self.api = server.APIRouterV1(options)
+        self.api = server.APIRouterV10(options)
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def create_request(self, path, body, content_type, method='GET'):

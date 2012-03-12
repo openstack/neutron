@@ -58,6 +58,7 @@ ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
         '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
+DEFAULT_QUANTUM_VERSION = '1.1'
 
 
 def help():
@@ -168,6 +169,8 @@ def main():
       action="store_true", default=False, help="turn on verbose logging")
     PARSER.add_option("-f", "--logfile", dest="logfile",
       type="string", default="syslog", help="log file path")
+    PARSER.add_option('--version', default=DEFAULT_QUANTUM_VERSION,
+      help='Accepts 1.1 and 1.0, defaults to env[QUANTUM_VERSION].')
     options, args = PARSER.parse_args()
 
     if options.verbose:
@@ -181,9 +184,10 @@ def main():
         LOG.addHandler(logging.handlers.WatchedFileHandler(options.logfile))
         os.chmod(options.logfile, 0644)
 
+    version = options.version
     if len(args) < 1:
         PARSER.print_help()
-        qcli.help()
+        qcli.help(version)
         help()
         sys.exit(1)
 
@@ -193,7 +197,7 @@ def main():
         sys.exit(1)
     if CMD not in COMMANDS.keys():
         LOG.error("Unknown command: %s" % CMD)
-        qcli.help()
+        qcli.help(version)
         help()
         sys.exit(1)
 

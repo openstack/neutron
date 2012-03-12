@@ -307,4 +307,4 @@ def port_unset_attachment_by_id(port_id):
 
 def validate_port_ownership(tenant_id, net_id, port_id, session=None):
     validate_network_ownership(tenant_id, net_id)
-    port_get(port_id, net_id)
+    port_get(net_id, port_id)

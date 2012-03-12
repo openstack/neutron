@@ -19,7 +19,7 @@
 #
 """
 from webob import exc
-
+from quantum import wsgi
 from quantum.extensions import _novatenant_view as novatenant_view
 from quantum.api import api_common as common
 from quantum.common import exceptions as qexception
@@ -72,7 +72,7 @@ class Novatenant(object):
                                              member_actions=member_actions)]
 
 
-class NovatenantsController(common.QuantumController):
+class NovatenantsController(common.QuantumController, wsgi.Controller):
     """ Novatenant API controller
         based on QuantumController """
 
@@ -121,9 +121,12 @@ class NovatenantsController(common.QuantumController):
         content_type = request.best_match_content_type()
 
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, content_type)
+            req_body = \
+                self._prepare_request_body(body,
                                            self._schedule_host_ops_param_list)
+            req_params = req_body[self._resource_name]
+
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
@@ -140,9 +143,12 @@ class NovatenantsController(common.QuantumController):
     def associate_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, content_type)
+            req_body = \
+                self._prepare_request_body(body,
                                            self._schedule_host_ops_param_list)
+            req_params = req_body[self._resource_name]
+
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         instance_id = req_params['instance_id']
@@ -159,9 +165,12 @@ class NovatenantsController(common.QuantumController):
     def detach_port(self, request, tenant_id, id):
         content_type = request.best_match_content_type()
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, content_type)
+            req_body = \
+                self._prepare_request_body(body,
                                            self._schedule_host_ops_param_list)
+            req_params = req_body[self._resource_name]
+
         except exc.HTTPError as exp:
             return faults.Fault(exp)
 

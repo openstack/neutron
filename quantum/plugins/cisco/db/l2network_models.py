@@ -87,9 +87,8 @@ class VlanBinding(BASE, L2NetworkBase):
 
     vlan_id = Column(Integer, primary_key=True)
     vlan_name = Column(String(255))
-    network_id = Column(String(255), ForeignKey("networks.uuid"),
+    network_id = Column(String(255),
                         nullable=False)
-    network = relation(models.Network, uselist=False)
 
     def __init__(self, vlan_id, vlan_name, network_id):
         self.vlan_id = vlan_id

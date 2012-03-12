@@ -38,6 +38,7 @@ class TestNexusPlugin(unittest.TestCase):
         self.net_id = 000007
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 267
+        self.second_vlan_id = 265
         self.port_id = "9"
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         cdb.initialize()
@@ -247,10 +248,11 @@ class TestNexusPlugin(unittest.TestCase):
                            tenant_id, self.net_name, network_created["net-id"],
                            self.vlan_name, self.vlan_id)
         network_created2 = self.create_network(tenant_id, 'test_network2')
-        cdb.add_vlan_binding(265, 'second_vlan', network_created2["net-id"])
+        cdb.add_vlan_binding(self.second_vlan_id, 'second_vlan',
+                             network_created2["net-id"])
         new_net_dict2 = self._cisco_nexus_plugin.create_network(
-                           tenant_id, "New_Network2",
-                           network_created2["net-id"], "second_vlan", "2003")
+                         tenant_id, "New_Network2", network_created2["net-id"],
+                         "second_vlan", self.second_vlan_id)
         list_net_dict = self._cisco_nexus_plugin.get_all_networks(tenant_id)
         net_temp_list = [new_net_dict1, new_net_dict2]
         self.assertTrue(net_temp_list[0] in list_net_dict)
