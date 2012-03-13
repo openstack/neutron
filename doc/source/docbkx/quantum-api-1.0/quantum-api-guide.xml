@@ -1676,7 +1676,7 @@ PUT tenants/33/networks/158233b0-ca9a-40b4-8614-54a4a99d47d1/ports/98017ddc-efc8
 					<para><emphasis>No data returned in response body.</emphasis></para>
                 </example>
                 <example>
-                    <title>Create Port Request/Response (JSON)</title>
+                    <title>Set Port State Request/Response (JSON)</title>
                     <para>Request:</para>
 	                <literallayout class="monospaced">
 PUT tenants/33/networks/158233b0-ca9a-40b4-8614-54a4a99d47d1/ports/98017ddc-efc8-4c25-a915-774b2a633855.json
@@ -1747,7 +1747,7 @@ DELETE tenants/33/networks/158233b0-ca9a-40b4-8614-54a4a99d47d1/ports/98017ddc-e
 					<para><emphasis>No data returned in response body.</emphasis></para>
                 </example>
                 <example>
-                    <title>Create Port Request/Response (JSON)</title>
+                    <title>Delete Port State Request/Response (JSON)</title>
                     <para>Request:</para>
 	                <literallayout class="monospaced">
 DELETE tenants/33/networks/158233b0-ca9a-40b4-8614-54a4a99d47d1/ports/98017ddc-efc8-4c25-a915-774b2a633855.json
