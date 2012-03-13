@@ -21,6 +21,7 @@
 
 import ConfigParser
 import logging as LOG
+import shlex
 import sys
 import time
 import signal
@@ -57,15 +58,17 @@ class VifPort:
 
 
 class OVSBridge:
-    def __init__(self, br_name):
+    def __init__(self, br_name, root_helper):
         self.br_name = br_name
+        self.root_helper = root_helper
 
     def run_cmd(self, args):
-        # LOG.debug("## running command: " + " ".join(args))
-        p = Popen(args, stdout=PIPE)
+        cmd = shlex.split(self.root_helper) + args
+        LOG.debug("## running command: " + " ".join(cmd))
+        p = Popen(cmd, stdout=PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
-            LOG.debug("## timeout running command: " + " ".join(args))
+            LOG.debug("## timeout running command: " + " ".join(cmd))
         return retval
 
     def run_vsctl(self, args):
@@ -207,7 +210,8 @@ class LocalVLANMapping:
 
 class OVSQuantumAgent(object):
 
-    def __init__(self, integ_br):
+    def __init__(self, integ_br, root_helper):
+        self.root_helper = root_helper
         self.setup_integration_br(integ_br)
 
     def port_bound(self, port, vlan_id):
@@ -220,7 +224,7 @@ class OVSQuantumAgent(object):
             self.int_br.clear_db_attribute("Port", port.port_name, "tag")
 
     def setup_integration_br(self, integ_br):
-        self.int_br = OVSBridge(integ_br)
+        self.int_br = OVSBridge(integ_br, self.root_helper)
         self.int_br.remove_all_flows()
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
@@ -323,13 +327,15 @@ class OVSQuantumTunnelAgent(object):
     # Upper bound on available vlans.
     MAX_VLAN_TAG = 4094
 
-    def __init__(self, integ_br, tun_br, remote_ip_file, local_ip):
+    def __init__(self, integ_br, tun_br, remote_ip_file, local_ip,
+                 root_helper):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
         :param tun_br: name of the tunnel bridge.
         :param remote_ip_file: name of file containing list of hypervisor IPs.
         :param local_ip: local IP address of this hypervisor.'''
+        self.root_helper = root_helper
         self.available_local_vlans = set(
             xrange(OVSQuantumTunnelAgent.MIN_VLAN_TAG,
                    OVSQuantumTunnelAgent.MAX_VLAN_TAG))
@@ -423,7 +429,7 @@ class OVSQuantumTunnelAgent(object):
         Create patch ports and remove all existing flows.
 
         :param integ_br: the name of the integration bridge.'''
-        self.int_br = OVSBridge(integ_br)
+        self.int_br = OVSBridge(integ_br, self.root_helper)
         self.int_br.delete_port("patch-tun")
         self.patch_tun_ofport = self.int_br.add_patch_port("patch-tun",
                                                            "patch-int")
@@ -442,7 +448,7 @@ class OVSQuantumTunnelAgent(object):
         :param remote_ip_file: path to file that contains list of destination
             IP addresses.
         :param local_ip: the ip address of this node.'''
-        self.tun_br = OVSBridge(tun_br)
+        self.tun_br = OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
         self.patch_int_ofport = self.tun_br.add_patch_port("patch-int",
                                                            "patch-tun")
@@ -630,6 +636,8 @@ def main():
         if not len(db_connection_url):
             raise Exception('Empty db_connection_url in configuration file.')
 
+        root_helper = config.get("AGENT", "root_helper")
+
     except Exception, e:
         LOG.error("Error parsing common params in config_file: '%s': %s"
                   % (config_file, str(e)))
@@ -659,10 +667,10 @@ def main():
             sys.exit(1)
 
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, remote_ip_file,
-                                       local_ip)
+                                       local_ip, root_helper)
     else:
         # Get parameters for OVSQuantumAgent.
-        plugin = OVSQuantumAgent(integ_br)
+        plugin = OVSQuantumAgent(integ_br, root_helper)
 
     # Start everything.
     options = {"sql_connection": db_connection_url}

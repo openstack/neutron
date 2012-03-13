@@ -58,8 +58,9 @@ class VifPort:
 
 
 class OVSBridge:
-    def __init__(self, br_name):
+    def __init__(self, br_name, root_helper):
         self.br_name = br_name
+        self.root_helper = root_helper
         self.datapath_id = None
 
     def find_datapath_id(self):
@@ -71,10 +72,11 @@ class OVSBridge:
         self.datapath_id = dp_id
 
     def run_cmd(self, args):
-        pipe = Popen(args, stdout=PIPE)
+        cmd = shlex.split(self.root_helper) + args
+        pipe = Popen(cmd, stdout=PIPE)
         retval = pipe.communicate()[0]
         if pipe.returncode == -(signal.SIGALRM):
-            LOG.debug("## timeout running command: " + " ".join(args))
+            LOG.debug("## timeout running command: " + " ".join(cmd))
         return retval
 
     def run_vsctl(self, args):
@@ -190,7 +192,8 @@ def check_ofp_mode(db):
 
 
 class OVSQuantumOFPRyuAgent:
-    def __init__(self, integ_br, db):
+    def __init__(self, integ_br, db, root_helper):
+        self.root_helper = root_helper
         (ofp_controller_addr, ofp_rest_api_addr) = check_ofp_mode(db)
 
         self.nw_id_external = rest_nw_id.NW_ID_EXTERNAL
@@ -198,7 +201,7 @@ class OVSQuantumOFPRyuAgent:
         self._setup_integration_br(integ_br, ofp_controller_addr)
 
     def _setup_integration_br(self, integ_br, ofp_controller_addr):
-        self.int_br = OVSBridge(integ_br)
+        self.int_br = OVSBridge(integ_br, self.root_helper)
         self.int_br.find_datapath_id()
         self.int_br.set_controller(ofp_controller_addr)
         for port in self.int_br.get_external_ports():
@@ -297,12 +300,14 @@ def main():
 
     integ_br = config.get("OVS", "integration-bridge")
 
+    root_helper = config.get("AGENT", "root_helper")
+
     options = {"sql_connection": config.get("DATABASE", "sql_connection")}
     db = SqlSoup(options["sql_connection"])
 
     LOG.info("Connecting to database \"%s\" on %s",
              db.engine.url.database, db.engine.url.host)
-    plugin = OVSQuantumOFPRyuAgent(integ_br, db)
+    plugin = OVSQuantumOFPRyuAgent(integ_br, db, root_helper)
     plugin.daemon_loop(db)
 
     sys.exit(0)
