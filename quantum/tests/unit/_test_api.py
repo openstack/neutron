@@ -53,7 +53,7 @@ class AbstractAPITest(unittest.TestCase):
         return port_data
 
     def _create_network(self, fmt, name=None, custom_req_body=None,
-                        expected_res_status=202):
+                        expected_res_status=None):
         LOG.debug("Creating network")
         content_type = "application/" + fmt
         if name:
@@ -64,20 +64,24 @@ class AbstractAPITest(unittest.TestCase):
                                                   net_name, fmt,
                                                   custom_req_body)
         network_res = network_req.get_response(self.api)
+        expected_res_status = expected_res_status or \
+                              self._successful_create_code
         self.assertEqual(network_res.status_int, expected_res_status)
         if expected_res_status in (200, 202):
             network_data = self._deserialize_net_response(content_type,
                                                           network_res)
             return network_data['network']['id']
 
-    def _create_port(self, network_id, port_state, fmt,
-                     custom_req_body=None, expected_res_status=202):
+    def _create_port(self, network_id, port_state, fmt, custom_req_body=None,
+                     expected_res_status=None):
         LOG.debug("Creating port for network %s", network_id)
         content_type = "application/%s" % fmt
         port_req = testlib.new_port_request(self.tenant_id, network_id,
                                             port_state, fmt,
                                             custom_req_body)
         port_res = port_req.get_response(self.api)
+        expected_res_status = expected_res_status or \
+                              self._successful_create_code
         self.assertEqual(port_res.status_int, expected_res_status)
         if expected_res_status in (200, 202):
             port_data = self._deserialize_port_response(content_type,

@@ -62,7 +62,10 @@ def create_resource(version, controller_dict):
     # and also the function for building the fault body
     fault_body_function = faults.fault_body_function(version)
 
-    headers_serializer = HeaderSerializer()
+    headers_serializers = {
+        '1.0': HeaderSerializer10(),
+        '1.1': HeaderSerializer11()
+    }
     xml_serializer = wsgi.XMLDictSerializer(metadata, xmlns)
     json_serializer = wsgi.JSONDictSerializer()
     xml_deserializer = wsgi.XMLDeserializer(metadata)
@@ -78,7 +81,8 @@ def create_resource(version, controller_dict):
         'application/json': json_deserializer,
     }
 
-    serializer = wsgi.ResponseSerializer(body_serializers, headers_serializer)
+    serializer = wsgi.ResponseSerializer(body_serializers,
+                                         headers_serializers[version])
     deserializer = wsgi.RequestDeserializer(body_deserializers)
 
     return wsgi.Resource(controller,
@@ -116,10 +120,10 @@ def APIFaultWrapper(errors=None):
     return wrapper
 
 
-class HeaderSerializer(wsgi.ResponseHeaderSerializer):
+class HeaderSerializer10(wsgi.ResponseHeaderSerializer):
     """
-    Defines default respone status codes for Quantum API operations
-        create - 202 ACCEPTED
+    Defines default respone status codes for Quantum API 1.0 operations
+        create - 200 OK
         update - 204 NOCONTENT
         delete - 204 NOCONTENT
         others - 200 OK (defined in base class)
@@ -127,7 +131,7 @@ class HeaderSerializer(wsgi.ResponseHeaderSerializer):
     """
 
     def create(self, response, data):
-        response.status_int = 202
+        response.status_int = 200
 
     def delete(self, response, data):
         response.status_int = 204
@@ -140,6 +144,20 @@ class HeaderSerializer(wsgi.ResponseHeaderSerializer):
 
     def detach_resource(self, response, data):
         response.status_int = 204
+
+
+class HeaderSerializer11(HeaderSerializer10):
+    """
+    Defines default respone status codes for Quantum API 1.0 operations
+        create - 202 ACCEPTED
+        update - 204 NOCONTENT
+        delete - 204 NOCONTENT
+        others - 200 OK (defined in base class)
+
+    """
+
+    def create(self, response, data):
+        response.status_int = 202
 
 
 class QuantumController(object):
