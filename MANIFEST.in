@@ -2,6 +2,7 @@ include README LICENSE TESTING
 include run_tests.py run_tests.sh
 include .pylintrc
 include bin/*
+graft doc/*
 include etc/*
 include etc/init.d/*
 include etc/quantum/plugins/openvswitch/*.ini
@@ -11,9 +12,15 @@ include etc/quantum/plugins/linuxbridge/*.ini
 include etc/quantum/plugins/nicira/*
 include etc/quantum/plugins/ryu/*.ini
 include quantum/plugins/*/README
+include quantum/plugins/cisco/services/README
 include quantum/plugins/nicira/nicira_nvp_plugin/*
 include quantum/plugins/nicira/nicira_nvp_plugin/tests/*
 include quantum/plugins/openvswitch/Makefile
 include quantum/plugins/openvswitch/tests/unit/*.txt
 include quantum/plugins/openvswitch/agent/xenserver_install.sh
+include tools/build_debs.sh
+include tools/clean.sh
 include tools/pip-requires
+include tools/rfc.sh
+include tools/with_venv.sh
+include tox.ini
