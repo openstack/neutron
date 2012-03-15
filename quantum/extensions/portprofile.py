@@ -20,7 +20,7 @@
 """
 
 from webob import exc
-
+from quantum import wsgi
 from quantum.extensions import _pprofiles as pprofiles_view
 from quantum.api import api_common as common
 from quantum.common import exceptions as qexception
@@ -73,7 +73,7 @@ class Portprofile(object):
                                              member_actions=member_actions)]
 
 
-class PortprofilesController(common.QuantumController):
+class PortprofilesController(common.QuantumController, wsgi.Controller):
     """ portprofile API controller
         based on QuantumController """
 
@@ -132,9 +132,11 @@ class PortprofilesController(common.QuantumController):
         """ Creates a new portprofile for a given tenant """
         #look for portprofile name in request
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._portprofile_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         portprofile = self._plugin.\
@@ -148,9 +150,11 @@ class PortprofilesController(common.QuantumController):
     def update(self, request, tenant_id, id):
         """ Updates the name for the portprofile with the given id """
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._portprofile_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         try:
@@ -177,9 +181,11 @@ class PortprofilesController(common.QuantumController):
         content_type = request.best_match_content_type()
 
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, content_type)
+            req_body = \
+                self._prepare_request_body(body,
                                            self._assignprofile_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()
@@ -198,9 +204,11 @@ class PortprofilesController(common.QuantumController):
         """ Disassociate a portprofile from a port """
         content_type = request.best_match_content_type()
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, content_type)
+            req_body = \
+                self._prepare_request_body(body,
                                            self._assignprofile_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         net_id = req_params['network-id'].strip()

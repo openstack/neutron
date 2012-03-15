@@ -20,6 +20,7 @@
 """
 import logging
 
+from quantum import wsgi
 from webob import exc
 from quantum.extensions import _qos_view as qos_view
 from quantum.api import api_common as common
@@ -73,7 +74,7 @@ class Qos(object):
                                              parent=parent_resource)]
 
 
-class QosController(common.QuantumController):
+class QosController(common.QuantumController, wsgi.Controller):
     """ qos API controller
         based on QuantumController """
 
@@ -123,9 +124,11 @@ class QosController(common.QuantumController):
         """ Creates a new qos for a given tenant """
         #look for qos name in request
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._qos_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         qos = self._plugin.\
@@ -139,9 +142,11 @@ class QosController(common.QuantumController):
     def update(self, request, tenant_id, id):
         """ Updates the name for the qos with the given id """
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._qos_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         try:

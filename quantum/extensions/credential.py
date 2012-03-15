@@ -21,7 +21,7 @@
 import logging
 
 from webob import exc
-
+from quantum import wsgi
 from quantum.extensions import _credential_view as credential_view
 from quantum.api import api_common as common
 from quantum.extensions import extensions
@@ -72,7 +72,7 @@ class Credential(object):
                                              parent=parent_resource)]
 
 
-class CredentialController(common.QuantumController):
+class CredentialController(common.QuantumController, wsgi.Controller):
     """ credential API controller
         based on QuantumController """
 
@@ -124,9 +124,12 @@ class CredentialController(common.QuantumController):
     def create(self, request, tenant_id):
         """ Creates a new credential for a given tenant """
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._credential_ops_param_list)
+            req_params = req_body[self._resource_name]
+
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         credential = self._plugin.\
@@ -141,9 +144,11 @@ class CredentialController(common.QuantumController):
     def update(self, request, tenant_id, id):
         """ Updates the name for the credential with the given id """
         try:
-            req_params = \
-                self._parse_request_params(request,
+            body = self._deserialize(request.body, request.get_content_type())
+            req_body = \
+                self._prepare_request_body(body,
                                            self._credential_ops_param_list)
+            req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         try:

@@ -97,13 +97,15 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
         """Invoke only the device plugin"""
-        # If there are more args than needed, add them to kwargs
         func = getattr(self._plugins[plugin_key], function_name)
 
-        if args.__len__() + 1 > inspect.getargspec(func).args.__len__():
-            kwargs.update(args.pop())
+        # If there are more args than needed, add them to kwargs
+        args_copy = deepcopy(args)
+        if args.__len__() + 1 > \
+           inspect.getargspec(func).args.__len__():
+            kwargs.update(args_copy.pop())
 
-        return func(*args, **kwargs)
+        return func(*args_copy, **kwargs)
 
     def get_all_networks(self, args):
         """Not implemented for this model"""

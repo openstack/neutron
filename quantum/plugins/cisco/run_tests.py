@@ -20,31 +20,29 @@
 """
 Unittest runner for quantum Cisco plugin
 
-export PLUGIN_DIR=plugins/cisco-plugin/lib/quantum/plugins/cisco/
+export PLUGIN_DIR=quantum/plugins/cisco
 ./run_tests.sh -N
 """
 
 import os
-import unittest
 import sys
 from nose import config
-from nose import core
-
 sys.path.append(os.getcwd())
-
-from quantum.common.test_lib import run_tests
-
-import quantum.plugins.cisco.tests.unit
+sys.path.append(os.path.dirname(__file__))
+from quantum.common.test_lib import run_tests, test_config
+import quantum.tests.unit
 
 
 def main():
+
+    test_config['plugin_name'] = "l2network_plugin.L2Network"
+    cwd = os.getcwd()
+    os.chdir(cwd)
+    working_dir = os.path.abspath("quantum/plugins/cisco")
     c = config.Config(stream=sys.stdout,
                       env=os.environ,
                       verbosity=3,
-                      includeExe=True,
-                      traverseNamespace=True,
-                      plugins=core.DefaultPluginManager())
-    c.configureWhere(quantum.plugins.cisco.tests.unit.__path__)
+                      workingDir=working_dir)
     sys.exit(run_tests(c))
 
 if __name__ == '__main__':
