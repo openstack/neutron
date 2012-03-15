@@ -9,4 +9,4 @@ simplejson
 sqlalchemy
 webob==1.0.8
 
--e git+https://review.openstack.org/p/openstack/python-quantumclient#egg=python-quantumclient-dev
+-e git+https://review.openstack.org/p/openstack/python-quantumclient#egg=python-quantumclient
