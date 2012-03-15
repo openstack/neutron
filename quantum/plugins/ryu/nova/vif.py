@@ -32,7 +32,7 @@ ryu_libvirt_ovs_driver_opt = cfg.StrOpt('libvirt_ovs_ryu_api_host',
                                         help='Openflow Ryu REST API host:port')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(ryu_libvirt_ovs_driver_opt)
+FLAGS.register_opt(ryu_libvirt_ovs_driver_opt)
 
 
 def _get_datapath_id(bridge_name):
