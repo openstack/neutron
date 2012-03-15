@@ -18,31 +18,37 @@
 
 """VIF drivers for interface type direct."""
 
+
 from nova import exception as excp
 from nova import flags
 from nova import log as logging
-from nova.network import linux_net
-from nova.virt.libvirt import netutils
-from nova import utils
+from nova.openstack.common import cfg
 from nova.virt.vif import VIFDriver
 from quantum.client import Client
-from quantum.common.wsgi import Serializer
 
-LOG = logging.getLogger('quantum.plugins.cisco.nova.vifdirect')
+
+LOG = logging.getLogger(__name__)
+
+quantum_opts = [
+    cfg.StrOpt('quantum_connection_host',
+               default='127.0.0.1',
+               help='HOST for connecting to quantum'),
+    cfg.StrOpt('quantum_connection_port',
+               default='9696',
+               help='PORT for connecting to quantum'),
+    cfg.StrOpt('quantum_default_tenant_id',
+               default="default",
+               help='Default tenant id when creating quantum networks'),
+    ]
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('quantum_host', "127.0.0.1",
-                     'IP address of the quantum network service.')
-flags.DEFINE_integer('quantum_port', 9696,
-                     'Listening port for Quantum network service')
+FLAGS.register_opts(quantum_opts)
 
-HOST = FLAGS.quantum_host
-PORT = FLAGS.quantum_port
+HOST = FLAGS.quantum_connection_host
+PORT = FLAGS.quantum_connection_port
 USE_SSL = False
-TENANT_ID = 'nova'
-ACTION_PREFIX_EXT = '/v1.0'
-ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
-        '/extensions/csco/tenants/{tenant_id}'
+VERSION = '1.0'
+URI_PREFIX_CSCO = '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
 ASSOCIATE_ACTION = '/associate_port'
@@ -55,8 +61,9 @@ class Libvirt802dot1QbhDriver(VIFDriver):
         # We have to send a dummy tenant name here since the client
         # needs some tenant name, but the tenant name will not be used
         # since the extensions URL does not require it
-        client = Client(HOST, PORT, USE_SSL, format='json',
-                        action_prefix=ACTION_PREFIX_EXT, tenant="dummy")
+        LOG.debug("Initializing Cisco Quantum VIF driver...")
+        client = Client(HOST, PORT, USE_SSL, format='json', version=VERSION,
+                        uri_prefix="", tenant="dummy", logger=LOG)
         request_url = "/extensions"
         data = client.do_request('GET', request_url)
         LOG.debug("Obtained supported extensions from Quantum: %s" % data)
@@ -73,8 +80,8 @@ class Libvirt802dot1QbhDriver(VIFDriver):
 
     def _update_configurations(self, instance, network, mapping, action):
         """Gets the device name and the profile name from Quantum"""
-
-        instance_id = instance['id']
+        LOG.debug("Cisco Quantum VIF driver performing: %s" % (action))
+        instance_id = instance['uuid']
         user_id = instance['user_id']
         project_id = instance['project_id']
         vif_id = mapping['vif_uuid']
@@ -87,8 +94,9 @@ class Libvirt802dot1QbhDriver(VIFDriver):
                    'project_id': project_id,
                    'vif_id': vif_id}}}
 
-        client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
-                        action_prefix=ACTION_PREFIX_CSCO)
+        client = Client(HOST, PORT, USE_SSL, format='json', version=VERSION,
+                        uri_prefix=URI_PREFIX_CSCO, tenant=TENANT_ID,
+                        logger=LOG)
         request_url = "/novatenants/" + project_id + action
         data = client.do_request('PUT', request_url, body=instance_data_dict)
 
