@@ -116,8 +116,19 @@ mysql> FLUSH PRIVILEGES;
   to the compute node.
 
 $ Run the following:
-  sudo python linuxbridge_quantum_agent.py linuxbridge_conf.ini
+  python linuxbridge_quantum_agent.py linuxbridge_conf.ini
   (Use --verbose option to see the logs)
+
+  Note that the the user running the agent must have sudo priviliges
+  to run various networking commands. Also, the agent can be
+  configured to use quantum-rootwrap, limiting what commands it can
+  run via sudo. See http://wiki.openstack.org/Packager/Rootwrap for
+  details on rootwrap.
+
+  As an alternative to coping the agent python file, if quantum is
+  installed on the compute node, the agent can be run as
+  bin/quantum-linuxbridge-agent.
+
 
 # -- Running Tests
 

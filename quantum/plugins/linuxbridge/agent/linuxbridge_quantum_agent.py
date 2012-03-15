@@ -30,6 +30,7 @@ import ConfigParser
 import logging as LOG
 import MySQLdb
 import os
+import shlex
 import signal
 import sqlite3
 import sys
@@ -53,16 +54,18 @@ DB_CONNECTION = None
 
 
 class LinuxBridge:
-    def __init__(self, br_name_prefix, physical_interface):
+    def __init__(self, br_name_prefix, physical_interface, root_helper):
         self.br_name_prefix = br_name_prefix
         self.physical_interface = physical_interface
+        self.root_helper = root_helper
 
     def run_cmd(self, args):
-        LOG.debug("Running command: " + " ".join(args))
-        p = Popen(args, stdout=PIPE)
+        cmd = shlex.split(self.root_helper) + args
+        LOG.debug("Running command: " + " ".join(cmd))
+        p = Popen(cmd, stdout=PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
-            LOG.debug("Timeout running command: " + " ".join(args))
+            LOG.debug("Timeout running command: " + " ".join(cmd))
         if retval:
             LOG.debug("Command returned: %s" % retval)
         return retval
@@ -287,12 +290,15 @@ class LinuxBridge:
 
 class LinuxBridgeQuantumAgent:
 
-    def __init__(self, br_name_prefix, physical_interface, polling_interval):
+    def __init__(self, br_name_prefix, physical_interface, polling_interval,
+                 root_helper):
         self.polling_interval = int(polling_interval)
+        self.root_helper = root_helper
         self.setup_linux_bridge(br_name_prefix, physical_interface)
 
     def setup_linux_bridge(self, br_name_prefix, physical_interface):
-        self.linux_br = LinuxBridge(br_name_prefix, physical_interface)
+        self.linux_br = LinuxBridge(br_name_prefix, physical_interface,
+                                    self.root_helper)
 
     def process_port_binding(self, port_id, network_id, interface_id,
                              vlan_id):
@@ -439,6 +445,7 @@ def main():
         br_name_prefix = BRIDGE_NAME_PREFIX
         physical_interface = config.get("LINUX_BRIDGE", "physical_interface")
         polling_interval = config.get("AGENT", "polling_interval")
+        root_helper = config.get("AGENT", "root_helper")
         'Establish database connection and load models'
         global DB_CONNECTION
         DB_CONNECTION = config.get("DATABASE", "connection")
@@ -462,7 +469,7 @@ def main():
 
     try:
         plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
-                                         polling_interval)
+                                         polling_interval, root_helper)
         LOG.info("Agent initialized successfully, now running...")
         plugin.daemon_loop(conn)
     finally:

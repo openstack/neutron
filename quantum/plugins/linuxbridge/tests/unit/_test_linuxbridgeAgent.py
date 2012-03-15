@@ -22,6 +22,7 @@ import logging as LOG
 import unittest
 import sys
 import os
+import shlex
 import signal
 from subprocess import *
 
@@ -392,20 +393,24 @@ class LinuxBridgeAgentTest(unittest.TestCase):
             self.physical_interface = config.get("LINUX_BRIDGE",
                                                  "physical_interface")
             self.polling_interval = config.get("AGENT", "polling_interval")
+            self.root_helper = config.get("AGENT", "root_helper")
         except Exception, e:
             LOG.error("Unable to parse config file \"%s\": \nException%s"
                       % (self.config_file, str(e)))
             sys.exit(1)
         self._linuxbridge = linux_agent.LinuxBridge(self.br_name_prefix,
-                                                    self.physical_interface)
+                                                    self.physical_interface,
+                                                    self.root_helper)
         self._linuxbridge_quantum_agent = linux_agent.LinuxBridgeQuantumAgent(
                                                     self.br_name_prefix,
                                                     self.physical_interface,
-                                                    self.polling_interval)
+                                                    self.polling_interval,
+                                                    self.root_helper)
 
     def run_cmd(self, args):
-        LOG.debug("Running command: " + " ".join(args))
-        p = Popen(args, stdout=PIPE)
+        cmd = shlex.split(self.root_helper) + args
+        LOG.debug("Running command: " + " ".join(cmd))
+        p = Popen(cmd, stdout=PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
             LOG.debug("Timeout running command: " + " ".join(args))
