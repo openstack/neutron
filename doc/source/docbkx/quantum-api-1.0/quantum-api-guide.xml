@@ -1198,7 +1198,7 @@ PUT /tenants/XYZ/networks/158233b0-ca9a-40b4-8614-54a4a99d47d1.json
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="1">&PUT;</td>
+                            <td colspan="1">&DELETE;</td>
                             <td colspan="2">/tenants/<emphasis>{tenant-id}</emphasis>/networks/<emphasis>{network-id}</emphasis></td>
                             <td colspan="3">
                             Destroys the network identified by
