@@ -1,8 +1,10 @@
 include README LICENSE TESTING
 include run_tests.py run_tests.sh
 include .pylintrc
+include openstack-common.conf
 include bin/*
 graft doc/*
+include doc/Makefile doc/pom.xml
 include etc/*
 include etc/init.d/*
 include etc/quantum/plugins/openvswitch/*.ini
@@ -20,7 +22,7 @@ include quantum/plugins/openvswitch/tests/unit/*.txt
 include quantum/plugins/openvswitch/agent/xenserver_install.sh
 include tools/build_debs.sh
 include tools/clean.sh
-include tools/pip-requires
+include tools/pip-requires tools/test-requires
 include tools/rfc.sh
 include tools/with_venv.sh
 include tox.ini
