@@ -40,15 +40,26 @@ LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger("ovs_quantum_plugin")
 
 
+# Exception thrown if no more VLANs are available
+class NoFreeVLANException(Exception):
+    pass
+
+
 class VlanMap(object):
     vlans = {}
     net_ids = {}
     free_vlans = set()
+    VLAN_MIN = 1
+    VLAN_MAX = 4094
 
     def __init__(self):
         self.vlans.clear()
         self.net_ids.clear()
-        self.free_vlans = set(xrange(2, 4094))
+        self.free_vlans = set(xrange(self.VLAN_MIN, self.VLAN_MAX + 1))
+
+    def already_used(self, vlan_id, network_id):
+        self.free_vlans.remove(vlan_id)
+        self.set_vlan(vlan_id, network_id)
 
     def set_vlan(self, vlan_id, network_id):
         self.vlans[vlan_id] = network_id
@@ -58,13 +69,11 @@ class VlanMap(object):
         if len(self.free_vlans):
             vlan = self.free_vlans.pop()
             self.set_vlan(vlan, network_id)
-            # LOG.debug("VlanMap::acquire %s -> %s", x, network_id)
+            LOG.debug("Allocated VLAN %s for network %s" % (vlan, network_id))
             return vlan
         else:
-            raise Exception("No free vlans..")
-
-    def get(self, vlan_id):
-        return self.vlans.get(vlan_id, None)
+            raise NoFreeVLANException("No VLAN free for network %s" %
+                                      network_id)
 
     def release(self, network_id):
         vlan = self.net_ids.get(network_id, None)
@@ -72,7 +81,8 @@ class VlanMap(object):
             self.free_vlans.add(vlan)
             del self.vlans[vlan]
             del self.net_ids[network_id]
-            # LOG.debug("VlanMap::release %s", vlan)
+            LOG.debug("Deallocated VLAN %s (used by network %s)"
+                      % (vlan, network_id))
         else:
             LOG.error("No vlan found with network \"%s\"", network_id)
 
@@ -103,9 +113,9 @@ class OVSQuantumPlugin(QuantumPluginBase):
         vlans = ovs_db.get_vlans()
         for x in vlans:
             vlan_id, network_id = x
-            # LOG.debug("Adding already populated vlan %s -> %s"
-            #                                   % (vlan_id, network_id))
-            self.vmap.set_vlan(vlan_id, network_id)
+            LOG.debug("Adding already populated vlan %s -> %s"
+                      % (vlan_id, network_id))
+            self.vmap.already_used(vlan_id, network_id)
 
     def get_all_networks(self, tenant_id, **kwargs):
         nets = []
