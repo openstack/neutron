@@ -40,6 +40,9 @@ class Versions(wsgi.Application):
             },
         ]
 
+        if req.path != '/':
+            return webob.exc.HTTPNotFound()
+
         builder = versions_view.get_view_builder(req)
         versions = [builder.build(version) for version in version_objs]
         response = dict(versions=versions)
