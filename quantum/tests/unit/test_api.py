@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2010-2011 ????
+# Copyright 2010-2012 ????
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,13 +16,16 @@
 #    under the License.
 #    @author: Salvatore Orlando, Citrix Systems
 
-
+import json
 import logging
-from webob import exc
+import unittest
+from lxml import etree
+from webob import exc, request
 
 import quantum.api.attachments as atts
 import quantum.api.networks as nets
 import quantum.api.ports as ports
+import quantum.api.versions as versions
 import quantum.tests.unit._test_api as test_api
 import quantum.tests.unit.testlib_api as testlib
 
@@ -360,3 +363,31 @@ class APIFiltersTest(test_api.AbstractAPITest):
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
         LOG.debug("test_port_multiple_filters - END")
+
+
+class APIRootTest(unittest.TestCase):
+    def setUp(self):
+        self.app = versions.Versions()
+
+    def _test_root_responds_with_versions(self, content_type):
+        req = testlib.create_request('/', '', content_type)
+        response = self.app(req)
+        self.assertEquals(response.status_int, 200)
+        return response.body
+
+    def test_root_responds_with_versions_json(self):
+        body = self._test_root_responds_with_versions('application/json')
+        data = json.loads(body)
+        self.assertEquals('versions', data.keys()[0])
+
+    def test_root_responds_with_versions_xml(self):
+        body = self._test_root_responds_with_versions('application/xml')
+        root = etree.fromstring(body)
+        self.assertEquals(root.tag, 'versions')
+
+    def test_invalid_version(self):
+        req = testlib.create_request('/v99.99/tenants/tenantX/networks',
+                                    '',
+                                    'application/json')
+        response = self.app(req)
+        self.assertEquals(response.status_int, 404)

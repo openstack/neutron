@@ -1,5 +1,4 @@
-import webob
-
+from quantum import wsgi
 from quantum.common.serializer import Serializer
 
 
@@ -8,7 +7,7 @@ def create_request(path, body, content_type, method='GET', query_string=None):
         url = "%s?%s" % (path, query_string)
     else:
         url = path
-    req = webob.Request.blank(url)
+    req = wsgi.Request.blank(url)
     req.method = method
     req.headers = {}
     req.headers['Accept'] = content_type
