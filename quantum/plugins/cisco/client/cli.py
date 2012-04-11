@@ -36,20 +36,13 @@ import subprocess
 
 from optparse import OptionParser
 
-sys.path.append(os.getcwd())
-import quantum.client.cli as qcli
+from quantum.plugins.cisco.common import cisco_constants as const
+from quantumclient import Client
+import quantumclient.cli as qcli
 
-POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
-                                   os.pardir,
-                                   os.pardir))
-if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'quantum', '__init__.py')):
-    sys.path.insert(0, POSSIBLE_TOPDIR)
 
 gettext.install('quantum', unicode=1)
 
-from quantum.client import Client
-
-from quantum.plugins.cisco.common import cisco_constants as const
 
 LOG = logging.getLogger('quantum')
 FORMAT = 'json'

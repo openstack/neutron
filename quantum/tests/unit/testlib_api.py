@@ -1,5 +1,5 @@
 from quantum import wsgi
-from quantum.common.serializer import Serializer
+from quantum.wsgi import Serializer
 
 
 def create_request(path, body, content_type, method='GET', query_string=None):
