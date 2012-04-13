@@ -20,9 +20,9 @@ import uuid
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relation, object_mapper
 
+from quantum.db import models
 from quantum.db.models import BASE
 from quantum.db.models import QuantumBase
-from quantum.db import models
 
 
 class VlanID(BASE, QuantumBase):
@@ -37,8 +37,7 @@ class VlanID(BASE, QuantumBase):
         self.vlan_used = False
 
     def __repr__(self):
-        return "<VlanID(%d,%s)>" % \
-          (self.vlan_id, self.vlan_used)
+        return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
 
 
 class VlanBinding(BASE, QuantumBase):
@@ -53,5 +52,4 @@ class VlanBinding(BASE, QuantumBase):
         self.network_id = network_id
 
     def __repr__(self):
-        return "<VlanBinding(%d,%s,%s)>" % \
-          (self.vlan_id, self.network_id)
+        return "<VlanBinding(%d,%s,%s)>" % (self.vlan_id, self.network_id)

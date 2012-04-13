@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems Inc.
 #
-"""
 
 """
 Implements a UCSM XML API Client
@@ -27,11 +25,13 @@ import httplib
 import logging
 from xml.etree import ElementTree as et
 
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.ucs import cisco_getvif as gvif
 
+
 LOG = logging.getLogger(__name__)
+
 
 COOKIE_VALUE = "cookie_placeholder"
 PROFILE_NAME = "profilename_placeholder"
@@ -144,35 +144,25 @@ class CiscoUCSMDriver():
     def _post_data(self, ucsm_ip, ucsm_username, ucsm_password, data):
         """Send command to UCSM in http request"""
         conn = httplib.HTTPSConnection(ucsm_ip)
-        login_data = "<aaaLogin inName=\"" + ucsm_username + \
-        "\" inPassword=\"" + ucsm_password + "\" />"
+        login_data = ("<aaaLogin inName=\"" + ucsm_username +
+                      "\" inPassword=\"" + ucsm_password + "\" />")
         conn.request(METHOD, URL, login_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        #LOG.debug(response.status)
-        #LOG.debug(response.reason)
-        #LOG.debug(response_data)
         # TODO (Sumit): If login is not successful, throw exception
         xml_tree = et.XML(response_data)
         cookie = xml_tree.attrib["outCookie"]
 
         data = data.replace(COOKIE_VALUE, cookie)
-        #LOG.debug("POST: %s" % data)
         conn.request(METHOD, URL, data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        #LOG.debug(response.status)
-        #LOG.debug(response.reason)
-        #LOG.debug("UCSM Response: %s" % response_data)
         post_data_response = response_data
 
         logout_data = "<aaaLogout inCookie=\"" + cookie + "\" />"
         conn.request(METHOD, URL, logout_data, HEADERS)
         response = conn.getresponse()
         response_data = response.read()
-        #LOG.debug(response.status)
-        #LOG.debug(response.reason)
-        #LOG.debug(response_data)
         return post_data_response
 
     def _create_vlan_post_data(self, vlan_name, vlan_id):
@@ -187,15 +177,14 @@ class CiscoUCSMDriver():
         data = data.replace(VLAN_NAME, vlan_name)
         return data
 
-    def _create_pclient_post_data(self, profile_name,
-                                         profile_client_name):
+    def _create_pclient_post_data(self, profile_name, profile_client_name):
         """Create command"""
         data = ASSOCIATE_PROFILE.replace(PROFILE_NAME, profile_name)
         data = data.replace(PROFILE_CLIENT, profile_client_name)
         return data
 
     def _change_vlaninprof_post_data(self, profile_name, old_vlan_name,
-                                          new_vlan_name):
+                                     new_vlan_name):
         """Create command"""
         data = CHANGE_VLAN_IN_PROFILE.replace(PROFILE_NAME, profile_name)
         data = data.replace(OLD_VLAN_NAME, old_vlan_name)
@@ -229,20 +218,23 @@ class CiscoUCSMDriver():
         data = self._get_blade_interfaces_post_data(chassis_number,
                                                     blade_number)
         response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-        elements = \
-                et.XML(response).find("outConfigs").findall("adaptorHostEthIf")
+        elements = (
+            et.XML(response).find("outConfigs").findall("adaptorHostEthIf")
+            )
         blade_interfaces = {}
         for element in elements:
             dist_name = element.get("dn", default=None)
             if dist_name:
                 order = element.get("order", default=None)
-                blade_interface = {const.BLADE_INTF_DN: dist_name,
-                                  const.BLADE_INTF_ORDER: order,
-                                  const.BLADE_INTF_LINK_STATE: None,
-                                  const.BLADE_INTF_OPER_STATE: None,
-                                  const.BLADE_INTF_INST_TYPE: None,
-                                  const.BLADE_INTF_RHEL_DEVICE_NAME:
-                                  self._get_rhel_device_name(order)}
+                blade_interface = {
+                    const.BLADE_INTF_DN: dist_name,
+                    const.BLADE_INTF_ORDER: order,
+                    const.BLADE_INTF_LINK_STATE: None,
+                    const.BLADE_INTF_OPER_STATE: None,
+                    const.BLADE_INTF_INST_TYPE: None,
+                    const.BLADE_INTF_RHEL_DEVICE_NAME:
+                    self._get_rhel_device_name(order),
+                    }
                 blade_interfaces[dist_name] = blade_interface
 
         return blade_interfaces
@@ -250,18 +242,18 @@ class CiscoUCSMDriver():
     def _get_blade_interface_state(self, blade_intf, ucsm_ip,
                               ucsm_username, ucsm_password):
         """Create command"""
-        data = \
-        self._get_blade_intf_st_post_data(blade_intf[const.BLADE_INTF_DN])
+        data = (
+            self._get_blade_intf_st_post_data(blade_intf[const.BLADE_INTF_DN])
+            )
         response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-        elements = \
-                et.XML(response).find("outConfigs").findall("dcxVIf")
+        elements = et.XML(response).find("outConfigs").findall("dcxVIf")
         for element in elements:
             blade_intf[const.BLADE_INTF_LINK_STATE] = element.get("linkState",
-                                                                 default=None)
+                                                                  default=None)
             blade_intf[const.BLADE_INTF_OPER_STATE] = element.get("operState",
-                                                                 default=None)
+                                                                  default=None)
             blade_intf[const.BLADE_INTF_INST_TYPE] = element.get("instType",
-                                                                default=None)
+                                                                 default=None)
 
     def _get_rhel_device_name(self, order):
         """Get the device name as on the RHEL host"""
@@ -279,8 +271,7 @@ class CiscoUCSMDriver():
         """Create request for UCSM"""
         data = self._create_profile_post_data(profile_name, vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
-        data = self._create_pclient_post_data(profile_name,
-                                                     profile_name[-16:])
+        data = self._create_pclient_post_data(profile_name, profile_name[-16:])
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
     def change_vlan_in_profile(self, profile_name, old_vlan_name,
@@ -288,21 +279,20 @@ class CiscoUCSMDriver():
                                ucsm_password):
         """Create request for UCSM"""
         data = self._change_vlaninprof_post_data(profile_name,
-                                                      old_vlan_name,
-                                                      new_vlan_name)
+                                                 old_vlan_name,
+                                                 new_vlan_name)
         self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
 
-    def get_blade_data(self, chassis_number, blade_number,
-                                         ucsm_ip, ucsm_username,
-                                         ucsm_password):
+    def get_blade_data(self, chassis_number, blade_number, ucsm_ip,
+                       ucsm_username, ucsm_password):
         """
         Returns only the dynamic interfaces on the blade
         """
         blade_interfaces = self._get_blade_interfaces(chassis_number,
-                                                       blade_number,
-                                                       ucsm_ip,
-                                                       ucsm_username,
-                                                       ucsm_password)
+                                                      blade_number,
+                                                      ucsm_ip,
+                                                      ucsm_username,
+                                                      ucsm_password)
         for blade_intf in blade_interfaces.keys():
             self._get_blade_interface_state(blade_interfaces[blade_intf],
                                             ucsm_ip, ucsm_username,

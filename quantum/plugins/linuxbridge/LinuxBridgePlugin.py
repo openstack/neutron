@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2012, Cisco Systems, Inc.
@@ -15,17 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-"""
 
 import logging
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as exc
 from quantum.db import api as db
-from quantum.plugins.linuxbridge import plugin_configuration as conf
 from quantum.plugins.linuxbridge.common import constants as const
 from quantum.plugins.linuxbridge.common import utils as cutil
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
+from quantum.plugins.linuxbridge import plugin_configuration as conf
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 
@@ -111,10 +109,12 @@ class LinuxBridgePlugin(QuantumPluginBase):
         new_net_id = new_network[const.UUID]
         vlan_id = self._get_vlan_for_tenant(tenant_id)
         cdb.add_vlan_binding(vlan_id, new_net_id)
-        new_net_dict = {const.NET_ID: new_net_id,
-                        const.NET_NAME: net_name,
-                        const.NET_PORTS: [],
-                        const.NET_OP_STATUS: new_network[const.OPSTATUS]}
+        new_net_dict = {
+            const.NET_ID: new_net_id,
+            const.NET_NAME: net_name,
+            const.NET_PORTS: [],
+            const.NET_OP_STATUS: new_network[const.OPSTATUS],
+            }
         return new_net_dict
 
     def delete_network(self, tenant_id, net_id):
@@ -197,7 +197,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         LOG.debug("LinuxBridgePlugin.create_port() called")
         db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state,
-                                op_status=OperationalStatus.DOWN)
+                              op_status=OperationalStatus.DOWN)
         unique_port_id_string = port[const.UUID]
         new_port_dict = cutil.make_port_dict(port)
         return new_port_dict

@@ -19,18 +19,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Isaku Yamahata
+
 import ConfigParser
 import logging as LOG
+from optparse import OptionParser
 import shlex
 import signal
+from subprocess import PIPE, Popen
 import sys
 import time
-from optparse import OptionParser
-from sqlalchemy.ext.sqlsoup import SqlSoup
-from subprocess import PIPE, Popen
 
 from ryu.app import rest_nw_id
 from ryu.app.client import OFPClient
+from sqlalchemy.ext.sqlsoup import SqlSoup
 
 
 OP_STATUS_UP = "UP"
@@ -115,11 +116,11 @@ class OVSBridge:
 
     def get_xapi_iface_id(self, xs_vif_uuid):
         return self.run_cmd(
-                        ["xe",
-                        "vif-param-get",
-                        "param-name=other-config",
-                        "param-key=nicira-iface-id",
-                        "uuid=%s" % xs_vif_uuid]).strip()
+            ["xe",
+             "vif-param-get",
+             "param-name=other-config",
+             "param-key=nicira-iface-id",
+             "uuid=%s" % xs_vif_uuid]).strip()
 
     def _vifport(self, name, external_ids):
         ofport = self.db_get_val("Interface", name, "ofport")

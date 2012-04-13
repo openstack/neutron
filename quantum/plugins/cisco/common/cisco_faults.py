@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,8 +15,7 @@
 #    under the License.
 #
 # @author: Ying Liu, Cisco Systems, Inc.
-#
-"""
+
 import webob.dec
 
 from quantum import wsgi
@@ -73,7 +71,7 @@ class PortprofileNotFound(webob.exc.HTTPClientError):
     code = 450
     title = 'Portprofile Not Found'
     explanation = ('Unable to find a Portprofile with'
-                   + ' the specified identifier.')
+                   ' the specified identifier.')
 
 
 class PortNotFound(webob.exc.HTTPClientError):
@@ -102,7 +100,7 @@ class CredentialNotFound(webob.exc.HTTPClientError):
     code = 451
     title = 'Credential Not Found'
     explanation = ('Unable to find a Credential with'
-                   + ' the specified identifier.')
+                   ' the specified identifier.')
 
 
 class QosNotFound(webob.exc.HTTPClientError):
@@ -117,7 +115,7 @@ class QosNotFound(webob.exc.HTTPClientError):
     code = 452
     title = 'QoS Not Found'
     explanation = ('Unable to find a QoS with'
-                   + ' the specified identifier.')
+                   ' the specified identifier.')
 
 
 class NovatenantNotFound(webob.exc.HTTPClientError):
@@ -132,7 +130,7 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     code = 453
     title = 'Nova tenant Not Found'
     explanation = ('Unable to find a Novatenant with'
-                   + ' the specified identifier.')
+                   ' the specified identifier.')
 
 
 class MultiportNotFound(webob.exc.HTTPClientError):
@@ -147,7 +145,7 @@ class MultiportNotFound(webob.exc.HTTPClientError):
     code = 454
     title = 'Multiport Not Found'
     explanation = ('Unable to find Multiport with'
-                   + ' the specified identifier.')
+                   ' the specified identifier.')
 
 
 class RequestedStateInvalid(webob.exc.HTTPClientError):

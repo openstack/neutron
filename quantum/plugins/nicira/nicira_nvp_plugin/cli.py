@@ -12,17 +12,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from optparse import OptionParser
-
-import gettext
 import logging
+from optparse import OptionParser
 import os
 import sys
 
-gettext.install('nvp-plugin-cli', unicode=1)
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import (
+    NvpPlugin as QuantumManager,
+    )
 
-from QuantumPlugin import NvpPlugin as QuantumManager
-import nvplib
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger('nvp-plugin-cli')

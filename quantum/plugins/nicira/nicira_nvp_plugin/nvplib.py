@@ -14,10 +14,12 @@
 #
 # @author: Brad Hall, Nicira Networks, Inc.
 
-from quantum.common import exceptions as exception
 import json
 import logging
-import NvpApiClient
+
+from quantum.common import exceptions as exception
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+
 
 LOG = logging.getLogger("nvplib")
 LOG.setLevel(logging.INFO)
@@ -36,13 +38,14 @@ def check_default_transport_zone(c):
     msg = []
     # This will throw an exception on failure and that's ok since it will
     # just propogate to the cli.
-    resp = do_single_request("GET",
+    resp = do_single_request(
+        "GET",
         "/ws.v1/transport-zone?uuid=%s" % c.default_tz_uuid,
         controller=c)
     result = json.loads(resp)
     if int(result["result_count"]) == 0:
         msg.append("Unable to find zone \"%s\" for controller \"%s\"" %
-            (c.default_tz_uuid, c.name))
+                   (c.default_tz_uuid, c.name))
     if len(msg) > 0:
         raise Exception(' '.join(msg))
 
@@ -78,8 +81,8 @@ def create_lswitch(controller, lswitch_obj):
     # Warn if no tenant is specified
     found = "os_tid" in [x["scope"] for x in lswitch_obj["tags"]]
     if not found:
-        LOG.warn("No tenant-id tag specified in logical switch: %s" % (
-            lswitch_obj))
+        LOG.warn("No tenant-id tag specified in logical switch: %s" %
+                 lswitch_obj)
     uri = "/ws.v1/lswitch"
     try:
         resp_obj = do_single_request("POST", uri,
@@ -102,8 +105,8 @@ def update_network(controller, network, **kwargs):
     if "name" in kwargs:
         lswitch_obj["display_name"] = kwargs["name"]
     try:
-        resp_obj = do_single_request("PUT", uri,
-          json.dumps(lswitch_obj), controller=controller)
+        resp_obj = do_single_request(
+            "PUT", uri, json.dumps(lswitch_obj), controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
         raise exception.NetworkNotFound(net_id=network)
@@ -148,7 +151,7 @@ def query_networks(controller, tenant_id, fields="*", tags=None):
     lswitches = json.loads(resp_obj)["results"]
     nets = [{'net-id': lswitch["uuid"],
              'net-name': lswitch["display_name"]}
-             for lswitch in lswitches]
+            for lswitch in lswitches]
     return nets
 
 
@@ -175,13 +178,16 @@ def create_network(tenant_id, net_name, **kwargs):
     transport_zone = kwargs.get("transport_zone",
       controller.default_tz_uuid)
     transport_type = kwargs.get("transport_type", "gre")
-    lswitch_obj = {"display_name": net_name,
-                   "transport_zones": [
-                    {"zone_uuid": transport_zone,
-                     "transport_type": transport_type}
-                   ],
-                "tags": [{"tag": tenant_id, "scope": "os_tid"}]
-             }
+    lswitch_obj = {
+        "display_name": net_name,
+        "transport_zones": [
+            {
+                "zone_uuid": transport_zone,
+                "transport_type": transport_type,
+                },
+            ],
+        "tags": [{"tag": tenant_id, "scope": "os_tid"}],
+        }
 
     net = create_lswitch(controller, lswitch_obj)
     net['net-op-status'] = "UP"
@@ -216,8 +222,8 @@ def get_port_stats(controller, network_id, port_id):
 
 def check_port_state(state):
     if state not in ["ACTIVE", "DOWN"]:
-        LOG.error("Invalid port state (ACTIVE and " \
-                          "DOWN are valid states): %s" % state)
+        LOG.error("Invalid port state (ACTIVE and DOWN are valid states): %s" %
+                  state)
         raise exception.StateInvalid(port_state=state)
 
 
@@ -256,9 +262,10 @@ def delete_all_ports(controller, ls_uuid):
       controller=controller)
     res = json.loads(res)
     for r in res["results"]:
-        do_single_request("DELETE",
-          "/ws.v1/lswitch/%s/lport/%s" % (ls_uuid, r["uuid"]),
-          controller=controller)
+        do_single_request(
+            "DELETE",
+            "/ws.v1/lswitch/%s/lport/%s" % (ls_uuid, r["uuid"]),
+            controller=controller)
 
 
 def get_port(controller, network, port, relations=None):
@@ -292,7 +299,7 @@ def plug_interface(controller, network, port, type, attachment=None):
         raise exception.PortNotFound(port_id=port, net_id=network)
     except NvpApiClient.Conflict as e:
         LOG.error("Conflict while making attachment to port, " \
-                      "Error: %s" % str(e))
+                  "Error: %s" % str(e))
         raise exception.AlreadyAttached(att_id=attachment,
                                         port_id=port,
                                         net_id=network,
@@ -308,8 +315,8 @@ def unplug_interface(controller, network, port):
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port + "/attachment"
     lport_obj = {"type": "NoAttachment"}
     try:
-        resp_obj = do_single_request("PUT",
-          uri, json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request(
+            "PUT", uri, json.dumps(lport_obj), controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
@@ -332,8 +339,8 @@ def update_port(network, port_id, **params):
 
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port_id
     try:
-        resp_obj = do_single_request("PUT", uri,
-          json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request(
+            "PUT", uri, json.dumps(lport_obj), controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=network)
@@ -361,8 +368,8 @@ def create_port(tenant, network, port_init_state, **params):
 
     path = "/ws.v1/lswitch/" + ls_uuid + "/lport"
     try:
-        resp_obj = do_single_request("POST", path,
-          json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request(
+            "POST", path, json.dumps(lport_obj), controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
         raise exception.NetworkNotFound(net_id=network)
@@ -387,7 +394,8 @@ def get_port_status(controller, lswitch_id, port_id):
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
     try:
-        r = do_single_request("GET",
+        r = do_single_request(
+            "GET",
             "/ws.v1/lswitch/%s/lport/%s/status" % (lswitch_id, port_id),
             controller=controller)
         r = json.loads(r)

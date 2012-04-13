@@ -19,11 +19,13 @@
 # The code below enables nosetests to work with i18n _() blocks
 
 import __builtin__
+import os
 import unittest
+
 setattr(__builtin__, '_', lambda x: x)
 
-import os
 from quantum.common import flags
+
 
 FLAGS = flags.FLAGS
 reldir = os.path.join(os.path.dirname(__file__), '..', '..', '..')

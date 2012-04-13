@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,18 +15,19 @@
 #    under the License.
 #
 # @author: Ying Liu, Cisco Systems, Inc.
-#
-"""
+
 import logging
 
 from webob import exc
-from quantum import wsgi
-from quantum.extensions import _credential_view as credential_view
+
 from quantum.api import api_common as common
+from quantum.extensions import _credential_view as credential_view
 from quantum.extensions import extensions
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_exceptions as exception
 from quantum.plugins.cisco.common import cisco_faults as faults
+from quantum import wsgi
+
 
 LOG = logging.getLogger('quantum.api.credentials')
 
@@ -76,13 +76,11 @@ class CredentialController(common.QuantumController, wsgi.Controller):
     """ credential API controller
         based on QuantumController """
 
-    _credential_ops_param_list = [{
-        'param-name': 'credential_name',
-        'required': True}, {
-        'param-name': 'user_name',
-        'required': True}, {
-        'param-name': 'password',
-        'required': True}]
+    _credential_ops_param_list = [
+        {'param-name': 'credential_name', 'required': True},
+        {'param-name': 'user_name', 'required': True},
+        {'param-name': 'password', 'required': True},
+        ]
 
     _serialization_metadata = {
         "application/xml": {
@@ -112,8 +110,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
     def show(self, request, tenant_id, id):
         """ Returns credential details for the given credential id """
         try:
-            credential = self._plugin.get_credential_details(
-                            tenant_id, id)
+            credential = self._plugin.get_credential_details(tenant_id, id)
             builder = credential_view.get_view_builder(request)
             #build response with details
             result = builder.build(credential, True)
@@ -125,18 +122,17 @@ class CredentialController(common.QuantumController, wsgi.Controller):
         """ Creates a new credential for a given tenant """
         try:
             body = self._deserialize(request.body, request.get_content_type())
-            req_body = \
-                self._prepare_request_body(body,
-                                           self._credential_ops_param_list)
+            req_body = self._prepare_request_body(
+                body, self._credential_ops_param_list)
             req_params = req_body[self._resource_name]
 
         except exc.HTTPError as exp:
             return faults.Fault(exp)
-        credential = self._plugin.\
-                       create_credential(tenant_id,
-                                          req_params['credential_name'],
-                                          req_params['user_name'],
-                                          req_params['password'])
+        credential = self._plugin.create_credential(
+            tenant_id,
+            req_params['credential_name'],
+            req_params['user_name'],
+            req_params['password'])
         builder = credential_view.get_view_builder(request)
         result = builder.build(credential)
         return dict(credentials=result)
@@ -145,16 +141,14 @@ class CredentialController(common.QuantumController, wsgi.Controller):
         """ Updates the name for the credential with the given id """
         try:
             body = self._deserialize(request.body, request.get_content_type())
-            req_body = \
-                self._prepare_request_body(body,
-                                           self._credential_ops_param_list)
+            req_body = self._prepare_request_body(
+                body, self._credential_ops_param_list)
             req_params = req_body[self._resource_name]
         except exc.HTTPError as exp:
             return faults.Fault(exp)
         try:
-            credential = self._plugin.\
-            rename_credential(tenant_id,
-                        id, req_params['credential_name'])
+            credential = self._plugin.rename_credential(
+                tenant_id, id, req_params['credential_name'])
 
             builder = credential_view.get_view_builder(request)
             result = builder.build(credential, True)

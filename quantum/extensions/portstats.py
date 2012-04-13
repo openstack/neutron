@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Nicira Networks, Inc.  All rights reserved.
@@ -16,17 +15,15 @@
 #    under the License.
 #
 # @author: Brad Hall, Nicira Networks, Inc
-#
-"""
 
 import logging
 
-from quantum import wsgi
-from quantum.extensions import _portstats_view as portstats_view
 from quantum.api import faults
 from quantum.common import exceptions as qexception
 from quantum.common import extensions
+from quantum.extensions import _portstats_view as portstats_view
 from quantum.manager import QuantumManager
+from quantum import wsgi
 
 
 LOG = logging.getLogger("quantum.api.portstats")
@@ -61,8 +58,8 @@ class Portstats(object):
         """ Returns all defined resources """
         controller = StatsController(QuantumManager.get_plugin())
         parent_resource = dict(member_name="port",
-                               collection_name="extensions/ovs/tenants/" + \
-                               ":(tenant_id)/networks/:(network_id)/ports")
+                               collection_name="extensions/ovs/tenants/"
+                               ":(tenant_id)/ networks/:(network_id)/ports")
         return [extensions.ResourceExtension('stats', controller,
                                              parent=parent_resource)]
 
@@ -84,12 +81,10 @@ class StatsController(wsgi.Controller):
     def _show(self, request, tenant_id, network_id, port_id):
         """Returns port statistics for a given port"""
         if not hasattr(self._plugin, "get_port_stats"):
-            return \
-                faults.QuantumHTTPError(
-                    qexception.NotImplementedError("get_port_stats"))
+            return faults.QuantumHTTPError(
+                qexception.NotImplementedError("get_port_stats"))
 
-        stats = self._plugin.get_port_stats(tenant_id, network_id,
-                                            port_id)
+        stats = self._plugin.get_port_stats(tenant_id, network_id, port_id)
         builder = portstats_view.get_view_builder(request)
         result = builder.build(stats, True)
         return dict(stats=result)

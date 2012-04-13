@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Ying Liu, Cisco Systems, Inc.
 #
-"""
 
 
 def get_view_builder(req):
@@ -52,5 +50,5 @@ class ViewBuilder(object):
     def _build_detail(self, credential_data):
         """Return a detailed description of credential."""
         return dict(credential=dict(id=credential_data['credential_id'],
-                                name=credential_data['user_name'],
-                                password=credential_data['password']))
+                                    name=credential_data['user_name'],
+                                    password=credential_data['password']))

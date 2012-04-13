@@ -32,6 +32,7 @@ from quantum.plugins.cisco.db import nexus_db as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -70,10 +71,11 @@ class NexusPlugin(L2DevicePluginBase):
         for this VLAN
         """
         LOG.debug("NexusPlugin:create_network() called\n")
-        self._client.create_vlan(vlan_name, str(vlan_id), self._nexus_ip,
-                self._nexus_username, self._nexus_password,
-                self._nexus_first_port, self._nexus_second_port,
-                self._nexus_ssh_port)
+        self._client.create_vlan(
+            vlan_name, str(vlan_id), self._nexus_ip,
+            self._nexus_username, self._nexus_password,
+            self._nexus_first_port, self._nexus_second_port,
+            self._nexus_ssh_port)
         nxos_db.add_nexusport_binding(self._nexus_first_port, str(vlan_id))
         nxos_db.add_nexusport_binding(self._nexus_second_port, str(vlan_id))
 
@@ -97,7 +99,8 @@ class NexusPlugin(L2DevicePluginBase):
         nxos_db.remove_nexusport_binding(vlan_id)
         net = self._get_network(tenant_id, net_id)
         if net:
-            self._client.delete_vlan(str(vlan_id), self._nexus_ip,
+            self._client.delete_vlan(
+                str(vlan_id), self._nexus_ip,
                 self._nexus_username, self._nexus_password,
                 self._nexus_first_port, self._nexus_second_port,
                 self._nexus_ssh_port)

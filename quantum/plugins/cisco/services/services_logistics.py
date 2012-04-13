@@ -26,9 +26,10 @@ import time
 
 from quantum.common import utils
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.plugins.cisco.db import services_db as sdb
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.db import services_db as sdb
 from quantum.plugins.cisco.services import services_constants as servconts
+
 
 LOG = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class ServicesLogistics():
             while not flag and counter <= 5:
                 counter = counter + 1
                 time.sleep(2.5)
-                process = subprocess.Popen(service_args, \
+                process = subprocess.Popen(service_args,
                                            stdout=subprocess.PIPE)
                 result = process.stdout.readlines()
                 if not result:
@@ -74,8 +75,8 @@ class ServicesLogistics():
             while not flag and counter <= 10:
                 counter = counter + 1
                 time.sleep(2.5)
-                process = subprocess.Popen(service_args, \
-                                    stdout=subprocess.PIPE)
+                process = subprocess.Popen(service_args,
+                                           stdout=subprocess.PIPE)
                 result = process.stdout.readlines()
                 if result:
                     tokens = re.search("running", str(result[1]))
@@ -105,8 +106,8 @@ class ServicesLogistics():
         """
         _plugins = {}
         for key in conf.PLUGINS[const.PLUGINS].keys():
-            _plugins[key] = \
-                utils.import_object(conf.PLUGINS[const.PLUGINS][key])
+            _plugins[key] = (
+                utils.import_object(conf.PLUGINS[const.PLUGINS][key]))
         if not plugin_key in _plugins.keys():
             LOG.debug("No %s Plugin loaded" % plugin_key)
             return False

@@ -20,68 +20,69 @@
 """
 Exceptions used by the Cisco plugin
 """
+
 from quantum.common import exceptions
 
 
 class NoMoreNics(exceptions.QuantumException):
     """No more dynamic nics are available in the system"""
-    message = _("Unable to complete operation. No more dynamic nics are " \
+    message = _("Unable to complete operation. No more dynamic nics are "
                  "available in the system.")
 
 
 class PortProfileLimit(exceptions.QuantumException):
     """Port profile limit has been hit"""
-    message = _("Unable to complete operation on port %(port_id)s " \
-                "for network %(net_id)s. The system has reached the maximum" \
+    message = _("Unable to complete operation on port %(port_id)s "
+                "for network %(net_id)s. The system has reached the maximum"
                 "limit of allowed port profiles.")
 
 
 class UCSMPortProfileLimit(exceptions.QuantumException):
     """UCSM Port profile limit has been hit"""
-    message = _("Unable to complete operation on port %(port_id)s " \
-                "for network %(net_id)s. The system has reached the maximum" \
+    message = _("Unable to complete operation on port %(port_id)s "
+                "for network %(net_id)s. The system has reached the maximum"
                 "limit of allowed UCSM port profiles.")
 
 
 class NetworksLimit(exceptions.QuantumException):
     """Total number of network objects limit has been hit"""
-    message = _("Unable to create new network. Number of networks" \
+    message = _("Unable to create new network. Number of networks"
                 "for the system has exceeded the limit")
 
 
 class PortProfileNotFound(exceptions.QuantumException):
     """Port profile cannot be found"""
-    message = _("Port profile %(portprofile_id)s could not be found " \
+    message = _("Port profile %(portprofile_id)s could not be found "
                 "for tenant %(tenant_id)s")
 
 
 class MultiportNotFound(exceptions.QuantumException):
     """Multiport cannot be found"""
-    message = _("Multiports %(port_id)s could not be found " \
+    message = _("Multiports %(port_id)s could not be found "
                 "for tenant %(tenant_id)s")
 
 
 class PortProfileInvalidDelete(exceptions.QuantumException):
     """Port profile cannot be deleted since its being used"""
-    message = _("Port profile %(profile_id)s could not be deleted " \
+    message = _("Port profile %(profile_id)s could not be deleted "
                 "for tenant %(tenant_id)s since port associations exist")
 
 
 class NetworkVlanBindingAlreadyExists(exceptions.QuantumException):
     """Binding cannot be created, since it already exists"""
-    message = _("NetworkVlanBinding for %(vlan_id)s and network " \
+    message = _("NetworkVlanBinding for %(vlan_id)s and network "
                 "%(network_id)s already exists")
 
 
 class PortProfileAlreadyExists(exceptions.QuantumException):
     """Port profile cannot be created since it already exisits"""
-    message = _("PortProfile %(pp_name) for %(tenant_id)s " \
+    message = _("PortProfile %(pp_name) for %(tenant_id)s "
                 "already exists")
 
 
 class PortProfileBindingAlreadyExists(exceptions.QuantumException):
     """Binding cannot be created, since it already exists"""
-    message = _("PortProfileBinding for port profile %(pp_id)s to " \
+    message = _("PortProfileBinding for port profile %(pp_id)s to "
                  "port %(port_id) already exists")
 
 
@@ -97,37 +98,37 @@ class VlanIDNotAvailable(exceptions.QuantumException):
 
 class QosNotFound(exceptions.QuantumException):
     """QoS level with this ID cannot be found"""
-    message = _("QoS level %(qos_id)s could not be found " \
+    message = _("QoS level %(qos_id)s could not be found "
                 "for tenant %(tenant_id)s")
 
 
 class QoSLevelInvalidDelete(exceptions.QuantumException):
     """QoS is associated with a port profile, hence cannot be deleted"""
-    message = _("QoS level %(qos_id)s could not be deleted " \
+    message = _("QoS level %(qos_id)s could not be deleted "
                 "for tenant %(tenant_id)s since association exists")
 
 
 class QosNameAlreadyExists(exceptions.QuantumException):
     """QoS Name already exists"""
-    message = _("QoS level with name %(qos_name)s already exists " \
+    message = _("QoS level with name %(qos_name)s already exists "
                 "for tenant %(tenant_id)s")
 
 
 class CredentialNotFound(exceptions.QuantumException):
     """Credential with this ID cannot be found"""
-    message = _("Credential %(credential_id)s could not be found " \
+    message = _("Credential %(credential_id)s could not be found "
                 "for tenant %(tenant_id)s")
 
 
 class CredentialNameNotFound(exceptions.QuantumException):
     """Credential Name could not be found"""
-    message = _("Credential %(credential_name)s could not be found " \
+    message = _("Credential %(credential_name)s could not be found "
                 "for tenant %(tenant_id)s")
 
 
 class CredentialAlreadyExists(exceptions.QuantumException):
     """Credential ID already exists"""
-    message = _("Credential %(credential_id)s already exists " \
+    message = _("Credential %(credential_id)s already exists "
                 "for tenant %(tenant_id)s")
 
 
@@ -177,23 +178,8 @@ class PortVnicNotFound(exceptions.QuantumException):
 
 
 class InvalidAttach(exceptions.QuantumException):
-    message = _("Unable to plug the attachment %(att_id)s into port " \
-                "%(port_id)s for network %(net_id)s. Association of " \
-                "attachment ID with port ID happens implicitly when " \
-                "VM is instantiated; attach operation can be " \
+    message = _("Unable to plug the attachment %(att_id)s into port "
+                "%(port_id)s for network %(net_id)s. Association of "
+                "attachment ID with port ID happens implicitly when "
+                "VM is instantiated; attach operation can be "
                 "performed subsequently.")
-
-
-try:
-    _("test")
-except NameError:
-
-    def _(a_string):
-        """
-        Default implementation of the gettext string
-        translation function: no translation
-        """
-        return a_string
-except TypeError:
-    # during doctesting, _ might mean something else
-    pass

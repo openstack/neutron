@@ -25,11 +25,10 @@ To run all tests::
     PLUGIN_DIR=quantum/plugins/linuxbridge ./run_tests.sh
 """
 
-import gettext
 import logging
 import os
-import unittest
 import sys
+import unittest
 
 from nose import config
 from nose import core

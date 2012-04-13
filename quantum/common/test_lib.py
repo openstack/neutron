@@ -37,15 +37,14 @@
 #    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 #    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import gettext
-import os
-import unittest
-import sys
 import logging
+import os
+import sys
+import unittest
 
-from nose import result
-from nose import core
 from nose import config
+from nose import core
+from nose import result
 
 
 class _AnsiColorizer(object):

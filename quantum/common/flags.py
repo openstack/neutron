@@ -238,7 +238,7 @@ def DECLARE(name, module_string, flag_values=FLAGS):
         __import__(module_string, globals(), locals())
     if name not in flag_values:
         raise gflags.UnrecognizedFlag(
-                "%s not defined by %s" % (name, module_string))
+            "%s not defined by %s" % (name, module_string))
 
 
 # __GLOBAL FLAGS ONLY__

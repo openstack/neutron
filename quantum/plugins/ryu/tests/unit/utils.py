@@ -16,15 +16,16 @@
 #    under the License.
 
 import ConfigParser
+from StringIO import StringIO
 import imp
 import os
 import tempfile
-from StringIO import StringIO
 
 import mock
 
 from quantum.plugins.ryu.tests.unit import fake_rest_nw_id
 from quantum.plugins.ryu.tests.unit import fake_ryu_client
+
 
 FAKE_CONTROLLER_ADDR = '127.0.0.1:6633'
 FAKE_REST_ADDR = '127.0.0.1:8080'

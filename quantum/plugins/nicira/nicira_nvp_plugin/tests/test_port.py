@@ -20,9 +20,12 @@ import os
 import unittest
 
 from quantum.common import exceptions as exception
-from nicira_nvp_plugin.QuantumPlugin import NvpPlugin
-from nicira_nvp_plugin import NvpApiClient
-from nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
+from quantum.plugins.nicira.nicira_nvp_plugin import (
+    NvpApiClient,
+    nvplib,
+    )
+
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger("test_port")
@@ -49,17 +52,17 @@ class NvpTests(unittest.TestCase):
             nvplib.do_single_request("DELETE", "/ws.v1/transport-node/%s" % t,
                                      controller=self.quantum.controller)
         for c in self.cis_uuids:
-            nvplib.do_single_request("DELETE",
+            nvplib.do_single_request(
+                "DELETE",
                 "/ws.v1/cluster-interconnect-service/%s" % c,
                 controller=self.quantum.controller)
 
     def _create_tz(self, name):
         post_uri = "/ws.v1/transport-zone"
-        body = {"display_name": name,
-                "tags": [{"tag": "plugin-test"}]}
+        body = {"display_name": name, "tags": [{"tag": "plugin-test"}]}
         try:
-            resp_obj = self.quantum.api_client.request("POST",
-              post_uri, json.dumps(body))
+            resp_obj = self.quantum.api_client.request(
+                "POST", post_uri, json.dumps(body))
         except NvpApiClient.NvpApiException as e:
             LOG.error("Unknown API Error: %s" % str(e))
             raise exception.QuantumException()
@@ -135,17 +138,17 @@ class NvpTests(unittest.TestCase):
 
         params = {}
         params["NICIRA:allowed_address_pairs"] = [
-          {
-             "ip_address": "172.168.17.5",
-             "mac_address": "10:9a:dd:61:4e:89"
-            },
             {
-             "ip_address": "172.168.17.6",
-             "mac_address": "10:9a:dd:61:4e:88"
-            }
-        ]
+                "ip_address": "172.168.17.5",
+                "mac_address": "10:9a:dd:61:4e:89",
+                },
+            {
+                "ip_address": "172.168.17.6",
+                "mac_address": "10:9a:dd:61:4e:88",
+                },
+            ]
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
-            "ACTIVE", **params)
+                                        "ACTIVE", **params)
         port_id = resp["port-id"]
         resp = self.quantum.delete_port("quantum-test-tenant", net_id, port_id)
         self.quantum.delete_network("quantum-test-tenant", net_id)
@@ -256,7 +259,7 @@ class NvpTests(unittest.TestCase):
     def test_negative_create_port1(self):
         try:
             self.quantum.create_port("quantum-test-tenant", "xxx-no-net-id",
-              "ACTIVE")
+                                     "ACTIVE")
         except exception.NetworkNotFound:
             self.assertTrue(True)
             return
@@ -265,10 +268,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_create_port2(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.create_port("quantum-test-tenant", resp1["net-id"],
-                "INVALID")
+                                     "INVALID")
         except exception.StateInvalid:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -279,10 +282,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_update_port1(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.update_port("quantum-test-tenant", resp1["net-id"],
-                "port_id_fake", state="ACTIVE")
+                                     "port_id_fake", state="ACTIVE")
         except exception.PortNotFound:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -292,10 +295,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_update_port2(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.update_port("quantum-test-tenant", resp1["net-id"],
-                "port_id_fake", state="INVALID")
+                                     "port_id_fake", state="INVALID")
         except exception.StateInvalid:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -305,10 +308,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_update_port3(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.update_port("quantum-test-tenant", resp1["net-id"],
-                "port_id_fake", state="ACTIVE")
+                                     "port_id_fake", state="ACTIVE")
         except exception.PortNotFound:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -319,10 +322,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_delete_port1(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.delete_port("quantum-test-tenant", resp1["net-id"],
-                "port_id_fake")
+                                     "port_id_fake")
         except exception.PortNotFound:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -332,10 +335,10 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_delete_port2(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.delete_port("quantum-test-tenant", resp1["net-id"],
-                "port_id_fake")
+                                     "port_id_fake")
         except exception.PortNotFound:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant", resp1["net-id"])
@@ -346,11 +349,11 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_get_port_details(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.get_port_details("quantum-test-tenant",
                                           resp1["net-id"],
-                "port_id_fake")
+                                          "port_id_fake")
         except exception.PortNotFound:
             self.assertTrue(True)
             self.quantum.delete_network("quantum-test-tenant",
@@ -362,7 +365,7 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_plug_interface(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.plug_interface("quantum-test-tenant",
                                         resp1["net-id"],
@@ -377,7 +380,7 @@ class NvpTests(unittest.TestCase):
 
     def test_negative_unplug_interface(self):
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         try:
             self.quantum.unplug_interface("quantum-test-tenant",
                                           resp1["net-id"], "port_id_fake")
@@ -401,8 +404,9 @@ class NvpTests(unittest.TestCase):
 
     def test_get_port_status_invalid_port(self):
         resp = self.quantum.create_custom_network("quantum-test-tenant",
-            "quantum-Private-TenantA", self.BRIDGE_TZ_UUID,
-            self.quantum.controller)
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
         self.networks.append(net_id)
 
@@ -416,8 +420,9 @@ class NvpTests(unittest.TestCase):
 
     def test_get_port_status_returns_the_right_stuff(self):
         resp = self.quantum.create_custom_network("quantum-test-tenant",
-            "quantum-Private-TenantA", self.BRIDGE_TZ_UUID,
-            self.quantum.controller)
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
         self.networks.append(net_id)
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
@@ -439,8 +444,9 @@ class NvpTests(unittest.TestCase):
 
     def test_get_port_stats_invalid_port(self):
         resp = self.quantum.create_custom_network("quantum-test-tenant",
-            "quantum-Private-TenantA", self.BRIDGE_TZ_UUID,
-            self.quantum.controller)
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
         self.networks.append(net_id)
 
@@ -454,8 +460,9 @@ class NvpTests(unittest.TestCase):
 
     def test_get_port_stats_returns_the_right_stuff(self):
         resp = self.quantum.create_custom_network("quantum-test-tenant",
-            "quantum-Private-TenantA", self.BRIDGE_TZ_UUID,
-            self.quantum.controller)
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
         self.networks.append(net_id)
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
@@ -472,8 +479,9 @@ class NvpTests(unittest.TestCase):
 
     def test_port_filters_by_attachment(self):
         resp = self.quantum.create_custom_network("quantum-test-tenant",
-            "quantum-Private-TenantA", self.BRIDGE_TZ_UUID,
-            self.quantum.controller)
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
         self.networks.append(net_id)
 
@@ -483,7 +491,7 @@ class NvpTests(unittest.TestCase):
         port_id1 = port_id
         self.ports.append((net_id, port_id))
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id,
-            "attachment1")
+                                    "attachment1")
 
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
                                         "ACTIVE")
@@ -491,7 +499,7 @@ class NvpTests(unittest.TestCase):
         port_id2 = port_id
         self.ports.append((net_id, port_id))
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id,
-            "attachment2")
+                                    "attachment2")
 
         # Make sure we get all the ports that we created back
         ports = self.quantum.get_all_ports("quantum-test-tenant", net_id)
@@ -504,6 +512,7 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(ports[0]["port-id"] == port_id2)
 
         # Make sure we don't get any back with an invalid filter
-        ports = self.quantum.get_all_ports("quantum-test-tenant", net_id,
+        ports = self.quantum.get_all_ports(
+            "quantum-test-tenant", net_id,
             filter_opts={"attachment": "invalidattachment"})
         self.assertTrue(len(ports) == 0)

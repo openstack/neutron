@@ -12,12 +12,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-import unittest
-import StringIO
 import ConfigParser
-from nicira_nvp_plugin.QuantumPlugin import parse_config
-from nicira_nvp_plugin.QuantumPlugin import NVPCluster
+import StringIO
+import unittest
+
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import (
+    NVPCluster,
+    parse_config,
+    )
 
 
 class ConfigParserTest(unittest.TestCase):
@@ -46,7 +48,7 @@ class ConfigParserTest(unittest.TestCase):
         self.assertTrue(len(nvpc.controllers) == 3)
 
     def test_old_config_parser_old_style(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
@@ -54,7 +56,7 @@ NVP_CONTROLLER_IP = <controller ip>
 PORT = <port>
 USER = <user>
 PASSWORD = <pass>
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
@@ -78,13 +80,13 @@ PASSWORD = <pass>
             cluster1.controllers[0]['redirects'] == 2)
 
     def test_old_config_parser_new_style(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
 NVP_CONTROLLER_CONNECTIONS = CONNECTION1
 CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
@@ -108,7 +110,7 @@ CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
             cluster1.controllers[0]['redirects'] == 45)
 
     def test_old_config_parser_both_styles(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 NVP_CONTROLLER_IP = <controller ip>
@@ -118,7 +120,7 @@ PASSWORD = <pass>
 DEFAULT_TZ_UUID = <default uuid>
 NVP_CONTROLLER_CONNECTIONS = CONNECTION1
 CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
@@ -142,7 +144,7 @@ CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
             cluster1.controllers[0]['redirects'] == 45)
 
     def test_old_config_parser_both_styles(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 NVP_CONTROLLER_IP = <controller ip>
@@ -152,7 +154,7 @@ PASSWORD = <pass>
 DEFAULT_TZ_UUID = <default uuid>
 NVP_CONTROLLER_CONNECTIONS = CONNECTION1
 CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
@@ -176,7 +178,7 @@ CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
             cluster1.controllers[0]['redirects'] == 45)
 
     def test_failover_time(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
@@ -185,28 +187,28 @@ PORT = 443
 USER = admin
 PASSWORD = admin
 FAILOVER_TIME = 10
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
         self.assertTrue(plugin_config['failover_time'] == '10')
 
     def test_failover_time_new_style(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
 NVP_CONTROLLER_CONNECTIONS = CONNECTION1
 CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
 FAILOVER_TIME = 10
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
         self.assertTrue(plugin_config['failover_time'] == '10')
 
     def test_concurrent_connections_time(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
@@ -215,21 +217,21 @@ PORT = 443
 USER = admin
 PASSWORD = admin
 CONCURRENT_CONNECTIONS = 5
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)
         self.assertTrue(plugin_config['concurrent_connections'] == '5')
 
     def test_concurrent_connections_time_new_style(self):
-        config = StringIO.StringIO('''
+        config = StringIO.StringIO("""
 [DEFAULT]
 [NVP]
 DEFAULT_TZ_UUID = <default uuid>
 NVP_CONTROLLER_CONNECTIONS = CONNECTION1
 CONNECTION1 = 10.0.0.1:4242:admin:admin:42:43:44:45
 CONCURRENT_CONNECTIONS = 5
-''')
+""")
         cp = ConfigParser.ConfigParser()
         cp.readfp(config)
         cluster1, plugin_config = parse_config(cp)

@@ -17,8 +17,9 @@
 import logging
 import unittest
 
-from nicira_nvp_plugin.QuantumPlugin import NvpPlugin
-from nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger("test_check")

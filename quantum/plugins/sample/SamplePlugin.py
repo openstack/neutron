@@ -22,6 +22,7 @@ from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as exc
 from quantum.db import api as db
 
+
 LOG = logging.getLogger('quantum.plugins.sample.SamplePlugin')
 
 
@@ -247,8 +248,8 @@ class FakePlugin(object):
         """
         LOG.debug("FakePlugin.get_all_ports() called")
         db.validate_network_ownership(tenant_id, net_id)
-        filter_opts = kwargs.get('filter_opts', None)
-        if not filter_opts is None and len(filter_opts) > 0:
+        filter_opts = kwargs.get('filter_opts')
+        if filter_opts:
             LOG.debug("filtering options were passed to the plugin"
                       "but the Fake plugin does not support them")
         port_ids = []
@@ -279,8 +280,7 @@ class FakePlugin(object):
         self._get_network(tenant_id, net_id)
         port = db.port_create(net_id, port_state)
         # Put operational status UP
-        db.port_update(port.uuid, net_id,
-                       op_status=OperationalStatus.UP)
+        db.port_update(port.uuid, net_id, op_status=OperationalStatus.UP)
         port_item = {'port-id': str(port.uuid)}
         return port_item
 
@@ -293,8 +293,7 @@ class FakePlugin(object):
         self._get_network(tenant_id, net_id)
         self._get_port(tenant_id, net_id, port_id)
         port = db.port_update(port_id, net_id, **kwargs)
-        port_item = {'port-id': port_id,
-                     'port-state': port['state']}
+        port_item = {'port-id': port_id, 'port-state': port['state']}
         return port_item
 
     def delete_port(self, tenant_id, net_id, port_id):

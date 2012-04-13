@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -24,27 +23,22 @@
 # Cisco adaptation for extensions
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Ying Liu, Cisco Systems, Inc.
-#
-"""
 
-import gettext
 import logging
 import logging.handlers
+from optparse import OptionParser
 import os
 import sys
 import subprocess
-
-from optparse import OptionParser
 
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantumclient import Client
 import quantumclient.cli as qcli
 
 
-gettext.install('quantum', unicode=1)
-
-
 LOG = logging.getLogger('quantum')
+
+
 FORMAT = 'json'
 ACTION_PREFIX_EXT = '/v1.0'
 ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
@@ -58,8 +52,8 @@ def help():
     """Help for CLI"""
     print "\nCisco Extension Commands:"
     for key in COMMANDS.keys():
-        print "    %s %s" % (key,
-          " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
+        print "    %s %s" % (
+            key, " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
 
 
 def build_args(cmd, cmdargs, arglist):
@@ -72,15 +66,15 @@ def build_args(cmd, cmdargs, arglist):
             del arglist[0]
     except:
         LOG.error("Not enough arguments for \"%s\" (expected: %d, got: %d)" % (
-          cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+            cmd, len(cmdargs), len(orig_arglist)))
+        print "Usage:\n    %s %s" % (
+            cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     if len(arglist) > 0:
         LOG.error("Too many arguments for \"%s\" (expected: %d, got: %d)" % (
-          cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+            cmd, len(cmdargs), len(orig_arglist)))
+        print "Usage:\n    %s %s" % (
+            cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     return args
 
@@ -98,12 +92,15 @@ def schedule_host(tenant_id, instance_id, user_id=None):
     """Gets the host name from the Quantum service"""
     project_id = tenant_id
 
-    instance_data_dict = \
-            {'novatenant': \
-             {'instance_id': instance_id,
-              'instance_desc': \
-              {'user_id': user_id,
-               'project_id': project_id}}}
+    instance_data_dict = {
+        'novatenant': {
+            'instance_id': instance_id,
+            'instance_desc': {
+                'user_id': user_id,
+                'project_id': project_id,
+                },
+            },
+        }
 
     request_url = "/novatenants/" + project_id + "/schedule_host"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
@@ -112,8 +109,8 @@ def schedule_host(tenant_id, instance_id, user_id=None):
 
     hostname = data["host_list"]["host_1"]
     if not hostname:
-        print("Scheduler was unable to locate a host" + \
-              " for this request. Is the appropriate" + \
+        print("Scheduler was unable to locate a host"
+              " for this request. Is the appropriate"
               " service running?")
 
     print("Quantum service returned host: %s" % hostname)
@@ -122,7 +119,7 @@ def schedule_host(tenant_id, instance_id, user_id=None):
 def create_multiport(tenant_id, net_id_list, *args):
     """Creates ports on a single host"""
     net_list = net_id_list.split(",")
-    ports_info = {'multiport': \
+    ports_info = {'multiport':
                   {'status': 'ACTIVE',
                    'net_id_list': net_list,
                    'ports_desc': {'key': 'value'}}}
@@ -136,16 +133,20 @@ def create_multiport(tenant_id, net_id_list, *args):
 
 
 COMMANDS = {
-  "create_multiport": {
-    "func": create_multiport,
-    "args": ["tenant-id",
-             "net-id-list (comma separated list of netword IDs)"]},
-  "list_extensions": {
-    "func": list_extensions,
-    "args": []},
-  "schedule_host": {
-    "func": schedule_host,
-    "args": ["tenant-id", "instance-id"]}, }
+    "create_multiport": {
+        "func": create_multiport,
+        "args": ["tenant-id",
+                 "net-id-list (comma separated list of netword IDs)"],
+        },
+    "list_extensions": {
+        "func": list_extensions,
+        "args": [],
+        },
+    "schedule_host": {
+        "func": schedule_host,
+        "args": ["tenant-id", "instance-id"],
+        },
+    }
 
 
 def main():
@@ -153,17 +154,20 @@ def main():
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     PARSER = OptionParser(usage=usagestr)
     PARSER.add_option("-H", "--host", dest="host",
-      type="string", default="127.0.0.1", help="ip address of api host")
+                      type="string", default="127.0.0.1",
+                      help="ip address of api host")
     PARSER.add_option("-p", "--port", dest="port",
-      type="int", default=9696, help="api poort")
+                      type="int", default=9696, help="api poort")
     PARSER.add_option("-s", "--ssl", dest="ssl",
-      action="store_true", default=False, help="use ssl")
+                      action="store_true", default=False, help="use ssl")
     PARSER.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
+                      action="store_true", default=False,
+                      help="turn on verbose logging")
     PARSER.add_option("-f", "--logfile", dest="logfile",
-      type="string", default="syslog", help="log file path")
-    PARSER.add_option('--version', default=DEFAULT_QUANTUM_VERSION,
-      help='Accepts 1.1 and 1.0, defaults to env[QUANTUM_VERSION].')
+                      type="string", default="syslog", help="log file path")
+    PARSER.add_option(
+        '--version', default=DEFAULT_QUANTUM_VERSION,
+        help='Accepts 1.1 and 1.0, defaults to env[QUANTUM_VERSION].')
     options, args = PARSER.parse_args()
 
     if options.verbose:

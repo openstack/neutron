@@ -19,30 +19,32 @@ from webob import exc
 
 from quantum.api import api_common as common
 from quantum.api import faults
-from quantum.api.views import networks as networks_view
 from quantum.api.views import filters
+from quantum.api.views import networks as networks_view
 from quantum.common import exceptions as exception
+
 
 LOG = logging.getLogger('quantum.api.networks')
 
 
 def create_resource(plugin, version):
     controller_dict = {
-                        '1.0': [ControllerV10(plugin),
-                               ControllerV10._serialization_metadata,
-                               common.XML_NS_V10],
-                        '1.1': [ControllerV11(plugin),
-                                ControllerV11._serialization_metadata,
-                                common.XML_NS_V11]}
+        '1.0': [ControllerV10(plugin),
+                ControllerV10._serialization_metadata,
+                common.XML_NS_V10],
+        '1.1': [ControllerV11(plugin),
+                ControllerV11._serialization_metadata,
+                common.XML_NS_V11],
+        }
     return common.create_resource(version, controller_dict)
 
 
 class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
 
-    _network_ops_param_list = [{
-        'param-name': 'name',
-        'required': True}, ]
+    _network_ops_param_list = [
+        {'param-name': 'name', 'required': True},
+        ]
 
     def __init__(self, plugin):
         self._resource_name = 'network'
@@ -52,17 +54,17 @@ class Controller(common.QuantumController):
               net_details=True, port_details=False):
         # We expect get_network_details to return information
         # concerning logical ports as well.
-        network = self._plugin.get_network_details(
-                            tenant_id, network_id)
+        network = self._plugin.get_network_details(tenant_id, network_id)
         # Doing this in the API is inefficient
         # TODO(salvatore-orlando): This should be fixed with Bug #834012
         # Don't pass filter options
         ports_data = None
         if port_details:
             port_list = self._plugin.get_all_ports(tenant_id, network_id)
-            ports_data = [self._plugin.get_port_details(
-                                   tenant_id, network_id, port['port-id'])
-                      for port in port_list]
+            ports_data = [
+                self._plugin.get_port_details(tenant_id, network_id,
+                                              port['port-id'])
+                for port in port_list]
         builder = networks_view.get_view_builder(request, self.version)
         result = builder.build(network, net_details,
                                ports_data, port_details)['network']
@@ -128,10 +130,9 @@ class Controller(common.QuantumController):
         # request_params but that would mean all the plugins would need to
         # change.
         body = self._prepare_request_body(body, self._network_ops_param_list)
-        network = self._plugin.\
-                   create_network(tenant_id,
-                                  body['network']['name'],
-                                  **body)
+        network = self._plugin.create_network(tenant_id,
+                                              body['network']['name'],
+                                              **body)
         builder = networks_view.get_view_builder(request, self.version)
         result = builder.build(network)['network']
         return dict(network=result)
@@ -153,13 +154,16 @@ class ControllerV10(Controller):
     """Network resources controller for Quantum v1.0 API"""
 
     _serialization_metadata = {
-            "attributes": {
-                "network": ["id", "name"],
-                "port": ["id", "state"],
-                "attachment": ["id"]},
-            "plurals": {"networks": "network",
-                        "ports": "port"}
-    }
+        "attributes": {
+            "network": ["id", "name"],
+            "port": ["id", "state"],
+            "attachment": ["id"],
+            },
+        "plurals": {
+            "networks": "network",
+            "ports": "port",
+            },
+        }
 
     def __init__(self, plugin):
         self.version = "1.0"
@@ -176,13 +180,16 @@ class ControllerV11(Controller):
     """
 
     _serialization_metadata = {
-            "attributes": {
-                "network": ["id", "name", "op-status"],
-                "port": ["id", "state", "op-status"],
-                "attachment": ["id"]},
-            "plurals": {"networks": "network",
-                        "ports": "port"}
-    }
+        "attributes": {
+            "network": ["id", "name", "op-status"],
+            "port": ["id", "state", "op-status"],
+            "attachment": ["id"],
+            },
+        "plurals": {
+            "networks": "network",
+            "ports": "port",
+            },
+        }
 
     def __init__(self, plugin):
         self.version = "1.1"

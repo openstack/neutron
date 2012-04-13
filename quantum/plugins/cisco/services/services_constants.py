@@ -22,8 +22,7 @@ Services Constants for the Services insertion Library
 
 FORMAT = 'json'
 ACTION_PREFIX_EXT = '/v1.0'
-ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
-        '/extensions/csco/tenants/{tenant_id}'
+ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + '/extensions/csco/tenants/{tenant_id}'
 NETWORK = 'network'
 ID = 'id'
 PORTS = 'ports'

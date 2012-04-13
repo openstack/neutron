@@ -16,9 +16,10 @@
 #    under the License.
 
 import logging
+
 from quantum.common import config
-from quantum import wsgi
 from quantum.common import exceptions as exception
+from quantum import wsgi
 
 
 LOG = logging.getLogger('quantum.service')
@@ -53,11 +54,9 @@ class QuantumApiService(WsgiService):
     def create(cls, conf=None, options=None, args=None):
         app_name = "quantum"
         if not conf:
-            conf_file, conf = config.load_paste_config(
-                              app_name, options, args)
+            conf_file, conf = config.load_paste_config(app_name, options, args)
             if not conf:
-                message = (_('No paste configuration found for: %s'),
-                           app_name)
+                message = (_('No paste configuration found for: %s'), app_name)
                 raise exception.Error(message)
 
         # Setup logging early, supplying both the CLI options and the
@@ -67,12 +66,11 @@ class QuantumApiService(WsgiService):
         # Log the options used when starting if we're in debug mode...
 
         config.setup_logging(options, conf)
-        debug = options.get('debug') or \
-                config.get_option(conf, 'debug',
-                                  type='bool', default=False)
-        verbose = options.get('verbose') or \
-                config.get_option(conf, 'verbose',
-                                  type='bool', default=False)
+        debug = (options.get('debug') or
+                 config.get_option(conf, 'debug', type='bool', default=False))
+        verbose = (options.get('verbose') or
+                   config.get_option(conf, 'verbose', type='bool',
+                                     default=False))
         conf['debug'] = debug
         conf['verbose'] = verbose
         LOG.debug("*" * 80)
@@ -107,9 +105,8 @@ def _run_wsgi(app_name, paste_conf, paste_config_file):
                                       None)
     if not app:
         LOG.error(_('No known API applications configured in %s.'),
-                      paste_config_file)
+                  paste_config_file)
         return
     server = wsgi.Server("Quantum")
-    server.start(app,
-                 int(paste_conf['bind_port']), paste_conf['bind_host'])
+    server.start(app, int(paste_conf['bind_port']), paste_conf['bind_host'])
     return server

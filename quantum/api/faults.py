@@ -20,6 +20,7 @@ import webob.exc
 
 from quantum.common import exceptions
 
+
 _NETNOTFOUND_EXPL = 'Unable to find a network with the specified identifier.'
 _NETINUSE_EXPL = 'Unable to remove the network: attachments still plugged.'
 _PORTNOTFOUND_EXPL = 'Unable to find a port with the specified identifier.'
@@ -39,13 +40,15 @@ def fault_body_function_v10(wrapped_exc):
     :rtype: tuple
     """
     code = wrapped_exc.status_int
-    fault_name = hasattr(wrapped_exc, 'title') and \
-                 wrapped_exc.title or "quantumServiceFault"
+    fault_name = (hasattr(wrapped_exc, 'title') and
+                  wrapped_exc.title or "quantumServiceFault")
     fault_data = {
         fault_name: {
             'code': code,
             'message': wrapped_exc.explanation,
-            'detail': str(wrapped_exc.detail)}}
+            'detail': str(wrapped_exc.detail),
+            },
+        }
     metadata = {'attributes': {fault_name: ['code']}}
     return fault_data, metadata
 
@@ -59,15 +62,17 @@ def fault_body_function_v11(wrapped_exc):
     :returns: response body contents and serialization metadata
     :rtype: tuple
     """
-    fault_name = hasattr(wrapped_exc, 'type') and \
-                 wrapped_exc.type or "QuantumServiceFault"
+    fault_name = (hasattr(wrapped_exc, 'type') and
+                  wrapped_exc.type or "QuantumServiceFault")
     # Ensure first letter is capital
     fault_name = fault_name[0].upper() + fault_name[1:]
     fault_data = {
         'QuantumError': {
             'type': fault_name,
             'message': wrapped_exc.explanation,
-            'detail': str(wrapped_exc.detail)}}
+            'detail': str(wrapped_exc.detail),
+            },
+        }
     # Metadata not required for v11
     return fault_data, None
 

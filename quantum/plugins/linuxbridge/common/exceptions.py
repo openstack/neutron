@@ -20,24 +20,25 @@
 """
 Exceptions used by the LinuxBridge plugin
 """
+
 from quantum.common import exceptions
 
 
 class NetworksLimit(exceptions.QuantumException):
     """Total number of network objects limit has been hit"""
-    message = _("Unable to create new network. Number of networks" \
+    message = _("Unable to create new network. Number of networks"
                 "for the system has exceeded the limit")
 
 
 class NetworkVlanBindingAlreadyExists(exceptions.QuantumException):
     """Binding cannot be created, since it already exists"""
-    message = _("NetworkVlanBinding for %(vlan_id)s and network " \
+    message = _("NetworkVlanBinding for %(vlan_id)s and network "
                 "%(network_id)s already exists")
 
 
 class NetworkVlanBindingNotFound(exceptions.QuantumException):
     """Binding could not be found"""
-    message = _("NetworkVlanBinding for network " \
+    message = _("NetworkVlanBinding for network "
                 "%(network_id)s does not exist")
 
 
@@ -53,20 +54,5 @@ class VlanIDNotAvailable(exceptions.QuantumException):
 
 class UnableToChangeVlanRange(exceptions.QuantumException):
     """No VLAN ID available"""
-    message = _("Current VLAN ID range %(range_start)s to %(range_end)s " \
+    message = _("Current VLAN ID range %(range_start)s to %(range_end)s "
                 "cannot be changed. Please check plugin conf file.")
-
-
-try:
-    _("test")
-except NameError:
-
-    def _(a_string):
-        """
-        Default implementation of the gettext string
-        translation function: no translation
-        """
-        return a_string
-except TypeError:
-    # during doctesting, _ might mean something else
-    pass

@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,8 +15,6 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
 import inspect
 import logging
@@ -26,7 +23,6 @@ import re
 from quantum.common import exceptions as exc
 from quantum.common import utils
 from quantum.quantum_plugin_base import QuantumPluginBase
-
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
@@ -34,6 +30,7 @@ from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
+
 
 LOG = logging.getLogger(__name__)
 
@@ -83,8 +80,8 @@ class L2Network(QuantumPluginBase):
         vlan_id = self._get_vlan_for_tenant(tenant_id, net_name)
         vlan_name = self._get_vlan_name(new_net_id, str(vlan_id))
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_name,
-                                                     new_net_id, vlan_name,
-                                                     vlan_id])
+                                                        new_net_id, vlan_name,
+                                                        vlan_id])
         cdb.add_vlan_binding(vlan_id, vlan_name, new_net_id)
         new_net_dict = {const.NET_ID: new_net_id,
                         const.NET_NAME: net_name,
@@ -137,8 +134,8 @@ class L2Network(QuantumPluginBase):
             ports_on_net.append(new_port)
 
         new_network = cutil.make_net_dict(network[const.UUID],
-                                              network[const.NETWORKNAME],
-                                              ports_on_net)
+                                          network[const.NETWORKNAME],
+                                          ports_on_net)
 
         return new_network
 
@@ -151,7 +148,7 @@ class L2Network(QuantumPluginBase):
         db.validate_network_ownership(tenant_id, net_id)
         network = db.network_update(net_id, tenant_id, **kwargs)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     kwargs])
+                                                        kwargs])
         net_dict = cutil.make_net_dict(network[const.UUID],
                                        network[const.NETWORKNAME],
                                        [])
@@ -187,8 +184,8 @@ class L2Network(QuantumPluginBase):
         port = db.port_create(net_id, port_state)
         unique_port_id_string = port[const.UUID]
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     port_state,
-                                                     unique_port_id_string])
+                                                        port_state,
+                                                        unique_port_id_string])
         new_port_dict = cutil.make_port_dict(port[const.UUID],
                                              port[const.PORTSTATE],
                                              port[const.NETWORKID],
@@ -226,7 +223,7 @@ class L2Network(QuantumPluginBase):
         db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                        port_id, kwargs])
+                                                        port_id, kwargs])
         self._validate_port_state(kwargs["state"])
         db.port_update(port_id, net_id, **kwargs)
 
@@ -243,7 +240,7 @@ class L2Network(QuantumPluginBase):
         db.validate_port_ownership(tenant_id, net_id, port_id)
         network = db.network_get(net_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     port_id])
+                                                        port_id])
         port = db.port_get(net_id, port_id)
         new_port_dict = cutil.make_port_dict(port[const.UUID],
                                              port[const.PORTSTATE],
@@ -264,7 +261,7 @@ class L2Network(QuantumPluginBase):
         attachment_id = port[const.INTERFACEID]
         if attachment_id is None:
             raise cexc.InvalidAttach(port_id=port_id, net_id=net_id,
-                                    att_id=remote_interface_id)
+                                     att_id=remote_interface_id)
         attachment_id = attachment_id[:const.UUID_LENGTH]
         remote_interface_id = remote_interface_id[:const.UUID_LENGTH]
         if remote_interface_id != attachment_id:
@@ -295,7 +292,7 @@ class L2Network(QuantumPluginBase):
             raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
                                     att_id=remote_interface_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                     port_id])
+                                                        port_id])
         attachment_id = attachment_id[:const.UUID_LENGTH]
         attachment_id = attachment_id + const.UNPLUGGED
         db.port_unset_attachment(net_id, port_id)
@@ -337,7 +334,7 @@ class L2Network(QuantumPluginBase):
         """Create port profile"""
         LOG.debug("create_portprofile() called\n")
         portprofile = cdb.add_portprofile(tenant_id, profile_name,
-                                 const.NO_VLAN_ID, qos)
+                                          const.NO_VLAN_ID, qos)
         new_pp = cutil.make_portprofile_dict(tenant_id,
                                              portprofile[const.UUID],
                                              portprofile[const.PPNAME],
@@ -491,9 +488,10 @@ class L2Network(QuantumPluginBase):
     def schedule_host(self, tenant_id, instance_id, instance_desc):
         """Provides the hostname on which a dynamic vnic is reserved"""
         LOG.debug("schedule_host() called\n")
-        host_list = self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                               instance_id,
-                                                               instance_desc])
+        host_list = self._invoke_device_plugins(self._func_name(),
+                                                [tenant_id,
+                                                 instance_id,
+                                                 instance_desc])
         return host_list
 
     def associate_port(self, tenant_id, instance_id, instance_desc):

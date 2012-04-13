@@ -56,7 +56,7 @@ class NetworkNotFound(NotFound):
 
 
 class PortNotFound(NotFound):
-    message = _("Port %(port_id)s could not be found " \
+    message = _("Port %(port_id)s could not be found "
                 "on network %(net_id)s")
 
 
@@ -65,19 +65,19 @@ class StateInvalid(QuantumException):
 
 
 class NetworkInUse(QuantumException):
-    message = _("Unable to complete operation on network %(net_id)s. " \
+    message = _("Unable to complete operation on network %(net_id)s. "
                 "There is one or more attachments plugged into its ports.")
 
 
 class PortInUse(QuantumException):
-    message = _("Unable to complete operation on port %(port_id)s " \
-                "for network %(net_id)s. The attachment '%(att_id)s" \
+    message = _("Unable to complete operation on port %(port_id)s "
+                "for network %(net_id)s. The attachment '%(att_id)s"
                 "is plugged into the logical port.")
 
 
 class AlreadyAttached(QuantumException):
-    message = _("Unable to plug the attachment %(att_id)s into port " \
-                "%(port_id)s for network %(net_id)s. The attachment is " \
+    message = _("Unable to plug the attachment %(att_id)s into port "
+                "%(port_id)s for network %(net_id)s. The attachment is "
                 "already plugged into port %(att_port_id)s")
 
 

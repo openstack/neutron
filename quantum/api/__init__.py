@@ -60,6 +60,9 @@ class APIRouter(wsgi.Router):
         plugin = manager.QuantumManager.get_plugin(options)
 
         uri_prefix = '/tenants/{tenant_id}/'
+        attachment_path = (
+            '%snetworks/{network_id}/ports/{id}/attachment{.format}' %
+            uri_prefix)
         mapper.resource('network', 'networks',
                         controller=networks.create_resource(plugin, version),
                         collection={'detail': 'GET'},
@@ -69,25 +72,22 @@ class APIRouter(wsgi.Router):
                         controller=ports.create_resource(plugin, version),
                         collection={'detail': 'GET'},
                         member={'detail': 'GET'},
-                        parent_resource=dict(member_name='network',
-                                             collection_name=uri_prefix +\
-                                                 'networks'))
+                        parent_resource=dict(
+                            member_name='network',
+                            collection_name='%snetworks' % uri_prefix))
         attachments_ctrl = attachments.create_resource(plugin, version)
         mapper.connect("get_resource",
-                       uri_prefix + 'networks/{network_id}/' \
-                                    'ports/{id}/attachment{.format}',
+                       attachment_path,
                        controller=attachments_ctrl,
                        action="get_resource",
                        conditions=dict(method=['GET']))
         mapper.connect("attach_resource",
-                       uri_prefix + 'networks/{network_id}/' \
-                                    'ports/{id}/attachment{.format}',
+                       attachment_path,
                        controller=attachments_ctrl,
                        action="attach_resource",
                        conditions=dict(method=['PUT']))
         mapper.connect("detach_resource",
-                       uri_prefix + 'networks/{network_id}/' \
-                                    'ports/{id}/attachment{.format}',
+                       attachment_path,
                        controller=attachments_ctrl,
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))

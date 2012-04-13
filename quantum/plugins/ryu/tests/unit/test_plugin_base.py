@@ -15,8 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mox
 import os
+
+import mox
 
 from quantum.plugins.ryu.tests.unit import fake_plugin
 from quantum.plugins.ryu.tests.unit import utils

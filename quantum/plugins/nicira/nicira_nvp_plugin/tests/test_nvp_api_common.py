@@ -12,11 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 import httplib
-import unittest
+import unittest2 as unittest
 
-import nicira_nvp_plugin.api_client.common as naco
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.common as naco
 
 
 class NvpApiCommonTest(unittest.TestCase):

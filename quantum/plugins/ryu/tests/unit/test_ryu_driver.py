@@ -18,8 +18,8 @@
 import uuid
 
 import quantum.db.api as db
-from quantum.plugins.ryu.tests.unit import utils
 from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
+from quantum.plugins.ryu.tests.unit import utils
 from quantum.plugins.ryu.tests.unit.utils import patch_fake_ryu_client
 
 

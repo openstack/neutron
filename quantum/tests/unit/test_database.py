@@ -19,9 +19,9 @@
 test_database.py is an independent test suite
 that tests the database api method calls
 """
+
 import logging
 import unittest
-
 
 from quantum.db import api as db
 from quantum.tests.unit import database_stubs as db_stubs
@@ -75,7 +75,7 @@ class QuantumDBTest(unittest.TestCase):
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["name"] == "plugin_test1")
         net = self.dbtest.update_network(self.tenant_id, net1["id"],
-          {'name': "plugin_test1_renamed"})
+                                         {'name': "plugin_test1_renamed"})
         print net
         self.assertTrue(net["name"] == "plugin_test1_renamed")
 

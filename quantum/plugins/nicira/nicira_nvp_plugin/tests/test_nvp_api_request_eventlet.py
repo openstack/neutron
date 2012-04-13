@@ -12,26 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-# System
 import httplib
 import logging
 import new
 import random
 import unittest
 
-# Third party
 import eventlet
 from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
 
-# Local
-import nicira_nvp_plugin.api_client.client_eventlet as nace
-import nicira_nvp_plugin.api_client.request_eventlet as nare
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
+    client_eventlet as nace,
+    request_eventlet as nare,
+    )
+
 
 logging.basicConfig(level=logging.DEBUG)
-lg = logging.getLogger("test_nvp_api_request_eventlet")
+LOG = logging.getLogger("test_nvp_api_request_eventlet")
+
 
 REQUEST_TIMEOUT = 1
 
@@ -47,8 +47,7 @@ class NvpApiRequestEventletTest(unittest.TestCase):
         self.client = nace.NvpApiClientEventlet(
             [("127.0.0.1", 4401, True)], "admin", "admin")
         self.url = "/ws.v1/_debug"
-        self.req = nare.NvpApiRequestEventlet(
-            self.client, self.url)
+        self.req = nare.NvpApiRequestEventlet(self.client, self.url)
 
     def tearDown(self):
         self.client = None
@@ -61,7 +60,7 @@ class NvpApiRequestEventletTest(unittest.TestCase):
     def test_apirequest_spawn(self):
         def x(id):
             eventlet.greenthread.sleep(random.random())
-            lg.info('spawned: %d' % id)
+            LOG.info('spawned: %d' % id)
 
         for i in range(10):
             nare.NvpApiRequestEventlet._spawn(x, i)
@@ -108,8 +107,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
 
     def test_run_and_timeout(self):
         def my_handle_request(self):
-            lg.info('my_handle_request() self: %s' % self)
-            lg.info('my_handle_request() dir(self): %s' % dir(self))
+            LOG.info('my_handle_request() self: %s' % self)
+            LOG.info('my_handle_request() dir(self): %s' % dir(self))
             eventlet.greenthread.sleep(REQUEST_TIMEOUT * 2)
 
         self.req._request_timeout = REQUEST_TIMEOUT
@@ -156,7 +155,7 @@ class NvpApiRequestEventletTest(unittest.TestCase):
         self.client.acquire_connection.return_value = None
 
         self.req._issue_request()
-        lg.info('request_error: %s' % self.req._request_error)
+        LOG.info('request_error: %s' % self.req._request_error)
         self.assertTrue(isinstance(self.req._request_error, Exception))
         self.assertTrue(self.client.acquire_connection.called)
 
@@ -343,11 +342,11 @@ class NvpApiRequestEventletTest(unittest.TestCase):
     def test_api_providers_non_none_api_providers(self):
         r = nare.NvpGetApiProvidersRequestEventlet(self.client)
         r.value = Mock()
-        r.value.body = '''{
+        r.value.body = """{
           "results": [
             { "roles": [
               { "role": "api_provider",
-                "listen_addr": "pssl:1.1.1.1:1" }]}]}'''
+                "listen_addr": "pssl:1.1.1.1:1" }]}]}"""
         r.successful = Mock(return_value=True)
-        lg.info('%s' % r.api_providers())
+        LOG.info('%s' % r.api_providers())
         self.assertTrue(r.api_providers() is not None)
