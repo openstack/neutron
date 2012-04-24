@@ -21,20 +21,21 @@
 # Based on the structure of the OpenVSwitch agent in the
 # Quantum OpenVSwitch Plugin.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-
-from optparse import OptionParser
-from subprocess import *
 
 import ConfigParser
-import logging as LOG
-import MySQLdb
+import logging
+from optparse import OptionParser
 import os
 import shlex
 import signal
-import sqlite3
+import subprocess
 import sys
 import time
+
+from sqlalchemy.ext.sqlsoup import SqlSoup
+
+logging.basicConfig()
+LOG = logging.getLogger(__name__)
 
 
 BRIDGE_NAME_PREFIX = "brq"
@@ -50,7 +51,9 @@ VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
 OP_STATUS_UP = "UP"
 OP_STATUS_DOWN = "DOWN"
-DB_CONNECTION = None
+# Default inteval values
+DEFAULT_POLLING_INTERVAL = 2
+DEFAULT_RECONNECT_INTERVAL = 2
 
 
 class LinuxBridge:
@@ -62,7 +65,7 @@ class LinuxBridge:
     def run_cmd(self, args):
         cmd = shlex.split(self.root_helper) + args
         LOG.debug("Running command: " + " ".join(cmd))
-        p = Popen(cmd, stdout=PIPE)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
             LOG.debug("Timeout running command: " + " ".join(cmd))
@@ -81,7 +84,7 @@ class LinuxBridge:
     def get_bridge_name(self, network_id):
         if not network_id:
             LOG.warning("Invalid Network ID, will lead to incorrect bridge" \
-                      "name")
+                        "name")
         bridge_name = self.br_name_prefix + network_id[0:11]
         return bridge_name
 
@@ -95,7 +98,7 @@ class LinuxBridge:
     def get_tap_device_name(self, interface_id):
         if not interface_id:
             LOG.warning("Invalid Interface ID, will lead to incorrect " \
-                      "tap device name")
+                        "tap device name")
         tap_device_name = TAP_INTERFACE_PREFIX + interface_id[0:11]
         return tap_device_name
 
@@ -109,9 +112,8 @@ class LinuxBridge:
 
     def get_interfaces_on_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
-            bridge_interface_path = \
-                    BRIDGE_INTERFACES_FS.replace(BRIDGE_NAME_PLACEHOLDER,
-                                                 bridge_name)
+            bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
+                BRIDGE_NAME_PLACEHOLDER, bridge_name)
             return os.listdir(bridge_interface_path)
 
     def get_all_tap_devices(self):
@@ -149,9 +151,8 @@ class LinuxBridge:
         if not device_name:
             return False
         else:
-            bridge_port_path = \
-                    BRIDGE_PORT_FS_FOR_DEVICE.replace(DEVICE_NAME_PLACEHOLDER,
-                                                      device_name)
+            bridge_port_path = BRIDGE_PORT_FS_FOR_DEVICE.replace(
+                DEVICE_NAME_PLACEHOLDER, device_name)
             return os.path.exists(bridge_port_path)
 
     def ensure_vlan_bridge(self, network_id, vlan_id):
@@ -183,7 +184,7 @@ class LinuxBridge:
         """
         if not self.device_exists(bridge_name):
             LOG.debug("Starting bridge %s for subinterface %s" % (bridge_name,
-                                                                interface))
+                                                                  interface))
             if self.run_cmd(['brctl', 'addbr', bridge_name]):
                 return
             if self.run_cmd(['brctl', 'setfd', bridge_name, str(0)]):
@@ -210,8 +211,7 @@ class LinuxBridge:
                       tap_device_name)
             return False
 
-        current_bridge_name = \
-                self.get_bridge_for_tap_device(tap_device_name)
+        current_bridge_name = self.get_bridge_for_tap_device(tap_device_name)
         bridge_name = self.get_bridge_name(network_id)
         if bridge_name == current_bridge_name:
             return False
@@ -237,12 +237,10 @@ class LinuxBridge:
             """
             return False
         if interface_id.startswith(GATEWAY_INTERFACE_PREFIX):
-            return self.add_tap_interface(network_id, vlan_id,
-                                              interface_id)
+            return self.add_tap_interface(network_id, vlan_id, interface_id)
         else:
             tap_device_name = self.get_tap_device_name(interface_id)
-            return self.add_tap_interface(network_id, vlan_id,
-                                          tap_device_name)
+            return self.add_tap_interface(network_id, vlan_id, tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
@@ -266,15 +264,15 @@ class LinuxBridge:
         if self.device_exists(bridge_name):
             if not self.is_device_on_bridge(interface_name):
                 return True
-            LOG.debug("Removing device %s from bridge %s" % \
+            LOG.debug("Removing device %s from bridge %s" %
                       (interface_name, bridge_name))
             if self.run_cmd(['brctl', 'delif', bridge_name, interface_name]):
                 return False
-            LOG.debug("Done removing device %s from bridge %s" % \
+            LOG.debug("Done removing device %s from bridge %s" %
                       (interface_name, bridge_name))
             return True
         else:
-            LOG.debug("Cannot remove device %s, bridge %s does not exist" % \
+            LOG.debug("Cannot remove device %s, bridge %s does not exist" %
                       (interface_name, bridge_name))
             return False
 
@@ -291,10 +289,12 @@ class LinuxBridge:
 class LinuxBridgeQuantumAgent:
 
     def __init__(self, br_name_prefix, physical_interface, polling_interval,
-                 root_helper):
-        self.polling_interval = int(polling_interval)
+                 reconnect_interval, root_helper):
+        self.polling_interval = polling_interval
+        self.reconnect_interval = reconnect_interval
         self.root_helper = root_helper
         self.setup_linux_bridge(br_name_prefix, physical_interface)
+        self.db_connected = False
 
     def setup_linux_bridge(self, br_name_prefix, physical_interface):
         self.linux_br = LinuxBridge(br_name_prefix, physical_interface,
@@ -327,16 +327,16 @@ class LinuxBridgeQuantumAgent:
         LOG.debug("plugged tap device names %s" % plugged_tap_device_names)
         for tap_device in self.linux_br.get_all_tap_devices():
             if tap_device not in plugged_tap_device_names:
-                current_bridge_name = \
-                        self.linux_br.get_bridge_for_tap_device(tap_device)
+                current_bridge_name = (
+                    self.linux_br.get_bridge_for_tap_device(tap_device))
                 if current_bridge_name:
                     self.linux_br.remove_interface(current_bridge_name,
                                                    tap_device)
 
         for gw_device in self.linux_br.get_all_gateway_devices():
             if gw_device not in plugged_gateway_device_names:
-                current_bridge_name = \
-                        self.linux_br.get_bridge_for_tap_device(gw_device)
+                current_bridge_name = (
+                    self.linux_br.get_bridge_for_tap_device(gw_device))
                 if current_bridge_name:
                     self.linux_br.remove_interface(current_bridge_name,
                                                    gw_device)
@@ -353,42 +353,53 @@ class LinuxBridgeQuantumAgent:
             if bridge not in current_quantum_bridge_names:
                 self.linux_br.delete_vlan_bridge(bridge)
 
-    def manage_networks_on_host(self, conn, old_vlan_bindings,
+    def manage_networks_on_host(self, db,
+                                old_vlan_bindings,
                                 old_port_bindings):
-        if DB_CONNECTION != 'sqlite':
-            cursor = MySQLdb.cursors.DictCursor(conn)
-        else:
-            cursor = conn.cursor()
-        cursor.execute("SELECT * FROM vlan_bindings")
-        rows = cursor.fetchall()
-        cursor.close()
         vlan_bindings = {}
+        try:
+            vlan_binds = db.vlan_bindings.all()
+        except Exception as e:
+            LOG.info("Unable to get vlan bindings! Exception: %s" % e)
+            self.db_connected = False
+            return {VLAN_BINDINGS: {},
+                    PORT_BINDINGS: []}
+
         vlans_string = ""
-        for row in rows:
-            vlan_bindings[row['network_id']] = row
-            vlans_string = "%s %s" % (vlans_string, row)
+        for bind in vlan_binds:
+            entry = {'network_id': bind.network_id, 'vlan_id': bind.vlan_id}
+            vlan_bindings[bind.network_id] = entry
+            vlans_string = "%s %s" % (vlans_string, entry)
+
+        port_bindings = []
+        try:
+            port_binds = db.ports.all()
+        except Exception as e:
+            LOG.info("Unable to get port bindings! Exception: %s" % e)
+            self.db_connected = False
+            return {VLAN_BINDINGS: {},
+                    PORT_BINDINGS: []}
+
+        all_bindings = {}
+        for bind in port_binds:
+            all_bindings[bind.uuid] = bind
+            entry = {'network_id': bind.network_id, 'state': bind.state,
+                     'op_status': bind.op_status, 'uuid': bind.uuid,
+                     'interface_id': bind.interface_id}
+            if bind.state == 'ACTIVE':
+                port_bindings.append(entry)
 
         plugged_interfaces = []
-        cursor = MySQLdb.cursors.DictCursor(conn)
-        cursor.execute("SELECT * FROM ports where state = 'ACTIVE'")
-        port_bindings = cursor.fetchall()
-        cursor.close()
-
         ports_string = ""
         for pb in port_bindings:
             ports_string = "%s %s" % (ports_string, pb)
             if pb['interface_id']:
-                vlan_id = \
-                        str(vlan_bindings[pb['network_id']]['vlan_id'])
+                vlan_id = str(vlan_bindings[pb['network_id']]['vlan_id'])
                 if self.process_port_binding(pb['uuid'],
                                              pb['network_id'],
                                              pb['interface_id'],
                                              vlan_id):
-                    cursor = MySQLdb.cursors.DictCursor(conn)
-                    sql = PORT_OPSTATUS_UPDATESQL % (pb['uuid'],
-                                                     OP_STATUS_UP)
-                    cursor.execute(sql)
-                    cursor.close()
+                    all_bindings[pb['uuid']].op_status = OP_STATUS_UP
                 plugged_interfaces.append(pb['interface_id'])
 
         if old_port_bindings != port_bindings:
@@ -401,16 +412,30 @@ class LinuxBridgeQuantumAgent:
 
         self.process_deleted_networks(vlan_bindings)
 
-        conn.commit()
+        try:
+            db.commit()
+        except Exception as e:
+            LOG.info("Unable to update database! Exception: %s" % e)
+            db.rollback()
+            vlan_bindings = {}
+            port_bindings = []
+
         return {VLAN_BINDINGS: vlan_bindings,
                 PORT_BINDINGS: port_bindings}
 
-    def daemon_loop(self, conn):
+    def daemon_loop(self, db_connection_url):
         old_vlan_bindings = {}
-        old_port_bindings = {}
+        old_port_bindings = []
+        self.db_connected = False
 
         while True:
-            bindings = self.manage_networks_on_host(conn,
+            if not self.db_connected:
+                time.sleep(self.reconnect_interval)
+                db = SqlSoup(db_connection_url)
+                self.db_connected = True
+                LOG.info("Connecting to database \"%s\" on %s" %
+                         (db.engine.url.database, db.engine.url.host))
+            bindings = self.manage_networks_on_host(db,
                                                     old_vlan_bindings,
                                                     old_port_bindings)
             old_vlan_bindings = bindings[VLAN_BINDINGS]
@@ -427,9 +452,9 @@ def main():
     options, args = parser.parse_args()
 
     if options.verbose:
-        LOG.basicConfig(level=LOG.DEBUG)
+        LOG.setLevel(logging.DEBUG)
     else:
-        LOG.basicConfig(level=LOG.WARN)
+        LOG.setLevel(logging.WARNING)
 
     if len(args) != 1:
         parser.print_help()
@@ -437,22 +462,28 @@ def main():
 
     config_file = args[0]
     config = ConfigParser.ConfigParser()
-    conn = None
     try:
         fh = open(config_file)
         fh.close()
         config.read(config_file)
         br_name_prefix = BRIDGE_NAME_PREFIX
         physical_interface = config.get("LINUX_BRIDGE", "physical_interface")
-        polling_interval = config.get("AGENT", "polling_interval")
+        if config.has_option("AGENT", "polling_interval"):
+            polling_interval = config.getint("AGENT", "polling_interval")
+        else:
+            polling_interval = DEFAULT_POLLING_INTERVAL
+            LOG.info("Polling interval not defined. Using default.")
+        if config.has_option("AGENT", "reconnect_interval"):
+            reconnect_interval = config.getint("AGENT", "reconnect_interval")
+        else:
+            reconnect_interval = DEFAULT_RECONNECT_INTERVAL
+            LOG.info("Reconnect interval not defined. Using default.")
         root_helper = config.get("AGENT", "root_helper")
         'Establish database connection and load models'
-        global DB_CONNECTION
-        DB_CONNECTION = config.get("DATABASE", "connection")
-        if DB_CONNECTION == 'sqlite':
+        connection = config.get("DATABASE", "connection")
+        if connection == 'sqlite':
             LOG.info("Connecting to sqlite DB")
-            conn = sqlite3.connect(":memory:")
-            conn.row_factory = sqlite3.Row
+            db_connection_url = "sqlite:///:memory:"
         else:
             db_name = config.get("DATABASE", "name")
             db_user = config.get("DATABASE", "user")
@@ -460,21 +491,18 @@ def main():
             db_host = config.get("DATABASE", "host")
             db_port = int(config.get("DATABASE", "port"))
             LOG.info("Connecting to database %s on %s" % (db_name, db_host))
-            conn = MySQLdb.connect(host=db_host, user=db_user, port=db_port,
-                                   passwd=db_pass, db=db_name)
-    except Exception, e:
-        LOG.error("Unable to parse config file \"%s\": \nException%s"
-                  % (config_file, str(e)))
+            db_connection_url = ("%s://%s:%s@%s:%d/%s" %
+                    (connection, db_user, db_pass, db_host, db_port, db_name))
+    except Exception as e:
+        LOG.error("Unable to parse config file \"%s\": \nException %s" %
+                  (config_file, str(e)))
         sys.exit(1)
 
-    try:
-        plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
-                                         polling_interval, root_helper)
-        LOG.info("Agent initialized successfully, now running...")
-        plugin.daemon_loop(conn)
-    finally:
-        if conn:
-            conn.close()
+    plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
+                                     polling_interval, reconnect_interval,
+                                     root_helper)
+    LOG.info("Agent initialized successfully, now running... ")
+    plugin.daemon_loop(db_connection_url)
 
     sys.exit(0)
 
