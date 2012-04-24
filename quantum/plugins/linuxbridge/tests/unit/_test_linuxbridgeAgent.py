@@ -34,7 +34,7 @@ from quantum.plugins.linuxbridge.common import constants as lconst
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
 
 
-LOG = logger.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class LinuxBridgeAgentTest(unittest.TestCase):

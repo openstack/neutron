@@ -30,9 +30,8 @@ import time
 
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
-
+logging.basicConfig()
 LOG = logging.getLogger(__name__)
-
 
 # Global constants.
 OP_STATUS_UP = "UP"
@@ -41,7 +40,9 @@ OP_STATUS_DOWN = "DOWN"
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = "4095"
 
-REFRESH_INTERVAL = 2
+# Default interval values
+DEFAULT_POLLING_INTERVAL = 2
+DEFAULT_RECONNECT_INTERVAL = 2
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -215,9 +216,12 @@ class LocalVLANMapping:
 
 class OVSQuantumAgent(object):
 
-    def __init__(self, integ_br, root_helper):
+    def __init__(self, integ_br, root_helper,
+                 polling_interval, reconnect_interval):
         self.root_helper = root_helper
         self.setup_integration_br(integ_br)
+        self.polling_interval = polling_interval
+        self.reconnect_interval = reconnect_interval
 
     def port_bound(self, port, vlan_id):
         self.int_br.set_db_attribute("Port", port.port_name,
@@ -234,26 +238,39 @@ class OVSQuantumAgent(object):
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
 
-    def daemon_loop(self, db):
+    def daemon_loop(self, db_connection_url):
         self.local_vlan_map = {}
         old_local_bindings = {}
         old_vif_ports = {}
+        db_connected = False
 
         while True:
+            if not db_connected:
+                time.sleep(self.reconnect_interval)
+                db = SqlSoup(db_connection_url)
+                db_connected = True
+                LOG.info("Connecting to database \"%s\" on %s" %
+                         (db.engine.url.database, db.engine.url.host))
 
             all_bindings = {}
             try:
                 ports = db.ports.all()
-            except:
-                ports = []
+            except Exception as e:
+                LOG.info("Unable to get port bindings! Exception: %s" % e)
+                db_connected = False
+                continue
+
             for port in ports:
                 all_bindings[port.interface_id] = port
 
             vlan_bindings = {}
             try:
                 vlan_binds = db.vlan_bindings.all()
-            except:
-                vlan_binds = []
+            except Exception as e:
+                LOG.info("Unable to get vlan bindings! Exception: %s" % e)
+                db_connected = False
+                continue
+
             for bind in vlan_binds:
                 vlan_bindings[bind.network_id] = bind.vlan_id
 
@@ -306,8 +323,15 @@ class OVSQuantumAgent(object):
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
-            db.commit()
-            time.sleep(REFRESH_INTERVAL)
+            try:
+                db.commit()
+            except Exception as e:
+                LOG.info("Unable to commit to database! Exception: %s" % e)
+                db.rollback()
+                old_local_bindings = {}
+                old_vif_ports = {}
+
+            time.sleep(self.polling_interval)
 
 
 class OVSQuantumTunnelAgent(object):
@@ -335,7 +359,7 @@ class OVSQuantumTunnelAgent(object):
     MAX_VLAN_TAG = 4094
 
     def __init__(self, integ_br, tun_br, remote_ip_file, local_ip,
-                 root_helper):
+                 root_helper, polling_interval, reconnect_interval):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -349,6 +373,9 @@ class OVSQuantumTunnelAgent(object):
         self.setup_integration_br(integ_br)
         self.local_vlan_map = {}
         self.setup_tunnel_br(tun_br, remote_ip_file, local_ip)
+        self.db_connected = False
+        self.polling_interval = polling_interval
+        self.reconnect_interval = reconnect_interval
 
     def provision_local_vlan(self, net_uuid, lsw_id):
         '''Provisions a local VLAN.
@@ -466,7 +493,7 @@ class OVSQuantumTunnelAgent(object):
                 tunnel_ips = (x for x in clean_ips if x != local_ip and x)
                 for i, remote_ip in enumerate(tunnel_ips):
                     self.tun_br.add_tunnel_port("gre-" + str(i), remote_ip)
-        except Exception, e:
+        except Exception as e:
             LOG.error("Error configuring tunnels: '%s' %s" %
                       (remote_ip_file, str(e)))
             raise
@@ -485,8 +512,10 @@ class OVSQuantumTunnelAgent(object):
         ports = []
         try:
             ports = db.ports.all()
-        except Exception, e:
-            LOG.info("Exception accessing db.ports: %s" % e)
+        except Exceptioni as e:
+            LOG.info("Unable to get port bindings! Exception: %s" % e)
+            self.db_connected = False
+            return {}
 
         return dict([(port.interface_id, port) for port in ports])
 
@@ -500,25 +529,39 @@ class OVSQuantumTunnelAgent(object):
         lsw_id_binds = []
         try:
             lsw_id_binds.extend(db.vlan_bindings.all())
-        except Exception, e:
-            LOG.info("Exception accessing db.vlan_bindings: %s" % e)
+        except Exception as e:
+            LOG.info("Unable to get vlan bindings! Exception: %s" % e)
+            self.db_connected = False
+            return {}
 
         return dict([(bind.network_id, bind.vlan_id)
             for bind in lsw_id_binds])
 
-    def daemon_loop(self, db):
+    def daemon_loop(self, db_connection_url):
         '''Main processing loop (not currently used).
 
-        :param db: reference to database layer.
+        :param options: database information - in the event need to reconnect
         '''
         old_local_bindings = {}
         old_vif_ports = {}
+        self.db_connected = False
 
         while True:
+            if not self.db_connected:
+                time.sleep(self.reconnect_interval)
+                db = SqlSoup(db_connection_url)
+                self.db_connected = True
+                LOG.info("Connecting to database \"%s\" on %s" %
+                         (db.engine.url.database, db.engine.url.host))
+
             # Get bindings from db.
             all_bindings = self.get_db_port_bindings(db)
+            if not self.db_connected:
+                continue
             all_bindings_vif_port_ids = set(all_bindings.keys())
             lsw_id_bindings = self.get_db_vlan_bindings(db)
+            if not self.db_connected:
+                continue
 
             # Get bindings from OVS bridge.
             vif_ports = self.int_br.get_vif_ports()
@@ -579,7 +622,7 @@ class OVSQuantumTunnelAgent(object):
                         LOG.info("Port " + str(p) + " on net-id = "
                                  + new_net_uuid + " bound to " +
                                  str(self.local_vlan_map[new_net_uuid]))
-                    except Exception, e:
+                    except Exception as e:
                         LOG.info("Unable to bind Port " + str(p) +
                                  " on netid = " + new_net_uuid + " to "
                                  + str(self.local_vlan_map[new_net_uuid]))
@@ -597,7 +640,7 @@ class OVSQuantumTunnelAgent(object):
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
-            time.sleep(REFRESH_INTERVAL)
+            time.sleep(self.polling_interval)
 
 
 def main():
@@ -609,9 +652,9 @@ def main():
     options, args = parser.parse_args()
 
     if options.verbose:
-        LOG.basicConfig(level=LOG.DEBUG)
+        LOG.setLevel(logging.DEBUG)
     else:
-        LOG.basicConfig(level=LOG.WARN)
+        LOG.setLevel(logging.WARNING)
 
     if len(args) != 1:
         parser.print_help()
@@ -621,7 +664,7 @@ def main():
     config = ConfigParser.ConfigParser()
     try:
         config.read(config_file)
-    except Exception, e:
+    except Exception as e:
         LOG.error("Unable to parse config file \"%s\": %s" %
                   (config_file, str(e)))
         raise e
@@ -630,7 +673,7 @@ def main():
     enable_tunneling = False
     try:
         enable_tunneling = config.getboolean("OVS", "enable-tunneling")
-    except Exception, e:
+    except Exception as e:
         pass
 
     # Get common parameters.
@@ -643,9 +686,19 @@ def main():
         if not len(db_connection_url):
             raise Exception('Empty db_connection_url in configuration file.')
 
+        if config.has_option("AGENT", "polling_interval"):
+            polling_interval = config.getint("AGENT", "polling_interval")
+        else:
+            polling_interval = DEFAULT_POLLING_INTERVAL
+            LOG.info("Polling interval not defined. Using default.")
+        if config.has_option("AGENT", "reconnect_interval"):
+            reconnect_interval = config.getint("AGENT", "reconnect_interval")
+        else:
+            reconnect_interval = DEFAULT_RECONNECT_INTERVAL
+            LOG.info("Reconnect interval not defined. Using default.")
         root_helper = config.get("AGENT", "root_helper")
 
-    except Exception, e:
+    except Exception as e:
         LOG.error("Error parsing common params in config_file: '%s': %s" %
                   (config_file, str(e)))
         sys.exit(1)
@@ -668,24 +721,22 @@ def main():
             local_ip = config.get("OVS", "local-ip")
             if not len(local_ip):
                 raise Exception('Empty local-ip in configuration file.')
-        except Exception, e:
+
+        except Exception as e:
             LOG.error("Error parsing tunnel params in config_file: '%s': %s" %
                       (config_file, str(e)))
             sys.exit(1)
 
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, remote_ip_file,
-                                       local_ip, root_helper)
+                                       local_ip, root_helper,
+                                       polling_interval, reconnect_interval)
     else:
         # Get parameters for OVSQuantumAgent.
-        plugin = OVSQuantumAgent(integ_br, root_helper)
+        plugin = OVSQuantumAgent(integ_br, root_helper,
+                                 polling_interval, reconnect_interval)
 
     # Start everything.
-    options = {"sql_connection": db_connection_url}
-    db = SqlSoup(options["sql_connection"])
-    LOG.info("Connecting to database \"%s\" on %s" %
-             (db.engine.url.database, db.engine.url.host))
-
-    plugin.daemon_loop(db)
+    plugin.daemon_loop(db_connection_url)
 
     sys.exit(0)
 
