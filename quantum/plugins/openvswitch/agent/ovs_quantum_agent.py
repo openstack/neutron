@@ -127,18 +127,15 @@ class OVSBridge:
     def add_tunnel_port(self, port_name, remote_ip):
         self.run_vsctl(["add-port", self.br_name, port_name])
         self.set_db_attribute("Interface", port_name, "type", "gre")
-        self.set_db_attribute("Interface", port_name, "options", "remote_ip=" +
-            remote_ip)
-        self.set_db_attribute("Interface", port_name, "options", "in_key=flow")
-        self.set_db_attribute("Interface", port_name, "options",
-            "out_key=flow")
+        self.set_db_attribute("Interface", port_name, "options:remote_ip", remote_ip)
+        self.set_db_attribute("Interface", port_name, "options:in_key", "flow")
+        self.set_db_attribute("Interface", port_name, "options:out_key", "flow")
         return self.get_port_ofport(port_name)
 
     def add_patch_port(self, local_name, remote_name):
         self.run_vsctl(["add-port", self.br_name, local_name])
         self.set_db_attribute("Interface", local_name, "type", "patch")
-        self.set_db_attribute("Interface", local_name, "options", "peer=" +
-                              remote_name)
+        self.set_db_attribute("Interface", local_name, "options:peer", remote_name)
         return self.get_port_ofport(local_name)
 
     def db_get_map(self, table, record, column):
