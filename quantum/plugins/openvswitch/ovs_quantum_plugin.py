@@ -19,7 +19,7 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
 import ConfigParser
-import logging as LOG
+import logging
 from optparse import OptionParser
 import os
 import sys
@@ -27,17 +27,17 @@ import sys
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.common.config import find_config_file
+import quantum.db.api as db
+from quantum.plugins.openvswitch import ovs_db
 from quantum.quantum_plugin_base import QuantumPluginBase
 
-import quantum.db.api as db
-import ovs_db
 
-CONF_FILE = find_config_file(
-  {"plugin": "openvswitch"},
-  None, "ovs_quantum_plugin.ini")
+logging.basicConfig(level=logging.WARN)
+LOG = logging.getLogger("ovs_quantum_plugin")
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger("ovs_quantum_plugin")
+
+CONF_FILE = find_config_file({"plugin": "openvswitch"},
+                             None, "ovs_quantum_plugin.ini")
 
 
 # Exception thrown if no more VLANs are available
@@ -81,8 +81,8 @@ class VlanMap(object):
             self.free_vlans.add(vlan)
             del self.vlans[vlan]
             del self.net_ids[network_id]
-            LOG.debug("Deallocated VLAN %s (used by network %s)"
-                      % (vlan, network_id))
+            LOG.debug("Deallocated VLAN %s (used by network %s)" %
+                      (vlan, network_id))
         else:
             LOG.error("No vlan found with network \"%s\"", network_id)
 
@@ -96,10 +96,10 @@ class OVSQuantumPlugin(QuantumPluginBase):
                 configfile = CONF_FILE
             else:
                 configfile = find_config(os.path.abspath(
-                        os.path.dirname(__file__)))
+                    os.path.dirname(__file__)))
         if configfile is None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
-              (configfile))
+                            (configfile))
         LOG.debug("Using configuration file: %s" % configfile)
         config.read(configfile)
         LOG.debug("Config: %s" % config)
@@ -113,8 +113,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
         vlans = ovs_db.get_vlans()
         for x in vlans:
             vlan_id, network_id = x
-            LOG.debug("Adding already populated vlan %s -> %s"
-                      % (vlan_id, network_id))
+            LOG.debug("Adding already populated vlan %s -> %s" %
+                      (vlan_id, network_id))
             self.vmap.already_used(vlan_id, network_id)
 
     def get_all_networks(self, tenant_id, **kwargs):
@@ -126,21 +126,22 @@ class OVSQuantumPlugin(QuantumPluginBase):
         return nets
 
     def _make_net_dict(self, net_id, net_name, ports, op_status):
-        res = {'net-id': net_id,
-                'net-name': net_name,
-                'net-op-status': op_status}
+        res = {
+            'net-id': net_id,
+            'net-name': net_name,
+            'net-op-status': op_status,
+            }
         if ports:
             res['net-ports'] = ports
         return res
 
     def create_network(self, tenant_id, net_name, **kwargs):
         net = db.network_create(tenant_id, net_name,
-                          op_status=OperationalStatus.UP)
+                                op_status=OperationalStatus.UP)
         LOG.debug("Created network: %s" % net)
         vlan_id = self.vmap.acquire(str(net.uuid))
         ovs_db.add_vlan_binding(vlan_id, str(net.uuid))
-        return self._make_net_dict(str(net.uuid), net.name, [],
-                                        net.op_status)
+        return self._make_net_dict(str(net.uuid), net.name, [], net.op_status)
 
     def delete_network(self, tenant_id, net_id):
         db.validate_network_ownership(tenant_id, net_id)
@@ -153,21 +154,20 @@ class OVSQuantumPlugin(QuantumPluginBase):
         net = db.network_destroy(net_id)
         ovs_db.remove_vlan_binding(net_id)
         self.vmap.release(net_id)
-        return self._make_net_dict(str(net.uuid), net.name, [],
-                                        net.op_status)
+        return self._make_net_dict(str(net.uuid), net.name, [], net.op_status)
 
     def get_network_details(self, tenant_id, net_id):
         db.validate_network_ownership(tenant_id, net_id)
         net = db.network_get(net_id)
         ports = self.get_all_ports(tenant_id, net_id)
         return self._make_net_dict(str(net.uuid), net.name,
-                                    ports, net.op_status)
+                                   ports, net.op_status)
 
     def update_network(self, tenant_id, net_id, **kwargs):
         db.validate_network_ownership(tenant_id, net_id)
         net = db.network_update(net_id, tenant_id, **kwargs)
         return self._make_net_dict(str(net.uuid), net.name,
-                                        None, net.op_status)
+                                   None, net.op_status)
 
     def _make_port_dict(self, port):
         if port.state == "ACTIVE":
@@ -175,11 +175,13 @@ class OVSQuantumPlugin(QuantumPluginBase):
         else:
             op_status = OperationalStatus.DOWN
 
-        return {'port-id': str(port.uuid),
-                'port-state': port.state,
-                'port-op-status': op_status,
-                'net-id': port.network_id,
-                'attachment': port.interface_id}
+        return {
+            'port-id': str(port.uuid),
+            'port-state': port.state,
+            'port-op-status': op_status,
+            'net-id': port.network_id,
+            'attachment': port.interface_id,
+            }
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):
         ids = []
@@ -192,7 +194,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
         LOG.debug("Creating port with network_id: %s" % net_id)
         db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state,
-                                op_status=OperationalStatus.DOWN)
+                              op_status=OperationalStatus.DOWN)
         return self._make_port_dict(port)
 
     def delete_port(self, tenant_id, net_id, port_id):

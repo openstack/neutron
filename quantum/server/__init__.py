@@ -19,12 +19,9 @@
 # If ../quantum/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
-import gettext
 import optparse
 import os
 import sys
-
-gettext.install('quantum', unicode=1)
 
 from quantum import service
 from quantum.common import config
@@ -47,11 +44,12 @@ def main():
 
     try:
         quantum_service = service.serve_wsgi(service.QuantumApiService,
-                                     options=options,
-                                     args=args)
+                                             options=options,
+                                             args=args)
         quantum_service.wait()
     except RuntimeError, e:
         sys.exit("ERROR: %s" % e)
+
 
 if __name__ == "__main__":
     main()

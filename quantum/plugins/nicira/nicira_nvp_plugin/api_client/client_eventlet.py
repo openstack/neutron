@@ -12,18 +12,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-import client
-import eventlet
 import httplib
 import logging
-import request_eventlet
 import time
-from common import _conn_str
+
+import eventlet
+
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
+    _conn_str,
+    )
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client as client
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet
 
 
 logging.basicConfig(level=logging.INFO)
-lg = logging.getLogger('nvp_api_client')
+LOG = logging.getLogger('nvp_api_client')
+
 
 # Default parameters.
 DEFAULT_FAILOVER_TIME = 5
@@ -32,7 +36,7 @@ DEFAULT_CONNECT_TIMEOUT = 5
 
 
 class NvpApiClientEventlet(object):
-    '''Eventlet-based implementation of NvpApiClient ABC.'''
+    """Eventlet-based implementation of NvpApiClient ABC."""
 
     CONN_IDLE_TIMEOUT = 60 * 15
 
@@ -41,7 +45,7 @@ class NvpApiClientEventlet(object):
                  use_https=True,
                  connect_timeout=DEFAULT_CONNECT_TIMEOUT,
                  failover_time=DEFAULT_FAILOVER_TIME):
-        '''Constructor
+        """Constructor
 
         Args:
             api_providers: a list of tuples of the form: (host, port, is_ssl).
@@ -50,7 +54,7 @@ class NvpApiClientEventlet(object):
             concurrent_connections: total number of concurrent connections.
             use_https: whether or not to use https for requests.
             connect_timeout: connection timeout in seconds.
-        '''
+        """
         self._api_providers = set([tuple(p) for p in api_providers])
         self._user = user
         self._password = password
@@ -107,13 +111,13 @@ class NvpApiClientEventlet(object):
         return self._cookie
 
     def acquire_connection(self):
-        '''Check out an available HTTPConnection instance.
+        """Check out an available HTTPConnection instance.
 
         Blocks until a connection is available.
 
         Returns: An available HTTPConnection instance or None if no
                  api_providers are configured.
-        '''
+        """
         if not self._api_providers:
             return None
 
@@ -121,47 +125,47 @@ class NvpApiClientEventlet(object):
         # there has been a change in the controller used as the api_provider.
         now = time.time()
         if now < getattr(self, '_issue_conn_barrier', now):
-            lg.info("acquire_connection() waiting for timer to expire.")
+            LOG.info("acquire_connection() waiting for timer to expire.")
             time.sleep(self._issue_conn_barrier - now)
 
         if self._active_conn_pool.empty():
-            lg.debug("Waiting to acquire an API client connection")
+            LOG.debug("Waiting to acquire an API client connection")
 
         # get() call is blocking.
         conn = self._active_conn_pool.get()
         now = time.time()
         if getattr(conn, 'last_used', now) < now - self.CONN_IDLE_TIMEOUT:
-            lg.info("Connection %s idle for %0.2f seconds; reconnecting."
-                    % (_conn_str(conn), now - conn.last_used))
+            LOG.info("Connection %s idle for %0.2f seconds; reconnecting." %
+                     (_conn_str(conn), now - conn.last_used))
             conn = self._create_connection(*self._conn_params(conn))
 
             # Stash conn pool so conn knows where to go when it releases.
             conn.conn_pool = self._active_conn_pool
 
         conn.last_used = now
-        lg.debug("API client connection %s acquired" % _conn_str(conn))
+        LOG.debug("API client connection %s acquired" % _conn_str(conn))
         return conn
 
     def release_connection(self, http_conn, bad_state=False):
-        '''Mark HTTPConnection instance as available for check-out.
+        """Mark HTTPConnection instance as available for check-out.
 
         Args:
             http_conn: An HTTPConnection instance obtained from this
                 instance.
             bad_state: True if http_conn is known to be in a bad state
                 (e.g. connection fault.)
-        '''
+        """
         if self._conn_params(http_conn) not in self._api_providers:
-            lg.debug("Released connection '%s' is no longer an API provider "
-                     "for the cluster" % _conn_str(http_conn))
+            LOG.debug(("Released connection '%s' is no longer an API provider "
+                       "for the cluster") % _conn_str(http_conn))
             return
 
         # Retrieve "home" connection pool.
         conn_pool = http_conn.conn_pool
         if bad_state:
             # reconnect
-            lg.info("API connection fault, reconnecting to %s"
-                    % _conn_str(http_conn))
+            LOG.info("API connection fault, reconnecting to %s" %
+                     _conn_str(http_conn))
             http_conn = self._create_connection(*self._conn_params(http_conn))
             http_conn.conn_pool = conn_pool
             conn_pool.put(http_conn)
@@ -169,14 +173,14 @@ class NvpApiClientEventlet(object):
             if self._active_conn_pool == http_conn.conn_pool:
                 # Get next connection from the connection pool and make it
                 # active.
-                lg.info("API connection fault changing active_conn_pool.")
+                LOG.info("API connection fault changing active_conn_pool.")
                 self._conn_pool.put(self._active_conn_pool)
                 self._active_conn_pool = self._conn_pool.get()
                 self._issue_conn_barrier = time.time() + self._failover_time
         else:
             conn_pool.put(http_conn)
 
-        lg.debug("API client connection %s released" % _conn_str(http_conn))
+        LOG.debug("API client connection %s released" % _conn_str(http_conn))
 
     @property
     def need_login(self):
@@ -192,13 +196,15 @@ class NvpApiClientEventlet(object):
                 self.login()
                 self._doing_login_sem.release()
             else:
-                lg.debug("Waiting for auth to complete")
+                LOG.debug("Waiting for auth to complete")
                 self._doing_login_sem.acquire()
                 self._doing_login_sem.release()
         return self._cookie
 
     def login(self):
-        '''Issue login request and update authentication cookie.'''
+        """Issue login request and update authentication cookie."""
+        request_eventlet = (quantum.plugins.nicira.nicira_nvp_plugin.
+                            api_client.request_eventlet)
         g = request_eventlet.NvpLoginRequestEventlet(
             self, self._user, self._password)
         g.start()
@@ -206,13 +212,13 @@ class NvpApiClientEventlet(object):
 
         if ret:
             if isinstance(ret, Exception):
-                lg.error('NvpApiClient: login error "%s"' % ret)
+                LOG.error('NvpApiClient: login error "%s"' % ret)
                 raise ret
 
             self._cookie = None
             cookie = ret.getheader("Set-Cookie")
             if cookie:
-                lg.debug("Saving new authentication cookie '%s'" % cookie)
+                LOG.debug("Saving new authentication cookie '%s'" % cookie)
                 self._cookie = cookie
                 self._need_login = False
 

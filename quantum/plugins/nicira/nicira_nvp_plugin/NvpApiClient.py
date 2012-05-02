@@ -1,4 +1,3 @@
-'''
 # Copyright 2012 Nicira Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -12,14 +11,18 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-@author: Somik Behera, Nicira Networks, Inc.
-'''
+#
+#@author: Somik Behera, Nicira Networks, Inc.
 
 import httplib  # basic HTTP library for HTTPS connections
 import logging
-from api_client.client_eventlet import NvpApiClientEventlet
-from api_client.request_eventlet import NvpGenericRequestEventlet
+
+
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
+     import NvpApiClientEventlet
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
+     import NvpGenericRequestEventlet
+
 
 LOG = logging.getLogger("NVPApiHelper")
 LOG.setLevel(logging.INFO)
@@ -124,8 +127,9 @@ class NVPApiHelper(NvpApiClientEventlet):
         # Continue processing for non-error condition.
         if (status != httplib.OK and status != httplib.CREATED
                 and status != httplib.NO_CONTENT):
-            LOG.error("%s to %s, unexpected response code: %d (content = '%s')"
-                     % (method, url, response.status, response.body))
+            LOG.error(
+                "%s to %s, unexpected response code: %d (content = '%s')" %
+                (method, url, response.status, response.body))
             return None
 
         return response.body
@@ -145,14 +149,16 @@ class NVPApiHelper(NvpApiClientEventlet):
     def zero(self):
         raise NvpApiException()
 
-    error_codes = {404: fourZeroFour,
-                   409: fourZeroNine,
-                   503: fiveZeroThree,
-                   403: fourZeroThree,
-                   301: zero,
-                   307: zero,
-                   400: zero,
-                   500: zero}
+    error_codes = {
+        404: fourZeroFour,
+        409: fourZeroNine,
+        503: fiveZeroThree,
+        403: fourZeroThree,
+        301: zero,
+        307: zero,
+        400: zero,
+        500: zero,
+        }
 
 
 class NvpApiException(Exception):
@@ -191,13 +197,13 @@ class Conflict(NvpApiException):
 
 
 class ServiceUnavailable(NvpApiException):
-    message = "Request could not completed because the associated " \
-        "resource could not be reached."
+    message = ("Request could not completed because the associated "
+               "resource could not be reached.")
 
 
 class Forbidden(NvpApiException):
-    message = "The request is forbidden from accessing the " \
-        "referenced resource."
+    message = ("The request is forbidden from accessing the "
+               "referenced resource.")
 
 
 class RequestTimeout(NvpApiException):

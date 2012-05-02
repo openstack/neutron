@@ -26,22 +26,22 @@ LOG = logging.getLogger('quantum.api.ports')
 
 def create_resource(plugin, version):
     controller_dict = {
-                        '1.0': [ControllerV10(plugin),
-                               ControllerV10._serialization_metadata,
-                               common.XML_NS_V10],
-                        '1.1': [ControllerV11(plugin),
-                                ControllerV11._serialization_metadata,
-                                common.XML_NS_V11]}
+        '1.0': [ControllerV10(plugin),
+                ControllerV10._serialization_metadata,
+                common.XML_NS_V10],
+        '1.1': [ControllerV11(plugin),
+                ControllerV11._serialization_metadata,
+                common.XML_NS_V11],
+        }
     return common.create_resource(version, controller_dict)
 
 
 class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
 
-    _port_ops_param_list = [{
-        'param-name': 'state',
-        'default-value': 'DOWN',
-        'required': False}, ]
+    _port_ops_param_list = [
+        {'param-name': 'state', 'default-value': 'DOWN', 'required': False},
+        ]
 
     def __init__(self, plugin):
         self._resource_name = 'port'
@@ -69,10 +69,10 @@ class Controller(common.QuantumController):
         # This can be inefficient.
         # TODO(salvatore-orlando): the fix for bug #834012 should deal with it
         if port_details:
-            port_list_detail = \
-                [self._plugin.get_port_details(
-                            tenant_id, network_id, port['port-id'])
-                  for port in port_list]
+            port_list_detail = [
+                self._plugin.get_port_details(tenant_id, network_id,
+                                              port['port-id'])
+                for port in port_list]
             port_list = port_list_detail
 
         # Perform manual filtering if not supported by plugin
@@ -92,8 +92,7 @@ class Controller(common.QuantumController):
     def _item(self, request, tenant_id, network_id, port_id,
               att_details=False):
         """ Returns a specific port. """
-        port = self._plugin.get_port_details(
-                        tenant_id, network_id, port_id)
+        port = self._plugin.get_port_details(tenant_id, network_id, port_id)
         builder = ports_view.get_view_builder(request, self.version)
         result = builder.build(port, port_details=True,
                                att_details=att_details)['port']
@@ -160,11 +159,14 @@ class ControllerV10(Controller):
     """Port resources controller for Quantum v1.0 API"""
 
     _serialization_metadata = {
-            "attributes": {
-                "port": ["id", "state"],
-                "attachment": ["id"]},
-            "plurals": {"ports": "port"}
-    }
+        "attributes": {
+            "port": ["id", "state"],
+            "attachment": ["id"],
+            },
+        "plurals": {
+            "ports": "port",
+            },
+        }
 
     def __init__(self, plugin):
         self.version = "1.0"
@@ -175,11 +177,14 @@ class ControllerV11(Controller):
     """Port resources controller for Quantum v1.1 API"""
 
     _serialization_metadata = {
-            "attributes": {
-                "port": ["id", "state", "op-status"],
-                "attachment": ["id"]},
-            "plurals": {"ports": "port"}
-    }
+        "attributes": {
+            "port": ["id", "state", "op-status"],
+            "attachment": ["id"],
+            },
+        "plurals": {
+            "ports": "port",
+            },
+        }
 
     def __init__(self, plugin):
         self.version = "1.1"

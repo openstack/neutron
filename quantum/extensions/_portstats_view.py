@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Nicira Networks, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Brad Hall, Nicira Networks, Inc
 #
-"""
 
 
 def get_view_builder(req):

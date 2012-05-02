@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,18 +16,18 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
-"""
 
 import os
+
 from quantum.common.config import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
+
 
 CONF_FILE = find_config_file({'plugin': 'cisco'}, None, "l2network_plugin.ini")
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
 
-"""
-Reading the conf for the l2network_plugin
-"""
+
+# Read the conf for the l2network_plugin
 SECTION_CONF = CONF_PARSER_OBJ['VLANS']
 VLAN_NAME_PREFIX = SECTION_CONF['vlan_name_prefix']
 VLAN_START = SECTION_CONF['vlan_start']
@@ -54,18 +53,16 @@ MANAGER_CLASS = SECTION_CONF['manager_class']
 
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
 
-"""
-Reading the config for the device plugins
-"""
+
+# Read the config for the device plugins
 PLUGINS = CONF_PARSER_OBJ.walk(CONF_PARSER_OBJ.dummy)
 
 CONF_FILE = find_config_file({'plugin': 'cisco'}, None, "db_conn.ini")
 
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
 
-"""
-Reading DB config for the Quantum DB
-"""
+
+# Read DB config for the Quantum DB
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
 DB_NAME = SECTION_CONF['name']
 DB_USER = SECTION_CONF['user']

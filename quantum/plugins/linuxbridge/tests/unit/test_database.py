@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2012, Cisco Systems, Inc.
@@ -15,22 +14,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
-"""
 
 """
 test_database.py is an independent test suite
 that tests the database api method calls
 """
-import logging as LOG
+
+import logging
 import unittest
 
-from common import constants as const
-
 import quantum.db.api as db
-import db.l2network_db as l2network_db
+from quantum.plugins.linuxbridge.common import constants as const
+import quantum.plugins.linuxbridge.db.l2network_db as l2network_db
 
 
-LOG.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class L2networkDB(object):
@@ -42,7 +40,7 @@ class L2networkDB(object):
         try:
             for vlan_bind in l2network_db.get_all_vlan_bindings():
                 LOG.debug("Getting vlan bindings for vlan: %s" %
-                            vlan_bind.vlan_id)
+                          vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
                 vlan_dict["net-id"] = str(vlan_bind.network_id)
@@ -56,8 +54,8 @@ class L2networkDB(object):
         vlan = []
         try:
             for vlan_bind in l2network_db.get_vlan_binding(network_id):
-                LOG.debug("Getting vlan binding for vlan: %s"
-                           % vlan_bind.vlan_id)
+                LOG.debug("Getting vlan binding for vlan: %s" %
+                          vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
                 vlan_dict["net-id"] = str(vlan_bind.network_id)

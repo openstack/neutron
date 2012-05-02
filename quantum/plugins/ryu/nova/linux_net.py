@@ -15,12 +15,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from ryu.app.client import OFPClient
+
 from nova import flags
 from nova import log as logging
-from nova import utils
 from nova.network import linux_net
 from nova.openstack.common import cfg
-from ryu.app.client import OFPClient
+from nova import utils
+
 
 LOG = logging.getLogger(__name__)
 
@@ -56,8 +58,9 @@ class LinuxOVSRyuInterfaceDriver(linux_net.LinuxOVSInterfaceDriver):
         if linux_net.binary_name == 'nova-network':
             for tables in [linux_net.iptables_manager.ipv4,
                            linux_net.iptables_manager.ipv6]:
-                tables['filter'].add_rule('FORWARD',
-                        '--in-interface gw-+ --out-interface gw-+ -j DROP')
+                tables['filter'].add_rule(
+                    'FORWARD',
+                    '--in-interface gw-+ --out-interface gw-+ -j DROP')
             linux_net.iptables_manager.apply()
 
     def plug(self, network, mac_address, gateway=True):

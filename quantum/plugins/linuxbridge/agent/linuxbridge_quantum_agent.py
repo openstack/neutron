@@ -21,20 +21,22 @@
 # Based on the structure of the OpenVSwitch agent in the
 # Quantum OpenVSwitch Plugin.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-
-from optparse import OptionParser
-from subprocess import *
 
 import ConfigParser
-import logging as LOG
-import MySQLdb
+import logging
+from optparse import OptionParser
 import os
 import shlex
 import signal
 import sqlite3
+import subprocess
 import sys
 import time
+
+import MySQLdb
+
+
+LOG = logging.getLogger(__name__)
 
 
 BRIDGE_NAME_PREFIX = "brq"
@@ -62,7 +64,7 @@ class LinuxBridge:
     def run_cmd(self, args):
         cmd = shlex.split(self.root_helper) + args
         LOG.debug("Running command: " + " ".join(cmd))
-        p = Popen(cmd, stdout=PIPE)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
             LOG.debug("Timeout running command: " + " ".join(cmd))
@@ -81,7 +83,7 @@ class LinuxBridge:
     def get_bridge_name(self, network_id):
         if not network_id:
             LOG.warning("Invalid Network ID, will lead to incorrect bridge" \
-                      "name")
+                        "name")
         bridge_name = self.br_name_prefix + network_id[0:11]
         return bridge_name
 
@@ -95,7 +97,7 @@ class LinuxBridge:
     def get_tap_device_name(self, interface_id):
         if not interface_id:
             LOG.warning("Invalid Interface ID, will lead to incorrect " \
-                      "tap device name")
+                        "tap device name")
         tap_device_name = TAP_INTERFACE_PREFIX + interface_id[0:11]
         return tap_device_name
 
@@ -109,9 +111,8 @@ class LinuxBridge:
 
     def get_interfaces_on_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
-            bridge_interface_path = \
-                    BRIDGE_INTERFACES_FS.replace(BRIDGE_NAME_PLACEHOLDER,
-                                                 bridge_name)
+            bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
+                BRIDGE_NAME_PLACEHOLDER, bridge_name)
             return os.listdir(bridge_interface_path)
 
     def get_all_tap_devices(self):
@@ -149,9 +150,8 @@ class LinuxBridge:
         if not device_name:
             return False
         else:
-            bridge_port_path = \
-                    BRIDGE_PORT_FS_FOR_DEVICE.replace(DEVICE_NAME_PLACEHOLDER,
-                                                      device_name)
+            bridge_port_path = BRIDGE_PORT_FS_FOR_DEVICE.replace(
+                DEVICE_NAME_PLACEHOLDER, device_name)
             return os.path.exists(bridge_port_path)
 
     def ensure_vlan_bridge(self, network_id, vlan_id):
@@ -183,7 +183,7 @@ class LinuxBridge:
         """
         if not self.device_exists(bridge_name):
             LOG.debug("Starting bridge %s for subinterface %s" % (bridge_name,
-                                                                interface))
+                                                                  interface))
             if self.run_cmd(['brctl', 'addbr', bridge_name]):
                 return
             if self.run_cmd(['brctl', 'setfd', bridge_name, str(0)]):
@@ -210,8 +210,7 @@ class LinuxBridge:
                       tap_device_name)
             return False
 
-        current_bridge_name = \
-                self.get_bridge_for_tap_device(tap_device_name)
+        current_bridge_name = self.get_bridge_for_tap_device(tap_device_name)
         bridge_name = self.get_bridge_name(network_id)
         if bridge_name == current_bridge_name:
             return False
@@ -237,12 +236,10 @@ class LinuxBridge:
             """
             return False
         if interface_id.startswith(GATEWAY_INTERFACE_PREFIX):
-            return self.add_tap_interface(network_id, vlan_id,
-                                              interface_id)
+            return self.add_tap_interface(network_id, vlan_id, interface_id)
         else:
             tap_device_name = self.get_tap_device_name(interface_id)
-            return self.add_tap_interface(network_id, vlan_id,
-                                          tap_device_name)
+            return self.add_tap_interface(network_id, vlan_id, tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
@@ -266,15 +263,15 @@ class LinuxBridge:
         if self.device_exists(bridge_name):
             if not self.is_device_on_bridge(interface_name):
                 return True
-            LOG.debug("Removing device %s from bridge %s" % \
+            LOG.debug("Removing device %s from bridge %s" %
                       (interface_name, bridge_name))
             if self.run_cmd(['brctl', 'delif', bridge_name, interface_name]):
                 return False
-            LOG.debug("Done removing device %s from bridge %s" % \
+            LOG.debug("Done removing device %s from bridge %s" %
                       (interface_name, bridge_name))
             return True
         else:
-            LOG.debug("Cannot remove device %s, bridge %s does not exist" % \
+            LOG.debug("Cannot remove device %s, bridge %s does not exist" %
                       (interface_name, bridge_name))
             return False
 
@@ -327,16 +324,16 @@ class LinuxBridgeQuantumAgent:
         LOG.debug("plugged tap device names %s" % plugged_tap_device_names)
         for tap_device in self.linux_br.get_all_tap_devices():
             if tap_device not in plugged_tap_device_names:
-                current_bridge_name = \
-                        self.linux_br.get_bridge_for_tap_device(tap_device)
+                current_bridge_name = (
+                    self.linux_br.get_bridge_for_tap_device(tap_device))
                 if current_bridge_name:
                     self.linux_br.remove_interface(current_bridge_name,
                                                    tap_device)
 
         for gw_device in self.linux_br.get_all_gateway_devices():
             if gw_device not in plugged_gateway_device_names:
-                current_bridge_name = \
-                        self.linux_br.get_bridge_for_tap_device(gw_device)
+                current_bridge_name = (
+                    self.linux_br.get_bridge_for_tap_device(gw_device))
                 if current_bridge_name:
                     self.linux_br.remove_interface(current_bridge_name,
                                                    gw_device)
@@ -378,15 +375,13 @@ class LinuxBridgeQuantumAgent:
         for pb in port_bindings:
             ports_string = "%s %s" % (ports_string, pb)
             if pb['interface_id']:
-                vlan_id = \
-                        str(vlan_bindings[pb['network_id']]['vlan_id'])
+                vlan_id = str(vlan_bindings[pb['network_id']]['vlan_id'])
                 if self.process_port_binding(pb['uuid'],
                                              pb['network_id'],
                                              pb['interface_id'],
                                              vlan_id):
                     cursor = MySQLdb.cursors.DictCursor(conn)
-                    sql = PORT_OPSTATUS_UPDATESQL % (pb['uuid'],
-                                                     OP_STATUS_UP)
+                    sql = PORT_OPSTATUS_UPDATESQL % (pb['uuid'], OP_STATUS_UP)
                     cursor.execute(sql)
                     cursor.close()
                 plugged_interfaces.append(pb['interface_id'])

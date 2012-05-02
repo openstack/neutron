@@ -26,9 +26,12 @@ export PLUGIN_DIR=quantum/plugins/cisco
 
 import os
 import sys
+
 from nose import config
+
 sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(__file__))
+
 from quantum.common.test_lib import run_tests, test_config
 import quantum.tests.unit
 

@@ -13,34 +13,42 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import json
 import logging
 import os
-import routes
+import sys
 import unittest
-from quantum.tests.unit import BaseTest
-from webtest import TestApp
+
+import routes
 from webtest import AppError
+from webtest import TestApp
 
-
-from quantum import wsgi
 from quantum.api import faults
 from quantum.common import config
 from quantum.common import exceptions
 from quantum.extensions import extensions
-import sys
-print sys.path
+from quantum.extensions.extensions import (
+    ExtensionManager,
+    ExtensionMiddleware,
+    PluginAwareExtensionManager,
+    )
 from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
-from quantum.tests.unit.extension_stubs import (StubExtension, StubPlugin,
-                                        StubPluginInterface,
-                                        StubBaseAppController,
-                                        ExtensionExpectingPluginInterface)
+from quantum.tests.unit import BaseTest
+from quantum.tests.unit.extension_stubs import (
+    ExtensionExpectingPluginInterface,
+    StubBaseAppController,
+    StubExtension,
+    StubPlugin,
+    StubPluginInterface,
+    )
 import quantum.tests.unit.extensions
-from quantum.extensions.extensions import (ExtensionManager,
-                                       PluginAwareExtensionManager,
-                                       ExtensionMiddleware)
+from quantum import wsgi
+
 
 LOG = logging.getLogger('test_extensions')
+
+
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
 extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
 
@@ -86,16 +94,16 @@ class ResourceExtensionTest(unittest.TestCase):
         # anything that is below 200 or above 400 so we can't actually check
         # it.  It thows AppError instead.
         try:
-            response = \
-                test_app.get("/tweedles/some_id/notimplemented_function")
+            response = (
+                test_app.get("/tweedles/some_id/notimplemented_function"))
             # Shouldn't be reached
             self.assertTrue(False)
         except AppError:
             pass
 
     def test_resource_can_be_added_as_extension(self):
-        res_ext = extensions.ResourceExtension('tweedles',
-                                            self.ResourceExtensionController())
+        res_ext = extensions.ResourceExtension(
+            'tweedles', self.ResourceExtensionController())
         test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
@@ -208,7 +216,8 @@ class ActionExtensionTest(unittest.TestCase):
         action_params = dict(name='Beetle')
         req_body = json.dumps({action_name: action_params})
         response = self.extension_app.post('/dummy_resources/1/action',
-                                     req_body, content_type='application/json')
+                                           req_body,
+                                           content_type='application/json')
         self.assertEqual("Tweedle Beetle Added.", response.body)
 
     def test_extended_action_for_deleting_extra_data(self):
@@ -216,7 +225,8 @@ class ActionExtensionTest(unittest.TestCase):
         action_params = dict(name='Bailey')
         req_body = json.dumps({action_name: action_params})
         response = self.extension_app.post("/dummy_resources/1/action",
-                                     req_body, content_type='application/json')
+                                           req_body,
+                                           content_type='application/json')
         self.assertEqual("Tweedle Bailey Deleted.", response.body)
 
     def test_returns_404_for_non_existant_action(self):
@@ -225,8 +235,9 @@ class ActionExtensionTest(unittest.TestCase):
         req_body = json.dumps({non_existant_action: action_params})
 
         response = self.extension_app.post("/dummy_resources/1/action",
-                                     req_body, content_type='application/json',
-                                     status='*')
+                                           req_body,
+                                           content_type='application/json',
+                                           status='*')
 
         self.assertEqual(404, response.status_int)
 
@@ -236,7 +247,8 @@ class ActionExtensionTest(unittest.TestCase):
         req_body = json.dumps({action_name: action_params})
 
         response = self.extension_app.post("/asdf/1/action", req_body,
-                                   content_type='application/json', status='*')
+                                           content_type='application/json',
+                                           status='*')
         self.assertEqual(404, response.status_int)
 
 
@@ -253,7 +265,7 @@ class RequestExtensionTest(BaseTest):
                            headers={'X-NEW-REQUEST-HEADER': "sox"})
 
         self.assertEqual(response.headers['X-NEW-RESPONSE-HEADER'],
-                                                   "response_header_data")
+                         "response_header_data")
 
     def test_extend_get_resource_response(self):
         def extend_response_data(req, res):
@@ -296,12 +308,13 @@ class RequestExtensionTest(BaseTest):
         ext_app = self._setup_app_with_request_handler(_update_handler,
                                                             'PUT')
         ext_response = ext_app.put("/dummy_resources/1",
-                                    {'uneditable': "new_value"})
+                                   {'uneditable': "new_value"})
         self.assertEqual(ext_response.json['uneditable'], "new_value")
 
     def _setup_app_with_request_handler(self, handler, verb):
         req_ext = extensions.RequestExtension(verb,
-                                   '/dummy_resources/:(id)', handler)
+                                              '/dummy_resources/:(id)',
+                                              handler)
         manager = SimpleExtensionManager(None, None, req_ext)
         return setup_extensions_test_app(manager)
 
@@ -381,7 +394,7 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
         ext_mgr = PluginAwareExtensionManager('',
                                               PluginWithExpectedInterface())
         ext_mgr.add_extension(
-                ExtensionExpectingPluginInterface("supported_extension"))
+            ExtensionExpectingPluginInterface("supported_extension"))
 
         self.assertTrue("supported_extension" in ext_mgr.extensions)
 

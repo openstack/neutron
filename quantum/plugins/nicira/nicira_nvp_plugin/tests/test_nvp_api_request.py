@@ -15,10 +15,13 @@
 
 import logging
 import unittest
+
 from eventlet.green import urllib2
 
+
 logging.basicConfig(level=logging.DEBUG)
-lg = logging.getLogger("test_nvp_api_request")
+LOG = logging.getLogger("test_nvp_api_request")
+
 
 REQUEST_TIMEOUT = 1
 

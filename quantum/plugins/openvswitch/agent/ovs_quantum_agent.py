@@ -20,15 +20,18 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
 import ConfigParser
-import logging as LOG
+import logging
+from optparse import OptionParser
 import shlex
+import signal
+import subprocess
 import sys
 import time
-import signal
 
-from optparse import OptionParser
 from sqlalchemy.ext.sqlsoup import SqlSoup
-from subprocess import *
+
+
+LOG = logging.getLogger(__name__)
 
 
 # Global constants.
@@ -52,9 +55,10 @@ class VifPort:
         self.switch = switch
 
     def __str__(self):
-        return "iface-id=" + self.vif_id + ", vif_mac=" + \
-          self.vif_mac + ", port_name=" + self.port_name + \
-          ", ofport=" + self.ofport + ", bridge name = " + self.switch.br_name
+        return ("iface-id=" + self.vif_id + ", vif_mac=" +
+                self.vif_mac + ", port_name=" + self.port_name +
+                ", ofport=" + self.ofport + ", bridge name = " +
+                self.switch.br_name)
 
 
 class OVSBridge:
@@ -65,7 +69,7 @@ class OVSBridge:
     def run_cmd(self, args):
         cmd = shlex.split(self.root_helper) + args
         LOG.debug("## running command: " + " ".join(cmd))
-        p = Popen(cmd, stdout=PIPE)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         retval = p.communicate()[0]
         if p.returncode == -(signal.SIGALRM):
             LOG.debug("## timeout running command: " + " ".join(cmd))
@@ -128,10 +132,10 @@ class OVSBridge:
         self.run_vsctl(["add-port", self.br_name, port_name])
         self.set_db_attribute("Interface", port_name, "type", "gre")
         self.set_db_attribute("Interface", port_name, "options:remote_ip",
-            remote_ip)
+                              remote_ip)
         self.set_db_attribute("Interface", port_name, "options:in_key", "flow")
         self.set_db_attribute("Interface", port_name, "options:out_key",
-            "flow")
+                              "flow")
         return self.get_port_ofport(port_name)
 
     def add_patch_port(self, local_name, remote_name):
@@ -166,12 +170,13 @@ class OVSBridge:
         return self.db_get_map("Interface", port_name, "statistics")
 
     def get_xapi_iface_id(self, xs_vif_uuid):
-        return self.run_cmd(
-                        ["xe",
-                        "vif-param-get",
-                        "param-name=other-config",
-                        "param-key=nicira-iface-id",
-                        "uuid=%s" % xs_vif_uuid]).strip()
+        return self.run_cmd([
+            "xe",
+            "vif-param-get",
+            "param-name=other-config",
+            "param-key=nicira-iface-id",
+            "uuid=%s" % xs_vif_uuid,
+            ]).strip()
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
@@ -184,8 +189,8 @@ class OVSBridge:
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
                 edge_ports.append(p)
-            elif "xs-vif-uuid" in external_ids and \
-                 "attached-mac" in external_ids:
+            elif ("xs-vif-uuid" in external_ids and
+                  "attached-mac" in external_ids):
                 # if this is a xenserver and iface-id is not automatically
                 # synced to OVS from XAPI, we grab it from XAPI directly
                 iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
@@ -215,8 +220,8 @@ class OVSQuantumAgent(object):
         self.setup_integration_br(integ_br)
 
     def port_bound(self, port, vlan_id):
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                str(vlan_id))
+        self.int_br.set_db_attribute("Port", port.port_name,
+                                     "tag", str(vlan_id))
         self.int_br.delete_flows(match="in_port=%s" % port.ofport)
 
     def port_unbound(self, port, still_exists):
@@ -265,7 +270,8 @@ class OVSQuantumAgent(object):
                     self.int_br.set_db_attribute("Port", p.port_name, "tag",
                                                  DEAD_VLAN_TAG)
                     self.int_br.add_flow(priority=2,
-                           match="in_port=%s" % p.ofport, actions="drop")
+                                         match="in_port=%s" % p.ofport,
+                                         actions="drop")
 
                 old_b = old_local_bindings.get(p.vif_id, None)
                 new_b = new_local_bindings.get(p.vif_id, None)
@@ -285,8 +291,9 @@ class OVSQuantumAgent(object):
                         self.port_bound(p, vlan_id)
                         if p.vif_id in all_bindings:
                             all_bindings[p.vif_id].op_status = OP_STATUS_UP
-                        LOG.info("Adding binding to net-id = %s " \
-                             "for %s on vlan %s" % (new_b, str(p), vlan_id))
+                        LOG.info(("Adding binding to net-id = %s "
+                                  "for %s on vlan %s") %
+                                 (new_b, str(p), vlan_id))
 
             for vif_id in old_vif_ports:
                 if vif_id not in new_vif_ports:
@@ -356,13 +363,13 @@ class OVSQuantumTunnelAgent(object):
 
         # outbound
         self.tun_br.add_flow(priority=4, match="in_port=%s,dl_vlan=%s" %
-                            (self.patch_int_ofport, lvid),
+                             (self.patch_int_ofport, lvid),
                              actions="set_tunnel:%s,normal" % (lsw_id))
 
         # inbound
         self.tun_br.add_flow(priority=3, match="tun_id=%s" % lsw_id,
-                             actions="mod_vlan_vid:%s,output:%s" % (lvid,
-                             self.patch_int_ofport))
+                             actions="mod_vlan_vid:%s,output:%s" %
+                             (lvid, self.patch_int_ofport))
 
     def reclaim_local_vlan(self, net_uuid, lvm):
         '''Reclaim a local VLAN.
@@ -401,8 +408,8 @@ class OVSQuantumTunnelAgent(object):
         :param port: a VifPort object.
         :param net_uuid: the net_uuid this port is associated with.'''
         if net_uuid not in self.local_vlan_map:
-            LOG.info('port_unbound() net_uuid %s not in local_vlan_map'
-                     % net_uuid)
+            LOG.info('port_unbound() net_uuid %s not in local_vlan_map' %
+                     net_uuid)
             return
         lvm = self.local_vlan_map[net_uuid]
 
@@ -460,8 +467,8 @@ class OVSQuantumTunnelAgent(object):
                 for i, remote_ip in enumerate(tunnel_ips):
                     self.tun_br.add_tunnel_port("gre-" + str(i), remote_ip)
         except Exception, e:
-            LOG.error("Error configuring tunnels: '%s' %s"
-                      % (remote_ip_file, str(e)))
+            LOG.error("Error configuring tunnels: '%s' %s" %
+                      (remote_ip_file, str(e)))
             raise
 
         self.tun_br.remove_all_flows()
@@ -525,11 +532,11 @@ class OVSQuantumTunnelAgent(object):
             new_local_bindings_ids = all_bindings_vif_port_ids.intersection(
                 new_vif_ports_ids)
             new_local_bindings = dict([(p, all_bindings.get(p))
-                for p in new_vif_ports_ids])
-            new_bindings = set((p, old_local_bindings.get(p),
-                new_local_bindings.get(p)) for p in new_vif_ports_ids)
-            changed_bindings = set([b for b in new_bindings
-                if b[2] != b[1]])
+                                       for p in new_vif_ports_ids])
+            new_bindings = set(
+                (p, old_local_bindings.get(p),
+                 new_local_bindings.get(p)) for p in new_vif_ports_ids)
+            changed_bindings = set([b for b in new_bindings if b[2] != b[1]])
 
             LOG.debug('all_bindings: %s' % all_bindings)
             LOG.debug('lsw_id_bindings: %s' % lsw_id_bindings)
@@ -563,7 +570,7 @@ class OVSQuantumTunnelAgent(object):
                     new_net_uuid = new_port.network_id
                     if new_net_uuid not in lsw_id_bindings:
                         LOG.warn("No ls-id binding found for net-id '%s'" %
-                            new_net_uuid)
+                                 new_net_uuid)
                         continue
 
                     lsw_id = lsw_id_bindings[new_net_uuid]
@@ -574,8 +581,8 @@ class OVSQuantumTunnelAgent(object):
                                  str(self.local_vlan_map[new_net_uuid]))
                     except Exception, e:
                         LOG.info("Unable to bind Port " + str(p) +
-                            " on netid = " + new_net_uuid + " to "
-                            + str(self.local_vlan_map[new_net_uuid]))
+                                 " on netid = " + new_net_uuid + " to "
+                                 + str(self.local_vlan_map[new_net_uuid]))
 
             for vif_id in disappeared_vif_ports_ids:
                 LOG.info("Port Disappeared: " + vif_id)
@@ -615,8 +622,8 @@ def main():
     try:
         config.read(config_file)
     except Exception, e:
-        LOG.error("Unable to parse config file \"%s\": %s"
-                  % (config_file, str(e)))
+        LOG.error("Unable to parse config file \"%s\": %s" %
+                  (config_file, str(e)))
         raise e
 
     # Determine which agent type to use.
@@ -639,8 +646,8 @@ def main():
         root_helper = config.get("AGENT", "root_helper")
 
     except Exception, e:
-        LOG.error("Error parsing common params in config_file: '%s': %s"
-                  % (config_file, str(e)))
+        LOG.error("Error parsing common params in config_file: '%s': %s" %
+                  (config_file, str(e)))
         sys.exit(1)
 
     if enable_tunneling:
@@ -662,8 +669,8 @@ def main():
             if not len(local_ip):
                 raise Exception('Empty local-ip in configuration file.')
         except Exception, e:
-            LOG.error("Error parsing tunnel params in config_file: '%s': %s"
-                      % (config_file, str(e)))
+            LOG.error("Error parsing tunnel params in config_file: '%s': %s" %
+                      (config_file, str(e)))
             sys.exit(1)
 
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, remote_ip_file,

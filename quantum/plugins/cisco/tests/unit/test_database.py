@@ -19,11 +19,11 @@
 test_database.py is an independent test suite
 that tests the database api method calls
 """
+
 import logging as LOG
 import unittest
 
 from quantum.plugins.cisco.common import cisco_constants as const
-
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db as nexus_db
@@ -72,13 +72,14 @@ class UcsDB(object):
             LOG.error("Failed to get port binding: %s" % str(exc))
         return port_binding
 
-    def create_port_binding(self, port_id, blade_intf_dn, portprofile_name, \
+    def create_port_binding(self, port_id, blade_intf_dn, portprofile_name,
                             vlan_name, vlan_id, qos):
         """create port binding"""
         port_bind_dict = {}
         try:
-            res = ucs_db.add_portbinding(port_id, blade_intf_dn, \
-                                  portprofile_name, vlan_name, vlan_id, qos)
+            res = ucs_db.add_portbinding(port_id, blade_intf_dn,
+                                         portprofile_name, vlan_name,
+                                         vlan_id, qos)
             LOG.debug("Created port binding: %s" % res.port_id)
             port_bind_dict["port-id"] = res.port_id
             port_bind_dict["blade-intf-dn"] = str(res.blade_intf_dn)
@@ -101,12 +102,13 @@ class UcsDB(object):
         except Exception, exc:
             raise Exception("Failed to delete port profile: %s" % str(exc))
 
-    def update_port_binding(self, port_id, blade_intf_dn, \
-                         portprofile_name, vlan_name, vlan_id, qos):
+    def update_port_binding(self, port_id, blade_intf_dn,
+                            portprofile_name, vlan_name, vlan_id, qos):
         """update port binding"""
         try:
-            res = ucs_db.update_portbinding(port_id, blade_intf_dn, \
-                               portprofile_name, vlan_name, vlan_id, qos)
+            res = ucs_db.update_portbinding(port_id, blade_intf_dn,
+                                            portprofile_name, vlan_name,
+                                            vlan_id, qos)
             LOG.debug("Updating port binding: %s" % res.port_id)
             port_bind_dict = {}
             port_bind_dict["port-id"] = res.port_id
@@ -223,7 +225,7 @@ class ServicesDB(object):
         """create service binding"""
         bind_dict = {}
         try:
-            res = services_db.add_services_binding(service_id, mngnet_id, \
+            res = services_db.add_services_binding(service_id, mngnet_id,
                                                    nbnet_id, sbnet_id)
             LOG.debug("Created service binding : %s" % res.service_id)
             bind_dict["service_id"] = str(res.service_id)
@@ -253,7 +255,7 @@ class L2networkDB(object):
         try:
             for vlan_bind in l2network_db.get_all_vlan_bindings():
                 LOG.debug("Getting vlan bindings for vlan: %s" %
-                            vlan_bind.vlan_id)
+                          vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
                 vlan_dict["vlan-name"] = vlan_bind.vlan_name
@@ -268,8 +270,8 @@ class L2networkDB(object):
         vlan = []
         try:
             for vlan_bind in l2network_db.get_vlan_binding(network_id):
-                LOG.debug("Getting vlan binding for vlan: %s"
-                           % vlan_bind.vlan_id)
+                LOG.debug("Getting vlan binding for vlan: %s" %
+                          vlan_bind.vlan_id)
                 vlan_dict = {}
                 vlan_dict["vlan-id"] = str(vlan_bind.vlan_id)
                 vlan_dict["vlan-name"] = vlan_bind.vlan_name
@@ -395,7 +397,7 @@ class L2networkDB(object):
         try:
             for pp_bind in l2network_db.get_all_pp_bindings():
                 LOG.debug("Getting port profile binding: %s" %
-                                               pp_bind.portprofile_id)
+                          pp_bind.portprofile_id)
                 ppbinding_dict = {}
                 ppbinding_dict["portprofile-id"] = str(pp_bind.portprofile_id)
                 ppbinding_dict["port-id"] = str(pp_bind.port_id)
@@ -412,7 +414,7 @@ class L2networkDB(object):
         try:
             for pp_bind in l2network_db.get_pp_binding(tenant_id, pp_id):
                 LOG.debug("Getting port profile binding: %s" %
-                                                 pp_bind.portprofile_id)
+                          pp_bind.portprofile_id)
                 ppbinding_dict = {}
                 ppbinding_dict["portprofile-id"] = str(pp_bind.portprofile_id)
                 ppbinding_dict["port-id"] = str(pp_bind.port_id)
@@ -428,7 +430,7 @@ class L2networkDB(object):
         ppbinding_dict = {}
         try:
             res = l2network_db.add_pp_binding(tenant_id, port_id, pp_id,
-                                                                default)
+                                              default)
             LOG.debug("Created port profile binding: %s" % res.portprofile_id)
             ppbinding_dict["portprofile-id"] = str(res.portprofile_id)
             ppbinding_dict["port-id"] = str(res.port_id)
@@ -453,8 +455,8 @@ class L2networkDB(object):
                           port_id, default):
         """Update portprofile binding"""
         try:
-            res = l2network_db.update_pp_binding(tenant_id, pp_id,
-                                            newtenant_id, port_id, default)
+            res = l2network_db.update_pp_binding(
+                tenant_id, pp_id, newtenant_id, port_id, default)
             LOG.debug("Updating port profile binding: %s" % res.portprofile_id)
             ppbinding_dict = {}
             ppbinding_dict["portprofile-id"] = str(res.portprofile_id)
@@ -653,8 +655,8 @@ class UcsDBTest(unittest.TestCase):
         """create port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind1 = self.dbtest.create_port_binding(
+            port1["port-id"], "vnic1", "pp1", "vlan1", 10, "qos1")
         self.assertTrue(port_bind1["port-id"] == port1["port-id"])
         self.teardown_portbinding()
         self.teardown_network_port()
@@ -664,10 +666,10 @@ class UcsDBTest(unittest.TestCase):
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
         port2 = self.quantum.create_port(net1["net-id"])
-        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                "vnic1", "pp1", "vlan1", 10, "qos1")
-        port_bind2 = self.dbtest.create_port_binding(port2["port-id"],
-                                "vnic2", "pp2", "vlan2", 20, "qos2")
+        port_bind1 = self.dbtest.create_port_binding(
+            port1["port-id"], "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind2 = self.dbtest.create_port_binding(
+            port2["port-id"], "vnic2", "pp2", "vlan2", 20, "qos2")
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
         for pbind in port_bindings:
@@ -681,8 +683,8 @@ class UcsDBTest(unittest.TestCase):
         """delete port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind1 = self.dbtest.create_port_binding(
+            port1["port-id"], "vnic1", "pp1", "vlan1", 10, "qos1")
         self.dbtest.delete_port_binding(port1["port-id"])
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
@@ -697,10 +699,10 @@ class UcsDBTest(unittest.TestCase):
         """update port binding"""
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
-        port_bind1 = self.dbtest.create_port_binding(port1["port-id"],
-                                "vnic1", "pp1", "vlan1", 10, "qos1")
-        port_bind1 = self.dbtest.update_port_binding(port1["port-id"],
-                        "vnic1", "newpp1", "newvlan1", 11, "newqos1")
+        port_bind1 = self.dbtest.create_port_binding(
+            port1["port-id"], "vnic1", "pp1", "vlan1", 10, "qos1")
+        port_bind1 = self.dbtest.update_port_binding(
+            port1["port-id"], "vnic1", "newpp1", "newvlan1", 11, "newqos1")
         port_bindings = self.dbtest.get_all_port_bindings()
         count = 0
         for pbind in port_bindings:
@@ -776,8 +778,8 @@ class NexusDBTest(unittest.TestCase):
     def testd_update_nexusportbinding(self):
         """update nexus port binding"""
         binding1 = self.dbtest.create_nexusportbinding("port1", 10)
-        binding1 = self.dbtest.update_nexusport_binding(binding1["port-id"], \
-                                                             20)
+        binding1 = self.dbtest.update_nexusport_binding(binding1["port-id"],
+                                                        20)
         bindings = self.dbtest.get_all_nexusportbindings()
         count = 0
         for bind in bindings:
@@ -809,15 +811,15 @@ class ServicesDBTest(unittest.TestCase):
 
     def testa_create_servicebinding(self):
         """create service binding"""
-        service_id = self.dbtest.create_servicebinding("i-00001", \
-                                    "mng_net", "northb_net", "northb_net")
+        service_id = self.dbtest.create_servicebinding(
+            "i-00001", "mng_net", "northb_net", "northb_net")
         self.assertTrue(service_id["service_id"] == "i-00001")
         self.tearDown_servicebinding()
 
     def testb_get_servicesbindings(self):
         """get all services binding"""
-        service_id = self.dbtest.create_servicebinding("i-00001", \
-                                    "mng_net", "northb_net", "northb_net")
+        service_id = self.dbtest.create_servicebinding(
+            "i-00001", "mng_net", "northb_net", "northb_net")
         bindings = self.dbtest.get_servicebindings("i-00001")
         count = 0
         if bindings:
@@ -827,10 +829,10 @@ class ServicesDBTest(unittest.TestCase):
 
     def testb_getall_servicesbindings(self):
         """get all services binding"""
-        service_id = self.dbtest.create_servicebinding("i-00001", \
-                                    "mng_net", "northb_net", "northb_net")
-        service_id = self.dbtest.create_servicebinding("i-00002", \
-                                    "mng_net", "northb_net", "northb_net")
+        service_id = self.dbtest.create_servicebinding(
+            "i-00001", "mng_net", "northb_net", "northb_net")
+        service_id = self.dbtest.create_servicebinding(
+            "i-00002", "mng_net", "northb_net", "northb_net")
         bindings = self.dbtest.get_all_servicesbindings()
         count = 0
         for bind in bindings:
@@ -841,8 +843,8 @@ class ServicesDBTest(unittest.TestCase):
 
     def testc_delete_servicesbinding(self):
         """delete services binding"""
-        binding_serv = self.dbtest.create_servicebinding("i-00001", \
-                                    "mng_net", "northb_net", "northb_net")
+        binding_serv = self.dbtest.create_servicebinding(
+            "i-00001", "mng_net", "northb_net", "northb_net")
         self.dbtest.delete_servicebinding("i-00001")
         bindings = self.dbtest.get_all_servicesbindings()
         count = 0
@@ -967,8 +969,8 @@ class L2networkDBTest(unittest.TestCase):
         """test update portprofile"""
         pp1 = self.dbtest.create_portprofile("t1", "portprofile1", 10, "qos1")
         self.assertTrue(pp1["portprofile-name"] == "portprofile1")
-        pp1 = self.dbtest.update_portprofile("t1", pp1["portprofile-id"], \
-                                          "newportprofile1", 20, "qos2")
+        pp1 = self.dbtest.update_portprofile("t1", pp1["portprofile-id"],
+                                             "newportprofile1", 20, "qos2")
         pps = self.dbtest.get_all_portprofiles()
         count = 0
         for pprofile in pps:
@@ -982,8 +984,8 @@ class L2networkDBTest(unittest.TestCase):
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
         pp1 = self.dbtest.create_portprofile("t1", "portprofile1", 10, "qos1")
-        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"], \
-                                              pp1["portprofile-id"], "0")
+        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"],
+                                                    pp1["portprofile-id"], "0")
         self.assertTrue(pp_binding1["tenant-id"] == "t1")
         self.teardown_portprofilebinding()
         self.teardown_port()
@@ -997,11 +999,11 @@ class L2networkDBTest(unittest.TestCase):
         port2 = self.quantum.create_port(net1["net-id"])
         pp1 = self.dbtest.create_portprofile("t1", "portprofile1", 10, "qos1")
         pp2 = self.dbtest.create_portprofile("t1", "portprofile2", 20, "qos2")
-        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"], \
-                                               pp1["portprofile-id"], "0")
+        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"],
+                                                    pp1["portprofile-id"], "0")
         self.assertTrue(pp_binding1["tenant-id"] == "t1")
-        pp_binding2 = self.dbtest.create_pp_binding("t1", port2["port-id"], \
-                                               pp2["portprofile-id"], "0")
+        pp_binding2 = self.dbtest.create_pp_binding("t1", port2["port-id"],
+                                                    pp2["portprofile-id"], "0")
         self.assertTrue(pp_binding2["tenant-id"] == "t1")
         pp_bindings = self.dbtest.get_all_pp_bindings()
         count = 0
@@ -1019,10 +1021,10 @@ class L2networkDBTest(unittest.TestCase):
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
         pp1 = self.dbtest.create_portprofile("t1", "portprofile1", 10, "qos1")
-        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"], \
-                                                pp1["portprofile-id"], "0")
+        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"],
+                                                    pp1["portprofile-id"], "0")
         self.assertTrue(pp_binding1["tenant-id"] == "t1")
-        self.dbtest.delete_pp_binding("t1", port1["port-id"], \
+        self.dbtest.delete_pp_binding("t1", port1["port-id"],
                                       pp_binding1["portprofile-id"])
         pp_bindings = self.dbtest.get_all_pp_bindings()
         count = 0
@@ -1040,11 +1042,11 @@ class L2networkDBTest(unittest.TestCase):
         net1 = self.quantum.create_network("t1", "netid1")
         port1 = self.quantum.create_port(net1["net-id"])
         pp1 = self.dbtest.create_portprofile("t1", "portprofile1", 10, "qos1")
-        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"], \
-                                                pp1["portprofile-id"], "0")
+        pp_binding1 = self.dbtest.create_pp_binding("t1", port1["port-id"],
+                                                    pp1["portprofile-id"], "0")
         self.assertTrue(pp_binding1["tenant-id"] == "t1")
-        pp_binding1 = self.dbtest.update_pp_binding("t1", \
-                      pp1["portprofile-id"], "newt1", port1["port-id"], "1")
+        pp_binding1 = self.dbtest.update_pp_binding(
+            "t1", pp1["portprofile-id"], "newt1", port1["port-id"], "1")
         pp_bindings = self.dbtest.get_all_pp_bindings()
         count = 0
         for pp_bind in pp_bindings:
@@ -1246,26 +1248,3 @@ class QuantumDBTest(unittest.TestCase):
             for port in ports:
                 self.dbtest.delete_port(port["net-id"], port["port-id"])
             self.dbtest.delete_network(netid)
-
-"""
-if __name__ == "__main__":
-    usagestr = "Usage: %prog [OPTIONS] <command> [args]"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
-
-    options, args = parser.parse_args()
-
-    if options.verbose:
-        LOG.basicConfig(level=LOG.DEBUG)
-    else:
-        LOG.basicConfig(level=LOG.WARN)
-
-    l2network_db.initialize()
-
-    # Run the tests
-    suite = unittest.TestLoader().loadTestsFromTestCase(QuantumDBTest)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(L2networkDBTest)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-"""

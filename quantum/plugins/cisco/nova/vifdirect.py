@@ -24,7 +24,7 @@ from nova import flags
 from nova import log as logging
 from nova.openstack.common import cfg
 from nova.virt.vif import VIFDriver
-from quantum.client import Client
+from quantumclient import Client
 
 
 LOG = logging.getLogger(__name__)

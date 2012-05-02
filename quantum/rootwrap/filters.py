@@ -30,9 +30,7 @@ class CommandFilter(object):
 
     def match(self, userargs):
         """Only check that the first argument (command) matches exec_path"""
-        if (os.path.basename(self.exec_path) == userargs[0]):
-            return True
-        return False
+        return os.path.basename(self.exec_path) == userargs[0]
 
     def get_command(self, userargs):
         """Returns command to execute (with sudo -u if run_as != root)."""
@@ -108,13 +106,12 @@ class KillFilter(CommandFilter):
             if signal not in self.args[0]:
                 # Requested signal not in accepted list
                 return False
-        else:
-            if len(args) != 2:
-                # Incorrect number of arguments
-                return False
-            if '' not in self.args[0]:
-                # No signal, but list doesn't include empty string
-                return False
+        elif len(args) != 2:
+            # Incorrect number of arguments
+            return False
+        elif '' not in self.args[0]:
+            # No signal, but list doesn't include empty string
+            return False
         try:
             command = os.readlink("/proc/%d/exe" % int(args[1]))
             if command not in self.args[1]:

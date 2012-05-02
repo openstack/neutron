@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,10 +15,9 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
 from configobj import ConfigObj
+
 from quantum.plugins.cisco.common import cisco_constants as const
 
 

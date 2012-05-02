@@ -17,13 +17,17 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
 import logging
-import mox
 import os
 import unittest
-from agent import ovs_quantum_agent
+
+import mox
+
+from quantum.plugins.openvswitch.agent import ovs_quantum_agent
+
 
 LOG = logging.getLogger("quantum.plugins.openvswitch.tests.unit.test_tunnel")
 LOG.setLevel(logging.INFO)
+
 
 LOCAL_DIR = os.path.dirname(__file__)
 REMOTE_IP_FILE = LOCAL_DIR + '/remote-ip-file.txt'
@@ -135,7 +139,7 @@ class TunnelTest(unittest.TestCase):
 
     def testPortBound(self):
         self.mock_int_bridge.set_db_attribute('Port', VIF_PORT.port_name,
-                                               'tag', str(LVM.vlan))
+                                              'tag', str(LVM.vlan))
         self.mock_int_bridge.delete_flows(match='in_port=%s' % VIF_PORT.ofport)
 
         self.mox.ReplayAll()
@@ -161,8 +165,8 @@ class TunnelTest(unittest.TestCase):
         self.mox.VerifyAll()
 
     def testPortDead(self):
-        self.mock_int_bridge.set_db_attribute('Port', VIF_PORT.port_name,
-            'tag', ovs_quantum_agent.DEAD_VLAN_TAG)
+        self.mock_int_bridge.set_db_attribute(
+            'Port', VIF_PORT.port_name, 'tag', ovs_quantum_agent.DEAD_VLAN_TAG)
 
         match_string = 'in_port=%s' % VIF_PORT.ofport
         self.mock_int_bridge.add_flow(priority=2, match=match_string,

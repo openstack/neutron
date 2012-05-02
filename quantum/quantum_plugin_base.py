@@ -260,8 +260,8 @@ class QuantumPluginBase(object):
                         if inspect.isfunction(fn_obj):
                             abstract_fn_obj = cls.__dict__[method]
                             arg_count = fn_obj.func_code.co_argcount
-                            expected_arg_count = \
-                                abstract_fn_obj.func_code.co_argcount
+                            expected_arg_count = (
+                                abstract_fn_obj.func_code.co_argcount)
                             method_ok = arg_count == expected_arg_count
                 if method_ok:
                     continue

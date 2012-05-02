@@ -18,6 +18,7 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
 import logging
+
 import sqlalchemy as sql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
@@ -127,17 +128,17 @@ def network_all_tenant_list():
 
 def network_list(tenant_id):
     session = get_session()
-    return session.query(models.Network).\
-      filter_by(tenant_id=tenant_id).\
-      all()
+    return (session.query(models.Network).
+            filter_by(tenant_id=tenant_id).
+            all())
 
 
 def network_get(net_id):
     session = get_session()
     try:
-        return  session.query(models.Network).\
-            filter_by(uuid=net_id).\
-            one()
+        return (session.query(models.Network).
+                filter_by(uuid=net_id).
+                one())
     except exc.NoResultFound, e:
         raise q_exc.NetworkNotFound(net_id=net_id)
 
@@ -155,13 +156,13 @@ def network_update(net_id, tenant_id, **kwargs):
 def network_destroy(net_id):
     session = get_session()
     try:
-        net = session.query(models.Network).\
-          filter_by(uuid=net_id).\
-          one()
+        net = (session.query(models.Network).
+               filter_by(uuid=net_id).
+               one())
 
-        ports = session.query(models.Port).\
-            filter_by(network_id=net_id).\
-            all()
+        ports = (session.query(models.Port).
+                 filter_by(network_id=net_id).
+                 all())
         for p in ports:
             session.delete(p)
 
@@ -175,10 +176,10 @@ def network_destroy(net_id):
 def validate_network_ownership(tenant_id, net_id):
     session = get_session()
     try:
-        return  session.query(models.Network).\
-            filter_by(uuid=net_id).\
-            filter_by(tenant_id=tenant_id).\
-            one()
+        return (session.query(models.Network).
+                filter_by(uuid=net_id).
+                filter_by(tenant_id=tenant_id).
+                one())
     except exc.NoResultFound, e:
         raise q_exc.NetworkNotFound(net_id=net_id)
 
@@ -204,9 +205,9 @@ def port_list(net_id):
     # confirm network exists
     network_get(net_id)
     session = get_session()
-    return session.query(models.Port).\
-      filter_by(network_id=net_id).\
-      all()
+    return (session.query(models.Port).
+            filter_by(network_id=net_id).
+            all())
 
 
 def port_get(port_id, net_id, session=None):
@@ -215,10 +216,10 @@ def port_get(port_id, net_id, session=None):
     if not session:
         session = get_session()
     try:
-        return session.query(models.Port).\
-          filter_by(uuid=port_id).\
-          filter_by(network_id=net_id).\
-          one()
+        return (session.query(models.Port).
+                filter_by(uuid=port_id).
+                filter_by(network_id=net_id).
+                one())
     except exc.NoResultFound:
         raise q_exc.PortNotFound(net_id=net_id, port_id=port_id)
 
@@ -228,7 +229,7 @@ def port_update(port_id, net_id, **kwargs):
     network_get(net_id)
     port = port_get(port_id, net_id)
     session = get_session()
-    for key in kwargs.keys():
+    for key in kwargs:
         if key == "state":
             if kwargs[key] not in ('ACTIVE', 'DOWN'):
                 raise q_exc.StateInvalid(port_state=kwargs[key])
@@ -249,16 +250,16 @@ def port_set_attachment(port_id, net_id, new_interface_id):
         # We are setting, not clearing, the attachment-id
         if port['interface_id']:
             raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port['interface_id'])
+                                  att_id=port['interface_id'])
 
         try:
-            port = session.query(models.Port).\
-            filter_by(interface_id=new_interface_id).\
-            one()
+            port = (session.query(models.Port).
+                    filter_by(interface_id=new_interface_id).
+                    one())
             raise q_exc.AlreadyAttached(net_id=net_id,
-                                    port_id=port_id,
-                                    att_id=new_interface_id,
-                                    att_port_id=port['uuid'])
+                                        port_id=port_id,
+                                        att_id=new_interface_id,
+                                        att_port_id=port['uuid'])
         except exc.NoResultFound:
             # this is what should happen
             pass
@@ -285,13 +286,13 @@ def port_destroy(port_id, net_id):
 
     session = get_session()
     try:
-        port = session.query(models.Port).\
-          filter_by(uuid=port_id).\
-          filter_by(network_id=net_id).\
-          one()
+        port = (session.query(models.Port).
+                filter_by(uuid=port_id).
+                filter_by(network_id=net_id).
+                one())
         if port['interface_id']:
             raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
-                                att_id=port['interface_id'])
+                                  att_id=port['interface_id'])
         session.delete(port)
         session.flush()
         return port

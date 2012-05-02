@@ -16,19 +16,21 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+from abc import ABCMeta
 import imp
 import logging
 import os
+
 import routes
 import webob.dec
 import webob.exc
 
-from gettext import gettext as _
-from abc import ABCMeta
 from quantum.common import exceptions
 import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum import wsgi
+
 
 LOG = logging.getLogger('quantum.extensions.extensions')
 
@@ -281,14 +283,14 @@ class ExtensionMiddleware(wsgi.Middleware):
             if not action.collection in action_controllers.keys():
                 controller = ActionExtensionController(application)
                 mapper.connect("/%s/:(id)/action.:(format)" %
-                                action.collection,
-                                action='action',
-                                controller=controller,
-                                conditions=dict(method=['POST']))
+                               action.collection,
+                               action='action',
+                               controller=controller,
+                               conditions=dict(method=['POST']))
                 mapper.connect("/%s/:(id)/action" % action.collection,
-                                action='action',
-                                controller=controller,
-                                conditions=dict(method=['POST']))
+                               action='action',
+                               controller=controller,
+                               conditions=dict(method=['POST']))
                 action_controllers[action.collection] = controller
 
         return action_controllers
@@ -300,14 +302,14 @@ class ExtensionMiddleware(wsgi.Middleware):
             if not req_ext.key in request_ext_controllers.keys():
                 controller = RequestExtensionController(application)
                 mapper.connect(req_ext.url_route + '.:(format)',
-                                action='process',
-                                controller=controller,
-                                conditions=req_ext.conditions)
+                               action='process',
+                               controller=controller,
+                               conditions=req_ext.conditions)
 
                 mapper.connect(req_ext.url_route,
-                                action='process',
-                                controller=controller,
-                                conditions=req_ext.conditions)
+                               action='process',
+                               controller=controller,
+                               conditions=req_ext.conditions)
                 request_ext_controllers[req_ext.key] = controller
 
         return request_ext_controllers
@@ -361,7 +363,7 @@ class ExtensionManager(object):
         """Returns a list of ResourceExtension objects."""
         resources = []
         resources.append(ResourceExtension('extensions',
-                                            ExtensionController(self)))
+                                           ExtensionController(self)))
         for alias, ext in self.extensions.iteritems():
             try:
                 resources.extend(ext.get_resources())
@@ -496,7 +498,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         if not plugin_has_interface:
             LOG.warn("plugin %s does not implement extension's"
                      "plugin interface %s" % (self.plugin,
-                                             extension.get_alias()))
+                                              extension.get_alias()))
         return plugin_has_interface
 
 

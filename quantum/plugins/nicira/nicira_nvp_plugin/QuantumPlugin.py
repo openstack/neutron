@@ -17,19 +17,29 @@
 
 import ConfigParser
 import logging
-import nvplib
-import NvpApiClient
 import os
 import sys
 
-from api_client.client_eventlet import DEFAULT_CONCURRENT_CONNECTIONS
-from api_client.client_eventlet import DEFAULT_FAILOVER_TIME
-from api_client.request_eventlet import DEFAULT_REQUEST_TIMEOUT
-from api_client.request_eventlet import DEFAULT_HTTP_TIMEOUT
-from api_client.request_eventlet import DEFAULT_RETRIES
-from api_client.request_eventlet import DEFAULT_REDIRECTS
+import NvpApiClient
+import nvplib
 
 from quantum.common import exceptions as exception
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
+     import (
+    DEFAULT_CONCURRENT_CONNECTIONS,
+    DEFAULT_FAILOVER_TIME,
+    )
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
+     import (
+    DEFAULT_REQUEST_TIMEOUT,
+    DEFAULT_HTTP_TIMEOUT,
+    DEFAULT_RETRIES,
+    DEFAULT_REDIRECTS,
+    )
+
+
+LOG = logging.getLogger("QuantumPlugin")
+
 
 CONFIG_FILE = "nvp.ini"
 CONFIG_FILE_PATHS = []
@@ -38,7 +48,6 @@ if os.environ.get('QUANTUM_HOME', None):
 CONFIG_FILE_PATHS.append("/etc/quantum/plugins/nicira")
 CONFIG_KEYS = ["DEFAULT_TZ_UUID", "NVP_CONTROLLER_IP", "PORT", "USER",
                "PASSWORD"]
-LOG = logging.getLogger("QuantumPlugin")
 
 
 def initConfig(cfile=None):
@@ -50,8 +59,7 @@ def initConfig(cfile=None):
             cfile = find_config(os.path.abspath(os.path.dirname(__file__)))
 
     if cfile == None:
-        raise Exception("Configuration file \"%s\" doesn't exist" %
-                        (cfile))
+        raise Exception("Configuration file \"%s\" doesn't exist" % (cfile))
     LOG.info("Using configuration file: %s" % cfile)
     config.read(cfile)
     LOG.debug("Config: %s" % config)
@@ -71,7 +79,7 @@ def find_config(basepath):
 
 
 def parse_config(config):
-    '''Backwards compatible parsing.
+    """Backwards compatible parsing.
 
     :param config: ConfigParser object initilized with nvp.ini.
     :returns: A tuple consisting of a control cluster object and a
@@ -81,7 +89,7 @@ def parse_config(config):
         At some point, error handling needs to be significantly
         enhanced to provide user friendly error messages, clean program
         exists, rather than exceptions propagated to the user.
-    '''
+    """
     # Extract plugin config parameters.
     try:
         failover_time = config.get('NVP', 'failover_time')
@@ -95,16 +103,15 @@ def parse_config(config):
 
     plugin_config = {
         'failover_time': failover_time,
-        'concurrent_connections': concurrent_connections
-    }
+        'concurrent_connections': concurrent_connections,
+        }
     LOG.info('parse_config(): plugin_config == "%s"' % plugin_config)
 
     cluster = NVPCluster('cluster1')
 
     # Extract connection information.
     try:
-        defined_connections = config.get(
-            'NVP', 'NVP_CONTROLLER_CONNECTIONS')
+        defined_connections = config.get('NVP', 'NVP_CONTROLLER_CONNECTIONS')
 
         for conn_key in defined_connections.split():
             args = [config.get('NVP', 'DEFAULT_TZ_UUID')]
@@ -131,7 +138,7 @@ def parse_config(config):
 
 
 class NVPCluster(object):
-    '''Encapsulates controller connection and api_client.
+    """Encapsulates controller connection and api_client.
 
     Initialized within parse_config().
     Accessed within the NvpPlugin class.
@@ -142,7 +149,7 @@ class NVPCluster(object):
 
     There may be some redundancy here, but that has been done to provide
     future flexibility.
-    '''
+    """
     def __init__(self, name):
         self._name = name
         self.controllers = []
@@ -162,7 +169,7 @@ class NVPCluster(object):
                        request_timeout=DEFAULT_REQUEST_TIMEOUT,
                        http_timeout=DEFAULT_HTTP_TIMEOUT,
                        retries=DEFAULT_RETRIES, redirects=DEFAULT_REDIRECTS):
-        '''Add a new set of controller parameters.
+        """Add a new set of controller parameters.
 
         :param ip: IP address of controller.
         :param port: port controller is listening on.
@@ -174,14 +181,12 @@ class NVPCluster(object):
         :param redirects: maximum number of server redirect responses to
             follow.
         :param default_tz_uuid: default transport zone uuid.
-        '''
+        """
 
-        keys = [
-            'ip', 'port', 'user', 'password', 'default_tz_uuid']
+        keys = ['ip', 'port', 'user', 'password', 'default_tz_uuid']
         controller_dict = dict([(k, locals()[k]) for k in keys])
 
-        int_keys = [
-            'request_timeout', 'http_timeout', 'retries', 'redirects']
+        int_keys = ['request_timeout', 'http_timeout', 'retries', 'redirects']
         for k in int_keys:
             controller_dict[k] = int(locals()[k])
 
@@ -236,10 +241,10 @@ class NVPCluster(object):
 
 
 class NvpPlugin(object):
-    '''
+    """
     NvpPlugin is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
-    '''
+    """
     supported_extension_aliases = ["portstats"]
 
     def __init__(self, configfile=None, loglevel=None, cli=False):
@@ -251,8 +256,7 @@ class NvpPlugin(object):
         config = initConfig(configfile)
         self.controller, self.plugin_config = parse_config(config)
         c = self.controller
-        api_providers = [
-            (x['ip'], x['port'], True) for x in c.controllers]
+        api_providers = [(x['ip'], x['port'], True) for x in c.controllers]
 
         c.api_client = NvpApiClient.NVPApiHelper(
             api_providers, c.user, c.password,
@@ -268,7 +272,7 @@ class NvpPlugin(object):
         self.api_client = self.controller.api_client
 
     def get_all_networks(self, tenant_id, **kwargs):
-        '''
+        """
         Returns a dictionary containing all <network_uuid, network_name> for
         the specified tenant.
 
@@ -286,15 +290,14 @@ class NvpPlugin(object):
                       }
                    ]
         :raises: None
-        '''
-        networks = nvplib.get_all_networks(self.controller, tenant_id,
-                                           [])
-        LOG.debug("get_all_networks() completed for tenant %s: %s" % (
-            tenant_id, networks))
+        """
+        networks = nvplib.get_all_networks(self.controller, tenant_id, [])
+        LOG.debug("get_all_networks() completed for tenant %s: %s" %
+                  (tenant_id, networks))
         return networks
 
     def create_network(self, tenant_id, net_name, **kwargs):
-        '''
+        """
         Creates a new Virtual Network, and assigns it a symbolic name.
         :returns: a sequence of mappings with the following signature:
                     {'net-id': uuid that uniquely identifies the
@@ -303,7 +306,7 @@ class NvpPlugin(object):
                                     with network referenced by net-id
                    }
         :raises:
-        '''
+        """
         kwargs["controller"] = self.controller
         return nvplib.create_network(tenant_id, net_name, **kwargs)
 
@@ -315,7 +318,7 @@ class NvpPlugin(object):
                                    controller=controller)
 
     def delete_network(self, tenant_id, netw_id):
-        '''
+        """
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
 
@@ -325,7 +328,7 @@ class NvpPlugin(object):
                    }
         :raises: exception.NetworkInUse
         :raises: exception.NetworkNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         nvplib.delete_network(self.controller, netw_id)
@@ -334,7 +337,7 @@ class NvpPlugin(object):
         return {'net-id': netw_id}
 
     def get_network_details(self, tenant_id, netw_id):
-        '''
+        """
         Retrieves a list of all the remote vifs that
         are attached to the network.
 
@@ -348,14 +351,14 @@ class NvpPlugin(object):
                    }
         :raises: exception.NetworkNotFound
         :raises: exception.QuantumException
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = None
         remote_vifs = []
         switch = netw_id
         lports = nvplib.query_ports(self.controller, switch,
-          relations="LogicalPortAttachment")
+                                    relations="LogicalPortAttachment")
 
         for port in lports:
             relation = port["_relations"]
@@ -366,16 +369,18 @@ class NvpPlugin(object):
         if not result:
             result = nvplib.get_network(self.controller, switch)
 
-        d = {"net-id": netw_id,
-             "net-ifaces": remote_vifs,
-             "net-name": result["display_name"],
-             "net-op-status": "UP"}
-        LOG.debug("get_network_details() completed for tenant %s: %s" % (
-                  tenant_id, d))
+        d = {
+            "net-id": netw_id,
+            "net-ifaces": remote_vifs,
+            "net-name": result["display_name"],
+            "net-op-status": "UP",
+            }
+        LOG.debug("get_network_details() completed for tenant %s: %s" %
+                  (tenant_id, d))
         return d
 
     def update_network(self, tenant_id, netw_id, **kwargs):
-        '''
+        """
         Updates the properties of a particular Virtual Network.
 
         :returns: a sequence of mappings representing the new network
@@ -386,16 +391,19 @@ class NvpPlugin(object):
                                   associated with network referenced by net-id
                    }
         :raises: exception.NetworkNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = nvplib.update_network(self.controller, netw_id, **kwargs)
         LOG.debug("update_network() completed for tenant: %s" % tenant_id)
-        return {'net-id': netw_id, 'net-name': result["display_name"],
-                'net-op-status': "UP"}
+        return {
+            'net-id': netw_id,
+            'net-name': result["display_name"],
+            'net-op-status': "UP",
+            }
 
     def get_all_ports(self, tenant_id, netw_id, **kwargs):
-        '''
+        """
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
 
@@ -409,7 +417,7 @@ class NvpPlugin(object):
                       }
                      ]
         :raises: exception.NetworkNotFound
-        '''
+        """
         ids = []
         filters = kwargs.get("filter_opts") or {}
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
@@ -430,9 +438,8 @@ class NvpPlugin(object):
         LOG.debug(ids)
         return ids
 
-    def create_port(self, tenant_id, netw_id, port_init_state=None,
-            **params):
-        '''
+    def create_port(self, tenant_id, netw_id, port_init_state=None, **params):
+        """
         Creates a port on the specified Virtual Network.
 
         :returns: a mapping sequence with the following signature:
@@ -441,7 +448,7 @@ class NvpPlugin(object):
                    }
         :raises: exception.NetworkNotFound
         :raises: exception.StateInvalid
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         params["controller"] = self.controller
@@ -449,13 +456,15 @@ class NvpPlugin(object):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = nvplib.create_port(tenant_id, netw_id, port_init_state,
           **params)
-        d = {"port-id": result["uuid"],
-             "port-op-status": result["port-op-status"]}
+        d = {
+            "port-id": result["uuid"],
+            "port-op-status": result["port-op-status"],
+            }
         LOG.debug("create_port() completed for tenant %s: %s" % (tenant_id, d))
         return d
 
     def update_port(self, tenant_id, netw_id, portw_id, **params):
-        '''
+        """
         Updates the properties of a specific port on the
         specified Virtual Network.
 
@@ -466,21 +475,23 @@ class NvpPlugin(object):
                    }
         :raises: exception.StateInvalid
         :raises: exception.PortNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         LOG.debug("Update port request: %s" % (params))
         params["controller"] = self.controller
         result = nvplib.update_port(netw_id, portw_id, **params)
         LOG.debug("update_port() completed for tenant: %s" % tenant_id)
-        port = {'port-id': portw_id,
-                'port-state': result["admin_status_enabled"],
-                'port-op-status': result["port-op-status"]}
+        port = {
+            'port-id': portw_id,
+            'port-state': result["admin_status_enabled"],
+            'port-op-status': result["port-op-status"],
+            }
         LOG.debug("returning updated port %s: " % port)
         return port
 
     def delete_port(self, tenant_id, netw_id, portw_id):
-        '''
+        """
         Deletes a port on a specified Virtual Network,
         if the port contains a remote interface attachment,
         the remote interface is first un-plugged and then the port
@@ -493,7 +504,7 @@ class NvpPlugin(object):
         :raises: exception.PortInUse
         :raises: exception.PortNotFound
         :raises: exception.NetworkNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         nvplib.delete_port(self.controller, netw_id, portw_id)
@@ -501,7 +512,7 @@ class NvpPlugin(object):
         return {"port-id": portw_id}
 
     def get_port_details(self, tenant_id, netw_id, portw_id):
-        '''
+        """
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
 
@@ -515,7 +526,7 @@ class NvpPlugin(object):
                     }
         :raises: exception.PortNotFound
         :raises: exception.NetworkNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         port = nvplib.get_port(self.controller, netw_id, portw_id,
@@ -530,15 +541,17 @@ class NvpPlugin(object):
         if attach_type == "VifAttachment":
             vif_uuid = relation["LogicalPortAttachment"]["vif_uuid"]
 
-        d = {"port-id": portw_id, "attachment": vif_uuid,
-             "net-id": netw_id, "port-state": state,
-             "port-op-status": op_status}
+        d = {
+            "port-id": portw_id, "attachment": vif_uuid,
+            "net-id": netw_id, "port-state": state,
+            "port-op-status": op_status,
+            }
         LOG.debug("Port details for tenant %s: %s" % (tenant_id, d))
         return d
 
     def plug_interface(self, tenant_id, netw_id, portw_id,
                        remote_interface_id):
-        '''
+        """
         Attaches a remote interface to the specified port on the
         specified Virtual Network.
 
@@ -547,29 +560,29 @@ class NvpPlugin(object):
         :raises: exception.PortNotFound
         :raises: exception.AlreadyAttached
                     (? should the network automatically unplug/replug)
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = nvplib.plug_interface(self.controller, netw_id, portw_id,
           "VifAttachment", attachment=remote_interface_id)
-        LOG.debug("plug_interface() completed for %s: %s" % (
-            tenant_id, result))
+        LOG.debug("plug_interface() completed for %s: %s" %
+                  (tenant_id, result))
 
     def unplug_interface(self, tenant_id, netw_id, portw_id):
-        '''
+        """
         Detaches a remote interface from the specified port on the
         specified Virtual Network.
 
         :returns: None
         :raises: exception.NetworkNotFound
         :raises: exception.PortNotFound
-        '''
+        """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = nvplib.unplug_interface(self.controller, netw_id, portw_id)
 
         LOG.debug("unplug_interface() completed for tenant %s: %s" %
-          (tenant_id, result))
+                  (tenant_id, result))
 
     def get_port_stats(self, tenant_id, network_id, port_id):
         """

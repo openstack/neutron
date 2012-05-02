@@ -19,6 +19,7 @@
 import json
 import logging
 import unittest
+
 from lxml import etree
 from webob import exc, request
 
@@ -26,10 +27,9 @@ import quantum.api.attachments as atts
 import quantum.api.networks as nets
 import quantum.api.ports as ports
 import quantum.api.versions as versions
+from quantum.common.test_lib import test_config
 import quantum.tests.unit._test_api as test_api
 import quantum.tests.unit.testlib_api as testlib
-
-from quantum.common.test_lib import test_config
 
 
 LOG = logging.getLogger('quantum.tests.test_api')
@@ -40,7 +40,7 @@ class APITestV10(test_api.BaseAPIOperationsTest):
     def assert_network(self, **kwargs):
         self.assertEqual({'id': kwargs['id'],
                           'name': kwargs['name']},
-                          kwargs['network_data'])
+                         kwargs['network_data'])
 
     def assert_network_details(self, **kwargs):
         self.assertEqual({'id': kwargs['id'],
@@ -60,10 +60,13 @@ class APITestV10(test_api.BaseAPIOperationsTest):
                          kwargs['port_data'])
 
     def setUp(self):
-        super(APITestV10, self).setUp('quantum.api.APIRouterV10',
-             {test_api.NETS: nets.ControllerV10._serialization_metadata,
-              test_api.PORTS: ports.ControllerV10._serialization_metadata,
-              test_api.ATTS: atts.ControllerV10._serialization_metadata})
+        super(APITestV10, self).setUp(
+            'quantum.api.APIRouterV10',
+            {
+                test_api.NETS: nets.ControllerV10._serialization_metadata,
+                test_api.PORTS: ports.ControllerV10._serialization_metadata,
+                test_api.ATTS: atts.ControllerV10._serialization_metadata,
+                })
         self._successful_create_code = exc.HTTPOk.code
         self._network_not_found_code = 420
         self._network_in_use_code = 421
@@ -79,7 +82,7 @@ class APITestV11(test_api.BaseAPIOperationsTest):
         self.assertEqual({'id': kwargs['id'],
                           'name': kwargs['name'],
                           'op-status': self.net_op_status},
-                          kwargs['network_data'])
+                         kwargs['network_data'])
 
     def assert_network_details(self, **kwargs):
         self.assertEqual({'id': kwargs['id'],
@@ -107,10 +110,13 @@ class APITestV11(test_api.BaseAPIOperationsTest):
                                              'UNKNOWN')
         self.port_op_status = test_config.get('default_port_op_status',
                                               'UNKNOWN')
-        super(APITestV11, self).setUp('quantum.api.APIRouterV11',
-             {test_api.NETS: nets.ControllerV11._serialization_metadata,
-              test_api.PORTS: ports.ControllerV11._serialization_metadata,
-              test_api.ATTS: atts.ControllerV11._serialization_metadata})
+        super(APITestV11, self).setUp(
+            'quantum.api.APIRouterV11',
+            {
+                test_api.NETS: nets.ControllerV11._serialization_metadata,
+                test_api.PORTS: ports.ControllerV11._serialization_metadata,
+                test_api.ATTS: atts.ControllerV11._serialization_metadata,
+                })
         self._successful_create_code = exc.HTTPAccepted.code
         self._network_not_found_code = exc.HTTPNotFound.code
         self._network_in_use_code = exc.HTTPConflict.code
@@ -131,8 +137,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
                                                         query_string=flt)
         list_network_res = list_network_req.get_response(self.api)
         self.assertEqual(list_network_res.status_int, 200)
-        network_data = self._net_deserializers[self.content_type].\
-                            deserialize(list_network_res.body)['body']
+        network_data = (self._net_deserializers[self.content_type].
+                        deserialize(list_network_res.body)['body'])
         return network_data
 
     def _do_filtered_port_list_request(self, flt, network_id):
@@ -142,15 +148,18 @@ class APIFiltersTest(test_api.AbstractAPITest):
                                                   query_string=flt)
         list_port_res = list_port_req.get_response(self.api)
         self.assertEqual(list_port_res.status_int, 200)
-        port_data = self._port_deserializers[self.content_type].\
-                            deserialize(list_port_res.body)['body']
+        port_data = (self._port_deserializers[self.content_type].
+                     deserialize(list_port_res.body)['body'])
         return port_data
 
     def setUp(self):
-        super(APIFiltersTest, self).setUp('quantum.api.APIRouterV11',
-             {test_api.NETS: nets.ControllerV11._serialization_metadata,
-              test_api.PORTS: ports.ControllerV11._serialization_metadata,
-              test_api.ATTS: atts.ControllerV11._serialization_metadata})
+        super(APIFiltersTest, self).setUp(
+            'quantum.api.APIRouterV11',
+            {
+                test_api.NETS: nets.ControllerV11._serialization_metadata,
+                test_api.PORTS: ports.ControllerV11._serialization_metadata,
+                test_api.ATTS: atts.ControllerV11._serialization_metadata,
+                })
         self._successful_create_code = exc.HTTPAccepted.code
         self.net_op_status = test_config.get('default_net_op_status',
                                              'UNKNOWN')
@@ -387,7 +396,7 @@ class APIRootTest(unittest.TestCase):
 
     def test_invalid_version(self):
         req = testlib.create_request('/v99.99/tenants/tenantX/networks',
-                                    '',
-                                    'application/json')
+                                     '',
+                                     'application/json')
         response = self.app(req)
         self.assertEquals(response.status_int, 404)

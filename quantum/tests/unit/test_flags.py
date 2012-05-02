@@ -17,12 +17,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import gflags
 import os
 import tempfile
 import unittest
 
+import gflags
+
 from quantum.common import flags
+
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('flags_unittest', 'foo', 'for testing purposes only')

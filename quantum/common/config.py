@@ -31,8 +31,9 @@ import socket
 
 from paste import deploy
 
-from quantum.common import flags
 from quantum.common import exceptions as exception
+from quantum.common import flags
+
 
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -142,10 +143,10 @@ def setup_logging(options, conf):
 
     # If either the CLI option or the conf value
     # is True, we set to True
-    debug = options.get('debug') or \
-            get_option(conf, 'debug', type='bool', default=False)
-    verbose = options.get('verbose') or \
-            get_option(conf, 'verbose', type='bool', default=False)
+    debug = (options.get('debug') or
+             get_option(conf, 'debug', type='bool', default=False))
+    verbose = (options.get('verbose') or
+               get_option(conf, 'verbose', type='bool', default=False))
     root_logger = logging.root
     if debug:
         root_logger.setLevel(logging.DEBUG)
@@ -227,7 +228,7 @@ def find_config_file(options, args, config_file='quantum.conf'):
     # Handle standard directory search for the config file
     config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'etc')),
                         fix_path(os.path.join('~', '.quantum-venv', 'etc',
-                                 'quantum')),
+                                              'quantum')),
                         fix_path('~'),
                         os.path.join(FLAGS.state_path, 'etc'),
                         os.path.join(FLAGS.state_path, 'etc', 'quantum'),
@@ -239,13 +240,14 @@ def find_config_file(options, args, config_file='quantum.conf'):
                         '/etc']
 
     if 'plugin' in options:
-        config_file_dirs = [os.path.join(x, 'quantum', 'plugins',
-                                             options['plugin'])
-                            for x in config_file_dirs]
+        config_file_dirs = [
+            os.path.join(x, 'quantum', 'plugins', options['plugin'])
+            for x in config_file_dirs
+            ]
 
     if os.path.exists(os.path.join(root, 'plugins')):
         plugins = [fix_path(os.path.join(root, 'plugins', p, 'etc'))
-                  for p in os.listdir(os.path.join(root, 'plugins'))]
+                   for p in os.listdir(os.path.join(root, 'plugins'))]
         plugins = [p for p in plugins if os.path.isdir(p)]
         config_file_dirs.extend(plugins)
 

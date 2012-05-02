@@ -17,12 +17,13 @@
 
 import httplib
 
+from ryu.app.client import OFPClient
+
 from nova import flags
 from nova import log as logging
-from nova import utils
 from nova.openstack.common import cfg
+from nova import utils
 from nova.virt.libvirt import vif as libvirt_vif
-from ryu.app.client import OFPClient
 
 
 LOG = logging.getLogger(__name__)
@@ -63,8 +64,7 @@ class LibvirtOpenVswitchOFPRyuDriver(libvirt_vif.LibvirtOpenVswitchDriver):
         result = super(LibvirtOpenVswitchOFPRyuDriver, self).plug(
             instance, network, mapping)
         port_no = self._get_port_no(mapping)
-        self.ryu_client.create_port(network['id'],
-                                    self.datapath_id, port_no)
+        self.ryu_client.create_port(network['id'], self.datapath_id, port_no)
         return result
 
     def unplug(self, instance, network, mapping):

@@ -26,12 +26,13 @@ from nova import exception as excp
 from nova import flags
 from nova import log as logging
 from nova.openstack.common import cfg
-from nova.scheduler import driver
 from nova.scheduler import chance
-from quantum.client import Client
+from nova.scheduler import driver
+from quantumclient import Client
 
 
 LOG = logging.getLogger(__name__)
+
 
 quantum_opts = [
     cfg.StrOpt('quantum_connection_host',
@@ -44,6 +45,7 @@ quantum_opts = [
                default="default",
                help='Default tenant id when creating quantum networks'),
     ]
+
 
 FLAGS = flags.FLAGS
 FLAGS.register_opts(quantum_opts)
@@ -88,17 +90,14 @@ class QuantumPortAwareScheduler(chance.ChanceScheduler):
         """Gets the host name from the Quantum service"""
         LOG.debug("Cisco Quantum Port-aware Scheduler is scheduling...")
         instance_id = request_spec['instance_properties']['uuid']
-        user_id = \
-                request_spec['instance_properties']['user_id']
-        project_id = \
-                request_spec['instance_properties']['project_id']
+        user_id = request_spec['instance_properties']['user_id']
+        project_id = request_spec['instance_properties']['project_id']
 
-        instance_data_dict = \
-                {'novatenant': \
-                 {'instance_id': instance_id,
-                  'instance_desc': \
-                  {'user_id': user_id,
-                   'project_id': project_id}}}
+        instance_data_dict = {'novatenant':
+                              {'instance_id': instance_id,
+                               'instance_desc':
+                               {'user_id': user_id,
+                                'project_id': project_id}}}
 
         client = Client(HOST, PORT, USE_SSL, format='json', version=VERSION,
                         uri_prefix=URI_PREFIX_CSCO, tenant=TENANT_ID,
@@ -109,8 +108,8 @@ class QuantumPortAwareScheduler(chance.ChanceScheduler):
         hostname = data["host_list"]["host_1"]
         if not hostname:
             raise excp.NoValidHost(_("Scheduler was unable to locate a host"
-                                       " for this request. Is the appropriate"
-                                       " service running?"))
+                                     " for this request. Is the appropriate"
+                                     " service running?"))
 
         LOG.debug(_("Quantum service returned host: %s") % hostname)
         return hostname

@@ -1,3 +1,18 @@
+# Copyright 2012 OpenStack LLC
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 from quantum import wsgi
 from quantum.wsgi import Serializer
 
@@ -19,8 +34,8 @@ def _network_list_request(tenant_id, format='xml', detail=False,
                           query_string=None):
     method = 'GET'
     detail_str = detail and '/detail' or ''
-    path = "/tenants/%(tenant_id)s/networks" \
-           "%(detail_str)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks"
+            "%(detail_str)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method, query_string)
 
@@ -36,8 +51,8 @@ def network_list_detail_request(tenant_id, format='xml'):
 def _show_network_request(tenant_id, network_id, format='xml', detail=False):
     method = 'GET'
     detail_str = detail and '/detail' or ''
-    path = "/tenants/%(tenant_id)s/networks" \
-           "/%(network_id)s%(detail_str)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks"
+            "/%(network_id)s%(detail_str)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
@@ -63,8 +78,8 @@ def new_network_request(tenant_id, network_name='new_name',
 def update_network_request(tenant_id, network_id, network_name, format='xml',
                            custom_req_body=None):
     method = 'PUT'
-    path = "/tenants/%(tenant_id)s/networks" \
-           "/%(network_id)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks"
+            "/%(network_id)s.%(format)s") % locals()
     data = custom_req_body or {'network': {'name': '%s' % network_name}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
@@ -73,8 +88,8 @@ def update_network_request(tenant_id, network_id, network_name, format='xml',
 
 def network_delete_request(tenant_id, network_id, format='xml'):
     method = 'DELETE'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
@@ -83,8 +98,8 @@ def _port_list_request(tenant_id, network_id, format='xml',
                        detail=False, query_string=None):
     method = 'GET'
     detail_str = detail and '/detail' or ''
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports%(detail_str)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports%(detail_str)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method, query_string)
 
@@ -105,8 +120,8 @@ def _show_port_request(tenant_id, network_id, port_id,
                        format='xml', detail=False):
     method = 'GET'
     detail_str = detail and '/detail' or ''
-    path = "/tenants/%(tenant_id)s/networks/%(network_id)s" \
-           "/ports/%(port_id)s%(detail_str)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/%(network_id)s"
+            "/ports/%(port_id)s%(detail_str)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
@@ -123,10 +138,10 @@ def show_port_detail_request(tenant_id, network_id, port_id, format='xml'):
 def new_port_request(tenant_id, network_id, port_state,
                      format='xml', custom_req_body=None):
     method = 'POST'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports.%(format)s" % locals()
-    data = custom_req_body or port_state and \
-           {'port': {'state': '%s' % port_state}}
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports.%(format)s") % locals()
+    data = (custom_req_body or port_state and
+            {'port': {'state': '%s' % port_state}})
     content_type = "application/%s" % format
     body = data and Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
@@ -134,8 +149,8 @@ def new_port_request(tenant_id, network_id, port_state,
 
 def port_delete_request(tenant_id, network_id, port_id, format='xml'):
     method = 'DELETE'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports/%(port_id)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports/%(port_id)s.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
@@ -143,8 +158,8 @@ def port_delete_request(tenant_id, network_id, port_id, format='xml'):
 def update_port_request(tenant_id, network_id, port_id, port_state,
                         format='xml', custom_req_body=None):
     method = 'PUT'
-    path = "/tenants/%(tenant_id)s/networks" \
-           "/%(network_id)s/ports/%(port_id)s.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks"
+            "/%(network_id)s/ports/%(port_id)s.%(format)s") % locals()
     data = custom_req_body or {'port': {'state': '%s' % port_state}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
@@ -153,17 +168,19 @@ def update_port_request(tenant_id, network_id, port_id, port_state,
 
 def get_attachment_request(tenant_id, network_id, port_id, format='xml'):
     method = 'GET'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports/%(port_id)s/attachment.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports/%(port_id)s/"
+            "attachment.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)
 
 
 def put_attachment_request(tenant_id, network_id, port_id,
-                              attachment_id, format='xml'):
+                           attachment_id, format='xml'):
     method = 'PUT'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports/%(port_id)s/attachment.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports/%(port_id)s/"
+            "attachment.%(format)s") % locals()
     data = {'attachment': {'id': attachment_id}}
     content_type = "application/%s" % format
     body = Serializer().serialize(data, content_type)
@@ -173,7 +190,8 @@ def put_attachment_request(tenant_id, network_id, port_id,
 def delete_attachment_request(tenant_id, network_id, port_id,
                               attachment_id, format='xml'):
     method = 'DELETE'
-    path = "/tenants/%(tenant_id)s/networks/" \
-           "%(network_id)s/ports/%(port_id)s/attachment.%(format)s" % locals()
+    path = ("/tenants/%(tenant_id)s/networks/"
+            "%(network_id)s/ports/%(port_id)s/"
+            "attachment.%(format)s") % locals()
     content_type = "application/%s" % format
     return create_request(path, None, content_type, method)

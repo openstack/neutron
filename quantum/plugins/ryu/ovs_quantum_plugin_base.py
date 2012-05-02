@@ -15,14 +15,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Isaku Yamahata
+
 import ConfigParser
+from abc import ABCMeta, abstractmethod
 import logging as LOG
 import os
-from abc import ABCMeta, abstractmethod
 
-import quantum.db.api as db
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
+import quantum.db.api as db
 from quantum.manager import find_config
 from quantum.quantum_plugin_base import QuantumPluginBase
 
@@ -59,11 +60,11 @@ class OVSQuantumPluginBase(QuantumPluginBase):
             if conf_file and os.path.exists(conf_file):
                 configfile = conf_file
             else:
-                configfile = find_config(os.path.abspath(
-                        os.path.dirname(mod_file)))
+                configfile = (
+                    find_config(os.path.abspath(os.path.dirname(mod_file))))
         if configfile is None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
-              (configfile))
+                            (configfile))
         LOG.debug("Using configuration file: %s", configfile)
         config.read(configfile)
         LOG.debug("Config: %s", config)

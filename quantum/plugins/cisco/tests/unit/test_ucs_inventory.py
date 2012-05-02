@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,22 +16,22 @@
 #
 # @author: Shubhangi Satras, Cisco Systems, Inc.
 # @author: Tyler Smith, Cisco Systems, Inc.
-#
-"""
 
+import logging
 import unittest
-import logging as LOG
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.l2network_plugin import L2Network
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.l2network_plugin import L2Network
 from quantum.plugins.cisco.ucs.cisco_ucs_inventory import UCSInventory
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(__name__)
+
+logging.basicConfig(level=LOG.WARN)
+LOG = logging.getLogger(__name__)
+
 
 # Set some data to use in tests
 tenant = 'shubh'
@@ -97,12 +96,12 @@ class TestUCSInventory(unittest.TestCase):
 
         # Clean up created network and port
         try:
-            self._l2network.unplug_interface(tenant,
-                net[const.NET_ID], port[const.PORT_ID])
+            self._l2network.unplug_interface(
+                tenant, net[const.NET_ID], port[const.PORT_ID])
         except:
             pass
         self._l2network.delete_port(tenant,
-            net[const.NET_ID], port[const.PORT_ID])
+                                    net[const.NET_ID], port[const.PORT_ID])
         self._l2network.delete_network(tenant, net[const.NET_ID])
         db.clear_db()
 

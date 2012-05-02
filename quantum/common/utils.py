@@ -20,27 +20,28 @@
 
 """Utilities and helper functions."""
 
+
+import base64
 import ConfigParser
 import datetime
+import functools
 import inspect
+import json
 import logging
 import os
 import random
-import subprocess
-import socket
-import sys
-import base64
-import functools
-import json
 import re
+import socket
 import string
 import struct
+import subprocess
+import sys
 import time
 import types
 
-from quantum.common import flags
 from quantum.common import exceptions as exception
 from quantum.common.exceptions import ProcessExecutionError
+from quantum.common import flags
 
 
 def import_class(import_str):
@@ -95,6 +96,7 @@ def dumps(value):
 
 def loads(s):
     return json.loads(s)
+
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 FLAGS = flags.FLAGS
@@ -173,7 +175,6 @@ def abspath(s):
 
 # TODO(sirp): when/if utils is extracted to common library, we should remove
 # the argument's default.
-#def default_flagfile(filename='nova.conf'):
 def default_flagfile(filename='quantum.conf'):
     for arg in sys.argv:
         if arg.find('flagfile') != -1:
@@ -184,8 +185,7 @@ def default_flagfile(filename='quantum.conf'):
             script_dir = os.path.dirname(inspect.stack()[-1][1])
             filename = os.path.abspath(os.path.join(script_dir, filename))
         if os.path.exists(filename):
-            sys.argv = \
-                sys.argv[:1] + ['--flagfile=%s' % filename] + sys.argv[1:]
+            sys.argv.insert(1, '--flagfile=%s' % filename)
 
 
 def debug(arg):
@@ -231,9 +231,9 @@ def parse_isotime(timestr):
 
 
 def get_plugin_from_config(file="config.ini"):
-        Config = ConfigParser.ConfigParser()
-        Config.read(file)
-        return Config.get("PLUGIN", "provider")
+    Config = ConfigParser.ConfigParser()
+    Config.read(file)
+    return Config.get("PLUGIN", "provider")
 
 
 class LazyPluggable(object):
@@ -251,7 +251,7 @@ class LazyPluggable(object):
                 raise exception.Error('Invalid backend: %s' % backend_name)
 
             backend = self.__backends[backend_name]
-            if type(backend) == type(tuple()):
+            if isinstance(backend, tuple):
                 name = backend[0]
                 fromlist = backend[1]
             else:

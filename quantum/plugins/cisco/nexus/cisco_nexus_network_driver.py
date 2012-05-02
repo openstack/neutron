@@ -23,11 +23,12 @@ Implements a Nexus-OS NETCONF over SSHv2 API Client
 
 import logging
 
+from ncclient import manager
+
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
-from ncclient import manager
 
 LOG = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class CiscoNEXUSDriver():
         Makes the SSH connection to the Nexus Switch
         """
         man = manager.connect(host=nexus_host, port=nexus_ssh_port,
-                                username=nexus_user, password=nexus_password)
+                              username=nexus_user, password=nexus_password)
         return man
 
     def create_xml_snippet(self, cutomized_config):

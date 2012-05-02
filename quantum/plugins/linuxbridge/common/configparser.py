@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2012 Cisco Systems, Inc.  All rights reserved.
@@ -16,8 +15,6 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
 from configobj import ConfigObj
 
@@ -27,7 +24,7 @@ class ConfigParser(ConfigObj):
 
     def __init__(self, filename):
         super(ConfigParser, self).__init__(filename, raise_errors=True,
-                                                file_error=True)
+                                           file_error=True)
 
     def dummy(self, section, key):
         """Dummy function to return the same key, used in walk"""

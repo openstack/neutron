@@ -25,28 +25,33 @@ LOG = logging.getLogger('quantum.api.ports')
 
 def create_resource(plugin, version):
     controller_dict = {
-                        '1.0': [ControllerV10(plugin),
-                               ControllerV10._serialization_metadata,
-                               common.XML_NS_V10],
-                        '1.1': [ControllerV11(plugin),
-                                ControllerV11._serialization_metadata,
-                                common.XML_NS_V11]}
+        '1.0': [ControllerV10(plugin),
+                ControllerV10._serialization_metadata,
+                common.XML_NS_V10],
+        '1.1': [ControllerV11(plugin),
+                ControllerV11._serialization_metadata,
+                common.XML_NS_V11],
+        }
     return common.create_resource(version, controller_dict)
 
 
 class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
 
-    _attachment_ops_param_list = [{
-        'param-name': 'id',
-        'required': True}, ]
+    _attachment_ops_param_list = [
+        {
+            'param-name': 'id',
+            'required': True,
+            },
+        ]
 
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "attachment": ["id"], }
-        },
-    }
+                "attachment": ["id"],
+                },
+            },
+        }
 
     def __init__(self, plugin):
         self._resource_name = 'attachment'
@@ -55,8 +60,7 @@ class Controller(common.QuantumController):
     @common.APIFaultWrapper([exception.NetworkNotFound,
                              exception.PortNotFound])
     def get_resource(self, request, tenant_id, network_id, id):
-        att_data = self._plugin.get_port_details(
-                        tenant_id, network_id, id)
+        att_data = self._plugin.get_port_details(tenant_id, network_id, id)
         builder = attachments_view.get_view_builder(request)
         result = builder.build(att_data)['attachment']
         return dict(attachment=result)
@@ -74,8 +78,7 @@ class Controller(common.QuantumController):
     @common.APIFaultWrapper([exception.NetworkNotFound,
                              exception.PortNotFound])
     def detach_resource(self, request, tenant_id, network_id, id):
-        self._plugin.unplug_interface(tenant_id,
-                                      network_id, id)
+        self._plugin.unplug_interface(tenant_id, network_id, id)
 
 
 class ControllerV10(Controller):

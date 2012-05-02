@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,8 +15,6 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
 from copy import deepcopy
 import inspect
@@ -30,6 +27,7 @@ from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
+
 
 LOG = logging.getLogger(__name__)
 
@@ -46,13 +44,13 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         for key in conf.PLUGINS[const.PLUGINS].keys():
             self._plugins[key] = utils.import_object(
                 conf.PLUGINS[const.PLUGINS][key])
-            LOG.debug("Loaded device plugin %s\n" % \
-                    conf.PLUGINS[const.PLUGINS][key])
+            LOG.debug("Loaded device plugin %s\n" %
+                      conf.PLUGINS[const.PLUGINS][key])
             if key in conf.PLUGINS[const.INVENTORY].keys():
                 self._inventory[key] = utils.import_object(
                     conf.PLUGINS[const.INVENTORY][key])
-                LOG.debug("Loaded device inventory %s\n" % \
-                        conf.PLUGINS[const.INVENTORY][key])
+                LOG.debug("Loaded device inventory %s\n" %
+                          conf.PLUGINS[const.INVENTORY][key])
 
     def _func_name(self, offset=0):
         """Get the name of the calling function"""
@@ -62,8 +60,8 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         """Invoke only device plugin for all the devices in the system"""
         if not plugin_key in self._plugins.keys():
             LOG.info("No %s Plugin loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" \
-                     % (plugin_key, function_name, args))
+            LOG.info("%s: %s with args %s ignored" %
+                     (plugin_key, function_name, args))
             return
         device_params = self._invoke_inventory(plugin_key, function_name,
                                                args)
@@ -82,8 +80,8 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         """Invoke only the inventory implementation"""
         if not plugin_key in self._inventory.keys():
             LOG.warn("No %s inventory loaded" % plugin_key)
-            LOG.warn("%s: %s with args %s ignored" \
-                     % (plugin_key, function_name, args))
+            LOG.warn("%s: %s with args %s ignored" %
+                     (plugin_key, function_name, args))
             return {const.DEVICE_IP: []}
         else:
             return getattr(self._inventory[plugin_key], function_name)(args)

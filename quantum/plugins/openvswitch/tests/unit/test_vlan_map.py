@@ -15,7 +15,11 @@
 #    under the License.
 
 import unittest
-from ovs_quantum_plugin import VlanMap, NoFreeVLANException
+
+from quantum.plugins.openvswitch.ovs_quantum_plugin import (
+    NoFreeVLANException,
+    VlanMap,
+    )
 
 
 class VlanMapTest(unittest.TestCase):

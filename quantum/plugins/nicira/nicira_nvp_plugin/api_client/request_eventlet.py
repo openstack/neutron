@@ -12,22 +12,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-import client_eventlet
-import eventlet
 import httplib
+import json
+import logging
+import time
 import urllib
 import urlparse
-import logging
-import request
-import time
-import json
-from common import _conn_str
+
+import eventlet
 from eventlet import timeout
+
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
+    _conn_str,
+    )
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.request as request
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
 
 
 logging.basicConfig(level=logging.INFO)
-lg = logging.getLogger("nvp_api_request")
+LOG = logging.getLogger("nvp_api_request")
+
+
 USER_AGENT = "NVP gevent client/1.0"
 
 # Default parameters.
@@ -57,7 +62,7 @@ class NvpApiRequestEventlet:
         httplib.NOT_FOUND,
         httplib.CONFLICT,
         httplib.INTERNAL_SERVER_ERROR,
-        httplib.SERVICE_UNAVAILABLE
+        httplib.SERVICE_UNAVAILABLE,
     ]
 
     API_REQUEST_POOL = eventlet.GreenPool(API_REQUEST_POOL_SIZE)
@@ -102,7 +107,7 @@ class NvpApiRequestEventlet:
     def join(self):
         if self._green_thread is not None:
             return self._green_thread.wait()
-        lg.error('Joining on invalid green thread')
+        LOG.error('Joining on invalid green thread')
         return Exception('Joining an invalid green thread')
 
     def start(self):
@@ -124,7 +129,7 @@ class NvpApiRequestEventlet:
             with timeout.Timeout(self._request_timeout, False):
                 return self._handle_request()
 
-            lg.info('Request timeout handling request.')
+            LOG.info('Request timeout handling request.')
             self._request_error = Exception('Request timeout')
             return None
         else:
@@ -141,7 +146,7 @@ class NvpApiRequestEventlet:
             return error
 
         url = self._url
-        lg.info("Issuing request '%s'" % self._request_str(conn, url))
+        LOG.info("Issuing request '%s'" % self._request_str(conn, url))
         issued_time = time.time()
         is_conn_error = False
         try:
@@ -159,28 +164,29 @@ class NvpApiRequestEventlet:
                 try:
                     conn.request(self._method, url, self._body, self._headers)
                 except Exception, e:
-                    lg.info('_issue_request: conn.request() exception: %s' % e)
+                    LOG.info('_issue_request: conn.request() exception: %s' %
+                             e)
                     raise e
 
                 response = conn.getresponse()
                 response.body = response.read()
                 response.headers = response.getheaders()
-                lg.info("Request '%s' complete: %s (%0.2f seconds)"
+                LOG.info("Request '%s' complete: %s (%0.2f seconds)"
                         % (self._request_str(conn, url), response.status,
                           time.time() - issued_time))
                 if response.status not in [httplib.MOVED_PERMANENTLY,
                                            httplib.TEMPORARY_REDIRECT]:
                     break
                 elif redirects >= self._redirects:
-                    lg.warn("Maximum redirects exceeded, aborting request")
+                    LOG.warn("Maximum redirects exceeded, aborting request")
                     break
                 redirects += 1
                 conn, url = self._redirect_params(conn, response.headers)
                 if url is None:
                     response.status = httplib.INTERNAL_SERVER_ERROR
                     break
-                lg.info("Redirecting request to: %s" % \
-                        self._request_str(conn, url))
+                LOG.info("Redirecting request to: %s" %
+                         self._request_str(conn, url))
 
             # If we receive any of these responses, then our server did not
             # process our request and may be in an errored state. Raise an
@@ -188,8 +194,8 @@ class NvpApiRequestEventlet:
             # is_conn_error == True which puts the conn on the back of the
             # client's priority queue.
             if response.status >= 500:
-                lg.warn("API Request '%s %s' received: %s"
-                        % (self._method, self._url, response.status))
+                LOG.warn("API Request '%s %s' received: %s" %
+                         (self._method, self._url, response.status))
                 raise Exception('Server error return: %s' %
                                 response.status)
             return response
@@ -198,9 +204,9 @@ class NvpApiRequestEventlet:
                 msg = "Invalid server response"
             else:
                 msg = unicode(e)
-            lg.warn("Request '%s' failed: %s (%0.2f seconds)"
-                    % (self._request_str(conn, url), msg,
-                       time.time() - issued_time))
+            LOG.warn("Request '%s' failed: %s (%0.2f seconds)"
+                     % (self._request_str(conn, url), msg,
+                        time.time() - issued_time))
             self._request_error = e
             is_conn_error = True
             return e
@@ -214,7 +220,7 @@ class NvpApiRequestEventlet:
                 url = value
                 break
         if not url:
-            lg.warn("Received redirect status without location header field")
+            LOG.warn("Received redirect status without location header field")
             return (conn, None)
         # Accept location with the following format:
         # 1. /path, redirect to same node
@@ -230,15 +236,18 @@ class NvpApiRequestEventlet:
                     url = result.path
                 return (conn, url)      # case 1
             else:
-                lg.warn("Received invalid redirect location: %s" % url)
+                LOG.warn("Received invalid redirect location: %s" % url)
                 return (conn, None)     # case 3
         elif result.scheme not in ["http", "https"] or not result.hostname:
-            lg.warn("Received malformed redirect location: %s" % url)
+            LOG.warn("Received malformed redirect location: %s" % url)
             return (conn, None)         # case 3
         # case 2, redirect location includes a scheme
         # so setup a new connection and authenticate
         use_https = result.scheme == "https"
         api_providers = [(result.hostname, result.port, use_https)]
+        client_eventlet = (
+            quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
+            )
         api_client = client_eventlet.NvpApiClientEventlet(
             api_providers, self._api_client.user, self._api_client.password,
             use_https=use_https)
@@ -268,7 +277,7 @@ class NvpApiRequestEventlet:
 
             req = self.spawn(self._issue_request).wait()
             # automatically raises any exceptions returned.
-            lg.debug('req: %s' % type(req))
+            LOG.debug('req: %s' % type(req))
 
             if isinstance(req, httplib.HTTPResponse):
                 if (req.status == httplib.UNAUTHORIZED
@@ -278,15 +287,15 @@ class NvpApiRequestEventlet:
                         continue
                     # else fall through to return the error code
 
-                lg.debug("API Request '%s %s' complete: %s"
-                         % (self._method, self._url, req.status))
+                LOG.debug("API Request '%s %s' complete: %s" %
+                          (self._method, self._url, req.status))
                 self._request_error = None
                 response = req
             else:
-                lg.info('_handle_request: caught an error - %s' % req)
+                LOG.info('_handle_request: caught an error - %s' % req)
                 self._request_error = req
 
-        lg.debug('_handle_request: response - %s' % response)
+        LOG.debug('_handle_request: response - %s' % response)
         return response
 
 
@@ -332,7 +341,7 @@ class NvpGetApiProvidersRequestEventlet(NvpApiRequestEventlet):
                                 ret.append(_provider_from_listen_addr(addr))
                 return ret
         except Exception, e:
-            lg.warn("Failed to parse API provider: %s" % e)
+            LOG.warn("Failed to parse API provider: %s" % e)
             # intentionally fall through
         return None
 

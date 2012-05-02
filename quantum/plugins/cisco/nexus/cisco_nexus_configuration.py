@@ -27,6 +27,7 @@ import os
 from quantum.common.config import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
+
 CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'}, None,
                              "nexus.ini"))
 

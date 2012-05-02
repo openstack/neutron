@@ -19,10 +19,14 @@ import json
 import logging
 import os
 import unittest
+
 from quantum.common import exceptions as exception
-from nicira_nvp_plugin.QuantumPlugin import NvpPlugin
-from nicira_nvp_plugin import NvpApiClient
-from nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
+from quantum.plugins.nicira.nicira_nvp_plugin import (
+    NvpApiClient,
+    nvplib,
+    )
+
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger("test_network")
@@ -72,11 +76,11 @@ class NvpTests(unittest.TestCase):
             "quantum-test-tenant", "quantum-Private-TenantA",
             self.BRIDGE_TZ_UUID, self.quantum.controller)
         resp1 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantB")
+                                            "quantum-Private-TenantB")
         resp2 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantC")
+                                            "quantum-Private-TenantC")
         resp3 = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantD")
+                                            "quantum-Private-TenantD")
         net_id = resp["net-id"]
 
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
@@ -88,7 +92,7 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(old_vic == "None")
 
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id1,
-            "nova-instance-test-%s" % os.getpid())
+                                    "nova-instance-test-%s" % os.getpid())
         resp = self.quantum.get_port_details("quantum-test-tenant", net_id,
                                              port_id1)
         new_vic = resp["attachment"]
@@ -103,7 +107,7 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(old_vic2 == "None")
 
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id2,
-            "nova-instance-test2-%s" % os.getpid())
+                                    "nova-instance-test2-%s" % os.getpid())
         resp = self.quantum.get_port_details("quantum-test-tenant", net_id,
                                              port_id2)
         new_vic = resp["attachment"]
@@ -130,7 +134,7 @@ class NvpTests(unittest.TestCase):
         net_id = resp["net-id"]
         try:
             resp = self.quantum.update_network("quantum-test-tenant", net_id,
-                name="new-name")
+                                               name="new-name")
         except exception.NetworkNotFound:
             self.assertTrue(False)
 
@@ -152,7 +156,7 @@ class NvpTests(unittest.TestCase):
     def test_negative_update_network(self):
         try:
             self.quantum.update_network("quantum-test-tenant", "xxx-no-net-id",
-                name="new-name")
+                                        name="new-name")
         except exception.NetworkNotFound:
             self.assertTrue(True)
 

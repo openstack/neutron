@@ -16,27 +16,26 @@
 #    under the License.
 # @author: Somik Behera, Nicira Networks, Inc.
 
-
 """
 Quantum's Manager class is responsible for parsing a config file and
 instantiating the correct plugin that concretely implement quantum_plugin_base
 class.
 The caller should make sure that QuantumManager is a singleton.
 """
-import gettext
+
 import logging
 import os
-
-gettext.install('quantum', unicode=1)
 
 from quantum.common import utils
 from quantum.common.config import find_config_file
 from quantum.common.exceptions import ClassNotFound
-from quantum_plugin_base import QuantumPluginBase
+from quantum.quantum_plugin_base import QuantumPluginBase
+
 
 LOG = logging.getLogger('quantum.manager')
+
+
 CONFIG_FILE = "plugins.ini"
-LOG = logging.getLogger('quantum.manager')
 
 
 def find_config(basepath):
@@ -61,23 +60,23 @@ class QuantumManager(object):
         self.configuration_file = find_config_file(options, config_file,
                                                    CONFIG_FILE)
         if not 'plugin_provider' in options:
-            options['plugin_provider'] = \
-                utils.get_plugin_from_config(self.configuration_file)
+            options['plugin_provider'] = utils.get_plugin_from_config(
+                self.configuration_file)
         LOG.debug("Plugin location:%s", options['plugin_provider'])
 
         # If the plugin can't be found let them know gracefully
         try:
             plugin_klass = utils.import_class(options['plugin_provider'])
         except ClassNotFound:
-            raise Exception("Plugin not found.  You can install a " \
-                            "plugin with: pip install <plugin-name>\n" \
+            raise Exception("Plugin not found.  You can install a "
+                            "plugin with: pip install <plugin-name>\n"
                             "Example: pip install quantum-sample-plugin")
 
         if not issubclass(plugin_klass, QuantumPluginBase):
-            raise Exception("Configured Quantum plug-in " \
+            raise Exception("Configured Quantum plug-in "
                             "didn't pass compatibility test")
         else:
-            LOG.debug("Successfully imported Quantum plug-in." \
+            LOG.debug("Successfully imported Quantum plug-in."
                       "All compatibility tests passed")
         self.plugin = plugin_klass()
 

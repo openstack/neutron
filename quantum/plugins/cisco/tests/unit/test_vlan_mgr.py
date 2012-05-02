@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,23 +15,23 @@
 #    under the License.
 #
 # @author: Peter Strunk, Cisco Systems, Inc.
-#
-"""
 
+import logging
 import unittest
-import logging as LOG
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco import l2network_plugin_configuration  as conf
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
-from quantum.plugins.cisco.segmentation.l2network_vlan_mgr \
-                                import L2NetworkVLANMgr
+from quantum.plugins.cisco import l2network_plugin_configuration as conf
+from quantum.plugins.cisco.segmentation.l2network_vlan_mgr import (
+    L2NetworkVLANMgr,
+    )
 
-LOG.basicConfig(level=LOG.WARN)
-LOG.getLogger(__name__)
+
+logging.basicConfig(level=logging.WARN)
+LOG = logging.getLogger(__name__)
 
 
 class Test_L2Network_Vlan_Mgr(unittest.TestCase):
@@ -50,8 +49,8 @@ class Test_L2Network_Vlan_Mgr(unittest.TestCase):
         self.vlan_id = 300
         self.net_id = 100
         self.vlan_mgr = L2NetworkVLANMgr()
-        self.plugin_key = "quantum.plugins.cisco.ucs.cisco_ucs_plugin" +\
-                          ".UCSVICPlugin"
+        self.plugin_key = (
+            "quantum.plugins.cisco.ucs.cisco_ucs_plugin.UCSVICPlugin")
 
     def tearDown(self):
         db.clear_db()
@@ -60,7 +59,7 @@ class Test_L2Network_Vlan_Mgr(unittest.TestCase):
         LOG.debug("test_reserve_segmentation_id - START")
         db.network_create(self.tenant_id, self.net_name)
         vlan_id = self.vlan_mgr.reserve_segmentation_id(self.tenant_id,
-                                                             self.net_name)
+                                                        self.net_name)
         self.assertEqual(vlan_id, int(conf.VLAN_START))
         LOG.debug("test_reserve_segmentation_id - END")
 
@@ -77,10 +76,10 @@ class Test_L2Network_Vlan_Mgr(unittest.TestCase):
         LOG.debug("test_release_segmentation_id - START")
         db.network_create(self.tenant_id, self.net_name)
         vlan_id = self.vlan_mgr.reserve_segmentation_id(self.tenant_id,
-                                                             self.net_name)
+                                                        self.net_name)
         cdb.add_vlan_binding(vlan_id, self.vlan_name, self.net_id)
         release_return = self.vlan_mgr.release_segmentation_id(self.tenant_id,
-                                                                self.net_id)
+                                                               self.net_id)
         self.assertEqual(release_return, False)
         LOG.debug("test_release_segmentation_id - END")
 

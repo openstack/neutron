@@ -21,18 +21,19 @@ Utility methods for working with WSGI servers
 
 import logging
 import sys
+from xml.dom import minidom
+from xml.parsers import expat
+
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
+from lxml import etree
 import routes.middleware
 import webob.dec
 import webob.exc
 
-from lxml import etree
-from xml.dom import minidom
-from xml.parsers import expat
-
 from quantum.common import exceptions as exception
 from quantum.common import utils
+
 
 LOG = logging.getLogger('quantum.common.wsgi')
 
@@ -308,8 +309,8 @@ class ResponseSerializer(object):
         }
         self.body_serializers.update(body_serializers or {})
 
-        self.headers_serializer = headers_serializer or \
-                                    ResponseHeadersSerializer()
+        self.headers_serializer = (headers_serializer or
+                                   ResponseHeadersSerializer())
 
     def serialize(self, response_data, content_type, action='default'):
         """Serialize a dict into a string and wrap in a wsgi.Request object.

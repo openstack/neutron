@@ -22,6 +22,7 @@ from webob import exc
 from quantum import wsgi
 from quantum.api import faults
 
+
 XML_NS_V10 = 'http://openstack.org/quantum/api/v1.0'
 XML_NS_V11 = 'http://openstack.org/quantum/api/v1.1'
 LOG = logging.getLogger('quantum.api.api_common')

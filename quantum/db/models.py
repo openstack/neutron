@@ -26,6 +26,7 @@ from sqlalchemy.orm import relation, object_mapper
 
 from quantum.api import api_common as common
 
+
 BASE = declarative_base()
 
 
@@ -59,7 +60,7 @@ class QuantumBase(object):
         Includes attributes from joins."""
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
-                      if not k[0] == '_'])
+                       if not k[0] == '_'])
         local.update(joined)
         return local.iteritems()
 
@@ -76,8 +77,7 @@ class Port(BASE, QuantumBase):
     state = Column(String(8))
     op_status = Column(String(16))
 
-    def __init__(self, network_id,
-                 op_status=common.OperationalStatus.UNKNOWN):
+    def __init__(self, network_id, op_status=common.OperationalStatus.UNKNOWN):
         self.uuid = str(uuid.uuid4())
         self.network_id = network_id
         self.interface_id = None

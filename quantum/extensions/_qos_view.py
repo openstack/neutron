@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Ying Liu, Cisco Systems, Inc.
 #
-"""
 
 
 def get_view_builder(req):
@@ -52,5 +50,5 @@ class ViewBuilder(object):
     def _build_detail(self, qos_data):
         """Return a detailed description of qos."""
         return dict(qos=dict(id=qos_data['qos_id'],
-                                name=qos_data['qos_name'],
-                                description=qos_data['qos_desc']))
+                             name=qos_data['qos_name'],
+                             description=qos_data['qos_desc']))

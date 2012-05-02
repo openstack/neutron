@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011 Cisco Systems, Inc.  All rights reserved.
@@ -16,8 +15,6 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
 from copy import deepcopy
 import inspect
@@ -30,6 +27,7 @@ from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
+
 
 LOG = logging.getLogger(__name__)
 
@@ -49,13 +47,13 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         for key in conf.PLUGINS[const.PLUGINS].keys():
             self._plugins[key] = utils.import_object(
                 conf.PLUGINS[const.PLUGINS][key])
-            LOG.debug("Loaded device plugin %s\n" % \
-                    conf.PLUGINS[const.PLUGINS][key])
+            LOG.debug("Loaded device plugin %s\n" %
+                      conf.PLUGINS[const.PLUGINS][key])
             if key in conf.PLUGINS[const.INVENTORY].keys():
                 self._inventory[key] = utils.import_object(
                     conf.PLUGINS[const.INVENTORY][key])
-                LOG.debug("Loaded device inventory %s\n" % \
-                        conf.PLUGINS[const.INVENTORY][key])
+                LOG.debug("Loaded device inventory %s\n" %
+                          conf.PLUGINS[const.INVENTORY][key])
 
     def _func_name(self, offset=0):
         """Get the name of the calling function"""
@@ -65,8 +63,8 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         """Invoke only device plugin for all the devices in the system"""
         if not plugin_key in self._plugins.keys():
             LOG.info("No %s Plugin loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" \
-                     % (plugin_key, function_name, args))
+            LOG.info("%s: %s with args %s ignored" %
+                     (plugin_key, function_name, args))
             return
         device_params = self._invoke_inventory(plugin_key, function_name,
                                                args)
@@ -74,7 +72,7 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         if not device_ips:
             # Return in a list
             return [self._invoke_plugin(plugin_key, function_name, args,
-                                device_params)]
+                                        device_params)]
         else:
             # Return a list of return values from each device
             output = []
@@ -82,15 +80,15 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
                 new_device_params = deepcopy(device_params)
                 new_device_params[const.DEVICE_IP] = device_ip
                 output.append(self._invoke_plugin(plugin_key, function_name,
-                                args, new_device_params))
+                                                  args, new_device_params))
             return output
 
     def _invoke_inventory(self, plugin_key, function_name, args):
         """Invoke only the inventory implementation"""
         if not plugin_key in self._inventory.keys():
             LOG.warn("No %s inventory loaded" % plugin_key)
-            LOG.warn("%s: %s with args %s ignored" \
-                     % (plugin_key, function_name, args))
+            LOG.warn("%s: %s with args %s ignored" %
+                     (plugin_key, function_name, args))
             return {const.DEVICE_IP: []}
         else:
             return getattr(self._inventory[plugin_key], function_name)(args)
@@ -101,8 +99,7 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
 
         # If there are more args than needed, add them to kwargs
         args_copy = deepcopy(args)
-        if args.__len__() + 1 > \
-           inspect.getargspec(func).args.__len__():
+        if (args.__len__() + 1) > inspect.getargspec(func).args.__len__():
             kwargs.update(args_copy.pop())
 
         return func(*args_copy, **kwargs)
@@ -115,9 +112,9 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         """Support for the Quantum core API call"""
         output = []
         ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                       self._func_name(), args)
+                                                    self._func_name(), args)
         nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                       self._func_name(), args)
+                                                      self._func_name(), args)
         output.extend(ucs_output or [])
         output.extend(nexus_output or [])
         return output
@@ -126,9 +123,9 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         """Support for the Quantum core API call"""
         output = []
         ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                       self._func_name(), args)
+                                                    self._func_name(), args)
         nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                       self._func_name(), args)
+                                                      self._func_name(), args)
         output.extend(ucs_output or [])
         output.extend(nexus_output or [])
         return output
@@ -141,9 +138,9 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
         """Support for the Quantum core API call"""
         output = []
         ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                       self._func_name(), args)
+                                                    self._func_name(), args)
         nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                       self._func_name(), args)
+                                                      self._func_name(), args)
         output.extend(ucs_output or [])
         output.extend(nexus_output or [])
         return output
@@ -155,12 +152,12 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
     def create_port(self, args):
         """Support for the Quantum core API call"""
         return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                       self._func_name(), args)
+                                              self._func_name(), args)
 
     def delete_port(self, args):
         """Support for the Quantum core API call"""
         return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                        self._func_name(), args)
+                                              self._func_name(), args)
 
     def update_port(self, args):
         """Not implemented for this model"""
@@ -173,12 +170,12 @@ class L2NetworkMultiBlade(L2NetworkModelBase):
     def plug_interface(self, args):
         """Support for the Quantum core API call"""
         return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                        self._func_name(), args)
+                                              self._func_name(), args)
 
     def unplug_interface(self, args):
         """Support for the Quantum core API call"""
         return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                        self._func_name(), args)
+                                              self._func_name(), args)
 
     def schedule_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
