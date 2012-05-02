@@ -640,6 +640,14 @@ class OVSQuantumTunnelAgent(object):
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
+            try:
+                db.commit()
+            except Exception as e:
+                LOG.info("Unable to commit to database! Exception: %s" % e)
+                db.rollback()
+                old_local_bindings = {}
+                old_vif_ports = {}
+
             time.sleep(self.polling_interval)
 
 
