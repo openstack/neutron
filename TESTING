@@ -27,6 +27,15 @@ Running tests
     After running all of the tests, run_test.sh will report any pep8 errors
     found in the tree.
 
+Running individual tests
+
+    Individual tests can be run using run_tests.py, you just need to pass
+    the dot-separated path to the module you want as an argument to it.
+    For example, the following would run only the APITestV11 tests from
+    quantum/tests/unit/test_api.py:
+
+      $ ./run_tests.sh quantum.tests.unit.test_api:APITestV11
+
 Adding more tests
 
     Quantum is a pretty new code base at this point and there is plenty of
