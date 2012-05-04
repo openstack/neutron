@@ -7,14 +7,14 @@ if [ ! -d /etc/xapi.d/plugins ]; then
 	exit 1
 fi
 
-# Make sure we have sqlalchemy-python
-rpm -qa | grep sqlalchemy-python >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-        echo "sqlalchemy-python not found"
-    echo "Please enable the centos repositories and install sqlalchemy-python:"
-    echo "yum --enablerepo=base -y install sqlalchemy-python"
-    exit 1
-fi
+
+
+sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Base.repo
+
+yum -y install python-setuptools gcc gcc-c++ MySQL-python
+easy_install pip && pip install sqlalchemy
+
+
 
 cp ovs_quantum_agent.py /etc/xapi.d/plugins
 cp ovs_quantum_plugin.ini /etc/xapi.d/plugins
