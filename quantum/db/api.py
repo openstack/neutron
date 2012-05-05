@@ -29,10 +29,12 @@ from quantum.common import exceptions as q_exc
 from quantum.db import models
 
 
+LOG = logging.getLogger(__name__)
+
+
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
-LOG = logging.getLogger('quantum.db.api')
 
 
 class MySQLPingListener(object):

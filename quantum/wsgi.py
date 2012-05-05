@@ -35,7 +35,7 @@ from quantum.common import exceptions as exception
 from quantum.common import utils
 
 
-LOG = logging.getLogger('quantum.common.wsgi')
+LOG = logging.getLogger(__name__)
 
 
 class WritableLogger(object):

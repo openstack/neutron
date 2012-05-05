@@ -21,7 +21,7 @@ from quantum.api.views import ports as ports_view
 from quantum.common import exceptions as exception
 
 
-LOG = logging.getLogger('quantum.api.ports')
+LOG = logging.getLogger(__name__)
 
 
 def create_resource(plugin, version):

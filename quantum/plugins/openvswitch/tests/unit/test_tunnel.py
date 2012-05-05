@@ -16,17 +16,12 @@
 #
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import logging
 import os
 import unittest
 
 import mox
 
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
-
-
-LOG = logging.getLogger("quantum.plugins.openvswitch.tests.unit.test_tunnel")
-LOG.setLevel(logging.INFO)
 
 
 LOCAL_DIR = os.path.dirname(__file__)

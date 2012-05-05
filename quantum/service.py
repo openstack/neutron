@@ -22,7 +22,7 @@ from quantum.common import exceptions as exception
 from quantum import wsgi
 
 
-LOG = logging.getLogger('quantum.service')
+LOG = logging.getLogger(__name__)
 
 
 class WsgiService(object):

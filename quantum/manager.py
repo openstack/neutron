@@ -32,7 +32,7 @@ from quantum.common.exceptions import ClassNotFound
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 
-LOG = logging.getLogger('quantum.manager')
+LOG = logging.getLogger(__name__)
 
 
 CONFIG_FILE = "plugins.ini"

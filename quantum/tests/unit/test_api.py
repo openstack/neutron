@@ -17,7 +17,6 @@
 #    @author: Salvatore Orlando, Citrix Systems
 
 import json
-import logging
 import unittest
 
 from lxml import etree
@@ -30,9 +29,6 @@ import quantum.api.versions as versions
 from quantum.common.test_lib import test_config
 import quantum.tests.unit._test_api as test_api
 import quantum.tests.unit.testlib_api as testlib
-
-
-LOG = logging.getLogger('quantum.tests.test_api')
 
 
 class APITestV10(test_api.BaseAPIOperationsTest):
@@ -185,7 +181,6 @@ class APIFiltersTest(test_api.AbstractAPITest):
         self.port22_id = self._create_port(self.net2_id, "ACTIVE", self.fmt)
 
     def test_network_name_filter(self):
-        LOG.debug("test_network_name_filter - START")
         flt = "name=test-1"
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 1
@@ -197,10 +192,7 @@ class APIFiltersTest(test_api.AbstractAPITest):
         # Check network count: should return 0
         self.assertEqual(len(network_data['networks']), 0)
 
-        LOG.debug("test_network_name_filter - END")
-
     def test_network_op_status_filter(self):
-        LOG.debug("test_network_op_status_filter - START")
         # First filter for networks in default status
         flt = "op-status=%s" % self.net_op_status
         network_data = self._do_filtered_network_list_request(flt)
@@ -212,19 +204,15 @@ class APIFiltersTest(test_api.AbstractAPITest):
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 0
         self.assertEqual(len(network_data['networks']), 0)
-        LOG.debug("test_network_op_status_filter - END")
 
     def test_network_port_op_status_filter(self):
-        LOG.debug("test_network_port_op_status_filter - START")
         # First filter for networks with ports in default op status
         flt = "port-op-status=%s" % self.port_op_status
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 2
         self.assertEqual(len(network_data['networks']), 2)
-        LOG.debug("test_network_port_op_status_filter - END")
 
     def test_network_port_state_filter(self):
-        LOG.debug("test_network_port_state_filter - START")
         # First filter for networks with ports 'ACTIVE'
         flt = "port-state=ACTIVE"
         network_data = self._do_filtered_network_list_request(flt)
@@ -236,10 +224,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 1
         self.assertEqual(len(network_data['networks']), 1)
-        LOG.debug("test_network_port_state_filter - END")
 
     def test_network_has_attachment_filter(self):
-        LOG.debug("test_network_has_attachment_filter - START")
         # First filter for networks with ports 'ACTIVE'
         flt = "has-attachment=True"
         network_data = self._do_filtered_network_list_request(flt)
@@ -251,11 +237,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 1
         self.assertEqual(len(network_data['networks']), 1)
-        LOG.debug("test_network_has_attachment_filter - END")
 
     def test_network_port_filter(self):
-        LOG.debug("test_network_port_filter - START")
-
         flt = "port=%s" % self.port11_id
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 1
@@ -267,11 +250,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         # Check network count: should return 1
         self.assertEqual(len(network_data['networks']), 1)
         self.assertEqual(network_data['networks'][0]['id'], self.net2_id)
-        LOG.debug("test_network_port_filter - END")
 
     def test_network_attachment_filter(self):
-        LOG.debug("test_network_attachment_filter - START")
-
         flt = "attachment=test-1-att"
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 1
@@ -282,10 +262,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         network_data = self._do_filtered_network_list_request(flt)
         # Check network count: should return 0
         self.assertEqual(len(network_data['networks']), 0)
-        LOG.debug("test_network_attachment_filter - END")
 
     def test_network_multiple_filters(self):
-        LOG.debug("test_network_multiple_filters - START")
         # Add some data for having more fun
         another_net_id = self._create_network(self.fmt, name="test-1")
         # Add 1 ACTIVE port
@@ -296,10 +274,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         # Check network count: should return 1
         self.assertEqual(len(network_data['networks']), 1)
         self.assertEqual(network_data['networks'][0]['id'], self.net1_id)
-        LOG.debug("test_network_multiple_filters - END")
 
     def test_port_state_filter(self):
-        LOG.debug("test_port_state_filter - START")
         # First filter for 'ACTIVE' ports in 1st network
         flt = "state=ACTIVE"
         port_data = self._do_filtered_port_list_request(flt, self.net1_id)
@@ -310,19 +286,15 @@ class APIFiltersTest(test_api.AbstractAPITest):
         port_data = self._do_filtered_port_list_request(flt, self.net2_id)
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
-        LOG.debug("test_port_state_filter - END")
 
     def test_port_op_status_filter(self):
-        LOG.debug("test_port_op_status_filter - START")
         # First filter for 'UP' ports in 1st network
         flt = "op-status=%s" % self.port_op_status
         port_data = self._do_filtered_port_list_request(flt, self.net1_id)
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
-        LOG.debug("test_port_op_status_filter - END")
 
     def test_port_has_attachment_filter(self):
-        LOG.debug("test_port_has_attachment_filter - START")
         # First search for ports with attachments in 1st network
         flt = "has-attachment=True"
         port_data = self._do_filtered_port_list_request(flt, self.net1_id)
@@ -335,10 +307,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         port_data = self._do_filtered_port_list_request(flt, self.net2_id)
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
-        LOG.debug("test_port_has_attachment_filter - END")
 
     def test_port_attachment_filter(self):
-        LOG.debug("test_port_attachment_filter - START")
         # First search for ports with attachments in 1st network
         flt = "attachment=test-1-att"
         port_data = self._do_filtered_port_list_request(flt, self.net1_id)
@@ -351,10 +321,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
         port_data = self._do_filtered_port_list_request(flt, self.net2_id)
         # Check port count: should return 0
         self.assertEqual(len(port_data['ports']), 0)
-        LOG.debug("test_port_has_attachment_filter - END")
 
     def test_port_multiple_filters(self):
-        LOG.debug("test_port_multiple_filters - START")
         flt = "op-status=%s&state=DOWN" % self.port_op_status
         port_data = self._do_filtered_port_list_request(flt, self.net1_id)
         # Check port count: should return 1
@@ -371,7 +339,6 @@ class APIFiltersTest(test_api.AbstractAPITest):
         port_data = self._do_filtered_port_list_request(flt, self.net2_id)
         # Check port count: should return 2
         self.assertEqual(len(port_data['ports']), 2)
-        LOG.debug("test_port_multiple_filters - END")
 
 
 class APIRootTest(unittest.TestCase):

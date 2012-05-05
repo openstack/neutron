@@ -39,7 +39,6 @@ DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 FLAGS = flags.FLAGS
-LOG = logging.getLogger('quantum.wsgi')
 
 
 def parse_options(parser, cli_args=None):

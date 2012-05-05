@@ -15,7 +15,6 @@
 #    under the License.
 
 import json
-import logging
 import os
 import sys
 import unittest
@@ -44,9 +43,6 @@ from quantum.tests.unit.extension_stubs import (
     )
 import quantum.tests.unit.extensions
 from quantum import wsgi
-
-
-LOG = logging.getLogger('test_extensions')
 
 
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")

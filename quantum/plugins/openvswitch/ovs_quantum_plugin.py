@@ -32,7 +32,6 @@ from quantum.plugins.openvswitch import ovs_db
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 
-logging.basicConfig(level=logging.WARN)
 LOG = logging.getLogger("ovs_quantum_plugin")
 
 

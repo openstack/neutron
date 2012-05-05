@@ -19,7 +19,7 @@
 import logging
 
 
-LOG = logging.getLogger('quantum.api.views.filters')
+LOG = logging.getLogger(__name__)
 
 
 def _load_network_ports_details(network, **kwargs):

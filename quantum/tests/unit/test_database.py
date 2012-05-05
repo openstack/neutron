@@ -20,14 +20,10 @@ test_database.py is an independent test suite
 that tests the database api method calls
 """
 
-import logging
 import unittest
 
 from quantum.db import api as db
 from quantum.tests.unit import database_stubs as db_stubs
-
-
-LOG = logging.getLogger('quantum.tests.test_database')
 
 
 class QuantumDBTest(unittest.TestCase):
@@ -37,7 +33,6 @@ class QuantumDBTest(unittest.TestCase):
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         self.dbtest = db_stubs.QuantumDB()
         self.tenant_id = "t1"
-        LOG.debug("Setup")
 
     def tearDown(self):
         """Tear Down"""

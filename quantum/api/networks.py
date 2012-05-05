@@ -24,7 +24,7 @@ from quantum.api.views import networks as networks_view
 from quantum.common import exceptions as exception
 
 
-LOG = logging.getLogger('quantum.api.networks')
+LOG = logging.getLogger(__name__)
 
 
 def create_resource(plugin, version):

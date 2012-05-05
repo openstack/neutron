@@ -21,7 +21,8 @@ import webob.dec
 from quantum import wsgi
 from quantum.api.views import versions as versions_view
 
-LOG = logging.getLogger('quantum.api.versions')
+
+LOG = logging.getLogger(__name__)
 
 
 class Versions(wsgi.Application):
