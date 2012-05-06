@@ -699,8 +699,9 @@ def main():
         else:
             polling_interval = DEFAULT_POLLING_INTERVAL
             LOG.info("Polling interval not defined. Using default.")
-        if config.has_option("AGENT", "reconnect_interval"):
-            reconnect_interval = config.getint("AGENT", "reconnect_interval")
+        if config.has_option("DATABASE", "reconnect_interval"):
+            reconnect_interval = config.getint("DATABASE",
+                                               "reconnect_interval")
         else:
             reconnect_interval = DEFAULT_RECONNECT_INTERVAL
             LOG.info("Reconnect interval not defined. Using default.")
