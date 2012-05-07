@@ -1,5 +1,6 @@
 *.pyc
 *.DS_Store
+AUTHORS
 build/*
 build-stamp
 quantum.egg-info/
