@@ -19,19 +19,16 @@
 Routines for configuring Quantum
 """
 
-import ConfigParser
 import logging
 import logging.config
 import logging.handlers
 import optparse
 import os
-import re
-import sys
 import socket
+import sys
 
 from paste import deploy
 
-from quantum.common import exceptions as exception
 from quantum.common import flags
 
 
