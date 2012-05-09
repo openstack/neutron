@@ -4,5 +4,5 @@ Routes>=1.12.3
 eventlet>=0.9.12
 lxml
 python-gflags==1.3
-sqlalchemy
+sqlalchemy>0.6.4
 webob==1.2.0

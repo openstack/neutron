@@ -47,12 +47,24 @@ class NotFound(QuantumException):
     pass
 
 
+class NotAuthorized(QuantumException):
+    message = _("Not authorized.")
+
+
+class AdminRequired(NotAuthorized):
+    message = _("User does not have admin privileges: %(reason)s")
+
+
 class ClassNotFound(NotFound):
     message = _("Class %(class_name)s could not be found")
 
 
 class NetworkNotFound(NotFound):
     message = _("Network %(net_id)s could not be found")
+
+
+class SubnetNotFound(NotFound):
+    message = _("Subnet %(subnet_id)s could not be found")
 
 
 class PortNotFound(NotFound):
@@ -64,12 +76,16 @@ class StateInvalid(QuantumException):
     message = _("Unsupported port state: %(port_state)s")
 
 
-class NetworkInUse(QuantumException):
+class InUse(QuantumException):
+    message = _("The resource is inuse")
+
+
+class NetworkInUse(InUse):
     message = _("Unable to complete operation on network %(net_id)s. "
                 "There is one or more attachments plugged into its ports.")
 
 
-class PortInUse(QuantumException):
+class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
                 "for network %(net_id)s. The attachment '%(att_id)s"
                 "is plugged into the logical port.")
@@ -112,3 +128,8 @@ class InvalidContentType(Invalid):
 
 class NotImplementedError(Error):
     pass
+
+
+class FixedIPNotAvailable(QuantumException):
+    message = _("Fixed IP (%(ip)s) unavailable for network "
+                "%(network_uuid)s")

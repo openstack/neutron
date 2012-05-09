@@ -27,7 +27,7 @@ from sqlalchemy.orm import sessionmaker, exc
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
-from quantum.db import models
+from quantum.db import model_base, models
 
 
 LOG = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ LOG = logging.getLogger(__name__)
 
 _ENGINE = None
 _MAKER = None
-BASE = models.BASE
+BASE = model_base.BASE
 
 
 class MySQLPingListener(object):
@@ -79,15 +79,16 @@ def configure_db(options):
             engine_args['listeners'] = [MySQLPingListener()]
 
         _ENGINE = create_engine(options['sql_connection'], **engine_args)
-        if not register_models():
+        base = options.get('base', BASE)
+        if not register_models(base):
             if 'reconnect_interval' in options:
-                retry_registration(options['reconnect_interval'])
+                retry_registration(options['reconnect_interval'], base)
 
 
-def clear_db():
+def clear_db(base=BASE):
     global _ENGINE
     assert _ENGINE
-    for table in reversed(BASE.metadata.sorted_tables):
+    for table in reversed(base.metadata.sorted_tables):
         _ENGINE.execute(table.delete())
 
 
@@ -102,32 +103,32 @@ def get_session(autocommit=True, expire_on_commit=False):
     return _MAKER()
 
 
-def retry_registration(reconnect_interval):
+def retry_registration(reconnect_interval, base=BASE):
     while True:
         LOG.info("Unable to connect to database. Retrying in %s seconds" %
                  reconnect_interval)
         time.sleep(reconnect_interval)
-        if register_models():
+        if register_models(base):
             break
 
 
-def register_models():
+def register_models(base=BASE):
     """Register Models and create properties"""
     global _ENGINE
     assert _ENGINE
     try:
-        BASE.metadata.create_all(_ENGINE)
+        base.metadata.create_all(_ENGINE)
     except sql.exc.OperationalError as e:
         LOG.info("Database registration exception: %s" % e)
         return False
     return True
 
 
-def unregister_models():
+def unregister_models(base=BASE):
     """Unregister Models, useful clearing out data before testing"""
     global _ENGINE
     assert _ENGINE
-    BASE.metadata.drop_all(_ENGINE)
+    base.metadata.drop_all(_ENGINE)
 
 
 def network_create(tenant_id, name, op_status=OperationalStatus.UNKNOWN):
@@ -158,7 +159,7 @@ def network_get(net_id):
         return (session.query(models.Network).
                 filter_by(uuid=net_id).
                 one())
-    except exc.NoResultFound, e:
+    except exc.NoResultFound:
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 
@@ -199,7 +200,7 @@ def validate_network_ownership(tenant_id, net_id):
                 filter_by(uuid=net_id).
                 filter_by(tenant_id=tenant_id).
                 one())
-    except exc.NoResultFound, e:
+    except exc.NoResultFound:
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 

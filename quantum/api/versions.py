@@ -37,11 +37,15 @@ class Versions(object):
         version_objs = [
             {
                 "id": "v1.0",
-                "status": "CURRENT",
+                "status": "DEPRECATED",
             },
             {
                 "id": "v1.1",
                 "status": "CURRENT",
+            },
+            {
+                "id": "v2.0",
+                "status": "PROPOSED",
             },
         ]
 

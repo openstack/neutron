@@ -62,12 +62,27 @@ def bool_from_string(subject):
 
     Useful for JSON-decoded stuff and config file parsing
     """
-    if type(subject) == type(bool):
+    if isinstance(subject, bool):
         return subject
-    if hasattr(subject, 'startswith'):  # str or unicode...
+    elif isinstance(subject, basestring):
         if subject.strip().lower() in ('true', 'on', '1'):
             return True
     return False
+
+
+def boolize(subject):
+    """
+    Quak like a boolean
+    """
+    if isinstance(subject, bool):
+        return subject
+    elif isinstance(subject, basestring):
+        sub = subject.strip().lower()
+        if sub == 'true':
+            return True
+        elif sub == 'false':
+            return False
+    return subject
 
 
 def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
