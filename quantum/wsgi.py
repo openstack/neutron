@@ -752,6 +752,12 @@ class Resource(Application):
             action_result = Fault(ex,
                                   self._xmlns,
                                   self._fault_body_function)
+        except Exception:
+            LOG.exception("Internal error")
+            # Do not include the traceback to avoid returning it to clients.
+            action_result = Fault(webob.exc.HTTPServerError(),
+                                  self._xmlns,
+                                  self._fault_body_function)
 
         if isinstance(action_result, dict) or action_result is None:
             response = self.serializer.serialize(action_result,

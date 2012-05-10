@@ -18,8 +18,12 @@
 #    @author: Salvatore Orlando, Citrix Systems
 
 import logging
-import unittest
+import unittest2 as unittest
 
+import mock
+
+from quantum.api.api_common import APIFaultWrapper
+from quantum.api.networks import Controller
 from quantum.common.test_lib import test_config
 from quantum.common import utils
 from quantum.db import api as db
@@ -1187,3 +1191,21 @@ class BaseAPIOperationsTest(AbstractAPITest):
 
     def test_multitenancy_json(self):
         self._test_multitenancy('json')
+
+    def test_internal_error(self):
+        """Check that internal errors do not leak.
+
+        Any internal, unexpected error should be turned into a 500 response
+        without any traces of the original exception.
+        """
+        orig_exception_msg = "An exception with a traceback"
+
+        @APIFaultWrapper()
+        def raise_exception(self, *args, **kwargs):
+            raise Exception(orig_exception_msg)
+
+        list_network_req = testlib.network_list_request(self.tenant_id, "json")
+        with mock.patch.object(Controller, 'index', new=raise_exception):
+            list_network_res = list_network_req.get_response(self.api)
+        self.assertEqual(list_network_res.status_int, 500)
+        self.assertNotIn(orig_exception_msg, list_network_res.body)
