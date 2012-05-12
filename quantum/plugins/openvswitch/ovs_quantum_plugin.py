@@ -104,6 +104,12 @@ class OVSQuantumPlugin(QuantumPluginBase):
         LOG.debug("Config: %s" % config)
 
         options = {"sql_connection": config.get("DATABASE", "sql_connection")}
+        if config.has_option("DATABASE", "reconnect_interval"):
+            reconnect_interval = config.getint("DATABASE",
+                                               "reconnect_interval")
+        else:
+            reconnect_interval = 2
+        options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
         self.vmap = VlanMap()

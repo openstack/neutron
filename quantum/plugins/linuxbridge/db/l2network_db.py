@@ -31,16 +31,8 @@ LOG = logging.getLogger(__name__)
 
 
 def initialize():
-    'Establish database connection and load models'
-    if conf.DB_CONNECTION == 'sqlite':
-        options = {"sql_connection": "sqlite://"}
-    else:
-        options = {"sql_connection": "mysql://%s:%s@%s:%s/%s" % (conf.DB_USER,
-                                                                 conf.DB_PASS,
-                                                                 conf.DB_HOST,
-                                                                 conf.DB_PORT,
-                                                                 conf.DB_NAME)}
-
+    options = {"sql_connection": "%s" % conf.DB_SQL_CONNECTION}
+    options.update({"reconnect_interval": conf.DB_RECONNECT_INTERVAL})
     db.configure_db(options)
     create_vlanids()
 
