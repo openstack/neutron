@@ -1,3 +1,4 @@
+include HACKING.rst
 include README LICENSE TESTING AUTHORS
 include run_tests.py run_tests.sh
 include .pylintrc
