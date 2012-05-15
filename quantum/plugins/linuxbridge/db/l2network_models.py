@@ -52,4 +52,4 @@ class VlanBinding(BASE, QuantumBase):
         self.network_id = network_id
 
     def __repr__(self):
-        return "<VlanBinding(%d,%s,%s)>" % (self.vlan_id, self.network_id)
+        return "<VlanBinding(%d,%s)>" % (self.vlan_id, self.network_id)
