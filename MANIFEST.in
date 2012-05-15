@@ -1,4 +1,4 @@
-include README LICENSE TESTING
+include README LICENSE TESTING AUTHORS
 include run_tests.py run_tests.sh
 include .pylintrc
 include openstack-common.conf
