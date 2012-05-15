@@ -40,3 +40,16 @@ class VlanBinding(BASE):
     def __repr__(self):
         return "<VlanBinding(%s,%s)>" % \
           (self.vlan_id, self.network_id)
+
+
+class TunnelIP(BASE):
+    """Represents a remote IP in tunnel mode"""
+    __tablename__ = 'tunnel_ips'
+
+    ip_address = Column(String(255), primary_key=True)
+
+    def __init__(self, ip_address):
+        self.ip_address = ip_address
+
+    def __repr__(self):
+        return "<TunnelIP(%s)>" % (self.ip_address)
