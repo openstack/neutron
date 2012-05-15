@@ -70,6 +70,7 @@ class QuantumPortAwareScheduler(chance.ChanceScheduler):
         # needs some tenant name, but the tenant name will not be used
         # since the extensions URL does not require it
         LOG.debug("Initializing Cisco Quantum Port-aware Scheduler...")
+        super(QuantumPortAwareScheduler, self).__init__()
         client = Client(HOST, PORT, USE_SSL, format='json', version=VERSION,
                         uri_prefix="", tenant="dummy", logger=LOG)
         request_url = "/extensions"
