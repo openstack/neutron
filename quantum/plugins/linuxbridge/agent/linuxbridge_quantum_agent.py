@@ -34,6 +34,8 @@ import time
 
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
+from quantum.common import exceptions as exception
+
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
@@ -62,7 +64,7 @@ class LinuxBridge:
         self.physical_interface = physical_interface
         self.root_helper = root_helper
 
-    def run_cmd(self, args):
+    def run_cmd(self, args, check_return=False):
         cmd = shlex.split(self.root_helper) + args
         LOG.debug("Running command: " + " ".join(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -71,6 +73,10 @@ class LinuxBridge:
             LOG.debug("Timeout running command: " + " ".join(cmd))
         if retval:
             LOG.debug("Command returned: %s" % retval)
+        if (p.returncode != 0 and check_return):
+            msg = "Command failed: " + " ".join(cmd)
+            LOG.debug(msg)
+            raise exception.ProcessExecutionError(msg)
         return retval
 
     def device_exists(self, device):
@@ -116,27 +122,39 @@ class LinuxBridge:
                 BRIDGE_NAME_PLACEHOLDER, bridge_name)
             return os.listdir(bridge_interface_path)
 
-    def get_all_tap_devices(self):
-        tap_devices = []
-        retval = self.run_cmd(['ip', 'tuntap'])
+    def _get_prefixed_ip_link_devices(self, prefix):
+        prefixed_devices = []
+        retval = self.run_cmd(['ip', 'link'])
+        rows = retval.split('\n')
+        for row in rows:
+            values = row.split(':')
+            if (len(values) > 2):
+                value = values[1].strip(' ')
+                if (value.startswith(prefix)):
+                    prefixed_devices.append(value)
+        return prefixed_devices
+
+    def _get_prefixed_tap_devices(self, prefix):
+        prefixed_devices = []
+        retval = self.run_cmd(['ip', 'tuntap'], check_return=True)
         rows = retval.split('\n')
         for row in rows:
             split_row = row.split(':')
-            if split_row[0].startswith(TAP_INTERFACE_PREFIX):
-                tap_devices.append(split_row[0])
+            if split_row[0].startswith(prefix):
+                prefixed_devices.append(split_row[0])
+        return prefixed_devices
 
-        return tap_devices
+    def get_all_tap_devices(self):
+        try:
+            return self._get_prefixed_tap_devices(TAP_INTERFACE_PREFIX)
+        except exception.ProcessExecutionError:
+            return self._get_prefixed_ip_link_devices(TAP_INTERFACE_PREFIX)
 
     def get_all_gateway_devices(self):
-        gw_devices = []
-        retval = self.run_cmd(['ip', 'tuntap'])
-        rows = retval.split('\n')
-        for row in rows:
-            split_row = row.split(':')
-            if split_row[0].startswith(GATEWAY_INTERFACE_PREFIX):
-                gw_devices.append(split_row[0])
-
-        return gw_devices
+        try:
+            return self._get_prefixed_tap_devices(GATEWAY_INTERFACE_PREFIX)
+        except exception.ProcessExecutionError:
+            return self._get_prefixed_ip_link_devices(GATEWAY_INTERFACE_PREFIX)
 
     def get_bridge_for_tap_device(self, tap_device_name):
         bridges = self.get_all_quantum_bridges()
