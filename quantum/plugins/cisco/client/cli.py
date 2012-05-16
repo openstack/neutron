@@ -189,7 +189,7 @@ def main():
         sys.exit(1)
 
     CMD = args[0]
-    if CMD in qcli.commands.keys():
+    if CMD in qcli.commands['1.1'].keys():
         qcli.main()
         sys.exit(1)
     if CMD not in COMMANDS.keys():
