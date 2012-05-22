@@ -31,8 +31,6 @@ import time
 import sqlalchemy
 from sqlalchemy.ext import sqlsoup
 
-from quantum.plugins.openvswitch import ovs_models
-
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
