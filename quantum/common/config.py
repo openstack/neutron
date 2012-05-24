@@ -32,6 +32,7 @@ from paste import deploy
 from quantum.common import flags
 
 
+LOG = logging.getLogger(__name__)
 DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -315,10 +316,11 @@ def load_paste_app(app_name, options, args):
 
     try:
         app = deploy.loadapp("config:%s" % conf_file, name=app_name)
-    except (LookupError, ImportError), e:
-        raise RuntimeError("Unable to load %(app_name)s from "
-                           "configuration file %(conf_file)s."
-                           "\nGot: %(e)r" % locals())
+    except (LookupError, ImportError):
+        msg = ("Unable to load %(app_name)s from "
+               "configuration file %(conf_file)s.") % locals()
+        LOG.exception(msg)
+        raise RuntimeError(msg)
     return conf, app
 
 
