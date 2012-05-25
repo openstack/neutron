@@ -37,7 +37,9 @@ def create_resource(plugin, version):
 
 class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
-
+    _resource_name = 'attachment'
+    # version will be redefined by in child class
+    version = None
     _attachment_ops_param_list = [
         {
             'param-name': 'id',
@@ -52,10 +54,6 @@ class Controller(common.QuantumController):
                 },
             },
         }
-
-    def __init__(self, plugin):
-        self._resource_name = 'attachment'
-        super(Controller, self).__init__(plugin)
 
     @common.APIFaultWrapper([exception.NetworkNotFound,
                              exception.PortNotFound])
@@ -83,15 +81,9 @@ class Controller(common.QuantumController):
 
 class ControllerV10(Controller):
     """Attachment resources controller for Quantum v1.0 API"""
-
-    def __init__(self, plugin):
-        self.version = "1.0"
-        super(ControllerV10, self).__init__(plugin)
+    version = "1.0"
 
 
 class ControllerV11(Controller):
     """Attachment resources controller for Quantum v1.1 API"""
-
-    def __init__(self, plugin):
-        self.version = "1.1"
-        super(ControllerV11, self).__init__(plugin)
+    version = "1.1"

@@ -15,8 +15,6 @@
 #    under the License.
 
 import json
-import os
-import sys
 import unittest
 
 import routes
@@ -39,7 +37,6 @@ from quantum.tests.unit.extension_stubs import (
     StubBaseAppController,
     StubExtension,
     StubPlugin,
-    StubPluginInterface,
     )
 import quantum.tests.unit.extensions
 from quantum import wsgi

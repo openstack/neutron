@@ -165,6 +165,8 @@ class HeaderSerializer11(HeaderSerializer10):
 
 class QuantumController(object):
     """ Base controller class for Quantum API """
+    # _resource_name will be redefined in sub concrete controller
+    _resource_name = None
 
     def __init__(self, plugin):
         self._plugin = plugin

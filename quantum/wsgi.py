@@ -310,7 +310,7 @@ class ResponseSerializer(object):
         self.body_serializers.update(body_serializers or {})
 
         self.headers_serializer = (headers_serializer or
-                                   ResponseHeadersSerializer())
+                                   ResponseHeaderSerializer())
 
     def serialize(self, response_data, content_type, action='default'):
         """Serialize a dict into a string and wrap in a wsgi.Request object.

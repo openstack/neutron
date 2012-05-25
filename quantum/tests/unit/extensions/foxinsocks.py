@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import  abstractmethod
+from abc import abstractmethod
 import json
 
 from quantum.extensions import extensions
@@ -66,10 +66,10 @@ class Foxinsocks(object):
         return resources
 
     def get_actions(self):
-        return  [extensions.ActionExtension('dummy_resources',
+        return [extensions.ActionExtension('dummy_resources',
                                             'FOXNSOX:add_tweedle',
                                             self._add_tweedle_handler),
-                 extensions.ActionExtension('dummy_resources',
+                extensions.ActionExtension('dummy_resources',
                                             'FOXNSOX:delete_tweedle',
                                             self._delete_tweedle_handler)]
 

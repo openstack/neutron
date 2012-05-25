@@ -97,7 +97,7 @@ def network_list(tenant_id):
 def network_id(net_name):
     session = get_session()
     try:
-        return  session.query(models.Network).\
+        return session.query(models.Network).\
             options(joinedload(models.Network.ports)). \
             filter_by(name=net_name).\
             all()
@@ -108,7 +108,7 @@ def network_id(net_name):
 def network_get(net_id):
     session = get_session()
     try:
-        return  session.query(models.Network).\
+        return session.query(models.Network).\
             options(joinedload(models.Network.ports)). \
             filter_by(uuid=net_id).\
             one()
@@ -142,7 +142,7 @@ def network_destroy(net_id):
 def validate_network_ownership(tenant_id, net_id):
     session = get_session()
     try:
-        return  session.query(models.Network).\
+        return session.query(models.Network).\
             filter_by(uuid=net_id).\
             filter_by(tenant_id=tenant_id).\
             one()
@@ -176,7 +176,7 @@ def port_get(net_id, port_id):
     network_get(net_id)
     session = get_session()
     try:
-        return  session.query(models.Port).\
+        return session.query(models.Port).\
           filter_by(uuid=port_id).\
           filter_by(network_id=net_id).\
           one()
@@ -266,7 +266,7 @@ def port_destroy(net_id, port_id):
 def port_get_by_id(port_id):
     session = get_session()
     try:
-        return  session.query(models.Port).\
+        return session.query(models.Port).\
           filter_by(uuid=port_id).one()
     except exc.NoResultFound:
         raise q_exc.PortNotFound(port_id=port_id)

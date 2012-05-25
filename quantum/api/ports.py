@@ -38,14 +38,12 @@ def create_resource(plugin, version):
 
 class Controller(common.QuantumController):
     """ Port API controller for Quantum API """
-
+    _resource_name = 'port'
+    # version will be redefined in child class
+    version = None
     _port_ops_param_list = [
         {'param-name': 'state', 'default-value': 'DOWN', 'required': False},
         ]
-
-    def __init__(self, plugin):
-        self._resource_name = 'port'
-        super(Controller, self).__init__(plugin)
 
     def _items(self, request, tenant_id, network_id,
                port_details=False):
@@ -168,9 +166,7 @@ class ControllerV10(Controller):
             },
         }
 
-    def __init__(self, plugin):
-        self.version = "1.0"
-        super(ControllerV10, self).__init__(plugin)
+    version = "1.0"
 
 
 class ControllerV11(Controller):
@@ -186,6 +182,4 @@ class ControllerV11(Controller):
             },
         }
 
-    def __init__(self, plugin):
-        self.version = "1.1"
-        super(ControllerV11, self).__init__(plugin)
+    version = "1.1"

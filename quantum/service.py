@@ -80,7 +80,9 @@ class QuantumApiService(WsgiService):
         items = dict([(k, v) for k, v in conf.items()
                       if k not in ('__file__', 'here')])
         for key, value in sorted(items.items()):
-            LOG.debug("%(key)-30s %(value)s" % locals())
+            LOG.debug("%(key)-30s %(value)s" % {'key': key,
+                                                'value': value,
+                                                })
         LOG.debug("*" * 80)
         service = cls(app_name, conf_file, conf)
         return service

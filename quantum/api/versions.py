@@ -25,7 +25,11 @@ from quantum.api.views import versions as versions_view
 LOG = logging.getLogger(__name__)
 
 
-class Versions(wsgi.Application):
+class Versions(object):
+
+    @classmethod
+    def factory(cls, global_config, **local_config):
+        return cls()
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
@@ -37,7 +41,7 @@ class Versions(wsgi.Application):
             },
             {
                 "id": "v1.1",
-                "status": "PROPOSED",
+                "status": "CURRENT",
             },
         ]
 

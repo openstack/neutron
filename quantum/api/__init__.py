@@ -40,6 +40,7 @@ class APIRouter(wsgi.Router):
     """
     Base class for Quantum API routes.
     """
+    _version = None
 
     def __init__(self, options=None):
         mapper = self._mapper()

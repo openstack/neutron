@@ -21,23 +21,15 @@
 """Utilities and helper functions."""
 
 
-import base64
 import ConfigParser
 import datetime
-import functools
 import inspect
 import json
 import logging
 import os
 import random
-import re
-import socket
-import string
-import struct
 import subprocess
 import sys
-import time
-import types
 
 from quantum.common import exceptions as exception
 from quantum.common.exceptions import ProcessExecutionError

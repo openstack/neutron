@@ -15,10 +15,8 @@
 
 import logging
 
-from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
 from quantum.api.views import filters
 from quantum.api.views import networks as networks_view
 from quantum.common import exceptions as exception
@@ -41,14 +39,12 @@ def create_resource(plugin, version):
 
 class Controller(common.QuantumController):
     """ Network API controller for Quantum API """
-
+    _resource_name = 'network'
+    # version will be redefined in child class
+    version = None
     _network_ops_param_list = [
         {'param-name': 'name', 'required': True},
         ]
-
-    def __init__(self, plugin):
-        self._resource_name = 'network'
-        super(Controller, self).__init__(plugin)
 
     def _item(self, request, tenant_id, network_id,
               net_details=True, port_details=False):
@@ -165,9 +161,7 @@ class ControllerV10(Controller):
             },
         }
 
-    def __init__(self, plugin):
-        self.version = "1.0"
-        super(ControllerV10, self).__init__(plugin)
+    version = "1.0"
 
 
 class ControllerV11(Controller):
@@ -191,6 +185,4 @@ class ControllerV11(Controller):
             },
         }
 
-    def __init__(self, plugin):
-        self.version = "1.1"
-        super(ControllerV11, self).__init__(plugin)
+    version = "1.1"
