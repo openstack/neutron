@@ -543,12 +543,6 @@ class OVSQuantumTunnelAgent(object):
                 self.tun_br.add_tunnel_port(tun_name, ip)
                 self.tunnel_count += 1
 
-            # adding new ports can void flows, so reset flows
-            self.tun_br.remove_all_flows()
-            self.tun_br.add_flow(priority=1, actions="drop")
-            for lv_ojb in self.local_vlan_map.values():
-                self.add_tun_br_flows_for_local_vlan(lv_obj)
-
     def rollback_until_success(self, db):
         while True:
             time.sleep(self.reconnect_interval)
