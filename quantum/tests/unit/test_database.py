@@ -89,6 +89,20 @@ class QuantumDBTest(unittest.TestCase):
         count = len(ports)
         self.assertTrue(count == 1)
 
+    def testf_update_port(self):
+        """test to update port"""
+        net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
+        port = self.dbtest.create_port(net1["id"])
+        self.dbtest.update_port(port["net-id"],
+                                port['id'],
+                                state='ACTIVE',
+                                interface_id='interface_id1')
+        self.assertTrue(port["net-id"] == net1["id"])
+        ports = self.dbtest.get_all_ports(net1["id"])
+        new_port = ports[0]
+        self.assertEqual('ACTIVE', new_port['state'])
+        self.assertEqual('interface_id1', new_port['attachment'])
+
     def testf_delete_port(self):
         """test to delete port"""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")

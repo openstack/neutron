@@ -20,7 +20,6 @@ stubs.py provides interface methods for
 the database test cases
 """
 import logging
-import unittest
 
 from quantum.db import api as db
 
@@ -157,7 +156,7 @@ class QuantumDB(object):
     def update_port(self, net_id, port_id, **kwargs):
         """Update a port"""
         try:
-            port = db.port_set_state(net_id, port_id, **kwargs)
+            port = db.port_update(port_id, net_id, **kwargs)
             LOG.debug("Updated port %s", port.uuid)
             port_dict = {}
             port_dict["id"] = str(port.uuid)
