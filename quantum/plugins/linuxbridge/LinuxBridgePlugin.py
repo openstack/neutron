@@ -23,7 +23,6 @@ from quantum.db import api as db
 from quantum.plugins.linuxbridge.common import constants as const
 from quantum.plugins.linuxbridge.common import utils as cutil
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
-from quantum.plugins.linuxbridge import plugin_configuration as conf
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 

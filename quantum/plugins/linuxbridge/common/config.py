@@ -17,28 +17,34 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import os
-
-from quantum.common.config import find_config_file
-from quantum.plugins.linuxbridge.common import configparser as confp
+from quantum.openstack.common import cfg
 
 
-CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None,
-                             "linuxbridge_conf.ini")
-CONF_PARSER_OBJ = confp.ConfigParser(CONF_FILE)
+vlan_opts = [
+    cfg.IntOpt('vlan_start', default=1000),
+    cfg.IntOpt('vlan_end', default=3000),
+]
+
+database_opts = [
+    cfg.StrOpt('sql_connection', default='sqlite://'),
+    cfg.IntOpt('reconnect_interval', default=2),
+]
+
+bridge_opts = [
+    cfg.StrOpt('physical_interface', default='eth1'),
+]
+
+agent_opts = [
+    cfg.IntOpt('polling_interval', default=2),
+    cfg.StrOpt('root_helper', default='sudo'),
+]
 
 
-"""
-Reading the conf for the linuxbridge_plugin
-"""
-SECTION_CONF = CONF_PARSER_OBJ['VLANS']
-VLAN_START = SECTION_CONF['vlan_start']
-VLAN_END = SECTION_CONF['vlan_end']
-
-
-SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
-DB_SQL_CONNECTION = SECTION_CONF['sql_connection']
-if 'reconnect_interval' in SECTION_CONF:
-    DB_RECONNECT_INTERVAL = int(SECTION_CONF['reconnect_interval'])
-else:
-    DB_RECONNECT_INTERVAL = 2
+def parse(config_file):
+    conf = cfg.ConfigOpts(default_config_files=[config_file])
+    conf(args=[])
+    conf.register_opts(vlan_opts, "VLANS")
+    conf.register_opts(database_opts, "DATABASE")
+    conf.register_opts(bridge_opts, "BRIDGE")
+    conf.register_opts(agent_opts, "AGENT")
+    return conf

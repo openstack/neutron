@@ -19,7 +19,6 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import ConfigParser
 import logging
 from optparse import OptionParser
 import shlex
@@ -30,6 +29,9 @@ import time
 
 import sqlalchemy
 from sqlalchemy.ext import sqlsoup
+
+from quantum.plugins.openvswitch.common import config
+
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -688,67 +690,21 @@ def main():
         sys.exit(1)
 
     config_file = args[0]
-    config = ConfigParser.ConfigParser()
-    try:
-        config.read(config_file)
-    except Exception as e:
-        LOG.error("Unable to parse config file \"%s\": %s" %
-                  (config_file, str(e)))
-        raise e
+    conf = config.parse(config_file)
 
     # Determine which agent type to use.
-    enable_tunneling = False
-    try:
-        enable_tunneling = config.getboolean("OVS", "enable-tunneling")
-    except Exception as e:
-        pass
-
-    # Get common parameters.
-    try:
-        integ_br = config.get("OVS", "integration-bridge")
-        if not len(integ_br):
-            raise Exception('Empty integration-bridge in configuration file.')
-
-        db_connection_url = config.get("DATABASE", "sql_connection")
-        if not len(db_connection_url):
-            raise Exception('Empty db_connection_url in configuration file.')
-
-        if config.has_option("AGENT", "polling_interval"):
-            polling_interval = config.getint("AGENT", "polling_interval")
-        else:
-            polling_interval = DEFAULT_POLLING_INTERVAL
-            LOG.info("Polling interval not defined. Using default.")
-        if config.has_option("DATABASE", "reconnect_interval"):
-            reconnect_interval = config.getint("DATABASE",
-                                               "reconnect_interval")
-        else:
-            reconnect_interval = DEFAULT_RECONNECT_INTERVAL
-            LOG.info("Reconnect interval not defined. Using default.")
-        root_helper = config.get("AGENT", "root_helper")
-
-    except Exception as e:
-        LOG.error("Error parsing common params in config_file: '%s': %s" %
-                  (config_file, str(e)))
-        sys.exit(1)
+    enable_tunneling = conf.OVS.enable_tunneling
+    integ_br = conf.OVS.integration_bridge
+    db_connection_url = conf.DATABASE.sql_connection
+    polling_interval = conf.AGENT.polling_interval
+    reconnect_interval = conf.DATABASE.reconnect_interval
+    root_helper = conf.AGENT.root_helper
 
     if enable_tunneling:
         # Get parameters for OVSQuantumTunnelAgent
-        try:
-            # Mandatory parameter.
-            tun_br = config.get("OVS", "tunnel-bridge")
-            if not len(tun_br):
-                raise Exception('Empty tunnel-bridge in configuration file.')
-
-            # Mandatory parameter.
-            local_ip = config.get("OVS", "local-ip")
-            if not len(local_ip):
-                raise Exception('Empty local-ip in configuration file.')
-
-        except Exception as e:
-            LOG.error("Error parsing tunnel params in config_file: '%s': %s" %
-                      (config_file, str(e)))
-            sys.exit(1)
-
+        tun_br = conf.OVS.tunnel_bridge
+        # Mandatory parameter.
+        local_ip = conf.OVS.local_ip
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, local_ip, root_helper,
                                        polling_interval, reconnect_interval)
     else:

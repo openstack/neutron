@@ -21,18 +21,21 @@ from sqlalchemy import func
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
+from quantum.common.config import find_config_file
 import quantum.db.api as db
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
-from quantum.plugins.linuxbridge import plugin_configuration as conf
-
+from quantum.plugins.linuxbridge.common import config
 
 LOG = logging.getLogger(__name__)
+CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None,
+                              "linuxbridge_conf.ini")
+CONF = config.parse(CONF_FILE)
 
 
 def initialize():
-    options = {"sql_connection": "%s" % conf.DB_SQL_CONNECTION}
-    options.update({"reconnect_interval": conf.DB_RECONNECT_INTERVAL})
+    options = {"sql_connection": "%s" % CONF.DATABASE.sql_connection}
+    options.update({"reconnect_interval": CONF.DATABASE.reconnect_interval})
     db.configure_db(options)
     create_vlanids()
 
@@ -41,8 +44,8 @@ def create_vlanids():
     """Prepopulates the vlan_bindings table"""
     LOG.debug("create_vlanids() called")
     session = db.get_session()
-    start = int(conf.VLAN_START)
-    end = int(conf.VLAN_END)
+    start = CONF.VLANS.vlan_start
+    end = CONF.VLANS.vlan_end
     try:
         vlanid = session.query(l2network_models.VlanID).\
           one()
