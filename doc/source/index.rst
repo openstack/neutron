@@ -45,6 +45,7 @@ Development Documents
    :maxdepth: 1
 
    devref/index
+   devref/common
 
 Man Pages
 ---------

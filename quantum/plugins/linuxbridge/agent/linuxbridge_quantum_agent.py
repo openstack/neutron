@@ -22,7 +22,6 @@
 # Quantum OpenVSwitch Plugin.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import ConfigParser
 import logging
 from optparse import OptionParser
 import os
@@ -35,10 +34,11 @@ import time
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.common import exceptions as exception
+from quantum.plugins.linuxbridge.common import config
+
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
-
 
 BRIDGE_NAME_PREFIX = "brq"
 GATEWAY_INTERFACE_PREFIX = "gw-"
@@ -479,33 +479,15 @@ def main():
         sys.exit(1)
 
     config_file = args[0]
-    config = ConfigParser.ConfigParser()
-    try:
-        fh = open(config_file)
-        fh.close()
-        config.read(config_file)
-        br_name_prefix = BRIDGE_NAME_PREFIX
-        physical_interface = config.get("LINUX_BRIDGE", "physical_interface")
-        if config.has_option("AGENT", "polling_interval"):
-            polling_interval = config.getint("AGENT", "polling_interval")
-        else:
-            polling_interval = DEFAULT_POLLING_INTERVAL
-            LOG.info("Polling interval not defined. Using default.")
-        if config.has_option("DATABASE", "reconnect_interval"):
-            reconnect_interval = config.getint("DATABASE",
-                                               "reconnect_interval")
-        else:
-            reconnect_interval = DEFAULT_RECONNECT_INTERVAL
-            LOG.info("Reconnect interval not defined. Using default.")
-        root_helper = config.get("AGENT", "root_helper")
-        'Establish database connection and load models'
-        db_connection_url = config.get("DATABASE", "sql_connection")
-        LOG.info("Connecting to %s" % (db_connection_url))
-
-    except Exception as e:
-        LOG.error("Unable to parse config file \"%s\": \nException %s" %
-                  (config_file, str(e)))
-        sys.exit(1)
+    conf = config.parse(config_file)
+    br_name_prefix = BRIDGE_NAME_PREFIX
+    physical_interface = conf.BRIDGE.physical_interface
+    polling_interval = conf.AGENT.polling_interval
+    reconnect_interval = conf.DATABASE.reconnect_interval
+    root_helper = conf.AGENT.root_helper
+    'Establish database connection and load models'
+    db_connection_url = conf.DATABASE.sql_connection
+    LOG.info("Connecting to %s" % (db_connection_url))
 
     plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
                                      polling_interval, reconnect_interval,

@@ -18,7 +18,6 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import ConfigParser
 import logging
 from optparse import OptionParser
 import os
@@ -29,8 +28,8 @@ from quantum.common import exceptions as q_exc
 from quantum.common.config import find_config_file
 import quantum.db.api as db
 from quantum.plugins.openvswitch import ovs_db
+from quantum.plugins.openvswitch.common import config
 from quantum.quantum_plugin_base import QuantumPluginBase
-
 
 LOG = logging.getLogger("ovs_quantum_plugin")
 
@@ -89,7 +88,6 @@ class VlanMap(object):
 class OVSQuantumPlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
-        config = ConfigParser.ConfigParser()
         if configfile is None:
             if os.path.exists(CONF_FILE):
                 configfile = CONF_FILE
@@ -100,15 +98,9 @@ class OVSQuantumPlugin(QuantumPluginBase):
             raise Exception("Configuration file \"%s\" doesn't exist" %
                             (configfile))
         LOG.debug("Using configuration file: %s" % configfile)
-        config.read(configfile)
-        LOG.debug("Config: %s" % config)
-
-        options = {"sql_connection": config.get("DATABASE", "sql_connection")}
-        if config.has_option("DATABASE", "reconnect_interval"):
-            reconnect_interval = config.getint("DATABASE",
-                                               "reconnect_interval")
-        else:
-            reconnect_interval = 2
+        conf = config.parse(configfile)
+        options = {"sql_connection": conf.DATABASE.sql_connection}
+        reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
