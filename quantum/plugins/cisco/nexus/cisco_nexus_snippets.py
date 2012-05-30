@@ -73,7 +73,6 @@ CMD_VLAN_INT_SNIPPET = """
             <ethernet>
               <interface>%s</interface>
               <__XML__MODE_if-ethernet-switch>
-                <switchport></switchport>import logging as LOG
                 <switchport>
                   <trunk>
                     <allowed>
