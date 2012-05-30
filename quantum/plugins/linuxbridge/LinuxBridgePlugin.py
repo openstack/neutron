@@ -167,7 +167,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.get_all_ports() called")
         db.validate_network_ownership(tenant_id, net_id)
-        network = db.network_get(net_id)
         ports_list = db.port_list(net_id)
         ports_on_net = []
         for port in ports_list:
@@ -184,7 +183,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.get_port_details() called")
         db.validate_port_ownership(tenant_id, net_id, port_id)
-        network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         new_port_dict = cutil.make_port_dict(port)
         return new_port_dict
@@ -197,7 +195,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         db.validate_network_ownership(tenant_id, net_id)
         port = db.port_create(net_id, port_state,
                               op_status=OperationalStatus.DOWN)
-        unique_port_id_string = port[const.UUID]
         new_port_dict = cutil.make_port_dict(port)
         return new_port_dict
 
@@ -207,7 +204,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.update_port() called")
         db.validate_port_ownership(tenant_id, net_id, port_id)
-        network = db.network_get(net_id)
         self._validate_port_state(kwargs["state"])
         port = db.port_update(port_id, net_id, **kwargs)
 
@@ -223,7 +219,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.delete_port() called")
         db.validate_port_ownership(tenant_id, net_id, port_id)
-        network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if not attachment_id:
@@ -241,7 +236,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.plug_interface() called")
         db.validate_port_ownership(tenant_id, net_id, port_id)
-        network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if attachment_id:
@@ -256,11 +250,9 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.unplug_interface() called")
         db.validate_port_ownership(tenant_id, net_id, port_id)
-        network = db.network_get(net_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if attachment_id == None:
-            raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
-                                    att_id=remote_interface_id)
+            return
         db.port_unset_attachment(port_id, net_id)
         db.port_update(port_id, net_id, op_status=OperationalStatus.DOWN)

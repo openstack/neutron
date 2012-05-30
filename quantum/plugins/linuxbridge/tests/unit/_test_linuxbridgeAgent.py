@@ -300,6 +300,23 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_test_process_unplugged_tap_interface -END")
 
+    def test_process_unplugged_interface_empty(
+        self, tenant_id="test_tenant", network_name="test_network"):
+        """ test to unplug not plugged port. It should not raise exception
+        """
+        LOG.debug("test_process_unplugged_interface_empty - START")
+        new_network = (
+            self._linuxbridge_plugin.create_network(tenant_id, network_name))
+        new_port = self._linuxbridge_plugin.create_port(
+            tenant_id, new_network[lconst.NET_ID], lconst.PORT_UP)
+        self._linuxbridge_plugin.unplug_interface(tenant_id,
+                                                  new_network[lconst.NET_ID],
+                                                  new_port[lconst.PORT_ID])
+        self.tearDownNetworkPort(tenant_id, new_network[lconst.NET_ID],
+                                 new_port[lconst.PORT_ID])
+
+        LOG.debug("test_process_unplugged_interface_empty -END")
+
     def test_process_unplugged_gw_interface(
         self, tenant_id="test_tenant", network_name="test_network",
         interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
