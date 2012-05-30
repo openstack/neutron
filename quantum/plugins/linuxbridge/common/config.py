@@ -45,6 +45,6 @@ def parse(config_file):
     conf(args=[])
     conf.register_opts(vlan_opts, "VLANS")
     conf.register_opts(database_opts, "DATABASE")
-    conf.register_opts(bridge_opts, "BRIDGE")
+    conf.register_opts(bridge_opts, "LINUX_BRIDGE")
     conf.register_opts(agent_opts, "AGENT")
     return conf

@@ -481,7 +481,7 @@ def main():
     config_file = args[0]
     conf = config.parse(config_file)
     br_name_prefix = BRIDGE_NAME_PREFIX
-    physical_interface = conf.BRIDGE.physical_interface
+    physical_interface = conf.LINUX_BRIDGE.physical_interface
     polling_interval = conf.AGENT.polling_interval
     reconnect_interval = conf.DATABASE.reconnect_interval
     root_helper = conf.AGENT.root_helper
