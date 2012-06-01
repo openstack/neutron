@@ -340,8 +340,8 @@ def add_pp_binding(tenantid, portid, ppid, default):
         raise c_exc.PortProfileBindingAlreadyExists(pp_id=ppid,
                                                     port_id=portid)
     except exc.NoResultFound:
-        binding = l2network_models.PortProfileBinding(tenantid, portid, \
-                                                            ppid, default)
+        binding = l2network_models.PortProfileBinding(tenantid, portid,
+                                                      ppid, default)
         session.add(binding)
         session.flush()
         return binding

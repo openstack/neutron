@@ -252,7 +252,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         db.validate_port_ownership(tenant_id, net_id, port_id)
         port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
-        if attachment_id == None:
+        if attachment_id is None:
             return
         db.port_unset_attachment(port_id, net_id)
         db.port_update(port_id, net_id, op_status=OperationalStatus.DOWN)

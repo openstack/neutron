@@ -21,9 +21,6 @@ from quantum.openstack.common.setup import write_requirements
 from quantum.openstack.common.setup import write_git_changelog
 from quantum.openstack.common.setup import write_vcsversion
 
-import sys
-import os
-import subprocess
 
 requires = parse_requirements()
 depend_links = parse_dependency_links()
@@ -98,11 +95,11 @@ setup(
     eager_resources=EagerResources,
     entry_points={
         'console_scripts': [
-            'quantum-linuxbridge-agent =' \
+            'quantum-linuxbridge-agent ='
             'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
-            'quantum-openvswitch-agent =' \
+            'quantum-openvswitch-agent ='
             'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
-            'quantum-ryu-agent = ' \
+            'quantum-ryu-agent = '
             'quantum.plugins.ryu.agent.ryu_quantum_agent:main',
             'quantum-server = quantum.server:main',
         ]

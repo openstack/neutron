@@ -61,8 +61,9 @@ def add_portbinding(port_id, blade_intf_dn, portprofile_name,
           one()
         raise c_exc.PortVnicBindingAlreadyExists(port_id=port_id)
     except exc.NoResultFound:
-        port_binding = ucs_models.PortBinding(port_id, blade_intf_dn, \
-                                    portprofile_name, vlan_name, vlan_id, qos)
+        port_binding = ucs_models.PortBinding(port_id, blade_intf_dn,
+                                              portprofile_name, vlan_name,
+                                              vlan_id, qos)
         session.add(port_binding)
         session.flush()
         return port_binding

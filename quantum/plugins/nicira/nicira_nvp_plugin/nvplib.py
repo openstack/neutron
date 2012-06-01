@@ -298,7 +298,7 @@ def plug_interface(controller, network, port, type, attachment=None):
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
     except NvpApiClient.Conflict as e:
-        LOG.error("Conflict while making attachment to port, " \
+        LOG.error("Conflict while making attachment to port, "
                   "Error: %s" % str(e))
         raise exception.AlreadyAttached(att_id=attachment,
                                         port_id=port,

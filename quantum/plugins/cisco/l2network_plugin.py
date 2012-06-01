@@ -265,7 +265,7 @@ class L2Network(QuantumPluginBase):
         attachment_id = attachment_id[:const.UUID_LENGTH]
         remote_interface_id = remote_interface_id[:const.UUID_LENGTH]
         if remote_interface_id != attachment_id:
-            LOG.debug("Existing attachment_id:%s, remote_interface_id:%s" % \
+            LOG.debug("Existing attachment_id:%s, remote_interface_id:%s" %
                       (attachment_id, remote_interface_id))
             raise exc.PortInUse(port_id=port_id, net_id=net_id,
                                 att_id=attachment_id)

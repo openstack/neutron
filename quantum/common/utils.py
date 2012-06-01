@@ -57,13 +57,14 @@ def import_object(import_str):
         return cls()
 
 
+# NOTE(jkoelker) Since to_primitive isn't used anywhere can we just drop it
 def to_primitive(value):
-    if type(value) is type([]) or type(value) is type((None,)):
+    if isinstance(value, (list, tuple)):
         o = []
         for v in value:
             o.append(to_primitive(v))
         return o
-    elif type(value) is type({}):
+    elif isinstance(value, dict):
         o = {}
         for k, v in value.iteritems():
             o[k] = to_primitive(v)
@@ -145,7 +146,7 @@ def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
     obj = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     result = None
-    if process_input != None:
+    if process_input is not None:
         result = obj.communicate(process_input)
     else:
         result = obj.communicate()

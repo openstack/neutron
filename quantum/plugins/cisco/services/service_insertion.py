@@ -54,7 +54,7 @@ def insert_inpath_service(tenant_id, service_image_id,
     service_logic = servlogcs.ServicesLogistics()
     net_list = {}
     multiport_net_list = []
-    networks_name_list = [management_net_name, northbound_net_name, \
+    networks_name_list = [management_net_name, northbound_net_name,
                           southbound_net_name]
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=tenant_id)
     for net in networks_name_list:
@@ -257,7 +257,7 @@ def build_args(cmd, cmdargs, arglist):
             cmd, " ".join(["<%s>" % y for y in SERVICE_COMMANDS[cmd]["args"]]))
         sys.exit()
     if len(arglist) > 0:
-        LOG.debug("Too many arguments for \"%s\" (expected: %d, got: %d)" \
+        LOG.debug("Too many arguments for \"%s\" (expected: %d, got: %d)"
                   % (cmd, len(cmdargs), len(orig_arglist)))
         print "Service Insertion Usage:\n    %s %s" % (
             cmd, " ".join(["<%s>" % y for y in SERVICE_COMMANDS[cmd]["args"]]))

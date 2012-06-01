@@ -52,13 +52,13 @@ CONFIG_KEYS = ["DEFAULT_TZ_UUID", "NVP_CONTROLLER_IP", "PORT", "USER",
 
 def initConfig(cfile=None):
     config = ConfigParser.ConfigParser()
-    if cfile == None:
+    if cfile is None:
         if os.path.exists(CONFIG_FILE):
             cfile = CONFIG_FILE
         else:
             cfile = find_config(os.path.abspath(os.path.dirname(__file__)))
 
-    if cfile == None:
+    if cfile is None:
         raise Exception("Configuration file \"%s\" doesn't exist" % (cfile))
     LOG.info("Using configuration file: %s" % cfile)
     config.read(cfile)

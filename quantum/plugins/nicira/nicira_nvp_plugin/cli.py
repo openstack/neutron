@@ -115,7 +115,7 @@ def main():
     LOG.debug("Executing command \"%s\" with args: %s" % (CMD, args))
 
     manager = None
-    if COMMANDS[CMD]["need_login"] == True:
+    if COMMANDS[CMD]["need_login"] is True:
         if not os.path.exists(options.configfile):
             LOG.error("NVP plugin configuration file \"%s\" doesn't exist!" %
                       options.configfile)

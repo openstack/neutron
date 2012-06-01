@@ -74,7 +74,7 @@ class Libvirt802dot1QbhDriver(VIFDriver):
                           "for the VIF driver." % name)
                 return
         LOG.error("Quantum plugin does not support required \"%s\" extension"
-                  " for the VIF driver. nova-compute will quit." \
+                  " for the VIF driver. nova-compute will quit."
                   % CSCO_EXT_NAME)
         raise excp.ServiceUnavailable()
 
@@ -86,13 +86,13 @@ class Libvirt802dot1QbhDriver(VIFDriver):
         project_id = instance['project_id']
         vif_id = mapping['vif_uuid']
 
-        instance_data_dict = \
-                {'novatenant': \
-                 {'instance_id': instance_id,
-                  'instance_desc': \
-                  {'user_id': user_id,
-                   'project_id': project_id,
-                   'vif_id': vif_id}}}
+        instance_data_dict = {
+            'novatenant': {
+                'instance_id': instance_id,
+                'instance_desc': {
+                    'user_id': user_id,
+                    'project_id': project_id,
+                    'vif_id': vif_id}}}
 
         client = Client(HOST, PORT, USE_SSL, format='json', version=VERSION,
                         uri_prefix=URI_PREFIX_CSCO, tenant=TENANT_ID,

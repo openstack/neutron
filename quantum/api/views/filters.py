@@ -93,7 +93,8 @@ def _filter_port_by_interface(port, interface_id, **kwargs):
 def _filter_port_has_interface(port, has_interface, **kwargs):
     # convert to bool
     match_has_interface = has_interface.lower() == 'true'
-    really_has_interface = 'attachment' in port and port['attachment'] != None
+    really_has_interface = ('attachment' in port and
+                            port['attachment'] is not None)
     return match_has_interface == really_has_interface
 
 

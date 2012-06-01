@@ -89,21 +89,21 @@ class LinuxBridge:
 
     def get_bridge_name(self, network_id):
         if not network_id:
-            LOG.warning("Invalid Network ID, will lead to incorrect bridge" \
+            LOG.warning("Invalid Network ID, will lead to incorrect bridge"
                         "name")
         bridge_name = self.br_name_prefix + network_id[0:11]
         return bridge_name
 
     def get_subinterface_name(self, vlan_id):
         if not vlan_id:
-            LOG.warning("Invalid VLAN ID, will lead to incorrect " \
+            LOG.warning("Invalid VLAN ID, will lead to incorrect "
                         "subinterface name")
         subinterface_name = '%s.%s' % (self.physical_interface, vlan_id)
         return subinterface_name
 
     def get_tap_device_name(self, interface_id):
         if not interface_id:
-            LOG.warning("Invalid Interface ID, will lead to incorrect " \
+            LOG.warning("Invalid Interface ID, will lead to incorrect "
                         "tap device name")
         tap_device_name = TAP_INTERFACE_PREFIX + interface_id[0:11]
         return tap_device_name

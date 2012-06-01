@@ -185,7 +185,7 @@ class QuantumController(object):
             data = body[self._resource_name]
         except KeyError:
             # raise if _resource_name is not in req body.
-            raise exc.HTTPBadRequest("Unable to find '%s' in request body"\
+            raise exc.HTTPBadRequest("Unable to find '%s' in request body"
                                      % self._resource_name)
         for param in params:
             param_name = param['param-name']

@@ -55,7 +55,7 @@ def add_services_binding(service_id, mngnet_id, nbnet_id, sbnet_id):
     """Adds a services binding"""
     LOG.debug("add_services_binding() called")
     session = db.get_session()
-    binding = services_models.ServicesBinding(service_id, mngnet_id, \
+    binding = services_models.ServicesBinding(service_id, mngnet_id,
                                               nbnet_id, sbnet_id)
     session.add(binding)
     session.flush()
