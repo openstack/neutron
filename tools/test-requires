@@ -9,4 +9,4 @@ openstack.nose_plugin
 pep8==0.6.1
 sphinx>=1.1.2
 unittest2
-webtest
+webtest==1.3.3
