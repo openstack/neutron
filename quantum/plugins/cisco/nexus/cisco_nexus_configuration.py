@@ -23,11 +23,11 @@ This module will export the configuration parameters
 from the nexus.ini file
 """
 
-from quantum.common.config import find_config_file
+from quantum.common.utils import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
 
-CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'}, None,
+CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'},
                              "nexus.ini"))
 
 SECTION = CP['SWITCH']

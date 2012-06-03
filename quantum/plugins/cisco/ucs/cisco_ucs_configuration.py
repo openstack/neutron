@@ -17,11 +17,11 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
 
-from quantum.common.config import find_config_file
+from quantum.common.utils import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 
 
-CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'}, [],
+CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'},
                                               'ucs.ini'))
 
 SECTION = CP['UCSM']
@@ -34,7 +34,7 @@ PROFILE_NAME_PREFIX = SECTION['profile_name_prefix']
 SECTION = CP['DRIVER']
 UCSM_DRIVER = SECTION['name']
 
-CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'}, [],
+CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'},
                                               'ucs_inventory.ini'))
 
 INVENTORY = CP.walk(CP.dummy)

@@ -21,7 +21,8 @@
 """Utilities and helper functions."""
 
 
-import ConfigParser
+import datetime
+import inspect
 import logging
 import os
 import subprocess
@@ -75,12 +76,6 @@ def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
     return result
 
 
-def get_plugin_from_config(file="config.ini"):
-    Config = ConfigParser.ConfigParser()
-    Config.read(file)
-    return Config.get("PLUGIN", "provider")
-
-
 class LazyPluggable(object):
     """A pluggable backend loaded lazily based on some value."""
 
@@ -110,3 +105,51 @@ class LazyPluggable(object):
     def __getattr__(self, key):
         backend = self.__get_backend()
         return getattr(backend, key)
+
+
+def find_config_file(options, config_file):
+    """
+    Return the first config file found.
+
+    We search for the paste config file in the following order:
+    * If --config-file option is used, use that
+    * Search for the configuration files via common cfg directories
+    :retval Full path to config file, or None if no config file found
+    """
+    fix_path = lambda p: os.path.abspath(os.path.expanduser(p))
+    if options.get('config_file'):
+        if os.path.exists(options['config_file']):
+            return fix_path(options['config_file'])
+
+    dir_to_common = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.join(dir_to_common, '..', '..', '..', '..')
+    # Handle standard directory search for the config file
+    config_file_dirs = [fix_path(os.path.join(os.getcwd(), 'etc')),
+                        fix_path(os.path.join('~', '.quantum-venv', 'etc',
+                                              'quantum')),
+                        fix_path('~'),
+                        os.path.join(FLAGS.state_path, 'etc'),
+                        os.path.join(FLAGS.state_path, 'etc', 'quantum'),
+                        fix_path(os.path.join('~', '.local',
+                                              'etc', 'quantum')),
+                        '/usr/etc/quantum',
+                        '/usr/local/etc/quantum',
+                        '/etc/quantum/',
+                        '/etc']
+
+    if 'plugin' in options:
+        config_file_dirs = [
+            os.path.join(x, 'quantum', 'plugins', options['plugin'])
+            for x in config_file_dirs
+        ]
+
+    if os.path.exists(os.path.join(root, 'plugins')):
+        plugins = [fix_path(os.path.join(root, 'plugins', p, 'etc'))
+                   for p in os.listdir(os.path.join(root, 'plugins'))]
+        plugins = [p for p in plugins if os.path.isdir(p)]
+        config_file_dirs.extend(plugins)
+
+    for cfg_dir in config_file_dirs:
+        cfg_file = os.path.join(cfg_dir, config_file)
+        if os.path.exists(cfg_file):
+            return cfg_file

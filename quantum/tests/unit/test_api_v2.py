@@ -12,6 +12,7 @@
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #  License for the spec
 
+import os
 import logging
 import unittest
 import uuid
@@ -26,6 +27,8 @@ from quantum.common import exceptions as q_exc
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
 from quantum.api.v2 import views
+from quantum.common import config
+from quantum.openstack.common import cfg
 
 
 LOG = logging.getLogger(__name__)
@@ -33,6 +36,13 @@ LOG = logging.getLogger(__name__)
 
 def _uuid():
     return str(uuid.uuid4())
+
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 def _get_path(resource, id=None, fmt=None):
@@ -123,16 +133,23 @@ class APIv2TestCase(unittest.TestCase):
     #                will get around this.
     def setUp(self):
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
+        # Create the default configurations
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        config.parse(args=args)
+        # Update the plugin
+        cfg.CONF.set_override('core_plugin', plugin)
+
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
 
-        api = router.APIRouter({'plugin_provider': plugin})
+        api = router.APIRouter()
         self.api = webtest.TestApp(api)
 
     def tearDown(self):
         self._plugin_patcher.stop()
         self.api = None
         self.plugin = None
+        cfg.CONF.reset()
 
     def test_verbose_attr(self):
         instance = self.plugin.return_value

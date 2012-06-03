@@ -38,8 +38,8 @@ agent_opts = [
 
 
 def parse(config_file):
-    conf = cfg.ConfigOpts(default_config_files=[config_file])
-    conf(args=[])
+    conf = cfg.ConfigOpts()
+    conf(args=[], default_config_files=[config_file])
     conf.register_opts(database_opts, "DATABASE")
     conf.register_opts(ovs_opts, "OVS")
     conf.register_opts(agent_opts, "AGENT")

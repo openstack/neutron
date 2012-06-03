@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2012 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,15 +13,3 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-
-from quantum.common.utils import find_config_file
-from quantum.plugins.cisco.common import cisco_configparser as confp
-
-
-CONF_FILE = find_config_file({'plugin': 'cisco'}, "ucs_inventory.ini")
-CP = confp.CiscoConfigParser(CONF_FILE)
-
-INVENTORY = CP.walk(CP.dummy)

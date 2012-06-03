@@ -24,6 +24,7 @@ import webob.exc
 from quantum import manager
 from quantum import wsgi
 from quantum.api.v2 import base
+from quantum.openstack.common import cfg
 
 
 LOG = logging.getLogger(__name__)
@@ -118,16 +119,14 @@ class APIRouter(wsgi.Router):
 
     @classmethod
     def factory(cls, global_config, **local_config):
-        return cls(global_config, **local_config)
+        return cls(**local_config)
 
-    def __init__(self, conf, **local_config):
+    def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()
-        plugin_provider = manager.get_plugin_provider(conf)
+        plugin_provider = cfg.CONF.core_plugin
+        LOG.debug("Plugin location:%s", plugin_provider)
         plugin = manager.get_plugin(plugin_provider)
 
-        # NOTE(jkoelker) Merge local_conf into conf after the plugin
-        #                is discovered
-        conf.update(local_config)
         col_kwargs = dict(collection_actions=COLLECTION_ACTIONS,
                           member_actions=MEMBER_ACTIONS)
 
@@ -137,8 +136,7 @@ class APIRouter(wsgi.Router):
 
         def _map_resource(collection, resource, params):
             controller = base.create_resource(collection, resource,
-                                              plugin, conf,
-                                              params)
+                                              plugin, params)
             mapper_kwargs = dict(controller=controller,
                                  requirements=REQUIREMENTS,
                                  **col_kwargs)

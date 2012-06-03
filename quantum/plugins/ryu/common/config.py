@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2012 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,25 +13,19 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam, Cisco Systems, Inc.
-# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 from quantum.openstack.common import cfg
 
-
-vlan_opts = [
-    cfg.IntOpt('vlan_start', default=1000),
-    cfg.IntOpt('vlan_end', default=3000),
-]
 
 database_opts = [
     cfg.StrOpt('sql_connection', default='sqlite://'),
     cfg.IntOpt('reconnect_interval', default=2),
 ]
 
-bridge_opts = [
-    cfg.StrOpt('physical_interface', default='eth1'),
+ovs_opts = [
+    cfg.StrOpt('integration_bridge', default='br-int'),
+    cfg.StrOpt('openflow_controller', default='127.0.0.1:6633'),
+    cfg.StrOpt('openflow_rest_api', default='127.0.0.1:8080'),
 ]
 
 agent_opts = [
@@ -43,8 +37,7 @@ agent_opts = [
 def parse(config_file):
     conf = cfg.ConfigOpts()
     conf(args=[], default_config_files=[config_file])
-    conf.register_opts(vlan_opts, "VLANS")
     conf.register_opts(database_opts, "DATABASE")
-    conf.register_opts(bridge_opts, "LINUX_BRIDGE")
+    conf.register_opts(ovs_opts, "OVS")
     conf.register_opts(agent_opts, "AGENT")
     return conf

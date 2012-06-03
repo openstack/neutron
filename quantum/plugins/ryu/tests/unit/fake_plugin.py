@@ -21,6 +21,8 @@ from quantum.plugins.ryu import ovs_quantum_plugin_base
 class FakePluginDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
     def __init__(self, config):
         super(FakePluginDriver, self).__init__()
+        conf = config.parse(config)
+        self.conf = conf
 
     def create_network(self, net):
         pass
@@ -32,4 +34,4 @@ class FakePluginDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
 class FakePlugin(ovs_quantum_plugin_base.OVSQuantumPluginBase):
     def __init__(self, configfile=None):
         super(FakePlugin, self).__init__(None, __file__, configfile)
-        self.driver = FakePluginDriver(self.config)
+        self.driver = FakePluginDriver(self.conf)

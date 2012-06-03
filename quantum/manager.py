@@ -24,25 +24,13 @@ The caller should make sure that QuantumManager is a singleton.
 """
 
 import logging
-import os
 
-from quantum.common import utils
-from quantum.common.config import find_config_file
 from quantum.common.exceptions import ClassNotFound
+from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 
 
 LOG = logging.getLogger(__name__)
-
-
-CONFIG_FILE = "plugins.ini"
-
-
-def find_config(basepath):
-    for root, dirs, files in os.walk(basepath):
-        if CONFIG_FILE in files:
-            return os.path.join(root, CONFIG_FILE)
-    return None
 
 
 def get_plugin(plugin_provider):
@@ -58,16 +46,6 @@ def get_plugin(plugin_provider):
     return plugin_klass()
 
 
-def get_plugin_provider(options, config_file=None):
-    if config_file:
-        config_file = [config_file]
-
-    if not 'plugin_provider' in options:
-        cf = find_config_file(options, config_file, CONFIG_FILE)
-        options['plugin_provider'] = utils.get_plugin_from_config(cf)
-    return options['plugin_provider']
-
-
 class QuantumManager(object):
 
     _instance = None
@@ -81,12 +59,12 @@ class QuantumManager(object):
         #                breaks tach monitoring. It has been removed
         #                intentianally to allow v2 plugins to be monitored
         #                for performance metrics.
-        plugin_provider = get_plugin_provider(options, config_file)
+        plugin_provider = cfg.CONF.core_plugin
         LOG.debug("Plugin location:%s", plugin_provider)
         self.plugin = get_plugin(plugin_provider)
 
     @classmethod
-    def get_plugin(cls, options=None, config_file=None):
+    def get_plugin(cls):
         if cls._instance is None:
-            cls._instance = cls(options, config_file)
+            cls._instance = cls()
         return cls._instance.plugin

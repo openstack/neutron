@@ -23,7 +23,7 @@ import os
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
-from quantum.common.config import find_config_file
+from quantum.common.utils import find_config_file
 import quantum.db.api as db
 from quantum.plugins.openvswitch import ovs_db
 from quantum.plugins.openvswitch.common import config
@@ -33,7 +33,7 @@ LOG = logging.getLogger("ovs_quantum_plugin")
 
 
 CONF_FILE = find_config_file({"plugin": "openvswitch"},
-                             None, "ovs_quantum_plugin.ini")
+                             "ovs_quantum_plugin.ini")
 
 
 # Exception thrown if no more VLANs are available

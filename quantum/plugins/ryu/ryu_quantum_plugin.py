@@ -19,7 +19,7 @@
 from ryu.app import client
 from ryu.app import rest_nw_id
 
-from quantum.common.config import find_config_file
+from quantum.common.utils import find_config_file
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
 from quantum.plugins.ryu import ofp_service_type
@@ -27,14 +27,14 @@ from quantum.plugins.ryu import ovs_quantum_plugin_base
 from quantum.plugins.ryu.db import api as db_api
 
 
-CONF_FILE = find_config_file({"plugin": "ryu"}, None, "ryu.ini")
+CONF_FILE = find_config_file({"plugin": "ryu"}, "ryu.ini")
 
 
 class OFPRyuDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
-    def __init__(self, config):
+    def __init__(self, conf):
         super(OFPRyuDriver, self).__init__()
-        ofp_con_host = config.get("OVS", "openflow-controller")
-        ofp_api_host = config.get("OVS", "openflow-rest-api")
+        ofp_con_host = conf.OVS.openflow_controller
+        ofp_api_host = conf.OVS.openflow_rest_api
 
         if ofp_con_host is None or ofp_api_host is None:
             raise q_exc.Invalid("invalid configuration. check ryu.ini")
@@ -64,4 +64,4 @@ class OFPRyuDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
 class RyuQuantumPlugin(ovs_quantum_plugin_base.OVSQuantumPluginBase):
     def __init__(self, configfile=None):
         super(RyuQuantumPlugin, self).__init__(CONF_FILE, __file__, configfile)
-        self.driver = OFPRyuDriver(self.config)
+        self.driver = OFPRyuDriver(self.conf)

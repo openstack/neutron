@@ -18,7 +18,7 @@
 import logging
 
 from quantum.common import config
-from quantum.common import exceptions as exception
+from quantum.openstack.common import cfg
 from quantum import wsgi
 
 
@@ -34,14 +34,12 @@ class WsgiService(object):
 
     """
 
-    def __init__(self, app_name, conf_file, conf):
+    def __init__(self, app_name):
         self.app_name = app_name
-        self.conf_file = conf_file
-        self.conf = conf
         self.wsgi_app = None
 
     def start(self):
-        self.wsgi_app = _run_wsgi(self.app_name, self.conf, self.conf_file)
+        self.wsgi_app = _run_wsgi(self.app_name)
 
     def wait(self):
         self.wsgi_app.wait()
@@ -51,13 +49,8 @@ class QuantumApiService(WsgiService):
     """Class for quantum-api service."""
 
     @classmethod
-    def create(cls, conf=None, options=None, args=None):
+    def create(cls):
         app_name = "quantum"
-        if not conf:
-            conf_file, conf = config.load_paste_config(app_name, options, args)
-            if not conf:
-                message = (_('No paste configuration found for: %s'), app_name)
-                raise exception.Error(message)
 
         # Setup logging early, supplying both the CLI options and the
         # configuration mapping from the config file
@@ -65,32 +58,24 @@ class QuantumApiService(WsgiService):
         # flags. Everything else must be set up in the conf file...
         # Log the options used when starting if we're in debug mode...
 
-        config.setup_logging(options, conf)
-        debug = (options.get('debug') or
-                 config.get_option(conf, 'debug', type='bool', default=False))
-        verbose = (options.get('verbose') or
-                   config.get_option(conf, 'verbose', type='bool',
-                                     default=False))
-        conf['debug'] = debug
-        conf['verbose'] = verbose
+        config.setup_logging(cfg.CONF)
         LOG.debug("*" * 80)
         LOG.debug("Configuration options gathered from config file:")
-        LOG.debug(conf_file)
         LOG.debug("================================================")
-        items = dict([(k, v) for k, v in conf.items()
+        items = dict([(k, v) for k, v in cfg.CONF.items()
                       if k not in ('__file__', 'here')])
         for key, value in sorted(items.items()):
             LOG.debug("%(key)-30s %(value)s" % {'key': key,
                                                 'value': value,
                                                 })
         LOG.debug("*" * 80)
-        service = cls(app_name, conf_file, conf)
+        service = cls(app_name)
         return service
 
 
-def serve_wsgi(cls, conf=None, options=None, args=None):
+def serve_wsgi(cls):
     try:
-        service = cls.create(conf, options, args)
+        service = cls.create()
     except Exception:
         logging.exception('in WsgiService.create()')
         raise
@@ -100,15 +85,11 @@ def serve_wsgi(cls, conf=None, options=None, args=None):
     return service
 
 
-def _run_wsgi(app_name, paste_conf, paste_config_file):
-    LOG.info(_('Using paste.deploy config at: %s'), paste_config_file)
-    conf, app = config.load_paste_app(app_name,
-                                      {'config_file': paste_config_file},
-                                      None)
+def _run_wsgi(app_name):
+    app = config.load_paste_app(app_name, "quantum.conf")
     if not app:
-        LOG.error(_('No known API applications configured in %s.'),
-                  paste_config_file)
+        LOG.error(_('No known API applications configured.'))
         return
     server = wsgi.Server("Quantum")
-    server.start(app, int(paste_conf['bind_port']), paste_conf['bind_host'])
+    server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host)
     return server

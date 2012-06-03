@@ -20,7 +20,6 @@
 #    under the License.
 # @author: Isaku Yamahata
 
-import ConfigParser
 import logging as LOG
 from optparse import OptionParser
 import shlex
@@ -34,6 +33,7 @@ from ryu.app.client import OFPClient
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import utils
+from quantum.plugins.ryu.common import config
 
 OP_STATUS_UP = "UP"
 OP_STATUS_DOWN = "DOWN"
@@ -286,18 +286,10 @@ def main():
         sys.exit(1)
 
     config_file = args[0]
-    config = ConfigParser.ConfigParser()
-    try:
-        config.read(config_file)
-    except Exception, e:
-        LOG.error("Unable to parse config file \"%s\": %s",
-                  config_file, str(e))
-
-    integ_br = config.get("OVS", "integration-bridge")
-
-    root_helper = config.get("AGENT", "root_helper")
-
-    options = {"sql_connection": config.get("DATABASE", "sql_connection")}
+    conf = config.parse(config_file)
+    integ_br = conf.OVS.integration_bridge
+    root_helper = conf.AGENT.root_helper
+    options = {"sql_connection": conf.DATABASE.sql_connection}
     db = SqlSoup(options["sql_connection"])
 
     LOG.info("Connecting to database \"%s\" on %s",

@@ -25,28 +25,19 @@ import sys
 
 from quantum import service
 from quantum.common import config
+from quantum.openstack.common import cfg
 from quantum.version import version_string
 
 
-def create_options(parser):
-    """
-    Sets up the CLI and config-file options that may be
-    parsed and program commands.
-    :param parser: The option parser
-    """
-    config.add_common_options(parser)
-    config.add_log_options(parser)
-
-
 def main():
-    oparser = optparse.OptionParser(version='%prog ' + version_string())
-    create_options(oparser)
-    (options, args) = config.parse_options(oparser)
-
+    # the configuration will be read into the cfg.CONF global data structure
+    config.parse(sys.argv)
+    if not cfg.CONF.config_file:
+        sys.exit("ERROR: Unable to find configuration file via the default"
+                 " search paths (~/.quantum/, ~/, /etc/quantum/, /etc/) and"
+                 " the '--config-file' option!")
     try:
-        quantum_service = service.serve_wsgi(service.QuantumApiService,
-                                             options=options,
-                                             args=args)
+        quantum_service = service.serve_wsgi(service.QuantumApiService)
         quantum_service.wait()
     except RuntimeError, e:
         sys.exit("ERROR: %s" % e)

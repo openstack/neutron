@@ -52,7 +52,7 @@ from quantum import wsgi
 LOG = logging.getLogger('quantum.plugins.cisco.tests.test_cisco_extensions')
 
 
-TEST_CONF_FILE = config.find_config_file({'plugin': 'cisco'}, None,
+TEST_CONF_FILE = config.find_config_file({'plugin': 'cisco'},
                                          'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
                                os.pardir, os.pardir, "extensions")
@@ -1256,8 +1256,8 @@ def setup_extensions_middleware(extension_manager=None):
                          PluginAwareExtensionManager(EXTENSIONS_PATH,
                                                      L2Network()))
     options = {'config_file': TEST_CONF_FILE}
-    conf, app = config.load_paste_app('extensions_test_app', options, None)
-    return ExtensionMiddleware(app, conf, ext_mgr=extension_manager)
+    app = config.load_paste_app('extensions_test_app', options, None)
+    return ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 
 def setup_extensions_test_app(extension_manager=None):

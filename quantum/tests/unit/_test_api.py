@@ -21,17 +21,28 @@ import logging
 import unittest2 as unittest
 
 import mock
+import os
 
 from quantum.api.api_common import APIFaultWrapper
 from quantum.api.networks import Controller
 from quantum.common.test_lib import test_config
+from quantum.common import config
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 import quantum.tests.unit.testlib_api as testlib
+from quantum.openstack.common import cfg
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
 
 LOG = logging.getLogger('quantum.tests.test_api')
+
+
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 NETS = "networks"
@@ -105,10 +116,13 @@ class AbstractAPITest(unittest.TestCase):
         self.assertEqual(put_attachment_res.status_int, expected_res_status)
 
     def setUp(self, api_router_klass, xml_metadata_dict):
-        options = {}
-        options['plugin_provider'] = test_config['plugin_name']
+        # Create the default configurations
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        config.parse(args=args)
+        # Update the plugin
+        cfg.CONF.set_override('core_plugin', test_config['plugin_name'])
         api_router_cls = importutils.import_class(api_router_klass)
-        self.api = api_router_cls(options)
+        self.api = api_router_cls()
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
 
@@ -136,6 +150,7 @@ class AbstractAPITest(unittest.TestCase):
         """Clear the test environment"""
         # Remove database contents
         db.clear_db()
+        cfg.CONF.reset()
 
 
 class BaseAPIOperationsTest(AbstractAPITest):

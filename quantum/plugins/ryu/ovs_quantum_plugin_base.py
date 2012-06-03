@@ -16,15 +16,14 @@
 #    under the License.
 # @author: Isaku Yamahata
 
-import ConfigParser
 from abc import ABCMeta, abstractmethod
 import logging as LOG
 import os
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
+from quantum.plugins.ryu.common import config
 import quantum.db.api as db
-from quantum.manager import find_config
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 
@@ -55,24 +54,23 @@ class OVSQuantumPluginBase(QuantumPluginBase):
     """
     def __init__(self, conf_file, mod_file, configfile=None):
         super(OVSQuantumPluginBase, self).__init__()
-        config = ConfigParser.ConfigParser()
         if configfile is None:
-            if conf_file and os.path.exists(conf_file):
+            if os.path.exists(conf_file):
                 configfile = conf_file
             else:
-                configfile = (
-                    find_config(os.path.abspath(os.path.dirname(mod_file))))
+                configfile = find_config(os.path.abspath(
+                    os.path.dirname(__file__)))
         if configfile is None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
                             (configfile))
-        LOG.debug("Using configuration file: %s", configfile)
-        config.read(configfile)
-        LOG.debug("Config: %s", config)
-
-        options = {"sql_connection": config.get("DATABASE", "sql_connection")}
+        LOG.debug("Using configuration file: %s" % configfile)
+        conf = config.parse(configfile)
+        options = {"sql_connection": conf.DATABASE.sql_connection}
+        reconnect_interval = conf.DATABASE.reconnect_interval
+        options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        self.config = config
+        self.conf = conf
         # Subclass must set self.driver to its own OVSQuantumPluginDriverBase
         self.driver = None
 

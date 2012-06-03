@@ -42,23 +42,23 @@ class APIRouter(wsgi.Router):
     """
     _version = None
 
-    def __init__(self, options=None):
+    def __init__(self):
         mapper = self._mapper()
-        self._setup_routes(mapper, options)
+        self._setup_routes(mapper)
         super(APIRouter, self).__init__(mapper)
 
     def _mapper(self):
         return routes.Mapper()
 
-    def _setup_routes(self, mapper, options):
-        self._setup_base_routes(mapper, options, self._version)
+    def _setup_routes(self, mapper):
+        self._setup_base_routes(mapper, self._version)
 
-    def _setup_base_routes(self, mapper, options, version):
+    def _setup_base_routes(self, mapper, version):
         """Routes common to all versions."""
         # Loads the quantum plugin
         # Note(salvatore-orlando): Should the plugin be versioned
         # I don't think so
-        plugin = manager.QuantumManager.get_plugin(options)
+        plugin = manager.QuantumManager.get_plugin()
 
         uri_prefix = '/tenants/{tenant_id}/'
         attachment_path = (

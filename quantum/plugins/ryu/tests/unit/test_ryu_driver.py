@@ -18,16 +18,21 @@
 import uuid
 
 import quantum.db.api as db
+from quantum.common.utils import find_config_file
+from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
 from quantum.plugins.ryu.tests.unit import utils
 from quantum.plugins.ryu.tests.unit.utils import patch_fake_ryu_client
+
+
+CONF_FILE = find_config_file({"plugin": "ryu"}, "ryu.ini")
 
 
 class RyuDriverTest(BaseRyuTest):
     """Class conisting of OFPRyuDriver unit tests"""
     def setUp(self):
         super(RyuDriverTest, self).setUp()
-
+        self.conf = config.parse(CONF_FILE)
         # fake up ryu.app.client and ryu.app.rest_nw_id
         # With those, plugin can be tested without ryu installed
         self.module_patcher = patch_fake_ryu_client()
@@ -65,7 +70,7 @@ class RyuDriverTest(BaseRyuTest):
         db.network_create('test', uuid0)
 
         from quantum.plugins.ryu import ryu_quantum_plugin
-        ryu_driver = ryu_quantum_plugin.OFPRyuDriver(self.config)
+        ryu_driver = ryu_quantum_plugin.OFPRyuDriver(self.conf)
         ryu_driver.create_network(net1)
         ryu_driver.delete_network(net1)
         self.mox.VerifyAll()

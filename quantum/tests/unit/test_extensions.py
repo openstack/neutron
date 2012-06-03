@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
+import os
 import unittest
 
 import routes
@@ -41,8 +43,15 @@ from quantum.tests.unit.extension_stubs import (
 import quantum.tests.unit.extensions
 from quantum import wsgi
 
+LOG = logging.getLogger('quantum.tests.test_extensions')
 
-test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
+
 extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
 
 
@@ -455,8 +464,10 @@ def app_factory(global_conf, **local_conf):
 
 
 def setup_base_app():
-    options = {'config_file': test_conf_file}
-    conf, app = config.load_paste_app('extensions_test_app', options, None)
+    config_file = 'quantum.conf.test'
+    args = ['--config-file', etcdir(config_file)]
+    config.parse(args=args)
+    app = config.load_paste_app('extensions_test_app', config_file)
     return app
 
 
@@ -464,9 +475,11 @@ def setup_extensions_middleware(extension_manager=None):
     extension_manager = (extension_manager or
                          PluginAwareExtensionManager(extensions_path,
                                                      QuantumEchoPlugin()))
-    options = {'config_file': test_conf_file}
-    conf, app = config.load_paste_app('extensions_test_app', options, None)
-    return ExtensionMiddleware(app, conf, ext_mgr=extension_manager)
+    config_file = 'quantum.conf.test'
+    args = ['--config-file', etcdir(config_file)]
+    config.parse(args=args)
+    app = config.load_paste_app('extensions_test_app', config_file)
+    return ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 
 def setup_extensions_test_app(extension_manager=None):

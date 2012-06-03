@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import logging
 import unittest
 import contextlib
@@ -22,11 +23,20 @@ import quantum
 from quantum.api.v2.router import APIRouter
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
+from quantum.common import config
+from quantum.openstack.common import cfg
 from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer, JSONDeserializer
 
 
 LOG = logging.getLogger(__name__)
+
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 class QuantumDbPluginV2TestCase(unittest.TestCase):
@@ -46,7 +56,12 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         }
 
         plugin = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
-        self.api = APIRouter({'plugin_provider': plugin})
+        # Create the default configurations
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        config.parse(args=args)
+        # Update the plugin
+        cfg.CONF.set_override('core_plugin', plugin)
+        self.api = APIRouter()
 
     def tearDown(self):
         super(QuantumDbPluginV2TestCase, self).tearDown()
@@ -54,6 +69,7 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         #                doesn't like when the plugin changes ;)
         db._ENGINE = None
         db._MAKER = None
+        cfg.CONF.reset()
 
     def _req(self, method, resource, data=None, fmt='json', id=None):
         if id:

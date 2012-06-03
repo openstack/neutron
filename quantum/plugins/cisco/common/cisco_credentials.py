@@ -18,7 +18,7 @@
 
 import logging as LOG
 
-from quantum.common.config import find_config_file
+from quantum.common.utils import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
@@ -28,7 +28,7 @@ from quantum.plugins.cisco.db import l2network_db as cdb
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
-CREDENTIALS_FILE = find_config_file({'plugin': 'cisco'}, None,
+CREDENTIALS_FILE = find_config_file({'plugin': 'cisco'},
                                     "credentials.ini")
 TENANT = const.NETWORK_ADMIN
 

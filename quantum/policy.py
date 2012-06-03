@@ -21,7 +21,7 @@ Policy engine for quantum.  Largely copied from nova.
 
 import os.path
 
-from quantum.common import config
+from quantum.common.utils import find_config_file
 from quantum.common import exceptions
 from quantum.openstack.common import policy
 
@@ -38,7 +38,7 @@ def reset():
 def init():
     global _POLICY_PATH
     if not _POLICY_PATH:
-        _POLICY_PATH = config.find_config_file({}, [], 'policy.json')
+        _POLICY_PATH = find_config_file({}, 'policy.json')
         if not _POLICY_PATH:
             raise exceptions.PolicyNotFound(path=FLAGS.policy_file)
     with open(_POLICY_PATH) as f:

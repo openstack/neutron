@@ -293,7 +293,7 @@ class Controller(object):
         return body
 
 
-def create_resource(collection, resource, plugin, conf, params):
+def create_resource(collection, resource, plugin, params):
     controller = Controller(plugin, collection, resource, params)
 
     # NOTE(jkoelker) To anyone wishing to add "proper" xml support
