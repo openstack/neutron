@@ -23,7 +23,7 @@ PlugIn for Nexus OS driver
 import logging
 
 from quantum.common import exceptions as exc
-from quantum.common import utils
+from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.db import api as db
@@ -46,7 +46,7 @@ class NexusPlugin(L2DevicePluginBase):
         """
         Extracts the configuration parameters from the configuration file
         """
-        self._client = utils.import_object(conf.NEXUS_DRIVER)
+        self._client = importutils.import_object(conf.NEXUS_DRIVER)
         LOG.debug("Loaded driver %s\n" % conf.NEXUS_DRIVER)
         self._nexus_ip = conf.NEXUS_IP_ADDRESS
         self._nexus_username = cred.Store.getUsername(conf.NEXUS_IP_ADDRESS)

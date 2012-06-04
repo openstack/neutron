@@ -25,8 +25,8 @@ import mock
 from quantum.api.api_common import APIFaultWrapper
 from quantum.api.networks import Controller
 from quantum.common.test_lib import test_config
-from quantum.common import utils
 from quantum.db import api as db
+from quantum.openstack.common import importutils
 import quantum.tests.unit.testlib_api as testlib
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
@@ -107,7 +107,7 @@ class AbstractAPITest(unittest.TestCase):
     def setUp(self, api_router_klass, xml_metadata_dict):
         options = {}
         options['plugin_provider'] = test_config['plugin_name']
-        api_router_cls = utils.import_class(api_router_klass)
+        api_router_cls = importutils.import_class(api_router_klass)
         self.api = api_router_cls(options)
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
