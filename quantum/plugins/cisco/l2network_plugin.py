@@ -21,7 +21,7 @@ import logging
 import re
 
 from quantum.common import exceptions as exc
-from quantum.common import utils
+from quantum.openstack.common import importutils
 from quantum.quantum_plugin_base import QuantumPluginBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
@@ -44,8 +44,8 @@ class L2Network(QuantumPluginBase):
     def __init__(self):
         cdb.initialize()
         cred.Store.initialize()
-        self._model = utils.import_object(conf.MODEL_CLASS)
-        self._vlan_mgr = utils.import_object(conf.MANAGER_CLASS)
+        self._model = importutils.import_object(conf.MODEL_CLASS)
+        self._vlan_mgr = importutils.import_object(conf.MANAGER_CLASS)
         LOG.debug("L2Network plugin initialization done successfully\n")
 
     """

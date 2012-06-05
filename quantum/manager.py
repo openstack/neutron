@@ -29,6 +29,7 @@ import os
 from quantum.common import utils
 from quantum.common.config import find_config_file
 from quantum.common.exceptions import ClassNotFound
+from quantum.openstack.common import importutils
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 
@@ -66,7 +67,7 @@ class QuantumManager(object):
 
         # If the plugin can't be found let them know gracefully
         try:
-            plugin_klass = utils.import_class(options['plugin_provider'])
+            plugin_klass = importutils.import_class(options['plugin_provider'])
         except ClassNotFound:
             raise Exception("Plugin not found.  You can install a "
                             "plugin with: pip install <plugin-name>\n"

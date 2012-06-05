@@ -24,7 +24,7 @@ import subprocess
 import re
 import time
 
-from quantum.common import utils
+from quantum.openstack.common import importutils
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import services_db as sdb
@@ -106,8 +106,8 @@ class ServicesLogistics():
         """
         _plugins = {}
         for key in conf.PLUGINS[const.PLUGINS].keys():
-            _plugins[key] = (
-                utils.import_object(conf.PLUGINS[const.PLUGINS][key]))
+            plugin_obj = conf.PLUGINS[const.PLUGINS][key]
+            _plugins[key] = importutils.import_object(plugin_obj)
         if not plugin_key in _plugins.keys():
             LOG.debug("No %s Plugin loaded" % plugin_key)
             return False

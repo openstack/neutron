@@ -23,7 +23,7 @@ import logging
 import unittest
 
 from quantum.common import exceptions as exc
-from quantum.common import utils
+from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as creds
 from quantum.plugins.cisco.db import api as db
@@ -78,8 +78,8 @@ class TestMultiBlade(unittest.TestCase):
         # Get UCS inventory to make sure all UCSs are affected by tests
         for key in conf.PLUGINS[const.PLUGINS].keys():
             if key in conf.PLUGINS[const.INVENTORY].keys():
-                self._inventory[key] = utils.import_object(
-                    conf.PLUGINS[const.INVENTORY][key])
+                plugin_obj = conf.PLUGINS[const.INVENTORY][key]
+                self._inventory[key] = importutils.import_object(plugin_obj)
 
         self.ucs_count = self._inventory['ucs_plugin']._inventory.__len__()
 
