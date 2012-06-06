@@ -21,17 +21,15 @@
 
 import logging
 from optparse import OptionParser
-import shlex
 import signal
-import subprocess
 import sys
 import time
 
 import sqlalchemy
 from sqlalchemy.ext import sqlsoup
 
+from quantum.agent.linux import ovs_lib
 from quantum.plugins.openvswitch.common import config
-
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -50,165 +48,6 @@ DEFAULT_RECONNECT_INTERVAL = 2
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
 # attributes set).
-class VifPort:
-    def __init__(self, port_name, ofport, vif_id, vif_mac, switch):
-        self.port_name = port_name
-        self.ofport = ofport
-        self.vif_id = vif_id
-        self.vif_mac = vif_mac
-        self.switch = switch
-
-    def __str__(self):
-        return ("iface-id=" + self.vif_id + ", vif_mac=" +
-                self.vif_mac + ", port_name=" + self.port_name +
-                ", ofport=" + self.ofport + ", bridge name = " +
-                self.switch.br_name)
-
-
-class OVSBridge:
-    def __init__(self, br_name, root_helper):
-        self.br_name = br_name
-        self.root_helper = root_helper
-
-    def run_cmd(self, args):
-        cmd = shlex.split(self.root_helper) + args
-        LOG.debug("## running command: " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        retval = p.communicate()[0]
-        if p.returncode == -(signal.SIGALRM):
-            LOG.debug("## timeout running command: " + " ".join(cmd))
-        return retval
-
-    def run_vsctl(self, args):
-        full_args = ["ovs-vsctl", "--timeout=2"] + args
-        return self.run_cmd(full_args)
-
-    def reset_bridge(self):
-        self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
-        self.run_vsctl(["add-br", self.br_name])
-
-    def delete_port(self, port_name):
-        self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
-          port_name])
-
-    def set_db_attribute(self, table_name, record, column, value):
-        args = ["set", table_name, record, "%s=%s" % (column, value)]
-        self.run_vsctl(args)
-
-    def clear_db_attribute(self, table_name, record, column):
-        args = ["clear", table_name, record, column]
-        self.run_vsctl(args)
-
-    def run_ofctl(self, cmd, args):
-        full_args = ["ovs-ofctl", cmd, self.br_name] + args
-        return self.run_cmd(full_args)
-
-    def count_flows(self):
-        flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
-        return len(flow_list) - 1
-
-    def remove_all_flows(self):
-        self.run_ofctl("del-flows", [])
-
-    def get_port_ofport(self, port_name):
-        return self.db_get_val("Interface", port_name, "ofport")
-
-    def add_flow(self, **dict):
-        if "actions" not in dict:
-            raise Exception("must specify one or more actions")
-        if "priority" not in dict:
-            dict["priority"] = "0"
-
-        flow_str = "priority=%s" % dict["priority"]
-        if "match" in dict:
-            flow_str += "," + dict["match"]
-        flow_str += ",actions=%s" % (dict["actions"])
-        self.run_ofctl("add-flow", [flow_str])
-
-    def delete_flows(self, **dict):
-        all_args = []
-        if "priority" in dict:
-            all_args.append("priority=%s" % dict["priority"])
-        if "match" in dict:
-            all_args.append(dict["match"])
-        if "actions" in dict:
-            all_args.append("actions=%s" % (dict["actions"]))
-        flow_str = ",".join(all_args)
-        self.run_ofctl("del-flows", [flow_str])
-
-    def add_tunnel_port(self, port_name, remote_ip):
-        self.run_vsctl(["add-port", self.br_name, port_name])
-        self.set_db_attribute("Interface", port_name, "type", "gre")
-        self.set_db_attribute("Interface", port_name, "options:remote_ip",
-                              remote_ip)
-        self.set_db_attribute("Interface", port_name, "options:in_key", "flow")
-        self.set_db_attribute("Interface", port_name, "options:out_key",
-                              "flow")
-        return self.get_port_ofport(port_name)
-
-    def add_patch_port(self, local_name, remote_name):
-        self.run_vsctl(["add-port", self.br_name, local_name])
-        self.set_db_attribute("Interface", local_name, "type", "patch")
-        self.set_db_attribute("Interface", local_name, "options:peer",
-                              remote_name)
-        return self.get_port_ofport(local_name)
-
-    def db_get_map(self, table, record, column):
-        str = self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
-        return self.db_str_to_map(str)
-
-    def db_get_val(self, table, record, column):
-        return self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
-
-    def db_str_to_map(self, full_str):
-        list = full_str.strip("{}").split(", ")
-        ret = {}
-        for e in list:
-            if e.find("=") == -1:
-                continue
-            arr = e.split("=")
-            ret[arr[0]] = arr[1].strip("\"")
-        return ret
-
-    def get_port_name_list(self):
-        res = self.run_vsctl(["list-ports", self.br_name])
-        return res.split("\n")[0:-1]
-
-    def get_port_stats(self, port_name):
-        return self.db_get_map("Interface", port_name, "statistics")
-
-    def get_xapi_iface_id(self, xs_vif_uuid):
-        return self.run_cmd([
-            "xe",
-            "vif-param-get",
-            "param-name=other-config",
-            "param-key=nicira-iface-id",
-            "uuid=%s" % xs_vif_uuid,
-            ]).strip()
-
-    # returns a VIF object for each VIF port
-    def get_vif_ports(self):
-        edge_ports = []
-        port_names = self.get_port_name_list()
-        for name in port_names:
-            external_ids = self.db_get_map("Interface", name, "external_ids")
-            ofport = self.db_get_val("Interface", name, "ofport")
-            if "iface-id" in external_ids and "attached-mac" in external_ids:
-                p = VifPort(name, ofport, external_ids["iface-id"],
-                            external_ids["attached-mac"], self)
-                edge_ports.append(p)
-            elif ("xs-vif-uuid" in external_ids and
-                  "attached-mac" in external_ids):
-                # if this is a xenserver and iface-id is not automatically
-                # synced to OVS from XAPI, we grab it from XAPI directly
-                iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
-                p = VifPort(name, ofport, iface_id,
-                            external_ids["attached-mac"], self)
-                edge_ports.append(p)
-
-        return edge_ports
-
-
 class LocalVLANMapping:
     def __init__(self, vlan, lsw_id, vif_ids=None):
         if vif_ids is None:
@@ -263,14 +102,14 @@ class OVSQuantumAgent(object):
     def port_bound(self, port, vlan_id):
         self.int_br.set_db_attribute("Port", port.port_name,
                                      "tag", str(vlan_id))
-        self.int_br.delete_flows(match="in_port=%s" % port.ofport)
+        self.int_br.delete_flows(in_port=port.ofport)
 
     def port_unbound(self, port, still_exists):
         if still_exists:
             self.int_br.clear_db_attribute("Port", port.port_name, "tag")
 
     def setup_integration_br(self, integ_br):
-        self.int_br = OVSBridge(integ_br, self.root_helper)
+        self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
         self.int_br.remove_all_flows()
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
@@ -328,7 +167,7 @@ class OVSQuantumAgent(object):
                     self.int_br.set_db_attribute("Port", p.port_name, "tag",
                                                  DEAD_VLAN_TAG)
                     self.int_br.add_flow(priority=2,
-                                         match="in_port=%s" % p.ofport,
+                                         in_port=p.ofport,
                                          actions="drop")
 
                 old_b = old_local_bindings.get(p.vif_id, None)
@@ -435,12 +274,12 @@ class OVSQuantumTunnelAgent(object):
         self.local_vlan_map[net_uuid] = LocalVLANMapping(lvid, lsw_id)
 
         # outbound
-        self.tun_br.add_flow(priority=4, match="in_port=%s,dl_vlan=%s" %
-                             (self.patch_int_ofport, lvid),
+        self.tun_br.add_flow(priority=4, in_port=self.patch_int_ofport,
+                             dl_vlan=lvid,
                              actions="strip_vlan,set_tunnel:%s,normal" %
                              (lsw_id))
         # inbound
-        self.tun_br.add_flow(priority=3, match="tun_id=%s" % lsw_id,
+        self.tun_br.add_flow(priority=3, tun_id=lsw_id,
                              actions="mod_vlan_vid:%s,output:%s" %
                              (lvid, self.patch_int_ofport))
 
@@ -451,15 +290,15 @@ class OVSQuantumTunnelAgent(object):
         :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
             vif_ids) mapping.'''
         LOG.info("reclaming vlan = %s from net-id = %s" % (lvm.vlan, net_uuid))
-        self.tun_br.delete_flows(match="tun_id=%s" % lvm.lsw_id)
-        self.tun_br.delete_flows(match="dl_vlan=%s" % lvm.vlan)
+        self.tun_br.delete_flows(tun_id=lvm.lsw_id)
+        self.tun_br.delete_flows(dl_vlan=lvm.vlan)
         del self.local_vlan_map[net_uuid]
         self.available_local_vlans.add(lvm.vlan)
 
     def port_bound(self, port, net_uuid, lsw_id):
         '''Bind port to net_uuid/lsw_id.
 
-        :param port: a VifPort object.
+        :param port: a ovslib.VifPort object.
         :param net_uuid: the net_uuid this port is to be associated with.
         :param lsw_id: the logical switch this port is to be associated with.
         '''
@@ -470,7 +309,7 @@ class OVSQuantumTunnelAgent(object):
 
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      str(lvm.vlan))
-        self.int_br.delete_flows(match="in_port=%s" % port.ofport)
+        self.int_br.delete_flows(in_port=port.ofport)
 
     def port_unbound(self, port, net_uuid):
         '''Unbind port.
@@ -478,7 +317,7 @@ class OVSQuantumTunnelAgent(object):
         Removes corresponding local vlan mapping object if this is its last
         VIF.
 
-        :param port: a VifPort object.
+        :param port: a ovslib.VifPort object.
         :param net_uuid: the net_uuid this port is associated with.'''
         if net_uuid not in self.local_vlan_map:
             LOG.info('port_unbound() net_uuid %s not in local_vlan_map' %
@@ -497,11 +336,10 @@ class OVSQuantumTunnelAgent(object):
     def port_dead(self, port):
         '''Once a port has no binding, put it on the "dead vlan".
 
-        :param port: a VifPort object.'''
+        :param port: a ovs_lib.VifPort object.'''
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      DEAD_VLAN_TAG)
-        self.int_br.add_flow(priority=2,
-                             match="in_port=%s" % port.ofport, actions="drop")
+        self.int_br.add_flow(priority=2, in_port=port.ofport, actions="drop")
 
     def setup_integration_br(self, integ_br):
         '''Setup the integration bridge.
@@ -509,7 +347,7 @@ class OVSQuantumTunnelAgent(object):
         Create patch ports and remove all existing flows.
 
         :param integ_br: the name of the integration bridge.'''
-        self.int_br = OVSBridge(integ_br, self.root_helper)
+        self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
         self.int_br.delete_port("patch-tun")
         self.patch_tun_ofport = self.int_br.add_patch_port("patch-tun",
                                                            "patch-int")
@@ -524,7 +362,7 @@ class OVSQuantumTunnelAgent(object):
         using a patch port.
 
         :param tun_br: the name of the tunnel bridge.'''
-        self.tun_br = OVSBridge(tun_br, self.root_helper)
+        self.tun_br = ovs_lib.OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
         self.patch_int_ofport = self.tun_br.add_patch_port("patch-int",
                                                            "patch-tun")
