@@ -1,12 +1,11 @@
 distribute>=0.6.24
-
 coverage
 mock>=0.7.1
 mox==0.5.3
 nose
 nosexcover
 openstack.nose_plugin
-pep8==0.6.1
+pep8
 sphinx>=1.1.2
 unittest2
 webtest
