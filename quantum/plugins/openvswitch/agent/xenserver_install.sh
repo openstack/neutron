@@ -7,14 +7,12 @@ if [ ! -d /etc/xapi.d/plugins ]; then
 	exit 1
 fi
 
+rpm -Uvh http://dl.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
+yum --enablerepo=epel -y install python-sqlalchemy0.5
+yum --enablerepo=base -y install MySQL-python
 
-sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Base.repo
-
-yum -y install python-setuptools gcc gcc-c++ MySQL-python
-easy_install pip && pip install sqlalchemy
-
-
+sed -i 's/enabled=1/enabled=0' /etc/yum.repos.d/epel.repo
 
 cp ovs_quantum_agent.py /etc/xapi.d/plugins
 cp ovs_quantum_plugin.ini /etc/xapi.d/plugins
