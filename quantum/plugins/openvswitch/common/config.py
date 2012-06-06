@@ -23,7 +23,7 @@ database_opts = [
 ]
 
 ovs_opts = [
-    cfg.StrOpt('enable_tunneling', default='False'),
+    cfg.BoolOpt('enable_tunneling', default=False),
     cfg.StrOpt('integration_bridge', default='br-int'),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
     cfg.StrOpt('local_ip', default='10.0.0.3'),
