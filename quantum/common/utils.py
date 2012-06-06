@@ -36,38 +36,12 @@ from quantum.common.exceptions import ProcessExecutionError
 from quantum.common import flags
 
 
-# NOTE(jkoelker) Since to_primitive isn't used anywhere can we just drop it
-def to_primitive(value):
-    if isinstance(value, (list, tuple)):
-        o = []
-        for v in value:
-            o.append(to_primitive(v))
-        return o
-    elif isinstance(value, dict):
-        o = {}
-        for k, v in value.iteritems():
-            o[k] = to_primitive(v)
-        return o
-    elif isinstance(value, datetime.datetime):
-        return str(value)
-    elif hasattr(value, 'iteritems'):
-        return to_primitive(dict(value.iteritems()))
-    elif hasattr(value, '__iter__'):
-        return to_primitive(list(value))
-    else:
-        return value
-
-
 def dumps(value):
-    try:
-        return json.dumps(value)
-    except TypeError:
-        pass
-    return json.dumps(to_primitive(value))
+    return json.dumps(value)
 
 
-def loads(s):
-    return json.loads(s)
+def loads(value):
+    return json.loads(value)
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -103,18 +77,6 @@ def bool_from_string(subject):
         if subject.strip().lower() in ('true', 'on', '1'):
             return True
     return False
-
-
-def fetchfile(url, target):
-    logging.debug("Fetching %s" % url)
-#    c = pycurl.Curl()
-#    fp = open(target, "wb")
-#    c.setopt(c.URL, url)
-#    c.setopt(c.WRITEDATA, fp)
-#    c.perform()
-#    c.close()
-#    fp.close()
-    execute("curl --fail %s -o %s" % (url, target))
 
 
 def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
