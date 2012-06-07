@@ -13,7 +13,6 @@
 #    under the License.
 
 import httplib
-import json
 import logging
 import time
 import urllib
@@ -22,6 +21,7 @@ import urlparse
 import eventlet
 from eventlet import timeout
 
+from quantum.openstack.common import jsonutils
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
     _conn_str,
     )
@@ -332,7 +332,7 @@ class NvpGetApiProvidersRequestEventlet(NvpApiRequestEventlet):
         try:
             if self.successful():
                 ret = []
-                body = json.loads(self.value.body)
+                body = jsonutils.loads(self.value.body)
                 for node in body.get('results', []):
                     for role in node.get('roles', []):
                         if role.get('role') == 'api_provider':

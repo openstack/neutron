@@ -16,7 +16,6 @@
 #    under the License.
 #    @author: Salvatore Orlando, Citrix Systems
 
-import json
 import unittest
 
 from lxml import etree
@@ -27,6 +26,7 @@ import quantum.api.networks as nets
 import quantum.api.ports as ports
 import quantum.api.versions as versions
 from quantum.common.test_lib import test_config
+from quantum.openstack.common import jsonutils
 import quantum.tests.unit._test_api as test_api
 import quantum.tests.unit.testlib_api as testlib
 
@@ -353,7 +353,7 @@ class APIRootTest(unittest.TestCase):
 
     def test_root_responds_with_versions_json(self):
         body = self._test_root_responds_with_versions('application/json')
-        data = json.loads(body)
+        data = jsonutils.loads(body)
         self.assertEquals('versions', data.keys()[0])
 
     def test_root_responds_with_versions_xml(self):

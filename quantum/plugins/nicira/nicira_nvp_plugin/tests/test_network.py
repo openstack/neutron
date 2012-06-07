@@ -15,12 +15,12 @@
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 
-import json
 import logging
 import os
 import unittest
 
 from quantum.common import exceptions as exception
+from quantum.openstack.common import jsonutils
 from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
 from quantum.plugins.nicira.nicira_nvp_plugin import (
     NvpApiClient,
@@ -56,11 +56,11 @@ class NvpTests(unittest.TestCase):
                 "tags": [{"tag": "plugin-test"}]}
         try:
             resp_obj = self.quantum.api_client.request("POST",
-              post_uri, json.dumps(body))
+              post_uri, jsonutils.dumps(body))
         except NvpApiClient.NvpApiException as e:
             print("Unknown API Error: %s" % str(e))
             raise exception.QuantumException()
-        return json.loads(resp_obj)["uuid"]
+        return jsonutils.loads(resp_obj)["uuid"]
 
     def _delete_tz(self, uuid):
         post_uri = "/ws.v1/transport-zone/%s" % uuid

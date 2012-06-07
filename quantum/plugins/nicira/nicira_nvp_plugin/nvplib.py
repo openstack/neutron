@@ -14,10 +14,10 @@
 #
 # @author: Brad Hall, Nicira Networks, Inc.
 
-import json
 import logging
 
 from quantum.common import exceptions as exception
+from quantum.openstack.common import jsonutils
 from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
 
 
@@ -42,7 +42,7 @@ def check_default_transport_zone(c):
         "GET",
         "/ws.v1/transport-zone?uuid=%s" % c.default_tz_uuid,
         controller=c)
-    result = json.loads(resp)
+    result = jsonutils.loads(resp)
     if int(result["result_count"]) == 0:
         msg.append("Unable to find zone \"%s\" for controller \"%s\"" %
                    (c.default_tz_uuid, c.name))
@@ -67,7 +67,7 @@ def get_network(controller, net_id):
     path = "/ws.v1/lswitch/%s" % net_id
     try:
         resp_obj = do_single_request("GET", path, controller=controller)
-        network = json.loads(resp_obj)
+        network = jsonutils.loads(resp_obj)
     except NvpApiClient.ResourceNotFound as e:
         raise exception.NetworkNotFound(net_id=net_id)
     except NvpApiClient.NvpApiException as e:
@@ -86,12 +86,12 @@ def create_lswitch(controller, lswitch_obj):
     uri = "/ws.v1/lswitch"
     try:
         resp_obj = do_single_request("POST", uri,
-                                     json.dumps(lswitch_obj),
+                                     jsonutils.dumps(lswitch_obj),
                                      controller=controller)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
-    r = json.loads(resp_obj)
+    r = jsonutils.loads(resp_obj)
     d = {}
     d["net-id"] = r["uuid"]
     d["net-name"] = r["display_name"]
@@ -105,15 +105,17 @@ def update_network(controller, network, **kwargs):
     if "name" in kwargs:
         lswitch_obj["display_name"] = kwargs["name"]
     try:
-        resp_obj = do_single_request(
-            "PUT", uri, json.dumps(lswitch_obj), controller=controller)
+        resp_obj = do_single_request("PUT",
+                                     uri,
+                                     jsonutils.dumps(lswitch_obj),
+                                     controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
         raise exception.NetworkNotFound(net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
-    obj = json.loads(resp_obj)
+    obj = jsonutils.loads(resp_obj)
     return obj
 
 
@@ -128,7 +130,7 @@ def get_all_networks(controller, tenant_id, networks):
         raise exception.QuantumException()
     if not resp_obj:
         return []
-    lswitches = json.loads(resp_obj)["results"]
+    lswitches = jsonutils.loads(resp_obj)["results"]
     for lswitch in lswitches:
         net_id = lswitch["uuid"]
         if net_id not in [x["net-id"] for x in networks]:
@@ -148,7 +150,7 @@ def query_networks(controller, tenant_id, fields="*", tags=None):
         raise exception.QuantumException()
     if not resp_obj:
         return []
-    lswitches = json.loads(resp_obj)["results"]
+    lswitches = jsonutils.loads(resp_obj)["results"]
     nets = [{'net-id': lswitch["uuid"],
              'net-name': lswitch["display_name"]}
             for lswitch in lswitches]
@@ -208,7 +210,7 @@ def get_port_stats(controller, network_id, port_id):
     try:
         path = "/ws.v1/lswitch/%s/lport/%s/statistic" % (network_id, port_id)
         resp = do_single_request("GET", path, controller=controller)
-        stats = json.loads(resp)
+        stats = jsonutils.loads(resp)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=network_id)
@@ -242,7 +244,7 @@ def query_ports(controller, network, relations=None, fields="*", filters=None):
         raise exception.NetworkNotFound(net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
-    return json.loads(resp_obj)["results"]
+    return jsonutils.loads(resp_obj)["results"]
 
 
 def delete_port(controller, network, port):
@@ -260,7 +262,7 @@ def delete_all_ports(controller, ls_uuid):
     res = do_single_request("GET",
       "/ws.v1/lswitch/%s/lport?fields=uuid" % ls_uuid,
       controller=controller)
-    res = json.loads(res)
+    res = jsonutils.loads(res)
     for r in res["results"]:
         do_single_request(
             "DELETE",
@@ -274,7 +276,7 @@ def get_port(controller, network, port, relations=None):
         uri += "relations=%s" % relations
     try:
         resp_obj = do_single_request("GET", uri, controller=controller)
-        port = json.loads(resp_obj)
+        port = jsonutils.loads(resp_obj)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
@@ -292,8 +294,10 @@ def plug_interface(controller, network, port, type, attachment=None):
 
     lport_obj["type"] = type
     try:
-        resp_obj = do_single_request("PUT", uri,
-          json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request("PUT",
+                                     uri,
+                                     jsonutils.dumps(lport_obj),
+                                     controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
@@ -307,7 +311,7 @@ def plug_interface(controller, network, port, type, attachment=None):
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
-    result = json.dumps(resp_obj)
+    result = jsonutils.dumps(resp_obj)
     return result
 
 
@@ -315,14 +319,16 @@ def unplug_interface(controller, network, port):
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port + "/attachment"
     lport_obj = {"type": "NoAttachment"}
     try:
-        resp_obj = do_single_request(
-            "PUT", uri, json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request("PUT",
+                                     uri,
+                                     jsonutils.dumps(lport_obj),
+                                     controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
-    return json.loads(resp_obj)
+    return jsonutils.loads(resp_obj)
 
 
 def update_port(network, port_id, **params):
@@ -339,15 +345,17 @@ def update_port(network, port_id, **params):
 
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port_id
     try:
-        resp_obj = do_single_request(
-            "PUT", uri, json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request("PUT",
+                                     uri,
+                                     jsonutils.dumps(lport_obj),
+                                     controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port or Network not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
-    obj = json.loads(resp_obj)
+    obj = jsonutils.loads(resp_obj)
     obj["port-op-status"] = get_port_status(controller, network, obj["uuid"])
     return obj
 
@@ -368,15 +376,17 @@ def create_port(tenant, network, port_init_state, **params):
 
     path = "/ws.v1/lswitch/" + ls_uuid + "/lport"
     try:
-        resp_obj = do_single_request(
-            "POST", path, json.dumps(lport_obj), controller=controller)
+        resp_obj = do_single_request("POST",
+                                     path,
+                                     jsonutils.dumps(lport_obj),
+                                     controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
         raise exception.NetworkNotFound(net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
-    result = json.loads(resp_obj)
+    result = jsonutils.loads(resp_obj)
     result['port-op-status'] = get_port_status(controller, ls_uuid,
                                                result['uuid'])
     return result
@@ -398,7 +408,7 @@ def get_port_status(controller, lswitch_id, port_id):
             "GET",
             "/ws.v1/lswitch/%s/lport/%s/status" % (lswitch_id, port_id),
             controller=controller)
-        r = json.loads(r)
+        r = jsonutils.loads(r)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Port not found, Error: %s" % str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=lswitch_id)

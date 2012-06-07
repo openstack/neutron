@@ -32,7 +32,7 @@ import webob.dec
 import webob.exc
 
 from quantum.common import exceptions as exception
-from quantum.common import utils
+from quantum.openstack.common import jsonutils
 
 
 LOG = logging.getLogger(__name__)
@@ -181,7 +181,7 @@ class JSONDictSerializer(DictSerializer):
     """Default JSON request body serialization"""
 
     def default(self, data):
-        return utils.dumps(data)
+        return jsonutils.dumps(data)
 
 
 class XMLDictSerializer(DictSerializer):
@@ -354,7 +354,7 @@ class JSONDeserializer(TextDeserializer):
 
     def _from_json(self, datastring):
         try:
-            return utils.loads(datastring)
+            return jsonutils.loads(datastring)
         except ValueError:
             msg = _("cannot understand JSON")
             raise exception.MalformedRequestBody(reason=msg)
@@ -956,7 +956,7 @@ class Serializer(object):
             raise exception.InvalidContentType(content_type=content_type)
 
     def _from_json(self, datastring):
-        return utils.loads(datastring)
+        return jsonutils.loads(datastring)
 
     def _from_xml(self, datastring):
         xmldata = self.metadata.get('application/xml', {})
@@ -987,7 +987,7 @@ class Serializer(object):
             return result
 
     def _to_json(self, data):
-        return utils.dumps(data)
+        return jsonutils.dumps(data)
 
     def _to_xml(self, data):
         metadata = self.metadata.get('application/xml', {})

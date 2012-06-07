@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
 import unittest
 
 import routes
@@ -30,6 +29,7 @@ from quantum.extensions.extensions import (
     ExtensionMiddleware,
     PluginAwareExtensionManager,
     )
+from quantum.openstack.common import jsonutils
 from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
 from quantum.tests.unit import BaseTest
 from quantum.tests.unit.extension_stubs import (
@@ -114,7 +114,8 @@ class ResourceExtensionTest(unittest.TestCase):
 
         response = test_app.get("/tweedles/some_id/custom_member_action")
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['member_action'], "value")
+        self.assertEqual(jsonutils.loads(response.body)['member_action'],
+                         "value")
 
     def test_resource_extension_for_get_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -125,7 +126,7 @@ class ResourceExtensionTest(unittest.TestCase):
 
         response = test_app.get("/tweedles/custom_collection_action")
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], "value")
+        self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
     def test_resource_extension_for_put_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -137,7 +138,7 @@ class ResourceExtensionTest(unittest.TestCase):
         response = test_app.put("/tweedles/custom_collection_action")
 
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], 'value')
+        self.assertEqual(jsonutils.loads(response.body)['collection'], 'value')
 
     def test_resource_extension_for_post_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -149,7 +150,7 @@ class ResourceExtensionTest(unittest.TestCase):
         response = test_app.post("/tweedles/custom_collection_action")
 
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], 'value')
+        self.assertEqual(jsonutils.loads(response.body)['collection'], 'value')
 
     def test_resource_extension_for_delete_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -161,7 +162,7 @@ class ResourceExtensionTest(unittest.TestCase):
         response = test_app.delete("/tweedles/custom_collection_action")
 
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], 'value')
+        self.assertEqual(jsonutils.loads(response.body)['collection'], 'value')
 
     def test_resource_ext_for_formatted_req_on_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -173,7 +174,7 @@ class ResourceExtensionTest(unittest.TestCase):
         response = test_app.get("/tweedles/custom_collection_action.json")
 
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], "value")
+        self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
     def test_resource_ext_for_nested_resource_custom_collection_action(self):
         controller = self.ResourceExtensionController()
@@ -188,7 +189,7 @@ class ResourceExtensionTest(unittest.TestCase):
                                 "/tweedles/custom_collection_action")
 
         self.assertEqual(200, response.status_int)
-        self.assertEqual(json.loads(response.body)['collection'], "value")
+        self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
     def test_returns_404_for_non_existant_extension(self):
         test_app = setup_extensions_test_app(SimpleExtensionManager(None))
@@ -207,7 +208,7 @@ class ActionExtensionTest(unittest.TestCase):
     def test_extended_action_for_adding_extra_data(self):
         action_name = 'FOXNSOX:add_tweedle'
         action_params = dict(name='Beetle')
-        req_body = json.dumps({action_name: action_params})
+        req_body = jsonutils.dumps({action_name: action_params})
         response = self.extension_app.post('/dummy_resources/1/action',
                                            req_body,
                                            content_type='application/json')
@@ -216,7 +217,7 @@ class ActionExtensionTest(unittest.TestCase):
     def test_extended_action_for_deleting_extra_data(self):
         action_name = 'FOXNSOX:delete_tweedle'
         action_params = dict(name='Bailey')
-        req_body = json.dumps({action_name: action_params})
+        req_body = jsonutils.dumps({action_name: action_params})
         response = self.extension_app.post("/dummy_resources/1/action",
                                            req_body,
                                            content_type='application/json')
@@ -225,7 +226,7 @@ class ActionExtensionTest(unittest.TestCase):
     def test_returns_404_for_non_existant_action(self):
         non_existant_action = 'blah_action'
         action_params = dict(name="test")
-        req_body = json.dumps({non_existant_action: action_params})
+        req_body = jsonutils.dumps({non_existant_action: action_params})
 
         response = self.extension_app.post("/dummy_resources/1/action",
                                            req_body,
@@ -237,7 +238,7 @@ class ActionExtensionTest(unittest.TestCase):
     def test_returns_404_for_non_existant_resource(self):
         action_name = 'add_tweedle'
         action_params = dict(name='Beetle')
-        req_body = json.dumps({action_name: action_params})
+        req_body = jsonutils.dumps({action_name: action_params})
 
         response = self.extension_app.post("/asdf/1/action", req_body,
                                            content_type='application/json',
@@ -262,16 +263,16 @@ class RequestExtensionTest(BaseTest):
 
     def test_extend_get_resource_response(self):
         def extend_response_data(req, res):
-            data = json.loads(res.body)
+            data = jsonutils.loads(res.body)
             data['FOXNSOX:extended_key'] = req.GET.get('extended_key')
-            res.body = json.dumps(data)
+            res.body = jsonutils.dumps(data)
             return res
 
         app = self._setup_app_with_request_handler(extend_response_data, 'GET')
         response = app.get("/dummy_resources/1?extended_key=extended_data")
 
         self.assertEqual(200, response.status_int)
-        response_data = json.loads(response.body)
+        response_data = jsonutils.loads(response.body)
         self.assertEqual('extended_data',
                          response_data['FOXNSOX:extended_key'])
         self.assertEqual('knox', response_data['fort'])
@@ -281,16 +282,16 @@ class RequestExtensionTest(BaseTest):
 
         response = app.get("/dummy_resources/1?chewing=newblue")
 
-        response_data = json.loads(response.body)
+        response_data = jsonutils.loads(response.body)
         self.assertEqual('newblue', response_data['FOXNSOX:googoose'])
         self.assertEqual("Pig Bands!", response_data['FOXNSOX:big_bands'])
 
     def test_edit_previously_uneditable_field(self):
 
         def _update_handler(req, res):
-            data = json.loads(res.body)
+            data = jsonutils.loads(res.body)
             data['uneditable'] = req.params['uneditable']
-            res.body = json.dumps(data)
+            res.body = jsonutils.dumps(data)
             return res
 
         base_app = TestApp(setup_base_app())

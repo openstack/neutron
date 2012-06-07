@@ -18,7 +18,6 @@
 #           Peter Strunk , Cisco Systems, Inc.
 #           Shubhangi Satras , Cisco Systems, Inc.
 
-import json
 import logging
 import os.path
 import unittest
@@ -42,6 +41,7 @@ from quantum.extensions.extensions import (
     PluginAwareExtensionManager,
     )
 from quantum.manager import QuantumManager
+from quantum.openstack.common import jsonutils
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco import l2network_plugin
 from quantum.plugins.cisco.l2network_plugin import L2Network
@@ -108,11 +108,11 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test List Portprofile"""
 
         LOG.debug("test_list_portprofile - START")
-        req_body1 = json.dumps(self.test_port_profile)
+        req_body1 = jsonutils.dumps(self.test_port_profile)
         create_response1 = self.test_app.post(
             self.profile_path, req_body1,
             content_type=self.contenttype)
-        req_body2 = json.dumps({
+        req_body2 = jsonutils.dumps({
             'portprofile': {
                 'portprofile_name': 'cisco_test_portprofile2',
                 'qos_name': 'test-qos2',
@@ -156,7 +156,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test create Portprofile"""
 
         LOG.debug("test_create_portprofile - START")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(self.profile_path, req_body,
                                             content_type=self.contenttype)
         self.assertEqual(200, index_response.status_int)
@@ -187,7 +187,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test show Portprofile """
 
         LOG.debug("test_show_portprofile - START")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(self.profile_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
@@ -226,7 +226,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test update Portprofile"""
 
         LOG.debug("test_update_portprofile - START")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(
             self.profile_path, req_body,
             content_type=self.contenttype)
@@ -238,7 +238,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                 'qos_name': 'test-qos1',
                 },
             }
-        rename_req_body = json.dumps(rename_port_profile)
+        rename_req_body = jsonutils.dumps(rename_port_profile)
         rename_path_temp = (self.portprofile_path +
                             resp_body['portprofiles']['portprofile']['id'])
         rename_path = str(rename_path_temp)
@@ -263,7 +263,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test update Portprofile Bad Request"""
 
         LOG.debug("test_update_portprofileBADRequest - START")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(
             self.profile_path, req_body,
             content_type=self.contenttype)
@@ -291,7 +291,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                 'qos_name': 'test-qos1',
                 },
             }
-        rename_req_body = json.dumps(rename_port_profile)
+        rename_req_body = jsonutils.dumps(rename_port_profile)
         update_path_temp = self.portprofile_path + portprofile_id
         update_path = str(update_path_temp)
         update_response = self.test_app.put(update_path, rename_req_body,
@@ -305,7 +305,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         """ Test delete Portprofile"""
 
         LOG.debug("test_delete_portprofile - START")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(
             self.profile_path, req_body,
             content_type=self.contenttype)
@@ -406,7 +406,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         LOG.debug("test_associate_portprofile - START")
         net_id = self._create_network()
         port_id = self._create_port(net_id, "ACTIVE")
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(
             self.profile_path, req_body,
             content_type=self.contenttype)
@@ -418,7 +418,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                 'port-id': port_id,
                 },
             }
-        req_assign_body = json.dumps(test_port_assign_data)
+        req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path_temp = (
             self.portprofile_path +
             resp_body['portprofiles']['portprofile']['id'] +
@@ -454,7 +454,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                 'port-id': '1',
                 },
             }
-        req_assign_body = json.dumps(test_port_assign_data)
+        req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path = (self.portprofile_path +
                           portprofile_id +
                           "/associate_portprofile")
@@ -472,7 +472,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         net_id = self._create_network()
         port_id = self._create_port(net_id, "ACTIVE")
 
-        req_body = json.dumps(self.test_port_profile)
+        req_body = jsonutils.dumps(self.test_port_profile)
         index_response = self.test_app.post(
             self.profile_path, req_body,
             content_type=self.contenttype)
@@ -485,7 +485,7 @@ class PortprofileExtensionTest(unittest.TestCase):
                 'port-id': port_id,
                 },
             }
-        req_assign_body = json.dumps(test_port_assign_data)
+        req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path_temp = (self.portprofile_path +
                                resp_body['portprofiles']['portprofile']['id'] +
                                "/associate_portprofile")
@@ -582,7 +582,7 @@ class NovatenantExtensionTest(unittest.TestCase):
     def test_schedule_host(self):
         """ Test get host"""
         LOG.debug("test_schedule_host - START")
-        req_body = json.dumps(self.test_associate_data)
+        req_body = jsonutils.dumps(self.test_associate_data)
         host_path = self.novatenants_path + "001/schedule_host"
         host_response = self.test_app.put(
             host_path, req_body,
@@ -603,7 +603,7 @@ class NovatenantExtensionTest(unittest.TestCase):
     def test_associate_port(self):
         """ Test get associate port """
         LOG.debug("test_associate_port - START")
-        req_body = json.dumps(self.test_associate_port_data)
+        req_body = jsonutils.dumps(self.test_associate_port_data)
         associate_port_path = self.novatenants_path + "001/associate_port"
         associate_port_response = self.test_app.put(
             associate_port_path, req_body,
@@ -650,7 +650,7 @@ class QosExtensionTest(unittest.TestCase):
         """ Test create qos """
 
         LOG.debug("test_create_qos - START")
-        req_body = json.dumps(self.test_qos_data)
+        req_body = jsonutils.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path,
                                             req_body,
                                             content_type=self.contenttype)
@@ -681,10 +681,10 @@ class QosExtensionTest(unittest.TestCase):
         """ Test list qoss """
 
         LOG.debug("test_list_qoss - START")
-        req_body1 = json.dumps(self.test_qos_data)
+        req_body1 = jsonutils.dumps(self.test_qos_data)
         create_resp1 = self.test_app.post(self.qos_path, req_body1,
                                           content_type=self.contenttype)
-        req_body2 = json.dumps({
+        req_body2 = jsonutils.dumps({
             'qos': {
                 'qos_name': 'cisco_test_qos2',
                 'qos_desc': {
@@ -721,7 +721,7 @@ class QosExtensionTest(unittest.TestCase):
         """ Test show qos """
 
         LOG.debug("test_show_qos - START")
-        req_body = json.dumps(self.test_qos_data)
+        req_body = jsonutils.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
@@ -756,12 +756,12 @@ class QosExtensionTest(unittest.TestCase):
         """ Test update qos """
 
         LOG.debug("test_update_qos - START")
-        req_body = json.dumps(self.test_qos_data)
+        req_body = jsonutils.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
                                                   self.contenttype)
-        rename_req_body = json.dumps({
+        rename_req_body = jsonutils.dumps({
             'qos': {
                 'qos_name': 'cisco_rename_qos',
                 'qos_desc': {
@@ -789,7 +789,7 @@ class QosExtensionTest(unittest.TestCase):
         """ Test update qos does not exist """
 
         LOG.debug("test_update_qosDNE - START")
-        rename_req_body = json.dumps({
+        rename_req_body = jsonutils.dumps({
             'qos': {
                 'qos_name': 'cisco_rename_qos',
                 'qos_desc': {
@@ -811,7 +811,7 @@ class QosExtensionTest(unittest.TestCase):
         """ Test update qos bad request """
 
         LOG.debug("test_update_qosBADRequest - START")
-        req_body = json.dumps(self.test_qos_data)
+        req_body = jsonutils.dumps(self.test_qos_data)
         index_response = self.test_app.post(self.qos_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
@@ -832,7 +832,7 @@ class QosExtensionTest(unittest.TestCase):
         """ Test delte qos """
 
         LOG.debug("test_delete_qos - START")
-        req_body = json.dumps({
+        req_body = jsonutils.dumps({
             'qos': {
                 'qos_name': 'cisco_test_qos',
                 'qos_desc': {
@@ -905,11 +905,11 @@ class CredentialExtensionTest(unittest.TestCase):
 
         #Create Credential before listing
         LOG.debug("test_list_credentials - START")
-        req_body1 = json.dumps(self.test_credential_data)
+        req_body1 = jsonutils.dumps(self.test_credential_data)
         create_response1 = self.test_app.post(
             self.credential_path, req_body1,
             content_type=self.contenttype)
-        req_body2 = json.dumps({
+        req_body2 = jsonutils.dumps({
             'credential': {
                 'credential_name': 'cred9',
                 'user_name': 'newUser2',
@@ -949,7 +949,7 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test create credential """
 
         LOG.debug("test_create_credential - START")
-        req_body = json.dumps(self.test_credential_data)
+        req_body = jsonutils.dumps(self.test_credential_data)
         index_response = self.test_app.post(
             self.credential_path, req_body,
             content_type=self.contenttype)
@@ -979,7 +979,7 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test show credential """
 
         LOG.debug("test_show_credential - START")
-        req_body = json.dumps(self.test_credential_data)
+        req_body = jsonutils.dumps(self.test_credential_data)
         index_response = self.test_app.post(
             self.credential_path, req_body,
             content_type=self.contenttype)
@@ -1015,14 +1015,14 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test update credential """
 
         LOG.debug("test_update_credential - START")
-        req_body = json.dumps(self.test_credential_data)
+        req_body = jsonutils.dumps(self.test_credential_data)
 
         index_response = self.test_app.post(
             self.credential_path, req_body,
             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(
             index_response.body, self.contenttype)
-        rename_req_body = json.dumps({
+        rename_req_body = jsonutils.dumps({
             'credential': {
                 'credential_name': 'cred3',
                 'user_name': 'RenamedUser',
@@ -1051,7 +1051,7 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test update credential bad request """
 
         LOG.debug("test_update_credBADReq - START")
-        req_body = json.dumps(self.test_credential_data)
+        req_body = jsonutils.dumps(self.test_credential_data)
         index_response = self.test_app.post(
             self.credential_path, req_body,
             content_type=self.contenttype)
@@ -1070,7 +1070,7 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test update credential does not exist"""
 
         LOG.debug("test_update_credentialDNE - START")
-        rename_req_body = json.dumps({
+        rename_req_body = jsonutils.dumps({
             'credential': {
                 'credential_name': 'cred3',
                 'user_name': 'RenamedUser',
@@ -1090,7 +1090,7 @@ class CredentialExtensionTest(unittest.TestCase):
         """ Test delete credential """
 
         LOG.debug("test_delete_credential - START")
-        req_body = json.dumps(self.test_credential_data)
+        req_body = jsonutils.dumps(self.test_credential_data)
         index_response = self.test_app.post(
             self.credential_path, req_body,
             content_type=self.contenttype)
@@ -1212,7 +1212,7 @@ class MultiPortExtensionTest(unittest.TestCase):
                     },
                 },
             }
-        req_body = json.dumps(test_multi_port)
+        req_body = jsonutils.dumps(test_multi_port)
         index_response = self.test_app.post(self.multiport_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,

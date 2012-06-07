@@ -24,7 +24,6 @@
 import ConfigParser
 import datetime
 import inspect
-import json
 import logging
 import os
 import random
@@ -34,14 +33,6 @@ import sys
 from quantum.common import exceptions as exception
 from quantum.common.exceptions import ProcessExecutionError
 from quantum.common import flags
-
-
-def dumps(value):
-    return json.dumps(value)
-
-
-def loads(value):
-    return json.loads(value)
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
