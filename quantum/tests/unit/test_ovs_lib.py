@@ -20,7 +20,7 @@ import uuid
 
 import mox
 
-from quantum.agent.linux import ovs_lib
+from quantum.agent.linux import ovs_lib, utils
 
 
 class OVS_Lib_Test(unittest.TestCase):
@@ -35,8 +35,9 @@ class OVS_Lib_Test(unittest.TestCase):
         self.TO = "--timeout=2"
 
         self.mox = mox.Mox()
-        self.br = ovs_lib.OVSBridge(self.BR_NAME, 'sudo')
-        self.mox.StubOutWithMock(self.br, "run_cmd")
+        self.root_helper = 'sudo'
+        self.br = ovs_lib.OVSBridge(self.BR_NAME, self.root_helper)
+        self.mox.StubOutWithMock(utils, "execute")
 
     def tearDown(self):
         self.mox.UnsetStubs()
@@ -64,9 +65,11 @@ class OVS_Lib_Test(unittest.TestCase):
         self.mox.VerifyAll()
 
     def test_reset_bridge(self):
-        self.br.run_cmd(["ovs-vsctl", self.TO, "--",
-                     "--if-exists", "del-br", self.BR_NAME])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "add-br", self.BR_NAME])
+        utils.execute(["ovs-vsctl", self.TO, "--",
+                       "--if-exists", "del-br", self.BR_NAME],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "add-br", self.BR_NAME],
+                      root_helper=self.root_helper)
         self.mox.ReplayAll()
 
         self.br.reset_bridge()
@@ -74,8 +77,9 @@ class OVS_Lib_Test(unittest.TestCase):
 
     def test_delete_port(self):
         pname = "tap5"
-        self.br.run_cmd(["ovs-vsctl", self.TO, "--", "--if-exists",
-                         "del-port", self.BR_NAME, pname])
+        utils.execute(["ovs-vsctl", self.TO, "--", "--if-exists",
+                       "del-port", self.BR_NAME, pname],
+                       root_helper=self.root_helper)
 
         self.mox.ReplayAll()
         self.br.delete_port(pname)
@@ -85,29 +89,34 @@ class OVS_Lib_Test(unittest.TestCase):
         ofport = "99"
         vid = 4000
         lsw_id = 18
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=2,dl_src=ca:fe:de:ad:be:ef"
-                         ",actions=strip_vlan,output:0"])
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=1,actions=normal"])
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=2,actions=drop"])
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=2,in_port=%s,actions=drop" % ofport])
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=4,in_port=%s,dl_vlan=%s,"
-                        "actions=strip_vlan,set_tunnel:%s,normal"
-                        % (ofport, vid, lsw_id)])
-        self.br.run_cmd(["ovs-ofctl", "add-flow", self.BR_NAME,
-                        "hard_timeout=0,idle_timeout=0,"
-                        "priority=3,tun_id=%s,actions="
-                        "mod_vlan_vid:%s,output:%s"
-                        % (lsw_id, vid, ofport)])
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=2,dl_src=ca:fe:de:ad:be:ef"
+                       ",actions=strip_vlan,output:0"],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=1,actions=normal"],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=2,actions=drop"],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=2,in_port=%s,actions=drop" % ofport],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=4,in_port=%s,dl_vlan=%s,"
+                       "actions=strip_vlan,set_tunnel:%s,normal"
+                       % (ofport, vid, lsw_id)],
+                       root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=3,tun_id=%s,actions="
+                       "mod_vlan_vid:%s,output:%s"
+                       % (lsw_id, vid, ofport)], root_helper=self.root_helper)
         self.mox.ReplayAll()
 
         self.br.add_flow(priority=2, dl_src="ca:fe:de:ad:be:ef",
@@ -127,16 +136,18 @@ class OVS_Lib_Test(unittest.TestCase):
     def test_get_port_ofport(self):
         pname = "tap99"
         ofport = "6"
-        self.br.run_cmd(["ovs-vsctl", self.TO, "get", "Interface",
-                         pname, "ofport"]).AndReturn(ofport)
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                       "Interface", pname, "ofport"],
+                       root_helper=self.root_helper).AndReturn(ofport)
         self.mox.ReplayAll()
 
         self.assertEqual(self.br.get_port_ofport(pname), ofport)
         self.mox.VerifyAll()
 
     def test_count_flows(self):
-        self.br.run_cmd(["ovs-ofctl", "dump-flows", self.BR_NAME]).\
-            AndReturn("ignore\nflow-1\n")
+        utils.execute(["ovs-ofctl", "dump-flows", self.BR_NAME],
+                      root_helper=self.root_helper).\
+                      AndReturn("ignore\nflow-1\n")
         self.mox.ReplayAll()
 
         # counts the number of flows as total lines of output - 2
@@ -147,12 +158,12 @@ class OVS_Lib_Test(unittest.TestCase):
         ofport = "5"
         lsw_id = 40
         vid = 39
-        self.br.run_cmd(["ovs-ofctl", "del-flows", self.BR_NAME,
-                         "in_port=" + ofport])
-        self.br.run_cmd(["ovs-ofctl", "del-flows", self.BR_NAME,
-                         "tun_id=%s" % lsw_id])
-        self.br.run_cmd(["ovs-ofctl", "del-flows", self.BR_NAME,
-                         "dl_vlan=%s" % vid])
+        utils.execute(["ovs-ofctl", "del-flows", self.BR_NAME,
+                      "in_port=" + ofport], root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "del-flows", self.BR_NAME,
+                      "tun_id=%s" % lsw_id], root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "del-flows", self.BR_NAME,
+                      "dl_vlan=%s" % vid], root_helper=self.root_helper)
         self.mox.ReplayAll()
 
         self.br.delete_flows(in_port=ofport)
@@ -165,18 +176,22 @@ class OVS_Lib_Test(unittest.TestCase):
         ip = "9.9.9.9"
         ofport = "6"
 
-        self.br.run_cmd(["ovs-vsctl", self.TO, "add-port",
-                         self.BR_NAME, pname])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "type=gre"])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "options:remote_ip=" + ip])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "options:in_key=flow"])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "options:out_key=flow"])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "get", "Interface",
-                         pname, "ofport"]).AndReturn(ofport)
+        utils.execute(["ovs-vsctl", self.TO, "add-port",
+                      self.BR_NAME, pname], root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                      pname, "type=gre"], root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                      pname, "options:remote_ip=" + ip],
+                      root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                      pname, "options:in_key=flow"],
+                      root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                      pname, "options:out_key=flow"],
+                      root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                      "Interface", pname, "ofport"],
+                      root_helper=self.root_helper).AndReturn(ofport)
         self.mox.ReplayAll()
 
         self.assertEqual(self.br.add_tunnel_port(pname, ip), ofport)
@@ -187,14 +202,16 @@ class OVS_Lib_Test(unittest.TestCase):
         peer = "bar10"
         ofport = "6"
 
-        self.br.run_cmd(["ovs-vsctl", self.TO, "add-port",
-                         self.BR_NAME, pname])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "type=patch"])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "set", "Interface",
-                         pname, "options:peer=" + peer])
-        self.br.run_cmd(["ovs-vsctl", self.TO, "get", "Interface",
-                         pname, "ofport"]).AndReturn(ofport)
+        utils.execute(["ovs-vsctl", self.TO, "add-port",
+                      self.BR_NAME, pname], root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                      pname, "type=patch"], root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set",
+                      "Interface", pname, "options:peer=" + peer],
+                      root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                      "Interface", pname, "ofport"],
+                      root_helper=self.root_helper).AndReturn(ofport)
         self.mox.ReplayAll()
 
         self.assertEqual(self.br.add_patch_port(pname, peer), ofport)
@@ -206,8 +223,8 @@ class OVS_Lib_Test(unittest.TestCase):
         vif_id = str(uuid.uuid4())
         mac = "ca:fe:de:ad:be:ef"
 
-        self.br.run_cmd(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME]).\
-            AndReturn("%s\n" % pname)
+        utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                      root_helper=self.root_helper).AndReturn("%s\n" % pname)
 
         if is_xen:
             external_ids = ('{xs-vif-uuid="%s", attached-mac="%s"}'
@@ -216,14 +233,16 @@ class OVS_Lib_Test(unittest.TestCase):
             external_ids = ('{iface-id="%s", attached-mac="%s"}'
                             % (vif_id, mac))
 
-        self.br.run_cmd(["ovs-vsctl", self.TO, "get", "Interface",
-                         pname, "external_ids"]).AndReturn(external_ids)
-        self.br.run_cmd(["ovs-vsctl", self.TO, "get", "Interface",
-                         pname, "ofport"]).AndReturn(ofport)
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                      "Interface", pname, "external_ids"],
+                      root_helper=self.root_helper).AndReturn(external_ids)
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                      "Interface", pname, "ofport"],
+                      root_helper=self.root_helper).AndReturn(ofport)
         if is_xen:
-            self.br.run_cmd(["xe", "vif-param-get", "param-name=other-config",
-                             "param-key=nicira-iface-id", "uuid=" + vif_id]).\
-                            AndReturn(vif_id)
+            utils.execute(["xe", "vif-param-get", "param-name=other-config",
+                          "param-key=nicira-iface-id", "uuid=" + vif_id],
+                          root_helper=self.root_helper).AndReturn(vif_id)
         self.mox.ReplayAll()
 
         ports = self.br.get_vif_ports()
@@ -243,8 +262,8 @@ class OVS_Lib_Test(unittest.TestCase):
 
     def test_clear_db_attribute(self):
         pname = "tap77"
-        self.br.run_cmd(["ovs-vsctl", self.TO, "clear", "Port",
-                        pname, "tag"])
+        utils.execute(["ovs-vsctl", self.TO, "clear", "Port",
+                      pname, "tag"], root_helper=self.root_helper)
         self.mox.ReplayAll()
         self.br.clear_db_attribute("Port", pname, "tag")
         self.mox.VerifyAll()

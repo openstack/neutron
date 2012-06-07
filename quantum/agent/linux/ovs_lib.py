@@ -23,6 +23,8 @@ import shlex
 import signal
 import subprocess
 
+from quantum.agent.linux import utils
+
 LOG = logging.getLogger(__name__)
 
 
@@ -46,18 +48,9 @@ class OVSBridge:
         self.br_name = br_name
         self.root_helper = root_helper
 
-    def run_cmd(self, args):
-        cmd = shlex.split(self.root_helper) + args
-        LOG.debug("## running command: " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        retval = p.communicate()[0]
-        if p.returncode == -(signal.SIGALRM):
-            LOG.debug("## timeout running command: " + " ".join(cmd))
-        return retval
-
     def run_vsctl(self, args):
         full_args = ["ovs-vsctl", "--timeout=2"] + args
-        return self.run_cmd(full_args)
+        return utils.execute(full_args, root_helper=self.root_helper)
 
     def reset_bridge(self):
         self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
@@ -77,7 +70,7 @@ class OVSBridge:
 
     def run_ofctl(self, cmd, args):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
-        return self.run_cmd(full_args)
+        return utils.execute(full_args, root_helper=self.root_helper)
 
     def count_flows(self):
         flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
@@ -183,13 +176,10 @@ class OVSBridge:
         return self.db_get_map("Interface", port_name, "statistics")
 
     def get_xapi_iface_id(self, xs_vif_uuid):
-        return self.run_cmd([
-            "xe",
-            "vif-param-get",
-            "param-name=other-config",
-            "param-key=nicira-iface-id",
-            "uuid=%s" % xs_vif_uuid,
-            ]).strip()
+        return utils.execute(["xe", "vif-param-get", "param-name=other-config",
+                              "param-key=nicira-iface-id",
+                              "uuid=%s" % xs_vif_uuid],
+                              root_helper=self.root_helper).strip()
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):

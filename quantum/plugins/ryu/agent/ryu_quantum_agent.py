@@ -33,6 +33,7 @@ from ryu.app import rest_nw_id
 from ryu.app.client import OFPClient
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
+from quantum.agent.linux import utils
 
 OP_STATUS_UP = "UP"
 OP_STATUS_DOWN = "DOWN"
@@ -73,17 +74,9 @@ class OVSBridge:
         dp_id = res.strip().strip('"')
         self.datapath_id = dp_id
 
-    def run_cmd(self, args):
-        cmd = shlex.split(self.root_helper) + args
-        pipe = Popen(cmd, stdout=PIPE)
-        retval = pipe.communicate()[0]
-        if pipe.returncode == -(signal.SIGALRM):
-            LOG.debug("## timeout running command: " + " ".join(cmd))
-        return retval
-
     def run_vsctl(self, args):
         full_args = ["ovs-vsctl", "--timeout=2"] + args
-        return self.run_cmd(full_args)
+        return utils.execute(full_args, root_helper=self.root_helper)
 
     def set_controller(self, target):
         methods = ("ssl", "tcp", "unix", "pssl", "ptcp", "punix")
@@ -115,12 +108,11 @@ class OVSBridge:
         return res.split("\n")[:-1]
 
     def get_xapi_iface_id(self, xs_vif_uuid):
-        return self.run_cmd(
-            ["xe",
-             "vif-param-get",
-             "param-name=other-config",
-             "param-key=nicira-iface-id",
-             "uuid=%s" % xs_vif_uuid]).strip()
+        return utils.execute(["xe", "vif-param-get",
+                              "param-name=other-config",
+                              "param-key=nicira-iface-id",
+                              "uuid=%s" % xs_vif_uuid],
+                              root_helper=self.root_helper).strip()
 
     def _vifport(self, name, external_ids):
         ofport = self.db_get_val("Interface", name, "ofport")

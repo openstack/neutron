@@ -33,9 +33,9 @@ import time
 
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
-from quantum.common import exceptions as exception
 from quantum.plugins.linuxbridge.common import config
 
+from quantum.agent.linux import utils
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -64,24 +64,10 @@ class LinuxBridge:
         self.physical_interface = physical_interface
         self.root_helper = root_helper
 
-    def run_cmd(self, args, check_return=False):
-        cmd = shlex.split(self.root_helper) + args
-        LOG.debug("Running command: " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        retval = p.communicate()[0]
-        if p.returncode == -(signal.SIGALRM):
-            LOG.debug("Timeout running command: " + " ".join(cmd))
-        if retval:
-            LOG.debug("Command returned: %s" % retval)
-        if (p.returncode != 0 and check_return):
-            msg = "Command failed: " + " ".join(cmd)
-            LOG.debug(msg)
-            raise exception.ProcessExecutionError(msg)
-        return retval
-
     def device_exists(self, device):
         """Check if ethernet device exists."""
-        retval = self.run_cmd(['ip', 'link', 'show', 'dev', device])
+        retval = utils.execute(['ip', 'link', 'show',
+                                'dev', device], root_wrapper=self.root_helper)
         if retval:
             return True
         else:
@@ -124,7 +110,7 @@ class LinuxBridge:
 
     def _get_prefixed_ip_link_devices(self, prefix):
         prefixed_devices = []
-        retval = self.run_cmd(['ip', 'link'])
+        retval = utils.execute(['ip', 'link'], root_wrapper=self.root_helper)
         rows = retval.split('\n')
         for row in rows:
             values = row.split(':')
@@ -136,7 +122,7 @@ class LinuxBridge:
 
     def _get_prefixed_tap_devices(self, prefix):
         prefixed_devices = []
-        retval = self.run_cmd(['ip', 'tuntap'], check_return=True)
+        retval = utils.execute(['ip', 'tuntap'], root_wrapper=self.root_helper)
         rows = retval.split('\n')
         for row in rows:
             split_row = row.split(':')
@@ -147,13 +133,13 @@ class LinuxBridge:
     def get_all_tap_devices(self):
         try:
             return self._get_prefixed_tap_devices(TAP_INTERFACE_PREFIX)
-        except exception.ProcessExecutionError:
+        except RuntimeError:
             return self._get_prefixed_ip_link_devices(TAP_INTERFACE_PREFIX)
 
     def get_all_gateway_devices(self):
         try:
             return self._get_prefixed_tap_devices(GATEWAY_INTERFACE_PREFIX)
-        except exception.ProcessExecutionError:
+        except RuntimeError:
             return self._get_prefixed_ip_link_devices(GATEWAY_INTERFACE_PREFIX)
 
     def get_bridge_for_tap_device(self, tap_device_name):
@@ -186,12 +172,13 @@ class LinuxBridge:
         if not self.device_exists(interface):
             LOG.debug("Creating subinterface %s for VLAN %s on interface %s" %
                       (interface, vlan_id, self.physical_interface))
-            if self.run_cmd(['ip', 'link', 'add', 'link',
+            if utils.execute(['ip', 'link', 'add', 'link',
                              self.physical_interface,
                              'name', interface, 'type', 'vlan', 'id',
-                             vlan_id]):
+                             vlan_id], root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['ip', 'link', 'set', interface, 'up']):
+            if utils.execute(['ip', 'link', 'set',
+                             interface, 'up'], root_wrapper=self.root_helper):
                 return
             LOG.debug("Done creating subinterface %s" % interface)
         return interface
@@ -203,18 +190,23 @@ class LinuxBridge:
         if not self.device_exists(bridge_name):
             LOG.debug("Starting bridge %s for subinterface %s" % (bridge_name,
                                                                   interface))
-            if self.run_cmd(['brctl', 'addbr', bridge_name]):
+            if utils.execute(['brctl', 'addbr', bridge_name],
+                             root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['brctl', 'setfd', bridge_name, str(0)]):
+            if utils.execute(['brctl', 'setfd', bridge_name,
+                             str(0)], root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['brctl', 'stp', bridge_name, 'off']):
+            if utils.execute(['brctl', 'stp', bridge_name,
+                             'off'], root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['ip', 'link', 'set', bridge_name, 'up']):
+            if utils.execute(['ip', 'link', 'set', bridge_name,
+                             'up'], root_wrapper=self.root_helper):
                 return
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
 
-        self.run_cmd(['brctl', 'addif', bridge_name, interface])
+        utils.execute(['brctl', 'addif', bridge_name, interface],
+                      root_wrapper=self.root_helper)
 
     def add_tap_interface(self, network_id, vlan_id, tap_device_name):
         """
@@ -236,12 +228,13 @@ class LinuxBridge:
         LOG.debug("Adding device %s to bridge %s" % (tap_device_name,
                                                      bridge_name))
         if current_bridge_name:
-            if self.run_cmd(['brctl', 'delif', current_bridge_name,
-                             tap_device_name]):
+            if utils.execute(['brctl', 'delif', current_bridge_name,
+                             tap_device_name], root_wrapper=self.root_helper):
                 return False
 
         self.ensure_vlan_bridge(network_id, vlan_id)
-        if self.run_cmd(['brctl', 'addif', bridge_name, tap_device_name]):
+        if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
+                         root_wrapper=self.root_helper):
             return False
         LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
                                                           bridge_name))
@@ -269,9 +262,11 @@ class LinuxBridge:
                     self.delete_vlan(interface)
 
             LOG.debug("Deleting bridge %s" % bridge_name)
-            if self.run_cmd(['ip', 'link', 'set', bridge_name, 'down']):
+            if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
+                             root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['brctl', 'delbr', bridge_name]):
+            if utils.execute(['brctl', 'delbr', bridge_name],
+                             root_wrapper=self.root_helper):
                 return
             LOG.debug("Done deleting bridge %s" % bridge_name)
 
@@ -284,7 +279,8 @@ class LinuxBridge:
                 return True
             LOG.debug("Removing device %s from bridge %s" %
                       (interface_name, bridge_name))
-            if self.run_cmd(['brctl', 'delif', bridge_name, interface_name]):
+            if utils.execute(['brctl', 'delif', bridge_name, interface_name],
+                             root_wrapper=self.root_helper):
                 return False
             LOG.debug("Done removing device %s from bridge %s" %
                       (interface_name, bridge_name))
@@ -297,9 +293,11 @@ class LinuxBridge:
     def delete_vlan(self, interface):
         if self.device_exists(interface):
             LOG.debug("Deleting subinterface %s for vlan" % interface)
-            if self.run_cmd(['ip', 'link', 'set', interface, 'down']):
+            if utils.execute(['ip', 'link', 'set', interface, 'down'],
+                             root_wrapper=self.root_helper):
                 return
-            if self.run_cmd(['ip', 'link', 'delete', interface]):
+            if utils.execute(['ip', 'link', 'delete', interface],
+                             root_wrapper=self.root_helper):
                 return
             LOG.debug("Done deleting subinterface %s" % interface)
 
