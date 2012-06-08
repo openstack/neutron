@@ -38,11 +38,9 @@
 #    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import logging
-import os
 import sys
 import unittest
 
-from nose import config
 from nose import core
 from nose import result
 

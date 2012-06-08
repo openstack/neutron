@@ -16,7 +16,6 @@
 #
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import os
 import unittest
 
 import mox

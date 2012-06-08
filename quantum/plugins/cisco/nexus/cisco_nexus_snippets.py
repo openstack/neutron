@@ -22,8 +22,6 @@ Nexus-OS XML-based configuration snippets
 
 import logging
 
-from quantum.plugins.cisco.common import cisco_constants as const
-
 
 LOG = logging.getLogger(__name__)
 

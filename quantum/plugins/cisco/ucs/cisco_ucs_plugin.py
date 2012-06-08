@@ -19,7 +19,6 @@
 
 import logging
 
-from quantum.common import exceptions as exc
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred

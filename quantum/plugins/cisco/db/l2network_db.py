@@ -24,9 +24,6 @@ from quantum.plugins.cisco.db import l2network_models
 
 import logging as LOG
 import quantum.plugins.cisco.db.api as db
-import quantum.plugins.cisco.db.nexus_db as ndb
-import quantum.plugins.cisco.db.ucs_db as udb
-import quantum.plugins.cisco.db.services_db as sdb
 
 
 def initialize():

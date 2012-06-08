@@ -26,8 +26,6 @@ import logging
 from xml.etree import ElementTree as et
 
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.ucs import cisco_getvif as gvif
 
 
 LOG = logging.getLogger(__name__)

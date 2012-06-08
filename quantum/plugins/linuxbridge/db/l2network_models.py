@@ -15,12 +15,8 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import uuid
-
 from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.orm import relation, object_mapper
 
-from quantum.db import models
 from quantum.db.models import BASE
 from quantum.db.models import QuantumBase
 

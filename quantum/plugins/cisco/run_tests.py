@@ -33,7 +33,6 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(__file__))
 
 from quantum.common.test_lib import run_tests, test_config
-import quantum.tests.unit
 
 
 def main():

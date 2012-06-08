@@ -22,7 +22,6 @@ from sqlalchemy.orm import exc
 
 import quantum.plugins.cisco.db.api as db
 
-from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.db import services_models
 
 

@@ -25,10 +25,8 @@ To run all tests::
     PLUGIN_DIR=quantum/plugins/openvswitch ./run_tests.sh
 """
 
-import logging
 import os
 import sys
-import unittest
 
 from nose import config
 from nose import core
@@ -38,7 +36,6 @@ sys.path.append(os.path.dirname(__file__))
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common.test_lib import run_tests, test_config
-from quantum.plugins.openvswitch.tests.unit.test_vlan_map import VlanMapTest
 import quantum.tests.unit
 
 

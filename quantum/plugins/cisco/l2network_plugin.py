@@ -18,7 +18,6 @@
 
 import inspect
 import logging
-import re
 
 from quantum.common import exceptions as exc
 from quantum.openstack.common import importutils
