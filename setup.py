@@ -12,24 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from setuptools import setup, find_packages
+import setuptools
 
-from quantum.openstack.common.setup import generate_authors
-from quantum.openstack.common.setup import parse_requirements
-from quantum.openstack.common.setup import parse_dependency_links
-from quantum.openstack.common.setup import write_requirements
-from quantum.openstack.common.setup import write_git_changelog
-from quantum.openstack.common.setup import write_vcsversion
+from quantum.openstack.common import setup
 
-
-requires = parse_requirements()
-depend_links = parse_dependency_links()
-write_requirements()
-write_git_changelog()
-write_vcsversion('quantum/vcsversion.py')
-generate_authors()
+setup.write_vcsversion('quantum/vcsversion.py')
 
 from quantum import version
+
+requires = setup.parse_requirements()
+depend_links = setup.parse_dependency_links()
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
@@ -77,7 +69,7 @@ DataFiles = [
     (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
 ]
 
-setup(
+setuptools.setup(
     name=Name,
     version=Version,
     url=Url,
@@ -90,7 +82,8 @@ setup(
     install_requires=requires,
     dependency_links=depend_links,
     include_package_data=False,
-    packages=find_packages('.'),
+    packages=setuptools.find_packages('.'),
+    cmdclass=setup.get_cmdclass(),
     data_files=DataFiles,
     eager_resources=EagerResources,
     entry_points={
