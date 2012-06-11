@@ -55,9 +55,6 @@ if __name__ == '__main__':
     # patch modules for ryu.app.client and ryu.app.rest_nw_id
     # With those, plugin can be tested without ryu installed
     with patch_fake_ryu_client():
-        # to find quantum/etc/plugin/ryu/ryu.ini before chdir()
-        import ryu_quantum_plugin
-
         c = config.Config(stream=sys.stdout,
                           env=os.environ,
                           verbosity=3,

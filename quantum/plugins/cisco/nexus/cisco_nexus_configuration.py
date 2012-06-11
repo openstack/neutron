@@ -22,7 +22,6 @@ Configuration consolidation for the Nexus Driver
 This module will export the configuration parameters
 from the nexus.ini file
 """
-import os
 
 from quantum.common.config import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp

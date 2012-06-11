@@ -16,7 +16,6 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import os
 import logging as LOG
 
 from quantum.common.config import find_config_file

@@ -18,8 +18,6 @@
 
 from configobj import ConfigObj
 
-from quantum.plugins.cisco.common import cisco_constants as const
-
 
 class CiscoConfigParser(ConfigObj):
     """Config Parser based on the ConfigObj module"""

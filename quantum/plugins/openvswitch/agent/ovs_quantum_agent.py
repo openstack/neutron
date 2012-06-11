@@ -21,11 +21,9 @@
 
 import logging
 from optparse import OptionParser
-import signal
 import sys
 import time
 
-import sqlalchemy
 from sqlalchemy.ext import sqlsoup
 
 from quantum.agent.linux import ovs_lib

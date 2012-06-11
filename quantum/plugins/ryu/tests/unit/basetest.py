@@ -20,7 +20,6 @@ import stubout
 import unittest
 
 import quantum.db.api as db
-import quantum.plugins.ryu.db.models    # for ryu specific tables
 from quantum.plugins.ryu.tests.unit import utils
 
 

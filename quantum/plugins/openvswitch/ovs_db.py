@@ -20,7 +20,6 @@
 from sqlalchemy.orm import exc
 
 import quantum.db.api as db
-import quantum.db.models as models
 from quantum.plugins.openvswitch import ovs_models
 
 

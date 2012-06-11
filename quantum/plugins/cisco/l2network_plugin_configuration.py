@@ -17,8 +17,6 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import os
-
 from quantum.common.config import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 

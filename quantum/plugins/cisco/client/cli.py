@@ -29,9 +29,7 @@ import logging.handlers
 from optparse import OptionParser
 import os
 import sys
-import subprocess
 
-from quantum.plugins.cisco.common import cisco_constants as const
 from quantumclient import Client
 import quantumclient.cli as qcli
 

@@ -19,9 +19,7 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
 import logging
-from optparse import OptionParser
 import os
-import sys
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc

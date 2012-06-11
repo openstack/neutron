@@ -27,7 +27,6 @@ from nova import flags
 from nova import log as logging
 from nova.openstack.common import cfg
 from nova.scheduler import chance
-from nova.scheduler import driver
 from quantumclient import Client
 
 

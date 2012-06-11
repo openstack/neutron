@@ -19,7 +19,7 @@
 import unittest
 
 from lxml import etree
-from webob import exc, request
+from webob import exc
 
 import quantum.api.attachments as atts
 import quantum.api.networks as nets
