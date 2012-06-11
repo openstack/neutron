@@ -25,6 +25,7 @@ import sys
 
 from quantum import service
 from quantum.common import config
+from quantum.version import version_string
 
 
 def create_options(parser):
@@ -38,7 +39,7 @@ def create_options(parser):
 
 
 def main():
-    oparser = optparse.OptionParser(version='%%prog VERSION')
+    oparser = optparse.OptionParser(version='%prog ' + version_string())
     create_options(oparser)
     (options, args) = config.parse_options(oparser)
 
