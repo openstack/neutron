@@ -1,6 +1,6 @@
 distribute>=0.6.24
 coverage
-mock>=0.7.1
+mock>=0.8
 mox==0.5.3
 nose
 nosexcover

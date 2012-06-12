@@ -21,51 +21,16 @@
 import uuid
 
 from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relation, object_mapper
+from sqlalchemy.orm import relation
 
 from quantum.api import api_common as common
+from quantum.db import model_base
 
 
-BASE = declarative_base()
+BASE = model_base.BASE
 
 
-class QuantumBase(object):
-    """Base class for Quantum Models."""
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
-    def __iter__(self):
-        self._i = iter(object_mapper(self).columns)
-        return self
-
-    def next(self):
-        n = self._i.next().name
-        return n, getattr(self, n)
-
-    def update(self, values):
-        """Make the model object behave like a dict"""
-        for k, v in values.iteritems():
-            setattr(self, k, v)
-
-    def iteritems(self):
-        """Make the model object behave like a dict.
-        Includes attributes from joins."""
-        local = dict(self)
-        joined = dict([(k, v) for k, v in self.__dict__.iteritems()
-                       if not k[0] == '_'])
-        local.update(joined)
-        return local.iteritems()
-
-
-class Port(BASE, QuantumBase):
+class Port(model_base.BASE):
     """Represents a port on a quantum network"""
     __tablename__ = 'ports'
 
@@ -90,7 +55,7 @@ class Port(BASE, QuantumBase):
                                            self.interface_id)
 
 
-class Network(BASE, QuantumBase):
+class Network(model_base.BASE):
     """Represents a quantum network"""
     __tablename__ = 'networks'
 
