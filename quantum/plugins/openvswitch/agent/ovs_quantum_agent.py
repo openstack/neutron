@@ -133,7 +133,7 @@ class OVSQuantumAgent(object):
             all_bindings = {}
             try:
                 ports = db.ports.all()
-            except Exception as e:
+            except Exception, e:
                 LOG.info("Unable to get port bindings! Exception: %s" % e)
                 db_connected = False
                 continue
@@ -144,7 +144,7 @@ class OVSQuantumAgent(object):
             vlan_bindings = {}
             try:
                 vlan_binds = db.vlan_bindings.all()
-            except Exception as e:
+            except Exception, e:
                 LOG.info("Unable to get vlan bindings! Exception: %s" % e)
                 db_connected = False
                 continue
@@ -203,7 +203,7 @@ class OVSQuantumAgent(object):
             old_local_bindings = new_local_bindings
             try:
                 db.commit()
-            except Exception as e:
+            except Exception, e:
                 LOG.info("Unable to commit to database! Exception: %s" % e)
                 db.rollback()
                 old_local_bindings = {}
