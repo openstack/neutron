@@ -36,6 +36,7 @@ PY_VERSION = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
 
 VENV_EXISTS = bool(os.path.exists(VENV))
 
+
 def die(message, *args):
     print >> sys.stderr, message % args
     sys.exit(1)
@@ -67,7 +68,7 @@ def check_dependencies():
     """Make sure virtualenv is in the path."""
 
     if not HAS_VIRTUALENV:
-        raise Exception('Virtualenv not found. ' + \
+        raise Exception('Virtualenv not found. ' +
                          'Try installing python-virtualenv')
     print 'done.'
 

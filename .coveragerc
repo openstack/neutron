@@ -1,0 +1,6 @@
+[run]
+branch = True
+omit = /usr*,setup.py,*egg*,.venv/*,.tox/*,quantum/tests/*
+
+[report]
+ignore-errors = True
