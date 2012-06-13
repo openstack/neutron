@@ -93,11 +93,11 @@ def verbose(request):
 
 
 class Controller(object):
-    def __init__(self, plugin, collection, resource, params):
+    def __init__(self, plugin, collection, resource, attr_info):
         self._plugin = plugin
         self._collection = collection
         self._resource = resource
-        self._params = params
+        self._attr_info = attr_info
         self._view = getattr(views, self._resource)
 
     def _items(self, request):
@@ -129,7 +129,9 @@ class Controller(object):
 
     def create(self, request, body=None):
         """Creates a new instance of the requested entity"""
-        body = self._prepare_request_body(body, allow_bulk=True)
+
+        body = self._prepare_request_body(request.context, body, True,
+                                          allow_bulk=True)
         obj_creator = getattr(self._plugin,
                               "create_%s" % self._resource)
         kwargs = {self._resource: body}
@@ -144,15 +146,39 @@ class Controller(object):
 
     def update(self, request, id, body=None):
         """Updates the specified entity's attributes"""
+        body = self._prepare_request_body(request.context, body, False)
         obj_updater = getattr(self._plugin,
                               "update_%s" % self._resource)
         kwargs = {self._resource: body}
         obj = obj_updater(request.context, id, **kwargs)
         return {self._resource: self._view(obj)}
 
-    def _prepare_request_body(self, body, allow_bulk=False):
-        """ verifies required parameters are in request body.
-            Parameters with default values are considered to be
+    def _populate_tenant_id(self, context, res_dict, is_create):
+
+        if self._resource not in ['network', 'port']:
+            return
+
+        if ('tenant_id' in res_dict and
+            res_dict['tenant_id'] != context.tenant_id and
+            not context.is_admin):
+            msg = _("Specifying 'tenant_id' other than authenticated"
+                    "tenant in request requires admin privileges")
+            raise webob.exc.HTTPBadRequest(msg)
+
+        if is_create and 'tenant_id' not in res_dict:
+            if context.tenant_id:
+                res_dict['tenant_id'] = context.tenant_id
+            else:
+                msg = _("Running without keystyone AuthN requires "
+                    " that tenant_id is specified")
+                raise webob.exc.HTTPBadRequest(msg)
+
+    def _prepare_request_body(self, context, body, is_create,
+                              allow_bulk=False):
+        """ verifies required attributes are in request body, and that
+            an attribute is only specified if it is allowed for the given
+            operation (create/update).
+            Attribute with default values are considered to be
             optional.
 
             body argument must be the deserialized body
@@ -163,9 +189,11 @@ class Controller(object):
         body = body or {self._resource: {}}
 
         if self._collection in body and allow_bulk:
-            bulk_body = [self._prepare_request_body({self._resource: b})
+            bulk_body = [self._prepare_request_body(context,
+                                                    {self._resource: b},
+                                                    is_create)
                          if self._resource not in b
-                         else self._prepare_request_body(b)
+                         else self._prepare_request_body(context, b, is_create)
                          for b in body[self._collection]]
 
             if not bulk_body:
@@ -181,13 +209,31 @@ class Controller(object):
             msg = _("Unable to find '%s' in request body") % self._resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        for param in self._params:
-            param_value = res_dict.get(param['attr'], param.get('default'))
-            if param_value is None:
-                msg = _("Failed to parse request. Parameter %s not "
-                        "specified") % param
-                raise webob.exc.HTTPUnprocessableEntity(msg)
-            res_dict[param['attr']] = param_value
+        self._populate_tenant_id(context, res_dict, is_create)
+
+        if is_create:  # POST
+            for attr, attr_vals in self._attr_info.iteritems():
+                is_required = ('default' not in attr_vals and
+                               attr_vals['allow_post'])
+                if is_required and attr not in res_dict:
+                    msg = _("Failed to parse request. Required "
+                            " attribute '%s' not specified") % attr
+                    raise webob.exc.HTTPUnprocessableEntity(msg)
+
+                if not attr_vals['allow_post'] and attr in res_dict:
+                    msg = _("Attribute '%s' not allowed in POST" % attr)
+                    raise webob.exc.HTTPUnprocessableEntity(msg)
+
+                if attr_vals['allow_post']:
+                    res_dict[attr] = res_dict.get(attr,
+                                                  attr_vals.get('default'))
+
+        else:  # PUT
+            for attr, attr_vals in self._attr_info.iteritems():
+                if attr in res_dict and not attr_vals['allow_put']:
+                    msg = _("Cannot update read-only attribute %s") % attr
+                    raise webob.exc.HTTPUnprocessableEntity(msg)
+
         return body
 
 

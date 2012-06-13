@@ -14,11 +14,14 @@
 # limitations under the License.
 
 import logging
+import random
 
+import netaddr
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from quantum import quantum_plugin_base_v2
+from quantum.api.v2 import router as api_router
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
@@ -132,7 +135,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'name': network['name'],
                'tenant_id': network['tenant_id'],
                'admin_state_up': network['admin_state_up'],
-               'op_status': network['op_status'],
+               'status': network['status'],
                'subnets': [subnet['id']
                             for subnet in network['subnets']]}
 
@@ -141,9 +144,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def _make_subnet_dict(self, subnet, fields=None):
         res = {'id': subnet['id'],
                'network_id': subnet['network_id'],
-               'tenant_id': subnet['tenant_id'],
                'ip_version': subnet['ip_version'],
-               'prefix': subnet['prefix'],
+               'cidr': subnet['cidr'],
                'gateway_ip': subnet['gateway_ip']}
         return self._fields(res, fields)
 
@@ -153,7 +155,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'tenant_id': port['tenant_id'],
                "mac_address": port["mac_address"],
                "admin_state_up": port["admin_state_up"],
-               "op_status": port["op_status"],
+               "status": port["status"],
                "fixed_ips": [ip["address"] for ip in port["fixed_ips"]],
                "device_id": port["device_id"]}
         return self._fields(res, fields)
@@ -168,7 +170,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             network = models_v2.Network(tenant_id=tenant_id,
                                         name=n['name'],
                                         admin_state_up=n['admin_state_up'],
-                                        op_status="ACTIVE")
+                                        status="ACTIVE")
             context.session.add(network)
         return self._make_network_dict(network)
 
@@ -204,14 +206,15 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
-        # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
-        #                unneeded db action if the operation raises
-        tenant_id = self._get_tenant_id_for_create(context, s)
+
+        if s['gateway_ip'] == api_router.ATTR_NOT_SPECIFIED:
+            net = netaddr.IPNetwork(s['cidr'])
+            s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
+
         with context.session.begin():
-            subnet = models_v2.Subnet(tenant_id=tenant_id,
-                                      network_id=s['network_id'],
+            subnet = models_v2.Subnet(network_id=s['network_id'],
                                       ip_version=s['ip_version'],
-                                      prefix=s['prefix'],
+                                      cidr=s['cidr'],
                                       gateway_ip=s['gateway_ip'])
 
             context.session.add(subnet)
@@ -249,16 +252,22 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
 
-        #FIXME(danwent): allocate MAC
-        mac_address = p.get('mac_address', 'ca:fe:de:ad:be:ef')
+        if p['mac_address'] == api_router.ATTR_NOT_SPECIFIED:
+            #FIXME(danwent): this is exact Nova mac generation logic
+            # we will want to provide more flexibility and to check
+            # for uniqueness.
+            mac = [0xfa, 0x16, 0x3e, random.randint(0x00, 0x7f),
+                   random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+            p['mac_address'] = ':'.join(map(lambda x: "%02x" % x, mac))
+
         with context.session.begin():
             network = self._get_network(context, p["network_id"])
 
             port = models_v2.Port(tenant_id=tenant_id,
                                   network_id=p['network_id'],
-                                  mac_address=mac_address,
+                                  mac_address=p['mac_address'],
                                   admin_state_up=p['admin_state_up'],
-                                  op_status="ACTIVE",
+                                  status="ACTIVE",
                                   device_id=p['device_id'])
             context.session.add(port)
 

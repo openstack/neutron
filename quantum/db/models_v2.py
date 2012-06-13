@@ -43,18 +43,18 @@ class Port(model_base.BASEV2, HasTenant):
     fixed_ips = orm.relationship(IPAllocation, backref='ports')
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
-    op_status = sa.Column(sa.String(16), nullable=False)
+    status = sa.Column(sa.String(16), nullable=False)
     device_id = sa.Column(sa.String(255), nullable=False)
 
 
-class Subnet(model_base.BASEV2, HasTenant):
+class Subnet(model_base.BASEV2):
     """Represents a quantum subnet"""
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
     allocations = orm.relationship(IPAllocation,
                                    backref=orm.backref('subnet',
                                                        uselist=False))
     ip_version = sa.Column(sa.Integer, nullable=False)
-    prefix = sa.Column(sa.String(255), nullable=False)
+    cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(255))
 
     #TODO(danwent):
@@ -68,5 +68,5 @@ class Network(model_base.BASEV2, HasTenant):
     name = sa.Column(sa.String(255))
     ports = orm.relationship(Port, backref='networks')
     subnets = orm.relationship(Subnet, backref='networks')
-    op_status = sa.Column(sa.String(16))
+    status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)

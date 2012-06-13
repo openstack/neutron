@@ -39,19 +39,20 @@ class QuantumPluginBaseV2(object):
                           is bound.
             "ip_version": integer indicating IP protocol version.
                           example: 4
-            "prefix": string indicating IP prefix indicating addresses
-                      that can be allocated for devices on this subnet.
-                      example: "10.0.0.0/24"
+            "cidr": string indicating IP prefix indicating addresses
+                    that can be allocated for devices on this subnet.
+                    example: "10.0.0.0/24"
             "gateway_ip": string indicating the default gateway
                           for devices on this subnet. example: "10.0.0.1"
             "dns_nameservers": list of strings stricting indication the
                                DNS name servers for devices on this
                                subnet.  example: [ "8.8.8.8", "8.8.4.4" ]
-            "excluded_ranges" : list of dicts indicating pairs of IPs that
-                                should not be allocated from the prefix.
+            "reserved_ranges" : list of dicts indicating pairs of IPs that
+                                should not be automatically allocated from
+                                the prefix.
                                 example: [ { "start" : "10.0.0.2",
                                              "end" : "10.0.0.5" } ]
-            "additional_routes": list of dicts indicating routes beyond
+            "additional_host_routes": list of dicts indicating routes beyond
                                  the default gateway and local prefix route
                                  that should be injected into the device.
                                  example: [{"destination": "192.168.0.0/16",

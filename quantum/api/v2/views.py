@@ -22,13 +22,13 @@ def resource(data, keys):
 def port(port_data):
     """Represents a view for a port object"""
     keys = ('id', 'network_id', 'mac_address', 'fixed_ips',
-            'device_id', 'admin_state_up', 'tenant_id', 'op_status')
+            'device_id', 'admin_state_up', 'tenant_id', 'status')
     return resource(port_data, keys)
 
 
 def network(network_data):
     """Represents a view for a network object"""
-    keys = ('id', 'name', 'subnets', 'admin_state_up', 'op_status',
+    keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
             'tenant_id', 'mac_ranges')
     return resource(network_data, keys)
 
@@ -36,5 +36,5 @@ def network(network_data):
 def subnet(subnet_data):
     """Represents a view for a subnet object"""
     keys = ('id', 'network_id', 'tenant_id', 'gateway_ip', 'ip_version',
-            'prefix')
+            'cidr')
     return resource(subnet_data, keys)

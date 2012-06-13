@@ -21,6 +21,7 @@ import webtest
 
 from webob import exc
 
+from quantum import context
 from quantum.common import exceptions as q_exc
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
@@ -28,6 +29,10 @@ from quantum.api.v2 import views
 
 
 LOG = logging.getLogger(__name__)
+
+
+def _uuid():
+    return str(uuid.uuid4())
 
 
 def _get_path(resource, id=None, fmt=None):
@@ -354,27 +359,107 @@ class APIv2TestCase(unittest.TestCase):
                                                       verbose=True)
 
 
+# Note: since all resources use the same controller and validation
+# logic, we actually get really good coverage from testing just networks.
 class JSONV2TestCase(APIv2TestCase):
     def test_list(self):
-        return_value = [{'network': {'name': 'net1',
-                                     'admin_state_up': True,
-                                     'subnets': []}}]
+        input_dict = {'id': str(uuid.uuid4()),
+                      'name': 'net1',
+                      'admin_state_up': True,
+                      'status': "ACTIVE",
+                      'tenant_id': str(uuid.uuid4()),
+                      'subnets': []}
+        return_value = [input_dict]
         instance = self.plugin.return_value
         instance.get_networks.return_value = return_value
 
         res = self.api.get(_get_path('networks'))
         self.assertTrue('networks' in res.json)
+        self.assertEqual(len(res.json['networks']), 1)
+        output_dict = res.json['networks'][0]
+        self.assertEqual(len(input_dict), len(output_dict))
+        for k, v in input_dict.iteritems():
+            self.assertEqual(v, output_dict[k])
 
     def test_create(self):
-        data = {'network': {'name': 'net1', 'admin_state_up': True}}
-        return_value = {'subnets': []}
+        net_id = _uuid()
+        data = {'network': {'name': 'net1', 'admin_state_up': True,
+                            'tenant_id': _uuid()}}
+        return_value = {'subnets': [], 'status': "ACTIVE",
+                        'id': net_id}
         return_value.update(data['network'].copy())
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
 
         res = self.api.post_json(_get_path('networks'), data)
+
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        self.assertTrue('network' in res.json)
+        net = res.json['network']
+        self.assertEqual(net['id'], net_id)
+        self.assertEqual(net['status'], "ACTIVE")
+
+    def test_create_use_defaults(self):
+        net_id = _uuid()
+        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
+        full_input['network'].update(initial_input['network'])
+
+        return_value = {'id': net_id, 'status': "ACTIVE"}
+        return_value.update(full_input['network'])
+
+        instance = self.plugin.return_value
+        instance.create_network.return_value = return_value
+
+        res = self.api.post_json(_get_path('networks'), initial_input)
+
+        instance.create_network.assert_called_with(mock.ANY,
+                                                   network=full_input)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        self.assertTrue('network' in res.json)
+        net = res.json['network']
+        self.assertEqual(net['id'], net_id)
+        self.assertEqual(net['admin_state_up'], True)
+        self.assertEqual(net['status'], "ACTIVE")
+
+    def test_create_no_keystone_env(self):
+        data = {'name': 'net1'}
+        res = self.api.post_json(_get_path('networks'), data,
+                                 expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_create_with_keystone_env(self):
+        tenant_id = _uuid()
+        net_id = _uuid()
+        env = {'quantum.context': context.Context('', tenant_id)}
+        # tenant_id should be fetched from env
+        initial_input = {'network': {'name': 'net1'}}
+        full_input = {'network': {'admin_state_up': True, 'subnets': [],
+                      'tenant_id': tenant_id}}
+        full_input['network'].update(initial_input['network'])
+
+        return_value = {'id': net_id, 'status': "ACTIVE"}
+        return_value.update(full_input['network'])
+
+        instance = self.plugin.return_value
+        instance.create_network.return_value = return_value
+
+        res = self.api.post_json(_get_path('networks'), initial_input,
+                                 extra_environ=env)
+
+        instance.create_network.assert_called_with(mock.ANY,
+                                                   network=full_input)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+
+    def test_create_bad_keystone_tenant(self):
+        tenant_id = _uuid()
+        data = {'network': {'name': 'net1', 'tenant_id': tenant_id}}
+        env = {'quantum.context': context.Context('', tenant_id + "bad")}
+        res = self.api.post_json(_get_path('networks'), data,
+                                 expect_errors=True,
+                                 extra_environ=env)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_no_body(self):
         data = {'whoa': None}
@@ -388,14 +473,23 @@ class JSONV2TestCase(APIv2TestCase):
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_missing_attr(self):
-        data = {'network': {'what': 'who'}}
+        data = {'network': {'what': 'who', 'tenant_id': _uuid()}}
+        res = self.api.post_json(_get_path('networks'), data,
+                                 expect_errors=True)
+        self.assertEqual(res.status_int, 422)
+
+    def test_create_readonly_attr(self):
+        data = {'network': {'name': 'net1', 'tenant_id': _uuid(),
+                            'status': "ACTIVE"}}
         res = self.api.post_json(_get_path('networks'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
 
     def test_create_bulk(self):
-        data = {'networks': [{'name': 'net1', 'admin_state_up': True},
-                             {'name': 'net2', 'admin_state_up': True}]}
+        data = {'networks': [{'name': 'net1', 'admin_state_up': True,
+                              'tenant_id': _uuid()},
+                             {'name': 'net2', 'admin_state_up': True,
+                              'tenant_id': _uuid()}]}
 
         def side_effect(context, network):
             nets = network.copy()
@@ -416,17 +510,51 @@ class JSONV2TestCase(APIv2TestCase):
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_bulk_missing_attr(self):
-        data = {'networks': [{'what': 'who'}]}
+        data = {'networks': [{'what': 'who', 'tenant_id': _uuid()}]}
         res = self.api.post_json(_get_path('networks'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
 
     def test_create_bulk_partial_body(self):
-        data = {'networks': [{'name': 'net1', 'admin_state_up': True},
-                             {}]}
+        data = {'networks': [{'name': 'net1', 'admin_state_up': True,
+                              'tenant_id': _uuid()},
+                             {'tenant_id': _uuid()}]}
         res = self.api.post_json(_get_path('networks'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
+
+    def test_create_attr_not_specified(self):
+        net_id = _uuid()
+        tenant_id = _uuid()
+        device_id = _uuid()
+        initial_input = {'port': {'network_id': net_id, 'tenant_id': tenant_id,
+                         'device_id': device_id,
+                         'admin_state_up': True}}
+        full_input = {'port': {'admin_state_up': True,
+                               'mac_address': router.ATTR_NOT_SPECIFIED,
+                               'fixed_ips_v4': router.ATTR_NOT_SPECIFIED,
+                               'fixed_ips_v6': router.ATTR_NOT_SPECIFIED,
+                               'host_routes': router.ATTR_NOT_SPECIFIED}}
+        full_input['port'].update(initial_input['port'])
+        return_value = {'id': _uuid(), 'status': 'ACTIVE',
+                        'admin_state_up': True,
+                        'mac_address': 'ca:fe:de:ad:be:ef',
+                        'fixed_ips_v4': ['10.0.0.0/24'],
+                        'fixed_ips_v6': [],
+                        'host_routes': [],
+                        'device_id': device_id}
+        return_value.update(initial_input['port'])
+
+        instance = self.plugin.return_value
+        instance.create_port.return_value = return_value
+        res = self.api.post_json(_get_path('ports'), initial_input)
+
+        instance.create_port.assert_called_with(mock.ANY, port=full_input)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        self.assertTrue('port' in res.json)
+        port = res.json['port']
+        self.assertEqual(port['network_id'], net_id)
+        self.assertEqual(port['mac_address'], 'ca:fe:de:ad:be:ef')
 
     def test_fields(self):
         return_value = {'name': 'net1', 'admin_state_up': True,
@@ -445,7 +573,8 @@ class JSONV2TestCase(APIv2TestCase):
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
 
     def test_update(self):
-        data = {'network': {'name': 'net1', 'admin_state_up': True}}
+        # leave out 'name' field intentionally
+        data = {'network': {'admin_state_up': True}}
         return_value = {'subnets': []}
         return_value.update(data['network'].copy())
 
@@ -454,6 +583,12 @@ class JSONV2TestCase(APIv2TestCase):
 
         self.api.put_json(_get_path('networks',
                                     id=str(uuid.uuid4())), data)
+
+    def test_update_readonly_field(self):
+        data = {'network': {'status': "NANANA"}}
+        res = self.api.put_json(_get_path('networks', id=_uuid()), data,
+                                expect_errors=True)
+        self.assertEqual(res.status_int, 422)
 
 
 class V2Views(unittest.TestCase):
@@ -471,16 +606,16 @@ class V2Views(unittest.TestCase):
         self.assertTrue('two' not in res)
 
     def test_network(self):
-        keys = ('id', 'name', 'subnets', 'admin_state_up', 'op_status',
+        keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
                 'tenant_id', 'mac_ranges')
         self._view(keys, views.network)
 
     def test_port(self):
         keys = ('id', 'network_id', 'mac_address', 'fixed_ips',
-                'device_id', 'admin_state_up', 'tenant_id', 'op_status')
+                'device_id', 'admin_state_up', 'tenant_id', 'status')
         self._view(keys, views.port)
 
     def test_subnet(self):
         keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
-                'ip_version', 'prefix')
+                'ip_version', 'cidr')
         self._view(keys, views.subnet)
