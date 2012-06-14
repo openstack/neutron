@@ -38,9 +38,12 @@ LOG = logging.getLogger('quantum')
 
 
 FORMAT = 'json'
-ACTION_PREFIX_EXT = '/v1.0'
-ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
-        '/extensions/csco/tenants/{tenant_id}'
+#ACTION_PREFIX_EXT = '/v1.0'
+#ACTION_PREFIX_CSCO = ACTION_PREFIX_EXT + \
+#        '/extensions/csco/tenants/{tenant_id}'
+VERSION = '1.0'
+URI_PREFIX_EXT = ''
+URI_PREFIX_CSCO = '/extensions/csco/tenants/{tenant_id}'
 TENANT_ID = 'nova'
 CSCO_EXT_NAME = 'Cisco Nova Tenant'
 DEFAULT_QUANTUM_VERSION = '1.1'
@@ -81,7 +84,7 @@ def list_extensions(*args):
     """Invoking the action to get the supported extensions"""
     request_url = "/extensions"
     client = Client(HOST, PORT, USE_SSL, format='json',
-                    action_prefix=ACTION_PREFIX_EXT, tenant="dummy")
+                    version=VERSION, uri_prefix=URI_PREFIX_EXT, tenant="dummy")
     data = client.do_request('GET', request_url)
     print("Obtained supported extensions from Quantum: %s" % data)
 
@@ -102,7 +105,7 @@ def schedule_host(tenant_id, instance_id, user_id=None):
 
     request_url = "/novatenants/" + project_id + "/schedule_host"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
-                    action_prefix=ACTION_PREFIX_CSCO)
+                    version=VERSION, uri_prefix=URI_PREFIX_CSCO)
     data = client.do_request('PUT', request_url, body=instance_data_dict)
 
     hostname = data["host_list"]["host_1"]
@@ -124,7 +127,7 @@ def create_multiport(tenant_id, net_id_list, *args):
 
     request_url = "/multiport"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=tenant_id,
-                    action_prefix=ACTION_PREFIX_CSCO)
+                    version=VERSION, uri_prefix=URI_PREFIX_CSCO)
     data = client.do_request('POST', request_url, body=ports_info)
 
     print("Created ports: %s" % data)
