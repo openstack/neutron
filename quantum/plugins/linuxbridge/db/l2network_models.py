@@ -18,10 +18,9 @@
 from sqlalchemy import Column, Integer, String, Boolean
 
 from quantum.db.models import BASE
-from quantum.db.models import QuantumBase
 
 
-class VlanID(BASE, QuantumBase):
+class VlanID(BASE):
     """Represents a vlan_id usage"""
     __tablename__ = 'vlan_ids'
 
@@ -36,7 +35,7 @@ class VlanID(BASE, QuantumBase):
         return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
 
 
-class VlanBinding(BASE, QuantumBase):
+class VlanBinding(BASE):
     """Represents a binding of vlan_id to network_id"""
     __tablename__ = 'vlan_bindings'
 
