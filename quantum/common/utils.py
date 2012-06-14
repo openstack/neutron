@@ -39,37 +39,6 @@ TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 FLAGS = flags.FLAGS
 
 
-def int_from_bool_as_string(subject):
-    """
-    Interpret a string as a boolean and return either 1 or 0.
-
-    Any string value in:
-        ('True', 'true', 'On', 'on', '1')
-    is interpreted as a boolean True.
-
-    Useful for JSON-decoded stuff and config file parsing
-    """
-    return bool_from_string(subject) and 1 or 0
-
-
-def bool_from_string(subject):
-    """
-    Interpret a string as a boolean.
-
-    Any string value in:
-        ('True', 'true', 'On', 'on', '1')
-    is interpreted as a boolean True.
-
-    Useful for JSON-decoded stuff and config file parsing
-    """
-    if isinstance(subject, bool):
-        return subject
-    elif isinstance(subject, basestring):
-        if subject.strip().lower() in ('true', 'on', '1'):
-            return True
-    return False
-
-
 def boolize(subject):
     """
     Quak like a boolean
