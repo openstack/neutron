@@ -1,0 +1,19 @@
+{
+    "admin_or_owner": [["role:admin"], ["tenant_id:%(tenant_id)s"]],
+    "default": [["rule:admin_or_owner"]],
+
+    "create_subnet": [],
+    "get_subnet": [["rule:admin_or_owner"]],
+    "update_subnet": [["rule:admin_or_owner"]],
+    "delete_subnet": [["rule:admin_or_owner"]],
+
+    "create_network": [],
+    "get_network": [["rule:admin_or_owner"]],
+    "update_network": [["rule:admin_or_owner"]],
+    "delete_network": [["rule:admin_or_owner"]],
+
+    "create_port": [],
+    "get_port": [["rule:admin_or_owner"]],
+    "update_port": [["rule:admin_or_owner"]],
+    "delete_port": [["rule:admin_or_owner"]]
+}

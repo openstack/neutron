@@ -46,6 +46,10 @@ class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
 
+class PolicyNotAuthorized(NotAuthorized):
+    message = _("Policy doesn't allow %(action)s to be performed.")
+
+
 class ClassNotFound(NotFound):
     message = _("Class %(class_name)s could not be found")
 
@@ -61,6 +65,10 @@ class SubnetNotFound(NotFound):
 class PortNotFound(NotFound):
     message = _("Port %(port_id)s could not be found "
                 "on network %(net_id)s")
+
+
+class PolicyNotFound(NotFound):
+    message = _("Policy configuration policy.json could not be found")
 
 
 class StateInvalid(QuantumException):

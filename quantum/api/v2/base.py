@@ -17,10 +17,11 @@ import logging
 
 import webob.exc
 
-from quantum.common import exceptions
 from quantum.api.v2 import resource as wsgi_resource
-from quantum.common import utils
 from quantum.api.v2 import views
+from quantum.common import exceptions
+from quantum.common import utils
+from quantum import policy
 
 LOG = logging.getLogger(__name__)
 XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
@@ -100,7 +101,7 @@ class Controller(object):
         self._attr_info = attr_info
         self._view = getattr(views, self._resource)
 
-    def _items(self, request):
+    def _items(self, request, do_authz=False):
         """Retrieves and formats a list of elements of the requested entity"""
         kwargs = {'filters': filters(request),
                   'verbose': verbose(request),
@@ -108,47 +109,100 @@ class Controller(object):
 
         obj_getter = getattr(self._plugin, "get_%s" % self._collection)
         obj_list = obj_getter(request.context, **kwargs)
+
+        # Check authz
+        if do_authz:
+            # Omit items from list that should not be visible
+            obj_list = [obj for obj in obj_list
+                        if policy.check(request.context,
+                                        "get_%s" % self._resource,
+                                        obj)]
+
         return {self._collection: [self._view(obj) for obj in obj_list]}
 
-    def _item(self, request, id):
+    def _item(self, request, id, do_authz=False):
         """Retrieves and formats a single element of the requested entity"""
         kwargs = {'verbose': verbose(request),
                   'fields': fields(request)}
-        obj_getter = getattr(self._plugin,
-                             "get_%s" % self._resource)
+        action = "get_%s" % self._resource
+        obj_getter = getattr(self._plugin, action)
         obj = obj_getter(request.context, id, **kwargs)
+
+        # Check authz
+        if do_authz:
+            policy.enforce(request.context, action, obj)
+
         return {self._resource: self._view(obj)}
 
     def index(self, request):
         """Returns a list of the requested entity"""
-        return self._items(request)
+        return self._items(request, True)
 
     def show(self, request, id):
         """Returns detailed information about the requested entity"""
-        return self._item(request, id)
+        try:
+            return self._item(request, id, True)
+        except exceptions.PolicyNotAuthorized:
+            # To avoid giving away information, pretend that it
+            # doesn't exist
+            raise webob.exc.HTTPNotFound()
 
     def create(self, request, body=None):
         """Creates a new instance of the requested entity"""
 
         body = self._prepare_request_body(request.context, body, True,
                                           allow_bulk=True)
-        obj_creator = getattr(self._plugin,
-                              "create_%s" % self._resource)
+
+        action = "create_%s" % self._resource
+
+        # Check authz
+        try:
+            if self._collection in body:
+                # Have to account for bulk create
+                for item in body[self._collection]:
+                    policy.enforce(request.context, action,
+                                   item[self._resource])
+            else:
+                policy.enforce(request.context, action, body[self._resource])
+        except exceptions.PolicyNotAuthorized:
+            raise webob.exc.HTTPForbidden()
+
+        obj_creator = getattr(self._plugin, action)
         kwargs = {self._resource: body}
         obj = obj_creator(request.context, **kwargs)
         return {self._resource: self._view(obj)}
 
     def delete(self, request, id):
         """Deletes the specified entity"""
-        obj_deleter = getattr(self._plugin,
-                              "delete_%s" % self._resource)
+        action = "delete_%s" % self._resource
+
+        # Check authz
+        obj = self._item(request, id)
+        try:
+            policy.enforce(request.context, action, obj)
+        except exceptions.PolicyNotAuthorized:
+            # To avoid giving away information, pretend that it
+            # doesn't exist
+            raise webob.exc.HTTPNotFound()
+
+        obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id)
 
     def update(self, request, id, body=None):
         """Updates the specified entity's attributes"""
         body = self._prepare_request_body(request.context, body, False)
-        obj_updater = getattr(self._plugin,
-                              "update_%s" % self._resource)
+        action = "update_%s" % self._resource
+
+        # Check authz
+        orig_obj = self._item(request, id)
+        try:
+            policy.enforce(request.context, action, orig_obj)
+        except exceptions.PolicyNotAuthorized:
+            # To avoid giving away information, pretend that it
+            # doesn't exist
+            raise webob.exc.HTTPNotFound()
+
+        obj_updater = getattr(self._plugin, action)
         kwargs = {self._resource: body}
         obj = obj_updater(request.context, id, **kwargs)
         return {self._resource: self._view(obj)}
