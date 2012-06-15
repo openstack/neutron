@@ -27,6 +27,8 @@ ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int'),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
     cfg.StrOpt('local_ip', default='10.0.0.3'),
+    cfg.IntOpt('vlan_min', default=1),
+    cfg.IntOpt('vlan_max', default=4094),
 ]
 
 agent_opts = [
