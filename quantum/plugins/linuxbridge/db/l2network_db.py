@@ -50,7 +50,7 @@ def initialize(base=None):
 
 
 def create_vlanids():
-    """Prepopulates the vlan_bindings table"""
+    """Prepopulate the vlan_bindings table"""
     LOG.debug("create_vlanids() called")
     session = db.get_session()
     start = CONF.VLANS.vlan_start
@@ -87,7 +87,7 @@ def create_vlanids():
 
 
 def get_all_vlanids():
-    """Gets all the vlanids"""
+    """Get all the vlanids"""
     LOG.debug("get_all_vlanids() called")
     session = db.get_session()
     try:
@@ -99,7 +99,7 @@ def get_all_vlanids():
 
 
 def is_vlanid_used(vlan_id):
-    """Checks if a vlanid is in use"""
+    """Check if a vlanid is in use"""
     LOG.debug("is_vlanid_used() called")
     session = db.get_session()
     try:
@@ -112,7 +112,7 @@ def is_vlanid_used(vlan_id):
 
 
 def release_vlanid(vlan_id):
-    """Sets the vlanid state to be unused"""
+    """Set the vlanid state to be unused, and delete if not in range"""
     LOG.debug("release_vlanid() called")
     session = db.get_session()
     try:
@@ -120,7 +120,10 @@ def release_vlanid(vlan_id):
                   filter_by(vlan_id=vlan_id).
                   one())
         vlanid["vlan_used"] = False
-        session.merge(vlanid)
+        if vlan_id >= CONF.VLANS.vlan_start and vlan_id <= CONF.VLANS.vlan_end:
+            session.merge(vlanid)
+        else:
+            session.delete(vlanid)
         session.flush()
         return vlanid["vlan_used"]
     except exc.NoResultFound:
@@ -129,7 +132,7 @@ def release_vlanid(vlan_id):
 
 
 def delete_vlanid(vlan_id):
-    """Deletes a vlanid entry from db"""
+    """Delete a vlanid entry from db"""
     LOG.debug("delete_vlanid() called")
     session = db.get_session()
     try:
@@ -144,7 +147,7 @@ def delete_vlanid(vlan_id):
 
 
 def reserve_vlanid():
-    """Reserves the first unused vlanid"""
+    """Reserve the first unused vlanid"""
     LOG.debug("reserve_vlanid() called")
     session = db.get_session()
     try:
@@ -170,8 +173,32 @@ def reserve_vlanid():
         raise c_exc.VlanIDNotAvailable()
 
 
+def reserve_specific_vlanid(vlan_id, net_id):
+    """Reserve a specific vlanid"""
+    LOG.debug("reserve_specific_vlanid() called")
+    if vlan_id < 1 or vlan_id > 4094:
+        msg = _("Specified VLAN %s outside legal range (1-4094)") % vlan_id
+        raise q_exc.InvalidInput(error_message=msg)
+    session = db.get_session()
+    try:
+        rvlanid = (session.query(l2network_models.VlanID).
+                   filter_by(vlan_id=vlan_id).
+                   one())
+        if rvlanid["vlan_used"]:
+            raise q_exc.VlanIdInUse(net_id=net_id, vlan_id=vlan_id)
+        LOG.debug("reserving dynamic vlanid %s" % vlan_id)
+        rvlanid["vlan_used"] = True
+        session.merge(rvlanid)
+    except exc.NoResultFound:
+        rvlanid = l2network_models.VlanID(vlan_id)
+        LOG.debug("reserving non-dynamic vlanid %s" % vlan_id)
+        rvlanid["vlan_used"] = True
+        session.add(rvlanid)
+    session.flush()
+
+
 def get_all_vlanids_used():
-    """Gets all the vlanids used"""
+    """Get all the vlanids used"""
     LOG.debug("get_all_vlanids() called")
     session = db.get_session()
     try:
@@ -184,7 +211,7 @@ def get_all_vlanids_used():
 
 
 def get_all_vlan_bindings():
-    """Lists all the vlan to network associations"""
+    """List all the vlan to network associations"""
     LOG.debug("get_all_vlan_bindings() called")
     session = db.get_session()
     try:
@@ -196,7 +223,7 @@ def get_all_vlan_bindings():
 
 
 def get_vlan_binding(netid):
-    """Lists the vlan given a network_id"""
+    """List the vlan given a network_id"""
     LOG.debug("get_vlan_binding() called")
     session = db.get_session()
     try:
@@ -209,7 +236,7 @@ def get_vlan_binding(netid):
 
 
 def add_vlan_binding(vlanid, netid):
-    """Adds a vlan to network association"""
+    """Add a vlan to network association"""
     LOG.debug("add_vlan_binding() called")
     session = db.get_session()
     try:
@@ -226,7 +253,7 @@ def add_vlan_binding(vlanid, netid):
 
 
 def remove_vlan_binding(netid):
-    """Removes a vlan to network association"""
+    """Remove a vlan to network association"""
     LOG.debug("remove_vlan_binding() called")
     session = db.get_session()
     try:
@@ -241,7 +268,7 @@ def remove_vlan_binding(netid):
 
 
 def update_vlan_binding(netid, newvlanid=None):
-    """Updates a vlan to network association"""
+    """Update a vlan to network association"""
     LOG.debug("update_vlan_binding() called")
     session = db.get_session()
     try:
