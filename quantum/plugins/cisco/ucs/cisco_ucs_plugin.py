@@ -252,8 +252,8 @@ class UCSVICPlugin(L2DevicePluginBase):
         return udb.update_portbinding(port_id, vlan_name=new_vlan_name,
                                       vlan_id=conf.DEFAULT_VLAN_ID)
 
-    def create_multiport(self, tenant_id, net_id_list, ports_num, port_id_list,
-                     **kwargs):
+    def create_multiport(self, tenant_id, net_id_list, ports_num,
+                         port_id_list, **kwargs):
         """
         Creates a port on the specified Virtual Network.
         """

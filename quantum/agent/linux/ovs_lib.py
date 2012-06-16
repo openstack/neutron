@@ -58,7 +58,7 @@ class OVSBridge:
 
     def delete_port(self, port_name):
         self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
-          port_name])
+                        port_name])
 
     def set_db_attribute(self, table_name, record, column, value):
         args = ["set", table_name, record, "%s=%s" % (column, value)]
@@ -87,10 +87,10 @@ class OVSBridge:
         is_delete_expr = kwargs.get('delete', False)
         print "kwargs = %s" % kwargs
         if not is_delete_expr:
-            prefix = ("hard_timeout=%s,idle_timeout=%s,priority=%s"
-                    % (kwargs.get('hard_timeout', '0'),
-                       kwargs.get('idle_timeout', '0'),
-                       kwargs.get('priority', '1')))
+            prefix = ("hard_timeout=%s,idle_timeout=%s,priority=%s" %
+                     (kwargs.get('hard_timeout', '0'),
+                      kwargs.get('idle_timeout', '0'),
+                      kwargs.get('priority', '1')))
             flow_expr_arr.append(prefix)
         elif 'priority' in kwargs:
             raise Exception("Cannot match priority on flow deletion")
@@ -179,7 +179,7 @@ class OVSBridge:
         return utils.execute(["xe", "vif-param-get", "param-name=other-config",
                               "param-key=nicira-iface-id",
                               "uuid=%s" % xs_vif_uuid],
-                              root_helper=self.root_helper).strip()
+                             root_helper=self.root_helper).strip()
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):

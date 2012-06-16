@@ -39,7 +39,7 @@ quantum_opts = [
     cfg.StrOpt('quantum_default_tenant_id',
                default="default",
                help='Default tenant id when creating quantum networks'),
-    ]
+]
 
 FLAGS = flags.FLAGS
 FLAGS.register_opts(quantum_opts)

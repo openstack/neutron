@@ -33,7 +33,7 @@ def create_resource(plugin, version):
         '1.1': [ControllerV11(plugin),
                 ControllerV11._serialization_metadata,
                 common.XML_NS_V11],
-        }
+    }
     return common.create_resource(version, controller_dict)
 
 
@@ -44,7 +44,7 @@ class Controller(common.QuantumController):
     version = None
     _network_ops_param_list = [
         {'param-name': 'name', 'required': True},
-        ]
+    ]
 
     def _item(self, request, tenant_id, network_id,
               net_details=True, port_details=False):
@@ -154,12 +154,12 @@ class ControllerV10(Controller):
             "network": ["id", "name"],
             "port": ["id", "state"],
             "attachment": ["id"],
-            },
+        },
         "plurals": {
             "networks": "network",
             "ports": "port",
-            },
-        }
+        },
+    }
 
     version = "1.0"
 
@@ -178,11 +178,11 @@ class ControllerV11(Controller):
             "network": ["id", "name", "op-status"],
             "port": ["id", "state", "op-status"],
             "attachment": ["id"],
-            },
+        },
         "plurals": {
             "networks": "network",
             "ports": "port",
-            },
-        }
+        },
+    }
 
     version = "1.1"

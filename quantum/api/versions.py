@@ -65,8 +65,8 @@ class Versions(object):
         }
 
         content_type = req.best_match_content_type()
-        body = wsgi.Serializer(metadata=metadata). \
-                    serialize(response, content_type)
+        body = (wsgi.Serializer(metadata=metadata).
+                serialize(response, content_type))
 
         response = webob.Response()
         response.content_type = content_type

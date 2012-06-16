@@ -25,16 +25,16 @@ import nvplib
 
 from quantum.common import exceptions as exception
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
-     import (
-    DEFAULT_CONCURRENT_CONNECTIONS,
-    DEFAULT_FAILOVER_TIME,
+    import (
+        DEFAULT_CONCURRENT_CONNECTIONS,
+        DEFAULT_FAILOVER_TIME,
     )
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
-     import (
-    DEFAULT_REQUEST_TIMEOUT,
-    DEFAULT_HTTP_TIMEOUT,
-    DEFAULT_RETRIES,
-    DEFAULT_REDIRECTS,
+    import (
+        DEFAULT_REQUEST_TIMEOUT,
+        DEFAULT_HTTP_TIMEOUT,
+        DEFAULT_RETRIES,
+        DEFAULT_REDIRECTS,
     )
 
 
@@ -104,7 +104,7 @@ def parse_config(config):
     plugin_config = {
         'failover_time': failover_time,
         'concurrent_connections': concurrent_connections,
-        }
+    }
     LOG.info('parse_config(): plugin_config == "%s"' % plugin_config)
 
     cluster = NVPCluster('cluster1')
@@ -374,7 +374,7 @@ class NvpPlugin(object):
             "net-ifaces": remote_vifs,
             "net-name": result["display_name"],
             "net-op-status": "UP",
-            }
+        }
         LOG.debug("get_network_details() completed for tenant %s: %s" %
                   (tenant_id, d))
         return d
@@ -400,7 +400,7 @@ class NvpPlugin(object):
             'net-id': netw_id,
             'net-name': result["display_name"],
             'net-op-status': "UP",
-            }
+        }
 
     def get_all_ports(self, tenant_id, netw_id, **kwargs):
         """
@@ -455,11 +455,11 @@ class NvpPlugin(object):
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         result = nvplib.create_port(tenant_id, netw_id, port_init_state,
-          **params)
+                                    **params)
         d = {
             "port-id": result["uuid"],
             "port-op-status": result["port-op-status"],
-            }
+        }
         LOG.debug("create_port() completed for tenant %s: %s" % (tenant_id, d))
         return d
 
@@ -486,7 +486,7 @@ class NvpPlugin(object):
             'port-id': portw_id,
             'port-state': result["admin_status_enabled"],
             'port-op-status': result["port-op-status"],
-            }
+        }
         LOG.debug("returning updated port %s: " % port)
         return port
 
@@ -530,7 +530,7 @@ class NvpPlugin(object):
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
         port = nvplib.get_port(self.controller, netw_id, portw_id,
-          "LogicalPortAttachment")
+                               "LogicalPortAttachment")
         state = "ACTIVE" if port["admin_status_enabled"] else "DOWN"
         op_status = nvplib.get_port_status(self.controller, netw_id, portw_id)
 
@@ -545,7 +545,7 @@ class NvpPlugin(object):
             "port-id": portw_id, "attachment": vif_uuid,
             "net-id": netw_id, "port-state": state,
             "port-op-status": op_status,
-            }
+        }
         LOG.debug("Port details for tenant %s: %s" % (tenant_id, d))
         return d
 
@@ -563,8 +563,9 @@ class NvpPlugin(object):
         """
         if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
             raise exception.NetworkNotFound(net_id=netw_id)
-        result = nvplib.plug_interface(self.controller, netw_id, portw_id,
-          "VifAttachment", attachment=remote_interface_id)
+        result = nvplib.plug_interface(self.controller, netw_id,
+                                       portw_id, "VifAttachment",
+                                       attachment=remote_interface_id)
         LOG.debug("plug_interface() completed for %s: %s" %
                   (tenant_id, result))
 

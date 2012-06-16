@@ -19,7 +19,7 @@ import unittest
 from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import (
     NVPCluster,
     parse_config,
-    )
+)
 
 
 class ConfigParserTest(unittest.TestCase):

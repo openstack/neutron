@@ -30,8 +30,8 @@ def _load_network_ports_details(network, **kwargs):
         # Don't pass filter options, don't care about unused filters
         port_list = plugin.get_all_ports(tenant_id, network['net-id'])
         ports_data = [plugin.get_port_details(
-                                   tenant_id, network['net-id'],
-                                   port['port-id'])
+                      tenant_id, network['net-id'],
+                      port['port-id'])
                       for port in port_list]
         network['net-ports'] = ports_data
 
@@ -150,8 +150,7 @@ def filter_ports(ports, plugin, tenant_id, network_id, filter_opts):
         'attachment': _filter_port_by_interface}
     # port details are need for filtering
     ports = [plugin.get_port_details(tenant_id, network_id,
-                                     port['port-id'])
-              for port in ports]
+             port['port-id']) for port in ports]
     # filter ports
     return _do_filtering(ports,
                          filters,

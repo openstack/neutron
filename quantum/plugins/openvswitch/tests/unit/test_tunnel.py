@@ -31,8 +31,8 @@ LV_IDS = [42, 43]
 LVM = ovs_quantum_agent.LocalVLANMapping(LV_ID, LS_ID, LV_IDS)
 VIF_ID = '404deaec-5d37-11e1-a64b-000c29d5f0a8'
 VIF_MAC = '3c:09:24:1e:78:23'
-VIF_PORT = ovs_lib.VifPort('port', 'ofport', VIF_ID, VIF_MAC,
-                                     'switch')
+VIF_PORT = ovs_lib.VifPort('port', 'ofport',
+                           VIF_ID, VIF_MAC, 'switch')
 
 
 class DummyPort:
@@ -57,16 +57,14 @@ class TunnelTest(unittest.TestCase):
         self.TUN_OFPORT = 'PATCH_TUN_OFPORT'
 
         self.mox.StubOutClassWithMocks(ovs_lib, 'OVSBridge')
-        self.mock_int_bridge = ovs_lib.OVSBridge(self.INT_BRIDGE,
-                                                           'sudo')
+        self.mock_int_bridge = ovs_lib.OVSBridge(self.INT_BRIDGE, 'sudo')
         self.mock_int_bridge.delete_port('patch-tun')
         self.mock_int_bridge.add_patch_port(
             'patch-tun', 'patch-int').AndReturn(self.TUN_OFPORT)
         self.mock_int_bridge.remove_all_flows()
         self.mock_int_bridge.add_flow(priority=1, actions='normal')
 
-        self.mock_tun_bridge = ovs_lib.OVSBridge(self.TUN_BRIDGE,
-                                                           'sudo')
+        self.mock_tun_bridge = ovs_lib.OVSBridge(self.TUN_BRIDGE, 'sudo')
         self.mock_tun_bridge.reset_bridge()
         self.mock_tun_bridge.add_patch_port(
             'patch-int', 'patch-tun').AndReturn(self.INT_OFPORT)

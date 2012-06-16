@@ -43,4 +43,4 @@ filterlist = [
     #   'ip', 'tuntap'
     filters.CommandFilter("/usr/sbin/ip", "root"),
     filters.CommandFilter("/sbin/ip", "root"),
-    ]
+]

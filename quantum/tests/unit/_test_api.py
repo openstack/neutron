@@ -219,8 +219,9 @@ class BaseAPIOperationsTest(AbstractAPITest):
         # Create a network and a port
         network_id = self._create_network(fmt)
         port_id = self._create_port(network_id, "ACTIVE", fmt)
-        show_network_req = testlib.show_network_detail_request(
-                                    self.tenant_id, network_id, fmt)
+        show_network_req = testlib.show_network_detail_request(self.tenant_id,
+                                                               network_id,
+                                                               fmt)
         show_network_res = show_network_req.get_response(self.api)
         self.assertEqual(show_network_res.status_int, 200)
         network_data = self._deserialize_net_response(content_type,
@@ -371,7 +372,7 @@ class BaseAPIOperationsTest(AbstractAPITest):
 
     def _test_list_ports_networknotfound(self, fmt):
         LOG.debug("_test_list_ports_networknotfound"
-                    " - fmt:%s - START", fmt)
+                  " - fmt:%s - START", fmt)
         list_port_req = testlib.port_list_request(self.tenant_id,
                                                   "A_BAD_ID", fmt)
         list_port_res = list_port_req.get_response(self.api)
@@ -414,7 +415,7 @@ class BaseAPIOperationsTest(AbstractAPITest):
         port_data = self._deserialize_port_response(content_type,
                                                     show_port_res)
         self.assert_port(id=port_id, state=port_state,
-                        port_data=port_data['port'])
+                         port_data=port_data['port'])
         LOG.debug("_test_show_port - fmt:%s - END", fmt)
 
     def _test_show_port_detail(self, fmt):

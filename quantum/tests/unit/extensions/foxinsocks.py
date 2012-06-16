@@ -67,11 +67,11 @@ class Foxinsocks(object):
 
     def get_actions(self):
         return [extensions.ActionExtension('dummy_resources',
-                                            'FOXNSOX:add_tweedle',
-                                            self._add_tweedle_handler),
+                                           'FOXNSOX:add_tweedle',
+                                           self._add_tweedle_handler),
                 extensions.ActionExtension('dummy_resources',
-                                            'FOXNSOX:delete_tweedle',
-                                            self._delete_tweedle_handler)]
+                                           'FOXNSOX:delete_tweedle',
+                                           self._delete_tweedle_handler)]
 
     def get_request_extensions(self):
         request_exts = []

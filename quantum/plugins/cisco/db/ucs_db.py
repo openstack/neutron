@@ -30,8 +30,7 @@ def get_all_portbindings():
     LOG.debug("db get_all_portbindings() called")
     session = db.get_session()
     try:
-        port_bindings = session.query(ucs_models.PortBinding).\
-          all()
+        port_bindings = session.query(ucs_models.PortBinding).all()
         return port_bindings
     except exc.NoResultFound:
         return []
@@ -42,23 +41,21 @@ def get_portbinding(port_id):
     LOG.debug("get_portbinding() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         return port_binding
     except exc.NoResultFound:
         raise c_exc.PortVnicNotFound(port_id=port_id)
 
 
 def add_portbinding(port_id, blade_intf_dn, portprofile_name,
-                                        vlan_name, vlan_id, qos):
+                    vlan_name, vlan_id, qos):
     """Adds a port binding"""
     LOG.debug("add_portbinding() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         raise c_exc.PortVnicBindingAlreadyExists(port_id=port_id)
     except exc.NoResultFound:
         port_binding = ucs_models.PortBinding(port_id, blade_intf_dn,
@@ -74,9 +71,8 @@ def remove_portbinding(port_id):
     LOG.debug("db remove_portbinding() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         session.delete(port_binding)
         session.flush()
         return port_binding
@@ -92,9 +88,8 @@ def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
     LOG.debug("db update_portbinding() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         if blade_intf_dn:
             port_binding.blade_intf_dn = blade_intf_dn
         if portprofile_name:
@@ -123,9 +118,8 @@ def update_portbinding_instance_id(port_id, instance_id):
     LOG.debug("db update_portbinding_instance_id() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         port_binding.instance_id = instance_id
         session.merge(port_binding)
         session.flush()
@@ -139,9 +133,8 @@ def update_portbinding_vif_id(port_id, vif_id):
     LOG.debug("db update_portbinding_vif_id() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(port_id=port_id).one())
         port_binding.vif_id = vif_id
         session.merge(port_binding)
         session.flush()
@@ -155,9 +148,8 @@ def get_portbinding_dn(blade_intf_dn):
     LOG.debug("get_portbinding_dn() called")
     session = db.get_session()
     try:
-        port_binding = session.query(ucs_models.PortBinding).\
-          filter_by(blade_intf_dn=blade_intf_dn).\
-          one()
+        port_binding = (session.query(ucs_models.PortBinding).
+                        filter_by(blade_intf_dn=blade_intf_dn).one())
         return port_binding
     except exc.NoResultFound:
         return []

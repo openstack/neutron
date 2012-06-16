@@ -24,7 +24,7 @@ from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
 from quantum.plugins.nicira.nicira_nvp_plugin import (
     NvpApiClient,
     nvplib,
-    )
+)
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -142,12 +142,12 @@ class NvpTests(unittest.TestCase):
             {
                 "ip_address": "172.168.17.5",
                 "mac_address": "10:9a:dd:61:4e:89",
-                },
+            },
             {
                 "ip_address": "172.168.17.6",
                 "mac_address": "10:9a:dd:61:4e:88",
-                },
-            ]
+            },
+        ]
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
                                         "ACTIVE", **params)
         port_id = resp["port-id"]
@@ -186,7 +186,7 @@ class NvpTests(unittest.TestCase):
         old_vic = resp["attachment"]
         self.assertTrue(old_vic == "None")
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id,
-            "nova-instance-test-%s" % os.getpid())
+                                    "nova-instance-test-%s" % os.getpid())
         resp = self.quantum.get_port_details("quantum-test-tenant", net_id,
                                              port_id)
         new_vic = resp["attachment"]
@@ -202,9 +202,10 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(True)
 
     def test_create_multi_port_attachment(self):
-        resp = self.quantum.create_custom_network(
-            "quantum-test-tenant", "quantum-Private-TenantA",
-            self.BRIDGE_TZ_UUID, self.quantum.controller)
+        resp = self.quantum.create_custom_network("quantum-test-tenant",
+                                                  "quantum-Private-TenantA",
+                                                  self.BRIDGE_TZ_UUID,
+                                                  self.quantum.controller)
         net_id = resp["net-id"]
 
         resp = self.quantum.create_port("quantum-test-tenant", net_id,
@@ -216,7 +217,7 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(old_vic == "None")
 
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id1,
-            "nova-instance-test-%s" % os.getpid())
+                                    "nova-instance-test-%s" % os.getpid())
         resp = self.quantum.get_port_details("quantum-test-tenant", net_id,
                                              port_id1)
         new_vic = resp["attachment"]
@@ -231,7 +232,7 @@ class NvpTests(unittest.TestCase):
         self.assertTrue(old_vic2 == "None")
 
         self.quantum.plug_interface("quantum-test-tenant", net_id, port_id2,
-            "nova-instance-test2-%s" % os.getpid())
+                                    "nova-instance-test2-%s" % os.getpid())
         resp = self.quantum.get_port_details("quantum-test-tenant", net_id,
                                              port_id2)
         new_vic = resp["attachment"]
@@ -508,7 +509,8 @@ class NvpTests(unittest.TestCase):
 
         # Make sure we only get the filtered ones back
         ports = self.quantum.get_all_ports("quantum-test-tenant", net_id,
-            filter_opts={"attachment": "attachment2"})
+                                           filter_opts={"attachment":
+                                                        "attachment2"})
         self.assertTrue(len(ports) == 1)
         self.assertTrue(ports[0]["port-id"] == port_id2)
 

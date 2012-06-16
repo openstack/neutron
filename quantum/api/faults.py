@@ -47,8 +47,8 @@ def fault_body_function_v10(wrapped_exc):
             'code': code,
             'message': wrapped_exc.explanation,
             'detail': str(wrapped_exc.detail),
-            },
-        }
+        },
+    }
     metadata = {'attributes': {fault_name: ['code']}}
     return fault_data, metadata
 
@@ -71,8 +71,8 @@ def fault_body_function_v11(wrapped_exc):
             'type': fault_name,
             'message': wrapped_exc.explanation,
             'detail': str(wrapped_exc.detail),
-            },
-        }
+        },
+    }
     # Metadata not required for v11
     return fault_data, None
 
@@ -90,41 +90,41 @@ def fault_body_function(version):
 class Quantum10HTTPError(webob.exc.HTTPClientError):
 
     _fault_dict = {
-            exceptions.NetworkNotFound: {
-                'code': 420,
-                'title': 'networkNotFound',
-                'explanation': _NETNOTFOUND_EXPL
-            },
-            exceptions.NetworkInUse: {
-                'code': 421,
-                'title': 'networkInUse',
-                'explanation': _NETINUSE_EXPL
-            },
-            exceptions.PortNotFound: {
-                'code': 430,
-                'title': 'portNotFound',
-                'explanation': _PORTNOTFOUND_EXPL
-            },
-            exceptions.StateInvalid: {
-                'code': 431,
-                'title': 'requestedStateInvalid',
-                'explanation': _STATEINVALID_EXPL
-            },
-            exceptions.PortInUse: {
-                'code': 432,
-                'title': 'portInUse',
-                'explanation': _PORTINUSE_EXPL
-            },
-            exceptions.AlreadyAttached: {
-                'code': 440,
-                'title': 'alreadyAttached',
-                'explanation': _ALREADYATTACHED_EXPL
-            },
-            exceptions.NotImplementedError: {
-                'code': 501,
-                'title': 'notImplemented',
-                'explanation': _NOTIMPLEMENTED_EXPL
-            }
+        exceptions.NetworkNotFound: {
+            'code': 420,
+            'title': 'networkNotFound',
+            'explanation': _NETNOTFOUND_EXPL
+        },
+        exceptions.NetworkInUse: {
+            'code': 421,
+            'title': 'networkInUse',
+            'explanation': _NETINUSE_EXPL
+        },
+        exceptions.PortNotFound: {
+            'code': 430,
+            'title': 'portNotFound',
+            'explanation': _PORTNOTFOUND_EXPL
+        },
+        exceptions.StateInvalid: {
+            'code': 431,
+            'title': 'requestedStateInvalid',
+            'explanation': _STATEINVALID_EXPL
+        },
+        exceptions.PortInUse: {
+            'code': 432,
+            'title': 'portInUse',
+            'explanation': _PORTINUSE_EXPL
+        },
+        exceptions.AlreadyAttached: {
+            'code': 440,
+            'title': 'alreadyAttached',
+            'explanation': _ALREADYATTACHED_EXPL
+        },
+        exceptions.NotImplementedError: {
+            'code': 501,
+            'title': 'notImplemented',
+            'explanation': _NOTIMPLEMENTED_EXPL
+        }
     }
 
     def __init__(self, inner_exc):
@@ -139,42 +139,42 @@ class Quantum10HTTPError(webob.exc.HTTPClientError):
 class Quantum11HTTPError(webob.exc.HTTPClientError):
 
     _fault_dict = {
-            exceptions.NetworkNotFound: {
-                'code': webob.exc.HTTPNotFound.code,
-                'title': webob.exc.HTTPNotFound.title,
-                'type': 'NetworkNotFound',
-                'explanation': _NETNOTFOUND_EXPL
-            },
-            exceptions.NetworkInUse: {
-                'code': webob.exc.HTTPConflict.code,
-                'title': webob.exc.HTTPConflict.title,
-                'type': 'NetworkInUse',
-                'explanation': _NETINUSE_EXPL
-            },
-            exceptions.PortNotFound: {
-                'code': webob.exc.HTTPNotFound.code,
-                'title': webob.exc.HTTPNotFound.title,
-                'type': 'PortNotFound',
-                'explanation': _PORTNOTFOUND_EXPL
-            },
-            exceptions.StateInvalid: {
-                'code': webob.exc.HTTPBadRequest.code,
-                'title': webob.exc.HTTPBadRequest.title,
-                'type': 'RequestedStateInvalid',
-                'explanation': _STATEINVALID_EXPL
-            },
-            exceptions.PortInUse: {
-                'code': webob.exc.HTTPConflict.code,
-                'title': webob.exc.HTTPConflict.title,
-                'type': 'PortInUse',
-                'explanation': _PORTINUSE_EXPL
-            },
-            exceptions.AlreadyAttached: {
-                'code': webob.exc.HTTPConflict.code,
-                'title': webob.exc.HTTPConflict.title,
-                'type': 'AlreadyAttached',
-                'explanation': _ALREADYATTACHED_EXPL
-            }
+        exceptions.NetworkNotFound: {
+            'code': webob.exc.HTTPNotFound.code,
+            'title': webob.exc.HTTPNotFound.title,
+            'type': 'NetworkNotFound',
+            'explanation': _NETNOTFOUND_EXPL
+        },
+        exceptions.NetworkInUse: {
+            'code': webob.exc.HTTPConflict.code,
+            'title': webob.exc.HTTPConflict.title,
+            'type': 'NetworkInUse',
+            'explanation': _NETINUSE_EXPL
+        },
+        exceptions.PortNotFound: {
+            'code': webob.exc.HTTPNotFound.code,
+            'title': webob.exc.HTTPNotFound.title,
+            'type': 'PortNotFound',
+            'explanation': _PORTNOTFOUND_EXPL
+        },
+        exceptions.StateInvalid: {
+            'code': webob.exc.HTTPBadRequest.code,
+            'title': webob.exc.HTTPBadRequest.title,
+            'type': 'RequestedStateInvalid',
+            'explanation': _STATEINVALID_EXPL
+        },
+        exceptions.PortInUse: {
+            'code': webob.exc.HTTPConflict.code,
+            'title': webob.exc.HTTPConflict.title,
+            'type': 'PortInUse',
+            'explanation': _PORTINUSE_EXPL
+        },
+        exceptions.AlreadyAttached: {
+            'code': webob.exc.HTTPConflict.code,
+            'title': webob.exc.HTTPConflict.title,
+            'type': 'AlreadyAttached',
+            'explanation': _ALREADYATTACHED_EXPL
+        }
     }
 
     def __init__(self, inner_exc):

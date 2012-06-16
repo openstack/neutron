@@ -35,11 +35,11 @@ from quantum.extensions import (
     novatenant,
     portprofile,
     qos,
-    )
+)
 from quantum.extensions.extensions import (
     ExtensionMiddleware,
     PluginAwareExtensionManager,
-    )
+)
 from quantum.manager import QuantumManager
 from quantum.openstack.common import jsonutils
 from quantum.plugins.cisco.db import api as db
@@ -93,8 +93,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'portprofile_name': 'cisco_test_portprofile',
                 'qos_name': 'test-qos1',
-                },
-            }
+            },
+        }
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         options = {}
@@ -111,13 +111,14 @@ class PortprofileExtensionTest(unittest.TestCase):
         req_body1 = jsonutils.dumps(self.test_port_profile)
         create_response1 = self.test_app.post(
             self.profile_path, req_body1,
-            content_type=self.contenttype)
+            content_type=self.contenttype
+        )
         req_body2 = jsonutils.dumps({
             'portprofile': {
                 'portprofile_name': 'cisco_test_portprofile2',
                 'qos_name': 'test-qos2',
-                },
-            })
+            },
+        })
         create_response2 = self.test_app.post(
             self.profile_path, req_body2,
             content_type=self.contenttype)
@@ -236,8 +237,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'portprofile_name': 'cisco_rename_portprofile',
                 'qos_name': 'test-qos1',
-                },
-            }
+            },
+        }
         rename_req_body = jsonutils.dumps(rename_port_profile)
         rename_path_temp = (self.portprofile_path +
                             resp_body['portprofiles']['portprofile']['id'])
@@ -289,8 +290,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'portprofile_name': 'cisco_rename_portprofile',
                 'qos_name': 'test-qos1',
-                },
-            }
+            },
+        }
         rename_req_body = jsonutils.dumps(rename_port_profile)
         update_path_temp = self.portprofile_path + portprofile_id
         update_path = str(update_path_temp)
@@ -416,8 +417,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'network-id': net_id,
                 'port-id': port_id,
-                },
-            }
+            },
+        }
         req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path_temp = (
             self.portprofile_path +
@@ -452,8 +453,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'network-id': '001',
                 'port-id': '1',
-                },
-            }
+            },
+        }
         req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path = (self.portprofile_path +
                           portprofile_id +
@@ -483,8 +484,8 @@ class PortprofileExtensionTest(unittest.TestCase):
             'portprofile': {
                 'network-id': net_id,
                 'port-id': port_id,
-                },
-            }
+            },
+        }
         req_assign_body = jsonutils.dumps(test_port_assign_data)
         associate_path_temp = (self.portprofile_path +
                                resp_body['portprofiles']['portprofile']['id'] +
@@ -565,18 +566,18 @@ class NovatenantExtensionTest(unittest.TestCase):
                     'project_id': 'demo',
                     'user_id': 'root',
                     'vif_id': '23432423',
-                    },
                 },
-            }
+            },
+        }
         self.test_associate_data = {
             'novatenant': {
                 'instance_id': 1,
                 'instance_desc': {
                     'project_id': 'demo',
                     'user_id': 'root',
-                    },
                 },
-            }
+            },
+        }
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_schedule_host(self):
@@ -640,9 +641,9 @@ class QosExtensionTest(unittest.TestCase):
                 'qos_desc': {
                     'PPS': 50,
                     'TTL': 5,
-                    },
                 },
-            }
+            },
+        }
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_create_qos(self):
@@ -690,9 +691,9 @@ class QosExtensionTest(unittest.TestCase):
                 'qos_desc': {
                     'PPS': 50,
                     'TTL': 5,
-                    },
                 },
-            })
+            },
+        })
         create_resp2 = self.test_app.post(self.qos_path, req_body2,
                                           content_type=self.contenttype)
         index_response = self.test_app.get(self.qos_path)
@@ -767,9 +768,9 @@ class QosExtensionTest(unittest.TestCase):
                 'qos_desc': {
                     'PPS': 50,
                     'TTL': 5,
-                    },
                 },
-            })
+            },
+        })
         rename_path_temp = (self.qos_second_path +
                             resp_body['qoss']['qos']['id'])
         rename_path = str(rename_path_temp)
@@ -778,9 +779,8 @@ class QosExtensionTest(unittest.TestCase):
         self.assertEqual(200, rename_response.status_int)
         rename_resp_dict = wsgi.Serializer().deserialize(rename_response.body,
                                                          self.contenttype)
-        self.assertEqual(
-                     rename_resp_dict['qoss']['qos']['name'],
-                     'cisco_rename_qos')
+        self.assertEqual(rename_resp_dict['qoss']['qos']['name'],
+                         'cisco_rename_qos')
         self.tearDownQos(rename_path)
         LOG.debug("test_update_qos - END")
 
@@ -795,9 +795,9 @@ class QosExtensionTest(unittest.TestCase):
                 'qos_desc': {
                     'PPS': 50,
                     'TTL': 5,
-                    },
                 },
-            })
+            },
+        })
         rename_path_temp = self.qos_second_path + qos_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,
@@ -838,9 +838,9 @@ class QosExtensionTest(unittest.TestCase):
                 'qos_desc': {
                     'PPS': 50,
                     'TTL': 5,
-                    },
                 },
-            })
+            },
+        })
         index_response = self.test_app.post(self.qos_path, req_body,
                                             content_type=self.contenttype)
         resp_body = wsgi.Serializer().deserialize(index_response.body,
@@ -881,12 +881,12 @@ class CredentialExtensionTest(unittest.TestCase):
 
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
-        controller = credential.CredentialController(
-                     QuantumManager.get_plugin())
+        controller = credential.CredentialController(QuantumManager.
+                                                     get_plugin())
         res_ext = extensions.ResourceExtension('credentials', controller,
                                                parent=parent_resource)
-        self.test_app = setup_extensions_test_app(
-                        SimpleExtensionManager(res_ext))
+        self.test_app = setup_extensions_test_app(SimpleExtensionManager(
+                                                  res_ext))
         self.contenttype = 'application/json'
         self.credential_path = '/extensions/csco/tenants/tt/credentials'
         self.cred_second_path = '/extensions/csco/tenants/tt/credentials/'
@@ -895,8 +895,8 @@ class CredentialExtensionTest(unittest.TestCase):
                 'credential_name': 'cred8',
                 'user_name': 'newUser2',
                 'password': 'newPasswd1',
-                },
-            }
+            },
+        }
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_credentials(self):
@@ -914,8 +914,8 @@ class CredentialExtensionTest(unittest.TestCase):
                 'credential_name': 'cred9',
                 'user_name': 'newUser2',
                 'password': 'newPasswd2',
-                },
-            })
+            },
+        })
         create_response2 = self.test_app.post(
             self.credential_path, req_body2,
             content_type=self.contenttype)
@@ -1027,8 +1027,8 @@ class CredentialExtensionTest(unittest.TestCase):
                 'credential_name': 'cred3',
                 'user_name': 'RenamedUser',
                 'password': 'Renamedpassword',
-                },
-            })
+            },
+        })
         rename_path_temp = (self.cred_second_path +
                             resp_body['credentials']['credential']['id'])
         rename_path = str(rename_path_temp)
@@ -1075,8 +1075,8 @@ class CredentialExtensionTest(unittest.TestCase):
                 'credential_name': 'cred3',
                 'user_name': 'RenamedUser',
                 'password': 'Renamedpassword',
-                },
-            })
+            },
+        })
         rename_path_temp = self.cred_second_path + credential_id
         rename_path = str(rename_path_temp)
         rename_response = self.test_app.put(rename_path, rename_req_body,
@@ -1143,8 +1143,8 @@ class MultiPortExtensionTest(unittest.TestCase):
                 'net_id_list': '1',
                 'status': 'test-qos1',
                 'ports_desc': 'Port Descr',
-                },
-            }
+            },
+        }
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
         options = {}
@@ -1209,9 +1209,9 @@ class MultiPortExtensionTest(unittest.TestCase):
                 'status': 'ACTIVE',
                 'ports_desc': {
                     'key': 'value',
-                    },
                 },
-            }
+            },
+        }
         req_body = jsonutils.dumps(test_multi_port)
         index_response = self.test_app.post(self.multiport_path, req_body,
                                             content_type=self.contenttype)

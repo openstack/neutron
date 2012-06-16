@@ -57,7 +57,7 @@ class QuantumBase(object):
         Includes attributes from joins."""
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
-                      if not k[0] == '_'])
+                       if not k[0] == '_'])
         local.update(joined)
         return local.iteritems()
 
@@ -80,7 +80,7 @@ class Port(BASE, QuantumBase):
 
     def __repr__(self):
         return "<Port(%s,%s,%s,%s)>" % (self.uuid, self.network_id,
-                                     self.state, self.interface_id)
+                                        self.state, self.interface_id)
 
 
 class Network(BASE, QuantumBase):
@@ -98,5 +98,4 @@ class Network(BASE, QuantumBase):
         self.name = name
 
     def __repr__(self):
-        return "<Network(%s,%s,%s)>" % \
-          (self.uuid, self.name, self.tenant_id)
+        return "<Network(%s,%s,%s)>" % (self.uuid, self.name, self.tenant_id)

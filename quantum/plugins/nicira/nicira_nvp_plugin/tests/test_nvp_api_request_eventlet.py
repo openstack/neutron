@@ -26,7 +26,7 @@ from mock import patch
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
     client_eventlet as nace,
     request_eventlet as nare,
-    )
+)
 
 
 logging.basicConfig(level=logging.DEBUG)

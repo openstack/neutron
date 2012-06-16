@@ -106,18 +106,18 @@ def add_log_options(parser):
                           "the Python logging module documentation for "
                           "details on logging configuration files.")
     group.add_option('--log-date-format', metavar="FORMAT",
-                      default=DEFAULT_LOG_DATE_FORMAT,
-                      help="Format string for %(asctime)s in log records. "
-                           "Default: %default")
+                     default=DEFAULT_LOG_DATE_FORMAT,
+                     help="Format string for %(asctime)s in log records. "
+                          "Default: %default")
     group.add_option('--use-syslog', default=False,
-                      action="store_true",
-                      help="Output logs to syslog.")
+                     action="store_true",
+                     help="Output logs to syslog.")
     group.add_option('--log-file', default=None, metavar="PATH",
-                      help="(Optional) Name of log file to output to. "
-                           "If not set, logging will go to stdout.")
+                     help="(Optional) Name of log file to output to. "
+                          "If not set, logging will go to stdout.")
     group.add_option("--log-dir", default=None,
-                      help="(Optional) The directory to keep log files in "
-                           "(will be prepended to --logfile)")
+                     help="(Optional) The directory to keep log files in "
+                          "(will be prepended to --logfile)")
     parser.add_option_group(group)
 
 
@@ -237,10 +237,9 @@ def find_config_file(options, args, config_file='quantum.conf'):
                         '/etc']
 
     if 'plugin' in options:
-        config_file_dirs = [
-            os.path.join(x, 'quantum', 'plugins', options['plugin'])
-            for x in config_file_dirs
-            ]
+        config_file_dirs = [os.path.join(x, 'quantum',
+                            'plugins', options['plugin'])
+                            for x in config_file_dirs]
 
     if os.path.exists(os.path.join(root, 'plugins')):
         plugins = [fix_path(os.path.join(root, 'plugins', p, 'etc'))
@@ -282,7 +281,7 @@ def load_paste_config(app_name, options, args):
     conf_file = find_config_file(options, args)
     if not conf_file:
         raise RuntimeError("Unable to locate any configuration file. "
-                            "Cannot load application %s" % app_name)
+                           "Cannot load application %s" % app_name)
     try:
         conf = deploy.appconfig("config:%s" % conf_file, name=app_name)
         return conf_file, conf

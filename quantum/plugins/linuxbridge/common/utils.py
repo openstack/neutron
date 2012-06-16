@@ -31,7 +31,7 @@ def make_net_dict(net_id, net_name, ports, op_status):
         const.NET_ID: net_id,
         const.NET_NAME: net_name,
         const.NET_OP_STATUS: op_status,
-        }
+    }
     if ports:
         res[const.NET_PORTS] = ports
     return res
@@ -50,4 +50,4 @@ def make_port_dict(port):
         const.PORT_OP_STATUS: op_status,
         const.NET_ID: port[const.NETWORKID],
         const.ATTACHMENT: port[const.INTERFACEID],
-        }
+    }

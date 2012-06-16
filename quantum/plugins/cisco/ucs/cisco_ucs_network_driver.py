@@ -48,89 +48,90 @@ HEADERS = {"Content-Type": "text/xml"}
 METHOD = "POST"
 URL = "/nuova"
 
-CREATE_VLAN = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"true\"> <inConfigs>" \
-"<pair key=\"fabric/lan/net-" + VLAN_NAME + \
-"\"> <fabricVlan defaultNet=\"no\" " \
-"dn=\"fabric/lan/net-" + VLAN_NAME + \
-"\" id=\"" + VLAN_ID + "\" name=\"" + \
-VLAN_NAME + "\" status=\"created\">" \
-"</fabricVlan> </pair> </inConfigs> </configConfMos>"
+CREATE_VLAN = ('<configConfMos cookie="' + COOKIE_VALUE +
+               '" inHierarchical="true"> <inConfigs>'
+               '<pair key="fabric/lan/net-"' + VLAN_NAME +
+               '"> <fabricVlan defaultNet="no" '
+               'dn="fabric/lan/net-' + VLAN_NAME +
+               '" id="' + VLAN_ID + '" name="' +
+               VLAN_NAME + '" status="created">'
+               '</fabricVlan> </pair> </inConfigs> </configConfMos>')
 
-CREATE_PROFILE = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"true\"> <inConfigs>" \
-"<pair key=\"fabric/lan/profiles/vnic-" + PROFILE_NAME + \
-"\"> <vnicProfile descr=\"Profile created by " \
-"Cisco OpenStack Quantum Plugin\" " \
-"dn=\"fabric/lan/profiles/vnic-" + PROFILE_NAME + \
-"\" maxPorts=\"64\" name=\"" + PROFILE_NAME + \
-"\" nwCtrlPolicyName=\"\" pinToGroupName=\"\" " \
-"qosPolicyName=\"\" status=\"created\"> " \
-"<vnicEtherIf defaultNet=\"yes\" name=\"" + VLAN_NAME + \
-"\" rn=\"if-" + VLAN_NAME + "\" > </vnicEtherIf> " \
-"</vnicProfile> </pair> </inConfigs> </configConfMos>"
+CREATE_PROFILE = ('<configConfMos cookie="' + COOKIE_VALUE +
+                  '" inHierarchical="true"> <inConfigs>'
+                  '<pair key="fabric/lan/profiles/vnic-' + PROFILE_NAME +
+                  '"> <vnicProfile descr="Profile created by '
+                  'Cisco OpenStack Quantum Plugin" '
+                  'dn="fabric/lan/profiles/vnic' + PROFILE_NAME +
+                  '" maxPorts="64" name="' + PROFILE_NAME +
+                  '" nwCtrlPolicyName="" pinToGroupName="" '
+                  'qosPolicyName="" status="created"> '
+                  '<vnicEtherIf defaultNet="yes" name="' + VLAN_NAME +
+                  '" rn="if' + VLAN_NAME + '" > </vnicEtherIf> '
+                  '</vnicProfile> </pair> </inConfigs> </configConfMos>')
 
-ASSOCIATE_PROFILE = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"true\"> <inConfigs> <pair " \
-"key=\"fabric/lan/profiles/vnic-" + PROFILE_NAME + \
-"/cl-" + PROFILE_CLIENT + "\"> <vmVnicProfCl dcName=\".*\" " \
-"descr=\"\" dn=\"fabric/lan/profiles/vnic-" + \
-PROFILE_NAME + "/cl-" + PROFILE_CLIENT + \
-"\"name=\"" + PROFILE_CLIENT + "\" orgPath=\".*\" " \
-"status=\"created\" swName=\"default$\"> </vmVnicProfCl>" \
-"</pair> </inConfigs> </configConfMos>"
+ASSOCIATE_PROFILE = ('<configConfMos cookie="' + COOKIE_VALUE +
+                     '" inHierarchical="true"> <inConfigs> <pair '
+                     'key="fabric/lan/profiles/vnic' + PROFILE_NAME +
+                     '/cl' + PROFILE_CLIENT + '"> <vmVnicProfCl dcName=".*" '
+                     'descr="" dn="fabric/lan/profiles/vnic' +
+                     PROFILE_NAME + '/cl' + PROFILE_CLIENT +
+                     '"name="' + PROFILE_CLIENT + '" orgPath=".*" '
+                     'status="created" swName="default$"> </vmVnicProfCl>'
+                     '</pair> </inConfigs> </configConfMos>')
 
-CHANGE_VLAN_IN_PROFILE = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"true\"> <inConfigs>" \
-"<pair key=\"fabric/lan/profiles/vnic-" + \
-PROFILE_NAME + "\"> <vnicProfile descr=\"Profile " \
-"created by Cisco OpenStack Quantum Plugin\" " \
-"dn=\"fabric/lan/profiles/vnic-" + \
-PROFILE_NAME + "\" maxPorts=\"64\" name=\"" + \
-PROFILE_NAME + "\" nwCtrlPolicyName=\"\" " \
-"pinToGroupName=\"\" qosPolicyName=\"\" " \
-"status=\"created,modified\">" \
-"<vnicEtherIf rn=\"if-" + OLD_VLAN_NAME + \
-"\" status=\"deleted\"> </vnicEtherIf> <vnicEtherIf " \
-"defaultNet=\"yes\" name=\"" + \
-VLAN_NAME + "\" rn=\"if-" + VLAN_NAME + \
-"\" > </vnicEtherIf> </vnicProfile> </pair>" \
-"</inConfigs> </configConfMos>"
+CHANGE_VLAN_IN_PROFILE = ('<configConfMos cookie="' + COOKIE_VALUE +
+                          '" inHierarchical="true"> <inConfigs'
+                          '<pair key="fabric/lan/profiles/vnic' +
+                          PROFILE_NAME + '"> <vnicProfile descr="Profile'
+                          'created by Cisco OpenStack Quantum Plugin"'
+                          'dn="fabric/lan/profiles/vnic' +
+                          PROFILE_NAME + '" maxPorts="64" name="' +
+                          PROFILE_NAME + '" nwCtrlPolicyName=""'
+                          'pinToGroupName="" qosPolicyName=""'
+                          'status="created,modified"'
+                          '<vnicEtherIf rn="if' + OLD_VLAN_NAME +
+                          '" status="deleted"> </vnicEtherIf> <vnicEtherIf'
+                          'defaultNet="yes" name="' +
+                          VLAN_NAME + '" rn="if' + VLAN_NAME +
+                          '" > </vnicEtherIf> </vnicProfile> </pair'
+                          '</inConfigs> </configConfMos>')
 
-DELETE_VLAN = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"true\"> <inConfigs>" \
-"<pair key=\"fabric/lan/net-" + VLAN_NAME + \
-"\"> <fabricVlan dn=\"fabric/lan/net-" + VLAN_NAME + \
-"\" status=\"deleted\"> </fabricVlan> </pair> </inConfigs>" \
-"</configConfMos>"
+DELETE_VLAN = ('<configConfMos cookie="' + COOKIE_VALUE +
+               '" inHierarchical="true"> <inConfigs'
+               '<pair key="fabric/lan/net' + VLAN_NAME +
+               '"> <fabricVlan dn="fabric/lan/net' + VLAN_NAME +
+               '" status="deleted"> </fabricVlan> </pair> </inConfigs'
+               '</configConfMos')
 
-DELETE_PROFILE = "<configConfMos cookie=\"" + COOKIE_VALUE + \
-"\" inHierarchical=\"false\"> <inConfigs>" \
-"<pair key=\"fabric/lan/profiles/vnic-" + PROFILE_NAME + \
-"\"> <vnicProfile dn=\"fabric/lan/profiles/vnic-" + \
-PROFILE_NAME + "\" status=\"deleted\"> </vnicProfile>" \
-"</pair> </inConfigs> </configConfMos>"
+DELETE_PROFILE = ('<configConfMos cookie="' + COOKIE_VALUE +
+                  '" inHierarchical="false"> <inConfigs'
+                  '<pair key="fabric/lan/profiles/vnic' + PROFILE_NAME +
+                  '"> <vnicProfile dn="fabric/lan/profiles/vnic' +
+                  PROFILE_NAME + '" status="deleted"> </vnicProfile'
+                  '</pair> </inConfigs> </configConfMos')
 
-GET_BLADE_INTERFACE_STATE = "<configScope cookie=\"" + COOKIE_VALUE + \
-        "\" dn=\"" + BLADE_DN_VALUE + "\" inClass=\"dcxVIf\" " +  \
-        "inHierarchical=\"false\" inRecursive=\"false\"> " + \
-        "<inFilter> </inFilter> </configScope>"
+GET_BLADE_INTERFACE_STATE = ('<configScope cookie="' + COOKIE_VALUE +
+                             '" dn="' + BLADE_DN_VALUE + '" inClass="dcxVIf"' +
+                             'inHierarchical="false" inRecursive="false">' +
+                             '<inFilter> </inFilter> </configScope')
 
-GET_BLADE_INTERFACE = "<configResolveClass cookie=\"" + COOKIE_VALUE + \
-        "\" classId=\"vnicEther\"" + \
-        " inHierarchical=\"false\">" + \
-        " <inFilter> <eq class=\"vnicEther\" property=\"equipmentDn\"" + \
-        " value=\"sys/chassis-" + CHASSIS_VALUE + "/blade-" + \
-        BLADE_VALUE + "/adaptor-1/host-eth-?\"/> " +  \
-        "</inFilter> </configResolveClass>"
+GET_BLADE_INTERFACE = ('<configResolveClass cookie="' + COOKIE_VALUE +
+                       '" classId="vnicEther"' +
+                       ' inHierarchical="false"' +
+                       ' <inFilter> <eq class="vnicEther" ' +
+                       'property="equipmentDn"' +
+                       ' value="sys/chassis' + CHASSIS_VALUE + '/blade' +
+                       BLADE_VALUE + '/adaptor-1/host-eth-?"/>' +
+                       '</inFilter> </configResolveClass')
 
 # TODO (Sumit): Assumes "adaptor-1", check if this has to be discovered too
-GET_BLADE_INTERFACES = "<configResolveChildren cookie=\"" + \
-        COOKIE_VALUE + "\" inDn=\"sys/chassis-" + \
-        CHASSIS_VALUE + "/blade-" + BLADE_VALUE + \
-        "/adaptor-1\"" + \
-        " inHierarchical=\"false\"> <inFilter> </inFilter>" + \
-        " </configResolveChildren>"
+GET_BLADE_INTERFACES = ('<configResolveChildren cookie="' +
+                        COOKIE_VALUE + '" inDn="sys/chassis' +
+                        CHASSIS_VALUE + '/blade' + BLADE_VALUE +
+                        '/adaptor-1"' +
+                        ' inHierarchical="false"> <inFilter> </inFilter' +
+                        ' </configResolveChildren')
 
 
 class CiscoUCSMDriver():
@@ -218,7 +219,7 @@ class CiscoUCSMDriver():
         response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
         elements = (
             et.XML(response).find("outConfigs").findall("adaptorHostEthIf")
-            )
+        )
         blade_interfaces = {}
         for element in elements:
             dist_name = element.get("dn", default=None)
@@ -232,17 +233,16 @@ class CiscoUCSMDriver():
                     const.BLADE_INTF_INST_TYPE: None,
                     const.BLADE_INTF_RHEL_DEVICE_NAME:
                     self._get_rhel_device_name(order),
-                    }
+                }
                 blade_interfaces[dist_name] = blade_interface
 
         return blade_interfaces
 
     def _get_blade_interface_state(self, blade_intf, ucsm_ip,
-                              ucsm_username, ucsm_password):
+                                   ucsm_username, ucsm_password):
         """Create command"""
-        data = (
-            self._get_blade_intf_st_post_data(blade_intf[const.BLADE_INTF_DN])
-            )
+        data = (self._get_blade_intf_st_post_data(
+                blade_intf[const.BLADE_INTF_DN]))
         response = self._post_data(ucsm_ip, ucsm_username, ucsm_password, data)
         elements = et.XML(response).find("outConfigs").findall("dcxVIf")
         for element in elements:
@@ -295,8 +295,8 @@ class CiscoUCSMDriver():
             self._get_blade_interface_state(blade_interfaces[blade_intf],
                                             ucsm_ip, ucsm_username,
                                             ucsm_password)
-            if blade_interfaces[blade_intf][const.BLADE_INTF_INST_TYPE] != \
-               const.BLADE_INTF_DYNAMIC:
+            if ((blade_interfaces[blade_intf][const.BLADE_INTF_INST_TYPE] !=
+                 const.BLADE_INTF_DYNAMIC)):
                 blade_interfaces.pop(blade_intf)
 
         return blade_interfaces

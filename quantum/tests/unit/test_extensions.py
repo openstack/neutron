@@ -28,7 +28,7 @@ from quantum.extensions.extensions import (
     ExtensionManager,
     ExtensionMiddleware,
     PluginAwareExtensionManager,
-    )
+)
 from quantum.openstack.common import jsonutils
 from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
 from quantum.tests.unit import BaseTest
@@ -37,7 +37,7 @@ from quantum.tests.unit.extension_stubs import (
     StubBaseAppController,
     StubExtension,
     StubPlugin,
-    )
+)
 import quantum.tests.unit.extensions
 from quantum import wsgi
 
@@ -300,7 +300,7 @@ class RequestExtensionTest(BaseTest):
         self.assertEqual(response.json['uneditable'], "original_value")
 
         ext_app = self._setup_app_with_request_handler(_update_handler,
-                                                            'PUT')
+                                                       'PUT')
         ext_response = ext_app.put("/dummy_resources/1",
                                    {'uneditable': "new_value"})
         self.assertEqual(ext_response.json['uneditable'], "new_value")

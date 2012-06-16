@@ -112,7 +112,7 @@ class OVSBridge:
                               "param-name=other-config",
                               "param-key=nicira-iface-id",
                               "uuid=%s" % xs_vif_uuid],
-                              root_helper=self.root_helper).strip()
+                             root_helper=self.root_helper).strip()
 
     def _vifport(self, name, external_ids):
         ofport = self.db_get_val("Interface", name, "ofport")
@@ -271,7 +271,8 @@ def main():
     usagestr = "%prog [OPTIONS] <config file>"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
+                      action="store_true", default=False,
+                      help="turn on verbose logging")
 
     options, args = parser.parse_args()
 

@@ -62,7 +62,8 @@ class APITestV10(test_api.BaseAPIOperationsTest):
                 test_api.NETS: nets.ControllerV10._serialization_metadata,
                 test_api.PORTS: ports.ControllerV10._serialization_metadata,
                 test_api.ATTS: atts.ControllerV10._serialization_metadata,
-                })
+            }
+        )
         self._successful_create_code = exc.HTTPOk.code
         self._network_not_found_code = 420
         self._network_in_use_code = 421
@@ -112,7 +113,8 @@ class APITestV11(test_api.BaseAPIOperationsTest):
                 test_api.NETS: nets.ControllerV11._serialization_metadata,
                 test_api.PORTS: ports.ControllerV11._serialization_metadata,
                 test_api.ATTS: atts.ControllerV11._serialization_metadata,
-                })
+            }
+        )
         self._successful_create_code = exc.HTTPAccepted.code
         self._network_not_found_code = exc.HTTPNotFound.code
         self._network_in_use_code = exc.HTTPConflict.code
@@ -155,7 +157,8 @@ class APIFiltersTest(test_api.AbstractAPITest):
                 test_api.NETS: nets.ControllerV11._serialization_metadata,
                 test_api.PORTS: ports.ControllerV11._serialization_metadata,
                 test_api.ATTS: atts.ControllerV11._serialization_metadata,
-                })
+            }
+        )
         self._successful_create_code = exc.HTTPAccepted.code
         self.net_op_status = test_config.get('default_net_op_status',
                                              'UNKNOWN')

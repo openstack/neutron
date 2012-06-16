@@ -90,10 +90,11 @@ class CoreAPITestFunc(unittest.TestCase):
             tenant_id, net_id)
         LOG.debug("test_delete_network_not_found - END")
 
-    def test_delete_networkInUse(
-                    self, tenant_id='test_tenant', instance_tenant_id='nova',
-                    nova_user_id='novaadmin', instance_id=10,
-                    vif_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
+    def test_delete_networkInUse(self, tenant_id='test_tenant',
+                                 instance_tenant_id='nova',
+                                 nova_user_id='novaadmin', instance_id=10,
+                                 vif_id='fe701ddf-26a2-'
+                                        '42ea-b9e6-7313d1c522cc'):
 
         """
         Tests deletion of a Virtual Network when Network is in Use.
@@ -492,10 +493,11 @@ class CoreAPITestFunc(unittest.TestCase):
         """
 
         LOG.debug("test_plug_interface - START")
-        new_net_dict = self._l2network_plugin.create_network(
-                                tenant_id, self.network_name)
-        port_dict = self._l2network_plugin.create_port(
-                        tenant_id, new_net_dict[const.NET_ID], self.state)
+        new_net_dict = self._l2network_plugin.create_network(tenant_id,
+                                                             self.network_name)
+        port_dict = self._l2network_plugin.create_port(tenant_id,
+                                                       new_net_dict[const.
+                                                       NET_ID], self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
@@ -551,11 +553,13 @@ class CoreAPITestFunc(unittest.TestCase):
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_plug_interface_portDNE - END")
 
-    def test_plug_interface_portInUse(
-        self, tenant_id='test_tenant', instance_tenant_id='nova',
-        nova_user_id='novaadmin', instance_id=10,
-        vif_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-        remote_interface='new_interface'):
+    def test_plug_interface_portInUse(self, tenant_id='test_tenant',
+                                      instance_tenant_id='nova',
+                                      nova_user_id='novaadmin',
+                                      instance_id=10,
+                                      vif_id='fe701ddf-26a2-42ea-'
+                                             'b9e6-7313d1c522cc',
+                                      remote_interface='new_interface'):
         """
         Tests attachment of new interface to the port when there is an
         existing attachment
@@ -588,10 +592,10 @@ class CoreAPITestFunc(unittest.TestCase):
 
         LOG.debug("test_plug_interface_portInUse - END")
 
-    def test_unplug_interface(
-        self, tenant_id='test_tenant', instance_tenant_id='nova',
-        nova_user_id='novaadmin', instance_id=10,
-        vif_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
+    def test_unplug_interface(self, tenant_id='test_tenant',
+                              instance_tenant_id='nova',
+                              nova_user_id='novaadmin', instance_id=10,
+                              vif_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
         """
         Tests detaachment of an interface to a port
         """
@@ -730,8 +734,8 @@ class CoreAPITestFunc(unittest.TestCase):
         port_profile_dict = self._l2network_plugin.create_portprofile(
             tenant_id, self.profile_name, self.qos)
         port_profile_id = port_profile_dict['profile_id']
-        new_net_dict = self._l2network_plugin.create_network(
-                        tenant_id, 'test_network')
+        new_net_dict = self._l2network_plugin.create_network(tenant_id,
+                                                             'test_network')
         port_dict = self._l2network_plugin.create_port(
             tenant_id, new_net_dict[const.NET_ID],
             const.PORT_UP)
@@ -919,7 +923,8 @@ class CoreAPITestFunc(unittest.TestCase):
         LOG.debug("test_disassociate_portprofile - END")
 
     def test_disassociate_portprofileDNE(self, tenant_id='test_tenant',
-                net_id='0005', port_id='p00005', profile_id='pr0005'):
+                                         net_id='0005', port_id='p00005',
+                                         profile_id='pr0005'):
         """
         Tests disassociation of a port-profile when network does not exist
         """
@@ -1010,8 +1015,8 @@ class CoreAPITestFunc(unittest.TestCase):
         self.tearDownNetwork(tenant_id, network_dict_id)
 
     def tearDownNetworkPortInterface(self, tenant_id, instance_tenant_id,
-                                  instance_id, instance_desc, network_dict_id,
-                                  port_id):
+                                     instance_id, instance_desc,
+                                     network_dict_id, port_id):
         """
         Tear down Network Port Interface
         """
@@ -1061,7 +1066,7 @@ class CoreAPITestFunc(unittest.TestCase):
             const.PROFILE_ASSOCIATIONS: profile_associations,
             const.PROFILE_VLAN_ID: None,
             const.PROFILE_QOS: qos,
-            }
+        }
         return res
 
     def _make_portprofile_assc_list(self, tenant_id, profile_id):

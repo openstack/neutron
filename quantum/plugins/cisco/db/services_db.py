@@ -30,8 +30,7 @@ def get_all_services_bindings():
     LOG.debug("get_all_services_bindings() called")
     session = db.get_session()
     try:
-        bindings = session.query(services_models.ServicesBinding).\
-          all()
+        bindings = session.query(services_models.ServicesBinding).all()
         return bindings
     except exc.NoResultFound:
         return []
@@ -42,9 +41,8 @@ def get_service_bindings(service_id):
     LOG.debug("get_service_bindings() called")
     session = db.get_session()
     try:
-        bindings = session.query(services_models.ServicesBinding).\
-          filter_by(service_id=service_id).\
-          one()
+        bindings = (session.query(services_models.ServicesBinding).
+                    filter_by(service_id=service_id).one())
         return bindings
     except exc.NoResultFound:
         return []
@@ -66,9 +64,8 @@ def remove_services_binding(service_id):
     LOG.debug("remove_services_binding() called")
     session = db.get_session()
     try:
-        binding = session.query(services_models.ServicesBinding).\
-          filter_by(service_id=service_id).\
-          all()
+        binding = (session.query(services_models.ServicesBinding).
+                   filter_by(service_id=service_id).all())
         for bind in binding:
             session.delete(bind)
         session.flush()

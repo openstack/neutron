@@ -73,5 +73,5 @@ class Network(model_base.BASE):
         self.op_status = op_status
 
     def __repr__(self):
-        return "<Network(%s,%s,%s,%s)>" % \
-          (self.uuid, self.name, self.op_status, self.tenant_id)
+        return "<Network(%s,%s,%s,%s)>" % (self.uuid, self.name,
+                                           self.op_status, self.tenant_id)

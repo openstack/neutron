@@ -113,7 +113,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
             const.NET_NAME: net_name,
             const.NET_PORTS: [],
             const.NET_OP_STATUS: new_network[const.OPSTATUS],
-            }
+        }
         return new_net_dict
 
     def delete_network(self, tenant_id, net_id):

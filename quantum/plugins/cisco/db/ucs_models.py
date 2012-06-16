@@ -50,6 +50,6 @@ class PortBinding(BASE, L2NetworkBase):
         self.qos = qos
 
     def __repr__(self):
-        return "<PortProfile Binding(%s,%s,%s,%s,%s,%s)>" % \
-          (self.port_id, self.blade_intf_dn, self.portprofile_name,
-                                self.vlan_name, self.vlan_id, self.qos)
+        return "<PortProfile Binding(%s,%s,%s,%s,%s,%s)>" % (
+               self.port_id, self.blade_intf_dn, self.portprofile_name,
+               self.vlan_name, self.vlan_id, self.qos)

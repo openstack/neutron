@@ -29,7 +29,7 @@ from quantum.plugins.linuxbridge.common import config
 
 LOG = logging.getLogger(__name__)
 CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None,
-                              "linuxbridge_conf.ini")
+                             "linuxbridge_conf.ini")
 CONF = config.parse(CONF_FILE)
 
 
@@ -47,8 +47,7 @@ def create_vlanids():
     start = CONF.VLANS.vlan_start
     end = CONF.VLANS.vlan_end
     try:
-        vlanid = session.query(l2network_models.VlanID).\
-          one()
+        vlanid = session.query(l2network_models.VlanID).one()
     except exc.MultipleResultsFound:
         """
         TODO (Sumit): Salvatore rightly points out that this will not handle

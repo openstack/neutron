@@ -158,9 +158,9 @@ class Controller(object):
         if self._resource not in ['network', 'port']:
             return
 
-        if ('tenant_id' in res_dict and
-            res_dict['tenant_id'] != context.tenant_id and
-            not context.is_admin):
+        if (('tenant_id' in res_dict and
+             res_dict['tenant_id'] != context.tenant_id and
+             not context.is_admin)):
             msg = _("Specifying 'tenant_id' other than authenticated"
                     "tenant in request requires admin privileges")
             raise webob.exc.HTTPBadRequest(msg)
@@ -170,7 +170,7 @@ class Controller(object):
                 res_dict['tenant_id'] = context.tenant_id
             else:
                 msg = _("Running without keystyone AuthN requires "
-                    " that tenant_id is specified")
+                        " that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
     def _prepare_request_body(self, context, body, is_create,
@@ -242,13 +242,11 @@ def create_resource(collection, resource, plugin, conf, params):
 
     # NOTE(jkoelker) To anyone wishing to add "proper" xml support
     #                this is where you do it
-    serializers = {
+    serializers = {}
     #    'application/xml': wsgi.XMLDictSerializer(metadata, XML_NS_V20),
-    }
 
-    deserializers = {
+    deserializers = {}
     #    'application/xml': wsgi.XMLDeserializer(metadata),
-    }
 
     return wsgi_resource.Resource(controller, FAULT_MAP, deserializers,
                                   serializers)

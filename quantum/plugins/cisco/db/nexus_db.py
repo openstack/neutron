@@ -30,8 +30,7 @@ def get_all_nexusport_bindings():
     LOG.debug("get_all_nexusport_bindings() called")
     session = db.get_session()
     try:
-        bindings = session.query(nexus_models.NexusPortBinding).\
-          all()
+        bindings = session.query(nexus_models.NexusPortBinding).all()
         return bindings
     except exc.NoResultFound:
         return []
@@ -42,9 +41,8 @@ def get_nexusport_binding(vlan_id):
     LOG.debug("get_nexusport_binding() called")
     session = db.get_session()
     try:
-        binding = session.query(nexus_models.NexusPortBinding).\
-          filter_by(vlan_id=vlan_id).\
-          all()
+        binding = (session.query(nexus_models.NexusPortBinding).
+                   filter_by(vlan_id=vlan_id).all())
         return binding
     except exc.NoResultFound:
         raise c_exc.NexusPortBindingNotFound(vlan_id=vlan_id)
@@ -65,9 +63,8 @@ def remove_nexusport_binding(vlan_id):
     LOG.debug("remove_nexusport_binding() called")
     session = db.get_session()
     try:
-        binding = session.query(nexus_models.NexusPortBinding).\
-          filter_by(vlan_id=vlan_id).\
-          all()
+        binding = (session.query(nexus_models.NexusPortBinding).
+                   filter_by(vlan_id=vlan_id).all())
         for bind in binding:
             session.delete(bind)
         session.flush()
@@ -81,9 +78,8 @@ def update_nexusport_binding(port_id, new_vlan_id):
     LOG.debug("update_nexusport_binding called")
     session = db.get_session()
     try:
-        binding = session.query(nexus_models.NexusPortBinding).\
-          filter_by(port_id=port_id).\
-          one()
+        binding = (session.query(nexus_models.NexusPortBinding).
+                   filter_by(port_id=port_id).one())
         if new_vlan_id:
             binding["vlan_id"] = new_vlan_id
         session.merge(binding)

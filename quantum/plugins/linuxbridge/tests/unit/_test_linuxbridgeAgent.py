@@ -29,7 +29,7 @@ import quantum.db.api as db
 from quantum.plugins.linuxbridge import LinuxBridgePlugin
 from quantum.plugins.linuxbridge.agent import (
     linuxbridge_quantum_agent as linux_agent,
-    )
+)
 from quantum.plugins.linuxbridge.common import constants as lconst
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
 
@@ -39,10 +39,11 @@ LOG = logging.getLogger(__name__)
 
 class LinuxBridgeAgentTest(unittest.TestCase):
 
-    def test_add_gateway_interface(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-        mac_address='fe:16:3e:51:60:dd'):
+    def test_add_gateway_interface(self, tenant_id="test_tenant",
+                                   network_name="test_network",
+                                   interface_id='fe701ddf-26a2-42ea-'
+                                                'b9e6-7313d1c522cc',
+                                   mac_address='fe:16:3e:51:60:dd'):
 
         LOG.debug("test_tap_gateway_interface - START")
         new_network = (
@@ -77,10 +78,11 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_add_gateway_interface - END")
 
-    def test_add_tap_interface(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-        mac_address='fe:16:3e:51:60:dd'):
+    def test_add_tap_interface(self, tenant_id="test_tenant",
+                               network_name="test_network",
+                               interface_id='fe701ddf-26a2-42ea-'
+                                            'b9e6-7313d1c522cc',
+                               mac_address='fe:16:3e:51:60:dd'):
 
         LOG.debug("test_add_tap_interface - START")
         new_network = (
@@ -115,10 +117,11 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_add_tap_interface -END")
 
-    def test_remove_interface(
-                  self, tenant_id="test_tenant", network_name="test_network",
-                  interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-                  mac_address='fe:16:3e:51:60:dd'):
+    def test_remove_interface(self, tenant_id="test_tenant",
+                              network_name="test_network",
+                              interface_id='fe701ddf-26a2-42ea-'
+                                           'b9e6-7313d1c522cc',
+                              mac_address='fe:16:3e:51:60:dd'):
 
         LOG.debug("test_remove_interface - START")
         new_network = (
@@ -158,10 +161,10 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_remove_interface -END")
 
-    def test_ensure_vlan_bridge(
-        self, tenant_id="test_tenant",
-        network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
+    def test_ensure_vlan_bridge(self, tenant_id="test_tenant",
+                                network_name="test_network",
+                                interface_id='fe701ddf-26a2-42ea-'
+                                             'b9e6-7313d1c522cc'):
 
         LOG.debug("test_ensure_vlan_bridge - START")
         new_network = (
@@ -179,7 +182,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self._linuxbridge_quantum_agent.linux_br.ensure_vlan_bridge(
             new_network[lconst.NET_ID], str(vlan_id))
         list_quantum_bridges = (self._linuxbridge_quantum_agent.linux_br.
-                               get_all_quantum_bridges())
+                                get_all_quantum_bridges())
         self.assertTrue(bridge_name in list_quantum_bridges)
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
@@ -195,9 +198,10 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_ensure_vlan_bridge -END")
 
-    def test_delete_vlan_bridge(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
+    def test_delete_vlan_bridge(self, tenant_id="test_tenant",
+                                network_name="test_network",
+                                interface_id='fe701ddf-26a2-42ea-'
+                                             'b9e6-7313d1c522cc'):
 
         LOG.debug("test_delete_vlan_bridge - START")
         new_network = (
@@ -224,9 +228,10 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_delete_vlan_bridge - END")
 
-    def test_process_deleted_networks(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc'):
+    def test_process_deleted_networks(self, tenant_id="test_tenant",
+                                      network_name="test_network",
+                                      interface_id='fe701ddf-26a2-42ea-'
+                                                   'b9e6-7313d1c522cc'):
 
         LOG.debug("test_delete_vlan_bridge - START")
         new_network = (
@@ -254,10 +259,12 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self.assertEquals(self.device_exists(bridge_name), False)
         LOG.debug("test_delete_vlan_bridge - END")
 
-    def test_process_unplugged_tap_interface(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-        mac_address='fe:16:3e:51:60:dd'):
+    def test_process_unplugged_tap_interface(self, tenant_id="test_tenant",
+                                             network_name="test_network",
+                                             interface_id='fe701ddf-26a2-'
+                                                          '42ea-b9e6-'
+                                                          '7313d1c522cc',
+                                             mac_address='fe:16:3e:51:60:dd'):
 
         LOG.debug("test_process_unplugged_tap_interface - START")
         new_network = (
@@ -278,8 +285,8 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self._linuxbridge_quantum_agent.process_port_binding(
             new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
             interface_id, str(vlan_id))
-        list_interface = self._linuxbridge_quantum_agent.linux_br.\
-                         get_interfaces_on_bridge(bridge_name)
+        list_interface = (self._linuxbridge_quantum_agent.linux_br.
+                          get_interfaces_on_bridge(bridge_name))
         self._linuxbridge_plugin.unplug_interface(tenant_id,
                                                   new_network[lconst.NET_ID],
                                                   new_port[lconst.PORT_ID])
@@ -287,7 +294,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self._linuxbridge_quantum_agent.process_unplugged_interfaces(
             plugged_interface)
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
-                         get_interfaces_on_bridge(bridge_name))
+                          get_interfaces_on_bridge(bridge_name))
         self.assertFalse(device_name in list_interface)
         for interface in list_interface:
             self._linuxbridge_quantum_agent.linux_br.remove_interface(
@@ -300,8 +307,8 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_test_process_unplugged_tap_interface -END")
 
-    def test_process_unplugged_interface_empty(
-        self, tenant_id="test_tenant", network_name="test_network"):
+    def test_process_unplugged_interface_empty(self, tenant_id="test_tenant",
+                                               network_name="test_network"):
         """ test to unplug not plugged port. It should not raise exception
         """
         LOG.debug("test_process_unplugged_interface_empty - START")
@@ -317,10 +324,11 @@ class LinuxBridgeAgentTest(unittest.TestCase):
 
         LOG.debug("test_process_unplugged_interface_empty -END")
 
-    def test_process_unplugged_gw_interface(
-        self, tenant_id="test_tenant", network_name="test_network",
-        interface_id='fe701ddf-26a2-42ea-b9e6-7313d1c522cc',
-        mac_address='fe:16:3e:51:60:dd'):
+    def test_process_unplugged_gw_interface(self, tenant_id="test_tenant",
+                                            network_name="test_network",
+                                            interface_id='fe701ddf-26a2-42ea-'
+                                                         'b9e6-7313d1c522cc',
+                                            mac_address='fe:16:3e:51:60:dd'):
 
         LOG.debug("test_process_unplugged_gw_interface - START")
         new_network = (
@@ -350,7 +358,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self._linuxbridge_quantum_agent.process_unplugged_interfaces(
             plugged_interface)
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
-                         get_interfaces_on_bridge(bridge_name))
+                          get_interfaces_on_bridge(bridge_name))
         self.assertFalse(device_name in list_interface)
         for interface in list_interface:
             self._linuxbridge_quantum_agent.linux_br.remove_interface(

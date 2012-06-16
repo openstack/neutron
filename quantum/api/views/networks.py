@@ -54,7 +54,7 @@ class ViewBuilder10(object):
     def _build_detail(self, network_data):
         """Return a detailed model of a network."""
         return dict(network=dict(id=network_data['net-id'],
-                                name=network_data['net-name']))
+                    name=network_data['net-name']))
 
     def _build_port(self, port_data):
         """Return details about a specific logical port."""
@@ -82,7 +82,7 @@ class ViewBuilder11(ViewBuilder10):
     def _build_port(self, port_data):
         """Return details about a specific logical port."""
         op_status = port_data.get('port-op-status',
-                                    OperationalStatus.UNKNOWN)
+                                  OperationalStatus.UNKNOWN)
         port_dict = {'id': port_data['port-id'],
                      'state': port_data['port-state'],
                      'op-status': op_status}

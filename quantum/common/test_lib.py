@@ -99,9 +99,9 @@ class _Win32Colorizer(object):
     See _AnsiColorizer docstring.
     """
     def __init__(self, stream):
-        from win32console import GetStdHandle, STD_OUT_HANDLE, \
-             FOREGROUND_RED, FOREGROUND_BLUE, FOREGROUND_GREEN, \
-             FOREGROUND_INTENSITY
+        from win32console import GetStdHandle, STD_OUT_HANDLE
+        from win32console import FOREGROUND_RED, FOREGROUND_BLUE
+        from win32console import FOREGROUND_GREEN, FOREGROUND_INTENSITY
         red, green, blue, bold = (FOREGROUND_RED, FOREGROUND_GREEN,
                                   FOREGROUND_BLUE, FOREGROUND_INTENSITY)
         self.stream = stream
@@ -251,9 +251,9 @@ class QuantumTestResult(result.TextTestResult):
 class QuantumTestRunner(core.TextTestRunner):
     def _makeResult(self):
         return QuantumTestResult(self.stream,
-                              self.descriptions,
-                              self.verbosity,
-                              self.config)
+                                 self.descriptions,
+                                 self.verbosity,
+                                 self.config)
 
 
 def run_tests(c=None):
@@ -273,8 +273,8 @@ def run_tests(c=None):
         return True
 
     runner = QuantumTestRunner(stream=c.stream,
-                            verbosity=c.verbosity,
-                            config=c)
+                               verbosity=c.verbosity,
+                               config=c)
     return not core.run(config=c, testRunner=runner)
 
 # describes parameters used by different unit/functional tests

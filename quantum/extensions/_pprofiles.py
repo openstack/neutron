@@ -50,14 +50,12 @@ class ViewBuilder(object):
         """Return a detailed info of a portprofile."""
         if (portprofile_data['assignment'] is None):
             return dict(portprofile=dict(
-                id=portprofile_data['profile_id'],
-                name=portprofile_data['profile_name'],
-                qos_name=portprofile_data['qos_name'],
-                ))
+                        id=portprofile_data['profile_id'],
+                        name=portprofile_data['profile_name'],
+                        qos_name=portprofile_data['qos_name']))
         else:
             return dict(portprofile=dict(
-                id=portprofile_data['profile_id'],
-                name=portprofile_data['profile_name'],
-                qos_name=portprofile_data['qos_name'],
-                assignment=portprofile_data['assignment'],
-                ))
+                        id=portprofile_data['profile_id'],
+                        name=portprofile_data['profile_name'],
+                        qos_name=portprofile_data['qos_name'],
+                        assignment=portprofile_data['assignment']))

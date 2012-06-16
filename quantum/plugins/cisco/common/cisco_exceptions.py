@@ -27,7 +27,7 @@ from quantum.common import exceptions
 class NoMoreNics(exceptions.QuantumException):
     """No more dynamic nics are available in the system"""
     message = _("Unable to complete operation. No more dynamic nics are "
-                 "available in the system.")
+                "available in the system.")
 
 
 class PortProfileLimit(exceptions.QuantumException):
@@ -83,7 +83,7 @@ class PortProfileAlreadyExists(exceptions.QuantumException):
 class PortProfileBindingAlreadyExists(exceptions.QuantumException):
     """Binding cannot be created, since it already exists"""
     message = _("PortProfileBinding for port profile %(pp_id)s to "
-                 "port %(port_id) already exists")
+                "port %(port_id) already exists")
 
 
 class VlanIDNotFound(exceptions.QuantumException):

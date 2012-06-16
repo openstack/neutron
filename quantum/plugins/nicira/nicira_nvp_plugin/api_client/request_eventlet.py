@@ -24,7 +24,7 @@ from eventlet import timeout
 from quantum.openstack.common import jsonutils
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
     _conn_str,
-    )
+)
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.request as request
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
 
@@ -172,8 +172,8 @@ class NvpApiRequestEventlet:
                 response.body = response.read()
                 response.headers = response.getheaders()
                 LOG.info("Request '%s' complete: %s (%0.2f seconds)"
-                        % (self._request_str(conn, url), response.status,
-                          time.time() - issued_time))
+                         % (self._request_str(conn, url), response.status,
+                            time.time() - issued_time))
                 if response.status not in [httplib.MOVED_PERMANENTLY,
                                            httplib.TEMPORARY_REDIRECT]:
                     break
@@ -247,7 +247,7 @@ class NvpApiRequestEventlet:
         api_providers = [(result.hostname, result.port, use_https)]
         client_eventlet = (
             quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
-            )
+        )
         api_client = client_eventlet.NvpApiClientEventlet(
             api_providers, self._api_client.user, self._api_client.password,
             use_https=use_https)
@@ -280,8 +280,8 @@ class NvpApiRequestEventlet:
             LOG.debug('req: %s' % type(req))
 
             if isinstance(req, httplib.HTTPResponse):
-                if (req.status == httplib.UNAUTHORIZED
-                    or req.status == httplib.FORBIDDEN):
+                if ((req.status == httplib.UNAUTHORIZED
+                     or req.status == httplib.FORBIDDEN)):
                     self._api_client.need_login = True
                     if attempt <= self._retries:
                         continue

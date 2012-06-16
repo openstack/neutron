@@ -19,9 +19,9 @@ import logging
 
 
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
-     import NvpApiClientEventlet
+    import NvpApiClientEventlet
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
-     import NvpGenericRequestEventlet
+    import NvpGenericRequestEventlet
 
 
 LOG = logging.getLogger("NVPApiHelper")
@@ -158,7 +158,7 @@ class NVPApiHelper(NvpApiClientEventlet):
         307: zero,
         400: zero,
         500: zero,
-        }
+    }
 
 
 class NvpApiException(Exception):

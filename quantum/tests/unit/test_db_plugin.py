@@ -80,8 +80,7 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
 
     def deserialize(self, content_type, response):
         ctype = 'application/%s' % content_type
-        data = self._deserializers[ctype].\
-                            deserialize(response.body)['body']
+        data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
     def _create_network(self, fmt, name, admin_status_up):

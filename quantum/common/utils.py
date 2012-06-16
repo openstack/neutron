@@ -91,7 +91,8 @@ def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
     if addl_env:
         env.update(addl_env)
     obj = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           env=env)
     result = None
     if process_input is not None:
         result = obj.communicate(process_input)

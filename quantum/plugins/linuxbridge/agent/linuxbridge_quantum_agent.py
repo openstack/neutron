@@ -173,12 +173,12 @@ class LinuxBridge:
             LOG.debug("Creating subinterface %s for VLAN %s on interface %s" %
                       (interface, vlan_id, self.physical_interface))
             if utils.execute(['ip', 'link', 'add', 'link',
-                             self.physical_interface,
-                             'name', interface, 'type', 'vlan', 'id',
-                             vlan_id], root_wrapper=self.root_helper):
+                              self.physical_interface,
+                              'name', interface, 'type', 'vlan', 'id',
+                              vlan_id], root_wrapper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'set',
-                             interface, 'up'], root_wrapper=self.root_helper):
+                              interface, 'up'], root_wrapper=self.root_helper):
                 return
             LOG.debug("Done creating subinterface %s" % interface)
         return interface
@@ -194,13 +194,13 @@ class LinuxBridge:
                              root_wrapper=self.root_helper):
                 return
             if utils.execute(['brctl', 'setfd', bridge_name,
-                             str(0)], root_wrapper=self.root_helper):
+                              str(0)], root_wrapper=self.root_helper):
                 return
             if utils.execute(['brctl', 'stp', bridge_name,
-                             'off'], root_wrapper=self.root_helper):
+                              'off'], root_wrapper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'set', bridge_name,
-                             'up'], root_wrapper=self.root_helper):
+                              'up'], root_wrapper=self.root_helper):
                 return
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
@@ -229,7 +229,7 @@ class LinuxBridge:
                                                      bridge_name))
         if current_bridge_name:
             if utils.execute(['brctl', 'delif', current_bridge_name,
-                             tap_device_name], root_wrapper=self.root_helper):
+                              tap_device_name], root_wrapper=self.root_helper):
                 return False
 
         self.ensure_vlan_bridge(network_id, vlan_id)
@@ -463,7 +463,8 @@ def main():
     usagestr = "%prog [OPTIONS] <config file>"
     parser = OptionParser(usage=usagestr)
     parser.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
+                      action="store_true", default=False,
+                      help="turn on verbose logging")
 
     options, args = parser.parse_args()
 

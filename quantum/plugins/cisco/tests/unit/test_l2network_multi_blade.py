@@ -116,7 +116,7 @@ class TestMultiBlade(unittest.TestCase):
             self.net_id,
             vlan_name(self.net_id),
             vlan_id,
-            ])
+        ])
         cdb.add_vlan_binding(vlan_id, vlan_name(self.net_id), self.net_id)
 
         for network in networks:
@@ -177,7 +177,7 @@ class TestMultiBlade(unittest.TestCase):
             tenant_id,
             self.net_id,
             {'name': new_net_name},
-            ])
+        ])
 
         for network in networks:
             self.assertEqual(network[const.NET_ID], self.net_id)

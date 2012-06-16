@@ -20,7 +20,7 @@ import sys
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import (
     NvpPlugin as QuantumManager,
-    )
+)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,8 +31,8 @@ def print_help():
     """Help for CLI"""
     print "\nNVP Plugin Commands:"
     for key in COMMANDS.keys():
-        print "    %s %s" % (key,
-          " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
+        print "    %s %s" %
+        (key, " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
 
 
 def build_args(cmd, cmdargs, arglist):
@@ -45,15 +45,15 @@ def build_args(cmd, cmdargs, arglist):
             del arglist[0]
     except:
         LOG.error("Not enough arguments for \"%s\" (expected: %d, got: %d)" % (
-          cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+                  cmd, len(cmdargs), len(orig_arglist)))
+        print "Usage:\n    %s %s" %
+        (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     if len(arglist) > 0:
         LOG.error("Too many arguments for \"%s\" (expected: %d, got: %d)" % (
-          cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" % (cmd,
-          " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+                  cmd, len(cmdargs), len(orig_arglist)))
+        print "Usage:\n    %s %s" %
+        (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
         sys.exit()
     return args
 
@@ -76,21 +76,23 @@ def check_config(manager):
 
 
 COMMANDS = {
-  "check_config": {
-    "need_login": True,
-    "func": check_config,
-    "args": []},
-  }
+    "check_config": {
+        "need_login": True,
+        "func": check_config,
+        "args": []
+    },
+}
 
 
 def main():
     usagestr = "Usage: %prog [OPTIONS] <command> [args]"
     PARSER = OptionParser(usage=usagestr)
     PARSER.add_option("-v", "--verbose", dest="verbose",
-      action="store_true", default=False, help="turn on verbose logging")
-    PARSER.add_option("-c", "--configfile", dest="configfile",
-      type="string", default="/etc/quantum/plugins/nvp/nvp.ini",
-      help="nvp plugin config file path (nvp.ini)")
+                      action="store_true", default=False,
+                      help="turn on verbose logging")
+    PARSER.add_option("-c", "--configfile", dest="configfile", type="string",
+                      default="/etc/quantum/plugins/nvp/nvp.ini",
+                      help="nvp plugin config file path (nvp.ini)")
     options, args = PARSER.parse_args()
 
     loglevel = logging.INFO

@@ -31,7 +31,7 @@ def create_resource(plugin, version):
         '1.1': [ControllerV11(plugin),
                 ControllerV11._serialization_metadata,
                 common.XML_NS_V11],
-        }
+    }
     return common.create_resource(version, controller_dict)
 
 
@@ -44,16 +44,16 @@ class Controller(common.QuantumController):
         {
             'param-name': 'id',
             'required': True,
-            },
-        ]
+        },
+    ]
 
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
                 "attachment": ["id"],
-                },
             },
-        }
+        },
+    }
 
     @common.APIFaultWrapper([exception.NetworkNotFound,
                              exception.PortNotFound])

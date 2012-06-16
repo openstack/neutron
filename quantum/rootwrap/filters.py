@@ -72,9 +72,9 @@ class DnsmasqFilter(CommandFilter):
     """Specific filter for the dnsmasq call (which includes env)"""
 
     def match(self, userargs):
-        if (userargs[0].startswith("FLAGFILE=") and
-            userargs[1].startswith("NETWORK_ID=") and
-            userargs[2] == "dnsmasq"):
+        if ((userargs[0].startswith("FLAGFILE=") and
+             userargs[1].startswith("NETWORK_ID=") and
+             userargs[2] == "dnsmasq")):
             return True
         return False
 

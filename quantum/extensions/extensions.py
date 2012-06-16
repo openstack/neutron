@@ -228,7 +228,7 @@ class ExtensionMiddleware(wsgi.Middleware):
         # extended resources
         for resource in self.ext_mgr.get_resources():
             LOG.debug(_('Extended resource: %s'),
-                        resource.collection)
+                      resource.collection)
             for action, method in resource.collection_actions.iteritems():
                 path_prefix = ""
                 parent = resource.parent
@@ -459,8 +459,8 @@ class ExtensionManager(object):
         LOG.warn(_('Loaded extension: %s'), alias)
 
         if alias in self.extensions:
-            raise exceptions.Error("Found duplicate extension: %s"
-                                         % alias)
+            raise exceptions.Error("Found duplicate extension: %s" %
+                                   alias)
         self.extensions[alias] = ext
 
 
@@ -474,7 +474,7 @@ class PluginAwareExtensionManager(ExtensionManager):
         """Checks if plugin supports extension and implements the
         extension contract."""
         extension_is_valid = super(PluginAwareExtensionManager,
-                                self)._check_extension(extension)
+                                   self)._check_extension(extension)
         return (extension_is_valid and
                 self._plugin_supports(extension) and
                 self._plugin_implements_interface(extension))

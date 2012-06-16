@@ -79,7 +79,7 @@ class MultiportController(common.QuantumController, wsgi.Controller):
         {'param-name': 'net_id_list', 'required': True},
         {'param-name': 'status', 'required': True},
         {'param-name': 'ports_desc', 'required': True},
-        ]
+    ]
 
     _serialization_metadata = {
         "application/xml": {

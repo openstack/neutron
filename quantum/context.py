@@ -42,8 +42,8 @@ class Context(object):
             *only* deleted records are visible.
         """
         if kwargs:
-            LOG.warn(_('Arguments dropped when creating context: %s') %
-                    str(kwargs))
+            LOG.warn(_('Arguments dropped when creating '
+                       'context: %s') % str(kwargs))
 
         self.user_id = user_id
         self.tenant_id = tenant_id

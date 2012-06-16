@@ -27,7 +27,7 @@ from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.segmentation.l2network_vlan_mgr import (
     L2NetworkVLANMgr,
-    )
+)
 
 
 logging.basicConfig(level=logging.WARN)

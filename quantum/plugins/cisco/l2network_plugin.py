@@ -391,7 +391,7 @@ class L2Network(QuantumPluginBase):
             portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
         except Exception:
             raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                      portprofile_id=portprofile_id)
+                                           portprofile_id=portprofile_id)
 
         cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
 

@@ -34,8 +34,7 @@ class VlanBinding(BASE):
         self.vlan_id = vlan_id
 
     def __repr__(self):
-        return "<VlanBinding(%s,%s)>" % \
-          (self.vlan_id, self.network_id)
+        return "<VlanBinding(%s,%s)>" % (self.vlan_id, self.network_id)
 
 
 class TunnelIP(BASE):

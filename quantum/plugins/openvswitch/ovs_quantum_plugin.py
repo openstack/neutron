@@ -125,7 +125,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
             'net-id': net_id,
             'net-name': net_name,
             'net-op-status': op_status,
-            }
+        }
         if ports:
             res['net-ports'] = ports
         return res
@@ -176,7 +176,7 @@ class OVSQuantumPlugin(QuantumPluginBase):
             'port-op-status': op_status,
             'net-id': port.network_id,
             'attachment': port.interface_id,
-            }
+        }
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):
         ids = []

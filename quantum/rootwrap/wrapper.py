@@ -22,8 +22,7 @@ import sys
 
 FILTERS_MODULES = ['quantum.rootwrap.linuxbridge-agent',
                    'quantum.rootwrap.openvswitch-agent',
-                   'quantum.rootwrap.ryu-agent',
-                  ]
+                   'quantum.rootwrap.ryu-agent']
 
 
 def load_filters():

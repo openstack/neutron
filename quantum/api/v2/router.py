@@ -95,13 +95,9 @@ class Index(wsgi.Application):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
-        metadata = {'application/xml': {
-                        'attributes': {
-                            'resource': ['name', 'collection'],
-                            'link': ['href', 'rel'],
-                           }
-                       }
-                   }
+        metadata = {'application/xml': {'attributes': {
+                    'resource': ['name', 'collection'],
+                    'link': ['href', 'rel']}}}
 
         layout = []
         for name, collection in self.resources.iteritems():
@@ -153,6 +149,6 @@ class APIRouter(wsgi.Router):
         for resource in resources:
             _map_resource(resources[resource], resource,
                           RESOURCE_ATTRIBUTE_MAP.get(resources[resource],
-                                                 dict()))
+                          dict()))
 
         super(APIRouter, self).__init__(mapper)

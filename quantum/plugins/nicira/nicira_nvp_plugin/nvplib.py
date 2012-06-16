@@ -178,18 +178,16 @@ def create_network(tenant_id, net_name, **kwargs):
     controller = kwargs["controller"]
 
     transport_zone = kwargs.get("transport_zone",
-      controller.default_tz_uuid)
+                                controller.default_tz_uuid)
     transport_type = kwargs.get("transport_type", "gre")
     lswitch_obj = {
         "display_name": net_name,
-        "transport_zones": [
-            {
-                "zone_uuid": transport_zone,
-                "transport_type": transport_type,
-                },
-            ],
+        "transport_zones": [{
+            "zone_uuid": transport_zone,
+            "transport_type": transport_type,
+        }],
         "tags": [{"tag": tenant_id, "scope": "os_tid"}],
-        }
+    }
 
     net = create_lswitch(controller, lswitch_obj)
     net['net-op-status'] = "UP"
@@ -237,8 +235,7 @@ def query_ports(controller, network, relations=None, fields="*", filters=None):
     if filters and "attachment" in filters:
         uri += "&attachment_vif_uuid=%s" % filters["attachment"]
     try:
-        resp_obj = do_single_request("GET", uri,
-          controller=controller)
+        resp_obj = do_single_request("GET", uri, controller=controller)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
         raise exception.NetworkNotFound(net_id=network)
@@ -259,9 +256,8 @@ def delete_port(controller, network, port):
 
 
 def delete_all_ports(controller, ls_uuid):
-    res = do_single_request("GET",
-      "/ws.v1/lswitch/%s/lport?fields=uuid" % ls_uuid,
-      controller=controller)
+    res = do_single_request("GET", "/ws.v1/lswitch/%s/lport?fields=uuid" %
+                            ls_uuid, controller=controller)
     res = jsonutils.loads(res)
     for r in res["results"]:
         do_single_request(

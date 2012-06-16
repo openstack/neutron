@@ -137,7 +137,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'admin_state_up': network['admin_state_up'],
                'status': network['status'],
                'subnets': [subnet['id']
-                            for subnet in network['subnets']]}
+                           for subnet in network['subnets']]}
 
         return self._fields(res, fields)
 

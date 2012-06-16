@@ -25,7 +25,7 @@ from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
 from quantum.plugins.nicira.nicira_nvp_plugin import (
     NvpApiClient,
     nvplib,
-    )
+)
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -55,8 +55,8 @@ class NvpTests(unittest.TestCase):
         body = {"display_name": name,
                 "tags": [{"tag": "plugin-test"}]}
         try:
-            resp_obj = self.quantum.api_client.request("POST",
-              post_uri, jsonutils.dumps(body))
+            resp_obj = self.quantum.api_client.request("POST", post_uri,
+                                                       jsonutils.dumps(body))
         except NvpApiClient.NvpApiException as e:
             print("Unknown API Error: %s" % str(e))
             raise exception.QuantumException()
@@ -130,7 +130,7 @@ class NvpTests(unittest.TestCase):
 
     def test_update_network(self):
         resp = self.quantum.create_network("quantum-test-tenant",
-            "quantum-Private-TenantA")
+                                           "quantum-Private-TenantA")
         net_id = resp["net-id"]
         try:
             resp = self.quantum.update_network("quantum-test-tenant", net_id,

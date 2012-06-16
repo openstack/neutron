@@ -485,8 +485,8 @@ class RequestDeserializer(object):
         }
         self.body_deserializers.update(body_deserializers or {})
 
-        self.headers_deserializer = headers_deserializer or \
-                                        RequestHeadersDeserializer()
+        self.headers_deserializer = (headers_deserializer or
+                                     RequestHeadersDeserializer())
 
     def deserialize(self, request):
         """Extract necessary pieces of the request.
@@ -767,7 +767,7 @@ class Resource(Application):
         """WSGI method that controls (de)serialization and method dispatch."""
 
         LOG.info("%(method)s %(url)s" % {"method": request.method,
-                                          "url": request.url})
+                                         "url": request.url})
 
         try:
             action, args, accept = self.deserializer.deserialize(request)

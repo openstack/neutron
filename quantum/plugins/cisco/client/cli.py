@@ -99,9 +99,9 @@ def schedule_host(tenant_id, instance_id, user_id=None):
             'instance_desc': {
                 'user_id': user_id,
                 'project_id': project_id,
-                },
             },
-        }
+        },
+    }
 
     request_url = "/novatenants/" + project_id + "/schedule_host"
     client = Client(HOST, PORT, USE_SSL, format='json', tenant=TENANT_ID,
@@ -138,16 +138,16 @@ COMMANDS = {
         "func": create_multiport,
         "args": ["tenant-id",
                  "net-id-list (comma separated list of netword IDs)"],
-        },
+    },
     "list_extensions": {
         "func": list_extensions,
         "args": [],
-        },
+    },
     "schedule_host": {
         "func": schedule_host,
         "args": ["tenant-id", "instance-id"],
-        },
-    }
+    },
+}
 
 
 def main():

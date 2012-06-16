@@ -80,7 +80,7 @@ class QosController(common.QuantumController, wsgi.Controller):
     _qos_ops_param_list = [
         {'param-name': 'qos_name', 'required': True},
         {'param-name': 'qos_desc', 'required': True},
-        ]
+    ]
 
     _serialization_metadata = {
         "application/xml": {

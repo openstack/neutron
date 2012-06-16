@@ -38,19 +38,19 @@ class SetupTest(unittest.TestCase):
         with open(self.mailmap, 'w') as mm_fh:
             mm_fh.write("Foo Bar <email@foo.com> Foo Bar <email@bar.com>\n")
         self.assertEqual({'<email@bar.com>': '<email@foo.com>'},
-                        parse_mailmap(self.mailmap))
+                         parse_mailmap(self.mailmap))
 
     def test_mailmap_with_firstname(self):
         with open(self.mailmap, 'w') as mm_fh:
             mm_fh.write("Foo <email@foo.com> Foo <email@bar.com>\n")
         self.assertEqual({'<email@bar.com>': '<email@foo.com>'},
-                        parse_mailmap(self.mailmap))
+                         parse_mailmap(self.mailmap))
 
     def test_mailmap_with_noname(self):
         with open(self.mailmap, 'w') as mm_fh:
             mm_fh.write("<email@foo.com> <email@bar.com>\n")
         self.assertEqual({'<email@bar.com>': '<email@foo.com>'},
-                        parse_mailmap(self.mailmap))
+                         parse_mailmap(self.mailmap))
 
     def tearDown(self):
         if os.path.exists(self.mailmap):

@@ -89,8 +89,8 @@ class L2NetworkSingleBlade(L2NetworkModelBase):
         if args and isinstance(args[-1], dict):
             kwargs.update(args.pop())
 
-        return getattr(self._plugins[plugin_key], function_name)(*args,
-                                                                 **kwargs)
+        return getattr(self._plugins[plugin_key],
+                       function_name)(*args, **kwargs)
 
     def get_all_networks(self, args):
         """Not implemented for this model"""

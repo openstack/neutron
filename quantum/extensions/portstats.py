@@ -69,10 +69,10 @@ class StatsController(wsgi.Controller):
         "application/xml": {
             "attributes": {
                 "stats": ["rx_bytes", "rx_packets", "rx_errors",
-                          "tx_bytes", "tx_packets", "tx_errors"],
-                },
-            },
+                          "tx_bytes", "tx_packets", "tx_errors"]
+            }
         }
+    }
 
     def __init__(self, plugin):
         self._resource_name = 'stats'

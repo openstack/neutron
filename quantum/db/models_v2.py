@@ -32,14 +32,14 @@ class IPAllocation(model_base.BASEV2):
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     address = sa.Column(sa.String(16), nullable=False, primary_key=True)
     subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
-                            primary_key=True)
+                          primary_key=True)
     allocated = sa.Column(sa.Boolean(), nullable=False)
 
 
 class Port(model_base.BASEV2, HasTenant):
     """Represents a port on a quantum v2 network"""
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
-                             nullable=False)
+                           nullable=False)
     fixed_ips = orm.relationship(IPAllocation, backref='ports')
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)

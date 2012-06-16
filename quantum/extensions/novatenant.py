@@ -77,12 +77,12 @@ class NovatenantsController(common.QuantumController, wsgi.Controller):
 
     _Novatenant_ops_param_list = [
         {'param-name': 'novatenant_name', 'required': True},
-        ]
+    ]
 
     _schedule_host_ops_param_list = [
         {'param-name': 'instance_id', 'required': True},
         {'param-name': 'instance_desc', 'required': True},
-        ]
+    ]
 
     _serialization_metadata = {
         "application/xml": {

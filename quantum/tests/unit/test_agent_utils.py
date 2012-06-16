@@ -32,7 +32,7 @@ class AgentUtilsExecuteTest(unittest.TestCase):
 
     def test_with_helper(self):
         result = utils.execute(["ls", self.test_file],
-                                self.root_helper)
+                               self.root_helper)
         self.assertEqual(result, "ls %s\n" % self.test_file)
 
     def test_stderr(self):

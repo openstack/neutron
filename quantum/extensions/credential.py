@@ -80,7 +80,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
         {'param-name': 'credential_name', 'required': True},
         {'param-name': 'user_name', 'required': True},
         {'param-name': 'password', 'required': True},
-        ]
+    ]
 
     _serialization_metadata = {
         "application/xml": {

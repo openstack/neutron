@@ -270,20 +270,20 @@ SERVICE_COMMANDS = {
         "func": insert_inpath_service,
         "args": ["tenant_id", "service_image_id", "management_net_name",
                  "northbound_net_name", "southbound_net_name"],
-        },
+    },
     "delete_service": {
         "func": delete_service,
         "args": ["tenant_id", "service_instance_id"],
-        },
+    },
     "connect_vm": {
         "func": connect_vm,
         "args": ["tenant_id", "vm_image_id", "service_instance_id"],
-        },
+    },
     "disconnect_vm": {
         "func": disconnect_vm,
         "args": ["vm_instance_id"],
-        },
-    }
+    },
+}
 
 
 if __name__ == "__main__":

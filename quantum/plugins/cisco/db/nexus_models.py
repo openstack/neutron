@@ -34,5 +34,4 @@ class NexusPortBinding(BASE, L2NetworkBase):
         self.vlan_id = vlan_id
 
     def __repr__(self):
-        return "<NexusPortBinding (%s,%d)>" % \
-          (self.port_id, self.vlan_id)
+        return "<NexusPortBinding (%s,%d)>" % (self.port_id, self.vlan_id)

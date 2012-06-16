@@ -60,7 +60,7 @@ class L2NetworkBase(object):
         Includes attributes from joins."""
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
-                      if not k[0] == '_'])
+                       if not k[0] == '_'])
         local.update(joined)
         return local.iteritems()
 
@@ -77,8 +77,7 @@ class VlanID(BASE, L2NetworkBase):
         self.vlan_used = False
 
     def __repr__(self):
-        return "<VlanID(%d,%s)>" % \
-          (self.vlan_id, self.vlan_used)
+        return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
 
 
 class VlanBinding(BASE, L2NetworkBase):
@@ -96,8 +95,9 @@ class VlanBinding(BASE, L2NetworkBase):
         self.network_id = network_id
 
     def __repr__(self):
-        return "<VlanBinding(%d,%s,%s)>" % \
-          (self.vlan_id, self.vlan_name, self.network_id)
+        return "<VlanBinding(%d,%s,%s)>" % (self.vlan_id,
+                                            self.vlan_name,
+                                            self.network_id)
 
 
 class PortProfile(BASE, L2NetworkBase):
@@ -116,8 +116,10 @@ class PortProfile(BASE, L2NetworkBase):
             self.qos = qos
 
     def __repr__(self):
-        return "<PortProfile(%s,%s,%d,%s)>" % \
-          (self.uuid, self.name, self.vlan_id, self.qos)
+        return "<PortProfile(%s,%s,%d,%s)>" % (self.uuid,
+                                               self.name,
+                                               self.vlan_id,
+                                               self.qos)
 
 
 class PortProfileBinding(BASE, L2NetworkBase):
@@ -127,8 +129,7 @@ class PortProfileBinding(BASE, L2NetworkBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id = Column(String(255))
 
-    port_id = Column(String(255), ForeignKey("ports.uuid"),
-                        nullable=False)
+    port_id = Column(String(255), ForeignKey("ports.uuid"), nullable=False)
     portprofile_id = Column(String(255), ForeignKey("portprofiles.uuid"),
                             nullable=False)
     default = Column(Boolean)
@@ -142,8 +143,10 @@ class PortProfileBinding(BASE, L2NetworkBase):
         self.default = default
 
     def __repr__(self):
-        return "<PortProfile Binding(%s,%s,%s,%s)>" % \
-          (self.tenant_id, self.port_id, self.portprofile_id, self.default)
+        return "<PortProfile Binding(%s,%s,%s,%s)>" % (self.tenant_id,
+                                                       self.port_id,
+                                                       self.portprofile_id,
+                                                       self.default)
 
 
 class QoS(BASE, L2NetworkBase):
@@ -162,8 +165,8 @@ class QoS(BASE, L2NetworkBase):
         self.qos_desc = qos_desc
 
     def __repr__(self):
-        return "<QoS(%s,%s,%s,%s)>" % \
-          (self.qos_id, self.tenant_id, self.qos_name, self.qos_desc)
+        return "<QoS(%s,%s,%s,%s)>" % (self.qos_id, self.tenant_id,
+                                       self.qos_name, self.qos_desc)
 
 
 class Credential(BASE, L2NetworkBase):
@@ -184,6 +187,8 @@ class Credential(BASE, L2NetworkBase):
         self.password = password
 
     def __repr__(self):
-        return "<Credentials(%s,%s,%s,%s,%s)>" % \
-          (self.credential_id, self.tenant_id, self.credential_name,
-           self.user_name, self.password)
+        return "<Credentials(%s,%s,%s,%s,%s)>" % (self.credential_id,
+                                                  self.tenant_id,
+                                                  self.credential_name,
+                                                  self.user_name,
+                                                  self.password)

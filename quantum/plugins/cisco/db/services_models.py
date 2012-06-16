@@ -38,5 +38,5 @@ class ServicesBinding(BASE, L2NetworkBase):
         self.sbnet_id = sbnet_id
 
     def __repr__(self):
-        return "<ServicesBinding (%s,%d)>" % \
-          (self.service_id, self.mngnet_id, self.nbnet_id, self.sbnet_id)
+        return "<ServicesBinding (%s,%d)>" % (self.service_id, self.mngnet_id,
+                                              self.nbnet_id, self.sbnet_id)

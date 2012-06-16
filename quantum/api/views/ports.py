@@ -53,7 +53,8 @@ class ViewBuilder11(ViewBuilder10):
         if port_details:
             port['port']['state'] = port_data['port-state']
             port['port']['op-status'] = port_data.get('port-op-status',
-                                        OperationalStatus.UNKNOWN)
+                                                      OperationalStatus.
+                                                      UNKNOWN)
         if att_details and port_data['attachment']:
             port['port']['attachment'] = dict(id=port_data['attachment'])
         return port

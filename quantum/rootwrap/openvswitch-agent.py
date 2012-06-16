@@ -33,4 +33,4 @@ filterlist = [
     #   "xe", "vif-param-get", ...
     filters.CommandFilter("/usr/bin/xe", "root"),
     filters.CommandFilter("/usr/sbin/xe", "root"),
-    ]
+]

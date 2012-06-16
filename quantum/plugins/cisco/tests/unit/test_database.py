@@ -178,7 +178,7 @@ class NexusDB(object):
             return bindings
         except Exception, exc:
             raise Exception("Failed to delete nexus port binding: %s"
-                             % str(exc))
+                            % str(exc))
 
     def update_nexusport_binding(self, port_id, new_vlan_id):
         """update nexus port binding"""
@@ -244,7 +244,7 @@ class ServicesDB(object):
                 LOG.debug("Deleted service binding: %s" % res.service_id)
         except Exception, exc:
             raise Exception("Failed to delete service binding: %s"
-                             % str(exc))
+                            % str(exc))
 
 
 class L2networkDB(object):
@@ -309,7 +309,7 @@ class L2networkDB(object):
         """Update a vlan binding"""
         try:
             res = l2network_db.update_vlan_binding(network_id, vlan_id,
-                                                            vlan_name)
+                                                   vlan_name)
             LOG.debug("Updating vlan binding for vlan: %s" % res.vlan_id)
             vlan_dict = {}
             vlan_dict["vlan-id"] = str(res.vlan_id)
@@ -1166,7 +1166,7 @@ class QuantumDBTest(unittest.TestCase):
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
         net = self.dbtest.update_network(self.tenant_id, net1["net-id"],
-          name="plugin_test1_renamed")
+                                         name="plugin_test1_renamed")
         self.assertTrue(net["net-name"] == "plugin_test1_renamed")
         self.teardown_network_port()
 

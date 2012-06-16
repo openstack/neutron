@@ -26,50 +26,63 @@ from quantum.plugins.cisco.ucs import cisco_ucs_network_driver
 LOG = logging.getLogger('quantum.tests.test_ucs_driver')
 
 
-CREATE_VLAN_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"true\"> <inConfigs><pair key=\"fabric/lan/net-New Vlan\"> "
-"<fabricVlan defaultNet=\"no\" dn=\"fabric/lan/net-New Vlan\" id=\"200\" "
-"name=\"New Vlan\" status=\"created\"></fabricVlan> </pair> </inConfigs> "
-"</configConfMos>")
+CREATE_VLAN_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                      'inHierarchical="true"> <inConfigs><pair '
+                      'key="fabric/lan/net-New Vlan"> '
+                      '<fabricVlan defaultNet="no" '
+                      'dn="fabric/lan/net-New Vlan" id="200" '
+                      'name="New Vlan" status="created"></fabricVlan> '
+                      '</pair> </inConfigs> </configConfMos>')
 
-CREATE_PROFILE_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"true\"> <inConfigs><pair key=\"fabric/lan/profiles/vnic-"
-"New Profile\"> <vnicProfile descr=\"Profile created by Cisco OpenStack "
-"Quantum Plugin\" dn=\"fabric/lan/profiles/vnic-New Profile\" maxPorts="
-"\"64\" name=\"New Profile\" nwCtrlPolicyName=\"\" pinToGroupName=\"\" "
-"qosPolicyName=\"\" status=\"created\"> <vnicEtherIf defaultNet=\"yes\" "
-"name=\"New Vlan\" rn=\"if-New Vlan\" > </vnicEtherIf> </vnicProfile> "
-"</pair> </inConfigs> </configConfMos>")
+CREATE_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                         'inHierarchical="true"> <inConfigs><pair '
+                         'key="fabric/lan/profiles/vnic-'
+                         'New Profile"> <vnicProfile descr="Profile created '
+                         'by Cisco OpenStack Quantum Plugin" '
+                         'dn="fabric/lan/profiles/vnic-New Profile" maxPorts='
+                         '"64" name="New Profile" nwCtrlPolicyName="" '
+                         'pinToGroupName="" qosPolicyName="" status="created">'
+                         ' <vnicEtherIf defaultNet="yes" name="New Vlan" '
+                         'rn="if-New Vlan" > </vnicEtherIf> </vnicProfile> '
+                         '</pair> </inConfigs> </configConfMos>')
 
-CHANGE_VLAN_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"true\"> <inConfigs><pair key=\""
-"fabric/lan/profiles/vnic-New Profile\"> <vnicProfile descr=\"Profile "
-"created by Cisco OpenStack Quantum Plugin\" "
-"dn=\"fabric/lan/profiles/vnic-New Profile\" maxPorts=\"64\" "
-"name=\"New Profile\" nwCtrlPolicyName=\"\" pinToGroupName=\"\" "
-"qosPolicyName=\"\" status=\"created,modified\"><vnicEtherIf "
-"rn=\"if-Old Vlan\" status=\"deleted\"> </vnicEtherIf> "
-"<vnicEtherIf defaultNet=\"yes\" name=\"New Vlan\" rn=\"if-New Vlan\" > "
-"</vnicEtherIf> </vnicProfile> </pair></inConfigs> </configConfMos>")
+CHANGE_VLAN_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                      'inHierarchical="true"> <inConfigs><pair key="'
+                      'fabric/lan/profiles/vnic-New Profile"> '
+                      '<vnicProfile descr="Profile '
+                      'created by Cisco OpenStack Quantum Plugin" '
+                      'dn="fabric/lan/profiles/vnic-New Profile" maxPorts="64"'
+                      ' name="New Profile" nwCtrlPolicyName="" '
+                      'pinToGroupName="" qosPolicyName="" '
+                      'status="created,modified"><vnicEtherIf '
+                      'rn="if-Old Vlan" status="deleted"> </vnicEtherIf> '
+                      '<vnicEtherIf defaultNet="yes" name="New Vlan" '
+                      'rn="if-New Vlan" > </vnicEtherIf> </vnicProfile> '
+                      '</pair></inConfigs> </configConfMos>')
 
-DELETE_VLAN_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"true\"> <inConfigs><pair key=\"fabric/lan/net-New Vlan\"> "
-"<fabricVlan dn=\"fabric/lan/net-New Vlan\" status=\"deleted\"> "
-"</fabricVlan> </pair> </inConfigs></configConfMos>")
+DELETE_VLAN_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                      'inHierarchical="true"> <inConfigs><pair '
+                      'key="fabric/lan/net-New Vlan"> '
+                      '<fabricVlan dn="fabric/lan/net-New Vlan" '
+                      'status="deleted"> </fabricVlan> '
+                      '</pair> </inConfigs></configConfMos>')
 
-DELETE_PROFILE_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"false\"> <inConfigs><pair key=\""
-"fabric/lan/profiles/vnic-New Profile\"> <vnicProfile "
-"dn=\"fabric/lan/profiles/vnic-New Profile\" status=\"deleted\"> "
-"</vnicProfile></pair> </inConfigs> </configConfMos>")
+DELETE_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                         'inHierarchical="false"> <inConfigs><pair key="'
+                         'fabric/lan/profiles/vnic-New Profile"> <vnicProfile '
+                         'dn="fabric/lan/profiles/vnic-New Profile" '
+                         'status="deleted"> </vnicProfile></pair> '
+                         '</inConfigs> </configConfMos>')
 
-ASSOCIATE_PROFILE_OUTPUT = ("<configConfMos cookie=\"cookie_placeholder\" "
-"inHierarchical=\"true\"> <inConfigs> <pair key="
-"\"fabric/lan/profiles/vnic-New Profile/cl-New Profile Client\">"
-" <vmVnicProfCl dcName=\".*\" descr=\"\" dn=\"fabric/lan/profiles/vnic-"
-"New Profile/cl-New Profile Client\"name=\"New Profile Client\" "
-"orgPath=\".*\" status=\"created\" swName=\"default$\"> </vmVnicProfCl>"
-"</pair> </inConfigs> </configConfMos>")
+ASSOCIATE_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                            'inHierarchical="true"> <inConfigs> <pair key='
+                            '"fabric/lan/profiles/vnic-New Profile/cl-New '
+                            'Profile Client"> <vmVnicProfCl dcName=".*" '
+                            'descr="" dn="fabric/lan/profiles/vnic-'
+                            'New Profile/cl-New Profile Client"name="New '
+                            'Profile Client" orgPath=".*" status="created" '
+                            'swName="default$"> </vmVnicProfCl>'
+                            '</pair> </inConfigs> </configConfMos>')
 
 
 class TestUCSDriver(unittest.TestCase):
@@ -94,8 +107,8 @@ class TestUCSDriver(unittest.TestCase):
         self.assertEqual(vlan_details, expected_output)
         LOG.debug("test_create_vlan - END")
 
-    def test_create_profile_post_data(
-                self, expected_output=CREATE_PROFILE_OUTPUT):
+    def test_create_profile_post_data(self,
+                                      expected_output=CREATE_PROFILE_OUTPUT):
         """
         Tests creation of profile post Data
         """
@@ -106,8 +119,8 @@ class TestUCSDriver(unittest.TestCase):
         self.assertEqual(profile_details, expected_output)
         LOG.debug("test_create_profile_post - END")
 
-    def test_change_vlan_profile_data(
-                self, expected_output=CHANGE_VLAN_OUTPUT):
+    def test_change_vlan_profile_data(self,
+                                      expected_output=CHANGE_VLAN_OUTPUT):
         """
         Tests creation of change vlan in profile post Data
         """
@@ -146,8 +159,9 @@ class TestUCSDriver(unittest.TestCase):
         self.assertEqual(profile_delete_details, expected_output)
         LOG.debug("test_create_profile_post - END")
 
-    def test_create_profile_client_data(
-        self, expected_output=ASSOCIATE_PROFILE_OUTPUT):
+    def test_create_profile_client_data(self,
+                                        expected_output=
+                                        ASSOCIATE_PROFILE_OUTPUT):
         """
         Tests creation of profile client post Data
         """

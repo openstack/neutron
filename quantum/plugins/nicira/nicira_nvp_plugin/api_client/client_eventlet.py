@@ -20,7 +20,7 @@ import eventlet
 
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
     _conn_str,
-    )
+)
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client as client
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet
 
