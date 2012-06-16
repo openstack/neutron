@@ -89,7 +89,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):
@@ -109,7 +109,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         a.available_local_vlans = set([LV_ID])
         a.provision_local_vlan(NET_UUID, LS_ID)
         self.mox.VerifyAll()
@@ -126,7 +126,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM
         a.reclaim_local_vlan(NET_UUID, LVM)
@@ -143,7 +143,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         a.local_vlan_map[NET_UUID] = LVM
         a.port_bound(VIF_PORT, NET_UUID, LS_ID)
         self.mox.VerifyAll()
@@ -154,7 +154,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
         a.port_unbound(VIF_PORT, NET_UUID)
@@ -173,7 +173,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
         a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
         a.port_dead(VIF_PORT)
@@ -196,7 +196,7 @@ class TunnelTest(unittest.TestCase):
                                                     self.TUN_BRIDGE,
                                                     REMOTE_IP_FILE,
                                                     '10.0.0.1',
-                                                    'sudo')
+                                                    'sudo', 2, 2)
 
         all_bindings = a.get_db_port_bindings(db)
         lsw_id_bindings = a.get_db_vlan_bindings(db)
