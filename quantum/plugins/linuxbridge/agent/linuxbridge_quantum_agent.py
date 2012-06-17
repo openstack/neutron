@@ -67,7 +67,7 @@ class LinuxBridge:
     def device_exists(self, device):
         """Check if ethernet device exists."""
         retval = utils.execute(['ip', 'link', 'show',
-                                'dev', device], root_wrapper=self.root_helper)
+                                'dev', device], root_helper=self.root_helper)
         if retval:
             return True
         else:
@@ -110,7 +110,7 @@ class LinuxBridge:
 
     def _get_prefixed_ip_link_devices(self, prefix):
         prefixed_devices = []
-        retval = utils.execute(['ip', 'link'], root_wrapper=self.root_helper)
+        retval = utils.execute(['ip', 'link'], root_helper=self.root_helper)
         rows = retval.split('\n')
         for row in rows:
             values = row.split(':')
@@ -122,7 +122,7 @@ class LinuxBridge:
 
     def _get_prefixed_tap_devices(self, prefix):
         prefixed_devices = []
-        retval = utils.execute(['ip', 'tuntap'], root_wrapper=self.root_helper)
+        retval = utils.execute(['ip', 'tuntap'], root_helper=self.root_helper)
         rows = retval.split('\n')
         for row in rows:
             split_row = row.split(':')
@@ -175,10 +175,10 @@ class LinuxBridge:
             if utils.execute(['ip', 'link', 'add', 'link',
                               self.physical_interface,
                               'name', interface, 'type', 'vlan', 'id',
-                              vlan_id], root_wrapper=self.root_helper):
+                              vlan_id], root_helper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'set',
-                              interface, 'up'], root_wrapper=self.root_helper):
+                              interface, 'up'], root_helper=self.root_helper):
                 return
             LOG.debug("Done creating subinterface %s" % interface)
         return interface
@@ -191,22 +191,22 @@ class LinuxBridge:
             LOG.debug("Starting bridge %s for subinterface %s" % (bridge_name,
                                                                   interface))
             if utils.execute(['brctl', 'addbr', bridge_name],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return
             if utils.execute(['brctl', 'setfd', bridge_name,
-                              str(0)], root_wrapper=self.root_helper):
+                              str(0)], root_helper=self.root_helper):
                 return
             if utils.execute(['brctl', 'stp', bridge_name,
-                              'off'], root_wrapper=self.root_helper):
+                              'off'], root_helper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'set', bridge_name,
-                              'up'], root_wrapper=self.root_helper):
+                              'up'], root_helper=self.root_helper):
                 return
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
 
         utils.execute(['brctl', 'addif', bridge_name, interface],
-                      root_wrapper=self.root_helper)
+                      root_helper=self.root_helper)
 
     def add_tap_interface(self, network_id, vlan_id, tap_device_name):
         """
@@ -229,12 +229,12 @@ class LinuxBridge:
                                                      bridge_name))
         if current_bridge_name:
             if utils.execute(['brctl', 'delif', current_bridge_name,
-                              tap_device_name], root_wrapper=self.root_helper):
+                              tap_device_name], root_helper=self.root_helper):
                 return False
 
         self.ensure_vlan_bridge(network_id, vlan_id)
         if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
-                         root_wrapper=self.root_helper):
+                         root_helper=self.root_helper):
             return False
         LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
                                                           bridge_name))
@@ -263,10 +263,10 @@ class LinuxBridge:
 
             LOG.debug("Deleting bridge %s" % bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return
             if utils.execute(['brctl', 'delbr', bridge_name],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return
             LOG.debug("Done deleting bridge %s" % bridge_name)
 
@@ -280,7 +280,7 @@ class LinuxBridge:
             LOG.debug("Removing device %s from bridge %s" %
                       (interface_name, bridge_name))
             if utils.execute(['brctl', 'delif', bridge_name, interface_name],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return False
             LOG.debug("Done removing device %s from bridge %s" %
                       (interface_name, bridge_name))
@@ -294,10 +294,10 @@ class LinuxBridge:
         if self.device_exists(interface):
             LOG.debug("Deleting subinterface %s for vlan" % interface)
             if utils.execute(['ip', 'link', 'set', interface, 'down'],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'delete', interface],
-                             root_wrapper=self.root_helper):
+                             root_helper=self.root_helper):
                 return
             LOG.debug("Done deleting subinterface %s" % interface)
 
