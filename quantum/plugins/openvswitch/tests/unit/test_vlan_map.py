@@ -32,8 +32,8 @@ class VlanMapTest(unittest.TestCase):
 
     def testAddVlan(self):
         vlan_id = self.vmap.acquire("foobar")
-        self.assertTrue(vlan_id >= VlanMap.VLAN_MIN)
-        self.assertTrue(vlan_id <= VlanMap.VLAN_MAX)
+        self.assertTrue(vlan_id >= self.vmap.vlan_min)
+        self.assertTrue(vlan_id <= self.vmap.vlan_max)
 
     def testReleaseVlan(self):
         vlan_id = self.vmap.acquire("foobar")
@@ -41,11 +41,11 @@ class VlanMapTest(unittest.TestCase):
 
     def testAddRelease4kVlans(self):
         vlan_id = None
-        num_vlans = VlanMap.VLAN_MAX - VlanMap.VLAN_MIN
+        num_vlans = self.vmap.vlan_max - self.vmap.vlan_min
         for id in xrange(num_vlans):
             vlan_id = self.vmap.acquire("net-%s" % id)
-            self.assertTrue(vlan_id >= VlanMap.VLAN_MIN)
-            self.assertTrue(vlan_id <= VlanMap.VLAN_MAX)
+            self.assertTrue(vlan_id >= self.vmap.vlan_min)
+            self.assertTrue(vlan_id <= self.vmap.vlan_max)
         for id in xrange(num_vlans):
             self.vmap.release("net-%s" % id)
 
@@ -56,7 +56,7 @@ class VlanMapTest(unittest.TestCase):
             # this value is high enough that we will exhaust
             # all VLANs.  We want to make sure 'existing_vlan'
             # is never reallocated.
-            num_vlans = VlanMap.VLAN_MAX - VlanMap.VLAN_MIN + 1
+            num_vlans = self.vmap.vlan_max - self.vmap.vlan_min + 1
             for x in xrange(num_vlans):
                 vlan_id = self.vmap.acquire("net-%x" % x)
                 self.assertTrue(vlan_id != existing_vlan)
