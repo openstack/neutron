@@ -282,9 +282,8 @@ def port_set_attachment_by_id(port_id, new_interface_id):
                                   att_id=port['interface_id'])
 
         try:
-            port = session.query(models.Port).\
-            filter_by(interface_id=new_interface_id).\
-            one()
+            port = session.query(models.Port).filter_by(
+                interface_id=new_interface_id).one()
             raise q_exc.AlreadyAttached(port_id=port_id,
                                         att_id=new_interface_id,
                                         att_port_id=port['uuid'])

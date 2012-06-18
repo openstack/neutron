@@ -82,17 +82,17 @@ class PortprofilesController(common.QuantumController, wsgi.Controller):
         self._portprofile_ops_param_list = [{
             'param-name': 'portprofile_name',
             'required': True}, {
-            'param-name': 'qos_name',
-            'required': True}, {
-            'param-name': 'assignment',
-            'required': False}
+                'param-name': 'qos_name',
+                'required': True}, {
+                    'param-name': 'assignment',
+                    'required': False}
         ]
 
         self._assignprofile_ops_param_list = [{
             'param-name': 'network-id',
             'required': True}, {
-            'param-name': 'port-id',
-            'required': True}
+                'param-name': 'port-id',
+                'required': True}
         ]
 
         self._serialization_metadata = {
