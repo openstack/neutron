@@ -23,9 +23,9 @@ from sqlalchemy.orm import exc
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
 import quantum.db.api as db
+from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
-from quantum.plugins.linuxbridge.common import config
 
 LOG = logging.getLogger(__name__)
 CONF_FILE = find_config_file({'plugin': 'linuxbridge'},

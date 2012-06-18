@@ -26,12 +26,12 @@ import sys
 import unittest
 
 import quantum.db.api as db
-from quantum.plugins.linuxbridge import LinuxBridgePlugin
 from quantum.plugins.linuxbridge.agent import (
     linuxbridge_quantum_agent as linux_agent,
 )
 from quantum.plugins.linuxbridge.common import constants as lconst
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
+from quantum.plugins.linuxbridge import LinuxBridgePlugin
 
 
 LOG = logging.getLogger(__name__)

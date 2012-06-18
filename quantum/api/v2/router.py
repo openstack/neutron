@@ -21,10 +21,10 @@ import webob
 import webob.dec
 import webob.exc
 
-from quantum import manager
-from quantum import wsgi
 from quantum.api.v2 import base
+from quantum import manager
 from quantum.openstack.common import cfg
+from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)

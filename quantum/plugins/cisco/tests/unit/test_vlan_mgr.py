@@ -20,8 +20,8 @@ import logging
 import unittest
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.common import cisco_credentials as creds
+from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf

@@ -18,8 +18,8 @@
 import logging
 import webob.dec
 
-from quantum import wsgi
 from quantum.api.views import versions as versions_view
+from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)

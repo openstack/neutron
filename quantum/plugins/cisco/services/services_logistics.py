@@ -20,14 +20,14 @@ Logistic components for Service Insertion utility
 """
 
 import logging
-import subprocess
 import re
+import subprocess
 import time
 
 from quantum.openstack.common import importutils
-from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import services_db as sdb
+from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.services import services_constants as servconts
 
 

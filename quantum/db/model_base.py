@@ -16,8 +16,8 @@
 import uuid
 
 import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.ext import declarative
+from sqlalchemy import orm
 
 
 def str_uuid():

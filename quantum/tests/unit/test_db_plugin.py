@@ -13,17 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import logging
-import unittest
 import contextlib
+import logging
 import mock
+import os
+import unittest
 
 import quantum
 from quantum.api.v2.router import APIRouter
+from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
-from quantum.common import config
 from quantum.openstack.common import cfg
 from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer, JSONDeserializer

@@ -17,8 +17,8 @@
 
 import uuid
 
-import quantum.db.api as db
 from quantum.common.utils import find_config_file
+import quantum.db.api as db
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
 from quantum.plugins.ryu.tests.unit import utils

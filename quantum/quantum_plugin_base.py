@@ -22,8 +22,8 @@ QuantumPluginBase provides the definition of minimum set of
 methods that needs to be implemented by a Quantum Plug-in.
 """
 
-import inspect
 from abc import ABCMeta, abstractmethod
+import inspect
 
 
 class QuantumPluginBase(object):

@@ -19,12 +19,12 @@
 from ryu.app import client
 from ryu.app import rest_nw_id
 
-from quantum.common.utils import find_config_file
 from quantum.common import exceptions as q_exc
+from quantum.common.utils import find_config_file
 import quantum.db.api as db
+from quantum.plugins.ryu.db import api as db_api
 from quantum.plugins.ryu import ofp_service_type
 from quantum.plugins.ryu import ovs_quantum_plugin_base
-from quantum.plugins.ryu.db import api as db_api
 
 
 CONF_FILE = find_config_file({"plugin": "ryu"}, "ryu.ini")

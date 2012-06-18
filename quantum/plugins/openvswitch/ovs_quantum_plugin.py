@@ -25,8 +25,8 @@ from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
 import quantum.db.api as db
-from quantum.plugins.openvswitch import ovs_db
 from quantum.plugins.openvswitch.common import config
+from quantum.plugins.openvswitch import ovs_db
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 LOG = logging.getLogger("ovs_quantum_plugin")
