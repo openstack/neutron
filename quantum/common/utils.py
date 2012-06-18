@@ -31,8 +31,8 @@ import subprocess
 import sys
 
 from quantum.common import exceptions as exception
-from quantum.common.exceptions import ProcessExecutionError
 from quantum.common import flags
+from quantum.openstack.common.exception import ProcessExecutionError
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
