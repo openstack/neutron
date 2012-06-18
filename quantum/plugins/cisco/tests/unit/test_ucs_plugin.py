@@ -29,9 +29,7 @@ from quantum.plugins.cisco.ucs import cisco_ucs_configuration as conf
 from quantum.plugins.cisco.ucs import cisco_ucs_inventory as ucsinv
 from quantum.plugins.cisco.ucs import cisco_ucs_plugin
 
-
-logging.basicConfig(level=LOG.WARN)
-LOG = logging.getLogger("cisco_ucs_plugin")
+LOG = logging.getLogger(__name__)
 
 
 class UCSVICTestPlugin(unittest.TestCase):

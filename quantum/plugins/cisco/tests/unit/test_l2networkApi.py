@@ -113,10 +113,13 @@ class CoreAPITestFunc(unittest.TestCase):
         instance_vif_desc = {'project_id': tenant_id,
                              'user_id': nova_user_id,
                              'vif_id': vif_id}
-        vif_description = self._l2network_plugin.associate_port(
-            instance_tenant_id, instance_id,
-            instance_vif_desc)
-
+        if conf.PLUGINS[const.PLUGINS].keys():
+            vif_description = self._l2network_plugin.associate_port(
+                instance_tenant_id, instance_id, instance_vif_desc)
+        else:
+            db.port_set_attachment_by_id(port_dict[const.PORT_ID],
+                                         instance_vif_desc['vif_id'] +
+                                         const.UNPLUGGED)
         self.assertRaises(exc.NetworkInUse,
                           self._l2network_plugin.delete_network, tenant_id,
                           new_net_dict[const.NET_ID])
@@ -359,7 +362,6 @@ class CoreAPITestFunc(unittest.TestCase):
         """
         Tests deletion of Ports when port is in Use.
         """
-
         LOG.debug("test_delete_portInUse - START")
         new_net_dict = self._l2network_plugin.create_network(
             tenant_id, self.network_name)
@@ -374,12 +376,17 @@ class CoreAPITestFunc(unittest.TestCase):
         instance_vif_desc = {'project_id': tenant_id,
                              'user_id': nova_user_id,
                              'vif_id': vif_id}
-        vif_description = self._l2network_plugin.associate_port(
-            instance_tenant_id, instance_id,
-            instance_vif_desc)
-        self.assertRaises(exc.PortInUse,
-                          self._l2network_plugin.delete_port, tenant_id,
-                          new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
+        if conf.PLUGINS[const.PLUGINS].keys():
+            vif_description = self._l2network_plugin.associate_port(
+                instance_tenant_id, instance_id, instance_vif_desc)
+        else:
+            db.port_set_attachment_by_id(port_dict[const.PORT_ID],
+                                         instance_vif_desc['vif_id'] +
+                                         const.UNPLUGGED)
+
+        self.assertRaises(exc.PortInUse, self._l2network_plugin.delete_port,
+                          tenant_id, new_net_dict[const.NET_ID],
+                          port_dict[const.PORT_ID])
         self.tearDownNetworkPortInterface(
             tenant_id, instance_tenant_id, instance_id, instance_vif_desc,
             new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
@@ -506,13 +513,19 @@ class CoreAPITestFunc(unittest.TestCase):
         instance_vif_desc = {'project_id': tenant_id,
                              'user_id': nova_user_id,
                              'vif_id': vif_id}
-        vif_description = self._l2network_plugin.associate_port(
-            instance_tenant_id, instance_id,
-            instance_vif_desc)
 
-        self._l2network_plugin.plug_interface(
-            tenant_id, new_net_dict[const.NET_ID],
-            port_dict[const.PORT_ID], vif_id)
+        if conf.PLUGINS[const.PLUGINS].keys():
+            vif_description = self._l2network_plugin.associate_port(
+                instance_tenant_id, instance_id,
+                instance_vif_desc)
+        else:
+            db.port_set_attachment_by_id(port_dict[const.PORT_ID],
+                                         instance_vif_desc['vif_id'] +
+                                         const.UNPLUGGED)
+
+        self._l2network_plugin.plug_interface(tenant_id,
+                                              new_net_dict[const.NET_ID],
+                                              port_dict[const.PORT_ID], vif_id)
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
         self.assertEqual(port[const.INTERFACEID], vif_id)
@@ -543,13 +556,13 @@ class CoreAPITestFunc(unittest.TestCase):
         """
         Tests attachment of interface port does not exist
         """
-
         LOG.debug("test_plug_interface_portDNE - START")
         new_net_dict = self._l2network_plugin.create_network(tenant_id,
                                                              self.network_name)
-        self.assertRaises(
-            exc.PortNotFound, self._l2network_plugin.plug_interface, tenant_id,
-            new_net_dict[const.NET_ID], port_id, remote_interface)
+        self.assertRaises(exc.PortNotFound,
+                          self._l2network_plugin.plug_interface,
+                          tenant_id, new_net_dict[const.NET_ID], port_id,
+                          remote_interface)
         self.tearDownNetwork(tenant_id, new_net_dict[const.NET_ID])
         LOG.debug("test_plug_interface_portDNE - END")
 
@@ -564,31 +577,33 @@ class CoreAPITestFunc(unittest.TestCase):
         Tests attachment of new interface to the port when there is an
         existing attachment
         """
-
         LOG.debug("test_plug_interface_portInUse - START")
-        new_net_dict = self._l2network_plugin.create_network(
-            tenant_id, self.network_name)
+        new_net_dict = self._l2network_plugin.create_network(tenant_id,
+                                                             self.network_name)
         port_dict = self._l2network_plugin.create_port(
             tenant_id, new_net_dict[const.NET_ID], self.state)
-        instance_desc = {'project_id': tenant_id,
-                         'user_id': nova_user_id}
+        instance_desc = {'project_id': tenant_id, 'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
                                                          instance_id,
                                                          instance_desc)
-        instance_vif_desc = {'project_id': tenant_id,
-                             'user_id': nova_user_id,
+        instance_vif_desc = {'project_id': tenant_id, 'user_id': nova_user_id,
                              'vif_id': vif_id}
-        vif_description = self._l2network_plugin.associate_port(
-            instance_tenant_id, instance_id,
-            instance_vif_desc)
 
-        self.assertRaises(exc.PortInUse,
-                          self._l2network_plugin.plug_interface, tenant_id,
-                          new_net_dict[const.NET_ID],
+        if conf.PLUGINS[const.PLUGINS].keys():
+            vif_description = self._l2network_plugin.associate_port(
+                instance_tenant_id, instance_id, instance_vif_desc)
+        else:
+            db.port_set_attachment_by_id(port_dict[const.PORT_ID],
+                                         instance_vif_desc['vif_id'] +
+                                         const.UNPLUGGED)
+
+        self.assertRaises(exc.PortInUse, self._l2network_plugin.plug_interface,
+                          tenant_id, new_net_dict[const.NET_ID],
                           port_dict[const.PORT_ID], remote_interface)
-        self.tearDownNetworkPortInterface(
-            tenant_id, instance_tenant_id, instance_id, instance_vif_desc,
-            new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
+        self.tearDownNetworkPortInterface(tenant_id, instance_tenant_id,
+                                          instance_id, instance_vif_desc,
+                                          new_net_dict[const.NET_ID],
+                                          port_dict[const.PORT_ID])
 
         LOG.debug("test_plug_interface_portInUse - END")
 
@@ -599,38 +614,43 @@ class CoreAPITestFunc(unittest.TestCase):
         """
         Tests detaachment of an interface to a port
         """
-
         LOG.debug("test_unplug_interface - START")
-        new_net_dict = self._l2network_plugin.create_network(
-            tenant_id, self.network_name)
+        new_net_dict = self._l2network_plugin.create_network(tenant_id,
+                                                             self.network_name)
         port_dict = self._l2network_plugin.create_port(
-            tenant_id, new_net_dict[const.NET_ID],
-            self.state)
+            tenant_id, new_net_dict[const.NET_ID], self.state)
         instance_desc = {'project_id': tenant_id,
                          'user_id': nova_user_id}
         host_list = self._l2network_plugin.schedule_host(instance_tenant_id,
                                                          instance_id,
                                                          instance_desc)
-        instance_vif_desc = {'project_id': tenant_id,
-                             'user_id': nova_user_id,
+        instance_vif_desc = {'project_id': tenant_id, 'user_id': nova_user_id,
                              'vif_id': vif_id}
-        vif_description = self._l2network_plugin.associate_port(
-            instance_tenant_id, instance_id,
-            instance_vif_desc)
 
-        self._l2network_plugin.plug_interface(
-            tenant_id, new_net_dict[const.NET_ID],
-            port_dict[const.PORT_ID], vif_id)
-        self._l2network_plugin.unplug_interface(
-            tenant_id, new_net_dict[const.NET_ID],
-            port_dict[const.PORT_ID])
+        if conf.PLUGINS[const.PLUGINS].keys():
+            vif_description = self._l2network_plugin. associate_port(
+                instance_tenant_id,
+                instance_id,
+                instance_vif_desc)
+        else:
+            db.port_set_attachment_by_id(port_dict[const.PORT_ID],
+                                         instance_vif_desc['vif_id'] +
+                                         const.UNPLUGGED)
+
+        self._l2network_plugin.plug_interface(tenant_id,
+                                              new_net_dict[const.NET_ID],
+                                              port_dict[const.PORT_ID], vif_id)
+        self._l2network_plugin.unplug_interface(tenant_id,
+                                                new_net_dict[const.NET_ID],
+                                                port_dict[const.PORT_ID])
         port = db.port_get(new_net_dict[const.NET_ID],
                            port_dict[const.PORT_ID])
         vif_id_unplugged = vif_id + '(detached)'
         self.assertEqual(port[const.INTERFACEID], vif_id_unplugged)
-        self.tearDownNetworkPortInterface(
-            tenant_id, instance_tenant_id, instance_id, instance_vif_desc,
-            new_net_dict[const.NET_ID], port_dict[const.PORT_ID])
+        self.tearDownNetworkPortInterface(tenant_id, instance_tenant_id,
+                                          instance_id, instance_vif_desc,
+                                          new_net_dict[const.NET_ID],
+                                          port_dict[const.PORT_ID])
 
         LOG.debug("test_unplug_interface - END")
 
@@ -1020,8 +1040,11 @@ class CoreAPITestFunc(unittest.TestCase):
         """
         Tear down Network Port Interface
         """
-        self._l2network_plugin.detach_port(instance_tenant_id, instance_id,
-                                           instance_desc)
+        if not conf.PLUGINS[const.PLUGINS].keys():
+            db.port_unset_attachment_by_id(port_id)
+        else:
+            self._l2network_plugin.detach_port(instance_tenant_id, instance_id,
+                                               instance_desc)
         self.tearDownNetworkPort(tenant_id, network_dict_id, port_id)
 
     def tearDownPortProfile(self, tenant_id, port_profile_id):

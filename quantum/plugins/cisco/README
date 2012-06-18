@@ -46,6 +46,7 @@ If you plan to just leverage the plugin framework, you do not need these.)
   ** Ubuntu 11.10 or above
   ** Package: python-configobj-4.6.0-3.el6.noarch (or newer)
   ** Package: python-routes-1.12.3-2.el6.noarch (or newer)
+  ** Package: pip install mysql-python
 
 If you are using a Nexus switch in your topology, you'll need the following
 NX-OS version and packages to enable Nexus support:
@@ -364,29 +365,33 @@ result the run_tests.py script.
 
 1. All unit tests (needs environment setup as indicated in the pre-requisites):
 
-   ./run_tests.sh -N quantum.plugins.cisco.tests.unit
-
-   or by modifying the environment variable to point to the plugin directory
+   Modify the environment variable to point to the plugin directory
 
        In bash : export PLUGIN_DIR=quantum/plugins/cisco
           tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
 
-       ./run_tests.sh -N
+   When no sub-plugins are configured(ucs or nexus plugins), execute only the l2networkApi unit tests.
+   Device-specific sub-plugins can be disabled by commenting out all the entries in:
+       etc/quantum/plugins/cisco/cisco_plugins.ini
 
-   Another option is to execute the python script run_tests.py
+   Execute the l2networkApi tests only using:
+       ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
-   python run_tests.py quantum.plugins.cisco.tests.unit
+   If just the ucs or both ucs and the nexus plugins are configured then all the tests could be executed by
+       ./run_tests.sh
+
+   All the test execution steps listed below is for when the sub-plugins are configured.
 
 2. Testing the core API (without UCS/Nexus/RHEL hardware, and can be run on
    Ubuntu):
-   Device-specific plugins can be disabled by commenting out the entries in:
-   etc/quantum/plugins/cisco/cisco_plugins.ini
    The Core API can be tested by initially disabling all device plugins, then
    enabling just the UCS plugins, and finally enabling both the UCS and the
    Nexus plugins.
+   Device-specific plugins can be disabled by commenting out the entries in:
+       etc/quantum/plugins/cisco/cisco_plugins.ini
    Execute the test script as follows:
 
-   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.test_l2networkApi
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    or
 
@@ -395,7 +400,7 @@ result the run_tests.py script.
 3. Specific Plugin unit test (needs environment setup as indicated in the
    pre-requisites):
 
-   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.<name_of_the_module>
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the_module>
 
    or
 
@@ -405,6 +410,11 @@ result the run_tests.py script.
    python run_tests.py quantum.plugins.cisco.tests.unit.test_ucs_plugin
 
    To run specific tests, use the following:
+
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the_module>:<ClassName>.<funcName>
+
+   or
+
    python run_tests.py
     quantum.plugins.cisco.tests.unit.<name_of_the_module>:<ClassName>.<funcName>
 
@@ -418,7 +428,7 @@ result the run_tests.py script.
    Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
 
    The script can be executed by :
-    ./run_tests.sh -N quantum.plugins.cisco.tests.unit.test_cisco_extension
+    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_cisco_extension
 
     or
 
