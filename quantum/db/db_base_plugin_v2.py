@@ -130,6 +130,37 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     collection = collection.filter(column.in_(value))
         return [dict_func(c, fields) for c in collection.all()]
 
+    @staticmethod
+    def _generate_mac(context, network_id):
+        # TODO(garyk) read from configuration file (CONF)
+        max_retries = 16
+        for i in range(max_retries):
+            # TODO(garyk) read base mac from configuration file (CONF)
+            mac = [0xfa, 0x16, 0x3e, random.randint(0x00, 0x7f),
+                   random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+            mac_address = ':'.join(map(lambda x: "%02x" % x, mac))
+            if QuantumDbPluginV2._check_unique_mac(context, network_id,
+                                                   mac_address):
+                LOG.debug("Generated mac for network %s is %s",
+                          network_id, mac_address)
+                return mac_address
+            else:
+                LOG.debug("Generated mac %s exists. Remaining attempts %s.",
+                          mac_address, max_retries - (i + 1))
+        LOG.error("Unable to generate mac address after %s attempts",
+                  max_retries)
+        raise q_exc.MacAddressGenerationFailure(net_id=network_id)
+
+    @staticmethod
+    def _check_unique_mac(context, network_id, mac_address):
+        mac_qry = context.session.query(models_v2.Port)
+        try:
+            mac_qry.filter_by(network_id=network_id,
+                              mac_address=mac_address).one()
+        except exc.NoResultFound:
+            return True
+        return False
+
     def _make_network_dict(self, network, fields=None):
         res = {'id': network['id'],
                'name': network['name'],
@@ -252,16 +283,21 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
 
-        if p['mac_address'] == api_router.ATTR_NOT_SPECIFIED:
-            #FIXME(danwent): this is exact Nova mac generation logic
-            # we will want to provide more flexibility and to check
-            # for uniqueness.
-            mac = [0xfa, 0x16, 0x3e, random.randint(0x00, 0x7f),
-                   random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-            p['mac_address'] = ':'.join(map(lambda x: "%02x" % x, mac))
-
         with context.session.begin():
             network = self._get_network(context, p["network_id"])
+
+            # Ensure that a MAC address is defined and it is unique on the
+            # network
+            if p['mac_address'] == api_router.ATTR_NOT_SPECIFIED:
+                p['mac_address'] = QuantumDbPluginV2._generate_mac(
+                    context, p["network_id"])
+            else:
+                # Ensure that the mac on the network is unique
+                if not QuantumDbPluginV2._check_unique_mac(context,
+                                                           p["network_id"],
+                                                           p['mac_address']):
+                    raise q_exc.MacAddressInUse(net_id=p["network_id"],
+                                                mac=p['mac_address'])
 
             port = models_v2.Port(tenant_id=tenant_id,
                                   network_id=p['network_id'],

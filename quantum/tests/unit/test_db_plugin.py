@@ -16,8 +16,11 @@
 import logging
 import unittest
 import contextlib
+import mock
 
+import quantum
 from quantum.api.v2.router import APIRouter
+from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer, JSONDeserializer
@@ -233,6 +236,38 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             res = self.deserialize('json', req.get_response(self.api))
             self.assertEqual(res['port']['admin_state_up'],
                              data['port']['admin_state_up'])
+
+    def test_requested_duplicate_mac(self):
+        fmt = 'json'
+        with self.port() as port:
+            mac = port['port']['mac_address']
+            # check that MAC address matches base MAC
+            # TODO(garyk) read base mac from configuration file (CONF)
+            base_mac = [0xfa, 0x16, 0x3e]
+            base_mac_address = ':'.join(map(lambda x: "%02x" % x, base_mac))
+            self.assertTrue(mac.startswith(base_mac_address))
+            kwargs = {"mac_address": mac}
+            net_id = port['port']['network_id']
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(fmt, res)
+            self.assertEquals(res.status_int, 409)
+
+    def test_mac_exhaustion(self):
+        # rather than actually consuming all MAC (would take a LONG time)
+        # we just raise the exception that would result.
+        @staticmethod
+        def fake_gen_mac(context, net_id):
+            raise q_exc.MacAddressGenerationFailure(net_id=net_id)
+
+        fmt = 'json'
+        with mock.patch.object(quantum.db.db_base_plugin_v2.QuantumDbPluginV2,
+                               '_generate_mac', new=fake_gen_mac):
+            res = self._create_network(fmt=fmt, name='net1',
+                                       admin_status_up=True)
+            network = self.deserialize(fmt, res)
+            net_id = network['network']['id']
+            res = self._create_port(fmt, net_id=net_id)
+            self.assertEquals(res.status_int, 503)
 
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):

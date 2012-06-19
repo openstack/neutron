@@ -28,6 +28,8 @@ XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
 
 FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.InUse: webob.exc.HTTPConflict,
+             exceptions.MacAddressGenerationFailure:
+             webob.exc.HTTPServiceUnavailable,
              exceptions.StateInvalid: webob.exc.HTTPBadRequest}
 
 

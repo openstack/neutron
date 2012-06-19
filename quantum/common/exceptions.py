@@ -90,6 +90,11 @@ class PortInUse(InUse):
                 "is plugged into the logical port.")
 
 
+class MacAddressInUse(InUse):
+    message = _("Unable to complete operation for network %(net_id)s. "
+                "The mac address %(mac)s is in use.")
+
+
 class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port "
                 "%(port_id)s for network %(net_id)s. The attachment is "
@@ -115,3 +120,7 @@ class NotImplementedError(Error):
 class FixedIPNotAvailable(QuantumException):
     message = _("Fixed IP (%(ip)s) unavailable for network "
                 "%(network_uuid)s")
+
+
+class MacAddressGenerationFailure(QuantumException):
+    message = _("Unable to generate unique mac on network %(net_id)s.")
