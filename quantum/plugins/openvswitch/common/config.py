@@ -34,6 +34,7 @@ ovs_opts = [
 agent_opts = [
     cfg.IntOpt('polling_interval', default=2),
     cfg.StrOpt('root_helper', default='sudo'),
+    cfg.StrOpt('log_file', default=None),
 ]
 
 

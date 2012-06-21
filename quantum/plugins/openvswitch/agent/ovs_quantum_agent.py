@@ -523,6 +523,15 @@ def main():
     config_file = args[0]
     conf = config.parse(config_file)
 
+    if conf.AGENT.log_file:
+        # Avoid to redirect traces to stdout/stderr
+        logging.getLogger().handlers = []
+        handler = logging.FileHandler(conf.AGENT.log_file)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler.setFormatter(formatter)
+        LOG.addHandler(handler)
+        LOG.debug('Verbose: %s', options.verbose)
+
     # Determine which agent type to use.
     enable_tunneling = conf.OVS.enable_tunneling
     integ_br = conf.OVS.integration_bridge
