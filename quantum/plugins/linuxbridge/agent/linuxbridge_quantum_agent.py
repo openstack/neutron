@@ -66,12 +66,12 @@ class LinuxBridge:
 
     def device_exists(self, device):
         """Check if ethernet device exists."""
-        retval = utils.execute(['ip', 'link', 'show',
-                                'dev', device], root_helper=self.root_helper)
-        if retval:
-            return True
-        else:
+        try:
+            utils.execute(['ip', 'link', 'show', 'dev', device],
+                          root_helper=self.root_helper)
+        except RuntimeError:
             return False
+        return True
 
     def get_bridge_name(self, network_id):
         if not network_id:
