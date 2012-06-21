@@ -51,7 +51,7 @@ ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 
 DataFiles = [
     (config_path,
-        ['etc/quantum.conf']),
+        ['etc/quantum.conf', 'etc/api-paste.ini', 'etc/policy.json']),
     (init_path, ['etc/init.d/quantum-server']),
     (ovs_plugin_config_path,
         ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),

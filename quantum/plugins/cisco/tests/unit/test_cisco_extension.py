@@ -52,10 +52,19 @@ from quantum import wsgi
 LOG = logging.getLogger('quantum.plugins.cisco.tests.test_cisco_extensions')
 
 
-TEST_CONF_FILE = config.find_config_file({'plugin': 'cisco'},
-                                         'quantum.conf.ciscoext')
 EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
                                os.pardir, os.pardir, "extensions")
+
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+UNITDIR = os.path.join(ROOTDIR, 'unit')
+
+
+def testsdir(*p):
+    return os.path.join(UNITDIR, *p)
+
+config_file = 'quantum.conf.cisco.test'
+args = ['--config-file', testsdir(config_file)]
+config.parse(args=args)
 
 
 class ExtensionsTestApp(wsgi.Router):
@@ -97,10 +106,7 @@ class PortprofileExtensionTest(unittest.TestCase):
         }
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
-        options = {}
-        options['plugin_provider'] = ('quantum.plugins.cisco.l2network_plugin'
-                                      '.L2Network')
-        self.api = server.APIRouterV10(options)
+        self.api = server.APIRouterV10()
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_portprofile(self):
@@ -1147,10 +1153,7 @@ class MultiPortExtensionTest(unittest.TestCase):
         }
         self.tenant_id = "test_tenant"
         self.network_name = "test_network"
-        options = {}
-        options['plugin_provider'] = (
-            'quantum.plugins.cisco.l2network_plugin.L2Network')
-        self.api = server.APIRouterV10(options)
+        self.api = server.APIRouterV10()
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def create_request(self, path, body, content_type, method='GET'):
@@ -1255,8 +1258,7 @@ def setup_extensions_middleware(extension_manager=None):
     extension_manager = (extension_manager or
                          PluginAwareExtensionManager(EXTENSIONS_PATH,
                                                      L2Network()))
-    options = {'config_file': TEST_CONF_FILE}
-    app = config.load_paste_app('extensions_test_app', options, None)
+    app = config.load_paste_app('extensions_test_app')
     return ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 

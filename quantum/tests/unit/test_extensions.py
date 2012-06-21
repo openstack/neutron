@@ -467,7 +467,7 @@ def setup_base_app():
     config_file = 'quantum.conf.test'
     args = ['--config-file', etcdir(config_file)]
     config.parse(args=args)
-    app = config.load_paste_app('extensions_test_app', config_file)
+    app = config.load_paste_app('extensions_test_app')
     return app
 
 
@@ -478,7 +478,7 @@ def setup_extensions_middleware(extension_manager=None):
     config_file = 'quantum.conf.test'
     args = ['--config-file', etcdir(config_file)]
     config.parse(args=args)
-    app = config.load_paste_app('extensions_test_app', config_file)
+    app = config.load_paste_app('extensions_test_app')
     return ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 

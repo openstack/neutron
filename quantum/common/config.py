@@ -35,6 +35,7 @@ LOG = logging.getLogger(__name__)
 bind_opts = [
     cfg.StrOpt('bind_host', default='0.0.0.0'),
     cfg.IntOpt('bind_port', default=9696),
+    cfg.StrOpt('api_paste_config', default="api-paste.ini"),
     cfg.StrOpt('api_extensions_path', default=""),
     cfg.StrOpt('core_plugin',
                default='quantum.plugins.sample.SamplePlugin.FakePlugin'),
@@ -96,17 +97,17 @@ def setup_logging(conf):
     root_logger.addHandler(handler)
 
 
-def load_paste_app(app_name, config_file):
+def load_paste_app(app_name):
     """
     Builds and returns a WSGI app from a paste config file.
 
     :param app_name: Name of the application to load
-    :param config_file: name of the configuration file
     :raises RuntimeError when config file cannot be located or application
             cannot be loaded from config file
     """
 
-    config_path = os.path.abspath(cfg.CONF.find_file(config_file))
+    config_path = os.path.abspath(cfg.CONF.find_file(
+        cfg.CONF.api_paste_config))
     LOG.info("Config paste file: %s", config_path)
 
     try:

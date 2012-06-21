@@ -86,7 +86,7 @@ def serve_wsgi(cls):
 
 
 def _run_wsgi(app_name):
-    app = config.load_paste_app(app_name, "quantum.conf")
+    app = config.load_paste_app(app_name)
     if not app:
         LOG.error(_('No known API applications configured.'))
         return
