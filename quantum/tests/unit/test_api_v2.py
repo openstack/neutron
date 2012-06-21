@@ -549,15 +549,12 @@ class JSONV2TestCase(APIv2TestCase):
                          'admin_state_up': True}}
         full_input = {'port': {'admin_state_up': True,
                                'mac_address': router.ATTR_NOT_SPECIFIED,
-                               'fixed_ips_v4': router.ATTR_NOT_SPECIFIED,
-                               'fixed_ips_v6': router.ATTR_NOT_SPECIFIED,
+                               'fixed_ips': router.ATTR_NOT_SPECIFIED,
                                'host_routes': router.ATTR_NOT_SPECIFIED}}
         full_input['port'].update(initial_input['port'])
         return_value = {'id': _uuid(), 'status': 'ACTIVE',
                         'admin_state_up': True,
                         'mac_address': 'ca:fe:de:ad:be:ef',
-                        'fixed_ips_v4': ['10.0.0.0/24'],
-                        'fixed_ips_v6': [],
                         'host_routes': [],
                         'device_id': device_id}
         return_value.update(initial_input['port'])

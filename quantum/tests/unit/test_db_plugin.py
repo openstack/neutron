@@ -17,6 +17,7 @@ import contextlib
 import logging
 import mock
 import os
+import random
 import unittest
 
 import quantum
@@ -110,10 +111,10 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         network_req = self.new_create_request('networks', data, fmt)
         return network_req.get_response(self.api)
 
-    def _create_subnet(self, fmt, net_id, gateway_ip, cidr):
+    def _create_subnet(self, fmt, net_id, gateway_ip, cidr, ip_version=4):
         data = {'subnet': {'network_id': net_id,
                            'cidr': cidr,
-                           'ip_version': 4}}
+                           'ip_version': ip_version}}
         if gateway_ip:
             data['subnet']['gateway_ip'] = gateway_ip
 
@@ -125,17 +126,16 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
-        for arg in ('admin_state_up', 'device_id', 'mac_address',
-                    'fixed_ips_v4', 'fixed_ips_v6'):
+        for arg in ('admin_state_up', 'device_id', 'mac_address', 'fixed_ips'):
             if arg in kwargs:
                 data['port'][arg] = kwargs[arg]
 
         port_req = self.new_create_request('ports', data, fmt)
         return port_req.get_response(self.api)
 
-    def _make_subnet(self, fmt, network, gateway, cidr):
+    def _make_subnet(self, fmt, network, gateway, cidr, ip_version=4):
         res = self._create_subnet(fmt, network['network']['id'],
-                                  gateway, cidr)
+                                  gateway, cidr, ip_version)
         return self.deserialize(fmt, res)
 
     def _make_port(self, fmt, net_id, **kwargs):
@@ -175,6 +175,11 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
                 port = self._make_port(fmt, net_id)
                 yield port
                 self._delete('ports', port['port']['id'])
+        else:
+            net_id = subnet['subnet']['network_id']
+            port = self._make_port(fmt, net_id)
+            yield port
+            self._delete('ports', port['port']['id'])
 
 
 class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
@@ -222,6 +227,9 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             for k, v in keys:
                 self.assertEquals(port['port'][k], v)
             self.assertTrue('mac_address' in port['port'])
+            ips = port['port']['fixed_ips']
+            self.assertEquals(len(ips), 1)
+            self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
 
     def test_list_ports(self):
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
@@ -263,6 +271,83 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             res = req.get_response(self.api)
             self.assertEquals(res.status_int, 409)
 
+    def test_update_port_delete_ip(self):
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                data = {'port': {'admin_state_up': False,
+                                 'fixed_ips': []}}
+                req = self.new_update_request('ports',
+                                              data, port['port']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEqual(res['port']['admin_state_up'],
+                                 data['port']['admin_state_up'])
+                self.assertEqual(res['port']['fixed_ips'],
+                                 data['port']['fixed_ips'])
+
+    def test_update_port_update_ip(self):
+        """Test update of port IP.
+
+        Check that a configured IP 10.0.0.2 is replaced by 10.0.0.10.
+        """
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                data = {'port': {'fixed_ips': [{'subnet_id':
+                                                subnet['subnet']['id'],
+                                                'ip_address': "10.0.0.10"}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.10')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+
+    def test_update_port_update_ips(self):
+        """Update IP and generate new IP on port.
+
+        Check a port update with the specified subnet_id's. A IP address
+        will be allocated for each subnet_id.
+        """
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                data = {'port': {'admin_state_up': False,
+                                 'fixed_ips': [{'subnet_id':
+                                                subnet['subnet']['id']}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEqual(res['port']['admin_state_up'],
+                                 data['port']['admin_state_up'])
+                ips = res['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+
+    def test_update_port_add_additional_ip(self):
+        """Test update of port with additional IP."""
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                data = {'port': {'admin_state_up': False,
+                                 'fixed_ips': [{'subnet_id':
+                                                subnet['subnet']['id']},
+                                               {'subnet_id':
+                                                subnet['subnet']['id']}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEqual(res['port']['admin_state_up'],
+                                 data['port']['admin_state_up'])
+                ips = res['port']['fixed_ips']
+                self.assertEquals(len(ips), 2)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self.assertEquals(ips[1]['ip_address'], '10.0.0.3')
+                self.assertEquals(ips[1]['subnet_id'], subnet['subnet']['id'])
+
     def test_requested_duplicate_mac(self):
         fmt = 'json'
         with self.port() as port:
@@ -292,6 +377,249 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             net_id = network['network']['id']
             res = self._create_port(fmt, net_id=net_id)
             self.assertEquals(res.status_int, 503)
+
+    def test_requested_duplicate_ip(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                # Check configuring of duplicate IP
+                kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                         'ip_address': ips[0]['ip_address']}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                self.assertEquals(res.status_int, 409)
+
+    def test_requested_subnet_delete(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                req = self.new_delete_request('subnet',
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 404)
+
+    def test_requested_subnet_id(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                # Request a IP from specific subnet
+                kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id']}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                ips = port2['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.3')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+
+    def test_requested_subnet_id_v4_and_v6(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+                # Get a IPv4 and IPv6 address
+                net_id = subnet['subnet']['network_id']
+                res = self._create_subnet(fmt, net_id=net_id,
+                                          cidr='2607:f0d0:1002:51::0/124',
+                                          ip_version=6, gateway_ip=None)
+                subnet2 = self.deserialize(fmt, res)
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet2['subnet']['id']}]}
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port3 = self.deserialize(fmt, res)
+                ips = port3['port']['fixed_ips']
+                self.assertEquals(len(ips), 2)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self.assertEquals(ips[1]['ip_address'], '2607:f0d0:1002:51::2')
+                self.assertEquals(ips[1]['subnet_id'], subnet2['subnet']['id'])
+                res = self._create_port(fmt, net_id=net_id)
+                port3 = self.deserialize(fmt, res)
+                # Check that a v4 and a v6 address are allocated
+                ips = port3['port']['fixed_ips']
+                self.assertEquals(len(ips), 2)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.3')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self.assertEquals(ips[1]['ip_address'], '2607:f0d0:1002:51::3')
+                self.assertEquals(ips[1]['subnet_id'], subnet2['subnet']['id'])
+
+    def test_range_allocation(self):
+        fmt = 'json'
+        with self.subnet(gateway='10.0.0.3',
+                         cidr='10.0.0.0/29') as subnet:
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']}]}
+                net_id = subnet['subnet']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port = self.deserialize(fmt, res)
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 5)
+                alloc = ['10.0.0.1', '10.0.0.2', '10.0.0.4', '10.0.0.5',
+                         '10.0.0.6']
+                for i in range(len(alloc)):
+                    self.assertEquals(ips[i]['ip_address'], alloc[i])
+                    self.assertEquals(ips[i]['subnet_id'],
+                                      subnet['subnet']['id'])
+        with self.subnet(gateway='11.0.0.6',
+                         cidr='11.0.0.0/29') as subnet:
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']}]}
+                net_id = subnet['subnet']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port = self.deserialize(fmt, res)
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 5)
+                alloc = ['11.0.0.1', '11.0.0.2', '11.0.0.3', '11.0.0.4',
+                         '11.0.0.5']
+                for i in range(len(alloc)):
+                    self.assertEquals(ips[i]['ip_address'], alloc[i])
+                    self.assertEquals(ips[i]['subnet_id'],
+                                      subnet['subnet']['id'])
+
+    def test_requested_invalid_fixed_ips(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                # Test invalid subnet_id
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id':
+                            '00000000-ffff-ffff-ffff-000000000000'}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                self.assertEquals(res.status_int, 404)
+
+                # Test invalid IP address on specified subnet_id
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id'],
+                            'ip_address': '1.1.1.1'}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                self.assertEquals(res.status_int, 400)
+
+                # Test invalid addresses - IP's not on subnet or network
+                # address or broadcast address
+                bad_ips = ['1.1.1.1', '10.0.0.0', '10.0.0.255']
+                net_id = port['port']['network_id']
+                for ip in bad_ips:
+                    kwargs = {"fixed_ips": [{'ip_address': ip}]}
+                    res = self._create_port(fmt, net_id=net_id, **kwargs)
+                    port2 = self.deserialize(fmt, res)
+                    self.assertEquals(res.status_int, 400)
+
+                # Enable allocation of gateway address
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id'],
+                            'ip_address': '10.0.0.1'}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                ips = port2['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.1')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self._delete('ports', port2['port']['id'])
+
+    def test_requested_split(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                # Allocate specific IP
+                kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                         'ip_address': '10.0.0.5'}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(fmt, res)
+                ips = port2['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.5')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                # Allocate specific IP's
+                allocated = ['10.0.0.3', '10.0.0.4', '10.0.0.6']
+                for a in allocated:
+                    res = self._create_port(fmt, net_id=net_id)
+                    port2 = self.deserialize(fmt, res)
+                    ips = port2['port']['fixed_ips']
+                    self.assertEquals(len(ips), 1)
+                    self.assertEquals(ips[0]['ip_address'], a)
+                    self.assertEquals(ips[0]['subnet_id'],
+                                      subnet['subnet']['id'])
+
+    def test_requested_ips_only(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                ips_only = ['10.0.0.18', '10.0.0.20', '10.0.0.22', '10.0.0.21',
+                            '10.0.0.3', '10.0.0.17', '10.0.0.19']
+                for i in ips_only:
+                    kwargs = {"fixed_ips": [{'ip_address': i}]}
+                    net_id = port['port']['network_id']
+                    res = self._create_port(fmt, net_id=net_id, **kwargs)
+                    port = self.deserialize(fmt, res)
+                    ips = port['port']['fixed_ips']
+                    self.assertEquals(len(ips), 1)
+                    self.assertEquals(ips[0]['ip_address'], i)
+                    self.assertEquals(ips[0]['subnet_id'],
+                                      subnet['subnet']['id'])
+
+    def test_recycling(self):
+        fmt = 'json'
+        with self.subnet(cidr='10.0.1.0/24') as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.1.2')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
+                net_id = port['port']['network_id']
+                ports = []
+                for i in range(16 - 3):
+                    res = self._create_port(fmt, net_id=net_id)
+                    p = self.deserialize(fmt, res)
+                    ports.append(p)
+                for i in range(16 - 3):
+                    x = random.randrange(0, len(ports), 1)
+                    p = ports.pop(x)
+                    self._delete('ports', p['port']['id'])
+                res = self._create_port(fmt, net_id=net_id)
+                port = self.deserialize(fmt, res)
+                ips = port['port']['fixed_ips']
+                self.assertEquals(len(ips), 1)
+                self.assertEquals(ips[0]['ip_address'], '10.0.1.3')
+                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
 
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):

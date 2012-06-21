@@ -25,22 +25,39 @@ class HasTenant(object):
     tenant_id = sa.Column(sa.String(255))
 
 
-class IPAllocation(model_base.BASEV2):
-    """Internal representation of a IP address allocation in a Quantum
-       subnet
+class IPAllocationRange(model_base.BASEV2):
+    """Internal representation of a free IP address range in a Quantum
+    subnet. The range of available ips is [first_ip..last_ip]. The
+    allocation retrieves the first entry from the range. If the first
+    entry is equal to the last entry then this row will be deleted.
+    Recycling ips involves appending to existing ranges. This is
+    only done if the range is contiguous. If not, the first_ip will be
+    the same as the last_ip. When adjacent ips are recycled the ranges
+    will be merged.
     """
-    port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
-    address = sa.Column(sa.String(16), nullable=False, primary_key=True)
     subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
-                          primary_key=True)
-    allocated = sa.Column(sa.Boolean(), nullable=False)
+                          nullable=True)
+    first_ip = sa.Column(sa.String(64), nullable=False)
+    last_ip = sa.Column(sa.String(64), nullable=False)
+
+
+class IPAllocation(model_base.BASEV2):
+    """Internal representation of allocated IP addresses in a Quantum subnet.
+    """
+    port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
+                        nullable=False, primary_key=True)
+    ip_address = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
+                          nullable=False, primary_key=True)
+    network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
+                           nullable=False, primary_key=True)
 
 
 class Port(model_base.BASEV2, HasTenant):
-    """Represents a port on a quantum v2 network"""
+    """Represents a port on a quantum v2 network."""
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
-    fixed_ips = orm.relationship(IPAllocation, backref='ports')
+    fixed_ips = orm.relationship(IPAllocation, backref='ports', lazy="dynamic")
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
@@ -48,14 +65,15 @@ class Port(model_base.BASEV2, HasTenant):
 
 
 class Subnet(model_base.BASEV2):
-    """Represents a quantum subnet"""
+    """Represents a quantum subnet.
+
+    When a subnet is created the first and last entries will be created. These
+    are used for the IP allocation.
+    """
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
-    allocations = orm.relationship(IPAllocation,
-                                   backref=orm.backref('subnet',
-                                                       uselist=False))
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
-    gateway_ip = sa.Column(sa.String(255))
+    gateway_ip = sa.Column(sa.String(64))
 
     #TODO(danwent):
     # - dns_namservers
@@ -64,7 +82,7 @@ class Subnet(model_base.BASEV2):
 
 
 class Network(model_base.BASEV2, HasTenant):
-    """Represents a v2 quantum network"""
+    """Represents a v2 quantum network."""
     name = sa.Column(sa.String(255))
     ports = orm.relationship(Port, backref='networks')
     subnets = orm.relationship(Subnet, backref='networks')

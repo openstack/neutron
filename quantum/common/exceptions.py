@@ -84,6 +84,11 @@ class NetworkInUse(InUse):
                 "There is one or more attachments plugged into its ports.")
 
 
+class SubnetInUse(InUse):
+    message = _("Unable to complete operation on subnet %(subnet_id)s. "
+                "There is used by one or more ports.")
+
+
 class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
                 "for network %(net_id)s. The attachment '%(att_id)s"
@@ -93,6 +98,11 @@ class PortInUse(InUse):
 class MacAddressInUse(InUse):
     message = _("Unable to complete operation for network %(net_id)s. "
                 "The mac address %(mac)s is in use.")
+
+
+class IpAddressInUse(InUse):
+    message = _("Unable to complete operation for network %(net_id)s. "
+                "The IP address %(ip_address)s is in use.")
 
 
 class AlreadyAttached(QuantumException):
@@ -107,6 +117,10 @@ class MalformedRequestBody(QuantumException):
 
 class Invalid(Error):
     pass
+
+
+class InvalidInput(QuantumException):
+    message = _("Invalid input for operation: %(error_message)s.")
 
 
 class InvalidContentType(Invalid):
@@ -124,3 +138,7 @@ class FixedIPNotAvailable(QuantumException):
 
 class MacAddressGenerationFailure(QuantumException):
     message = _("Unable to generate unique mac on network %(net_id)s.")
+
+
+class IpAddressGenerationFailure(QuantumException):
+    message = _("No more IP addresses available on network %(net_id)s.")
