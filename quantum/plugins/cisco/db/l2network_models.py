@@ -20,8 +20,8 @@ import uuid
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relation, object_mapper
 
-from quantum.plugins.cisco.db.models import BASE
 from quantum.plugins.cisco.db import models
+from quantum.plugins.cisco.db.models import BASE
 
 
 class L2NetworkBase(object):

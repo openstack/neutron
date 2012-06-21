@@ -22,8 +22,8 @@ import os
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
-from quantum.plugins.ryu.common import config
 import quantum.db.api as db
+from quantum.plugins.ryu.common import config
 from quantum.quantum_plugin_base import QuantumPluginBase
 
 

@@ -22,11 +22,11 @@ import eventlet
 from eventlet import timeout
 
 from quantum.openstack.common import jsonutils
+import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
     _conn_str,
 )
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.request as request
-import quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet
 
 
 logging.basicConfig(level=logging.INFO)

@@ -25,12 +25,12 @@ import os
 
 from quantum.api.api_common import APIFaultWrapper
 from quantum.api.networks import Controller
-from quantum.common.test_lib import test_config
 from quantum.common import config
+from quantum.common.test_lib import test_config
 from quantum.db import api as db
+from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 import quantum.tests.unit.testlib_api as testlib
-from quantum.openstack.common import cfg
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
 

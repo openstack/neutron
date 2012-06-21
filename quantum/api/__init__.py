@@ -24,11 +24,11 @@ import routes
 import webob.dec
 import webob.exc
 
-from quantum import manager
 from quantum.api import attachments
 from quantum.api import networks
 from quantum.api import ports
 from quantum.common import flags
+from quantum import manager
 from quantum import wsgi
 
 

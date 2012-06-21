@@ -20,11 +20,11 @@ import unittest
 
 from quantum.common import exceptions as exception
 from quantum.openstack.common import jsonutils
-from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
 from quantum.plugins.nicira.nicira_nvp_plugin import (
     NvpApiClient,
     nvplib,
 )
+from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
 
 
 logging.basicConfig(level=logging.DEBUG)

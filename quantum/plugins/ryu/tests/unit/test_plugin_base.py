@@ -19,9 +19,9 @@ import os
 
 import mox
 
+from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
 from quantum.plugins.ryu.tests.unit import fake_plugin
 from quantum.plugins.ryu.tests.unit import utils
-from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
 
 
 class PluginBaseTest(BaseRyuTest):

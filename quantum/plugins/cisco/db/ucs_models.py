@@ -18,8 +18,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relation
 
-from quantum.plugins.cisco.db import models
 from quantum.plugins.cisco.db.l2network_models import L2NetworkBase
+from quantum.plugins.cisco.db import models
 from quantum.plugins.cisco.db.models import BASE
 
 

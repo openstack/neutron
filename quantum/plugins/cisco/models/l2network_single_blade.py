@@ -21,9 +21,9 @@ import inspect
 import logging
 
 from quantum.openstack.common import importutils
+from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.l2network_model_base import L2NetworkModelBase
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.plugins.cisco.common import cisco_constants as const
 
 
 LOG = logging.getLogger(__name__)

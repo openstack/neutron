@@ -20,11 +20,11 @@ import netaddr
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from quantum import quantum_plugin_base_v2
 from quantum.api.v2 import router as api_router
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
+from quantum import quantum_plugin_base_v2
 
 
 LOG = logging.getLogger(__name__)

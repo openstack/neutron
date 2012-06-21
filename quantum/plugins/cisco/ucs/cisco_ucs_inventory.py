@@ -64,14 +64,14 @@ from copy import deepcopy
 import logging
 
 from quantum.common import exceptions as exc
-from quantum.plugins.cisco.l2device_inventory_base import (
-    L2NetworkDeviceInventoryBase,
-)
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import ucs_db as udb
+from quantum.plugins.cisco.l2device_inventory_base import (
+    L2NetworkDeviceInventoryBase,
+)
 from quantum.plugins.cisco.ucs import (
     cisco_ucs_inventory_configuration as conf,
 )

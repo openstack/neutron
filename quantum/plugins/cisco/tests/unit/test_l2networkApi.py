@@ -23,10 +23,10 @@ import unittest
 from quantum.common import exceptions as exc
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco import l2network_plugin
-from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco import l2network_plugin
+from quantum.plugins.cisco import l2network_plugin_configuration as conf
 
 
 LOG = logging.getLogger('quantum.tests.test_core_api_func')

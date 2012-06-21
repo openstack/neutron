@@ -17,9 +17,9 @@
 #
 # @author: Juliano Martinez, Locaweb.
 
+import logging
 import os
 import shlex
-import logging
 import subprocess
 
 LOG = logging.getLogger(__name__)

@@ -30,8 +30,8 @@ from optparse import OptionParser
 import os
 import sys
 
-from quantumclient import Client
 import quantumclient.cli as qcli
+from quantumclient import Client
 
 
 LOG = logging.getLogger('quantum')

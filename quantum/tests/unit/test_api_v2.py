@@ -12,8 +12,8 @@
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #  License for the spec
 
-import os
 import logging
+import os
 import unittest
 import uuid
 
@@ -22,12 +22,12 @@ import webtest
 
 from webob import exc
 
-from quantum import context
-from quantum.common import exceptions as q_exc
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
 from quantum.api.v2 import views
 from quantum.common import config
+from quantum.common import exceptions as q_exc
+from quantum import context
 from quantum.openstack.common import cfg
 
 

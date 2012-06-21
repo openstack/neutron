@@ -16,9 +16,9 @@
 #    under the License.
 
 import ConfigParser
-from StringIO import StringIO
 import imp
 import os
+from StringIO import StringIO
 import tempfile
 
 import mock

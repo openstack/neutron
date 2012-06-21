@@ -20,8 +20,8 @@ import unittest
 
 import mox
 
-from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.agent.linux import ovs_lib
+from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 
 # Useful global dummy variables.
 NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'

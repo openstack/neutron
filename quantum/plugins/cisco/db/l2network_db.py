@@ -18,9 +18,9 @@
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
-from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.db import l2network_models
+from quantum.plugins.cisco import l2network_plugin_configuration as conf
 
 import logging as LOG
 import quantum.plugins.cisco.db.api as db

@@ -21,8 +21,8 @@ Policy engine for quantum.  Largely copied from nova.
 
 import os.path
 
-from quantum.common.utils import find_config_file
 from quantum.common import exceptions
+from quantum.common.utils import find_config_file
 from quantum.openstack.common import policy
 
 
