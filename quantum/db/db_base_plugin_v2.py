@@ -216,13 +216,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         with context.session.begin():
             network = self._get_network(context, id)
 
-            # TODO(anyone) Delegation?
-            ports_qry = context.session.query(models_v2.Port)
-            ports_qry.filter_by(network_id=id).delete()
+            filter = {'network_id': [id]}
+            ports = self.get_ports(context, filters=filter)
+            if ports:
+                raise q_exc.NetworkInUse(net_id=id)
 
             subnets_qry = context.session.query(models_v2.Subnet)
             subnets_qry.filter_by(network_id=id).delete()
-
             context.session.delete(network)
 
     def get_network(self, context, id, fields=None, verbose=None):
@@ -243,6 +243,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
         with context.session.begin():
+            network = self._get_network(context, s["network_id"])
             subnet = models_v2.Subnet(network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],

@@ -253,6 +253,15 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             self.assertEqual(res['port']['admin_state_up'],
                              data['port']['admin_state_up'])
 
+    def test_delete_network_if_port_exists(self):
+        fmt = 'json'
+        with self.port() as port:
+            net_id = port['port']['network_id']
+            req = self.new_delete_request('networks',
+                                          port['port']['network_id'])
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 409)
+
     def test_requested_duplicate_mac(self):
         fmt = 'json'
         with self.port() as port:
