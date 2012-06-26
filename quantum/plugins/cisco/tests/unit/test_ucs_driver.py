@@ -74,15 +74,15 @@ DELETE_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
                          'status="deleted"> </vnicProfile></pair> '
                          '</inConfigs> </configConfMos>')
 
-ASSOCIATE_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
-                            'inHierarchical="true"> <inConfigs> <pair key='
-                            '"fabric/lan/profiles/vnic-New Profile/cl-New '
-                            'Profile Client"> <vmVnicProfCl dcName=".*" '
-                            'descr="" dn="fabric/lan/profiles/vnic-'
-                            'New Profile/cl-New Profile Client"name="New '
-                            'Profile Client" orgPath=".*" status="created" '
-                            'swName="default$"> </vmVnicProfCl>'
-                            '</pair> </inConfigs> </configConfMos>')
+ASSOC_PROFILE_OUTPUT = ('<configConfMos cookie="cookie_placeholder" '
+                        'inHierarchical="true"> <inConfigs> <pair key='
+                        '"fabric/lan/profiles/vnic-New Profile/cl-New '
+                        'Profile Client"> <vmVnicProfCl dcName=".*" '
+                        'descr="" dn="fabric/lan/profiles/vnic-'
+                        'New Profile/cl-New Profile Client"name="New '
+                        'Profile Client" orgPath=".*" status="created" '
+                        'swName="default$"> </vmVnicProfCl>'
+                        '</pair> </inConfigs> </configConfMos>')
 
 
 class TestUCSDriver(unittest.TestCase):
@@ -160,8 +160,7 @@ class TestUCSDriver(unittest.TestCase):
         LOG.debug("test_create_profile_post - END")
 
     def test_create_profile_client_data(self,
-                                        expected_output=
-                                        ASSOCIATE_PROFILE_OUTPUT):
+                                        expected_output=ASSOC_PROFILE_OUTPUT):
         """
         Tests creation of profile client post Data
         """

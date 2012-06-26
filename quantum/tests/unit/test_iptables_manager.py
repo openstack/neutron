@@ -129,8 +129,8 @@ class IptablesManagerStateFulTestCase(unittest.TestCase):
                               'OUTPUT -j %s-OUTPUT\n-A FORWARD -j %s-FORWARD'
                               '\n-A %s-filter -j DROP\n-A %s-INPUT -s 0/0 -d'
                               ' 192.168.0.2 -j %s-filter\n' % (bn, bn, bn, bn,
-                              bn, bn, bn, bn, bn, bn, bn, bn)), root_helper=
-                              self.root_helper).AndReturn(None)
+                              bn, bn, bn, bn, bn, bn, bn, bn)),
+                              root_helper=self.root_helper).AndReturn(None)
 
         self.iptables.execute(['/sbin/iptables-save', '-t', 'nat'],
                               root_helper=self.root_helper).AndReturn('')
