@@ -24,6 +24,7 @@ from quantum.api.v2 import router as api_router
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
+from quantum.openstack.common import cfg
 from quantum import quantum_plugin_base_v2
 
 
@@ -132,11 +133,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     @staticmethod
     def _generate_mac(context, network_id):
-        # TODO(garyk) read from configuration file (CONF)
-        max_retries = 16
+        base_mac = cfg.CONF.base_mac.split(':')
+        max_retries = cfg.CONF.mac_generation_retries
         for i in range(max_retries):
-            # TODO(garyk) read base mac from configuration file (CONF)
-            mac = [0xfa, 0x16, 0x3e, random.randint(0x00, 0x7f),
+            mac = [int(base_mac[0], 16), int(base_mac[1], 16),
+                   int(base_mac[2], 16), random.randint(0x00, 0x7f),
                    random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
             mac_address = ':'.join(map(lambda x: "%02x" % x, mac))
             if QuantumDbPluginV2._check_unique_mac(context, network_id,
