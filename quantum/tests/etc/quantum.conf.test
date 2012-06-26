@@ -14,11 +14,5 @@ bind_port = 9696
 # Path to the extensions
 api_extensions_path = unit/extensions
 
-[pipeline:extensions_app_with_filter]
-pipeline = extensions extensions_test_app
-
-[filter:extensions]
-paste.filter_factory = quantum.common.extensions:plugin_aware_extension_middleware_factory
-
-[app:extensions_test_app]
-paste.app_factory = quantum.tests.unit.test_extensions:app_factory
+# Paste configuration file
+api_paste_config = api-paste.ini.test

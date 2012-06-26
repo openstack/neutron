@@ -14,11 +14,7 @@ bind_port = 9696
 # Path to the extensions
 api_extensions_path = ../../../../extensions
 
-[pipeline:extensions_app_with_filter]
-pipeline = extensions extensions_test_app
+# Paste configuration file
+api_paste_config = api-paste.ini.cisco.test
 
-[filter:extensions]
-paste.filter_factory = quantum.extensions.extensions:plugin_aware_extension_middleware_factory
-
-[app:extensions_test_app]
-paste.app_factory = quantum.plugins.cisco.tests.unit.test_cisco_extension:app_factory
+core_plugin = quantum.plugins.cisco.l2network_plugin.L2Network
