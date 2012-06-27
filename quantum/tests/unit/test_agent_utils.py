@@ -17,6 +17,8 @@
 
 import unittest
 
+import mock
+
 from quantum.agent.linux import utils
 
 

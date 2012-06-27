@@ -51,7 +51,10 @@ ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 
 DataFiles = [
     (config_path,
-        ['etc/quantum.conf', 'etc/api-paste.ini', 'etc/policy.json']),
+        ['etc/quantum.conf',
+         'etc/api-paste.ini',
+         'etc/policy.json',
+         'etc/dhcp_agent.ini']),
     (init_path, ['etc/init.d/quantum-server']),
     (ovs_plugin_config_path,
         ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),
@@ -89,6 +92,7 @@ setuptools.setup(
     eager_resources=EagerResources,
     entry_points={
         'console_scripts': [
+            'quantum-dhcp-agent = quantum.agent.dhcp_agent:main',
             'quantum-linuxbridge-agent ='
             'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
             'quantum-openvswitch-agent ='

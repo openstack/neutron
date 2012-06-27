@@ -156,3 +156,15 @@ class MacAddressGenerationFailure(QuantumException):
 
 class IpAddressGenerationFailure(QuantumException):
     message = _("No more IP addresses available on network %(net_id)s.")
+
+
+class BridgeDoesNotExist(QuantumException):
+    message = _("Bridge %(bridge)s does not exist.")
+
+
+class PreexistingDeviceFailure(QuantumException):
+    message = _("Creation failed. %(dev_name)s already exists.")
+
+
+class SudoRequired(QuantumException):
+    message = _("Sudo priviledge is required to run this command.")
