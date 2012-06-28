@@ -97,6 +97,8 @@ def install_dependencies(venv=VENV):
                  PIP_REQUIRES], redirect_output=False)
     run_command(['tools/with_venv.sh', 'pip', 'install', '-r',
                  TEST_REQUIRES], redirect_output=False)
+    run_command(['tools/with_venv.sh', 'pip', 'install',
+                 'setuptools_git>=0.4'], redirect_output=False)
 
     # Tell the virtual env how to "import quantum"
     pthfile = os.path.join(venv, "lib", PY_VERSION, "site-packages",
