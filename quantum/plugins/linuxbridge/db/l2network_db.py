@@ -26,16 +26,24 @@ import quantum.db.api as db
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
+from quantum.plugins.linuxbridge.db import l2network_models_v2
 
 LOG = logging.getLogger(__name__)
 CONF_FILE = find_config_file({'plugin': 'linuxbridge'},
                              "linuxbridge_conf.ini")
 CONF = config.parse(CONF_FILE)
 
+# The global variable for the database version model
+L2_MODEL = l2network_models
 
-def initialize():
+
+def initialize(base=None):
+    global L2_MODEL
     options = {"sql_connection": "%s" % CONF.DATABASE.sql_connection}
     options.update({"reconnect_interval": CONF.DATABASE.reconnect_interval})
+    if base:
+        options.update({"base": base})
+        L2_MODEL = l2network_models_v2
     db.configure_db(options)
     create_vlanids()
 
@@ -47,7 +55,7 @@ def create_vlanids():
     start = CONF.VLANS.vlan_start
     end = CONF.VLANS.vlan_end
     try:
-        vlanid = session.query(l2network_models.VlanID).one()
+        vlanid = session.query(L2_MODEL.VlanID).one()
     except exc.MultipleResultsFound:
         """
         TODO (Sumit): Salvatore rightly points out that this will not handle
@@ -57,10 +65,10 @@ def create_vlanids():
         Per Dan's suggestion we just throw a server exception for now.
         """
         current_start = (
-            int(session.query(func.min(l2network_models.VlanID.vlan_id)).
+            int(session.query(func.min(L2_MODEL.VlanID.vlan_id)).
                 one()[0]))
         current_end = (
-            int(session.query(func.max(l2network_models.VlanID.vlan_id)).
+            int(session.query(func.max(L2_MODEL.VlanID.vlan_id)).
                 one()[0]))
         if current_start != start or current_end != end:
             LOG.debug("Old VLAN range %s-%s" % (current_start, current_end))
@@ -70,7 +78,7 @@ def create_vlanids():
     except exc.NoResultFound:
         LOG.debug("Setting VLAN range to %s-%s" % (start, end))
         while start <= end:
-            vlanid = l2network_models.VlanID(start)
+            vlanid = L2_MODEL.VlanID(start)
             session.add(vlanid)
             start += 1
         session.flush()
@@ -82,7 +90,7 @@ def get_all_vlanids():
     LOG.debug("get_all_vlanids() called")
     session = db.get_session()
     try:
-        vlanids = (session.query(l2network_models.VlanID).
+        vlanids = (session.query(L2_MODEL.VlanID).
                    all())
         return vlanids
     except exc.NoResultFound:
@@ -94,7 +102,7 @@ def is_vlanid_used(vlan_id):
     LOG.debug("is_vlanid_used() called")
     session = db.get_session()
     try:
-        vlanid = (session.query(l2network_models.VlanID).
+        vlanid = (session.query(L2_MODEL.VlanID).
                   filter_by(vlan_id=vlan_id).
                   one())
         return vlanid["vlan_used"]
@@ -107,7 +115,7 @@ def release_vlanid(vlan_id):
     LOG.debug("release_vlanid() called")
     session = db.get_session()
     try:
-        vlanid = (session.query(l2network_models.VlanID).
+        vlanid = (session.query(L2_MODEL.VlanID).
                   filter_by(vlan_id=vlan_id).
                   one())
         vlanid["vlan_used"] = False
@@ -124,7 +132,7 @@ def delete_vlanid(vlan_id):
     LOG.debug("delete_vlanid() called")
     session = db.get_session()
     try:
-        vlanid = (session.query(l2network_models.VlanID).
+        vlanid = (session.query(L2_MODEL.VlanID).
                   filter_by(vlan_id=vlan_id).
                   one())
         session.delete(vlanid)
@@ -139,18 +147,18 @@ def reserve_vlanid():
     LOG.debug("reserve_vlanid() called")
     session = db.get_session()
     try:
-        rvlan = (session.query(l2network_models.VlanID).
+        rvlan = (session.query(L2_MODEL.VlanID).
                  first())
         if not rvlan:
             create_vlanids()
 
-        rvlan = (session.query(l2network_models.VlanID).
+        rvlan = (session.query(L2_MODEL.VlanID).
                  filter_by(vlan_used=False).
                  first())
         if not rvlan:
             raise c_exc.VlanIDNotAvailable()
 
-        rvlanid = (session.query(l2network_models.VlanID).
+        rvlanid = (session.query(L2_MODEL.VlanID).
                    filter_by(vlan_id=rvlan["vlan_id"]).
                    one())
         rvlanid["vlan_used"] = True
@@ -166,7 +174,7 @@ def get_all_vlanids_used():
     LOG.debug("get_all_vlanids() called")
     session = db.get_session()
     try:
-        vlanids = (session.query(l2network_models.VlanID).
+        vlanids = (session.query(L2_MODEL.VlanID).
                    filter_by(vlan_used=True).
                    all())
         return vlanids
@@ -179,7 +187,7 @@ def get_all_vlan_bindings():
     LOG.debug("get_all_vlan_bindings() called")
     session = db.get_session()
     try:
-        bindings = (session.query(l2network_models.VlanBinding).
+        bindings = (session.query(L2_MODEL.VlanBinding).
                     all())
         return bindings
     except exc.NoResultFound:
@@ -191,7 +199,7 @@ def get_vlan_binding(netid):
     LOG.debug("get_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(l2network_models.VlanBinding).
+        binding = (session.query(L2_MODEL.VlanBinding).
                    filter_by(network_id=netid).
                    one())
         return binding
@@ -204,13 +212,13 @@ def add_vlan_binding(vlanid, netid):
     LOG.debug("add_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(l2network_models.VlanBinding).
+        binding = (session.query(L2_MODEL.VlanBinding).
                    filter_by(vlan_id=vlanid).
                    one())
         raise c_exc.NetworkVlanBindingAlreadyExists(vlan_id=vlanid,
                                                     network_id=netid)
     except exc.NoResultFound:
-        binding = l2network_models.VlanBinding(vlanid, netid)
+        binding = L2_MODEL.VlanBinding(vlanid, netid)
         session.add(binding)
         session.flush()
         return binding
@@ -221,7 +229,7 @@ def remove_vlan_binding(netid):
     LOG.debug("remove_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(l2network_models.VlanBinding).
+        binding = (session.query(L2_MODEL.VlanBinding).
                    filter_by(network_id=netid).
                    one())
         session.delete(binding)
@@ -236,7 +244,7 @@ def update_vlan_binding(netid, newvlanid=None):
     LOG.debug("update_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(l2network_models.VlanBinding).
+        binding = (session.query(L2_MODEL.VlanBinding).
                    filter_by(network_id=netid).
                    one())
         if newvlanid:

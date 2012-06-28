@@ -314,12 +314,13 @@ class LinuxBridge:
 class LinuxBridgeQuantumAgent:
 
     def __init__(self, br_name_prefix, physical_interface, polling_interval,
-                 reconnect_interval, root_helper):
+                 reconnect_interval, root_helper, target_v2_api):
         self.polling_interval = polling_interval
         self.reconnect_interval = reconnect_interval
         self.root_helper = root_helper
         self.setup_linux_bridge(br_name_prefix, physical_interface)
         self.db_connected = False
+        self.target_v2_api = target_v2_api
 
     def setup_linux_bridge(self, br_name_prefix, physical_interface):
         self.linux_br = LinuxBridge(br_name_prefix, physical_interface,
@@ -407,25 +408,41 @@ class LinuxBridgeQuantumAgent:
 
         all_bindings = {}
         for bind in port_binds:
-            all_bindings[bind.uuid] = bind
-            entry = {'network_id': bind.network_id, 'state': bind.state,
-                     'op_status': bind.op_status, 'uuid': bind.uuid,
-                     'interface_id': bind.interface_id}
-            if bind.state == 'ACTIVE':
+            append_entry = False
+            if self.target_v2_api:
+                all_bindings[bind.id] = bind
+                entry = {'network_id': bind.network_id,
+                         'uuid': bind.id,
+                         'status': bind.status,
+                         'interface_id': bind.id}
+                append_entry = bind.admin_state_up
+            else:
+                all_bindings[bind.uuid] = bind
+                entry = {'network_id': bind.network_id, 'state': bind.state,
+                         'op_status': bind.op_status, 'uuid': bind.uuid,
+                         'interface_id': bind.interface_id}
+                append_entry = bind.state == 'ACTIVE'
+            if append_entry:
                 port_bindings.append(entry)
 
         plugged_interfaces = []
         ports_string = ""
         for pb in port_bindings:
             ports_string = "%s %s" % (ports_string, pb)
-            if pb['interface_id']:
-                vlan_id = str(vlan_bindings[pb['network_id']]['vlan_id'])
-                if self.process_port_binding(pb['uuid'],
-                                             pb['network_id'],
-                                             pb['interface_id'],
-                                             vlan_id):
-                    all_bindings[pb['uuid']].op_status = OP_STATUS_UP
-                plugged_interfaces.append(pb['interface_id'])
+            port_id = pb['uuid']
+            interface_id = pb['interface_id']
+
+            vlan_id = str(vlan_bindings[pb['network_id']]['vlan_id'])
+            if self.process_port_binding(port_id,
+                                         pb['network_id'],
+                                         interface_id,
+                                         vlan_id):
+                if self.target_v2_api:
+                    all_bindings[port_id].status = OP_STATUS_UP
+                else:
+                    all_bindings[port_id].op_status = OP_STATUS_UP
+
+            plugged_interfaces.append(interface_id)
 
         if old_port_bindings != port_bindings:
             LOG.debug("Port-bindings: %s" % ports_string)
@@ -495,11 +512,9 @@ def main():
     root_helper = conf.AGENT.root_helper
     'Establish database connection and load models'
     db_connection_url = conf.DATABASE.sql_connection
-    LOG.info("Connecting to %s" % (db_connection_url))
-
     plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
                                      polling_interval, reconnect_interval,
-                                     root_helper)
+                                     root_helper, conf.AGENT.target_v2_api)
     LOG.info("Agent initialized successfully, now running... ")
     plugin.daemon_loop(db_connection_url)
 
