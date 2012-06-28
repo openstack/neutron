@@ -80,6 +80,9 @@ RESOURCE_ATTRIBUTE_MAP = {
         'cidr': {'allow_post': True, 'allow_put': False},
         'gateway_ip': {'allow_post': True, 'allow_put': True,
                        'default': ATTR_NOT_SPECIFIED},
+        #TODO(salvatore-orlando): Enable PUT on allocation_pools
+        'allocation_pools': {'allow_post': True, 'allow_put': False,
+                             'default': ATTR_NOT_SPECIFIED},
         'dns_namesevers': {'allow_post': True, 'allow_put': True,
                            'default': ATTR_NOT_SPECIFIED},
         'additional_host_routes': {'allow_post': True, 'allow_put': True,

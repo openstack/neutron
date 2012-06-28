@@ -127,6 +127,20 @@ class InvalidContentType(Invalid):
     message = _("Invalid content type %(content_type)s.")
 
 
+class InvalidAllocationPool(QuantumException):
+    message = _("The allocation pool %(pool)s is not valid.")
+
+
+class OverlappingAllocationPools(QuantumException):
+    message = _("Found overlapping allocation pools:"
+                "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
+
+
+class OutOfBoundsAllocationPool(QuantumException):
+    message = _("The allocation pool %(pool)s spans "
+                "beyond the subnet cidr %(subnet_cidr)s.")
+
+
 class NotImplementedError(Error):
     pass
 

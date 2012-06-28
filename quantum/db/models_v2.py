@@ -31,20 +31,42 @@ class HasId(object):
     id = sa.Column(sa.String(36), primary_key=True, default=utils.str_uuid)
 
 
-class IPAllocationRange(model_base.BASEV2, HasId):
-    """Internal representation of a free IP address range in a Quantum
-    subnet. The range of available ips is [first_ip..last_ip]. The
-    allocation retrieves the first entry from the range. If the first
-    entry is equal to the last entry then this row will be deleted.
+class IPAvailabilityRange(model_base.BASEV2):
+    """Internal representation of available IPs for Quantum subnets.
+
+    Allocation - first entry from the range will be allocated.
+    If the first entry is equal to the last entry then this row
+    will be deleted.
     Recycling ips involves appending to existing ranges. This is
     only done if the range is contiguous. If not, the first_ip will be
     the same as the last_ip. When adjacent ips are recycled the ranges
     will be merged.
+
     """
+    allocation_pool_id = sa.Column(sa.String(36),
+                                   sa.ForeignKey('ipallocationpools.id'),
+                                   nullable=True,
+                                   primary_key=True)
+    first_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    last_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
+
+    def __repr__(self):
+        return "%s - %s" % (self.first_ip, self.last_ip)
+
+
+class IPAllocationPool(model_base.BASEV2, HasId):
+    """Representation of an allocation pool in a Quantum subnet."""
+
     subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
                           nullable=True)
     first_ip = sa.Column(sa.String(64), nullable=False)
     last_ip = sa.Column(sa.String(64), nullable=False)
+    available_ranges = orm.relationship(IPAvailabilityRange,
+                                        backref='ipallocationpool',
+                                        lazy="dynamic")
+
+    def __repr__(self):
+        return "%s - %s" % (self.first_ip, self.last_ip)
 
 
 class IPAllocation(model_base.BASEV2):
@@ -80,10 +102,11 @@ class Subnet(model_base.BASEV2, HasId):
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(64))
-
+    allocation_pools = orm.relationship(IPAllocationPool,
+                                        backref='subnet',
+                                        lazy="dynamic")
     #TODO(danwent):
     # - dns_namservers
-    # - excluded_ranges
     # - additional_routes
 
 

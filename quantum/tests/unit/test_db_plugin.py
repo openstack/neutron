@@ -18,7 +18,8 @@ import logging
 import mock
 import os
 import random
-import unittest
+import unittest2
+import webob.exc
 
 import quantum
 from quantum.api.v2.router import APIRouter
@@ -40,7 +41,7 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class QuantumDbPluginV2TestCase(unittest.TestCase):
+class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def setUp(self):
         super(QuantumDbPluginV2TestCase, self).setUp()
 
@@ -111,13 +112,15 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         network_req = self.new_create_request('networks', data, fmt)
         return network_req.get_response(self.api)
 
-    def _create_subnet(self, fmt, net_id, gateway_ip, cidr, ip_version=4):
+    def _create_subnet(self, fmt, net_id, gateway_ip, cidr,
+                       allocation_pools=None, ip_version=4):
         data = {'subnet': {'network_id': net_id,
                            'cidr': cidr,
                            'ip_version': ip_version}}
         if gateway_ip:
             data['subnet']['gateway_ip'] = gateway_ip
-
+        if allocation_pools:
+            data['subnet']['allocation_pools'] = allocation_pools
         subnet_req = self.new_create_request('subnets', data, fmt)
         return subnet_req.get_response(self.api)
 
@@ -127,15 +130,25 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
         for arg in ('admin_state_up', 'device_id', 'mac_address', 'fixed_ips'):
-            if arg in kwargs:
+            # Arg must be present and not empty
+            if arg in kwargs and kwargs[arg]:
                 data['port'][arg] = kwargs[arg]
 
         port_req = self.new_create_request('ports', data, fmt)
         return port_req.get_response(self.api)
 
-    def _make_subnet(self, fmt, network, gateway, cidr, ip_version=4):
-        res = self._create_subnet(fmt, network['network']['id'],
-                                  gateway, cidr, ip_version)
+    def _make_subnet(self, fmt, network, gateway, cidr,
+                     allocation_pools=None, ip_version=4):
+        res = self._create_subnet(fmt,
+                                  network['network']['id'],
+                                  gateway,
+                                  cidr,
+                                  allocation_pools=allocation_pools,
+                                  ip_version=ip_version)
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
     def _make_port(self, fmt, net_id, **kwargs):
@@ -154,30 +167,46 @@ class QuantumDbPluginV2TestCase(unittest.TestCase):
         self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
-    def subnet(self, network=None, gateway=None,
-               cidr='10.0.0.0/24', fmt='json'):
+    def subnet(self, network=None,
+               gateway_ip=None,
+               cidr='10.0.0.0/24',
+               fmt='json',
+               ip_version=4,
+               allocation_pools=None):
         # TODO(anyone) DRY this
+        # NOTE(salvatore-orlando): we can pass the network object
+        # to gen function anyway, and then avoid the repetition
         if not network:
             with self.network() as network:
-                subnet = self._make_subnet(fmt, network, gateway, cidr)
+                subnet = self._make_subnet(fmt,
+                                           network,
+                                           gateway_ip,
+                                           cidr,
+                                           allocation_pools,
+                                           ip_version)
                 yield subnet
                 self._delete('subnets', subnet['subnet']['id'])
         else:
-            subnet = self._make_subnet(fmt, network, gateway, cidr)
+            subnet = self._make_subnet(fmt,
+                                       network,
+                                       gateway_ip,
+                                       cidr,
+                                       allocation_pools,
+                                       ip_version)
             yield subnet
             self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt='json'):
+    def port(self, subnet=None, fixed_ips=None, fmt='json'):
         if not subnet:
             with self.subnet() as subnet:
                 net_id = subnet['subnet']['network_id']
-                port = self._make_port(fmt, net_id)
+                port = self._make_port(fmt, net_id, fixed_ips=fixed_ips)
                 yield port
                 self._delete('ports', port['port']['id'])
         else:
             net_id = subnet['subnet']['network_id']
-            port = self._make_port(fmt, net_id)
+            port = self._make_port(fmt, net_id, fixed_ips=fixed_ips)
             yield port
             self._delete('ports', port['port']['id'])
 
@@ -434,7 +463,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                            admin_status_up=True)
                 network2 = self.deserialize(fmt, res)
                 subnet2 = self._make_subnet(fmt, network2, "1.1.1.1",
-                                            "1.1.1.0/24", 4)
+                                            "1.1.1.0/24", ip_version=4)
                 net_id = port['port']['network_id']
                 # Request a IP from specific subnet
                 kwargs = {"fixed_ips": [{'subnet_id':
@@ -475,7 +504,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
 
     def test_range_allocation(self):
         fmt = 'json'
-        with self.subnet(gateway='10.0.0.3',
+        with self.subnet(gateway_ip='10.0.0.3',
                          cidr='10.0.0.0/29') as subnet:
                 kwargs = {"fixed_ips":
                           [{'subnet_id': subnet['subnet']['id']},
@@ -494,7 +523,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                     self.assertEquals(ips[i]['ip_address'], alloc[i])
                     self.assertEquals(ips[i]['subnet_id'],
                                       subnet['subnet']['id'])
-        with self.subnet(gateway='11.0.0.6',
+        with self.subnet(gateway_ip='11.0.0.6',
                          cidr='11.0.0.0/29') as subnet:
                 kwargs = {"fixed_ips":
                           [{'subnet_id': subnet['subnet']['id']},
@@ -672,24 +701,120 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
 class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
+    def _test_create_subnet(self, **kwargs):
+        keys = kwargs.copy()
+        keys.setdefault('cidr', '10.0.0.0/24')
+        keys.setdefault('ip_version', 4)
+        with self.subnet(**keys) as subnet:
+            # verify the response has each key with the correct value
+            for k in keys:
+                self.assertIn(k, subnet['subnet'])
+                self.assertEquals(subnet['subnet'][k], keys[k])
+            return subnet
+
     def test_create_subnet(self):
-        gateway = '10.0.0.1'
+        gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        keys = [('ip_version', 4), ('gateway_ip', gateway),
-                ('cidr', cidr)]
-        with self.subnet(gateway=gateway, cidr=cidr) as subnet:
-            for k, v in keys:
-                self.assertEquals(subnet['subnet'][k], v)
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr)
 
     def test_create_subnet_defaults(self):
-        generated_gateway = '10.0.0.1'
+        gateway = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        keys = [('ip_version', 4), ('gateway_ip', generated_gateway),
-                ('cidr', cidr)]
-        # intentionally not passing gateway in
-        with self.subnet(cidr=cidr) as subnet:
-            for k, v in keys:
-                self.assertEquals(subnet['subnet'][k], v)
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.254'}]
+        subnet = self._test_create_subnet()
+        # verify cidr & gw have been correctly generated
+        self.assertEquals(subnet['subnet']['cidr'], cidr)
+        self.assertEquals(subnet['subnet']['gateway_ip'], gateway)
+        self.assertEquals(subnet['subnet']['allocation_pools'],
+                          allocation_pools)
+
+    def test_create_subnet_with_allocation_pool(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_with_v6_allocation_pool(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::0/80'
+        allocation_pools = [{'start': 'fe80::2',
+                             'end': 'fe80::ffff:fffa:ffff'}]
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_with_large_allocation_pool(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/8'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'},
+                            {'start': '10.1.0.0',
+                             'end': '10.200.0.100'}]
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_multiple_allocation_pools(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'},
+                            {'start': '10.0.0.110',
+                             'end': '10.0.0.150'}]
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
+        gateway_ip = '10.0.0.50'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.1',
+                             'end': '10.0.0.100'}]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr,
+                                     allocation_pools=allocation_pools)
+        self.assertEquals(ctx_manager.exception.code, 409)
+
+    def test_create_subnet_overlapping_allocation_pools_returns_409(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.150'},
+                            {'start': '10.0.0.140',
+                             'end': '10.0.0.180'}]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr,
+                                     allocation_pools=allocation_pools)
+        self.assertEquals(ctx_manager.exception.code, 409)
+
+    def test_create_subnet_invalid_allocation_pool_returns_400(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.256'}]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr,
+                                     allocation_pools=allocation_pools)
+        self.assertEquals(ctx_manager.exception.code, 400)
+
+    def test_create_subnet_out_of_range_allocation_pool_returns_400(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.1.6'}]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr,
+                                     allocation_pools=allocation_pools)
+        self.assertEquals(ctx_manager.exception.code, 400)
 
     def test_update_subnet(self):
         with self.subnet() as subnet:
@@ -715,9 +840,9 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         # NOTE(jkoelker) This would be a good place to use contextlib.nested
         #                or just drop 2.6 support ;)
         with self.network() as network:
-            with self.subnet(network=network, gateway='10.0.0.1',
+            with self.subnet(network=network, gateway_ip='10.0.0.1',
                              cidr='10.0.1.0/24') as subnet:
-                with self.subnet(network=network, gateway='10.0.1.1',
+                with self.subnet(network=network, gateway_ip='10.0.1.1',
                                  cidr='10.0.1.0/24') as subnet2:
                     req = self.new_list_request('subnets')
                     res = self.deserialize('json',

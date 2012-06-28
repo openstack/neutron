@@ -167,26 +167,41 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """Return an IP address to the pool of free IP's on the network
         subnet.
         """
-        range_qry = context.session.query(models_v2.IPAllocationRange)
+        # Grab all allocation pools for the subnet
+        pool_qry = context.session.query(models_v2.IPAllocationPool)
+        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id).all()
+        # Find the allocation pool for the IP to recycle
+        pool_id = None
+        for allocation_pool in allocation_pools:
+            allocation_pool_range = netaddr.IPRange(
+                allocation_pool['first_ip'],
+                allocation_pool['last_ip'])
+            if netaddr.IPAddress(ip_address) in allocation_pool_range:
+                pool_id = allocation_pool['id']
+                break
+        if not pool_id:
+            error_message = ("No allocation pool found for "
+                             "ip address:%s" % ip_address)
+            raise q_exc.InvalidInput(error_message=error_message)
         # Two requests will be done on the database. The first will be to
         # search if an entry starts with ip_address + 1 (r1). The second
         # will be to see if an entry ends with ip_address -1 (r2).
         # If 1 of the above holds true then the specific entry will be
         # modified. If both hold true then the two ranges will be merged.
         # If there are no entries then a single entry will be added.
+        range_qry = context.session.query(models_v2.IPAvailabilityRange)
         ip_first = str(netaddr.IPAddress(ip_address) + 1)
         ip_last = str(netaddr.IPAddress(ip_address) - 1)
         LOG.debug("Recycle %s", ip_address)
-
         try:
-            r1 = range_qry.filter_by(subnet_id=subnet_id,
+            r1 = range_qry.filter_by(allocation_pool_id=pool_id,
                                      first_ip=ip_first).one()
             LOG.debug("Recycle: first match for %s-%s", r1['first_ip'],
                       r1['last_ip'])
         except exc.NoResultFound:
             r1 = []
         try:
-            r2 = range_qry.filter_by(subnet_id=subnet_id,
+            r2 = range_qry.filter_by(allocation_pool_id=pool_id,
                                      last_ip=ip_last).one()
             LOG.debug("Recycle: last match for %s-%s", r2['first_ip'],
                       r2['last_ip'])
@@ -195,9 +210,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         if r1 and r2:
             # Merge the two ranges
-            ip_range = models_v2.IPAllocationRange(subnet_id=subnet_id,
-                                                   first_ip=r2['first_ip'],
-                                                   last_ip=r1['last_ip'])
+            ip_range = models_v2.IPAvailabilityRange(
+                allocation_pool_id=pool_id,
+                first_ip=r2['first_ip'],
+                last_ip=r1['last_ip'])
             context.session.add(ip_range)
             LOG.debug("Recycle: merged %s-%s and %s-%s", r2['first_ip'],
                       r2['last_ip'], r1['first_ip'], r1['last_ip'])
@@ -215,9 +231,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                       r2['last_ip'])
         else:
             # Create a new range
-            ip_range = models_v2.IPAllocationRange(subnet_id=subnet_id,
-                                                   first_ip=ip_address,
-                                                   last_ip=ip_address)
+            ip_range = models_v2.IPAvailabilityRange(
+                allocation_pool_id=pool_id,
+                first_ip=ip_address,
+                last_ip=ip_address)
             context.session.add(ip_range)
             LOG.debug("Recycle: created new %s-%s", ip_address, ip_address)
 
@@ -237,7 +254,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         The IP address will be generated from one of the subnets defined on
         the network.
         """
-        range_qry = context.session.query(models_v2.IPAllocationRange)
+        range_qry = context.session.query(
+            models_v2.IPAvailabilityRange).join(
+                models_v2.IPAllocationPool)
         for subnet in subnets:
             range = range_qry.filter_by(subnet_id=subnet['id']).first()
             if not range:
@@ -262,9 +281,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def _allocate_specific_ip(context, subnet_id, ip_address):
         """Allocate a specific IP address on the subnet."""
         ip = int(netaddr.IPAddress(ip_address))
-        range_qry = context.session.query(models_v2.IPAllocationRange)
-        ranges = range_qry.filter_by(subnet_id=subnet_id).all()
-        for range in ranges:
+        range_qry = context.session.query(
+            models_v2.IPAvailabilityRange,
+            models_v2.IPAllocationPool).join(
+                models_v2.IPAllocationPool)
+        results = range_qry.filter_by(subnet_id=subnet_id).all()
+        for (range, pool) in results:
             first = int(netaddr.IPAddress(range['first_ip']))
             last = int(netaddr.IPAddress(range['last_ip']))
             if first <= ip <= last:
@@ -282,9 +304,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     new_first = str(netaddr.IPAddress(ip_address) + 1)
                     new_last = range['last_ip']
                     range['last_ip'] = str(netaddr.IPAddress(ip_address) - 1)
-                    ip_range = models_v2.IPAllocationRange(subnet_id=subnet_id,
-                                                           first_ip=new_first,
-                                                           last_ip=new_last)
+                    ip_range = models_v2.IPAvailabilityRange(
+                        allocation_pool_id=pool['id'],
+                        first_ip=new_first,
+                        last_ip=new_last)
                     context.session.add(ip_range)
                     return
 
@@ -459,6 +482,107 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                 'subnet_id': result['subnet_id']})
         return ips
 
+    def _validate_allocation_pools(self, ip_pools, gateway_ip, subnet_cidr):
+        """Validate IP allocation pools.
+
+        Verify start and end address for each allocation pool are valid,
+        ie: constituted by valid and appropriately ordered IP addresses.
+        Also, verify pools do not overlap among themselves and with the
+        gateway IP. Finally, verify that each range, and the gateway IP,
+        fall within the subnet's CIDR.
+
+        """
+
+        subnet = netaddr.IPNetwork(subnet_cidr)
+        subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
+        subnet_last_ip = netaddr.IPAddress(subnet.last - 1)
+
+        LOG.debug("Performing IP validity checks on allocation pools")
+        ip_sets = []
+        for ip_pool in ip_pools:
+            try:
+                start_ip = netaddr.IPAddress(ip_pool['start'])
+                end_ip = netaddr.IPAddress(ip_pool['end'])
+            except netaddr.AddrFormatError:
+                LOG.error("Found invalid IP address in pool: %s - %s:",
+                          ip_pool['start'],
+                          ip_pool['end'])
+                raise q_exc.InvalidAllocationPool(pool=ip_pool)
+            if (start_ip.version != subnet.version or
+                    end_ip.version != subnet.version):
+                LOG.error("Specified IP addresses do not match "
+                          "the subnet IP version")
+                raise q_exc.InvalidAllocationPool(pool=ip_pool)
+            if end_ip < start_ip:
+                LOG.error("Start IP (%s) is greater than end IP (%s)",
+                          ip_pool['start'],
+                          ip_pool['end'])
+                raise q_exc.InvalidAllocationPool(pool=ip_pool)
+            if start_ip < subnet_first_ip or end_ip > subnet_last_ip:
+                LOG.error("Found pool larger than subnet CIDR:%s - %s",
+                          ip_pool['start'],
+                          ip_pool['end'])
+                raise q_exc.OutOfBoundsAllocationPool(
+                    pool=ip_pool,
+                    subnet_cidr=subnet_cidr)
+            # Valid allocation pool
+            # Create an IPSet for it for easily verifying overlaps
+            ip_sets.append(netaddr.IPSet(netaddr.IPRange(
+                ip_pool['start'],
+                ip_pool['end']).cidrs()))
+
+        LOG.debug("Checking for overlaps among allocation pools "
+                  "and gateway ip")
+        ip_ranges = ip_pools[:]
+        # Treat gw as IPset as well
+        ip_ranges.append(gateway_ip)
+        ip_sets.append(netaddr.IPSet([gateway_ip]))
+        # Use integer cursors as an efficient way for implementing
+        # comparison and avoiding comparing the same pair twice
+        for l_cursor in range(len(ip_sets)):
+            for r_cursor in range(l_cursor + 1, len(ip_sets)):
+                if ip_sets[l_cursor] & ip_sets[r_cursor]:
+                    l_range = ip_ranges[l_cursor]
+                    r_range = ip_ranges[r_cursor]
+                    LOG.error("Found overlapping ranges: %s and %s",
+                              l_range, r_range)
+                    raise q_exc.OverlappingAllocationPools(
+                        pool_1=l_range,
+                        pool_2=r_range,
+                        subnet_cidr=subnet_cidr)
+
+    def _allocate_pools_for_subnet(self, context, subnet):
+        """Create IP allocation pools for a given subnet
+
+        Pools are defined by the 'allocation_pools' attribute,
+        a list of dict objects with 'start' and 'end' keys for
+        defining the pool range.
+
+        """
+
+        pools = []
+        if subnet['allocation_pools'] == api_router.ATTR_NOT_SPECIFIED:
+            # Auto allocate the pool around gateway
+            gw_ip = int(netaddr.IPAddress(subnet['gateway_ip']))
+            net = netaddr.IPNetwork(subnet['cidr'])
+            first_ip = net.first + 1
+            last_ip = net.last - 1
+            if gw_ip > first_ip:
+                pools.append({'start': str(netaddr.IPAddress(first_ip)),
+                              'end': str(netaddr.IPAddress(gw_ip - 1))})
+            if gw_ip < last_ip:
+                pools.append({'start': str(netaddr.IPAddress(gw_ip + 1)),
+                              'end': str(netaddr.IPAddress(last_ip))})
+            # return auto-generated pools
+            # no need to check for their validity
+            return pools
+        else:
+            pools = subnet['allocation_pools']
+            self._validate_allocation_pools(pools,
+                                            subnet['gateway_ip'],
+                                            subnet['cidr'])
+            return pools
+
     def _make_network_dict(self, network, fields=None):
         res = {'id': network['id'],
                'name': network['name'],
@@ -475,6 +599,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'network_id': subnet['network_id'],
                'ip_version': subnet['ip_version'],
                'cidr': subnet['cidr'],
+               'allocation_pools': [{'start': pool['first_ip'],
+                                     'end': pool['last_ip']}
+                                    for pool in subnet['allocation_pools']],
                'gateway_ip': subnet['gateway_ip']}
         return self._fields(res, fields)
 
@@ -542,27 +669,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         if s['gateway_ip'] == api_router.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
-        ip = netaddr.IPAddress(s['gateway_ip'])
-        # Get the first and last indices for the subnet
-        ranges = []
-        # Gateway is the first address in the range
-        if ip == net.network + 1:
-            range = {'first': str(ip + 1),
-                     'last': str(net.broadcast - 1)}
-            ranges.append(range)
-        # Gateway is the last address in the range
-        elif ip == net.broadcast - 1:
-            range = {'first': str(net.network + 1),
-                     'last': str(ip - 1)}
-            ranges.append(range)
-        # Gateway is on IP in the subnet
-        else:
-            range = {'first': str(net.network + 1),
-                     'last': str(ip - 1)}
-            ranges.append(range)
-            range = {'first': str(ip + 1),
-                     'last': str(net.broadcast - 1)}
-            ranges.append(range)
         with context.session.begin():
             network = self._get_network(context, s["network_id"])
             subnet = models_v2.Subnet(network_id=s['network_id'],
@@ -570,12 +676,16 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                       cidr=s['cidr'],
                                       gateway_ip=s['gateway_ip'])
             context.session.add(subnet)
-
-        with context.session.begin():
-            for range in ranges:
-                ip_range = models_v2.IPAllocationRange(subnet_id=subnet.id,
-                                                       first_ip=range['first'],
-                                                       last_ip=range['last'])
+            pools = self._allocate_pools_for_subnet(context, s)
+            for pool in pools:
+                ip_pool = models_v2.IPAllocationPool(subnet=subnet,
+                                                     first_ip=pool['start'],
+                                                     last_ip=pool['end'])
+                context.session.add(ip_pool)
+                ip_range = models_v2.IPAvailabilityRange(
+                    ipallocationpool=ip_pool,
+                    first_ip=pool['start'],
+                    last_ip=pool['end'])
                 context.session.add(ip_range)
         return self._make_subnet_dict(subnet)
 
