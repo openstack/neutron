@@ -16,6 +16,7 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from quantum.common import utils
 from quantum.db import model_base
 
 
@@ -25,7 +26,12 @@ class HasTenant(object):
     tenant_id = sa.Column(sa.String(255))
 
 
-class IPAllocationRange(model_base.BASEV2):
+class HasId(object):
+    """id mixin, add to subclasses that have an id."""
+    id = sa.Column(sa.String(36), primary_key=True, default=utils.str_uuid)
+
+
+class IPAllocationRange(model_base.BASEV2, HasId):
     """Internal representation of a free IP address range in a Quantum
     subnet. The range of available ips is [first_ip..last_ip]. The
     allocation retrieves the first entry from the range. If the first
@@ -53,7 +59,7 @@ class IPAllocation(model_base.BASEV2):
                            nullable=False, primary_key=True)
 
 
-class Port(model_base.BASEV2, HasTenant):
+class Port(model_base.BASEV2, HasId, HasTenant):
     """Represents a port on a quantum v2 network."""
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
@@ -64,7 +70,7 @@ class Port(model_base.BASEV2, HasTenant):
     device_id = sa.Column(sa.String(255), nullable=False)
 
 
-class Subnet(model_base.BASEV2):
+class Subnet(model_base.BASEV2, HasId):
     """Represents a quantum subnet.
 
     When a subnet is created the first and last entries will be created. These
@@ -81,7 +87,7 @@ class Subnet(model_base.BASEV2):
     # - additional_routes
 
 
-class Network(model_base.BASEV2, HasTenant):
+class Network(model_base.BASEV2, HasId, HasTenant):
     """Represents a v2 quantum network."""
     name = sa.Column(sa.String(255))
     ports = orm.relationship(Port, backref='networks')

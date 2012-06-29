@@ -18,6 +18,7 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
+# @author: Aaron Rosen, Nicira Networks, Inc.
 
 import logging
 from optparse import OptionParser
@@ -59,21 +60,21 @@ class LocalVLANMapping:
 
 
 class Port(object):
-    '''class stores port data in an ORM-free way,
-       so attributes are still available even if a
-       row has been deleted.
-    '''
+    """Represents a quantum port.
+
+    Class stores port data in a ORM-free way, so attributres are
+    still available even if a row has been deleted.
+    """
 
     def __init__(self, p):
         self.uuid = p.uuid
         self.network_id = p.network_id
         self.interface_id = p.interface_id
         self.state = p.state
-        self.op_status = p.op_status
+        self.status = p.op_status
 
     def __eq__(self, other):
-        '''compare only fields that will cause us to re-wire
-        '''
+        '''Compare only fields that will cause us to re-wire.'''
         try:
             return (self and other
                     and self.interface_id == other.interface_id
@@ -88,14 +89,45 @@ class Port(object):
         return hash(self.uuid)
 
 
+class Portv2(object):
+    """Represents a quantumv2 port.
+
+    Class stores port data in a ORM-free way, so attributres are
+    still available even if a row has been deleted.
+    """
+
+    def __init__(self, p):
+        self.id = p.id
+        self.network_id = p.network_id
+        self.device_id = p.device_id
+        self.admin_state_up = p.admin_state_up
+        self.status = p.status
+
+    def __eq__(self, other):
+        '''Compare only fields that will cause us to re-wire.'''
+        try:
+            return (self and other
+                    and self.id == other.id
+                    and self.admin_state_up == other.admin_state_up)
+        except:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.id)
+
+
 class OVSQuantumAgent(object):
 
-    def __init__(self, integ_br, root_helper,
-                 polling_interval, reconnect_interval):
+    def __init__(self, integ_br, root_helper, polling_interval,
+                 reconnect_interval, target_v2_api=False):
         self.root_helper = root_helper
         self.setup_integration_br(integ_br)
         self.polling_interval = polling_interval
         self.reconnect_interval = reconnect_interval
+        self.target_v2_api = target_v2_api
 
     def port_bound(self, port, vlan_id):
         self.int_br.set_db_attribute("Port", port.port_name,
@@ -139,7 +171,10 @@ class OVSQuantumAgent(object):
                 continue
 
             for port in ports:
-                all_bindings[port.interface_id] = port
+                if self.target_v2_api:
+                    all_bindings[port.id] = port
+                else:
+                    all_bindings[port.interface_id] = port
 
             vlan_bindings = {}
             try:
@@ -177,7 +212,7 @@ class OVSQuantumAgent(object):
                                  % (old_b, str(p)))
                         self.port_unbound(p, True)
                         if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].op_status = OP_STATUS_DOWN
+                            all_bindings[p.vif_id].status = OP_STATUS_DOWN
                     if new_b is not None:
                         # If we don't have a binding we have to stick it on
                         # the dead vlan
@@ -185,7 +220,7 @@ class OVSQuantumAgent(object):
                         vlan_id = vlan_bindings.get(net_id, DEAD_VLAN_TAG)
                         self.port_bound(p, vlan_id)
                         if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].op_status = OP_STATUS_UP
+                            all_bindings[p.vif_id].status = OP_STATUS_UP
                         LOG.info(("Adding binding to net-id = %s "
                                   "for %s on vlan %s") %
                                  (new_b, str(p), vlan_id))
@@ -197,7 +232,7 @@ class OVSQuantumAgent(object):
                         old_b = old_local_bindings[vif_id]
                         self.port_unbound(old_vif_ports[vif_id], False)
                     if vif_id in all_bindings:
-                        all_bindings[vif_id].op_status = OP_STATUS_DOWN
+                        all_bindings[vif_id].status = OP_STATUS_DOWN
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
@@ -237,7 +272,7 @@ class OVSQuantumTunnelAgent(object):
     MAX_VLAN_TAG = 4094
 
     def __init__(self, integ_br, tun_br, local_ip, root_helper,
-                 polling_interval, reconnect_interval):
+                 polling_interval, reconnect_interval, target_v2_api=False):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -245,7 +280,9 @@ class OVSQuantumTunnelAgent(object):
         :param local_ip: local IP address of this hypervisor.
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
-        :param reconnect_internal: retry interval (secs) on DB error.'''
+        :param reconnect_internal: retry interval (secs) on DB error.
+        :param target_v2_api: if True  use v2 api.
+        '''
         self.root_helper = root_helper
         self.available_local_vlans = set(
             xrange(OVSQuantumTunnelAgent.MIN_VLAN_TAG,
@@ -259,6 +296,7 @@ class OVSQuantumTunnelAgent(object):
         self.local_ip = local_ip
         self.tunnel_count = 0
         self.setup_tunnel_br(tun_br)
+        self.target_v2_api = target_v2_api
 
     def provision_local_vlan(self, net_uuid, lsw_id):
         '''Provisions a local VLAN.
@@ -294,7 +332,8 @@ class OVSQuantumTunnelAgent(object):
         self.available_local_vlans.add(lvm.vlan)
 
     def port_bound(self, port, net_uuid, lsw_id):
-        '''Bind port to net_uuid/lsw_id.
+        '''Bind port to net_uuid/lsw_id and install flow for inbound traffic
+        to vm.
 
         :param port: a ovslib.VifPort object.
         :param net_uuid: the net_uuid this port is to be associated with.
@@ -405,8 +444,12 @@ class OVSQuantumTunnelAgent(object):
 
         while True:
             try:
-                all_bindings = dict((p.interface_id, Port(p))
-                                    for p in db.ports.all())
+                if self.target_v2_api:
+                    all_bindings = dict((p.id, Portv2(p))
+                                        for p in db.ports.all())
+                else:
+                    all_bindings = dict((p.interface_id, Port(p))
+                                        for p in db.ports.all())
                 all_bindings_vif_port_ids = set(all_bindings)
                 lsw_id_bindings = dict((bind.network_id, bind.vlan_id)
                                        for bind in db.vlan_bindings.all())
@@ -461,7 +504,8 @@ class OVSQuantumTunnelAgent(object):
                                  old_net_uuid + " for " + str(p)
                                  + " added to dead vlan")
                         self.port_unbound(p, old_net_uuid)
-                        all_bindings[p.vif_id].op_status = OP_STATUS_DOWN
+                        if p.vif_id in all_bindings:
+                            all_bindings[p.vif_id].status = OP_STATUS_DOWN
                         if not new_port:
                             self.port_dead(p)
 
@@ -474,7 +518,7 @@ class OVSQuantumTunnelAgent(object):
 
                         lsw_id = lsw_id_bindings[new_net_uuid]
                         self.port_bound(p, new_net_uuid, lsw_id)
-                        all_bindings[p.vif_id].op_status = OP_STATUS_UP
+                        all_bindings[p.vif_id].status = OP_STATUS_UP
                         LOG.info("Port %s on net-id = %s bound to %s " % (
                                  str(p), new_net_uuid,
                                  str(self.local_vlan_map[new_net_uuid])))
@@ -482,7 +526,7 @@ class OVSQuantumTunnelAgent(object):
                 for vif_id in disappeared_vif_ports_ids:
                     LOG.info("Port Disappeared: " + vif_id)
                     if vif_id in all_bindings:
-                        all_bindings[vif_id].op_status = OP_STATUS_DOWN
+                        all_bindings[vif_id].status = OP_STATUS_DOWN
                     old_port = old_local_bindings.get(vif_id)
                     if old_port:
                         self.port_unbound(old_vif_ports[vif_id],
@@ -540,17 +584,21 @@ def main():
     reconnect_interval = conf.DATABASE.reconnect_interval
     root_helper = conf.AGENT.root_helper
 
+    # Determine API Version to use
+    target_v2_api = conf.AGENT.target_v2_api
+
     if enable_tunneling:
         # Get parameters for OVSQuantumTunnelAgent
         tun_br = conf.OVS.tunnel_bridge
         # Mandatory parameter.
         local_ip = conf.OVS.local_ip
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, local_ip, root_helper,
-                                       polling_interval, reconnect_interval)
+                                       polling_interval, reconnect_interval,
+                                       target_v2_api)
     else:
         # Get parameters for OVSQuantumAgent.
-        plugin = OVSQuantumAgent(integ_br, root_helper,
-                                 polling_interval, reconnect_interval)
+        plugin = OVSQuantumAgent(integ_br, root_helper, polling_interval,
+                                 reconnect_interval, target_v2_api)
 
     # Start everything.
     plugin.daemon_loop(db_connection_url)

@@ -26,6 +26,7 @@ import inspect
 import logging
 import os
 import subprocess
+import uuid
 
 from quantum.common import exceptions as exception
 from quantum.common import flags
@@ -153,3 +154,8 @@ def find_config_file(options, config_file):
         cfg_file = os.path.join(cfg_dir, config_file)
         if os.path.exists(cfg_file):
             return cfg_file
+
+
+def str_uuid():
+    """Return a uuid as a string"""
+    return str(uuid.uuid4())

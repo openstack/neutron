@@ -17,6 +17,7 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
+# @author: Aaron Rosen, Nicira Networks, Inc.
 
 import logging
 import os
@@ -24,14 +25,16 @@ import os
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
-import quantum.db.api as db
+from quantum.db import api as db
+from quantum.db import db_base_plugin_v2
+from quantum.db import models_v2
 from quantum.plugins.openvswitch.common import config
 from quantum.plugins.openvswitch import ovs_db
+from quantum.plugins.openvswitch import ovs_db_v2
 from quantum.quantum_plugin_base import QuantumPluginBase
 
+
 LOG = logging.getLogger("ovs_quantum_plugin")
-
-
 CONF_FILE = find_config_file({"plugin": "openvswitch"},
                              "ovs_quantum_plugin.ini")
 
@@ -47,6 +50,12 @@ class VlanMap(object):
     free_vlans = set()
 
     def __init__(self, vlan_min=1, vlan_max=4094):
+        if vlan_min > vlan_max:
+            LOG.warn("Using default VLAN values! vlan_min = %s is larger"
+                     " than vlan_max = %s!" % (vlan_min, vlan_max))
+            vlan_min = 1
+            vlan_max = 4094
+
         self.vlan_min = vlan_min
         self.vlan_max = vlan_max
         self.vlans.clear()
@@ -82,44 +91,26 @@ class VlanMap(object):
         else:
             LOG.error("No vlan found with network \"%s\"", network_id)
 
+    def populate_already_used(self, vlans):
+        for vlan_id, network_id in vlans:
+            LOG.debug("Adding already populated vlan %s -> %s" %
+                      (vlan_id, network_id))
+            self.already_used(vlan_id, network_id)
+
 
 class OVSQuantumPlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
-        if configfile is None:
-            if os.path.exists(CONF_FILE):
-                configfile = CONF_FILE
-            else:
-                configfile = find_config(os.path.abspath(
-                    os.path.dirname(__file__)))
-        if configfile is None:
-            raise Exception("Configuration file \"%s\" doesn't exist" %
-                            (configfile))
-        LOG.debug("Using configuration file: %s" % configfile)
-        conf = config.parse(configfile)
+        conf = config.parse(CONF_FILE)
         options = {"sql_connection": conf.DATABASE.sql_connection}
         reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        vlan_min = conf.OVS.vlan_min
-        vlan_max = conf.OVS.vlan_max
-
-        if vlan_min > vlan_max:
-            LOG.warn("Using default VLAN values! vlan_min = %s is larger"
-                     " than vlan_max = %s!" % (vlan_min, vlan_max))
-            vlan_min = 1
-            vlan_max = 4094
-
-        self.vmap = VlanMap(vlan_min, vlan_max)
+        self.vmap = VlanMap(conf.OVS.vlan_min, conf.OVS.vlan_max)
         # Populate the map with anything that is already present in the
         # database
-        vlans = ovs_db.get_vlans()
-        for x in vlans:
-            vlan_id, network_id = x
-            LOG.debug("Adding already populated vlan %s -> %s" %
-                      (vlan_id, network_id))
-            self.vmap.already_used(vlan_id, network_id)
+        self.vmap.populate_already_used(ovs_db.get_vlans())
 
     def get_all_networks(self, tenant_id, **kwargs):
         nets = []
@@ -142,8 +133,13 @@ class OVSQuantumPlugin(QuantumPluginBase):
     def create_network(self, tenant_id, net_name, **kwargs):
         net = db.network_create(tenant_id, net_name,
                                 op_status=OperationalStatus.UP)
+        try:
+            vlan_id = self.vmap.acquire(str(net.uuid))
+        except NoFreeVLANException:
+            db.network_destroy(net.uuid)
+            raise
+
         LOG.debug("Created network: %s" % net)
-        vlan_id = self.vmap.acquire(str(net.uuid))
         ovs_db.add_vlan_binding(vlan_id, str(net.uuid))
         return self._make_net_dict(str(net.uuid), net.name, [], net.op_status)
 
@@ -233,3 +229,33 @@ class OVSQuantumPlugin(QuantumPluginBase):
         db.validate_port_ownership(tenant_id, net_id, port_id)
         res = db.port_get(port_id, net_id)
         return res.interface_id
+
+
+class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+    def __init__(self, configfile=None):
+        conf = config.parse(CONF_FILE)
+        options = {"sql_connection": conf.DATABASE.sql_connection}
+        options.update({'base': models_v2.model_base.BASEV2})
+        reconnect_interval = conf.DATABASE.reconnect_interval
+        options.update({"reconnect_interval": reconnect_interval})
+        db.configure_db(options)
+
+        self.vmap = VlanMap(conf.OVS.vlan_min, conf.OVS.vlan_max)
+        self.vmap.populate_already_used(ovs_db_v2.get_vlans())
+
+    def create_network(self, context, network):
+        net = super(OVSQuantumPluginV2, self).create_network(context, network)
+        try:
+            vlan_id = self.vmap.acquire(str(net['id']))
+        except NoFreeVLANException:
+            super(OVSQuantumPluginV2, self).delete_network(context, net['id'])
+            raise
+
+        LOG.debug("Created network: %s" % net['id'])
+        ovs_db_v2.add_vlan_binding(vlan_id, str(net['id']))
+        return net
+
+    def delete_network(self, context, id):
+        ovs_db_v2.remove_vlan_binding(id)
+        self.vmap.release(id)
+        return super(OVSQuantumPluginV2, self).delete_network(context, id)
