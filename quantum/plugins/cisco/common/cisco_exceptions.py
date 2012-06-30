@@ -183,3 +183,9 @@ class InvalidAttach(exceptions.QuantumException):
                 "attachment ID with port ID happens implicitly when "
                 "VM is instantiated; attach operation can be "
                 "performed subsequently.")
+
+
+class InvalidDetach(exceptions.QuantumException):
+    message = _("Unable to unplug the attachment %(att_id)s from port "
+                "%(port_id)s for network %(net_id)s. The attachment "
+                "%(att_id)s does not exist.")

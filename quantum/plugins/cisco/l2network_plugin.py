@@ -288,8 +288,8 @@ class L2Network(QuantumPluginBase):
         port = db.port_get(net_id, port_id)
         attachment_id = port[const.INTERFACEID]
         if attachment_id is None:
-            raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
-                                    att_id=remote_interface_id)
+            raise cexc.InvalidDetach(port_id=port_id, net_id=net_id,
+                                     att_id=remote_interface_id)
         self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
                                                         port_id])
         attachment_id = attachment_id[:const.UUID_LENGTH]
