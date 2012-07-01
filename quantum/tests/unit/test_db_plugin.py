@@ -425,6 +425,24 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                 self.assertEquals(ips[0]['ip_address'], '10.0.0.3')
                 self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
 
+    def test_requested_subnet_id_not_on_network(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                # Create new network
+                res = self._create_network(fmt=fmt, name='net2',
+                                           admin_status_up=True)
+                network2 = self.deserialize(fmt, res)
+                subnet2 = self._make_subnet(fmt, network2, "1.1.1.1",
+                                            "1.1.1.0/24", 4)
+                net_id = port['port']['network_id']
+                # Request a IP from specific subnet
+                kwargs = {"fixed_ips": [{'subnet_id':
+                                         subnet2['subnet']['id']}]}
+                net_id = port['port']['network_id']
+                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                self.assertEquals(res.status_int, 400)
+
     def test_requested_subnet_id_v4_and_v6(self):
         fmt = 'json'
         with self.subnet() as subnet:

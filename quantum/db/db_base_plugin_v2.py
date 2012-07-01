@@ -344,6 +344,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     raise q_exc.InvalidInput(error_message=msg)
             else:
                 subnet = self._get_subnet(context, fixed['subnet_id'])
+                if subnet['network_id'] != network_id:
+                    msg = _('Failed to create port on network %s, '
+                            'because fixed_ips included invalid subnet '
+                            '%s') % (network_id, fixed['subnet_id'])
+                    raise q_exc.InvalidInput(error_message=msg)
                 subnet_id = subnet['id']
 
             if 'ip_address' in fixed:
