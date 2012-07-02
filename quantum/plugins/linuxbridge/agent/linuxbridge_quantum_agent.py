@@ -73,6 +73,13 @@ class LinuxBridge:
             return False
         return True
 
+    def interface_exists_on_bridge(self, bridge, interface):
+        directory = '/sys/class/net/%s/brif' % bridge
+        for filename in os.listdir(directory):
+            if filename == interface:
+                return True
+        return False
+
     def get_bridge_name(self, network_id):
         if not network_id:
             LOG.warning("Invalid Network ID, will lead to incorrect bridge"
@@ -205,8 +212,10 @@ class LinuxBridge:
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
 
-        utils.execute(['brctl', 'addif', bridge_name, interface],
-                      root_helper=self.root_helper)
+        # Check if the interface is part of the bridge
+        if not self.interface_exists_on_bridge(bridge_name, interface):
+            utils.execute(['brctl', 'addif', bridge_name, interface],
+                          root_helper=self.root_helper)
 
     def add_tap_interface(self, network_id, vlan_id, tap_device_name):
         """
