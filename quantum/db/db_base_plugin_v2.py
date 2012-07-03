@@ -591,9 +591,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             subnet = self._get_subnet(context, id)
             # Check if ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
-            allocated = allocated_qry.filter_by(port_id=id).all()
+            allocated = allocated_qry.filter_by(subnet_id=id).all()
             if allocated:
                 raise q_exc.SubnetInUse(subnet_id=id)
+            # Delete IP Allocations on subnet
+            range_qry = context.session.query(models_v2.IPAllocationRange)
+            range_qry.filter_by(subnet_id=id).delete()
             context.session.delete(subnet)
 
     def get_subnet(self, context, id, fields=None, verbose=None):
