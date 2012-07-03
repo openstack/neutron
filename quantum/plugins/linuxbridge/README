@@ -58,8 +58,9 @@ quantum_use_dhcp=true
 
 Make the Linux Bridge plugin the current quantum plugin
 
-- edit etc/plugins.ini and change the provider line to be:
-provider = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin
+- edit quantum.conf and change the core_plugin according to the API version
+V1: "core_plugin = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
+V2: "core_plugin = quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
 
 # -- Database config.
 
