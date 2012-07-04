@@ -49,6 +49,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def delete_network(self, context, id):
         vlan_binding = cdb.get_vlan_binding(id)
-        cdb.release_vlanid(vlan_binding[const.VLANID])
+        cdb.release_vlanid(vlan_binding['vlan_id'])
         cdb.remove_vlan_binding(id)
         return super(LinuxBridgePluginV2, self).delete_network(context, id)

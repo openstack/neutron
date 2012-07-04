@@ -44,7 +44,8 @@ class IPAvailabilityRange(model_base.BASEV2):
 
     """
     allocation_pool_id = sa.Column(sa.String(36),
-                                   sa.ForeignKey('ipallocationpools.id'),
+                                   sa.ForeignKey('ipallocationpools.id',
+                                                 ondelete="CASCADE"),
                                    nullable=True,
                                    primary_key=True)
     first_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
@@ -57,7 +58,8 @@ class IPAvailabilityRange(model_base.BASEV2):
 class IPAllocationPool(model_base.BASEV2, HasId):
     """Representation of an allocation pool in a Quantum subnet."""
 
-    subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
+    subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id',
+                                                       ondelete="CASCADE"),
                           nullable=True)
     first_ip = sa.Column(sa.String(64), nullable=False)
     last_ip = sa.Column(sa.String(64), nullable=False)
@@ -72,12 +74,15 @@ class IPAllocationPool(model_base.BASEV2, HasId):
 class IPAllocation(model_base.BASEV2):
     """Internal representation of allocated IP addresses in a Quantum subnet.
     """
-    port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
+    port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
+                                                     ondelete="CASCADE"),
                         nullable=False, primary_key=True)
     ip_address = sa.Column(sa.String(64), nullable=False, primary_key=True)
-    subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id'),
+    subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id',
+                                                       ondelete="CASCADE"),
                           nullable=False, primary_key=True)
-    network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
+    network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id",
+                                                        ondelete="CASCADE"),
                            nullable=False, primary_key=True)
 
 
