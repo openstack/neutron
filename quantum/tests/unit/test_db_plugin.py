@@ -718,6 +718,34 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         self._test_create_subnet(gateway_ip=gateway_ip,
                                  cidr=cidr)
 
+    def test_delete_subnet(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
+
+    def test_delete_network(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        req = self.new_delete_request('networks', network['network']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
+
     def test_create_subnet_defaults(self):
         gateway = '10.0.0.1'
         cidr = '10.0.0.0/24'
