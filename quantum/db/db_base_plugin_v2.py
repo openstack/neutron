@@ -482,6 +482,24 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                 'subnet_id': result['subnet_id']})
         return ips
 
+    def _validate_subnet_cidr(self, network, new_subnet_cidr):
+        """Validate the CIDR for a subnet.
+
+        Verifies the specified CIDR does not overlap with the ones defined
+        for the other subnets specified for this network.
+
+        """
+        for subnet in network.subnets:
+            if (netaddr.IPSet([subnet.cidr]) &
+                    netaddr.IPSet([new_subnet_cidr])):
+                err_msg = ("Requested subnet with cidr: %s "
+                           "for network: %s "
+                           "overlaps with subnet: %s)" % (new_subnet_cidr,
+                                                          network.id,
+                                                          subnet.cidr))
+                LOG.error(err_msg)
+                raise q_exc.InvalidInput(error_message=err_msg)
+
     def _validate_allocation_pools(self, ip_pools, gateway_ip, subnet_cidr):
         """Validate IP allocation pools.
 
@@ -671,6 +689,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         with context.session.begin():
             network = self._get_network(context, s["network_id"])
+            self._validate_subnet_cidr(network, s['cidr'])
             subnet = models_v2.Subnet(network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
