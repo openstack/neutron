@@ -116,7 +116,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                        allocation_pools=None, ip_version=4):
         data = {'subnet': {'network_id': net_id,
                            'cidr': cidr,
-                           'ip_version': ip_version}}
+                           'ip_version': ip_version,
+                           'tenant_id': self._tenant_id}}
         if gateway_ip:
             data['subnet']['gateway_ip'] = gateway_ip
         if allocation_pools:
@@ -249,7 +250,6 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
 
 
 class TestPortsV2(QuantumDbPluginV2TestCase):
-
     def test_create_port_json(self):
         keys = [('admin_state_up', True), ('status', 'ACTIVE')]
         with self.port() as port:
@@ -259,6 +259,18 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             ips = port['port']['fixed_ips']
             self.assertEquals(len(ips), 1)
             self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+
+    def test_create_port_bad_tenant(self):
+        with self.network() as network:
+            data = {'port': {'network_id': network['network']['id'],
+                             'tenant_id': 'bad_tenant_id',
+                             'admin_state_up': True,
+                             'device_id': 'fake_device',
+                             'fixed_ips': []}}
+
+            port_req = self.new_create_request('ports', data)
+            res = port_req.get_response(self.api)
+            self.assertEquals(res.status_int, 403)
 
     def test_list_ports(self):
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
@@ -745,6 +757,18 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)
+
+    def test_create_subnet_bad_tenant(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': 'bad_tenant_id',
+                               'gateway_ip': '10.0.2.1'}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 403)
 
     def test_create_subnet_defaults(self):
         gateway = '10.0.0.1'

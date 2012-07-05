@@ -560,6 +560,7 @@ class JSONV2TestCase(APIv2TestCase):
         return_value.update(initial_input['port'])
 
         instance = self.plugin.return_value
+        instance.get_network.return_value = {'tenant_id': unicode(tenant_id)}
         instance.create_port.return_value = return_value
         res = self.api.post_json(_get_path('ports'), initial_input)
 
