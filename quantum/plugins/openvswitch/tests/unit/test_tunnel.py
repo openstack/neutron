@@ -34,6 +34,7 @@ VIF_MAC = '3c:09:24:1e:78:23'
 OFPORT_NUM = 1
 VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
                            VIF_ID, VIF_MAC, 'switch')
+BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
 
 
 class DummyPort:
@@ -85,13 +86,13 @@ class TunnelTest(unittest.TestCase):
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):
-        action_string = 'strip_vlan,set_tunnel:%s,normal' % LS_ID
+        action_string = 'set_tunnel:%s,normal' % LS_ID
         self.mock_tun_bridge.add_flow(priority=4, in_port=self.INT_OFPORT,
                                       dl_vlan=LV_ID, actions=action_string)
 
         action_string = 'mod_vlan_vid:%s,output:%s' % (LV_ID, self.INT_OFPORT)
         self.mock_tun_bridge.add_flow(priority=3, tun_id=LS_ID,
-                                      actions=action_string)
+                                      dl_dst=BCAST_MAC, actions=action_string)
 
         self.mox.ReplayAll()
 
@@ -123,6 +124,11 @@ class TunnelTest(unittest.TestCase):
         self.mock_int_bridge.set_db_attribute('Port', VIF_PORT.port_name,
                                               'tag', str(LVM.vlan))
         self.mock_int_bridge.delete_flows(in_port=VIF_PORT.ofport)
+
+        action_string = 'mod_vlan_vid:%s,normal' % LV_ID
+        self.mock_tun_bridge.add_flow(priority=3, tun_id=LS_ID,
+                                      dl_dst=VIF_PORT.vif_mac,
+                                      actions=action_string)
 
         self.mox.ReplayAll()
         a = ovs_quantum_agent.OVSQuantumTunnelAgent(self.INT_BRIDGE,

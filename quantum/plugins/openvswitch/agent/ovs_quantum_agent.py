@@ -478,10 +478,10 @@ class OVSQuantumTunnelAgent(object):
         # outbound
         self.tun_br.add_flow(priority=4, in_port=self.patch_int_ofport,
                              dl_vlan=lvid,
-                             actions="strip_vlan,set_tunnel:%s,normal" %
-                             (lsw_id))
-        # inbound
+                             actions="set_tunnel:%s,normal" % lsw_id)
+        # inbound bcast/mcast
         self.tun_br.add_flow(priority=3, tun_id=lsw_id,
+                             dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
                              actions="mod_vlan_vid:%s,output:%s" %
                              (lvid, self.patch_int_ofport))
 
@@ -509,6 +509,10 @@ class OVSQuantumTunnelAgent(object):
             self.provision_local_vlan(net_uuid, lsw_id)
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ids.append(port.vif_id)
+
+        # inbound unicast
+        self.tun_br.add_flow(priority=3, tun_id=lsw_id, dl_dst=port.vif_mac,
+                             actions="mod_vlan_vid:%s,normal" % lvm.vlan)
 
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      str(lvm.vlan))
