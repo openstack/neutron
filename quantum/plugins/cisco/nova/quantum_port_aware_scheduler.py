@@ -24,8 +24,8 @@ Quantum Port Aware Scheduler Implementation
 
 from nova import exception as excp
 from nova import flags
-from nova import log as logging
 from nova.openstack.common import cfg
+from nova.openstack.common import log as logging
 from nova.scheduler import chance
 from quantumclient import Client
 
