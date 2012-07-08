@@ -21,7 +21,7 @@ import os
 import tempfile
 import unittest
 
-from quantum.openstack.common.cfg import ConfigFileValueError
+from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.common import config
 
 
@@ -54,6 +54,8 @@ polling_interval=50
             self.assertEqual(100, conf.DATABASE.reconnect_interval)
             self.assertEqual(50, conf.AGENT.polling_interval)
             self.assertEqual('mysudo', conf.AGENT.root_helper)
+            self.assertEqual(conf.OVS.integration_bridge,
+                             cfg.CONF.OVS.integration_bridge)
         finally:
             os.remove(path)
 
@@ -75,6 +77,10 @@ polling_interval=50
             self.assertEqual(2, conf.DATABASE.reconnect_interval)
             self.assertEqual(2, conf.AGENT.polling_interval)
             self.assertEqual('sudo', conf.AGENT.root_helper)
+            self.assertEqual(conf.DATABASE.sql_connection,
+                             cfg.CONF.DATABASE.sql_connection)
+            self.assertEqual(conf.AGENT.root_helper,
+                             cfg.CONF.AGENT.root_helper)
         finally:
             os.remove(path)
 
@@ -106,12 +112,20 @@ enable_tunneling = notbool
         try:
             os.write(fd, configs)
             os.close(fd)
+
             conf = config.parse(path)
             exception_raised = False
             try:
                 tunnel = conf.OVS.enable_tunneling
-            except ConfigFileValueError:
+            except cfg.ConfigFileValueError:
                 exception_raised = True
             self.assertTrue(exception_raised)
         finally:
             os.remove(path)
+
+    def tearDown(self):
+        """Clear the test environment"""
+        cfg.CONF.reset()
+        cfg.CONF.unregister_opts(config.database_opts, "DATABASE")
+        cfg.CONF.unregister_opts(config.ovs_opts, "OVS")
+        cfg.CONF.unregister_opts(config.agent_opts, "AGENT")

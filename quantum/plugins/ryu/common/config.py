@@ -35,8 +35,12 @@ agent_opts = [
 
 
 def parse(config_file):
-    conf = cfg.ConfigOpts()
-    conf(args=[], default_config_files=[config_file])
+    conf = cfg.CONF
+    if 'config_file' in conf:
+        conf.config_file.append(config_file)
+    else:
+        conf.config_file = [config_file]
+    conf(args=[], default_config_files=conf.config_file)
     conf.register_opts(database_opts, "DATABASE")
     conf.register_opts(ovs_opts, "OVS")
     conf.register_opts(agent_opts, "AGENT")
