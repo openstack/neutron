@@ -97,7 +97,7 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     device_id = sa.Column(sa.String(255), nullable=False)
 
 
-class Subnet(model_base.BASEV2, HasId):
+class Subnet(model_base.BASEV2, HasId, HasTenant):
     """Represents a quantum subnet.
 
     When a subnet is created the first and last entries will be created. These

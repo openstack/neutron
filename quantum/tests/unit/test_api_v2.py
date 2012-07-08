@@ -379,24 +379,44 @@ class APIv2TestCase(unittest.TestCase):
 # Note: since all resources use the same controller and validation
 # logic, we actually get really good coverage from testing just networks.
 class JSONV2TestCase(APIv2TestCase):
-    def test_list(self):
+
+    def _test_list(self, req_tenant_id, real_tenant_id):
+        env = {}
+        if req_tenant_id:
+            env = {'quantum.context': context.Context('', req_tenant_id)}
         input_dict = {'id': str(uuid.uuid4()),
                       'name': 'net1',
                       'admin_state_up': True,
                       'status': "ACTIVE",
-                      'tenant_id': str(uuid.uuid4()),
+                      'tenant_id': real_tenant_id,
                       'subnets': []}
         return_value = [input_dict]
         instance = self.plugin.return_value
         instance.get_networks.return_value = return_value
 
-        res = self.api.get(_get_path('networks'))
+        res = self.api.get(_get_path('networks'), extra_environ=env)
         self.assertTrue('networks' in res.json)
-        self.assertEqual(len(res.json['networks']), 1)
-        output_dict = res.json['networks'][0]
-        self.assertEqual(len(input_dict), len(output_dict))
-        for k, v in input_dict.iteritems():
-            self.assertEqual(v, output_dict[k])
+        if not req_tenant_id or req_tenant_id == real_tenant_id:
+            # expect full list returned
+            self.assertEqual(len(res.json['networks']), 1)
+            output_dict = res.json['networks'][0]
+            self.assertEqual(len(input_dict), len(output_dict))
+            for k, v in input_dict.iteritems():
+                self.assertEqual(v, output_dict[k])
+        else:
+            # expect no results
+            self.assertEqual(len(res.json['networks']), 0)
+
+    def test_list_noauth(self):
+        self._test_list(None, _uuid())
+
+    def test_list_keystone(self):
+        tenant_id = _uuid()
+        self._test_list(tenant_id, tenant_id)
+
+    def test_list_keystone_bad(self):
+        tenant_id = _uuid()
+        self._test_list(tenant_id + "bad", tenant_id)
 
     def test_create(self):
         net_id = _uuid()
@@ -579,24 +599,90 @@ class JSONV2TestCase(APIv2TestCase):
 
         self.api.get(_get_path('networks', id=str(uuid.uuid4())))
 
-    def test_delete(self):
+    def _test_delete(self, req_tenant_id, real_tenant_id, expected_code,
+                     expect_errors=False):
+        env = {}
+        if req_tenant_id:
+            env = {'quantum.context': context.Context('', req_tenant_id)}
         instance = self.plugin.return_value
+        instance.get_network.return_value = {'tenant_id': real_tenant_id}
         instance.delete_network.return_value = None
 
-        res = self.api.delete(_get_path('networks', id=str(uuid.uuid4())))
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        res = self.api.delete(_get_path('networks', id=str(uuid.uuid4())),
+                              extra_environ=env, expect_errors=expect_errors)
+        self.assertEqual(res.status_int, expected_code)
 
-    def test_update(self):
+    def test_delete_noauth(self):
+        self._test_delete(None, _uuid(), exc.HTTPNoContent.code)
+
+    def test_delete_keystone(self):
+        tenant_id = _uuid()
+        self._test_delete(tenant_id, tenant_id, exc.HTTPNoContent.code)
+
+    def test_delete_keystone_bad_tenant(self):
+        tenant_id = _uuid()
+        self._test_delete(tenant_id + "bad", tenant_id,
+                          exc.HTTPNotFound.code, expect_errors=True)
+
+    def _test_get(self, req_tenant_id, real_tenant_id, expected_code,
+                  expect_errors=False):
+        env = {}
+        if req_tenant_id:
+            env = {'quantum.context': context.Context('', req_tenant_id)}
+        data = {'tenant_id': real_tenant_id}
+        instance = self.plugin.return_value
+        instance.get_network.return_value = data
+
+        res = self.api.get(_get_path('networks',
+                           id=str(uuid.uuid4())),
+                           extra_environ=env,
+                           expect_errors=expect_errors)
+        self.assertEqual(res.status_int, expected_code)
+
+    def test_get_noauth(self):
+        self._test_get(None, _uuid(), 200)
+
+    def test_get_keystone(self):
+        tenant_id = _uuid()
+        self._test_get(tenant_id, tenant_id, 200)
+
+    def test_get_keystone_bad_tenant(self):
+        tenant_id = _uuid()
+        self._test_get(tenant_id + "bad", tenant_id,
+                       exc.HTTPNotFound.code, expect_errors=True)
+
+    def _test_update(self, req_tenant_id, real_tenant_id, expected_code,
+                     expect_errors=False):
+        env = {}
+        if req_tenant_id:
+            env = {'quantum.context': context.Context('', req_tenant_id)}
         # leave out 'name' field intentionally
         data = {'network': {'admin_state_up': True}}
         return_value = {'subnets': []}
         return_value.update(data['network'].copy())
 
         instance = self.plugin.return_value
+        instance.get_network.return_value = {'tenant_id': real_tenant_id}
         instance.update_network.return_value = return_value
 
-        self.api.put_json(_get_path('networks',
-                                    id=str(uuid.uuid4())), data)
+        res = self.api.put_json(_get_path('networks',
+                                id=str(uuid.uuid4())),
+                                data,
+                                extra_environ=env,
+                                expect_errors=expect_errors)
+        self.assertEqual(res.status_int, expected_code)
+
+    def test_update_noauth(self):
+        self._test_update(None, _uuid(), 200)
+
+    def test_update_keystone(self):
+        tenant_id = _uuid()
+        self._test_update(tenant_id, tenant_id, 200)
+
+    def test_update_keystone_bad_tenant(self):
+        tenant_id = _uuid()
+        self._test_update(tenant_id + "bad", tenant_id,
+                          exc.HTTPNotFound.code, expect_errors=True)
 
     def test_update_readonly_field(self):
         data = {'network': {'status': "NANANA"}}

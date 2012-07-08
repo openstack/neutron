@@ -25,6 +25,7 @@ import quantum
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.common import exceptions as q_exc
+from quantum import context
 from quantum.db import api as db
 from quantum.openstack.common import cfg
 from quantum.tests.unit.testlib_api import create_request
@@ -112,9 +113,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         network_req = self.new_create_request('networks', data, fmt)
         return network_req.get_response(self.api)
 
-    def _create_subnet(self, fmt, net_id, gateway_ip, cidr,
+    def _create_subnet(self, fmt, tenant_id, net_id, gateway_ip, cidr,
                        allocation_pools=None, ip_version=4):
-        data = {'subnet': {'network_id': net_id,
+        data = {'subnet': {'tenant_id': tenant_id,
+                           'network_id': net_id,
                            'cidr': cidr,
                            'ip_version': ip_version}}
         if gateway_ip:
@@ -140,6 +142,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4):
         res = self._create_subnet(fmt,
+                                  network['network']['tenant_id'],
                                   network['network']['id'],
                                   gateway,
                                   cidr,
@@ -209,6 +212,25 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             port = self._make_port(fmt, net_id, fixed_ips=fixed_ips)
             yield port
             self._delete('ports', port['port']['id'])
+
+
+class TestBasicGet(QuantumDbPluginV2TestCase):
+
+    def test_single_get_admin(self):
+        plugin = quantum.db.db_base_plugin_v2.QuantumDbPluginV2()
+        with self.network() as network:
+            net_id = network['network']['id']
+            ctx = context.get_admin_context()
+            n = plugin._get_network(ctx, net_id)
+            self.assertEqual(net_id, n.id)
+
+    def test_single_get_tenant(self):
+        plugin = quantum.db.db_base_plugin_v2.QuantumDbPluginV2()
+        with self.network() as network:
+            net_id = network['network']['id']
+            ctx = context.get_admin_context()
+            n = plugin._get_network(ctx, net_id)
+            self.assertEqual(net_id, n.id)
 
 
 class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
@@ -476,8 +498,9 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         fmt = 'json'
         with self.subnet() as subnet:
                 # Get a IPv4 and IPv6 address
+                tenant_id = subnet['subnet']['tenant_id']
                 net_id = subnet['subnet']['network_id']
-                res = self._create_subnet(fmt, net_id=net_id,
+                res = self._create_subnet(fmt, tenant_id, net_id=net_id,
                                           cidr='2607:f0d0:1002:51::0/124',
                                           ip_version=6, gateway_ip=None)
                 subnet2 = self.deserialize(fmt, res)

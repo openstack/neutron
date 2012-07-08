@@ -184,7 +184,7 @@ class Controller(object):
         action = "delete_%s" % self._resource
 
         # Check authz
-        obj = self._item(request, id)
+        obj = self._item(request, id)[self._resource]
         try:
             policy.enforce(request.context, action, obj)
         except exceptions.PolicyNotAuthorized:
@@ -201,7 +201,7 @@ class Controller(object):
         action = "update_%s" % self._resource
 
         # Check authz
-        orig_obj = self._item(request, id)
+        orig_obj = self._item(request, id)[self._resource]
         try:
             policy.enforce(request.context, action, orig_obj)
         except exceptions.PolicyNotAuthorized:
@@ -215,9 +215,6 @@ class Controller(object):
         return {self._resource: self._view(obj)}
 
     def _populate_tenant_id(self, context, res_dict, is_create):
-
-        if self._resource not in ['network', 'port']:
-            return
 
         if (('tenant_id' in res_dict and
              res_dict['tenant_id'] != context.tenant_id and

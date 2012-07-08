@@ -57,7 +57,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True},
         'status': {'allow_post': False, 'allow_put': False},
-        'tenant_id': {'allow_post': True, 'allow_put': True},
+        'tenant_id': {'allow_post': True, 'allow_put': False},
     },
     'ports': {
         'id': {'allow_post': False, 'allow_put': False},
@@ -71,7 +71,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'host_routes': {'allow_post': True, 'allow_put': True,
                         'default': ATTR_NOT_SPECIFIED},
         'device_id': {'allow_post': True, 'allow_put': True, 'default': ''},
-        'tenant_id': {'allow_post': True, 'allow_put': True},
+        'tenant_id': {'allow_post': True, 'allow_put': False},
     },
     'subnets': {
         'id': {'allow_post': False, 'allow_put': False},
@@ -87,6 +87,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': ATTR_NOT_SPECIFIED},
         'additional_host_routes': {'allow_post': True, 'allow_put': True,
                                    'default': ATTR_NOT_SPECIFIED},
+        'tenant_id': {'allow_post': True, 'allow_put': False},
     }
 }
 

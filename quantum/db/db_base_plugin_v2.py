@@ -64,8 +64,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         query = context.session.query(model)
 
         # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
-        if not context.is_admin and hasattr(model.tenant_id):
-            query = query.filter(tenant_id=context.tenant_id)
+        if not context.is_admin and hasattr(model, 'tenant_id'):
+            query = query.filter(model.tenant_id == context.tenant_id)
 
         return query
 
@@ -614,6 +614,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _make_subnet_dict(self, subnet, fields=None):
         res = {'id': subnet['id'],
+               'tenant_id': subnet['tenant_id'],
                'network_id': subnet['network_id'],
                'ip_version': subnet['ip_version'],
                'cidr': subnet['cidr'],
@@ -687,10 +688,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         if s['gateway_ip'] == api_router.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
+        tenant_id = self._get_tenant_id_for_create(context, s)
         with context.session.begin():
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(network, s['cidr'])
-            subnet = models_v2.Subnet(network_id=s['network_id'],
+            subnet = models_v2.Subnet(tenant_id=tenant_id,
+                                      network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
                                       gateway_ip=s['gateway_ip'])
