@@ -40,6 +40,7 @@ L2_MODEL = l2network_models
 def initialize(base=None):
     global L2_MODEL
     options = {"sql_connection": "%s" % CONF.DATABASE.sql_connection}
+    options.update({"sql_max_retries": CONF.DATABASE.sql_max_retries})
     options.update({"reconnect_interval": CONF.DATABASE.reconnect_interval})
     if base:
         options.update({"base": base})

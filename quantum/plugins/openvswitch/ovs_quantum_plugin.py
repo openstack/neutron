@@ -103,6 +103,8 @@ class OVSQuantumPlugin(QuantumPluginBase):
     def __init__(self, configfile=None):
         conf = config.parse(CONF_FILE)
         options = {"sql_connection": conf.DATABASE.sql_connection}
+        sql_max_retries = conf.DATABASE.sql_max_retries
+        options.update({"sql_max_retries": sql_max_retries})
         reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
@@ -236,6 +238,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         conf = config.parse(CONF_FILE)
         options = {"sql_connection": conf.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
+        sql_max_retries = conf.DATABASE.sql_max_retries
+        options.update({"sql_max_retries": sql_max_retries})
         reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)

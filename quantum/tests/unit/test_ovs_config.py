@@ -29,6 +29,7 @@ class OvsConfigTestCase(unittest.TestCase):
     def test_tunnel(self):
         configs = """[DATABASE]
 sql_connection = testlink
+sql_max_retries = 200
 reconnect_interval=100
 [OVS]
 enable_tunneling = True
@@ -51,6 +52,7 @@ polling_interval=50
             self.assertEqual('mybrint', conf.OVS.integration_bridge)
             self.assertEqual('mybrtun', conf.OVS.tunnel_bridge)
             self.assertEqual('testlink', conf.DATABASE.sql_connection)
+            self.assertEqual(200, conf.DATABASE.sql_max_retries)
             self.assertEqual(100, conf.DATABASE.reconnect_interval)
             self.assertEqual(50, conf.AGENT.polling_interval)
             self.assertEqual('mysudo', conf.AGENT.root_helper)
@@ -74,6 +76,7 @@ polling_interval=50
             self.assertEqual('br-int', conf.OVS.integration_bridge)
             self.assertEqual('br-tun', conf.OVS.tunnel_bridge)
             self.assertEqual('sqlite://', conf.DATABASE.sql_connection)
+            self.assertEqual(-1, conf.DATABASE.sql_max_retries)
             self.assertEqual(2, conf.DATABASE.reconnect_interval)
             self.assertEqual(2, conf.AGENT.polling_interval)
             self.assertEqual('sudo', conf.AGENT.root_helper)

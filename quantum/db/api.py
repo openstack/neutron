@@ -82,7 +82,9 @@ def configure_db(options):
         base = options.get('base', BASE)
         if not register_models(base):
             if 'reconnect_interval' in options:
-                retry_registration(options['reconnect_interval'], base)
+                remaining = options.get('sql_max_retries', -1)
+                reconnect_interval = options['reconnect_interval']
+                retry_registration(remaining, reconnect_interval, base)
 
 
 def clear_db(base=BASE):
@@ -103,10 +105,17 @@ def get_session(autocommit=True, expire_on_commit=False):
     return _MAKER()
 
 
-def retry_registration(reconnect_interval, base=BASE):
+def retry_registration(remaining, reconnect_interval, base=BASE):
+    if remaining == -1:
+        remaining = 'infinite'
     while True:
-        LOG.info("Unable to connect to database. Retrying in %s seconds" %
-                 reconnect_interval)
+        if remaining != 'infinite':
+            if remaining == 0:
+                LOG.error("Database connection lost, exit...")
+                break
+            remaining -= 1
+        LOG.info("Unable to connect to database, %s attempts left. "
+                 "Retrying in %s seconds" % (remaining, reconnect_interval))
         time.sleep(reconnect_interval)
         if register_models(base):
             break

@@ -66,6 +66,8 @@ class OVSQuantumPluginBase(QuantumPluginBase):
         LOG.debug("Using configuration file: %s" % configfile)
         conf = config.parse(configfile)
         options = {"sql_connection": conf.DATABASE.sql_connection}
+        sql_max_retries = conf.DATABASE.sql_max_retries
+        options.update({"sql_max_retries": sql_max_retries})
         reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)

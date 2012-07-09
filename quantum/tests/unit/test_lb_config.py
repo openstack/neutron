@@ -25,6 +25,7 @@ class LinuxBridgeConfigTestCase(unittest.TestCase):
     def test_dummy(self):
         configs = """[DATABASE]
 sql_connection = testlink
+sql_max_retries = 200
 reconnect_interval=100
 [AGENT]
 root_helper = mysudo
@@ -39,6 +40,7 @@ polling_interval=50
 
             conf = config.parse(path)
             self.assertEqual('testlink', conf.DATABASE.sql_connection)
+            self.assertEqual(200, conf.DATABASE.sql_max_retries)
             self.assertEqual(100, conf.DATABASE.reconnect_interval)
             self.assertEqual(50, conf.AGENT.polling_interval)
             self.assertEqual('mysudo', conf.AGENT.root_helper)
@@ -59,6 +61,7 @@ polling_interval=50
 
             conf = config.parse(path)
             self.assertEqual('sqlite://', conf.DATABASE.sql_connection)
+            self.assertEqual(-1, conf.DATABASE.sql_max_retries)
             self.assertEqual(2, conf.DATABASE.reconnect_interval)
             self.assertEqual(2, conf.AGENT.polling_interval)
             self.assertEqual('sudo', conf.AGENT.root_helper)
