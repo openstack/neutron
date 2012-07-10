@@ -17,9 +17,12 @@
 #
 # @author: Juliano Martinez, Locaweb.
 
+import fcntl
 import logging
 import os
 import shlex
+import socket
+import struct
 import subprocess
 
 LOG = logging.getLogger(__name__)
@@ -50,3 +53,14 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         raise RuntimeError(m)
 
     return return_stderr and (_stdout, _stderr) or _stdout
+
+
+def get_interface_mac(interface):
+    DEVICE_NAME_LEN = 15
+    MAC_START = 18
+    MAC_END = 24
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    info = fcntl.ioctl(s.fileno(), 0x8927,
+                       struct.pack('256s', interface[:DEVICE_NAME_LEN]))
+    return ''.join(['%02x:' % ord(char)
+                   for char in info[MAC_START:MAC_END]])[:-1]

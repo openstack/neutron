@@ -19,7 +19,6 @@
 Exceptions common to OpenStack projects
 """
 
-import itertools
 import logging
 
 

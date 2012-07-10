@@ -62,8 +62,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         vlan_id = vlan_bind[lconst.VLANID]
 
         self._linuxbridge_quantum_agent.process_port_binding(
-            new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
-            device_name, str(vlan_id))
+            new_network[lconst.NET_ID], device_name, str(vlan_id))
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
 
@@ -101,8 +100,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         vlan_id = vlan_bind[lconst.VLANID]
 
         self._linuxbridge_quantum_agent.process_port_binding(
-            new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
-            interface_id, str(vlan_id))
+            new_network[lconst.NET_ID], interface_id, str(vlan_id))
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
 
@@ -140,8 +138,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         vlan_id = vlan_bind[lconst.VLANID]
 
         self._linuxbridge_quantum_agent.process_port_binding(
-            new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
-            interface_id, str(vlan_id))
+            new_network[lconst.NET_ID], interface_id, str(vlan_id))
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
 
@@ -283,8 +280,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         vlan_id = vlan_bind[lconst.VLANID]
 
         self._linuxbridge_quantum_agent.process_port_binding(
-            new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
-            interface_id, str(vlan_id))
+            new_network[lconst.NET_ID], interface_id, str(vlan_id))
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
         self._linuxbridge_plugin.unplug_interface(tenant_id,
@@ -347,8 +343,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         vlan_id = vlan_bind[lconst.VLANID]
 
         self._linuxbridge_quantum_agent.process_port_binding(
-            new_port[lconst.PORT_ID], new_network[lconst.NET_ID],
-            interface_id, str(vlan_id))
+            new_network[lconst.NET_ID], interface_id, str(vlan_id))
         list_interface = (self._linuxbridge_quantum_agent.linux_br.
                           get_interfaces_on_bridge(bridge_name))
         self._linuxbridge_plugin.unplug_interface(tenant_id,
@@ -412,6 +407,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self.gw_name_prefix = "gw-"
         self.tap_name_prefix = "tap"
         self.v2 = True
+        self.db_connection = 'sqlite://'
         self._linuxbridge_plugin = LinuxBridgePlugin.LinuxBridgePlugin()
         try:
             fh = open(self.config_file)
@@ -430,13 +426,15 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self._linuxbridge = linux_agent.LinuxBridge(self.br_name_prefix,
                                                     self.physical_interface,
                                                     self.root_helper)
-        self._linuxbridge_quantum_agent = linux_agent.LinuxBridgeQuantumAgent(
+        plugin = linux_agent.LinuxBridgeQuantumAgentDB(
             self.br_name_prefix,
             self.physical_interface,
             self.polling_interval,
             self.reconnect_interval,
             self.root_helper,
-            self.v2)
+            self.v2,
+            self.db_connection)
+        self._linuxbridge_quantum_agent = plugin
 
     def run_cmd(self, args):
         cmd = shlex.split(self.root_helper) + args
