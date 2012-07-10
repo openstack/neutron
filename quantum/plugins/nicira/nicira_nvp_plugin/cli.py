@@ -31,8 +31,8 @@ def print_help():
     """Help for CLI"""
     print "\nNVP Plugin Commands:"
     for key in COMMANDS.keys():
-        print "    %s %s" %
-        (key, " ".join(["<%s>" % y for y in COMMANDS[key]["args"]]))
+        print ("    %s %s" %
+              (key, " ".join(["<%s>" % y for y in COMMANDS[key]["args"]])))
 
 
 def build_args(cmd, cmdargs, arglist):
@@ -46,14 +46,14 @@ def build_args(cmd, cmdargs, arglist):
     except:
         LOG.error("Not enough arguments for \"%s\" (expected: %d, got: %d)" % (
                   cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" %
-        (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+        print ("Usage:\n    %s %s" %
+              (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]])))
         sys.exit()
     if len(arglist) > 0:
         LOG.error("Too many arguments for \"%s\" (expected: %d, got: %d)" % (
                   cmd, len(cmdargs), len(orig_arglist)))
-        print "Usage:\n    %s %s" %
-        (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]]))
+        print ("Usage:\n    %s %s" %
+              (cmd, " ".join(["<%s>" % y for y in COMMANDS[cmd]["args"]])))
         sys.exit()
     return args
 
