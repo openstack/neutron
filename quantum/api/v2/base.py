@@ -167,9 +167,20 @@ class Controller(object):
             if self._collection in body:
                 # Have to account for bulk create
                 for item in body[self._collection]:
-                    policy.enforce(request.context, action,
-                                   item[self._resource])
+                    self._validate_network_tenant_ownership(
+                        request,
+                        item[self._resource],
+                    )
+                    policy.enforce(
+                        request.context,
+                        action,
+                        item[self._resource],
+                    )
             else:
+                self._validate_network_tenant_ownership(
+                    request,
+                    body[self._resource]
+                )
                 policy.enforce(request.context, action, body[self._resource])
         except exceptions.PolicyNotAuthorized:
             raise webob.exc.HTTPForbidden()
@@ -293,6 +304,23 @@ class Controller(object):
                     raise webob.exc.HTTPUnprocessableEntity(msg)
 
         return body
+
+    def _validate_network_tenant_ownership(self, request, resource_item):
+        if self._resource not in ('port', 'subnet'):
+            return
+
+        network_owner = self._plugin.get_network(
+            request.context,
+            resource_item['network_id'],
+        )['tenant_id']
+
+        if network_owner != resource_item['tenant_id']:
+            msg = _("Tenant %(tenant_id)s not allowed to "
+                    "create %(resource)s on this network")
+            raise webob.exc.HTTPForbidden(msg % {
+                "tenant_id": resource_item['tenant_id'],
+                "resource": self._resource,
+            })
 
 
 def create_resource(collection, resource, plugin, params):
