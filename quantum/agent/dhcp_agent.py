@@ -206,8 +206,10 @@ class DeviceManager(object):
             LOG.error(_('You must specify an interface driver'))
         self.driver = importutils.import_object(conf.interface_driver, conf)
 
-    def get_interface_name(self, network):
-        return ('tap' + network.id)[:self.driver.DEV_NAME_LEN]
+    def get_interface_name(self, network, port=None):
+        if not port:
+            port = self._get_or_create_port(network)
+        return ('tap' + port.id)[:self.driver.DEV_NAME_LEN]
 
     def get_device_id(self, network):
         # There could be more than one dhcp server per network, so create
@@ -217,8 +219,8 @@ class DeviceManager(object):
         return 'dhcp%s-%s' % (host_uuid, network.id)
 
     def setup(self, network, reuse_existing=False):
-        interface_name = self.get_interface_name(network)
         port = self._get_or_create_port(network)
+        interface_name = self.get_interface_name(network, port)
 
         if ip_lib.device_exists(interface_name):
             if not reuse_existing:
