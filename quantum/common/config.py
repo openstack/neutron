@@ -37,6 +37,7 @@ bind_opts = [
     cfg.IntOpt('bind_port', default=9696),
     cfg.StrOpt('api_paste_config', default="api-paste.ini"),
     cfg.StrOpt('api_extensions_path', default=""),
+    cfg.StrOpt('policy_file', default="policy.json"),
     cfg.StrOpt('core_plugin',
                default='quantum.plugins.sample.SamplePlugin.FakePlugin'),
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00"),

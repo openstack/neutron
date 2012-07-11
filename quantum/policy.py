@@ -23,6 +23,7 @@ import os.path
 
 from quantum.common import exceptions
 from quantum.common.utils import find_config_file
+from quantum.openstack.common import cfg
 from quantum.openstack.common import policy
 
 
@@ -38,9 +39,9 @@ def reset():
 def init():
     global _POLICY_PATH
     if not _POLICY_PATH:
-        _POLICY_PATH = find_config_file({}, 'policy.json')
+        _POLICY_PATH = find_config_file({}, cfg.CONF.policy_file)
         if not _POLICY_PATH:
-            raise exceptions.PolicyNotFound(path=FLAGS.policy_file)
+            raise exceptions.PolicyNotFound(path=cfg.CONF.policy_file)
     with open(_POLICY_PATH) as f:
         _set_brain(f.read())
 
