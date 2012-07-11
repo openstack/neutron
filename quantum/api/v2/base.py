@@ -22,6 +22,7 @@ from quantum.api.v2 import views
 from quantum.common import exceptions
 from quantum.common import utils
 from quantum import policy
+from quantum import quota
 
 LOG = logging.getLogger(__name__)
 XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
@@ -36,6 +37,8 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.OutOfBoundsAllocationPool: webob.exc.HTTPBadRequest,
              exceptions.InvalidAllocationPool: webob.exc.HTTPBadRequest,
              }
+
+QUOTAS = quota.QUOTAS
 
 
 def fields(request):
@@ -176,10 +179,8 @@ class Controller(object):
 
     def create(self, request, body=None):
         """Creates a new instance of the requested entity"""
-
         body = self._prepare_request_body(request.context, body, True,
                                           allow_bulk=True)
-
         action = "create_%s" % self._resource
 
         # Check authz
@@ -196,12 +197,22 @@ class Controller(object):
                         action,
                         item[self._resource],
                     )
+                    count = QUOTAS.count(request.context, self._resource,
+                                         self._plugin, self._collection,
+                                         item[self._resource]['tenant_id'])
+                    kwargs = {self._resource: count + 1}
+                    QUOTAS.limit_check(request.context, **kwargs)
             else:
                 self._validate_network_tenant_ownership(
                     request,
                     body[self._resource]
                 )
                 policy.enforce(request.context, action, body[self._resource])
+                count = QUOTAS.count(request.context, self._resource,
+                                     self._plugin, self._collection,
+                                     body[self._resource]['tenant_id'])
+                kwargs = {self._resource: count + 1}
+                QUOTAS.limit_check(request.context, **kwargs)
         except exceptions.PolicyNotAuthorized:
             raise webob.exc.HTTPForbidden()
 
