@@ -16,7 +16,6 @@ from setuptools import setup, find_packages
 
 from quantum.openstack.common.setup import parse_requirements
 from quantum.openstack.common.setup import parse_dependency_links
-from quantum.openstack.common.setup import write_requirements
 from quantum.openstack.common.setup import write_git_changelog
 from quantum.openstack.common.setup import write_vcsversion
 
@@ -26,7 +25,6 @@ import subprocess
 
 requires = parse_requirements()
 depend_links = parse_dependency_links()
-write_requirements()
 write_git_changelog()
 write_vcsversion('quantum/vcsversion.py')
 
