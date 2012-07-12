@@ -139,10 +139,6 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
 
     def plug(self, network_id, port_id, device_name, mac_address):
         """Plugin the interface."""
-        bridge = self.get_bridge(network_id)
-
-        self.check_bridge_exists(bridge)
-
         if not ip_lib.device_exists(device_name):
             device = ip_lib.IPDevice(device_name, self.conf.root_helper)
             try:

@@ -233,7 +233,7 @@ class TestDeviceManager(unittest.TestCase):
                                  tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                  subnets=fake_subnets)
 
-        fake_port = FakeModel('12345678-aaaa-aaaa-1234567890ab',
+        fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
                               mac_address='aa:bb:cc:dd:ee:ff')
 
         port_dict = dict(mac_address='aa:bb:cc:dd:ee:ff', allocations=[], id=1)
@@ -270,7 +270,7 @@ class TestDeviceManager(unittest.TestCase):
 
         self.mock_driver.assert_has_calls([
             mock.call.plug('12345678-1234-5678-1234567890ab',
-                           '12345678-aaaa-aaaa-1234567890ab',
+                           '12345678-1234-aaaa-1234567890ab',
                            'tap12345678-12',
                            'aa:bb:cc:dd:ee:ff'),
             mock.call.init_l3(mock.ANY, 'tap12345678-12')]
@@ -284,13 +284,43 @@ class TestDeviceManager(unittest.TestCase):
                                  tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                  subnets=fake_subnets)
 
+        fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
+                              mac_address='aa:bb:cc:dd:ee:ff')
+
+        port_dict = dict(mac_address='aa:bb:cc:dd:ee:ff', allocations=[], id=1)
+
+        self.client_inst.create_port.return_value = dict(port=port_dict)
+        self.device_exists.return_value = False
+
+        # fake the db
+        filter_by_result = mock.Mock()
+        filter_by_result.one = mock.Mock(return_value=fake_port)
+
+        self.filter_called = False
+
+        def get_filter_results(*args, **kwargs):
+            if self.filter_called:
+                return filter_by_result
+            else:
+                self.filter_called = True
+                raise sqlsoup.SQLAlchemyError()
+
+            return filter_results.pop(0)
+
+        mock_db = mock.Mock()
+        mock_db.ports = mock.Mock(name='ports2')
+        mock_db.ports.filter_by = mock.Mock(
+            name='filter_by',
+            side_effect=get_filter_results)
+
         with mock.patch('quantum.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
             mock_driver.DEV_NAME_LEN = (
                 interface.LinuxInterfaceDriver.DEV_NAME_LEN)
+            mock_driver.port = fake_port
             dvr_cls.return_value = mock_driver
 
-            dh = dhcp_agent.DeviceManager(self.conf, None)
+            dh = dhcp_agent.DeviceManager(self.conf, mock_db)
             dh.destroy(fake_network)
 
             dvr_cls.assert_called_once_with(self.conf)
