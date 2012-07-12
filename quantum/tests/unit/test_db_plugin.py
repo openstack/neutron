@@ -27,6 +27,7 @@ from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.db import api as db
+from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer, JSONDeserializer
@@ -50,6 +51,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         #                doesn't like when the plugin changes ;)
         db._ENGINE = None
         db._MAKER = None
+        # Make sure at each test a new instance of the plugin is returned
+        QuantumManager._instance = None
 
         self._tenant_id = 'test-tenant'
 

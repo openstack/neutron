@@ -33,19 +33,6 @@ from quantum.openstack.common import importutils
 LOG = logging.getLogger(__name__)
 
 
-def get_plugin(plugin_provider):
-    # If the plugin can't be found let them know gracefully
-    try:
-        LOG.info("Loading Plugin: %s" % plugin_provider)
-        plugin_klass = importutils.import_class(plugin_provider)
-    except ClassNotFound:
-        LOG.exception("Error loading plugin")
-        raise Exception("Plugin not found.  You can install a "
-                        "plugin with: pip install <plugin-name>\n"
-                        "Example: pip install quantum-sample-plugin")
-    return plugin_klass()
-
-
 class QuantumManager(object):
 
     _instance = None
@@ -61,7 +48,16 @@ class QuantumManager(object):
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
         LOG.debug("Plugin location:%s", plugin_provider)
-        self.plugin = get_plugin(plugin_provider)
+        # If the plugin can't be found let them know gracefully
+        try:
+            LOG.info("Loading Plugin: %s" % plugin_provider)
+            plugin_klass = importutils.import_class(plugin_provider)
+        except ClassNotFound:
+            LOG.exception("Error loading plugin")
+            raise Exception("Plugin not found.  You can install a "
+                            "plugin with: pip install <plugin-name>\n"
+                            "Example: pip install quantum-sample-plugin")
+        self.plugin = plugin_klass()
 
     @classmethod
     def get_plugin(cls):

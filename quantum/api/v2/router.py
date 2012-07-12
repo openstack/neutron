@@ -125,9 +125,7 @@ class APIRouter(wsgi.Router):
 
     def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()
-        plugin_provider = cfg.CONF.core_plugin
-        LOG.debug("Plugin location:%s", plugin_provider)
-        plugin = manager.get_plugin(plugin_provider)
+        plugin = manager.QuantumManager.get_plugin()
 
         col_kwargs = dict(collection_actions=COLLECTION_ACTIONS,
                           member_actions=MEMBER_ACTIONS)

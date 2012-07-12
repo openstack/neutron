@@ -28,6 +28,7 @@ from quantum.api.v2 import views
 from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum import context
+from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 
 
@@ -133,6 +134,8 @@ class APIv2TestCase(unittest.TestCase):
     #                will get around this.
     def setUp(self):
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
+        # Ensure 'stale' patched copies of the plugin are never returned
+        QuantumManager._instance = None
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         config.parse(args=args)
