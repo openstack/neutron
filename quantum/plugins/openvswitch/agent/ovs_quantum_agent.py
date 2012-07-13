@@ -346,7 +346,8 @@ class OVSQuantumTunnelAgent(object):
 
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      str(lvm.vlan))
-        self.int_br.delete_flows(in_port=port.ofport)
+        if int(port.ofport) != -1:
+            self.int_br.delete_flows(in_port=port.ofport)
 
     def port_unbound(self, port, net_uuid):
         '''Unbind port.
