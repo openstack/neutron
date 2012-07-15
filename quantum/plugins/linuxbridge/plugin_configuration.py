@@ -39,10 +39,8 @@ VLAN_END = SECTION_CONF['vlan_end']
 
 
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
-DB_CONNECTION = SECTION_CONF['connection']
-if DB_CONNECTION != 'sqlite':
-    DB_NAME = SECTION_CONF['name']
-    DB_USER = SECTION_CONF['user']
-    DB_PASS = SECTION_CONF['pass']
-    DB_HOST = SECTION_CONF['host']
-    DB_PORT = SECTION_CONF['port']
+DB_SQL_CONNECTION = SECTION_CONF['sql_connection']
+if 'reconnect_interval' in SECTION_CONF:
+    DB_RECONNECT_INTERVAL = int(SECTION_CONF['reconnect_interval'])
+else:
+    DB_RECONNECT_INTERVAL = 2

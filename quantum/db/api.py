@@ -18,6 +18,8 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
 import logging
+import time
+
 import sqlalchemy as sql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
@@ -75,7 +77,9 @@ def configure_db(options):
             engine_args['listeners'] = [MySQLPingListener()]
 
         _ENGINE = create_engine(options['sql_connection'], **engine_args)
-        register_models()
+        if not register_models():
+            if 'reconnect_interval' in options:
+                retry_registration(options['reconnect_interval'])
 
 
 def clear_db():
@@ -96,11 +100,25 @@ def get_session(autocommit=True, expire_on_commit=False):
     return _MAKER()
 
 
+def retry_registration(reconnect_interval):
+    while True:
+        LOG.info("Unable to connect to database. Retrying in %s seconds" %
+                 reconnect_interval)
+        time.sleep(reconnect_interval)
+        if register_models():
+            break
+
+
 def register_models():
     """Register Models and create properties"""
     global _ENGINE
     assert _ENGINE
-    BASE.metadata.create_all(_ENGINE)
+    try:
+        BASE.metadata.create_all(_ENGINE)
+    except sql.exc.OperationalError as e:
+        LOG.info("Database registration exception: %s" % e)
+        return False
+    return True
 
 
 def unregister_models():

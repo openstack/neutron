@@ -473,26 +473,17 @@ def main():
         else:
             polling_interval = DEFAULT_POLLING_INTERVAL
             LOG.info("Polling interval not defined. Using default.")
-        if config.has_option("AGENT", "reconnect_interval"):
-            reconnect_interval = config.getint("AGENT", "reconnect_interval")
+        if config.has_option("DATABASE", "reconnect_interval"):
+            reconnect_interval = config.getint("DATABASE",
+                                               "reconnect_interval")
         else:
             reconnect_interval = DEFAULT_RECONNECT_INTERVAL
             LOG.info("Reconnect interval not defined. Using default.")
         root_helper = config.get("AGENT", "root_helper")
         'Establish database connection and load models'
-        connection = config.get("DATABASE", "connection")
-        if connection == 'sqlite':
-            LOG.info("Connecting to sqlite DB")
-            db_connection_url = "sqlite:///:memory:"
-        else:
-            db_name = config.get("DATABASE", "name")
-            db_user = config.get("DATABASE", "user")
-            db_pass = config.get("DATABASE", "pass")
-            db_host = config.get("DATABASE", "host")
-            db_port = int(config.get("DATABASE", "port"))
-            LOG.info("Connecting to database %s on %s" % (db_name, db_host))
-            db_connection_url = ("%s://%s:%s@%s:%d/%s" %
-                    (connection, db_user, db_pass, db_host, db_port, db_name))
+        db_connection_url = config.get("DATABASE", "sql_connection")
+        LOG.info("Connecting to %s" % (db_connection_url))
+
     except Exception as e:
         LOG.error("Unable to parse config file \"%s\": \nException %s" %
                   (config_file, str(e)))

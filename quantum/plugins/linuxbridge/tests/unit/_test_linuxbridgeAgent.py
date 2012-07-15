@@ -394,6 +394,8 @@ class LinuxBridgeAgentTest(unittest.TestCase):
             self.physical_interface = config.get("LINUX_BRIDGE",
                                                  "physical_interface")
             self.polling_interval = config.get("AGENT", "polling_interval")
+            self.reconnect_interval = config.get("DATABASE",
+                                                 "reconnect_interval")
             self.root_helper = config.get("AGENT", "root_helper")
         except Exception, e:
             LOG.error("Unable to parse config file \"%s\": \nException%s"
@@ -406,6 +408,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
             self.br_name_prefix,
             self.physical_interface,
             self.polling_interval,
+            self.reconnect_interval,
             self.root_helper)
 
     def run_cmd(self, args):
