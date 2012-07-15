@@ -35,6 +35,7 @@ from eventlet import pools
 from eventlet import semaphore
 
 from quantum.openstack.common import excutils
+from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import local
 from quantum.openstack.common.rpc import common as rpc_common
 

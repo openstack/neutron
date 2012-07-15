@@ -23,10 +23,10 @@ import sys
 import traceback
 
 from quantum.openstack.common import cfg
+from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import local
-from quantum.openstack.common.gettextutils import _
 
 
 LOG = logging.getLogger(__name__)

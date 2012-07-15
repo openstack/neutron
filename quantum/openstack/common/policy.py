@@ -21,6 +21,7 @@ import logging
 import urllib
 import urllib2
 
+from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import jsonutils
 
 

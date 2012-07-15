@@ -24,6 +24,7 @@ import json
 import logging
 
 from quantum.openstack.common import cfg
+from quantum.openstack.common.gettextutils import _
 
 
 matchmaker_opts = [

@@ -48,7 +48,8 @@ rpc_opts = [
                     'Only supported by impl_zmq.'),
     cfg.ListOpt('allowed_rpc_exception_modules',
                 default=['quantum.openstack.common.exception',
-                         'nova.exception'],
+                         'nova.exception',
+                         ],
                 help='Modules of exceptions that are permitted to be recreated'
                      'upon receiving exception data from an rpc call.'),
     cfg.StrOpt('control_exchange',
