@@ -23,6 +23,7 @@ import webob.exc
 
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
+from quantum.extensions import extensions
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum import wsgi
@@ -68,6 +69,9 @@ class APIRouter(wsgi.Router):
     def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()
         plugin = manager.QuantumManager.get_plugin()
+
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
 
         col_kwargs = dict(collection_actions=COLLECTION_ACTIONS,
                           member_actions=MEMBER_ACTIONS)

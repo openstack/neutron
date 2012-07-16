@@ -23,12 +23,13 @@ import webtest
 from webob import exc
 
 from quantum.api.v2 import attributes
+from quantum.api.v2 import base
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
-from quantum.api.v2 import views
 from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum import context
+from quantum.extensions.extensions import PluginAwareExtensionManager
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 
@@ -41,6 +42,7 @@ def _uuid():
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
+EXTDIR = os.path.join(ROOTDIR, 'unit/extensions')
 
 
 def etcdir(*p):
@@ -133,6 +135,8 @@ class APIv2TestBase(unittest.TestCase):
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
         # Ensure 'stale' patched copies of the plugin are never returned
         QuantumManager._instance = None
+        # Ensure existing ExtensionManager is not used
+        PluginAwareExtensionManager._instance = None
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         config.parse(args=args)
@@ -602,6 +606,26 @@ class JSONV2TestCase(APIv2TestBase):
         self.assertEqual(port['network_id'], net_id)
         self.assertEqual(port['mac_address'], 'ca:fe:de:ad:be:ef')
 
+    def test_create_return_extra_attr(self):
+        net_id = _uuid()
+        data = {'network': {'name': 'net1', 'admin_state_up': True,
+                            'tenant_id': _uuid()}}
+        return_value = {'subnets': [], 'status': "ACTIVE",
+                        'id': net_id, 'v2attrs:something': "123"}
+        return_value.update(data['network'].copy())
+
+        instance = self.plugin.return_value
+        instance.create_network.return_value = return_value
+
+        res = self.api.post_json(_get_path('networks'), data)
+
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        self.assertTrue('network' in res.json)
+        net = res.json['network']
+        self.assertEqual(net['id'], net_id)
+        self.assertEqual(net['status'], "ACTIVE")
+        self.assertFalse('v2attrs:something' in net)
+
     def test_fields(self):
         return_value = {'name': 'net1', 'admin_state_up': True,
                         'subnets': []}
@@ -704,33 +728,30 @@ class JSONV2TestCase(APIv2TestBase):
 
 
 class V2Views(unittest.TestCase):
-    def _view(self, keys, func):
+    def _view(self, keys, collection, resource):
         data = dict((key, 'value') for key in keys)
         data['fake'] = 'value'
-        res = func(data)
+        attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[collection]
+        controller = base.Controller(None, collection, resource, attr_info)
+        res = controller._view(data)
         self.assertTrue('fake' not in res)
         for key in keys:
             self.assertTrue(key in res)
 
-    def test_resource(self):
-        res = views.resource({'one': 1, 'two': 2}, ['one'])
-        self.assertTrue('one' in res)
-        self.assertTrue('two' not in res)
-
     def test_network(self):
         keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
                 'tenant_id', 'mac_ranges')
-        self._view(keys, views.network)
+        self._view(keys, 'networks', 'network')
 
     def test_port(self):
         keys = ('id', 'network_id', 'mac_address', 'fixed_ips',
                 'device_id', 'admin_state_up', 'tenant_id', 'status')
-        self._view(keys, views.port)
+        self._view(keys, 'ports', 'port')
 
     def test_subnet(self):
         keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
                 'ip_version', 'cidr')
-        self._view(keys, views.subnet)
+        self._view(keys, 'subnets', 'subnet')
 
 
 class QuotaTest(APIv2TestBase):
@@ -770,3 +791,74 @@ class QuotaTest(APIv2TestBase):
         res = self.api.post_json(
             _get_path('networks'), initial_input)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
+
+
+class ExtensionTestCase(unittest.TestCase):
+    # NOTE(jkoelker) This potentially leaks the mock object if the setUp
+    #                raises without being caught. Using unittest2
+    #                or dropping 2.6 support so we can use addCleanup
+    #                will get around this.
+    def setUp(self):
+        plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
+
+        # Ensure 'stale' patched copies of the plugin are never returned
+        QuantumManager._instance = None
+
+        # Ensure existing ExtensionManager is not used
+        PluginAwareExtensionManager._instance = None
+
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
+
+        # Create the default configurations
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        config.parse(args=args)
+
+        # Update the plugin and extensions path
+        cfg.CONF.set_override('core_plugin', plugin)
+        cfg.CONF.set_override('api_extensions_path', EXTDIR)
+
+        self._plugin_patcher = mock.patch(plugin, autospec=True)
+        self.plugin = self._plugin_patcher.start()
+
+        # Instantiate mock plugin and enable the V2attributes extension
+        QuantumManager.get_plugin().supported_extension_aliases = ["v2attrs"]
+
+        api = router.APIRouter()
+        self.api = webtest.TestApp(api)
+
+    def tearDown(self):
+        self._plugin_patcher.stop()
+        self.api = None
+        self.plugin = None
+        cfg.CONF.reset()
+
+        # Restore the global RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
+
+    def test_extended_create(self):
+        net_id = _uuid()
+        data = {'network': {'name': 'net1', 'admin_state_up': True,
+                            'tenant_id': _uuid(), 'subnets': [],
+                            'v2attrs:something_else': "abc"}}
+        return_value = {'subnets': [], 'status': "ACTIVE",
+                        'id': net_id,
+                        'v2attrs:something': "123"}
+        return_value.update(data['network'].copy())
+
+        instance = self.plugin.return_value
+        instance.create_network.return_value = return_value
+
+        res = self.api.post_json(_get_path('networks'), data)
+
+        instance.create_network.assert_called_with(mock.ANY,
+                                                   network=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        self.assertTrue('network' in res.json)
+        net = res.json['network']
+        self.assertEqual(net['id'], net_id)
+        self.assertEqual(net['status'], "ACTIVE")
+        self.assertEqual(net['v2attrs:something'], "123")
+        self.assertFalse('v2attrs:something_else' in net)

@@ -132,6 +132,20 @@ class ExtensionDescriptor(object):
         request_exts = []
         return request_exts
 
+    def get_extended_attributes(self, version):
+        """Map describing extended attributes for core resources.
+
+        Extended attributes are implemented by a core plugin similarly
+        to the attributes defined in the core, and can appear in
+        request and response messages. Their names are scoped with the
+        extension's prefix. The core API version is passed to this
+        function, which must return a
+        map[<resource_name>][<attribute_name>][<attribute_property>]
+        specifying the extended resource attribute properties required
+        by that API version.
+        """
+        return {}
+
     def get_plugin_interface(self):
         """
         Returns an abstract class which defines contract for the plugin.
@@ -340,9 +354,7 @@ class ExtensionMiddleware(wsgi.Middleware):
 def plugin_aware_extension_middleware_factory(global_config, **local_config):
     """Paste factory."""
     def _factory(app):
-        extensions_path = get_extensions_path()
-        ext_mgr = PluginAwareExtensionManager(extensions_path,
-                                              QuantumManager.get_plugin())
+        ext_mgr = PluginAwareExtensionManager.get_instance()
         return ExtensionMiddleware(app, ext_mgr=ext_mgr)
     return _factory
 
@@ -397,6 +409,18 @@ class ExtensionManager(object):
                 # extensions
                 pass
         return request_exts
+
+    def extend_resources(self, version, attr_map):
+        """Extend resources with additional attributes."""
+        for ext in self.extensions.itervalues():
+            try:
+                extended_attrs = ext.get_extended_attributes(version)
+                for resource, resource_attrs in extended_attrs.iteritems():
+                    attr_map[resource].update(resource_attrs)
+            except AttributeError:
+                # Extensions aren't required to have extended
+                # attributes
+                pass
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""
@@ -467,6 +491,8 @@ class ExtensionManager(object):
 
 class PluginAwareExtensionManager(ExtensionManager):
 
+    _instance = None
+
     def __init__(self, path, plugin):
         self.plugin = plugin
         super(PluginAwareExtensionManager, self).__init__(path)
@@ -501,6 +527,13 @@ class PluginAwareExtensionManager(ExtensionManager):
                      "plugin interface %s" % (self.plugin,
                                               extension.get_alias()))
         return plugin_has_interface
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls(get_extensions_path(),
+                                QuantumManager.get_plugin())
+        return cls._instance
 
 
 class RequestExtension(object):

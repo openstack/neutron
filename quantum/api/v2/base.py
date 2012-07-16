@@ -18,7 +18,6 @@ import webob.exc
 
 from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
-from quantum.api.v2 import views
 from quantum.common import exceptions
 from quantum.common import utils
 from quantum import policy
@@ -112,7 +111,18 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if 'required_by_policy' in info
                               and info['required_by_policy']]
-        self._view = getattr(views, self._resource)
+
+    def _is_visible(self, attr):
+        attr_val = self._attr_info.get(attr)
+        return attr_val and attr_val['is_visible']
+
+    def _view(self, data, fields_to_strip=None):
+        # make sure fields_to_strip is iterable
+        if not fields_to_strip:
+            fields_to_strip = []
+        return dict(item for item in data.iteritems()
+                    if self._is_visible(item[0])
+                    and not item[0] in fields_to_strip)
 
     def _do_field_list(self, original_fields):
         fields_to_add = None
