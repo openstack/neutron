@@ -22,6 +22,7 @@ from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
+from quantum.common import utils
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
@@ -639,12 +640,19 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_network(self, context, network):
         n = network['network']
+        # Ensure id is valid from plugin
+        if n.get('id'):
+            res = attributes._validate_regex(n.get('id'),
+                                             attributes.UUID_PATTERN)
+            if res:
+                raise TypeError('Invalid input for id. Reason: %s.' % res)
 
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, n)
         with context.session.begin():
             network = models_v2.Network(tenant_id=tenant_id,
+                                        id=n.get('id') or utils.str_uuid(),
                                         name=n['name'],
                                         admin_state_up=n['admin_state_up'],
                                         status="ACTIVE")
@@ -683,6 +691,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
+        # Ensure id is valid from plugin
+        if s.get('id'):
+            res = attributes._validate_regex(n.get('id'),
+                                             attributes.UUID_PATTERN)
+            if res:
+                raise TypeError('Invalid input for id. Reason: %s.' % res)
 
         net = netaddr.IPNetwork(s['cidr'])
         if s['gateway_ip'] == attributes.ATTR_NOT_SPECIFIED:
@@ -693,6 +707,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(network, s['cidr'])
             subnet = models_v2.Subnet(tenant_id=tenant_id,
+                                      id=s.get('id') or utils.str_uuid(),
                                       network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
@@ -740,6 +755,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_port(self, context, port):
         p = port['port']
+        # Ensure id is valid from plugin
+        if p.get('id'):
+            res = attributes._validate_regex(n.get('id'),
+                                             attributes.UUID_PATTERN)
+            if res:
+                raise TypeError('Invalid input for id. Reason: %s.' % res)
+
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
@@ -764,6 +786,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ips = self._allocate_ips_for_port(context, network, port)
 
             port = models_v2.Port(tenant_id=tenant_id,
+                                  id=p.get('id') or utils.str_uuid(),
                                   network_id=p['network_id'],
                                   mac_address=p['mac_address'],
                                   admin_state_up=p['admin_state_up'],
