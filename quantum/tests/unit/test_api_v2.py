@@ -22,6 +22,7 @@ import webtest
 
 from webob import exc
 
+from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
 from quantum.api.v2 import views
@@ -576,9 +577,9 @@ class JSONV2TestCase(APIv2TestCase):
                          'device_id': device_id,
                          'admin_state_up': True}}
         full_input = {'port': {'admin_state_up': True,
-                               'mac_address': router.ATTR_NOT_SPECIFIED,
-                               'fixed_ips': router.ATTR_NOT_SPECIFIED,
-                               'host_routes': router.ATTR_NOT_SPECIFIED}}
+                               'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                               'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                               'host_routes': attributes.ATTR_NOT_SPECIFIED}}
         full_input['port'].update(initial_input['port'])
         return_value = {'id': _uuid(), 'status': 'ACTIVE',
                         'admin_state_up': True,

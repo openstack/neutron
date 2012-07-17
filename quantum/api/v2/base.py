@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import logging
-
 import webob.exc
 
+from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import views
 from quantum.common import exceptions
@@ -321,6 +321,21 @@ class Controller(object):
             for attr, attr_vals in self._attr_info.iteritems():
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
+                    raise webob.exc.HTTPUnprocessableEntity(msg)
+
+        # Check that configured values are correct
+        for attr, attr_vals in self._attr_info.iteritems():
+            if not ('validate' in attr_vals and
+                    attr in res_dict and
+                    res_dict[attr] != attributes.ATTR_NOT_SPECIFIED):
+                continue
+            for rule in attr_vals['validate']:
+                res = attributes.validators[rule](res_dict[attr],
+                                                  attr_vals['validate'][rule])
+                if res:
+                    msg_dict = dict(attr=attr, reason=res)
+                    msg = _("Invalid input for %(attr)s. "
+                            "Reason: %(reason)s.") % msg_dict
                     raise webob.exc.HTTPUnprocessableEntity(msg)
 
         return body

@@ -769,6 +769,27 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                 self.assertEquals(ips[0]['ip_address'], '10.0.1.3')
                 self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
 
+    def test_invalid_admin_state(self):
+        with self.network() as network:
+            data = {'port': {'network_id': network['network']['id'],
+                             'tenant_id':  network['network']['tenant_id'],
+                             'admin_state_up': 7,
+                             'fixed_ips': []}}
+            port_req = self.new_create_request('ports', data)
+            res = port_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)
+
+    def test_invalid_mac_address(self):
+        with self.network() as network:
+            data = {'port': {'network_id': network['network']['id'],
+                             'tenant_id':  network['network']['tenant_id'],
+                             'admin_state_up': 1,
+                             'mac_address': 'mac',
+                             'fixed_ips': []}}
+            port_req = self.new_create_request('ports', data)
+            res = port_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)
+
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):
     # NOTE(cerberus): successful network update and delete are
@@ -798,6 +819,14 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             res = self.deserialize('json', req.get_response(self.api))
             self.assertEquals(res['network']['name'],
                               net['network']['name'])
+
+    def test_invalid_admin_status(self):
+        data = {'network': {'name': 'net',
+                            'admin_state_up': 7,
+                            'tenant_id': self._tenant_id}}
+        network_req = self.new_create_request('networks', data)
+        res = network_req.get_response(self.api)
+        self.assertEquals(res.status_int, 422)
 
 
 class TestSubnetsV2(QuantumDbPluginV2TestCase):
@@ -1033,3 +1062,51 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                       subnet['subnet']['cidr'])
                     self.assertEquals(res2['cidr'],
                                       subnet2['subnet']['cidr'])
+
+    def test_invalid_ip_version(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 7,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)
+
+    def test_invalid_subnet(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': 'invalid',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)
+
+    def test_invalid_ip_address(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': 'ipaddress'}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)
+
+    def test_invalid_uuid(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': 'invalid-uuid',
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.0.1'}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 422)

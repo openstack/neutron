@@ -20,7 +20,7 @@ import netaddr
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from quantum.api.v2 import router as api_router
+from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
@@ -456,7 +456,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         p = port['port']
         ips = []
 
-        fixed_configured = (p['fixed_ips'] != api_router.ATTR_NOT_SPECIFIED)
+        fixed_configured = (p['fixed_ips'] != attributes.ATTR_NOT_SPECIFIED)
         if fixed_configured:
             configured_ips = self._test_fixed_ips_for_port(context,
                                                            p["network_id"],
@@ -579,7 +579,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """
 
         pools = []
-        if subnet['allocation_pools'] == api_router.ATTR_NOT_SPECIFIED:
+        if subnet['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
             # Auto allocate the pool around gateway
             gw_ip = int(netaddr.IPAddress(subnet['gateway_ip']))
             net = netaddr.IPNetwork(subnet['cidr'])
@@ -685,7 +685,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         s = subnet['subnet']
 
         net = netaddr.IPNetwork(s['cidr'])
-        if s['gateway_ip'] == api_router.ATTR_NOT_SPECIFIED:
+        if s['gateway_ip'] == attributes.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
         tenant_id = self._get_tenant_id_for_create(context, s)
@@ -749,7 +749,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
             # Ensure that a MAC address is defined and it is unique on the
             # network
-            if p['mac_address'] == api_router.ATTR_NOT_SPECIFIED:
+            if p['mac_address'] == attributes.ATTR_NOT_SPECIFIED:
                 p['mac_address'] = QuantumDbPluginV2._generate_mac(
                     context, p["network_id"])
             else:
