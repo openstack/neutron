@@ -98,13 +98,9 @@ function run_pep8 {
   echo "Running pep8 ..."
 
   PEP8_EXCLUDE="vcsversion.py,*.pyc"
-  # TODO(gongysh) we should pep8 check openstack common files. But that project does
-  # not stick to latest pep8 version. Therefore we exclude these common files here.
-  # Pep8 does not support exclude in the format quantum/openstack/common,
-  # so I have to exclude some of openstack common files one by one. This also applies
-  # to tox.ini.
-  PEP8_EXCLUDE="$PEP8_EXCLUDE,log.py,notifier,rpc"
-  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
+  # we now turn off pep8 1.3 E125 check to avoid make change to 
+  # openstack-common . 
+  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125 --repeat --show-source"
   PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py"
   ${wrapper} pep8 $PEP8_OPTIONS $PEP8_INCLUDE
 }

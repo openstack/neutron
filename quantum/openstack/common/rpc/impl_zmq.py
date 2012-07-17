@@ -52,7 +52,7 @@ zmq_opts = [
         default=('quantum.openstack.common.rpc.'
                  'matchmaker.MatchMakerLocalhost'),
         help='MatchMaker driver',
-        ),
+    ),
 
     # The following port is unassigned by IANA as of 2012-05-21
     cfg.IntOpt('rpc_zmq_port', default=9501,

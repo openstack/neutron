@@ -772,7 +772,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_invalid_admin_state(self):
         with self.network() as network:
             data = {'port': {'network_id': network['network']['id'],
-                             'tenant_id':  network['network']['tenant_id'],
+                             'tenant_id': network['network']['tenant_id'],
                              'admin_state_up': 7,
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
@@ -782,7 +782,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_invalid_mac_address(self):
         with self.network() as network:
             data = {'port': {'network_id': network['network']['id'],
-                             'tenant_id':  network['network']['tenant_id'],
+                             'tenant_id': network['network']['tenant_id'],
                              'admin_state_up': 1,
                              'mac_address': 'mac',
                              'fixed_ips': []}}

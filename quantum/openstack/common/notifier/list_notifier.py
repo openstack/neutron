@@ -19,9 +19,10 @@ from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 
 
-list_notifier_drivers_opt = cfg.MultiStrOpt('list_notifier_drivers',
-        default=['quantum.openstack.common.notifier.no_op_notifier'],
-        help='List of drivers to send notifications')
+list_notifier_drivers_opt = cfg.MultiStrOpt(
+    'list_notifier_drivers',
+    default=['quantum.openstack.common.notifier.no_op_notifier'],
+    help='List of drivers to send notifications')
 
 CONF = cfg.CONF
 CONF.register_opt(list_notifier_drivers_opt)

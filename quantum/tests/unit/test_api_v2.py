@@ -68,7 +68,7 @@ class V2WsgiResourceTestCase(unittest.TestCase):
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int,  exc.HTTPInternalServerError.code)
+        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
 
     def test_mapped_quantum_error(self):
         controller = mock.MagicMock()

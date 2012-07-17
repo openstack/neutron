@@ -66,13 +66,13 @@ log_opts = [
                help='prefix each line of exception output with this format'),
     cfg.ListOpt('default_log_levels',
                 default=[
-                  'amqplib=WARN',
-                  'sqlalchemy=WARN',
-                  'boto=WARN',
-                  'suds=INFO',
-                  'keystone=INFO',
-                  'eventlet.wsgi.server=WARN'
-                  ],
+                    'amqplib=WARN',
+                    'sqlalchemy=WARN',
+                    'boto=WARN',
+                    'suds=INFO',
+                    'keystone=INFO',
+                    'eventlet.wsgi.server=WARN'
+                ],
                 help='list of logger=LEVEL pairs'),
     cfg.BoolOpt('publish_errors',
                 default=False,
@@ -89,7 +89,7 @@ log_opts = [
                default='[instance: %(uuid)s] ',
                help='If an instance UUID is passed with the log message, '
                     'format it like this'),
-    ]
+]
 
 
 generic_log_opts = [
@@ -105,7 +105,7 @@ generic_log_opts = [
     cfg.StrOpt('logfile_mode',
                default='0644',
                help='Default file mode used when creating log files'),
-    ]
+]
 
 
 CONF = cfg.CONF
@@ -208,9 +208,9 @@ class JSONFormatter(logging.Formatter):
     def formatException(self, ei, strip_newlines=True):
         lines = traceback.format_exception(*ei)
         if strip_newlines:
-            lines = [itertools.ifilter(lambda x: x,
-                                      line.rstrip().splitlines())
-                    for line in lines]
+            lines = [itertools.ifilter(
+                lambda x: x,
+                line.rstrip().splitlines()) for line in lines]
             lines = list(itertools.chain(*lines))
         return lines
 
@@ -252,9 +252,9 @@ class PublishErrorsHandler(logging.Handler):
                 CONF.list_notifier_drivers):
                 return
         notifier.api.notify(None, 'error.publisher',
-                                 'error_notification',
-                                 notifier.api.ERROR,
-                                 dict(error=record.msg))
+                            'error_notification',
+                            notifier.api.ERROR,
+                            dict(error=record.msg))
 
 
 def handle_exception(type, value, tb):

@@ -37,7 +37,7 @@ notifier_opts = [
     cfg.StrOpt('default_publisher_id',
                default='$host',
                help='Default publisher_id for outgoing notifications'),
-    ]
+]
 
 CONF = cfg.CONF
 CONF.register_opts(notifier_opts)
@@ -122,21 +122,21 @@ def notify(context, publisher_id, event_type, priority, payload):
     """
     if priority not in log_levels:
         raise BadPriorityException(
-                 _('%s not in valid priorities') % priority)
+            _('%s not in valid priorities') % priority)
 
     # Ensure everything is JSON serializable.
     payload = jsonutils.to_primitive(payload, convert_instances=True)
 
     driver = importutils.import_module(CONF.notification_driver)
     msg = dict(message_id=str(uuid.uuid4()),
-                   publisher_id=publisher_id,
-                   event_type=event_type,
-                   priority=priority,
-                   payload=payload,
-                   timestamp=str(timeutils.utcnow()))
+               publisher_id=publisher_id,
+               event_type=event_type,
+               priority=priority,
+               payload=payload,
+               timestamp=str(timeutils.utcnow()))
     try:
         driver.notify(context, msg)
     except Exception, e:
         LOG.exception(_("Problem '%(e)s' attempting to "
                         "send to notification system. Payload=%(payload)s") %
-                        locals())
+                      locals())
