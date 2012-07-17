@@ -63,12 +63,9 @@ def check(context, action, target):
 
     :return: Returns True if access is permitted else False.
     """
-
     init()
-
     match_list = ('rule:%s' % action,)
     credentials = context.to_dict()
-
     return policy.enforce(match_list, target, credentials)
 
 

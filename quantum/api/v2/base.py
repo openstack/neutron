@@ -106,17 +106,31 @@ class Controller(object):
         self._collection = collection
         self._resource = resource
         self._attr_info = attr_info
+        self._policy_attrs = [name for (name, info) in self._attr_info.items()
+                              if 'required_by_policy' in info
+                              and info['required_by_policy']]
         self._view = getattr(views, self._resource)
+
+    def _do_field_list(self, original_fields):
+        fields_to_add = None
+        # don't do anything if fields were not specified in the request
+        if original_fields:
+            fields_to_add = [attr for attr in self._policy_attrs
+                             if attr not in original_fields]
+            original_fields.extend(self._policy_attrs)
+        return original_fields, fields_to_add
 
     def _items(self, request, do_authz=False):
         """Retrieves and formats a list of elements of the requested entity"""
+        # NOTE(salvatore-orlando): The following ensures that fields which
+        # are needed for authZ policy validation are not stripped away by the
+        # plugin before returning.
+        original_fields, fields_to_add = self._do_field_list(fields(request))
         kwargs = {'filters': filters(request),
                   'verbose': verbose(request),
-                  'fields': fields(request)}
-
+                  'fields': original_fields}
         obj_getter = getattr(self._plugin, "get_%s" % self._collection)
         obj_list = obj_getter(request.context, **kwargs)
-
         # Check authz
         if do_authz:
             # Omit items from list that should not be visible
@@ -125,12 +139,18 @@ class Controller(object):
                                         "get_%s" % self._resource,
                                         obj)]
 
-        return {self._collection: [self._view(obj) for obj in obj_list]}
+        return {self._collection: [self._view(obj,
+                                              fields_to_strip=fields_to_add)
+                                   for obj in obj_list]}
 
     def _item(self, request, id, do_authz=False):
         """Retrieves and formats a single element of the requested entity"""
+        # NOTE(salvatore-orlando): The following ensures that fields which
+        # are needed for authZ policy validation are not stripped away by the
+        # plugin before returning.
+        field_list, added_fields = self._do_field_list(fields(request))
         kwargs = {'verbose': verbose(request),
-                  'fields': fields(request)}
+                  'fields': field_list}
         action = "get_%s" % self._resource
         obj_getter = getattr(self._plugin, action)
         obj = obj_getter(request.context, id, **kwargs)
@@ -139,7 +159,7 @@ class Controller(object):
         if do_authz:
             policy.enforce(request.context, action, obj)
 
-        return {self._resource: self._view(obj)}
+        return {self._resource: self._view(obj, fields_to_strip=added_fields)}
 
     def index(self, request):
         """Returns a list of the requested entity"""

@@ -48,6 +48,10 @@ ATTR_NOT_SPECIFIED = object()
 # and the default gateway_ip will be generated.
 # However, if gateway_ip is specified as None, this means that
 # the subnet does not have a gateway IP.
+# Some of the following attributes are used by the policy engine.
+# They are explicitly marked with the required_by_policy flag to ensure
+# they are always returned by a plugin for policy processing, even if
+# they are not specified in the 'fields' query param
 
 RESOURCE_ATTRIBUTE_MAP = {
     'networks': {
@@ -57,7 +61,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True},
         'status': {'allow_post': False, 'allow_put': False},
-        'tenant_id': {'allow_post': True, 'allow_put': False},
+        'tenant_id': {'allow_post': True, 'allow_put': False,
+                      'required_by_policy': True},
     },
     'ports': {
         'id': {'allow_post': False, 'allow_put': False},
@@ -71,7 +76,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'host_routes': {'allow_post': True, 'allow_put': True,
                         'default': ATTR_NOT_SPECIFIED},
         'device_id': {'allow_post': True, 'allow_put': True, 'default': ''},
-        'tenant_id': {'allow_post': True, 'allow_put': False},
+        'tenant_id': {'allow_post': True, 'allow_put': False,
+                      'required_by_policy': True},
     },
     'subnets': {
         'id': {'allow_post': False, 'allow_put': False},
@@ -87,7 +93,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': ATTR_NOT_SPECIFIED},
         'additional_host_routes': {'allow_post': True, 'allow_put': True,
                                    'default': ATTR_NOT_SPECIFIED},
-        'tenant_id': {'allow_post': True, 'allow_put': False},
+        'tenant_id': {'allow_post': True, 'allow_put': False,
+                      'required_by_policy': True},
     }
 }
 

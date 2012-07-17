@@ -78,7 +78,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         db._MAKER = None
         cfg.CONF.reset()
 
-    def _req(self, method, resource, data=None, fmt='json', id=None):
+    def _req(self, method, resource, data=None, fmt='json',
+             id=None, params=None):
         if id:
             path = '/%(resource)s/%(id)s.%(fmt)s' % locals()
         else:
@@ -87,13 +88,17 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         body = None
         if data:
             body = Serializer().serialize(data, content_type)
-        return create_request(path, body, content_type, method)
+        return create_request(path,
+                              body,
+                              content_type,
+                              method,
+                              query_string=params)
 
     def new_create_request(self, resource, data, fmt='json'):
         return self._req('POST', resource, data, fmt)
 
-    def new_list_request(self, resource, fmt='json'):
-        return self._req('GET', resource, None, fmt)
+    def new_list_request(self, resource, fmt='json', params=None):
+        return self._req('GET', resource, None, fmt, params=params)
 
     def new_show_request(self, resource, id, fmt='json'):
         return self._req('GET', resource, None, fmt, id=id)
@@ -109,11 +114,22 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
-    def _create_network(self, fmt, name, admin_status_up):
+    def _create_network(self, fmt, name, admin_status_up, **kwargs):
         data = {'network': {'name': name,
                             'admin_state_up': admin_status_up,
                             'tenant_id': self._tenant_id}}
+        for arg in ('admin_state_up', 'tenant_id', 'public'):
+            # Arg must be present and not empty
+            if arg in kwargs and kwargs[arg]:
+                data['network'][arg] = kwargs[arg]
         network_req = self.new_create_request('networks', data, fmt)
+        if ('set_context' in kwargs and
+                kwargs['set_context'] is True and
+                'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            network_req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+
         return network_req.get_response(self.api)
 
     def _create_subnet(self, fmt, tenant_id, net_id, gateway_ip, cidr,
@@ -246,6 +262,53 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
         req = self.new_list_request('networks')
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 200)
+
+    def _check_list_with_fields(self, res, field_name):
+        self.assertEquals(res.status_int, 200)
+        body = self.deserialize('json', res)
+        # further checks: 1 networks
+        self.assertEquals(len(body['networks']), 1)
+        # 1 field in the network record
+        self.assertEquals(len(body['networks'][0]), 1)
+        # field is 'name'
+        self.assertIn(field_name, body['networks'][0])
+
+    def test_list_with_fields(self):
+        self._create_network('json', 'some_net', True)
+        req = self.new_list_request('networks', params="fields=name")
+        res = req.get_response(self.api)
+        self._check_list_with_fields(res, 'name')
+
+    def test_list_with_fields_noadmin(self):
+        tenant_id = 'some_tenant'
+        self._create_network('json',
+                             'some_net',
+                             True,
+                             tenant_id=tenant_id,
+                             set_context=True)
+        req = self.new_list_request('networks', params="fields=name")
+        req.environ['quantum.context'] = context.Context('', tenant_id)
+        res = req.get_response(self.api)
+        self._check_list_with_fields(res, 'name')
+
+    def test_list_with_fields_noadmin_and_policy_field(self):
+        """ If a field used by policy is selected, do not duplicate it.
+
+        Verifies that if the field parameter explicitly specifies a field
+        which is used by the policy engine, then it is not duplicated
+        in the response.
+
+        """
+        tenant_id = 'some_tenant'
+        self._create_network('json',
+                             'some_net',
+                             True,
+                             tenant_id=tenant_id,
+                             set_context=True)
+        req = self.new_list_request('networks', params="fields=tenant_id")
+        req.environ['quantum.context'] = context.Context('', tenant_id)
+        res = req.get_response(self.api)
+        self._check_list_with_fields(res, 'tenant_id')
 
     def test_show_returns_200(self):
         with self.network() as net:

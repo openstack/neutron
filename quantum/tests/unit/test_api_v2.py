@@ -232,7 +232,8 @@ class APIv2TestCase(unittest.TestCase):
         self.api.get(_get_path('networks'), {'fields': 'foo'})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo'],
+                                                      fields=['foo',
+                                                              'tenant_id'],
                                                       verbose=mock.ANY)
 
     def test_fields_multiple(self):
@@ -242,7 +243,8 @@ class APIv2TestCase(unittest.TestCase):
         self.api.get(_get_path('networks'), {'fields': ['foo', 'bar']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo', 'bar'],
+                                                      fields=['foo', 'bar',
+                                                              'tenant_id'],
                                                       verbose=mock.ANY)
 
     def test_fields_multiple_with_empty(self):
@@ -252,7 +254,8 @@ class APIv2TestCase(unittest.TestCase):
         self.api.get(_get_path('networks'), {'fields': ['foo', '']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo'],
+                                                      fields=['foo',
+                                                              'tenant_id'],
                                                       verbose=mock.ANY)
 
     def test_fields_empty(self):
@@ -350,7 +353,8 @@ class APIv2TestCase(unittest.TestCase):
         filters = {'foo': ['bar']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=['foo'],
+                                                      fields=['foo',
+                                                              'tenant_id'],
                                                       verbose=mock.ANY)
 
     def test_filters_with_verbose(self):
@@ -375,7 +379,8 @@ class APIv2TestCase(unittest.TestCase):
         filters = {'foo': ['bar']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=['foo'],
+                                                      fields=['foo',
+                                                              'tenant_id'],
                                                       verbose=True)
 
 
