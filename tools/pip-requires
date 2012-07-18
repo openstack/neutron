@@ -3,6 +3,7 @@ PasteDeploy==1.5.0
 Routes>=1.12.3
 eventlet>=0.9.12
 httplib2
+iso8601>=0.1.4
 lxml
 netaddr
 python-gflags==1.3

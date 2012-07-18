@@ -23,11 +23,11 @@ import logging
 from datetime import datetime
 
 from quantum.db import api as db_api
-
+from quantum.openstack.common import context as common_context
 LOG = logging.getLogger(__name__)
 
 
-class Context(object):
+class Context(common_context.RequestContext):
     """Security context and request information.
 
     Represents the user taking a given action within the system.
@@ -44,11 +44,11 @@ class Context(object):
         if kwargs:
             LOG.warn(_('Arguments dropped when creating '
                        'context: %s') % str(kwargs))
-
+        super(Context, self).__init__(user=user_id, tenant=tenant_id,
+                                      is_admin=is_admin)
         self.user_id = user_id
         self.tenant_id = tenant_id
         self.roles = roles or []
-        self.is_admin = is_admin
         if self.is_admin is None:
             self.is_admin = 'admin' in [x.lower() for x in self.roles]
         elif self.is_admin and 'admin' not in [x.lower() for x in self.roles]:
