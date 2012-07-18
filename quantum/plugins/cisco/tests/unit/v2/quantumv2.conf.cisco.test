@@ -1,0 +1,20 @@
+[DEFAULT]
+# Show more verbose log output (sets INFO log level output)
+verbose = True
+
+# Show debugging output in logs (sets DEBUG log level output)
+debug = False
+
+# Address to bind the API server
+bind_host = 0.0.0.0
+
+# Port the bind the API server to
+bind_port = 9696
+
+# Path to the extensions
+api_extensions_path = ../../../../extensions
+
+# Paste configuration file
+api_paste_config = api-paste.ini.cisco.test
+
+core_plugin = quantum.plugins.cisco.network_plugin.PluginV2

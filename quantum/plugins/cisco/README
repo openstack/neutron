@@ -1,5 +1,328 @@
 =========================================================================================
-README: A Quantum Plugin Framework for Supporting L2 Networks Spannning Multiple Switches
+README for Quantum v2.0:
+A Plugin Framework for Supporting Quantum Networks Spannning Multiple Switches
+=========================================================================================
+
+Introduction
+------------
+
+This plugin implementation provides the following capabilities:
+
+* A reference implementation for a Quantum Plugin Framework
+(For details see: http://wiki.openstack.org/quantum-multi-switch-plugin)
+* Supports multiple switches in the network
+* Supports multiple models of switches concurrently
+* Supports use of multiple L2 technologies
+* Supports the Cisco Nexus family of switches.
+* Supports Cisco UCS blade servers with M81KR Virtual Interface Cards
+  (aka "Palo adapters") via 802.1Qbh.
+
+Pre-requisites
+--------------
+(The following are necessary only when using the UCS and/or Nexus devices in your system.
+If you plan to just leverage the plugin framework, you do not need these.)
+
+If you are using a Nexus switch in your topology, you'll need the following
+NX-OS version and packages to enable Nexus support:
+* NX-OS 5.2.1 (Delhi) Build 69 or above.
+* paramiko library - SSHv2 protocol library for python
+* ncclient v0.3.1 - Python library for NETCONF clients
+  ** You need a version of ncclient modifed by Cisco Systems.
+     To get it, from your shell prompt do:
+
+     git clone git@github.com:CiscoSystems/ncclient.git
+     sudo python ./setup.py install
+
+  ** For more information of ncclient, see:
+     http://schmizz.net/ncclient/
+
+* One or more UCS B200 series blade servers with M81KR VIC (aka
+  Palo adapters) installed.
+* UCSM 2.0 (Capitola) Build 230 or above.
+* OS supported:
+  ** RHEL 6.1 or above
+  ** Ubuntu 11.10 or above
+  ** Package: python-configobj-4.6.0-3.el6.noarch (or newer)
+  ** Package: python-routes-1.12.3-2.el6.noarch (or newer)
+  ** Package: pip install mysql-python
+
+
+Module Structure:
+-----------------
+* quantum/plugins/cisco/       - Contains the Network Plugin Framework
+                       /client - CLI module for core and extensions API
+                       /common - Modules common to the entire plugin
+                       /conf   - All configuration files
+                       /db     - Persistence framework
+                       /models - Class(es) which tie the logical abstractions
+                                 to the physical topology
+                       /nova   - Scheduler and VIF-driver to be used by Nova
+                       /nexus  - Nexus-specific modules
+                       /segmentation - Implementation of segmentation manager,
+                                       e.g. VLAN Manager
+                       /services - Set of orchestration libraries to insert
+                                   In-path Networking Services
+                       /tests  - Tests specific to this plugin
+                       /ucs    - UCS-specific modules
+
+
+Plugin Installation Instructions
+----------------------------------
+1.  Make a backup copy of quantum/etc/quantum.conf
+
+2.  Edit quantum/etc/quantum.conf and edit the "core_plugin" for v2 API
+
+core_plugin = quantum.plugins.cisco.network_plugin.PluginV2
+
+3.  MySQL database setup:
+    3a.  Create quantum_l2network database in mysql with the following command -
+
+mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
+
+    3b.  Enter the quantum_l2network database configuration info in the
+         quantum/plugins/cisco/conf/db_conn.ini file.
+
+4.  If you want to turn on support for Cisco Nexus switches:
+    4a.  Uncomment the nexus_plugin property in
+         etc/quantum/plugins/cisco/cisco_plugins.ini to read:
+
+[PLUGINS]
+nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin
+
+    4b.  Enter the relevant configuration in the
+         etc/quantum/plugins/cisco/nexus.ini file.  Example:
+
+[SWITCH]
+# Change the following to reflect the IP address of the Nexus switch.
+# This will be the address at which Quantum sends and receives configuration
+# information via SSHv2.
+nexus_ip_address=10.0.0.1
+# Port numbers on the Nexus switch to each one of the UCSM 6120s is connected
+# Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10".
+nexus_first_port=1/10
+nexus_second_port=1/11
+#Port number where SSH will be running on the Nexus switch.  Typically this is 22
+#unless you've configured your switch otherwise.
+nexus_ssh_port=22
+
+[DRIVER]
+name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
+
+    4c.  Make sure that SSH host key of the Nexus switch is known to the
+         host on which you are running the Quantum service.  You can do
+         this simply by logging in to your Quantum host as the user that
+         Quantum runs as and SSHing to the switch at least once.  If the
+         host key changes (e.g. due to replacement of the supervisor or
+         clearing of the SSH config on the switch), you may need to repeat
+         this step and remove the old hostkey from ~/.ssh/known_hosts.
+
+5.  If your are using UCS blade servers with M81KR Virtual Interface Cards and
+    want to leverage the VM-FEX features,
+
+    5a.  Uncomment the ucs_plugin propertes in
+         etc/quantum/plugins/cisco/cisco_plugins.ini to read:
+
+[PLUGINS]
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_plugin_v2.UCSVICPlugin
+[INVENTORY]
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_inventory_v2.UCSInventory
+
+    5b.  Enter the relevant configuration in the
+         etc/quantum/plugins/cisco/ucs.ini file.  Example:
+
+[UCSM]
+#change the following to the appropriate UCSM IP address
+#if you have more than one UCSM, enter info from any one
+ip_address=<put_ucsm_ip_address_here>
+default_vlan_name=default
+default_vlan_id=1
+max_ucsm_port_profiles=1024
+profile_name_prefix=q-
+
+[DRIVER]
+name=quantum.plugins.cisco.ucs.cisco_ucs_network_driver.CiscoUCSMDriver
+
+    5c.  Configure the UCS systems' information in your deployment by editing the
+         quantum/plugins/cisco/conf/ucs_inventory.ini file. You can configure multiple
+         UCSMs per deployment, multiple chassis per UCSM, and multiple blades per
+         chassis. Chassis ID and blade ID can be obtained from the UCSM (they will
+         typically be numbers like 1, 2, 3, etc.). Also make sure that you put the exact
+         hostname as nova sees it (the host column in the services table of the nova
+         DB will give you that information).
+
+[ucsm-1]
+ip_address = <put_ucsm_ip_address_here>
+[[chassis-1]]
+chassis_id = <put_the_chassis_id_here>
+[[[blade-1]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+[[[blade-2]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+[[[blade-3]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+
+[ucsm-2]
+ip_address = <put_ucsm_ip_address_here>
+[[chassis-1]]
+chassis_id = <put_the_chassis_id_here>
+[[[blade-1]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+[[[blade-2]]]
+blade_id = <put_blade_id_here>
+host_name = <put_hostname_here>
+
+    5d. Configure your OpenStack installation to use the 802.1qbh VIF driver and
+        Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
+        following entries:
+
+scheduler_driver=quantum.plugins.cisco.nova.quantum_port_aware_scheduler.QuantumPortAwareScheduler
+quantum_host=127.0.0.1
+quantum_port=9696
+libvirt_vif_driver=quantum.plugins.cisco.nova.vifdirect.Libvirt802dot1QbhDriver
+libvirt_vif_type=802.1Qbh
+
+    Note: To be able to bring up a VM on a UCS blade, you should first create a
+          port for that VM using the Quantum create port API. VM creation will
+          fail if an unused port is not available. If you have configured your
+          Nova project with more than one network, Nova will attempt to instantiate
+          the VM with one network interface (VIF) per configured network. To provide
+          plugin points for each of these VIFs, you will need to create multiple
+          Quantum ports, one for each of the networks, prior to starting the VM.
+          However, in this case you will need to use the Cisco multiport extension
+          API instead of the Quantum create port API. More details on using the
+          multiport extension follow in the section on multi NIC support.
+
+    To support the above configuration, you will need some Quantum modules. It's easiest
+    to copy the entire quantum directory from your quantum installation into:
+
+    /usr/lib/python2.7/site-packages/
+
+    This needs to be done on each nova compute node.
+
+7.  Verify that you have the correct credentials for each IP address listed
+    in quantum/plugins/cisco/conf/credentials.ini.  Example:
+
+# Provide the UCSM credentials, create a separte entry for each UCSM used in your system
+# UCSM IP address, username and password.
+[10.0.0.2]
+username=admin
+password=mySecretPasswordForUCSM
+
+# Provide the Nexus credentials, if you are using Nexus switches.
+# If not this will be ignored.
+[10.0.0.1]
+username=admin
+password=mySecretPasswordForNexus
+
+    In general, make sure that every UCSM and Nexus switch  used in your system,
+    has a credential entry in the above file. This is required for the system to
+    be able to communicate with those switches.
+
+
+9.  Start the Quantum service.  If something doesn't work, verify the
+    your configuration of each of the above files.
+
+
+Multi NIC support for VMs
+-------------------------
+As indicated earlier, if your Nova setup has a project with more than one network,
+Nova will try to create a virtual network interface (VIF) on the VM for each of those
+networks. Before each VM is instantiated, you should create Quantum ports on each of
+those networks. These ports need to be created using the following rest call:
+
+POST /1.0/extensions/csco/tenants/{tenant_id}/multiport/
+
+with request body:
+
+{'multiport':
+ {'status': 'ACTIVE',
+  'net_id_list': net_id_list,
+  'ports_desc': {'key': 'value'}}}
+
+where,
+
+net_id_list is a list of network IDs: [netid1, netid2, ...]. The "ports_desc" dictionary
+is reserved for later use. For now, the same structure in terms of the dictionary name, key
+and value should be used.
+
+The corresponding CLI for this operation is as follows:
+
+PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport <tenant_id> <net_id1,net_id2,...>
+
+    (Note that you should not be using the create port core API in the above case.)
+
+
+How to test the installation
+----------------------------
+The unit tests are located at quantum/plugins/cisco/tests/unit/v2. They can be
+executed from the top level Quantum directory using the run_tests.sh script.
+
+1. Testing the core API (without UCS/Nexus/RHEL device sub-plugins configured):
+   By default all the device sub-plugins are disabled (commented out) in
+   etc/quantum/plugins/cisco/cisco_plugins.ini
+
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.v2.test_api_v2
+   ./run_tests.sh quantum.plugins.cisco.tests.unit.v2.test_network_plugin
+
+2. For testing the Nexus device sub-plugin perform the following configuration:
+
+   Edit etc/quantum/plugins/cisco/cisco_plugins.ini to add:
+   In the [PLUGINS] section add:
+nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin
+
+   Edit the etc/quantum/plugins/cisco/nexus.ini file.
+   When not using Nexus hardware use the following dummy configuration verbatim:
+[SWITCH]
+nexus_ip_address=1.1.1.1
+nexus_first_port=1/10
+nexus_second_port=1/11
+nexus_ssh_port=22
+[DRIVER]
+name=quantum.plugins.cisco.tests.unit.v2.nexus.fake_nexus_driver.CiscoNEXUSFakeDriver
+   Or when using Nexus hardware (put the values relevant to your setup):
+[SWITCH]
+nexus_ip_address=1.1.1.1
+nexus_first_port=1/10
+nexus_second_port=1/11
+nexus_ssh_port=22
+[DRIVER]
+name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
+
+   (Note: Make sure that quantum/plugins/cisco/conf/credentials.ini has an entry for
+          the nexus_ip_address being used in the above cases)
+
+3. For testing the UCS device sub-plugin perform the following configuration:
+
+   Edit etc/quantum/plugins/cisco/cisco_plugins.ini to add:
+   In the [PLUGINS] section add:
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_plugin_v2.UCSVICPlugin
+
+   In the [INVENTORY] section add:
+   When not using UCS hardware:
+ucs_plugin=quantum.plugins.cisco.tests.unit.v2.ucs.cisco_ucs_inventory_fake.UCSInventory
+   Or when using UCS hardware:
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_inventory_v2.UCSInventory
+
+   Edit the etc/quantum/plugins/cisco/ucs.ini file.
+   When not using UCS hardware:
+[DRIVER]
+name=quantum.plugins.cisco.tests.unit.v2.ucs.fake_ucs_driver.CiscoUCSMFakeDriver
+   Or when using UCS hardware:
+[DRIVER]
+name=quantum.plugins.cisco.ucs.cisco_ucs_network_driver.CiscoUCSMDriver
+
+
+:Web site: http://wiki.openstack.org/cisco-quantum
+:Copyright: 2012 Cisco Systems, Inc.
+:Contact: netstack@lists.launchpad.net
+
+=========================================================================================
+README for Quantum v1 and v1.1:
+A Quantum Plugin Framework for Supporting L2 Networks Spannning Multiple Switches
 =========================================================================================
 
 :Author:  Sumit Naiksatam, Ram Durairaj, Mark Voelker, Edgar Magana, Shweta Padubidri,
@@ -83,12 +406,15 @@ Module Structure:
 
 Plugin Installation Instructions
 ----------------------------------
-1.  Make a backup copy of quantum/etc/plugins.ini.
+1.  Make a backup copy of quantum/etc/quantum.conf
 
-2.  Edit quantum/etc/plugins.ini and edit the "provider" entry to point
-    to the L2Network-plugin:
+2.  Edit quantum/etc/quantum.conf and edit the "core_plugin" for v2 API
 
-provider = quantum.plugins.cisco.l2network_plugin.L2Network
+core_plugin = quantum.plugins.cisco.network_plugin.PluginV2
+
+  OR for v1.1 API
+
+core_plugin = quantum.plugins.cisco.l2network_plugin.L2Network
 
 3.  Configure your OpenStack installation to use the 802.1qbh VIF driver and
     Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
@@ -374,7 +700,9 @@ result the run_tests.py script.
    Device-specific sub-plugins can be disabled by commenting out all the entries in:
        etc/quantum/plugins/cisco/cisco_plugins.ini
 
-   Execute the l2networkApi tests only using:
+   Execute the v2 API tests only using:
+       ./run_tests.sh quantum.plugins.cisco.tests.unit.test_api_v2
+   Execute the v1.1 API tests only using:
        ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    If just the ucs or both ucs and the nexus plugins are configured then all the tests could be executed by
@@ -389,13 +717,16 @@ result the run_tests.py script.
    Nexus plugins.
    Device-specific plugins can be disabled by commenting out the entries in:
        etc/quantum/plugins/cisco/cisco_plugins.ini
-   Execute the test script as follows:
 
-   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+   Execute the v2 API tests only using:
+       ./run_tests.sh quantum.plugins.cisco.tests.unit.test_api_v2
+       or
+       python run_tests.py quantum.plugins.cisco.tests.unit.test_api_v2
 
-   or
-
-   python run_tests.py quantum.plugins.cisco.tests.unit.test_l2networkApi
+   Execute the v1.1 API tests only using:
+       ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+       or
+       python run_tests.py quantum.plugins.cisco.tests.unit.test_l2networkApi
 
 3. Specific Plugin unit test (needs environment setup as indicated in the
    pre-requisites):

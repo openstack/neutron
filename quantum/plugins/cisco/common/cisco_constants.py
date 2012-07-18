@@ -161,3 +161,9 @@ ASSOCIATION_STATUS = 'association_status'
 ATTACHED = 'attached'
 
 DETACHED = 'detached'
+
+NETWORK = 'network'
+PORT = 'port'
+BASE_PLUGIN_REF = 'base_plugin_ref'
+CONTEXT = 'context'
+SUBNET = 'subnet'
