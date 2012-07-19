@@ -48,6 +48,7 @@ cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
 ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
+meta_plugin_config_path = 'etc/quantum/plugins/metaplugin'
 
 DataFiles = [
     (config_path,
@@ -70,6 +71,8 @@ DataFiles = [
     (nvp_plugin_config_path,
         ['etc/quantum/plugins/nicira/nvp.ini']),
     (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
+    (meta_plugin_config_path,
+        ['etc/quantum/plugins/metaplugin/metaplugin.ini'])
 ]
 
 setuptools.setup(

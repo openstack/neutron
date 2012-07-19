@@ -24,6 +24,7 @@ from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
+from quantum.agent.dhcp_agent import DeviceManager
 
 
 class BaseChild(interface.LinuxInterfaceDriver):
@@ -332,3 +333,55 @@ class TestRyuInterfaceDriver(TestBase):
         expected.extend([mock.call().device().link.set_up()])
 
         self.ip.assert_has_calls(expected)
+
+
+class TestMetaInterfaceDriver(TestBase):
+    def setUp(self):
+        super(TestMetaInterfaceDriver, self).setUp()
+        self.conf.register_opts(DeviceManager.OPTS)
+        self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
+        client_cls = self.client_cls_p.start()
+        self.client_inst = mock.Mock()
+        client_cls.return_value = self.client_inst
+
+        fake_network = {'network': {'flavor:id': 'fake1'}}
+        fake_port = {'ports':
+                     [{'mac_address':
+                      'aa:bb:cc:dd:ee:ffa', 'network_id': 'test'}]}
+
+        self.client_inst.list_ports.return_value = fake_port
+        self.client_inst.show_network.return_value = fake_network
+
+        self.conf.set_override('auth_url', 'http://localhost:35357/v2.0')
+        self.conf.set_override('auth_region', 'RegionOne')
+        self.conf.set_override('admin_user', 'quantum')
+        self.conf.set_override('admin_password', 'password')
+        self.conf.set_override('admin_tenant_name', 'service')
+        self.conf.set_override(
+            'meta_flavor_driver_mappings',
+            'fake1:quantum.agent.linux.interface.OVSInterfaceDriver,'
+            'fake2:quantum.agent.linux.interface.BridgeInterfaceDriver')
+
+    def tearDown(self):
+        self.client_cls_p.stop()
+        super(TestMetaInterfaceDriver, self).tearDown()
+
+    def test_get_driver_by_network_id(self):
+        meta_interface = interface.MetaInterfaceDriver(self.conf)
+        driver = meta_interface._get_driver_by_network_id('test')
+        self.assertTrue(isinstance(
+            driver,
+            interface.OVSInterfaceDriver))
+
+    def test_get_driver_by_device_name(self):
+        device_address_p = mock.patch(
+            'quantum.agent.linux.ip_lib.IpLinkCommand.address')
+        device_address = device_address_p.start()
+        device_address.return_value = 'aa:bb:cc:dd:ee:ffa'
+
+        meta_interface = interface.MetaInterfaceDriver(self.conf)
+        driver = meta_interface._get_driver_by_device_name('test')
+        self.assertTrue(isinstance(
+            driver,
+            interface.OVSInterfaceDriver))
+        device_address_p.stop()

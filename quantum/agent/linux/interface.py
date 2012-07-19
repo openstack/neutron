@@ -23,8 +23,8 @@ import netaddr
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
-from quantum.common import exceptions
 from quantum.openstack.common import cfg
+from quantum.openstack.common import importutils
 
 LOG = logging.getLogger(__name__)
 
@@ -36,7 +36,9 @@ OPTS = [
                help='MTU setting for device.'),
     cfg.StrOpt('ryu_api_host',
                default='127.0.0.1:8080',
-               help='Openflow Ryu REST API host:port')
+               help='Openflow Ryu REST API host:port'),
+    cfg.StrOpt('meta_flavor_driver_mappings',
+               help='Mapping between flavor and LinuxInterfaceDriver')
 ]
 
 
@@ -213,3 +215,62 @@ class RyuInterfaceDriver(OVSInterfaceDriver):
         datapath_id = ovs_br.get_datapath_id()
         port_no = ovs_br.get_port_ofport(device_name)
         self.ryu_client.create_port(network_id, datapath_id, port_no)
+
+
+class MetaInterfaceDriver(LinuxInterfaceDriver):
+    def __init__(self, conf):
+        super(MetaInterfaceDriver, self).__init__(conf)
+        from quantumclient.v2_0 import client
+        self.quantum = client.Client(
+            username=self.conf.admin_user,
+            password=self.conf.admin_password,
+            tenant_name=self.conf.admin_tenant_name,
+            auth_url=self.conf.auth_url,
+            auth_strategy=self.conf.auth_strategy,
+            auth_region=self.conf.auth_region
+        )
+        self.flavor_driver_map = {}
+        for flavor, driver_name in [
+                driver_set.split(':')
+                for driver_set in
+                self.conf.meta_flavor_driver_mappings.split(',')]:
+            self.flavor_driver_map[flavor] =\
+                self._load_driver(driver_name)
+
+    def _get_driver_by_network_id(self, network_id):
+        network = self.quantum.show_network(network_id)
+        flavor = network['network']['flavor:id']
+        return self.flavor_driver_map[flavor]
+
+    def _get_driver_by_device_name(self, device_name):
+        device = ip_lib.IPDevice(device_name, self.conf.root_helper)
+        mac_address = device.link.address
+        ports = self.quantum.list_ports(mac_address=mac_address)
+        if not 'ports' in ports or len(ports['ports']) < 1:
+            raise Exception('No port for this device %s' % device_name)
+        return self._get_driver_by_network_id(ports['ports'][0]['network_id'])
+
+    def get_device_name(self, port):
+        driver = self._get_driver_by_network_id(port.network_id)
+        return driver.get_device_name(port)
+
+    def plug(self, network_id, port_id, device_name, mac_address):
+        driver = self._get_driver_by_network_id(network_id)
+        return driver.plug(network_id, port_id, device_name, mac_address)
+
+    def unplug(self, device_name):
+        driver = self._get_driver_by_device_name(device_name)
+        return driver.unplug(device_name)
+
+    def _load_driver(self, driver_provider):
+        LOG.debug("Driver location:%s", driver_provider)
+        # If the plugin can't be found let them know gracefully
+        try:
+            LOG.info("Loading Driver: %s" % driver_provider)
+            plugin_klass = importutils.import_class(driver_provider)
+        except ClassNotFound:
+            LOG.exception("Error loading driver")
+            raise Exception("driver_provider not found.  You can install a "
+                            "Driver with: pip install <plugin-name>\n"
+                            "Example: pip install quantum-sample-driver")
+        return plugin_klass(self.conf)
