@@ -22,28 +22,33 @@ Policy engine for quantum.  Largely copied from nova.
 import os.path
 
 from quantum.common import exceptions
-from quantum.common.utils import find_config_file
 from quantum.openstack.common import cfg
+import quantum.common.utils as utils
 from quantum.openstack.common import policy
 
 
 _POLICY_PATH = None
+_POLICY_CACHE = {}
 
 
 def reset():
     global _POLICY_PATH
     _POLICY_PATH = None
+    _POLICY_CACHE = {}
     policy.reset()
 
 
 def init():
     global _POLICY_PATH
+    global _POLICY_CACHE
     if not _POLICY_PATH:
-        _POLICY_PATH = find_config_file({}, cfg.CONF.policy_file)
+        _POLICY_PATH = utils.find_config_file({}, cfg.CONF.policy_file)
         if not _POLICY_PATH:
             raise exceptions.PolicyNotFound(path=cfg.CONF.policy_file)
-    with open(_POLICY_PATH) as f:
-        _set_brain(f.read())
+    # pass _set_brain to read_cached_file so that the policy brain
+    # is reset only if the file has changed
+    utils.read_cached_file(_POLICY_PATH, _POLICY_CACHE,
+                           reload_func=_set_brain)
 
 
 def _set_brain(data):
