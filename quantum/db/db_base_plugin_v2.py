@@ -640,13 +640,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_network(self, context, network):
         n = network['network']
-        # Ensure id is valid from plugin
-        if n.get('id'):
-            res = attributes._validate_regex(n.get('id'),
-                                             attributes.UUID_PATTERN)
-            if res:
-                raise TypeError('Invalid input for id. Reason: %s.' % res)
-
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, n)
@@ -691,13 +684,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
-        # Ensure id is valid from plugin
-        if s.get('id'):
-            res = attributes._validate_regex(n.get('id'),
-                                             attributes.UUID_PATTERN)
-            if res:
-                raise TypeError('Invalid input for id. Reason: %s.' % res)
-
         net = netaddr.IPNetwork(s['cidr'])
         if s['gateway_ip'] == attributes.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
@@ -755,13 +741,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_port(self, context, port):
         p = port['port']
-        # Ensure id is valid from plugin
-        if p.get('id'):
-            res = attributes._validate_regex(n.get('id'),
-                                             attributes.UUID_PATTERN)
-            if res:
-                raise TypeError('Invalid input for id. Reason: %s.' % res)
-
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
