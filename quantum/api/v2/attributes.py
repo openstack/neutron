@@ -29,7 +29,19 @@ import logging
 import netaddr
 import re
 
+from quantum.common import exceptions as q_exc
+
+
 LOG = logging.getLogger(__name__)
+
+
+def _validate_boolean(data, valid_values=None):
+    if data in [True, False]:
+        return
+    else:
+        msg = _("%s is not boolean") % data
+        LOG.debug("validate_boolean: %s", msg)
+        return msg
 
 
 def _validate_values(data, valid_values=None):
@@ -82,13 +94,32 @@ def _validate_regex(data, valid_values=None):
         return msg
 
 
+def convert_to_boolean(data):
+    try:
+        i = int(data)
+        if i in [True, False]:
+            # Ensure that the value is True or False
+            if i:
+                return True
+            else:
+                return False
+    except ValueError, TypeError:
+        if (data == "True" or data == "true"):
+            return True
+        if (data == "False" or data == "false"):
+            return False
+    msg = _("%s is not boolean") % data
+    raise q_exc.InvalidInput(error_message=msg)
+
+
 HEX_ELEM = '[0-9A-Fa-f]'
 UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{4}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{12}'])
 
 # Dictionary that maintains a list of validation functions
-validators = {'type:values': _validate_values,
+validators = {'type:boolean': _validate_boolean,
+              'type:values': _validate_values,
               'type:mac_address': _validate_mac_address,
               'type:ip_address': _validate_ip_address,
               'type:subnet': _validate_subnet,
@@ -114,8 +145,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'name': {'allow_post': True, 'allow_put': True},
         'subnets': {'allow_post': True, 'allow_put': True, 'default': []},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
-                           'default': True,
-                           'validate': {'type:values': [True, False]}},
+                           'default': True, 'convert_to': convert_to_boolean,
+                           'validate': {'type:boolean': None}},
         'status': {'allow_post': False, 'allow_put': False},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True},
@@ -126,8 +157,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'network_id': {'allow_post': True, 'allow_put': False,
                        'validate': {'type:regex': UUID_PATTERN}},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
-                           'default': True,
-                           'validate': {'type:values': [True, False]}},
+                           'default': True, 'convert_to': convert_to_boolean,
+                           'validate': {'type:boolean': None}},
         'mac_address': {'allow_post': True, 'allow_put': False,
                         'default': ATTR_NOT_SPECIFIED,
                         'validate': {'type:mac_address': None}},
@@ -143,6 +174,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:regex': UUID_PATTERN}},
         'ip_version': {'allow_post': True, 'allow_put': False,
+                       'convert_to': int,
                        'validate': {'type:values': [4, 6]}},
         'network_id': {'allow_post': True, 'allow_put': False,
                        'validate': {'type:regex': UUID_PATTERN}},

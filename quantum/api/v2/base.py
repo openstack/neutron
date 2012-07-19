@@ -327,15 +327,19 @@ class Controller(object):
                 if attr_vals['allow_post']:
                     res_dict[attr] = res_dict.get(attr,
                                                   attr_vals.get('default'))
-
         else:  # PUT
             for attr, attr_vals in self._attr_info.iteritems():
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
                     raise webob.exc.HTTPUnprocessableEntity(msg)
 
-        # Check that configured values are correct
         for attr, attr_vals in self._attr_info.iteritems():
+            # Convert values if necessary
+            if ('convert_to' in attr_vals and
+                attr in res_dict):
+                res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
+
+            # Check that configured values are correct
             if not ('validate' in attr_vals and
                     attr in res_dict and
                     res_dict[attr] != attributes.ATTR_NOT_SPECIFIED):

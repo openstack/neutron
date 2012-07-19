@@ -777,7 +777,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_invalid_mac_address(self):
         with self.network() as network:
@@ -821,12 +821,21 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                               net['network']['name'])
 
     def test_invalid_admin_status(self):
-        data = {'network': {'name': 'net',
-                            'admin_state_up': 7,
-                            'tenant_id': self._tenant_id}}
-        network_req = self.new_create_request('networks', data)
-        res = network_req.get_response(self.api)
-        self.assertEquals(res.status_int, 422)
+        fmt = 'json'
+        value = [[7, False, 400], [True, True, 201], ["True", True, 201],
+                 ["true", True, 201], [1, True, 201], ["False", False, 201],
+                 [False, False, 201], ["false", False, 201],
+                 ["7", False, 400]]
+        for v in value:
+            data = {'network': {'name': 'net',
+                                'admin_state_up': v[0],
+                                'tenant_id': self._tenant_id}}
+            network_req = self.new_create_request('networks', data)
+            req = network_req.get_response(self.api)
+            self.assertEquals(req.status_int, v[2])
+            if v[2] == 201:
+                res = self.deserialize(fmt, req)
+                self.assertEquals(res['network']['admin_state_up'], v[1])
 
 
 class TestSubnetsV2(QuantumDbPluginV2TestCase):
