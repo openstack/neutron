@@ -90,7 +90,7 @@ class ResourceExtensionTest(unittest.TestCase):
         member = {'notimplemented_function': "GET"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                member_actions=member)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         # Ideally we would check for a 501 code here but webtest doesn't take
         # anything that is below 200 or above 400 so we can't actually check
@@ -106,7 +106,7 @@ class ResourceExtensionTest(unittest.TestCase):
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension(
             'tweedles', self.ResourceExtensionController())
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
         index_response = test_app.get("/tweedles")
         self.assertEqual(200, index_response.status_int)
         self.assertEqual("resource index", index_response.body)
@@ -119,7 +119,7 @@ class ResourceExtensionTest(unittest.TestCase):
         member = {'custom_member_action': "GET"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                member_actions=member)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.get("/tweedles/some_id/custom_member_action")
         self.assertEqual(200, response.status_int)
@@ -131,7 +131,7 @@ class ResourceExtensionTest(unittest.TestCase):
         collections = {'custom_collection_action': "GET"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.get("/tweedles/custom_collection_action")
         self.assertEqual(200, response.status_int)
@@ -142,7 +142,7 @@ class ResourceExtensionTest(unittest.TestCase):
         collections = {'custom_collection_action': "PUT"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.put("/tweedles/custom_collection_action")
 
@@ -154,7 +154,7 @@ class ResourceExtensionTest(unittest.TestCase):
         collections = {'custom_collection_action': "POST"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.post("/tweedles/custom_collection_action")
 
@@ -166,7 +166,7 @@ class ResourceExtensionTest(unittest.TestCase):
         collections = {'custom_collection_action': "DELETE"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.delete("/tweedles/custom_collection_action")
 
@@ -178,7 +178,7 @@ class ResourceExtensionTest(unittest.TestCase):
         collections = {'custom_collection_action': "GET"}
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.get("/tweedles/custom_collection_action.json")
 
@@ -192,7 +192,7 @@ class ResourceExtensionTest(unittest.TestCase):
         res_ext = extensions.ResourceExtension('tweedles', controller,
                                                collection_actions=collections,
                                                parent=parent)
-        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
 
         response = test_app.get("/beetles/beetle_id"
                                 "/tweedles/custom_collection_action")
@@ -201,7 +201,7 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
     def test_returns_404_for_non_existant_extension(self):
-        test_app = setup_extensions_test_app(SimpleExtensionManager(None))
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(None))
 
         response = test_app.get("/non_extistant_extension", status='*')
 
@@ -212,7 +212,7 @@ class ActionExtensionTest(unittest.TestCase):
 
     def setUp(self):
         super(ActionExtensionTest, self).setUp()
-        self.extension_app = setup_extensions_test_app()
+        self.extension_app = _setup_extensions_test_app()
 
     def test_extended_action_for_adding_extra_data(self):
         action_name = 'FOXNSOX:add_tweedle'
@@ -287,7 +287,7 @@ class RequestExtensionTest(BaseTest):
         self.assertEqual('knox', response_data['fort'])
 
     def test_get_resources(self):
-        app = setup_extensions_test_app()
+        app = _setup_extensions_test_app()
 
         response = app.get("/dummy_resources/1?chewing=newblue")
 
@@ -319,7 +319,7 @@ class RequestExtensionTest(BaseTest):
                                               '/dummy_resources/:(id)',
                                               handler)
         manager = SimpleExtensionManager(None, None, req_ext)
-        return setup_extensions_test_app(manager)
+        return _setup_extensions_test_app(manager)
 
 
 class ExtensionManagerTest(unittest.TestCase):
@@ -434,7 +434,7 @@ class ExtensionControllerTest(unittest.TestCase):
 
     def setUp(self):
         super(ExtensionControllerTest, self).setUp()
-        self.test_app = setup_extensions_test_app()
+        self.test_app = _setup_extensions_test_app()
 
     def test_index_gets_all_registerd_extensions(self):
         response = self.test_app.get("/extensions")
@@ -482,7 +482,7 @@ def setup_extensions_middleware(extension_manager=None):
     return ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 
-def setup_extensions_test_app(extension_manager=None):
+def _setup_extensions_test_app(extension_manager=None):
     return TestApp(setup_extensions_middleware(extension_manager))
 
 

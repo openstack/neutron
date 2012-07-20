@@ -49,6 +49,15 @@ class TestDhcpAgent(unittest.TestCase):
     def tearDown(self):
         self.driver_cls_p.stop()
 
+    def test_dhcp_agent_main(self):
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+            with mock.patch('quantum.agent.dhcp_agent.DhcpAgent') as dhcp:
+                dhcp_agent.main()
+                dev_mgr.assert_called_once(mock.ANY, 'sudo')
+                dhcp.assert_has_calls([
+                    mock.call(mock.ANY),
+                    mock.call().daemon_loop()])
+
     def test_daemon_loop_survives_get_network_state_delta_failure(self):
         def stop_loop(*args):
             self.dhcp._run = False
@@ -254,8 +263,6 @@ class TestDeviceManager(unittest.TestCase):
                 self.filter_called = True
                 raise sqlsoup.SQLAlchemyError()
 
-            return filter_results.pop(0)
-
         mock_db = mock.Mock()
         mock_db.ports = mock.Mock(name='ports2')
         mock_db.ports.filter_by = mock.Mock(
@@ -305,8 +312,6 @@ class TestDeviceManager(unittest.TestCase):
                 self.filter_called = True
                 raise sqlsoup.SQLAlchemyError()
 
-            return filter_results.pop(0)
-
         mock_db = mock.Mock()
         mock_db.ports = mock.Mock(name='ports2')
         mock_db.ports.filter_by = mock.Mock(
@@ -336,13 +341,3 @@ class TestAugmentingWrapper(unittest.TestCase):
         wrapped = dhcp_agent.AugmentingWrapper(net, db)
         self.assertEqual(wrapped.name, 'foo')
         self.assertEqual(repr(net), repr(wrapped))
-
-
-def test_dhcp_agent_main():
-    with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
-        with mock.patch('quantum.agent.dhcp_agent.DhcpAgent') as dhcp:
-            dhcp_agent.main()
-            dev_mgr.assert_called_once(mock.ANY, 'sudo')
-            dhcp.assert_has_calls([
-                mock.call(mock.ANY),
-                mock.call().daemon_loop()])
