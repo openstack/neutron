@@ -128,11 +128,7 @@ class ResourceIndexTestCase(unittest.TestCase):
         self.assertTrue(link['rel'] == 'self')
 
 
-class APIv2TestCase(unittest.TestCase):
-    # NOTE(jkoelker) This potentially leaks the mock object if the setUp
-    #                raises without being caught. Using unittest2
-    #                or dropping 2.6 support so we can use addCleanup
-    #                will get around this.
+class APIv2TestBase(unittest.TestCase):
     def setUp(self):
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
         # Ensure 'stale' patched copies of the plugin are never returned
@@ -155,6 +151,12 @@ class APIv2TestCase(unittest.TestCase):
         self.plugin = None
         cfg.CONF.reset()
 
+
+class APIv2TestCase(APIv2TestBase):
+    # NOTE(jkoelker) This potentially leaks the mock object if the setUp
+    #                raises without being caught. Using unittest2
+    #                or dropping 2.6 support so we can use addCleanup
+    #                will get around this.
     def test_verbose_attr(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
@@ -387,7 +389,7 @@ class APIv2TestCase(unittest.TestCase):
 
 # Note: since all resources use the same controller and validation
 # logic, we actually get really good coverage from testing just networks.
-class JSONV2TestCase(APIv2TestCase):
+class JSONV2TestCase(APIv2TestBase):
 
     def _test_list(self, req_tenant_id, real_tenant_id):
         env = {}
@@ -729,3 +731,42 @@ class V2Views(unittest.TestCase):
         keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
                 'ip_version', 'cidr')
         self._view(keys, views.subnet)
+
+
+class QuotaTest(APIv2TestBase):
+    def test_create_network_quota(self):
+        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
+        net_id = _uuid()
+        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
+        full_input['network'].update(initial_input['network'])
+
+        return_value = {'id': net_id, 'status': "ACTIVE"}
+        return_value.update(full_input['network'])
+        return_networks = {'networks': [return_value]}
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_networks
+        res = self.api.post_json(
+            _get_path('networks'), initial_input, expect_errors=True)
+        instance.get_networks.assert_called_with(mock.ANY,
+                                                 filters=mock.ANY)
+        self.assertTrue("Quota exceeded for resources" in
+                        res.json['QuantumError'])
+
+    def test_create_network_quota_without_limit(self):
+        cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
+        net_id = _uuid()
+        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
+        full_input['network'].update(initial_input['network'])
+        return_networks = []
+        for i in xrange(0, 3):
+            return_value = {'id': net_id + str(i), 'status': "ACTIVE"}
+            return_value.update(full_input['network'])
+            return_networks.append(return_value)
+        self.assertEquals(3, len(return_networks))
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_networks
+        res = self.api.post_json(
+            _get_path('networks'), initial_input)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)

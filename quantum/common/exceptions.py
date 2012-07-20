@@ -168,3 +168,16 @@ class PreexistingDeviceFailure(QuantumException):
 
 class SudoRequired(QuantumException):
     message = _("Sudo priviledge is required to run this command.")
+
+
+class QuotaResourceUnknown(QuantumException):
+    message = _("Unknown quota resources %(unknown)s.")
+
+
+class OverQuota(QuantumException):
+    message = _("Quota exceeded for resources: %(overs)s")
+
+
+class InvalidQuotaValue(QuantumException):
+    message = _("Change would make usage less than 0 for the following "
+                "resources: %(unders)s")
