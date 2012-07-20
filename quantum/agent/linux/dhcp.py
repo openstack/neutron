@@ -24,6 +24,7 @@ import tempfile
 
 import netaddr
 
+from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
@@ -110,7 +111,10 @@ class DhcpLocalProcess(DhcpBase):
         pid = self.pid
 
         if self.active:
-            utils.execute(['kill', '-9', pid], self.root_helper)
+            cmd = ['kill', '-9', pid]
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=self.network.id)
+            ip_wrapper.netns.execute(cmd)
             self.device_delegate.destroy(self.network)
         elif pid:
             LOG.debug(_('DHCP for %s pid %d is stale, ignoring command') %
@@ -178,7 +182,6 @@ class Dnsmasq(DhcpLocalProcess):
         """Spawns a Dnsmasq process for the network."""
         interface_name = self.device_delegate.get_interface_name(self.network)
         cmd = [
-            'NETWORK_ID=%s' % self.network.id,
             # TODO (mark): this is dhcpbridge script we'll need to know
             # when an IP address has been released
             'dnsmasq',
@@ -219,7 +222,9 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dnsmasq_dns_server:
             cmd.append('--server=%s' % self.conf.dnsmasq_dns_server)
 
-        utils.execute(cmd, self.root_helper)
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      namespace=self.network.id)
+        ip_wrapper.netns.execute(cmd)
 
     def reload_allocations(self):
         """If all subnets turn off dhcp, kill the process."""
@@ -232,7 +237,10 @@ class Dnsmasq(DhcpLocalProcess):
         """Rebuilds the dnsmasq config and signal the dnsmasq to reload."""
         self._output_hosts_file()
         self._output_opts_file()
-        utils.execute(['kill', '-HUP', self.pid], self.root_helper)
+        cmd = ['kill', '-HUP', self.pid]
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      namespace=self.network.id)
+        ip_wrapper.netns.execute(cmd)
         LOG.debug(_('Reloading allocations for network: %s') % self.network.id)
 
     def _output_hosts_file(self):
