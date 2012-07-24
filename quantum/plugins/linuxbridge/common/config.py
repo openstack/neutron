@@ -42,15 +42,7 @@ agent_opts = [
 ]
 
 
-def parse(config_file):
-    conf = cfg.CONF
-    if 'config_file' in conf:
-        conf.config_file.append(config_file)
-    else:
-        conf.config_file = [config_file]
-    conf(args=[], default_config_files=conf.config_file)
-    conf.register_opts(vlan_opts, "VLANS")
-    conf.register_opts(database_opts, "DATABASE")
-    conf.register_opts(bridge_opts, "LINUX_BRIDGE")
-    conf.register_opts(agent_opts, "AGENT")
-    return conf
+cfg.CONF.register_opts(vlan_opts, "VLANS")
+cfg.CONF.register_opts(database_opts, "DATABASE")
+cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
+cfg.CONF.register_opts(agent_opts, "AGENT")

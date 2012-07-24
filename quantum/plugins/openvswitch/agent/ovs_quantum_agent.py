@@ -21,13 +21,14 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 
 import logging
-from optparse import OptionParser
 import sys
 import time
 
 from sqlalchemy.ext import sqlsoup
 
 from quantum.agent.linux import ovs_lib
+from quantum.common import config as logging_config
+from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.common import config
 
 logging.basicConfig()
@@ -548,51 +549,27 @@ class OVSQuantumTunnelAgent(object):
 
 
 def main():
-    usagestr = "%prog [OPTIONS] <config file>"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      action="store_true", default=False,
-                      help="turn on verbose logging")
+    cfg.CONF(args=sys.argv, project='quantum')
 
-    options, args = parser.parse_args()
-
-    if options.verbose:
-        LOG.setLevel(logging.DEBUG)
-    else:
-        LOG.setLevel(logging.WARNING)
-
-    if len(args) != 1:
-        parser.print_help()
-        sys.exit(1)
-
-    config_file = args[0]
-    conf = config.parse(config_file)
-
-    if conf.AGENT.log_file:
-        # Avoid to redirect traces to stdout/stderr
-        logging.getLogger().handlers = []
-        handler = logging.FileHandler(conf.AGENT.log_file)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        handler.setFormatter(formatter)
-        LOG.addHandler(handler)
-        LOG.debug('Verbose: %s', options.verbose)
+    # (TODO) gary - swap with common logging
+    logging_config.setup_logging(cfg.CONF)
 
     # Determine which agent type to use.
-    enable_tunneling = conf.OVS.enable_tunneling
-    integ_br = conf.OVS.integration_bridge
-    db_connection_url = conf.DATABASE.sql_connection
-    polling_interval = conf.AGENT.polling_interval
-    reconnect_interval = conf.DATABASE.reconnect_interval
-    root_helper = conf.AGENT.root_helper
+    enable_tunneling = cfg.CONF.OVS.enable_tunneling
+    integ_br = cfg.CONF.OVS.integration_bridge
+    db_connection_url = cfg.CONF.DATABASE.sql_connection
+    polling_interval = cfg.CONF.AGENT.polling_interval
+    reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
+    root_helper = cfg.CONF.AGENT.root_helper
 
     # Determine API Version to use
-    target_v2_api = conf.AGENT.target_v2_api
+    target_v2_api = cfg.CONF.AGENT.target_v2_api
 
     if enable_tunneling:
         # Get parameters for OVSQuantumTunnelAgent
-        tun_br = conf.OVS.tunnel_bridge
+        tun_br = cfg.CONF.OVS.tunnel_bridge
         # Mandatory parameter.
-        local_ip = conf.OVS.local_ip
+        local_ip = cfg.CONF.OVS.local_ip
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, local_ip, root_helper,
                                        polling_interval, reconnect_interval,
                                        target_v2_api)

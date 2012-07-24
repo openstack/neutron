@@ -21,17 +21,14 @@ from sqlalchemy import func
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
-from quantum.common.utils import find_config_file
 import quantum.db.api as db
+from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
 from quantum.plugins.linuxbridge.db import l2network_models_v2
 
 LOG = logging.getLogger(__name__)
-CONF_FILE = find_config_file({'plugin': 'linuxbridge'},
-                             "linuxbridge_conf.ini")
-CONF = config.parse(CONF_FILE)
 
 # The global variable for the database version model
 L2_MODEL = l2network_models
@@ -39,9 +36,10 @@ L2_MODEL = l2network_models
 
 def initialize(base=None):
     global L2_MODEL
-    options = {"sql_connection": "%s" % CONF.DATABASE.sql_connection}
-    options.update({"sql_max_retries": CONF.DATABASE.sql_max_retries})
-    options.update({"reconnect_interval": CONF.DATABASE.reconnect_interval})
+    options = {"sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection}
+    options.update({"sql_max_retries": cfg.CONF.DATABASE.sql_max_retries})
+    options.update({"reconnect_interval":
+                   cfg.CONF.DATABASE.reconnect_interval})
     if base:
         options.update({"base": base})
         L2_MODEL = l2network_models_v2
@@ -53,8 +51,8 @@ def create_vlanids():
     """Prepopulate the vlan_bindings table"""
     LOG.debug("create_vlanids() called")
     session = db.get_session()
-    start = CONF.VLANS.vlan_start
-    end = CONF.VLANS.vlan_end
+    start = cfg.CONF.VLANS.vlan_start
+    end = cfg.CONF.VLANS.vlan_end
     try:
         vlanid = session.query(L2_MODEL.VlanID).one()
     except exc.MultipleResultsFound:
@@ -120,7 +118,8 @@ def release_vlanid(vlan_id):
                   filter_by(vlan_id=vlan_id).
                   one())
         vlanid["vlan_used"] = False
-        if vlan_id >= CONF.VLANS.vlan_start and vlan_id <= CONF.VLANS.vlan_end:
+        if (vlan_id >= cfg.CONF.VLANS.vlan_start and
+            vlan_id <= cfg.CONF.VLANS.vlan_end):
             session.merge(vlanid)
         else:
             session.delete(vlanid)

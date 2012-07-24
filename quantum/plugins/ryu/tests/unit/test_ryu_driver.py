@@ -17,22 +17,19 @@
 
 import uuid
 
-from quantum.common.utils import find_config_file
 import quantum.db.api as db
+from quantum.openstack.common import cfg
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
 from quantum.plugins.ryu.tests.unit import utils
 from quantum.plugins.ryu.tests.unit.utils import patch_fake_ryu_client
 
 
-CONF_FILE = find_config_file({"plugin": "ryu"}, "ryu.ini")
-
-
 class RyuDriverTest(BaseRyuTest):
     """Class conisting of OFPRyuDriver unit tests"""
     def setUp(self):
         super(RyuDriverTest, self).setUp()
-        self.conf = config.parse(CONF_FILE)
+        self.conf = cfg.CONF
         # fake up ryu.app.client and ryu.app.rest_nw_id
         # With those, plugin can be tested without ryu installed
         self.module_patcher = patch_fake_ryu_client()

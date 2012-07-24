@@ -30,6 +30,7 @@ from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
+from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.common import config
 from quantum.plugins.openvswitch import ovs_db
 from quantum.plugins.openvswitch import ovs_db_v2
@@ -38,8 +39,6 @@ from quantum import policy
 
 
 LOG = logging.getLogger("ovs_quantum_plugin")
-CONF_FILE = find_config_file({"plugin": "openvswitch"},
-                             "ovs_quantum_plugin.ini")
 
 
 # Exception thrown if no more VLANs are available
@@ -117,15 +116,14 @@ class VlanMap(object):
 class OVSQuantumPlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
-        conf = config.parse(CONF_FILE)
-        options = {"sql_connection": conf.DATABASE.sql_connection}
-        sql_max_retries = conf.DATABASE.sql_max_retries
+        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
+        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
         options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = conf.DATABASE.reconnect_interval
+        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        self.vmap = VlanMap(conf.OVS.vlan_min, conf.OVS.vlan_max)
+        self.vmap = VlanMap(cfg.CONF.OVS.vlan_min, cfg.CONF.OVS.vlan_max)
         # Populate the map with anything that is already present in the
         # database
         self.vmap.populate_already_used(ovs_db.get_vlans())
@@ -267,18 +265,16 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     supported_extension_aliases = ["provider"]
 
     def __init__(self, configfile=None):
-        conf = config.parse(CONF_FILE)
-        self.enable_tunneling = conf.OVS.enable_tunneling
-
-        options = {"sql_connection": conf.DATABASE.sql_connection}
+        self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
+        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
-        sql_max_retries = conf.DATABASE.sql_max_retries
+        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
         options.update({"sql_max_retries": sql_max_retries})
         reconnect_interval = conf.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        self.vmap = VlanMap(conf.OVS.vlan_min, conf.OVS.vlan_max)
+        self.vmap = VlanMap(cfg.CONF.OVS.vlan_min, cfg.CONF.OVS.vlan_max)
         self.vmap.populate_already_used(ovs_db_v2.get_vlans())
 
     # TODO(rkukura) Use core mechanism for attribute authorization

@@ -23,6 +23,7 @@ import os
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
+from quantum.openstack.common import cfg
 from quantum.plugins.ryu.common import config
 from quantum.quantum_plugin_base import QuantumPluginBase
 
@@ -54,25 +55,14 @@ class OVSQuantumPluginBase(QuantumPluginBase):
     """
     def __init__(self, conf_file, mod_file, configfile=None):
         super(OVSQuantumPluginBase, self).__init__()
-        if configfile is None:
-            if os.path.exists(conf_file):
-                configfile = conf_file
-            else:
-                configfile = find_config(os.path.abspath(
-                    os.path.dirname(__file__)))
-        if configfile is None:
-            raise Exception("Configuration file \"%s\" doesn't exist" %
-                            (configfile))
-        LOG.debug("Using configuration file: %s" % configfile)
-        conf = config.parse(configfile)
-        options = {"sql_connection": conf.DATABASE.sql_connection}
-        sql_max_retries = conf.DATABASE.sql_max_retries
+        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
+        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
         options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = conf.DATABASE.reconnect_interval
+        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        self.conf = conf
+        self.conf = cfg.CONF
         # Subclass must set self.driver to its own OVSQuantumPluginDriverBase
         self.driver = None
 

@@ -23,7 +23,6 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 import logging
-from optparse import OptionParser
 import os
 import shlex
 import signal
@@ -33,6 +32,8 @@ import time
 
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
+from quantum.openstack.common import cfg
+from quantum.common import config as logging_config
 from quantum.plugins.linuxbridge.common import config
 
 from quantum.agent.linux import utils
@@ -486,35 +487,21 @@ class LinuxBridgeQuantumAgent:
 
 
 def main():
-    usagestr = "%prog [OPTIONS] <config file>"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      action="store_true", default=False,
-                      help="turn on verbose logging")
+    cfg.CONF(args=sys.argv, project='quantum')
 
-    options, args = parser.parse_args()
+    # (TODO) gary - swap with common logging
+    logging_config.setup_logging(cfg.CONF)
 
-    if options.verbose:
-        LOG.setLevel(logging.DEBUG)
-    else:
-        LOG.setLevel(logging.WARNING)
-
-    if len(args) != 1:
-        parser.print_help()
-        sys.exit(1)
-
-    config_file = args[0]
-    conf = config.parse(config_file)
     br_name_prefix = BRIDGE_NAME_PREFIX
-    physical_interface = conf.LINUX_BRIDGE.physical_interface
-    polling_interval = conf.AGENT.polling_interval
-    reconnect_interval = conf.DATABASE.reconnect_interval
-    root_helper = conf.AGENT.root_helper
+    physical_interface = cfg.CONF.LINUX_BRIDGE.physical_interface
+    polling_interval = cfg.CONF.AGENT.polling_interval
+    reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
+    root_helper = cfg.CONF.AGENT.root_helper
     'Establish database connection and load models'
-    db_connection_url = conf.DATABASE.sql_connection
+    db_connection_url = cfg.CONF.DATABASE.sql_connection
     plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
                                      polling_interval, reconnect_interval,
-                                     root_helper, conf.AGENT.target_v2_api)
+                                     root_helper, cfg.CONF.AGENT.target_v2_api)
     LOG.info("Agent initialized successfully, now running... ")
     plugin.daemon_loop(db_connection_url)
 

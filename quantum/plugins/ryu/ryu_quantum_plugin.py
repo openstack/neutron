@@ -34,7 +34,6 @@ from quantum.plugins.ryu import ovs_quantum_plugin_base
 from quantum.plugins.ryu.common import config
 
 LOG = logging.getLogger(__name__)
-CONF_FILE = find_config_file({"plugin": "ryu"}, "ryu.ini")
 
 
 class OFPRyuDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
@@ -70,28 +69,20 @@ class OFPRyuDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
 
 class RyuQuantumPlugin(ovs_quantum_plugin_base.OVSQuantumPluginBase):
     def __init__(self, configfile=None):
-        super(RyuQuantumPlugin, self).__init__(CONF_FILE, __file__, configfile)
+        super(RyuQuantumPlugin, self).__init__(__file__, configfile)
         self.driver = OFPRyuDriver(self.conf)
 
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def __init__(self, configfile=None):
-        if configfile is None:
-            if os.path.exists(CONF_FILE):
-                configfile = CONF_FILE
-        if configfile is None:
-            raise Exception("Configuration file \"%s\" doesn't exist" %
-                            (configfile))
-        LOG.debug("Using configuration file: %s" % configfile)
-        conf = config.parse(configfile)
-        options = {"sql_connection": conf.DATABASE.sql_connection}
+        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
-        reconnect_interval = conf.DATABASE.reconnect_interval
+        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        ofp_con_host = conf.OVS.openflow_controller
-        ofp_api_host = conf.OVS.openflow_rest_api
+        ofp_con_host = cfg.CONF.OVS.openflow_controller
+        ofp_api_host = cfg.CONF.OVS.openflow_rest_api
 
         if ofp_con_host is None or ofp_api_host is None:
             raise q_exc.Invalid("invalid configuration. check ryu.ini")

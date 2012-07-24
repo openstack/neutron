@@ -24,6 +24,7 @@ import logging
 import unittest2 as unittest
 
 import quantum.db.api as db
+from quantum.openstack.common import cfg
 import quantum.plugins.linuxbridge.common.exceptions as c_exc
 import quantum.plugins.linuxbridge.db.l2network_db as l2network_db
 
@@ -265,3 +266,24 @@ class L2networkDBTest(unittest.TestCase):
         for vlan in vlans:
             netid = vlan["net-id"]
             self.dbtest.delete_vlan_binding(netid)
+
+
+class ConfigurationTest(unittest.TestCase):
+
+    def test_defaults(self):
+        self.assertEqual('sqlite://',
+                         cfg.CONF.DATABASE.sql_connection)
+        self.assertEqual(-1,
+                         cfg.CONF.DATABASE.sql_max_retries)
+        self.assertEqual(2,
+                         cfg.CONF.DATABASE.reconnect_interval)
+        self.assertEqual(2,
+                         cfg.CONF.AGENT.polling_interval)
+        self.assertEqual('sudo',
+                         cfg.CONF.AGENT.root_helper)
+        self.assertEqual(1000,
+                         cfg.CONF.VLANS.vlan_start)
+        self.assertEqual(3000,
+                         cfg.CONF.VLANS.vlan_end)
+        self.assertEqual('eth1',
+                         cfg.CONF.LINUX_BRIDGE.physical_interface)
