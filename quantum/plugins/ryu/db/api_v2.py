@@ -56,9 +56,11 @@ class TunnelKey(object):
 
         if (key_min < self._KEY_MIN_HARD or key_max > self._KEY_MAX_HARD or
                 key_min > key_max):
-            raise ValueError('Invalid tunnel key options '
-                             'tunnel_key_min: %d tunnel_key_max: %d. '
-                             'Using default value' % (key_min, key_min))
+            raise ValueError(_('Invalid tunnel key options '
+                               'tunnel_key_min: %(key_min)d '
+                               'tunnel_key_max: %(key_max)d. '
+                               'Using default value') % {'key_min': key_min,
+                                                         'key_max': key_max})
 
     def _last_key(self, session):
         try:
@@ -133,9 +135,10 @@ class TunnelKey(object):
             ).params(last_key=last_key).one()
 
         new_key = new_key[0]  # the result is tuple.
-        LOG.debug("last_key %s new_key %s", last_key, new_key)
+        LOG.debug(_("last_key %(last_key)s new_key %(new_key)s") %
+                  {"last_key": last_key, "new_key": new_key})
         if new_key > self.key_max:
-            LOG.debug("no key found")
+            LOG.debug(_("no key found"))
             raise orm_exc.NoResultFound()
         return new_key
 
@@ -168,8 +171,8 @@ class TunnelKey(object):
             count += 1
             if count > self._TRANSACTION_RETRY_MAX:
                 # if this happens too often, increase _TRANSACTION_RETRY_MAX
-                LOG.warn("Transaction retry reaches to %d. "
-                         "abandan to allocate tunnel key." % count)
+                LOG.warn(_("Transaction retry reaches to %d. "
+                           "abandan to allocate tunnel key."), count)
                 raise q_exc.ResourceExhausted()
 
         return new_key
@@ -182,3 +185,53 @@ class TunnelKey(object):
     def all_list(self):
         session = db.get_session()
         return session.query(ryu_models_v2.TunnelKey).all()
+
+
+def port_binding_create(port_id, net_id, dpid, port_no):
+    session = db.get_session()
+    session.query(models_v2.Port).filter(
+        models_v2.Port.network_id == net_id).filter(
+            models_v2.Port.id == port_id).one()  # confirm port exists
+    with session.begin():
+        port_binding = ryu_models_v2.PortBinding(net_id, port_id,
+                                                 dpid, port_no)
+        session.add(port_binding)
+        session.flush()
+        return port_binding
+
+
+def port_binding_get(port_id, net_id):
+    session = db.get_session()
+    session.query(models_v2.Port).filter(
+        models_v2.Port.network_id == net_id).filter(
+            models_v2.Port.id == port_id).one()  # confirm port exists
+    return session.query(ryu_models_v2.PortBinding).filter_by(
+        network_id=net_id).filter_by(port_id=port_id).one()
+
+
+def port_binding_destroy(session, port_id, net_id):
+    try:
+        session.query(models_v2.Port).filter(
+            models_v2.Port.network_id == net_id).filter(
+                models_v2.Port.id == port_id).one()  # confirm port exists
+        port_binding = session.query(ryu_models_v2.PortBinding).filter_by(
+            network_id=net_id).filter_by(port_id=port_id).one()
+        session.delete(port_binding)
+        session.flush()
+        return port_binding
+    except orm_exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id, net_id=net_id)
+
+
+def port_binding_all_list(session):
+    return session.query(ryu_models_v2.PortBinding).all()
+
+
+def set_port_status(session, port_id, status):
+    try:
+        port = session.query(models_v2.Port).filter_by(id=port_id).one()
+        port['status'] = status
+        session.merge(port)
+        session.flush()
+    except orm_exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id, net_id=None)

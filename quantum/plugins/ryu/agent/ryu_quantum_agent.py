@@ -20,20 +20,71 @@
 #    under the License.
 # @author: Isaku Yamahata
 
+import httplib
+import socket
 import sys
-import time
 
-from ryu.app.client import OFPClient
+import netifaces
+from ryu.app import client
+from ryu.app import conf_switch_key
 from ryu.app import rest_nw_id
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
 from quantum.common import config as logging_config
-from quantum.common import constants
 from quantum.openstack.common import cfg
+from quantum.openstack.common.cfg import NoSuchGroupError
+from quantum.openstack.common.cfg import NoSuchOptError
 from quantum.openstack.common import log as LOG
 from quantum.plugins.ryu.common import config
+
+
+# This is copied of nova.flags._get_my_ip()
+# Agent shouldn't depend on nova module
+def _get_my_ip():
+    """
+    Returns the actual ip of the local machine.
+
+    This code figures out what source address would be used if some traffic
+    were to be sent out to some well known address on the Internet. In this
+    case, a Google DNS server is used, but the specific address does not
+    matter much.  No traffic is actually sent.
+    """
+    csock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    csock.connect(('8.8.8.8', 80))
+    (addr, _port) = csock.getsockname()
+    csock.close()
+    return addr
+
+
+def _get_ip(cfg_ip_str, cfg_interface_str):
+    ip = None
+    try:
+        ip = getattr(cfg.CONF.OVS, cfg_ip_str)
+    except (NoSuchOptError, NoSuchGroupError):
+        pass
+    if ip:
+        return ip
+
+    iface = None
+    try:
+        iface = getattr(cfg.CONF.OVS, cfg_interface_str)
+    except (NoSuchOptError, NoSuchGroupError):
+        pass
+    if iface:
+        iface = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]
+        return iface['addr']
+
+    return _get_my_ip()
+
+
+def _get_tunnel_ip():
+    return _get_ip('tunnel_ip', 'tunnel_interface')
+
+
+def _get_ovsdb_ip():
+    return _get_ip('ovsdb_ip', 'ovsdb_interface')
 
 
 class OVSBridge(ovs_lib.OVSBridge):
@@ -42,65 +93,90 @@ class OVSBridge(ovs_lib.OVSBridge):
         self.datapath_id = None
 
     def find_datapath_id(self):
-        # ovs-vsctl get Bridge br-int datapath_id
-        res = self.run_vsctl(["get", "Bridge", self.br_name, "datapath_id"])
+        self.datapath_id = self.get_datapath_id()
 
-        # remove preceding/trailing double quotes
-        dp_id = res.strip().strip('"')
-        self.datapath_id = dp_id
+    def set_manager(self, target):
+        self.run_vsctl(["set-manager", target])
 
-    def set_controller(self, target):
-        methods = ("ssl", "tcp", "unix", "pssl", "ptcp", "punix")
-        args = target.split(":")
-        if not args[0] in methods:
-            target = "tcp:" + target
-        self.run_vsctl(["set-controller", self.br_name, target])
-
-    def _vifport(self, name, external_ids):
-        ofport = self.db_get_val("Interface", name, "ofport")
-        return VifPort(name, ofport, external_ids["iface-id"],
-                       external_ids["attached-mac"], self)
+    def get_ofport(self, name):
+        return self.db_get_val("Interface", name, "ofport")
 
     def _get_ports(self, get_port):
         ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
+            if self.get_ofport(name) < 0:
+                continue
             port = get_port(name)
             if port:
                 ports.append(port)
 
         return ports
 
-    def _get_vif_port(self, name):
-        external_ids = self.db_get_map("Interface", name, "external_ids")
-        if "iface-id" in external_ids and "attached-mac" in external_ids:
-            return self._vifport(name, external_ids)
-        elif ("xs-vif-uuid" in external_ids and
-              "attached-mac" in external_ids):
-            # if this is a xenserver and iface-id is not automatically
-            # synced to OVS from XAPI, we grab it from XAPI directly
-            ofport = self.db_get_val("Interface", name, "ofport")
-            iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
-            return VifPort(name, ofport, iface_id,
-                           external_ids["attached-mac"], self)
-
-    def get_vif_ports(self):
-        "returns a VIF object for each VIF port"
-        return self._get_ports(self._get_vif_port)
-
     def _get_external_port(self, name):
+        # exclude vif ports
         external_ids = self.db_get_map("Interface", name, "external_ids")
         if external_ids:
             return
 
-        ofport = self.db_get_val("Interface", name, "ofport")
+        # exclude tunnel ports
+        options = self.db_get_map("Interface", name, "options")
+        if "remote_ip" in options:
+            return
+
+        ofport = self.get_ofport(name)
         return VifPort(name, ofport, None, None, self)
 
     def get_external_ports(self):
         return self._get_ports(self._get_external_port)
 
 
-def check_ofp_mode(db):
+class VifPortSet(object):
+    def __init__(self, int_br, ryu_rest_client):
+        super(VifPortSet, self).__init__()
+        self.int_br = int_br
+        self.api = ryu_rest_client
+
+    def setup(self):
+        for port in self.int_br.get_external_ports():
+            LOG.debug(_('external port %s'), port)
+            self.api.update_port(rest_nw_id.NW_ID_EXTERNAL,
+                                 port.switch.datapath_id, port.ofport)
+
+
+class OVSQuantumOFPRyuAgent(object):
+    def __init__(self, integ_br, ofp_rest_api_addr,
+                 tunnel_ip, ovsdb_ip, ovsdb_port,
+                 root_helper):
+        super(OVSQuantumOFPRyuAgent, self).__init__()
+        self.int_br = None
+        self.vif_ports = None
+        self._setup_integration_br(root_helper, integ_br,
+                                   ofp_rest_api_addr,
+                                   tunnel_ip, ovsdb_port, ovsdb_ip)
+
+    def _setup_integration_br(self, root_helper, integ_br,
+                              ofp_rest_api_addr,
+                              tunnel_ip, ovsdb_port, ovsdb_ip):
+        self.int_br = OVSBridge(integ_br, root_helper)
+        self.int_br.find_datapath_id()
+
+        ryu_rest_client = client.OFPClient(ofp_rest_api_addr)
+
+        self.vif_ports = VifPortSet(self.int_br, ryu_rest_client)
+        self.vif_ports.setup()
+
+        sc_client = client.SwitchConfClient(ofp_rest_api_addr)
+        sc_client.set_key(self.int_br.datapath_id,
+                          conf_switch_key.OVS_TUNNEL_ADDR, tunnel_ip)
+
+        # Currently Ryu supports only tcp methods. (ssl isn't supported yet)
+        self.int_br.set_manager('ptcp:%d' % ovsdb_port)
+        sc_client.set_key(self.int_br.datapath_id, conf_switch_key.OVSDB_ADDR,
+                          'tcp:%s:%d' % (ovsdb_ip, ovsdb_port))
+
+
+def check_ofp_rest_api_addr(db):
     LOG.debug("checking db")
 
     servers = db.ofp_server.all()
@@ -113,107 +189,16 @@ def check_ofp_mode(db):
         elif serv.host_type == "controller":
             ofp_controller_addr = serv.address
         else:
-            LOG.warn("ignoring unknown server type %s", serv)
+            LOG.warn(_("ignoring unknown server type %s"), serv)
 
-    LOG.debug("controller %s", ofp_controller_addr)
     LOG.debug("api %s", ofp_rest_api_addr)
-    if not ofp_controller_addr:
-        raise RuntimeError("OF controller isn't specified")
+    if ofp_controller_addr:
+        LOG.warn(_('OF controller parameter is stale %s'), ofp_controller_addr)
     if not ofp_rest_api_addr:
-        raise RuntimeError("Ryu rest API port isn't specified")
+        raise RuntimeError(_("Ryu rest API port isn't specified"))
 
-    LOG.debug("going to ofp controller mode %s %s",
-              ofp_controller_addr, ofp_rest_api_addr)
-    return (ofp_controller_addr, ofp_rest_api_addr)
-
-
-class OVSQuantumOFPRyuAgent:
-    def __init__(self, integ_br, db, root_helper):
-        self.root_helper = root_helper
-        (ofp_controller_addr, ofp_rest_api_addr) = check_ofp_mode(db)
-
-        self.nw_id_external = rest_nw_id.NW_ID_EXTERNAL
-        self.api = OFPClient(ofp_rest_api_addr)
-        self._setup_integration_br(integ_br, ofp_controller_addr)
-
-    def _setup_integration_br(self, integ_br, ofp_controller_addr):
-        self.int_br = OVSBridge(integ_br, self.root_helper)
-        self.int_br.find_datapath_id()
-        self.int_br.set_controller(ofp_controller_addr)
-        for port in self.int_br.get_external_ports():
-            self._port_update(self.nw_id_external, port)
-
-    def _port_update(self, network_id, port):
-        self.api.update_port(network_id, port.switch.datapath_id, port.ofport)
-
-    def _all_bindings(self, db):
-        """return interface id -> port which include network id bindings"""
-        return dict((port.id, port) for port in db.ports.all())
-
-    def _set_port_status(self, port, status):
-        port.status = status
-
-    def daemon_loop(self, db):
-        # on startup, register all existing ports
-        all_bindings = self._all_bindings(db)
-
-        local_bindings = {}
-        vif_ports = {}
-        for port in self.int_br.get_vif_ports():
-            vif_ports[port.vif_id] = port
-            if port.vif_id in all_bindings:
-                net_id = all_bindings[port.vif_id].network_id
-                local_bindings[port.vif_id] = net_id
-                self._port_update(net_id, port)
-                self._set_port_status(all_bindings[port.vif_id],
-                                      constants.PORT_STATUS_ACTIVE)
-                LOG.info("Updating binding to net-id = %s for %s",
-                         net_id, str(port))
-        db.commit()
-
-        old_vif_ports = vif_ports
-        old_local_bindings = local_bindings
-
-        while True:
-            all_bindings = self._all_bindings(db)
-
-            new_vif_ports = {}
-            new_local_bindings = {}
-            for port in self.int_br.get_vif_ports():
-                new_vif_ports[port.vif_id] = port
-                if port.vif_id in all_bindings:
-                    net_id = all_bindings[port.vif_id].network_id
-                    new_local_bindings[port.vif_id] = net_id
-
-                old_b = old_local_bindings.get(port.vif_id)
-                new_b = new_local_bindings.get(port.vif_id)
-                if old_b == new_b:
-                    continue
-
-                if old_b:
-                    LOG.info("Removing binding to net-id = %s for %s",
-                             old_b, str(port))
-                    if port.vif_id in all_bindings:
-                        self._set_port_status(all_bindings[port.vif_id],
-                                              constants.PORT_STATUS_DOWN)
-                if new_b:
-                    if port.vif_id in all_bindings:
-                        self._set_port_status(all_bindings[port.vif_id],
-                                              constants.PORT_STATUS_ACTIVE)
-                    LOG.info("Adding binding to net-id = %s for %s",
-                             new_b, str(port))
-
-            for vif_id in old_vif_ports:
-                if vif_id not in new_vif_ports:
-                    LOG.info("Port Disappeared: %s", vif_id)
-                    if vif_id in all_bindings:
-                        self._set_port_status(all_bindings[port.vif_id],
-                                              constants.PORT_STATUS_DOWN)
-
-            old_vif_ports = new_vif_ports
-            old_local_bindings = new_local_bindings
-            db.commit()
-            time.sleep(2)
+    LOG.debug(_("going to ofp controller mode %s"), ofp_rest_api_addr)
+    return ofp_rest_api_addr
 
 
 def main():
@@ -227,11 +212,26 @@ def main():
     options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
     db = SqlSoup(options["sql_connection"])
 
-    LOG.info("Connecting to database \"%s\" on %s",
-             db.engine.url.database, db.engine.url.host)
-    plugin = OVSQuantumOFPRyuAgent(integ_br, db, root_helper)
-    plugin.daemon_loop(db)
+    LOG.info(_("Connecting to database \"%(database)s\" on %(host)s") %
+             {"database": db.engine.url.database,
+              "host": db.engine.url.host})
+    ofp_rest_api_addr = check_ofp_rest_api_addr(db)
 
+    tunnel_ip = _get_tunnel_ip()
+    LOG.debug(_('tunnel_ip %s'), tunnel_ip)
+    ovsdb_port = cfg.CONF.OVS.ovsdb_port
+    LOG.debug(_('ovsdb_port %s'), ovsdb_port)
+    ovsdb_ip = _get_ovsdb_ip()
+    LOG.debug(_('ovsdb_ip %s'), ovsdb_ip)
+    try:
+        OVSQuantumOFPRyuAgent(integ_br, ofp_rest_api_addr,
+                              tunnel_ip, ovsdb_ip, ovsdb_port, root_helper)
+    except httplib.HTTPException, e:
+        LOG.error(_("initialization failed: %s"), e)
+        sys.exit(1)
+
+    LOG.info(_("Ryu initialization on the node is done."
+               " Now Ryu agent exits successfully."))
     sys.exit(0)
 
 

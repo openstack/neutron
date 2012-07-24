@@ -17,7 +17,6 @@
 import sqlalchemy as sa
 
 from quantum.db import model_base
-from quantum.db import models_v2
 
 
 class OFPServer(model_base.BASEV2):
@@ -53,3 +52,28 @@ class TunnelKey(model_base.BASEV2):
 
     def __repr__(self):
         return "<TunnelKey(%s,%x)>" % (self.network_id, self.tunnel_key)
+
+
+class PortBinding(model_base.BASEV2):
+    """Represents Port binding to ovs ports."""
+    __tablename__ = 'port_binding'
+
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    network_id = sa.Column(sa.String(255), sa.ForeignKey("networks.id"),
+                           nullable=False)
+    port_id = sa.Column(sa.String(255), sa.ForeignKey("ports.id"), unique=True,
+                        nullable=False)
+    dpid = sa.Column(sa.String(255), nullable=False)
+    port_no = sa.Column(sa.Integer, nullable=False)
+
+    def __init__(self, network_id, port_id, dpid, port_no):
+        self.network_id = network_id
+        self.port_id = port_id
+        self.dpid = dpid
+        self.port_no = port_no
+
+    def __repr__(self):
+        return "<PortBinding(%s,%s,%s,%s,%s)>" % (self.network_id,
+                                                  self.port_id,
+                                                  self.dpid,
+                                                  self.port_no)
