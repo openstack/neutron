@@ -31,6 +31,17 @@ def get_vlans():
     return [(binding.vlan_id, binding.network_id) for binding in bindings]
 
 
+def get_vlan(net_id):
+    session = db.get_session()
+    try:
+        binding = (session.query(ovs_models_v2.VlanBinding).
+                   filter_by(network_id=net_id).
+                   one())
+    except exc.NoResultFound:
+        return
+    return binding.vlan_id
+
+
 def add_vlan_binding(vlan_id, net_id):
     session = db.get_session()
     binding = ovs_models_v2.VlanBinding(vlan_id, net_id)

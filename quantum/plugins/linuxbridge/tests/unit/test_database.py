@@ -21,9 +21,10 @@ that tests the database api method calls
 """
 
 import logging
-import unittest
+import unittest2 as unittest
 
 import quantum.db.api as db
+import quantum.plugins.linuxbridge.common.exceptions as c_exc
 import quantum.plugins.linuxbridge.db.l2network_db as l2network_db
 
 
@@ -157,16 +158,14 @@ class L2networkDBTest(unittest.TestCase):
         """Tear Down"""
         db.clear_db()
 
-    def testa_create_vlanbinding(self):
-        """test add vlan binding"""
+    def test_create_vlanbinding(self):
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
         self.teardown_vlanbinding()
         self.teardown_network()
 
-    def testb_getall_vlanbindings(self):
-        """test get all vlan binding"""
+    def test_getall_vlanbindings(self):
         net1 = self.quantum.create_network("t1", "netid1")
         net2 = self.quantum.create_network("t1", "netid2")
         vlan1 = self.dbtest.create_vlan_binding(10, net1["net-id"])
@@ -178,8 +177,7 @@ class L2networkDBTest(unittest.TestCase):
         self.teardown_vlanbinding()
         self.teardown_network()
 
-    def testc_delete_vlanbinding(self):
-        """test delete vlan binding"""
+    def test_delete_vlanbinding(self):
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
@@ -193,8 +191,7 @@ class L2networkDBTest(unittest.TestCase):
         self.teardown_vlanbinding()
         self.teardown_network()
 
-    def testd_update_vlanbinding(self):
-        """test update vlan binding"""
+    def test_update_vlanbinding(self):
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
@@ -203,17 +200,55 @@ class L2networkDBTest(unittest.TestCase):
         self.teardown_vlanbinding()
         self.teardown_network()
 
-    def teste_test_vlanids(self):
-        """test vlanid methods"""
+    def test_vlanids(self):
         l2network_db.create_vlanids()
         vlanids = l2network_db.get_all_vlanids()
-        self.assertTrue(len(vlanids) > 0)
+        self.assertGreater(len(vlanids), 0)
         vlanid = l2network_db.reserve_vlanid()
         used = l2network_db.is_vlanid_used(vlanid)
         self.assertTrue(used)
         used = l2network_db.release_vlanid(vlanid)
         self.assertFalse(used)
-        #counting on default teardown here to clear db
+        self.teardown_vlanbinding()
+        self.teardown_network()
+
+    def test_specific_vlanid_outside(self):
+        l2network_db.create_vlanids()
+        orig_count = len(l2network_db.get_all_vlanids())
+        self.assertGreater(orig_count, 0)
+        vlan_id = 7  # outside range dynamically allocated
+        with self.assertRaises(c_exc.VlanIDNotFound):
+            l2network_db.is_vlanid_used(vlan_id)
+        l2network_db.reserve_specific_vlanid(vlan_id, "net-id")
+        self.assertTrue(l2network_db.is_vlanid_used(vlan_id))
+        count = len(l2network_db.get_all_vlanids())
+        self.assertEqual(count, orig_count + 1)
+        used = l2network_db.release_vlanid(vlan_id)
+        self.assertFalse(used)
+        with self.assertRaises(c_exc.VlanIDNotFound):
+            l2network_db.is_vlanid_used(vlan_id)
+        count = len(l2network_db.get_all_vlanids())
+        self.assertEqual(count, orig_count)
+        self.teardown_vlanbinding()
+        self.teardown_network()
+
+    def test_specific_vlanid_inside(self):
+        l2network_db.create_vlanids()
+        orig_count = len(l2network_db.get_all_vlanids())
+        self.assertGreater(orig_count, 0)
+        vlan_id = 1007  # inside range dynamically allocated
+        self.assertFalse(l2network_db.is_vlanid_used(vlan_id))
+        l2network_db.reserve_specific_vlanid(vlan_id, "net-id")
+        self.assertTrue(l2network_db.is_vlanid_used(vlan_id))
+        count = len(l2network_db.get_all_vlanids())
+        self.assertEqual(count, orig_count)
+        used = l2network_db.release_vlanid(vlan_id)
+        self.assertFalse(used)
+        self.assertFalse(l2network_db.is_vlanid_used(vlan_id))
+        count = len(l2network_db.get_all_vlanids())
+        self.assertEqual(count, orig_count)
+        self.teardown_vlanbinding()
+        self.teardown_network()
 
     def teardown_network(self):
         """tearDown Network table"""

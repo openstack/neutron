@@ -346,7 +346,8 @@ class Controller(object):
         for attr, attr_vals in self._attr_info.iteritems():
             # Convert values if necessary
             if ('convert_to' in attr_vals and
-                attr in res_dict):
+                attr in res_dict and
+                res_dict[attr] != attributes.ATTR_NOT_SPECIFIED):
                 res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
 
             # Check that configured values are correct

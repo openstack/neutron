@@ -105,6 +105,11 @@ class IpAddressInUse(InUse):
                 "The IP address %(ip_address)s is in use.")
 
 
+class VlanIdInUse(InUse):
+    message = _("Unable to complete operation for network %(net_id)s. "
+                "The VLAN %(vlan_id)s is in use.")
+
+
 class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port "
                 "%(port_id)s for network %(net_id)s. The attachment is "

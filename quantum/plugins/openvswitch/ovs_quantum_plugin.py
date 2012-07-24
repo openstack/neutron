@@ -18,11 +18,13 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
 # @author: Aaron Rosen, Nicira Networks, Inc.
+# @author: Bob Kukura, Red Hat, Inc.
 
 import logging
 import os
 
 from quantum.api.api_common import OperationalStatus
+from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
 from quantum.db import api as db
@@ -32,6 +34,7 @@ from quantum.plugins.openvswitch.common import config
 from quantum.plugins.openvswitch import ovs_db
 from quantum.plugins.openvswitch import ovs_db_v2
 from quantum.quantum_plugin_base import QuantumPluginBase
+from quantum import policy
 
 
 LOG = logging.getLogger("ovs_quantum_plugin")
@@ -80,10 +83,23 @@ class VlanMap(object):
             raise NoFreeVLANException("No VLAN free for network %s" %
                                       network_id)
 
+    def acquire_specific(self, vlan_id, network_id):
+        LOG.debug("Allocating specific VLAN %s for network %s"
+                  % (vlan_id, network_id))
+        if vlan_id < 1 or vlan_id > 4094:
+            msg = _("Specified VLAN %s outside legal range (1-4094)") % vlan_id
+            raise q_exc.InvalidInput(error_message=msg)
+        if self.vlans.get(vlan_id):
+            raise q_exc.VlanIdInUse(net_id=network_id,
+                                    vlan_id=vlan_id)
+        self.free_vlans.discard(vlan_id)
+        self.set_vlan(vlan_id, network_id)
+
     def release(self, network_id):
         vlan = self.net_ids.get(network_id, None)
         if vlan is not None:
-            self.free_vlans.add(vlan)
+            if vlan >= self.vlan_min and vlan <= self.vlan_max:
+                self.free_vlans.add(vlan)
             del self.vlans[vlan]
             del self.net_ids[network_id]
             LOG.debug("Deallocated VLAN %s (used by network %s)" %
@@ -234,8 +250,26 @@ class OVSQuantumPlugin(QuantumPluginBase):
 
 
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+    """Implement the Quantum abstractions using Open vSwitch.
+
+    Depending on whether tunneling is enabled, either a GRE tunnel or
+    a new VLAN is created for each network. An agent is relied upon to
+    perform the actual OVS configuration on each host.
+
+    The provider extension is also supported. As discussed in
+    https://bugs.launchpad.net/quantum/+bug/1023156, this class could
+    be simplified, and filtering on extended attributes could be
+    handled, by adding support for extended attributes to the
+    QuantumDbPluginV2 base class. When that occurs, this class should
+    be updated to take advantage of it.
+    """
+
+    supported_extension_aliases = ["provider"]
+
     def __init__(self, configfile=None):
         conf = config.parse(CONF_FILE)
+        self.enable_tunneling = conf.OVS.enable_tunneling
+
         options = {"sql_connection": conf.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
         sql_max_retries = conf.DATABASE.sql_max_retries
@@ -247,19 +281,63 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         self.vmap = VlanMap(conf.OVS.vlan_min, conf.OVS.vlan_max)
         self.vmap.populate_already_used(ovs_db_v2.get_vlans())
 
+    # TODO(rkukura) Use core mechanism for attribute authorization
+    # when available.
+
+    def _check_provider_view_auth(self, context, network):
+        return policy.check(context,
+                            "extension:provider_network:view",
+                            network)
+
+    def _enforce_provider_set_auth(self, context, network):
+        return policy.enforce(context,
+                              "extension:provider_network:set",
+                              network)
+
+    def _extend_network_dict(self, context, network):
+        if self._check_provider_view_auth(context, network):
+            if not self.enable_tunneling:
+                network['provider:vlan_id'] = ovs_db_v2.get_vlan(network['id'])
+
     def create_network(self, context, network):
         net = super(OVSQuantumPluginV2, self).create_network(context, network)
         try:
-            vlan_id = self.vmap.acquire(str(net['id']))
-        except NoFreeVLANException:
+            vlan_id = network['network'].get('provider:vlan_id')
+            if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
+                self._enforce_provider_set_auth(context, net)
+                self.vmap.acquire_specific(int(vlan_id), str(net['id']))
+            else:
+                vlan_id = self.vmap.acquire(str(net['id']))
+        except Exception:
             super(OVSQuantumPluginV2, self).delete_network(context, net['id'])
             raise
 
         LOG.debug("Created network: %s" % net['id'])
         ovs_db_v2.add_vlan_binding(vlan_id, str(net['id']))
+        self._extend_network_dict(context, net)
+        return net
+
+    def update_network(self, context, id, network):
+        net = super(OVSQuantumPluginV2, self).update_network(context, id,
+                                                             network)
+        self._extend_network_dict(context, net)
         return net
 
     def delete_network(self, context, id):
         ovs_db_v2.remove_vlan_binding(id)
         self.vmap.release(id)
         return super(OVSQuantumPluginV2, self).delete_network(context, id)
+
+    def get_network(self, context, id, fields=None, verbose=None):
+        net = super(OVSQuantumPluginV2, self).get_network(context, id,
+                                                          None, verbose)
+        self._extend_network_dict(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None, verbose=None):
+        nets = super(OVSQuantumPluginV2, self).get_networks(context, filters,
+                                                            None, verbose)
+        for net in nets:
+            self._extend_network_dict(context, net)
+        # TODO(rkukura): Filter on extended attributes.
+        return [self._fields(net, fields) for net in nets]
