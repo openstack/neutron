@@ -88,6 +88,7 @@ class IPAllocation(model_base.BASEV2):
 
 class Port(model_base.BASEV2, HasId, HasTenant):
     """Represents a port on a quantum v2 network."""
+    name = sa.Column(sa.String(255))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
     fixed_ips = orm.relationship(IPAllocation, backref='ports', lazy="dynamic")
@@ -103,6 +104,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     When a subnet is created the first and last entries will be created. These
     are used for the IP allocation.
     """
+    name = sa.Column(sa.String(255))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)

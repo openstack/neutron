@@ -615,6 +615,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _make_subnet_dict(self, subnet, fields=None):
         res = {'id': subnet['id'],
+               'name': subnet['name'],
                'tenant_id': subnet['tenant_id'],
                'network_id': subnet['network_id'],
                'ip_version': subnet['ip_version'],
@@ -627,6 +628,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _make_port_dict(self, port, fields=None):
         res = {"id": port["id"],
+               'name': port['name'],
                "network_id": port["network_id"],
                'tenant_id': port['tenant_id'],
                "mac_address": port["mac_address"],
@@ -694,6 +696,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             self._validate_subnet_cidr(network, s['cidr'])
             subnet = models_v2.Subnet(tenant_id=tenant_id,
                                       id=s.get('id') or utils.str_uuid(),
+                                      name=s['name'],
                                       network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
@@ -765,6 +768,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ips = self._allocate_ips_for_port(context, network, port)
 
             port = models_v2.Port(tenant_id=tenant_id,
+                                  name=p['name'],
                                   id=p.get('id') or utils.str_uuid(),
                                   network_id=p['network_id'],
                                   mac_address=p['mac_address'],

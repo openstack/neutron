@@ -525,8 +525,8 @@ class JSONV2TestCase(APIv2TestBase):
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_missing_attr(self):
-        data = {'network': {'what': 'who', 'tenant_id': _uuid()}}
-        res = self.api.post_json(_get_path('networks'), data,
+        data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
+        res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
 
@@ -562,16 +562,16 @@ class JSONV2TestCase(APIv2TestBase):
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_bulk_missing_attr(self):
-        data = {'networks': [{'what': 'who', 'tenant_id': _uuid()}]}
-        res = self.api.post_json(_get_path('networks'), data,
+        data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}
+        res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
 
     def test_create_bulk_partial_body(self):
-        data = {'networks': [{'name': 'net1', 'admin_state_up': True,
-                              'tenant_id': _uuid()},
-                             {'tenant_id': _uuid()}]}
-        res = self.api.post_json(_get_path('networks'), data,
+        data = {'ports': [{'device_id': 'device_1',
+                           'tenant_id': _uuid()},
+                          {'tenant_id': _uuid()}]}
+        res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
         self.assertEqual(res.status_int, 422)
 
@@ -579,9 +579,10 @@ class JSONV2TestCase(APIv2TestBase):
         net_id = _uuid()
         tenant_id = _uuid()
         device_id = _uuid()
-        initial_input = {'port': {'network_id': net_id, 'tenant_id': tenant_id,
-                         'device_id': device_id,
-                         'admin_state_up': True}}
+        initial_input = {'port': {'name': '', 'network_id': net_id,
+                                  'tenant_id': tenant_id,
+                                  'device_id': device_id,
+                                  'admin_state_up': True}}
         full_input = {'port': {'admin_state_up': True,
                                'mac_address': attributes.ATTR_NOT_SPECIFIED,
                                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,

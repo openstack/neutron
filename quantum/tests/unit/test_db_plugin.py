@@ -151,7 +151,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
-        for arg in ('admin_state_up', 'device_id', 'mac_address', 'fixed_ips'):
+        for arg in ('admin_state_up', 'device_id', 'mac_address',
+                    'name', 'fixed_ips'):
             # Arg must be present and not empty
             if arg in kwargs and kwargs[arg]:
                 data['port'][arg] = kwargs[arg]
@@ -220,16 +221,18 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fixed_ips=None, fmt='json'):
+    def port(self, subnet=None, fixed_ips=None, fmt='json', **kwargs):
         if not subnet:
             with self.subnet() as subnet:
                 net_id = subnet['subnet']['network_id']
-                port = self._make_port(fmt, net_id, fixed_ips=fixed_ips)
+                port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
+                                       **kwargs)
                 yield port
                 self._delete('ports', port['port']['id'])
         else:
             net_id = subnet['subnet']['network_id']
-            port = self._make_port(fmt, net_id, fixed_ips=fixed_ips)
+            port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
+                                   **kwargs)
             yield port
             self._delete('ports', port['port']['id'])
 
@@ -340,13 +343,14 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
 class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_create_port_json(self):
         keys = [('admin_state_up', True), ('status', 'ACTIVE')]
-        with self.port() as port:
+        with self.port(name='myname') as port:
             for k, v in keys:
                 self.assertEquals(port['port'][k], v)
             self.assertTrue('mac_address' in port['port'])
             ips = port['port']['fixed_ips']
             self.assertEquals(len(ips), 1)
             self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+            self.assertEquals('myname', port['port']['name'])
 
     def test_create_port_bad_tenant(self):
         with self.network() as network:
@@ -854,8 +858,9 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_create_subnet(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        self._test_create_subnet(gateway_ip=gateway_ip,
-                                 cidr=cidr)
+        subnet = self._test_create_subnet(gateway_ip=gateway_ip,
+                                          cidr=cidr)
+        self.assertTrue('name' in subnet['subnet'])
 
     def test_create_two_subnets(self):
         gateway_ips = ['10.0.0.1', '10.0.1.1']
