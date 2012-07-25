@@ -31,7 +31,8 @@ LV_IDS = [42, 43]
 LVM = ovs_quantum_agent.LocalVLANMapping(LV_ID, LS_ID, LV_IDS)
 VIF_ID = '404deaec-5d37-11e1-a64b-000c29d5f0a8'
 VIF_MAC = '3c:09:24:1e:78:23'
-VIF_PORT = ovs_lib.VifPort('port', 'ofport',
+OFPORT_NUM = 1
+VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
                            VIF_ID, VIF_MAC, 'switch')
 
 
