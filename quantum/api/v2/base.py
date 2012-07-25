@@ -14,12 +14,16 @@
 # limitations under the License.
 
 import logging
+import socket
+
 import webob.exc
 
 from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions
 from quantum.common import utils
+from quantum.openstack.common import cfg
+from quantum.openstack.common.notifier import api as notifier_api
 from quantum import policy
 from quantum import quota
 
@@ -38,6 +42,14 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              }
 
 QUOTAS = quota.QUOTAS
+
+
+def _get_hostname():
+    return socket.gethostname()
+
+
+# Register the configuration options
+cfg.CONF.register_opt(cfg.StrOpt('host', default=_get_hostname()))
 
 
 def fields(request):
@@ -111,6 +123,7 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if 'required_by_policy' in info
                               and info['required_by_policy']]
+        self._publisher_id = notifier_api.publisher_id('network')
 
     def _is_visible(self, attr):
         attr_val = self._attr_info.get(attr)
@@ -189,6 +202,11 @@ class Controller(object):
 
     def create(self, request, body=None):
         """Creates a new instance of the requested entity"""
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.create.start',
+                            notifier_api.INFO,
+                            body)
         body = self._prepare_request_body(request.context, body, True,
                                           allow_bulk=True)
         action = "create_%s" % self._resource
@@ -229,10 +247,21 @@ class Controller(object):
         obj_creator = getattr(self._plugin, action)
         kwargs = {self._resource: body}
         obj = obj_creator(request.context, **kwargs)
-        return {self._resource: self._view(obj)}
+        result = {self._resource: self._view(obj)}
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.create.end',
+                            notifier_api.INFO,
+                            result)
+        return result
 
     def delete(self, request, id):
         """Deletes the specified entity"""
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.delete.start',
+                            notifier_api.INFO,
+                            {self._resource + '_id': id})
         action = "delete_%s" % self._resource
 
         # Check authz
@@ -246,9 +275,21 @@ class Controller(object):
 
         obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id)
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.delete.end',
+                            notifier_api.INFO,
+                            {self._resource + '_id': id})
 
     def update(self, request, id, body=None):
         """Updates the specified entity's attributes"""
+        payload = body.copy()
+        payload['id'] = id
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.update.start',
+                            notifier_api.INFO,
+                            payload)
         body = self._prepare_request_body(request.context, body, False)
         action = "update_%s" % self._resource
 
@@ -264,7 +305,13 @@ class Controller(object):
         obj_updater = getattr(self._plugin, action)
         kwargs = {self._resource: body}
         obj = obj_updater(request.context, id, **kwargs)
-        return {self._resource: self._view(obj)}
+        result = {self._resource: self._view(obj)}
+        notifier_api.notify(request.context,
+                            self._publisher_id,
+                            self._resource + '.update.end',
+                            notifier_api.INFO,
+                            result)
+        return result
 
     def _populate_tenant_id(self, context, res_dict, is_create):
 

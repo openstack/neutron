@@ -32,6 +32,7 @@ from quantum import context
 from quantum.extensions.extensions import PluginAwareExtensionManager
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
+from quantum.openstack.common.notifier import api as notifer_api
 
 
 LOG = logging.getLogger(__name__)
@@ -753,6 +754,51 @@ class V2Views(unittest.TestCase):
         keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
                 'ip_version', 'cidr')
         self._view(keys, 'subnets', 'subnet')
+
+
+class NotificationTest(APIv2TestBase):
+    def _resource_op_notifier(self, opname, resource, expected_errors=False):
+        initial_input = {resource: {'name': 'myname'}}
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = initial_input
+        expected_code = exc.HTTPCreated.code
+        with mock.patch.object(notifer_api, 'notify') as mynotifier:
+            if opname == 'create':
+                initial_input[resource]['tenant_id'] = _uuid()
+                res = self.api.post_json(
+                    _get_path('networks'), initial_input, expected_errors)
+            if opname == 'update':
+                res = self.api.put_json(
+                    _get_path('networks', id=_uuid()),
+                    initial_input, expect_errors=expected_errors)
+                expected_code = exc.HTTPOk.code
+            if opname == 'delete':
+                initial_input[resource]['tenant_id'] = _uuid()
+                res = self.api.delete(
+                    _get_path('networks', id=_uuid()),
+                    expect_errors=expected_errors)
+                expected_code = exc.HTTPNoContent.code
+            expected = [mock.call(mock.ANY,
+                                  'network.' + cfg.CONF.host,
+                                  resource + "." + opname + ".start",
+                                  'INFO',
+                                  mock.ANY),
+                        mock.call(mock.ANY,
+                                  'network.' + cfg.CONF.host,
+                                  resource + "." + opname + ".end",
+                                  'INFO',
+                                  mock.ANY)]
+            self.assertEqual(expected, mynotifier.call_args_list)
+        self.assertEqual(res.status_int, expected_code)
+
+    def test_network_create_notifer(self):
+        self._resource_op_notifier('create', 'network')
+
+    def test_network_delete_notifer(self):
+        self._resource_op_notifier('delete', 'network')
+
+    def test_network_update_notifer(self):
+        self._resource_op_notifier('update', 'network')
 
 
 class QuotaTest(APIv2TestBase):
