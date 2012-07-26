@@ -195,3 +195,8 @@ class OverQuota(QuantumException):
 class InvalidQuotaValue(QuantumException):
     message = _("Change would make usage less than 0 for the following "
                 "resources: %(unders)s")
+
+
+class InvalidSharedSetting(QuantumException):
+    message = _("Unable to reconfigure sharing settings for network"
+                "%(network). Multiple tenants are using it")

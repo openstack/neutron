@@ -17,7 +17,8 @@ from quantum import wsgi
 from quantum.wsgi import Serializer
 
 
-def create_request(path, body, content_type, method='GET', query_string=None):
+def create_request(path, body, content_type, method='GET',
+                   query_string=None, context=None):
     if query_string:
         url = "%s?%s" % (path, query_string)
     else:
@@ -27,4 +28,6 @@ def create_request(path, body, content_type, method='GET', query_string=None):
     req.headers = {}
     req.headers['Accept'] = content_type
     req.body = body
+    if context:
+        req.environ['quantum.context'] = context
     return req

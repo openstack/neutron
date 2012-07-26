@@ -233,37 +233,45 @@ class APIv2TestCase(APIv2TestBase):
                                                       fields=mock.ANY,
                                                       verbose=True)
 
+    def _do_field_list(self, resource, base_fields):
+        attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
+        policy_attrs = [name for (name, info) in attr_info.items()
+                        if info.get('required_by_policy')]
+        fields = base_fields
+        fields.extend(policy_attrs)
+        return fields
+
     def test_fields(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
         self.api.get(_get_path('networks'), {'fields': 'foo'})
+        fields = self._do_field_list('networks', ['foo'])
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo',
-                                                              'tenant_id'],
+                                                      fields=fields,
                                                       verbose=mock.ANY)
 
     def test_fields_multiple(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
+        fields = self._do_field_list('networks', ['foo', 'bar'])
         self.api.get(_get_path('networks'), {'fields': ['foo', 'bar']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo', 'bar',
-                                                              'tenant_id'],
+                                                      fields=fields,
                                                       verbose=mock.ANY)
 
     def test_fields_multiple_with_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
+        fields = self._do_field_list('networks', ['foo'])
         self.api.get(_get_path('networks'), {'fields': ['foo', '']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=['foo',
-                                                              'tenant_id'],
+                                                      fields=fields,
                                                       verbose=mock.ANY)
 
     def test_fields_empty(self):
@@ -359,10 +367,10 @@ class APIv2TestCase(APIv2TestBase):
 
         self.api.get(_get_path('networks'), {'foo': 'bar', 'fields': 'foo'})
         filters = {'foo': ['bar']}
+        fields = self._do_field_list('networks', ['foo'])
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=['foo',
-                                                              'tenant_id'],
+                                                      fields=fields,
                                                       verbose=mock.ANY)
 
     def test_filters_with_verbose(self):
@@ -385,10 +393,10 @@ class APIv2TestCase(APIv2TestBase):
                                              'fields': 'foo',
                                              'verbose': 'true'})
         filters = {'foo': ['bar']}
+        fields = self._do_field_list('networks', ['foo'])
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=['foo',
-                                                              'tenant_id'],
+                                                      fields=fields,
                                                       verbose=True)
 
 
@@ -405,6 +413,7 @@ class JSONV2TestCase(APIv2TestBase):
                       'admin_state_up': True,
                       'status': "ACTIVE",
                       'tenant_id': real_tenant_id,
+                      'shared': False,
                       'subnets': []}
         return_value = [input_dict]
         instance = self.plugin.return_value
@@ -416,6 +425,7 @@ class JSONV2TestCase(APIv2TestBase):
             # expect full list returned
             self.assertEqual(len(res.json['networks']), 1)
             output_dict = res.json['networks'][0]
+            input_dict['shared'] = False
             self.assertEqual(len(input_dict), len(output_dict))
             for k, v in input_dict.iteritems():
                 self.assertEqual(v, output_dict[k])
@@ -456,7 +466,9 @@ class JSONV2TestCase(APIv2TestBase):
     def test_create_use_defaults(self):
         net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
-        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
+        full_input = {'network': {'admin_state_up': True,
+                                  'shared': False,
+                                  'subnets': []}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
@@ -489,7 +501,7 @@ class JSONV2TestCase(APIv2TestBase):
         # tenant_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True, 'subnets': [],
-                      'tenant_id': tenant_id}}
+                      'shared': False, 'tenant_id': tenant_id}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
@@ -643,7 +655,8 @@ class JSONV2TestCase(APIv2TestBase):
         if req_tenant_id:
             env = {'quantum.context': context.Context('', req_tenant_id)}
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': real_tenant_id}
+        instance.get_network.return_value = {'tenant_id': real_tenant_id,
+                                             'shared': False}
         instance.delete_network.return_value = None
 
         res = self.api.delete(_get_path('networks', id=str(uuid.uuid4())),
@@ -665,9 +678,14 @@ class JSONV2TestCase(APIv2TestBase):
     def _test_get(self, req_tenant_id, real_tenant_id, expected_code,
                   expect_errors=False):
         env = {}
+        shared = False
         if req_tenant_id:
             env = {'quantum.context': context.Context('', req_tenant_id)}
-        data = {'tenant_id': real_tenant_id}
+            if req_tenant_id.endswith('another'):
+                shared = True
+                env['quantum.context'].roles = ['tenant_admin']
+
+        data = {'tenant_id': real_tenant_id, 'shared': shared}
         instance = self.plugin.return_value
         instance.get_network.return_value = data
 
@@ -689,6 +707,10 @@ class JSONV2TestCase(APIv2TestBase):
         self._test_get(tenant_id + "bad", tenant_id,
                        exc.HTTPNotFound.code, expect_errors=True)
 
+    def test_get_keystone_shared_network(self):
+        tenant_id = _uuid()
+        self._test_get(tenant_id + "another", tenant_id, 200)
+
     def _test_update(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):
         env = {}
@@ -700,7 +722,8 @@ class JSONV2TestCase(APIv2TestBase):
         return_value.update(data['network'].copy())
 
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': real_tenant_id}
+        instance.get_network.return_value = {'tenant_id': real_tenant_id,
+                                             'shared': False}
         instance.update_network.return_value = return_value
 
         res = self.api.put_json(_get_path('networks',
@@ -887,9 +910,12 @@ class ExtensionTestCase(unittest.TestCase):
 
     def test_extended_create(self):
         net_id = _uuid()
-        data = {'network': {'name': 'net1', 'admin_state_up': True,
-                            'tenant_id': _uuid(), 'subnets': [],
-                            'v2attrs:something_else': "abc"}}
+        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid(),
+                                     'v2attrs:something_else': "abc"}}
+        data = {'network': {'admin_state_up': True, 'subnets': [],
+                            'shared': False}}
+        data['network'].update(initial_input['network'])
+
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id,
                         'v2attrs:something': "123"}
@@ -898,7 +924,7 @@ class ExtensionTestCase(unittest.TestCase):
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
 
-        res = self.api.post_json(_get_path('networks'), data)
+        res = self.api.post_json(_get_path('networks'), initial_input)
 
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=data)

@@ -1,23 +1,37 @@
 {
     "admin_or_owner": [["role:admin"], ["tenant_id:%(tenant_id)s"]],
+    "admin_or_network_owner": [["role:admin"], ["tenant_id:%(network_tenant_id)s"]],
+    "admin_only": [["role:admin"]],
+    "regular_user": [],
     "default": [["rule:admin_or_owner"]],
 
-    "admin_api": [["role:admin"]],
-    "extension:provider_network:view": [["rule:admin_api"]],
-    "extension:provider_network:set": [["rule:admin_api"]],
+    "extension:provider_network:view": [["rule:admin_only"]],
+    "extension:provider_network:set": [["rule:admin_only"]],
 
-    "create_subnet": [],
+    "networks:private:read": [["rule:admin_or_owner"]],
+    "networks:private:write": [["rule:admin_or_owner"]],
+    "networks:shared:read": [["rule:regular_user"]],
+    "networks:shared:write": [["rule:admin_only"]],
+
+    "create_subnet": [["rule:admin_or_network_owner"]],
     "get_subnet": [["rule:admin_or_owner"]],
-    "update_subnet": [["rule:admin_or_owner"]],
-    "delete_subnet": [["rule:admin_or_owner"]],
+    "update_subnet": [["rule:admin_or_network_owner"]],
+    "delete_subnet": [["rule:admin_or_network_owner"]],
 
     "create_network": [],
-    "get_network": [["rule:admin_or_owner"]],
-    "update_network": [["rule:admin_or_owner"]],
-    "delete_network": [["rule:admin_or_owner"]],
+    "get_network": [],
+    "create_network:shared": [["rule:admin_only"]],
+    "update_network": [],
+    "update_network:shared": [["rule:admin_only"]],
+    "delete_network": [],
 
     "create_port": [],
+    "create_port:mac_address": [["rule:admin_or_network_owner"]],
+    "create_port:host_routes": [["rule:admin_or_network_owner"]],
+    "create_port:fixed_ips": [["rule:admin_or_network_owner"]],
     "get_port": [["rule:admin_or_owner"]],
     "update_port": [["rule:admin_or_owner"]],
+    "update_port:host_routes": [["rule:admin_or_network_owner"]],
+    "update_port:fixed_ips": [["rule:admin_or_network_owner"]],
     "delete_port": [["rule:admin_or_owner"]]
 }

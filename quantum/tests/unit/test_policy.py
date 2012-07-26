@@ -29,6 +29,7 @@ import quantum
 from quantum.common import exceptions
 from quantum.common import utils
 from quantum import context
+from quantum.openstack.common import importutils
 from quantum.openstack.common import policy as common_policy
 from quantum import policy
 
@@ -206,3 +207,113 @@ class DefaultPolicyTestCase(unittest.TestCase):
         self._set_brain("default_noexist")
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, "example:noexist", {})
+
+
+class QuantumPolicyTestCase(unittest.TestCase):
+
+    def setUp(self):
+        super(QuantumPolicyTestCase, self).setUp()
+        policy.reset()
+        policy.init()
+        self.rules = {
+            "admin_or_network_owner": [["role:admin"],
+                                       ["tenant_id:%(network_tenant_id)s"]],
+            "admin_only": [["role:admin"]],
+            "regular_user": [["role:user"]],
+            "default": [],
+
+            "networks:private:read": [["rule:admin_only"]],
+            "networks:private:write": [["rule:admin_only"]],
+            "networks:shared:read": [["rule:regular_user"]],
+            "networks:shared:write": [["rule:admin_only"]],
+
+            "create_network": [],
+            "create_network:shared": [["rule:admin_only"]],
+            "update_network": [],
+            "update_network:shared": [["rule:admin_only"]],
+
+            "get_network": [],
+            "create_port:mac": [["rule:admin_or_network_owner"]],
+        }
+
+        def fakepolicyinit():
+            common_policy.set_brain(common_policy.Brain(self.rules))
+
+        self.patcher = mock.patch.object(quantum.policy,
+                                         'init',
+                                         new=fakepolicyinit)
+        self.patcher.start()
+        self.context = context.Context('fake', 'fake', roles=['user'])
+        plugin_klass = importutils.import_class(
+            "quantum.db.db_base_plugin_v2.QuantumDbPluginV2")
+        self.plugin = plugin_klass()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_nonadmin_write_on_private_returns_403(self):
+        action = "update_network"
+        user_context = context.Context('', "user", roles=['user'])
+        # 384 is the int value of the bitmask for rw------
+        target = {'tenant_id': 'the_owner', 'shared': False}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          user_context, action, target, None)
+
+    def test_nonadmin_read_on_private_returns_403(self):
+        action = "get_network"
+        user_context = context.Context('', "user", roles=['user'])
+        # 384 is the int value of the bitmask for rw------
+        target = {'tenant_id': 'the_owner', 'shared': False}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          user_context, action, target, None)
+
+    def test_nonadmin_write_on_shared_returns_403(self):
+        action = "update_network"
+        user_context = context.Context('', "user", roles=['user'])
+        # 384 is the int value of the bitmask for rw-r--r--
+        target = {'tenant_id': 'the_owner', 'shared': True}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          user_context, action, target, None)
+
+    def test_nonadmin_read_on_shared_returns_200(self):
+        action = "get_network"
+        user_context = context.Context('', "user", roles=['user'])
+        # 420 is the int value of the bitmask for rw-r--r--
+        target = {'tenant_id': 'the_owner', 'shared': True}
+        result = policy.enforce(user_context, action, target, None)
+        self.assertEqual(result, None)
+
+    def _test_enforce_adminonly_attribute(self, action):
+        admin_context = context.get_admin_context()
+        target = {'shared': True}
+        result = policy.enforce(admin_context, action, target, None)
+        self.assertEqual(result, None)
+
+    def test_enforce_adminonly_attribute_create(self):
+        self._test_enforce_adminonly_attribute('create_network')
+
+    def test_enforce_adminonly_attribute_update(self):
+        self._test_enforce_adminonly_attribute('update_network')
+
+    def test_enforce_adminoly_attribute_nonadminctx_returns_403(self):
+        action = "create_network"
+        target = {'shared': True}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          self.context, action, target, None)
+
+    def test_enforce_regularuser_on_read(self):
+        action = "get_network"
+        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        result = policy.enforce(self.context, action, target, None)
+        self.assertIsNone(result)
+
+    def test_enforce_parentresource_owner(self):
+
+        def fakegetnetwork(*args, **kwargs):
+            return {'tenant_id': 'fake'}
+
+        action = "create_port:mac"
+        with mock.patch.object(self.plugin, 'get_network', new=fakegetnetwork):
+            target = {'network_id': 'whatever'}
+            result = policy.enforce(self.context, action, target, self.plugin)
+            self.assertIsNone(result)

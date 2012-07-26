@@ -122,56 +122,87 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         data = {'network': {'name': name,
                             'admin_state_up': admin_status_up,
                             'tenant_id': self._tenant_id}}
-        for arg in ('admin_state_up', 'tenant_id', 'public'):
+        for arg in ('admin_state_up', 'tenant_id', 'shared'):
             # Arg must be present and not empty
             if arg in kwargs and kwargs[arg]:
                 data['network'][arg] = kwargs[arg]
         network_req = self.new_create_request('networks', data, fmt)
-        if ('set_context' in kwargs and
-                kwargs['set_context'] is True and
-                'tenant_id' in kwargs):
+        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
             # create a specific auth context for this request
             network_req.environ['quantum.context'] = context.Context(
                 '', kwargs['tenant_id'])
 
         return network_req.get_response(self.api)
 
-    def _create_subnet(self, fmt, tenant_id, net_id, gateway_ip, cidr,
-                       allocation_pools=None, ip_version=4, enable_dhcp=True):
-        data = {'subnet': {'tenant_id': tenant_id,
-                           'network_id': net_id,
+    def _create_subnet(self, fmt, net_id, cidr,
+                       expected_res_status=None, **kwargs):
+        data = {'subnet': {'network_id': net_id,
                            'cidr': cidr,
-                           'ip_version': ip_version,
-                           'tenant_id': self._tenant_id,
-                           'enable_dhcp': enable_dhcp}}
-        if gateway_ip:
-            data['subnet']['gateway_ip'] = gateway_ip
-        if allocation_pools:
-            data['subnet']['allocation_pools'] = allocation_pools
+                           'ip_version': 4,
+                           'tenant_id': self._tenant_id}}
+        for arg in ('gateway_ip', 'allocation_pools',
+                    'ip_version', 'tenant_id',
+                    'enable_dhcp'):
+            # Arg must be present and not null (but can be false)
+            if arg in kwargs and kwargs[arg] is not None:
+                data['subnet'][arg] = kwargs[arg]
         subnet_req = self.new_create_request('subnets', data, fmt)
-        return subnet_req.get_response(self.api)
+        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            subnet_req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
 
-    def _create_port(self, fmt, net_id, custom_req_body=None,
-                     expected_res_status=None, **kwargs):
+        subnet_res = subnet_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(subnet_res.status_int, expected_res_status)
+        return subnet_res
+
+    def _create_port(self, fmt, net_id, expected_res_status=None, **kwargs):
         content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
-        for arg in ('admin_state_up', 'device_id', 'mac_address',
-                    'name', 'fixed_ips'):
+        for arg in ('admin_state_up', 'device_id',
+                    'mac_address', 'fixed_ips',
+                    'name', 'tenant_id'):
             # Arg must be present and not empty
             if arg in kwargs and kwargs[arg]:
                 data['port'][arg] = kwargs[arg]
-
         port_req = self.new_create_request('ports', data, fmt)
-        return port_req.get_response(self.api)
+        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            port_req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+
+        port_res = port_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(port_res.status_int, expected_res_status)
+        return port_res
+
+    def _list_ports(self, fmt, expected_res_status=None,
+                    net_id=None, **kwargs):
+        query_params = None
+        if net_id:
+            query_params = "network_id=%s" % net_id
+        port_req = self.new_list_request('ports', fmt, query_params)
+        if ('set_context' in kwargs and
+                kwargs['set_context'] is True and
+                'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            port_req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+
+        port_res = port_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(port_res.status_int, expected_res_status)
+        return port_res
 
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True):
         res = self._create_subnet(fmt,
-                                  network['network']['tenant_id'],
-                                  network['network']['id'],
-                                  gateway,
-                                  cidr,
+                                  net_id=network['network']['id'],
+                                  cidr=cidr,
+                                  gateway_ip=gateway,
+                                  tenant_id=network['network']['tenant_id'],
                                   allocation_pools=allocation_pools,
                                   ip_version=ip_version,
                                   enable_dhcp=enable_dhcp)
@@ -190,9 +221,21 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         req.get_response(self.api)
 
     @contextlib.contextmanager
-    def network(self, name='net1', admin_status_up=True, fmt='json'):
-        res = self._create_network(fmt, name, admin_status_up)
+    def network(self, name='net1',
+                admin_status_up=True,
+                fmt='json',
+                **kwargs):
+        res = self._create_network(fmt,
+                                   name,
+                                   admin_status_up,
+                                   **kwargs)
         network = self.deserialize(fmt, res)
+        # TODO(salvatore-orlando): do exception handling in this test module
+        # in a uniform way (we do it differently for ports, subnets, and nets
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
         yield network
         self._delete('networks', network['network']['id'])
 
@@ -373,6 +416,19 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             res = port_req.get_response(self.api)
             self.assertEquals(res.status_int, 403)
 
+    def test_create_port_public_network(self):
+        keys = [('admin_state_up', True), ('status', 'ACTIVE')]
+        with self.network(shared=True) as network:
+            port_res = self._create_port('json',
+                                         network['network']['id'],
+                                         201,
+                                         tenant_id='another_tenant',
+                                         set_context=True)
+            port = self.deserialize('json', port_res)
+            for k, v in keys:
+                self.assertEquals(port['port'][k], v)
+            self.assertTrue('mac_address' in port['port'])
+
     def test_list_ports(self):
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             req = self.new_list_request('ports', 'json')
@@ -381,6 +437,41 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             ids = [p['id'] for p in port_list['ports']]
             self.assertTrue(port1['port']['id'] in ids)
             self.assertTrue(port2['port']['id'] in ids)
+
+    def test_list_ports_public_network(self):
+        with self.network(shared=True) as network:
+            portres_1 = self._create_port('json',
+                                          network['network']['id'],
+                                          201,
+                                          tenant_id='tenant_1',
+                                          set_context=True)
+            portres_2 = self._create_port('json',
+                                          network['network']['id'],
+                                          201,
+                                          tenant_id='tenant_2',
+                                          set_context=True)
+            port1 = self.deserialize('json', portres_1)
+            port2 = self.deserialize('json', portres_2)
+
+            def _list_and_test_ports(expected_len, ports, tenant_id=None):
+                set_context = tenant_id is not None
+                port_res = self._list_ports('json',
+                                            200,
+                                            network['network']['id'],
+                                            tenant_id=tenant_id,
+                                            set_context=set_context)
+                port_list = self.deserialize('json', port_res)
+                self.assertEqual(len(port_list['ports']), expected_len)
+                ids = [p['id'] for p in port_list['ports']]
+                for port in ports:
+                    self.assertIn(port['port']['id'], ids)
+
+            # Admin request - must return both ports
+            _list_and_test_ports(2, [port1, port2])
+            # Tenant_1 request - must return single port
+            _list_and_test_ports(1, [port1], tenant_id='tenant_1')
+            # Tenant_2 request - must return single port
+            _list_and_test_ports(1, [port2], tenant_id='tenant_2')
 
     def test_show_port(self):
         with self.port() as port:
@@ -395,6 +486,20 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         req = self.new_show_request('port', 'json', port['port']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 404)
+
+    def test_delete_port_public_network(self):
+        with self.network(shared=True) as network:
+            port_res = self._create_port('json',
+                                         network['network']['id'],
+                                         201,
+                                         tenant_id='another_tenant',
+                                         set_context=True)
+
+            port = self.deserialize('json', port_res)
+            port_id = port['port']['id']
+            # delete the port
+            self._delete('ports', port['port']['id'])
+            # Todo: verify!!!
 
     def test_update_port(self):
         with self.port() as port:
@@ -615,9 +720,12 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                 # Get a IPv4 and IPv6 address
                 tenant_id = subnet['subnet']['tenant_id']
                 net_id = subnet['subnet']['network_id']
-                res = self._create_subnet(fmt, tenant_id, net_id=net_id,
+                res = self._create_subnet(fmt,
+                                          tenant_id=tenant_id,
+                                          net_id=net_id,
                                           cidr='2607:f0d0:1002:51::0/124',
-                                          ip_version=6, gateway_ip=None)
+                                          ip_version=6,
+                                          gateway_ip=None)
                 subnet2 = self.deserialize(fmt, res)
                 kwargs = {"fixed_ips":
                           [{'subnet_id': subnet['subnet']['id']},
@@ -834,10 +942,124 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
     def test_create_network(self):
         name = 'net1'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
-                ('status', 'ACTIVE')]
+                ('status', 'ACTIVE'), ('shared', False)]
         with self.network(name=name) as net:
             for k, v in keys:
                 self.assertEquals(net['network'][k], v)
+
+    def test_create_public_network(self):
+        name = 'public_net'
+        keys = [('subnets', []), ('name', name), ('admin_state_up', True),
+                ('status', 'ACTIVE'), ('shared', True)]
+        with self.network(name=name, shared=True) as net:
+            for k, v in keys:
+                self.assertEquals(net['network'][k], v)
+
+    def test_create_public_network_no_admin_tenant(self):
+        name = 'public_net'
+        keys = [('subnets', []), ('name', name), ('admin_state_up', True),
+                ('status', 'ACTIVE'), ('shared', True)]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            with self.network(name=name,
+                              shared=True,
+                              tenant_id="another_tenant",
+                              set_context=True):
+                pass
+        self.assertEquals(ctx_manager.exception.code, 403)
+
+    def test_update_network(self):
+        with self.network() as network:
+            data = {'network': {'name': 'a_brand_new_name'}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(res['network']['name'],
+                             data['network']['name'])
+
+    def test_update_shared_network_noadmin_returns_403(self):
+        with self.network(shared=True) as network:
+            data = {'network': {'name': 'a_brand_new_name'}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            req.environ['quantum.context'] = context.Context('', 'somebody')
+            res = req.get_response(self.api)
+            # The API layer always returns 404 on updates in place of 403
+            self.assertEqual(res.status_int, 404)
+
+    def test_update_network_set_shared(self):
+        with self.network(shared=False) as network:
+            data = {'network': {'shared': True}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertTrue(res['network']['shared'])
+
+    def test_update_network_set_not_shared_single_tenant(self):
+        with self.network(shared=True) as network:
+            self._create_port('json',
+                              network['network']['id'],
+                              201,
+                              tenant_id=network['network']['tenant_id'],
+                              set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertFalse(res['network']['shared'])
+
+    def test_update_network_set_not_shared_other_tenant_returns_409(self):
+        with self.network(shared=True) as network:
+            self._create_port('json',
+                              network['network']['id'],
+                              201,
+                              tenant_id='somebody_else',
+                              set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            self.assertEqual(req.get_response(self.api).status_int, 409)
+
+    def test_update_network_set_not_shared_multi_tenants_returns_409(self):
+        with self.network(shared=True) as network:
+            self._create_port('json',
+                              network['network']['id'],
+                              201,
+                              tenant_id='somebody_else',
+                              set_context=True)
+            self._create_port('json',
+                              network['network']['id'],
+                              201,
+                              tenant_id=network['network']['tenant_id'],
+                              set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            self.assertEqual(req.get_response(self.api).status_int, 409)
+
+    def test_update_network_set_not_shared_multi_tenants2_returns_409(self):
+        with self.network(shared=True) as network:
+            self._create_port('json',
+                              network['network']['id'],
+                              201,
+                              tenant_id='somebody_else',
+                              set_context=True)
+            self._create_subnet('json',
+                                network['network']['id'],
+                                '10.0.0.0/24',
+                                201,
+                                tenant_id=network['network']['tenant_id'],
+                                set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            self.assertEqual(req.get_response(self.api).status_int, 409)
 
     def test_list_networks(self):
         with self.network(name='net1') as net1:

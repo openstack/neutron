@@ -40,6 +40,7 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.OverlappingAllocationPools: webob.exc.HTTPConflict,
              exceptions.OutOfBoundsAllocationPool: webob.exc.HTTPBadRequest,
              exceptions.InvalidAllocationPool: webob.exc.HTTPBadRequest,
+             exceptions.InvalidSharedSetting: webob.exc.HTTPConflict,
              }
 
 QUOTAS = quota.QUOTAS
@@ -122,8 +123,7 @@ class Controller(object):
         self._resource = resource
         self._attr_info = attr_info
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
-                              if 'required_by_policy' in info
-                              and info['required_by_policy']]
+                              if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
 
     def _is_visible(self, attr):
@@ -160,33 +160,32 @@ class Controller(object):
         obj_list = obj_getter(request.context, **kwargs)
         # Check authz
         if do_authz:
+            # FIXME(salvatore-orlando): obj_getter might return references to
+            # other resources. Must check authZ on them too.
             # Omit items from list that should not be visible
             obj_list = [obj for obj in obj_list
                         if policy.check(request.context,
                                         "get_%s" % self._resource,
-                                        obj)]
+                                        obj,
+                                        plugin=self._plugin)]
 
         return {self._collection: [self._view(obj,
                                               fields_to_strip=fields_to_add)
                                    for obj in obj_list]}
 
-    def _item(self, request, id, do_authz=False):
+    def _item(self, request, id, do_authz=False, field_list=None):
         """Retrieves and formats a single element of the requested entity"""
-        # NOTE(salvatore-orlando): The following ensures that fields which
-        # are needed for authZ policy validation are not stripped away by the
-        # plugin before returning.
-        field_list, added_fields = self._do_field_list(fields(request))
         kwargs = {'verbose': verbose(request),
                   'fields': field_list}
         action = "get_%s" % self._resource
         obj_getter = getattr(self._plugin, action)
         obj = obj_getter(request.context, id, **kwargs)
-
         # Check authz
+        # FIXME(salvatore-orlando): obj_getter might return references to
+        # other resources. Must check authZ on them too.
         if do_authz:
-            policy.enforce(request.context, action, obj)
-
-        return {self._resource: self._view(obj, fields_to_strip=added_fields)}
+            policy.enforce(request.context, action, obj, plugin=self._plugin)
+        return obj
 
     def index(self, request):
         """Returns a list of the requested entity"""
@@ -195,7 +194,16 @@ class Controller(object):
     def show(self, request, id):
         """Returns detailed information about the requested entity"""
         try:
-            return self._item(request, id, True)
+            # NOTE(salvatore-orlando): The following ensures that fields
+            # which are needed for authZ policy validation are not stripped
+            # away by the plugin before returning.
+            field_list, added_fields = self._do_field_list(fields(request))
+            return {self._resource:
+                    self._view(self._item(request,
+                                          id,
+                                          do_authz=True,
+                                          field_list=field_list),
+                               fields_to_strip=added_fields)}
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
@@ -221,11 +229,10 @@ class Controller(object):
                         request,
                         item[self._resource],
                     )
-                    policy.enforce(
-                        request.context,
-                        action,
-                        item[self._resource],
-                    )
+                    policy.enforce(request.context,
+                                   action,
+                                   item[self._resource],
+                                   plugin=self._plugin)
                     count = QUOTAS.count(request.context, self._resource,
                                          self._plugin, self._collection,
                                          item[self._resource]['tenant_id'])
@@ -236,13 +243,17 @@ class Controller(object):
                     request,
                     body[self._resource]
                 )
-                policy.enforce(request.context, action, body[self._resource])
+                policy.enforce(request.context,
+                               action,
+                               body[self._resource],
+                               plugin=self._plugin)
                 count = QUOTAS.count(request.context, self._resource,
                                      self._plugin, self._collection,
                                      body[self._resource]['tenant_id'])
                 kwargs = {self._resource: count + 1}
                 QUOTAS.limit_check(request.context, **kwargs)
         except exceptions.PolicyNotAuthorized:
+            LOG.exception("Create operation not authorized")
             raise webob.exc.HTTPForbidden()
 
         obj_creator = getattr(self._plugin, action)
@@ -266,9 +277,12 @@ class Controller(object):
         action = "delete_%s" % self._resource
 
         # Check authz
-        obj = self._item(request, id)[self._resource]
+        obj = self._item(request, id)
         try:
-            policy.enforce(request.context, action, obj)
+            policy.enforce(request.context,
+                           action,
+                           obj,
+                           plugin=self._plugin)
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
@@ -293,11 +307,21 @@ class Controller(object):
                             payload)
         body = self._prepare_request_body(request.context, body, False)
         action = "update_%s" % self._resource
+        # Load object to check authz
+        # but pass only attributes in the original body and required
+        # by the policy engine to the policy 'brain'
+        field_list = [name for (name, value) in self._attr_info.iteritems()
+                      if ('required_by_policy' in value and
+                          value['required_by_policy'] or
+                          not 'default' in value)]
+        orig_obj = self._item(request, id, field_list=field_list)
+        orig_obj.update(body)
 
-        # Check authz
-        orig_obj = self._item(request, id)[self._resource]
         try:
-            policy.enforce(request.context, action, orig_obj)
+            policy.enforce(request.context,
+                           action,
+                           orig_obj,
+                           plugin=self._plugin)
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
@@ -319,7 +343,7 @@ class Controller(object):
         if (('tenant_id' in res_dict and
              res_dict['tenant_id'] != context.tenant_id and
              not context.is_admin)):
-            msg = _("Specifying 'tenant_id' other than authenticated"
+            msg = _("Specifying 'tenant_id' other than authenticated "
                     "tenant in request requires admin privileges")
             raise webob.exc.HTTPBadRequest(msg)
 
@@ -345,7 +369,6 @@ class Controller(object):
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
         body = body or {self._resource: {}}
-
         if self._collection in body and allow_bulk:
             bulk_body = [self._prepare_request_body(context,
                                                     {self._resource: b},
@@ -411,17 +434,21 @@ class Controller(object):
                     msg = _("Invalid input for %(attr)s. "
                             "Reason: %(reason)s.") % msg_dict
                     raise webob.exc.HTTPUnprocessableEntity(msg)
-
         return body
 
     def _validate_network_tenant_ownership(self, request, resource_item):
+        # TODO(salvatore-orlando): consider whether this check can be folded
+        # in the policy engine
         if self._resource not in ('port', 'subnet'):
             return
-
-        network_owner = self._plugin.get_network(
+        network = self._plugin.get_network(
             request.context,
-            resource_item['network_id'],
-        )['tenant_id']
+            resource_item['network_id'])
+        # do not perform the check on shared networks
+        if network.get('shared'):
+            return
+
+        network_owner = network['tenant_id']
 
         if network_owner != resource_item['tenant_id']:
             msg = _("Tenant %(tenant_id)s not allowed to "

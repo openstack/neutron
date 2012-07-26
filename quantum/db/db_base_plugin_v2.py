@@ -65,9 +65,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         query = context.session.query(model)
 
         # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
+        # NOTE(salvatore-orlando): unless the model allows for shared objects
         if not context.is_admin and hasattr(model, 'tenant_id'):
-            query = query.filter(model.tenant_id == context.tenant_id)
-
+            if hasattr(model, 'shared'):
+                query = query.filter((model.tenant_id == context.tenant_id) |
+                                     (model.shared))
+            else:
+                query = query.filter(model.tenant_id == context.tenant_id)
         return query
 
     def _get_by_id(self, context, model, id, joins=(), verbose=None):
@@ -610,12 +614,32 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                             subnet['cidr'])
             return pools
 
+    def _validate_shared_update(self, context, id, original, updated):
+        # The only case that needs to be validated is when 'shared'
+        # goes from True to False
+        if updated['shared'] == original.shared or updated['shared']:
+            return
+        ports = self._model_query(
+            context, models_v2.Port).filter(
+                models_v2.Port.network_id == id).all()
+        subnets = self._model_query(
+            context, models_v2.Subnet).filter(
+                models_v2.Subnet.network_id == id).all()
+        tenant_ids = set([port['tenant_id'] for port in ports] +
+                         [subnet['tenant_id'] for subnet in subnets])
+        # raise if multiple tenants found or if the only tenant found
+        # is not the owner of the network
+        if (len(tenant_ids) > 1 or len(tenant_ids) == 1 and
+            tenant_ids.pop() != original.tenant_id):
+            raise q_exc.InvalidSharedSetting(network=original.name)
+
     def _make_network_dict(self, network, fields=None):
         res = {'id': network['id'],
                'name': network['name'],
                'tenant_id': network['tenant_id'],
                'admin_state_up': network['admin_state_up'],
                'status': network['status'],
+               'shared': network['shared'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}
 
@@ -659,6 +683,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                         id=n.get('id') or utils.str_uuid(),
                                         name=n['name'],
                                         admin_state_up=n['admin_state_up'],
+                                        shared=n['shared'],
                                         status="ACTIVE")
             context.session.add(network)
         return self._make_network_dict(network)
@@ -667,6 +692,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         n = network['network']
         with context.session.begin():
             network = self._get_network(context, id)
+            # validate 'shared' parameter
+            if 'shared' in n:
+                self._validate_shared_update(context, id, network, n)
             network.update(n)
         return self._make_network_dict(network)
 
