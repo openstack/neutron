@@ -21,6 +21,7 @@ import webob.exc
 
 from quantum import context
 from quantum import wsgi
+from quantum.openstack.common import cfg
 
 
 LOG = logging.getLogger(__name__)
@@ -50,3 +51,15 @@ class QuantumKeystoneContext(wsgi.Middleware):
         req.environ['quantum.context'] = ctx
 
         return self.application
+
+
+def pipeline_factory(loader, global_conf, **local_conf):
+    """Create a paste pipeline based on the 'auth_strategy' config option."""
+    pipeline = local_conf[cfg.CONF.auth_strategy]
+    pipeline = pipeline.split()
+    filters = [loader.get_filter(n) for n in pipeline[:-1]]
+    app = loader.get_app(pipeline[-1])
+    filters.reverse()
+    for filter in filters:
+        app = filter(app)
+    return app
