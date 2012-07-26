@@ -90,14 +90,20 @@ class DhcpBase(object):
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
 
+    def _enable_dhcp(self):
+        """check if there is a subnet within the network with dhcp enabled."""
+        for subnet in self.network.subnets:
+            if subnet.enable_dhcp:
+                return True
+        return False
+
     def enable(self):
         """Enables DHCP for this network by spawning a local process."""
         if self.active:
             self.reload_allocations()
-            return
-
-        self.device_delegate.setup(self.network, reuse_existing=True)
-        self.spawn_process()
+        elif self._enable_dhcp():
+            self.device_delegate.setup(self.network, reuse_existing=True)
+            self.spawn_process()
 
     def disable(self):
         """Disable DHCP for this network by killing the local process."""
@@ -193,6 +199,9 @@ class Dnsmasq(DhcpLocalProcess):
         ]
 
         for i, subnet in enumerate(self.network.subnets):
+            # if a subnet is specified to have dhcp disabled
+            if not subnet.enable_dhcp:
+                continue
             if subnet.ip_version == 4:
                 mode = 'static'
             else:
@@ -213,6 +222,13 @@ class Dnsmasq(DhcpLocalProcess):
         utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
+        """If all subnets turn off dhcp, kill the process."""
+        if not self._enable_dhcp():
+            self.disable()
+            LOG.debug(_('Killing dhcpmasq for network since all subnets have \
+                         turned off DHCP: %s') % self.network.id)
+            return
+
         """Rebuilds the dnsmasq config and signal the dnsmasq to reload."""
         self._output_hosts_file()
         self._output_opts_file()
@@ -240,9 +256,12 @@ class Dnsmasq(DhcpLocalProcess):
         # TODO (mark): add support for nameservers
         options = []
         for i, subnet in enumerate(self.network.subnets):
-            if subnet.ip_version == 6:
+            if not subnet.enable_dhcp:
+                continue
+            elif subnet.ip_version == 6:
                 continue
             else:
+                #NOTE(xchenum) need to handle no gw case
                 options.append((self._TAG_PREFIX % i,
                                 'option',
                                 'router',

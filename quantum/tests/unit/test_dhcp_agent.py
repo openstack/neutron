@@ -70,6 +70,7 @@ class TestDhcpAgent(unittest.TestCase):
             self.dhcp.daemon_loop()
 
     def test_daemon_loop_completes_single_pass(self):
+        self.dhcp._network_dhcp_enable = mock.Mock(return_value=True)
         with mock.patch.object(self.dhcp, 'get_network_state_delta') as state:
             with mock.patch.object(self.dhcp, 'call_driver') as call_driver:
                 with mock.patch('quantum.agent.dhcp_agent.time') as time:
@@ -84,18 +85,75 @@ class TestDhcpAgent(unittest.TestCase):
                          mock.call('reload_allocations', 'updated_net'),
                          mock.call('disable', 'deleted_net')])
 
-    def test_state_builder(self):
-        fake_subnet = [
-            FakeModel(1, network_id=1),
-            FakeModel(2, network_id=2),
-        ]
+    def test_state_builder_network_admin_down(self):
+        fake_network1 = FakeModel(1, admin_state_up=True)
+        fake_network2 = FakeModel(2, admin_state_up=False)
+
+        fake_subnet1 = FakeModel(1, network_id=1, enable_dhcp=True)
+        fake_subnet2 = FakeModel(2, network_id=2, enable_dhcp=True)
+        fake_subnet3 = FakeModel(3, network_id=2, enable_dhcp=True)
+
+        fake_network1.subnets = [fake_subnet1]
+        fake_network2.subnets = [fake_subnet2, fake_subnet3]
+
+        fake_subnet1.network = fake_network1
+        fake_subnet2.network = fake_network2
+        fake_subnet3.network = fake_network2
 
         fake_allocation = [
-            FakeModel(2, subnet_id=1)
+            FakeModel(2, subnet_id=1),
+            FakeModel(3, subnet_id=2)
         ]
 
+        fake_subnets = [fake_subnet1, fake_subnet2, fake_subnet3]
+        fake_networks = [fake_network1, fake_network2]
+
         db = mock.Mock()
-        db.subnets.all = mock.Mock(return_value=fake_subnet)
+        db.subnets.all = mock.Mock(return_value=fake_subnets)
+        db.networks.all = mock.Mock(return_value=fake_networks)
+        db.ipallocations.all = mock.Mock(return_value=fake_allocation)
+        self.dhcp.db = db
+        state = self.dhcp._state_builder()
+
+        self.assertEquals(state.networks, set([1]))
+
+        expected_subnets = set([
+            (hash(str(fake_subnets[0])), 1),
+        ])
+        self.assertEquals(state.subnet_hashes, expected_subnets)
+
+        expected_ipalloc = set([
+            (hash(str(fake_allocation[0])), 1),
+        ])
+        self.assertEquals(state.ipalloc_hashes, expected_ipalloc)
+
+    def test_state_builder_network_dhcp_partial_disable(self):
+        fake_network1 = FakeModel(1, admin_state_up=True)
+        fake_network2 = FakeModel(2, admin_state_up=True)
+
+        fake_subnet1 = FakeModel(1, network_id=1, enable_dhcp=True)
+        fake_subnet2 = FakeModel(2, network_id=2, enable_dhcp=False)
+        fake_subnet3 = FakeModel(3, network_id=2, enable_dhcp=True)
+
+        fake_network1.subnets = [fake_subnet1]
+        fake_network2.subnets = [fake_subnet2, fake_subnet3]
+
+        fake_subnet1.network = fake_network1
+        fake_subnet2.network = fake_network2
+        fake_subnet3.network = fake_network2
+
+        fake_allocation = [
+            FakeModel(2, subnet_id=1),
+            FakeModel(3, subnet_id=2),
+            FakeModel(4, subnet_id=3),
+        ]
+
+        fake_subnets = [fake_subnet1, fake_subnet2, fake_subnet3]
+        fake_networks = [fake_network1, fake_network2]
+
+        db = mock.Mock()
+        db.subnets.all = mock.Mock(return_value=fake_subnets)
+        db.networks.all = mock.Mock(return_value=fake_networks)
         db.ipallocations.all = mock.Mock(return_value=fake_allocation)
         self.dhcp.db = db
         state = self.dhcp._state_builder()
@@ -103,8 +161,95 @@ class TestDhcpAgent(unittest.TestCase):
         self.assertEquals(state.networks, set([1, 2]))
 
         expected_subnets = set([
-            (hash(str(fake_subnet[0])), 1),
-            (hash(str(fake_subnet[1])), 2)
+            (hash(str(fake_subnets[0])), 1),
+            (hash(str(fake_subnets[2])), 2),
+        ])
+        self.assertEquals(state.subnet_hashes, expected_subnets)
+
+        expected_ipalloc = set([
+            (hash(str(fake_allocation[0])), 1),
+            (hash(str(fake_allocation[2])), 2),
+        ])
+        self.assertEquals(state.ipalloc_hashes, expected_ipalloc)
+
+    def test_state_builder_network_dhcp_all_disable(self):
+        fake_network1 = FakeModel(1, admin_state_up=True)
+        fake_network2 = FakeModel(2, admin_state_up=True)
+
+        fake_subnet1 = FakeModel(1, network_id=1, enable_dhcp=True)
+        fake_subnet2 = FakeModel(2, network_id=2, enable_dhcp=False)
+        fake_subnet3 = FakeModel(3, network_id=2, enable_dhcp=False)
+
+        fake_network1.subnets = [fake_subnet1]
+        fake_network2.subnets = [fake_subnet2, fake_subnet3]
+
+        fake_subnet1.network = fake_network1
+        fake_subnet2.network = fake_network2
+        fake_subnet3.network = fake_network2
+
+        fake_allocation = [
+            FakeModel(2, subnet_id=1),
+            FakeModel(3, subnet_id=2),
+            FakeModel(4, subnet_id=3),
+        ]
+
+        fake_subnets = [fake_subnet1, fake_subnet2, fake_subnet3]
+        fake_networks = [fake_network1, fake_network2]
+
+        db = mock.Mock()
+        db.subnets.all = mock.Mock(return_value=fake_subnets)
+        db.networks.all = mock.Mock(return_value=fake_networks)
+        db.ipallocations.all = mock.Mock(return_value=fake_allocation)
+        self.dhcp.db = db
+        state = self.dhcp._state_builder()
+
+        self.assertEquals(state.networks, set([1]))
+
+        expected_subnets = set([
+            (hash(str(fake_subnets[0])), 1)
+        ])
+        self.assertEquals(state.subnet_hashes, expected_subnets)
+
+        expected_ipalloc = set([
+            (hash(str(fake_allocation[0])), 1)
+        ])
+        self.assertEquals(state.ipalloc_hashes, expected_ipalloc)
+
+    def test_state_builder_mixed(self):
+        fake_network1 = FakeModel(1, admin_state_up=True)
+        fake_network2 = FakeModel(2, admin_state_up=True)
+        fake_network3 = FakeModel(3, admin_state_up=False)
+
+        fake_subnet1 = FakeModel(1, network_id=1, enable_dhcp=True)
+        fake_subnet2 = FakeModel(2, network_id=2, enable_dhcp=False)
+        fake_subnet3 = FakeModel(3, network_id=3, enable_dhcp=True)
+
+        fake_network1.subnets = [fake_subnet1]
+        fake_network2.subnets = [fake_subnet2]
+        fake_network3.subnets = [fake_subnet3]
+
+        fake_subnet1.network = fake_network1
+        fake_subnet2.network = fake_network2
+        fake_subnet3.network = fake_network3
+
+        fake_allocation = [
+            FakeModel(2, subnet_id=1)
+        ]
+
+        fake_subnets = [fake_subnet1, fake_subnet2, fake_subnet3]
+        fake_networks = [fake_network1, fake_network2, fake_network3]
+
+        db = mock.Mock()
+        db.subnets.all = mock.Mock(return_value=fake_subnets)
+        db.networks.all = mock.Mock(return_value=fake_networks)
+        db.ipallocations.all = mock.Mock(return_value=fake_allocation)
+        self.dhcp.db = db
+        state = self.dhcp._state_builder()
+
+        self.assertEquals(state.networks, set([1]))
+
+        expected_subnets = set([
+            (hash(str(fake_subnets[0])), 1),
         ])
         self.assertEquals(state.subnet_hashes, expected_subnets)
 
@@ -120,7 +265,8 @@ class TestDhcpAgent(unittest.TestCase):
             return self.dhcp.get_network_state_delta()
 
     def test_get_network_state_fresh(self):
-        new_state = dhcp_agent.State(set([1]), set([(3, 1)]), set([(11, 1)]))
+        new_state = dhcp_agent.State(set([1]), set([(3, 1)]),
+                                     set([(11, 1)]))
 
         delta = self._network_state_helper(self.dhcp.prev_state, new_state)
         self.assertEqual(delta,

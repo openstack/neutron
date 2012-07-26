@@ -104,12 +104,21 @@ class DhcpAgent(object):
 
             subnets = {}
             subnet_hashes = set()
+
+            network_admin_up = {}
+            for network in self.db.networks.all():
+                network_admin_up[network.id] = network.admin_state_up
+
             for subnet in self.db.subnets.all():
+                if (not subnet.enable_dhcp or
+                        not network_admin_up[subnet.network_id]):
+                    continue
                 subnet_hashes.add((hash(str(subnet)), subnet.network_id))
                 subnets[subnet.id] = subnet.network_id
 
             ipalloc_hashes = set([(hash(str(a)), subnets[a.subnet_id])
-                                 for a in self.db.ipallocations.all()])
+                                 for a in self.db.ipallocations.all()
+                                 if a.subnet_id in subnets])
 
             networks = set(subnets.itervalues())
 

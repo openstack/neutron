@@ -228,5 +228,10 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'is_visible': True},
+        'enable_dhcp': {'allow_post': True, 'allow_put': True,
+                        'default': True,
+                        'convert_to': convert_to_boolean,
+                        'validate': {'type:boolean': None},
+                        'is_visible': True},
     }
 }

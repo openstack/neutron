@@ -752,7 +752,7 @@ class V2Views(unittest.TestCase):
 
     def test_subnet(self):
         keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
-                'ip_version', 'cidr')
+                'ip_version', 'cidr', 'enable_dhcp')
         self._view(keys, 'subnets', 'subnet')
 
 

@@ -112,6 +112,8 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     allocation_pools = orm.relationship(IPAllocationPool,
                                         backref='subnet',
                                         lazy="dynamic")
+    enable_dhcp = sa.Column(sa.Boolean())
+
     #TODO(danwent):
     # - dns_namservers
     # - additional_routes

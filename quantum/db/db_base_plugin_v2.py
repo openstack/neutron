@@ -625,7 +625,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'allocation_pools': [{'start': pool['first_ip'],
                                      'end': pool['last_ip']}
                                     for pool in subnet['allocation_pools']],
-               'gateway_ip': subnet['gateway_ip']}
+               'gateway_ip': subnet['gateway_ip'],
+               'enable_dhcp': subnet['enable_dhcp']}
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None):
@@ -702,7 +703,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                       network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
-                                      gateway_ip=s['gateway_ip'])
+                                      gateway_ip=s['gateway_ip'],
+                                      enable_dhcp=s['enable_dhcp'])
             context.session.add(subnet)
             pools = self._allocate_pools_for_subnet(context, s)
             for pool in pools:

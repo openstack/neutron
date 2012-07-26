@@ -137,12 +137,13 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         return network_req.get_response(self.api)
 
     def _create_subnet(self, fmt, tenant_id, net_id, gateway_ip, cidr,
-                       allocation_pools=None, ip_version=4):
+                       allocation_pools=None, ip_version=4, enable_dhcp=True):
         data = {'subnet': {'tenant_id': tenant_id,
                            'network_id': net_id,
                            'cidr': cidr,
                            'ip_version': ip_version,
-                           'tenant_id': self._tenant_id}}
+                           'tenant_id': self._tenant_id,
+                           'enable_dhcp': enable_dhcp}}
         if gateway_ip:
             data['subnet']['gateway_ip'] = gateway_ip
         if allocation_pools:
@@ -165,14 +166,15 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         return port_req.get_response(self.api)
 
     def _make_subnet(self, fmt, network, gateway, cidr,
-                     allocation_pools=None, ip_version=4):
+                     allocation_pools=None, ip_version=4, enable_dhcp=True):
         res = self._create_subnet(fmt,
                                   network['network']['tenant_id'],
                                   network['network']['id'],
                                   gateway,
                                   cidr,
                                   allocation_pools=allocation_pools,
-                                  ip_version=ip_version)
+                                  ip_version=ip_version,
+                                  enable_dhcp=enable_dhcp)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= 400:
@@ -200,7 +202,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                cidr='10.0.0.0/24',
                fmt='json',
                ip_version=4,
-               allocation_pools=None):
+               allocation_pools=None,
+               enable_dhcp=True):
         # TODO(anyone) DRY this
         # NOTE(salvatore-orlando): we can pass the network object
         # to gen function anyway, and then avoid the repetition
@@ -211,7 +214,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                            gateway_ip,
                                            cidr,
                                            allocation_pools,
-                                           ip_version)
+                                           ip_version,
+                                           enable_dhcp)
                 yield subnet
                 self._delete('subnets', subnet['subnet']['id'])
         else:
@@ -220,7 +224,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                        gateway_ip,
                                        cidr,
                                        allocation_pools,
-                                       ip_version)
+                                       ip_version,
+                                       enable_dhcp)
             yield subnet
             self._delete('subnets', subnet['subnet']['id'])
 
@@ -876,6 +881,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         keys = kwargs.copy()
         keys.setdefault('cidr', '10.0.0.0/24')
         keys.setdefault('ip_version', 4)
+        keys.setdefault('enable_dhcp', True)
         with self.subnet(network=network, **keys) as subnet:
             # verify the response has each key with the correct value
             for k in keys:
@@ -974,10 +980,12 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.0.254'}]
+        enable_dhcp = True
         subnet = self._test_create_subnet()
         # verify cidr & gw have been correctly generated
         self.assertEquals(subnet['subnet']['cidr'], cidr)
         self.assertEquals(subnet['subnet']['gateway_ip'], gateway)
+        self.assertEquals(subnet['subnet']['enable_dhcp'], enable_dhcp)
         self.assertEquals(subnet['subnet']['allocation_pools'],
                           allocation_pools)
 
@@ -1020,6 +1028,10 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         self._test_create_subnet(gateway_ip=gateway_ip,
                                  cidr=cidr,
                                  allocation_pools=allocation_pools)
+
+    def test_create_subnet_with_dhcp_disabled(self):
+        enable_dhcp = False
+        self._test_create_subnet(enable_dhcp=enable_dhcp)
 
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         gateway_ip = '10.0.0.50'
