@@ -270,7 +270,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         options.update({'base': models_v2.model_base.BASEV2})
         sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
         options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = conf.DATABASE.reconnect_interval
+        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
