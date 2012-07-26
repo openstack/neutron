@@ -209,7 +209,7 @@ class DeviceManager(object):
     def get_interface_name(self, network, port=None):
         if not port:
             port = self._get_or_create_port(network)
-        return ('tap' + port.id)[:self.driver.DEV_NAME_LEN]
+        return self.driver.get_device_name(port)
 
     def get_device_id(self, network):
         # There could be more than one dhcp server per network, so create

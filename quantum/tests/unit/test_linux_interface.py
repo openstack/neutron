@@ -34,6 +34,10 @@ class BaseChild(interface.LinuxInterfaceDriver):
         pass
 
 
+class FakeNetwork:
+    id = '12345678-1234-5678-90ab-ba0987654321'
+
+
 class FakeSubnet:
     cidr = '192.168.1.1/24'
 
@@ -44,9 +48,11 @@ class FakeAllocation:
     ip_version = 4
 
 
-class FakePort(object):
+class FakePort:
+    id = 'abcdef01-1234-5678-90ab-ba0987654321'
     fixed_ips = [FakeAllocation]
     device_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    network = FakeNetwork()
 
 
 class TestBase(unittest.TestCase):
@@ -59,6 +65,8 @@ class TestBase(unittest.TestCase):
         self.conf.register_opts(root_helper_opt)
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
+        self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')
+        self.ip = self.ip_p.start()
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
 
@@ -69,9 +77,15 @@ class TestBase(unittest.TestCase):
         except RuntimeError, e:
             pass
         self.ip_dev_p.stop()
+        self.ip_p.stop()
 
 
 class TestABCDriver(TestBase):
+    def test_get_device_name(self):
+        bc = BaseChild(self.conf)
+        device_name = bc.get_device_name(FakePort())
+        self.assertEqual('tapabcdef01-12', device_name)
+
     def test_l3_init(self):
         addresses = [dict(ip_version=4, scope='global',
                           dynamic=False, cidr='172.16.77.240/24')]
@@ -88,7 +102,7 @@ class TestABCDriver(TestBase):
 
 class TestOVSInterfaceDriver(TestBase):
     def test_plug(self, additional_expectation=[]):
-        def device_exists(dev, root_helper=None):
+        def device_exists(dev, root_helper=None, namespace=None):
             return dev == 'br-int'
 
         vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
@@ -109,16 +123,17 @@ class TestOVSInterfaceDriver(TestBase):
                      'aa:bb:cc:dd:ee:ff')
             execute.assert_called_once_with(vsctl_cmd, 'sudo')
 
-        expected = [mock.call('tap0', 'sudo'),
-                    mock.call().link.set_address('aa:bb:cc:dd:ee:ff')]
-
+        expected = [mock.call('sudo'),
+                    mock.call().device('tap0'),
+                    mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
         expected.extend(additional_expectation)
-        expected.append(mock.call().link.set_up())
-        self.ip_dev.assert_has_calls(expected)
+        expected.extend([mock.call().device().link.set_up()])
+
+        self.ip.assert_has_calls(expected)
 
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)
-        self.test_plug([mock.call().link.set_mtu(9000)])
+        self.test_plug([mock.call().device().link.set_mtu(9000)])
 
     def test_unplug(self):
         with mock.patch('quantum.agent.linux.ovs_lib.OVSBridge') as ovs_br:
@@ -129,13 +144,19 @@ class TestOVSInterfaceDriver(TestBase):
 
 
 class TestBridgeInterfaceDriver(TestBase):
-    def test_get_bridge(self):
+    def test_get_device_name(self):
         br = interface.BridgeInterfaceDriver(self.conf)
-        self.assertEqual('brq12345678-11', br.get_bridge('12345678-1122-3344'))
+        device_name = br.get_device_name(FakePort())
+        self.assertEqual('dhcabcdef01-12', device_name)
 
     def test_plug(self):
-        def device_exists(device, root_helper=None):
+        def device_exists(device, root_helper=None, namespace=None):
             return device.startswith('brq')
+
+        root_veth = mock.Mock()
+        ns_veth = mock.Mock()
+
+        self.ip().add_veth = mock.Mock(return_value=(root_veth, ns_veth))
 
         expected = [mock.call(c, 'sudo') for c in [
             ['ip', 'tuntap', 'add', 'tap0', 'mode', 'tap'],
@@ -147,14 +168,16 @@ class TestBridgeInterfaceDriver(TestBase):
         br = interface.BridgeInterfaceDriver(self.conf)
         br.plug('01234567-1234-1234-99',
                 'port-1234',
-                'tap0',
+                'dhc0',
                 'aa:bb:cc:dd:ee:ff')
 
-        self.ip_dev.assert_has_calls(
-            [mock.call('tap0', 'sudo'),
-             mock.call().tuntap.add(),
-             mock.call().link.set_address('aa:bb:cc:dd:ee:ff'),
-             mock.call().link.set_up()])
+        self.ip.assert_has_calls(
+            [mock.call(),
+             mock.call('sudo'),
+             mock.call().add_veth('tap0', 'dhc0')])
+
+        root_veth.assert_has_calls([mock.call.link.set_up()])
+        ns_veth.assert_has_calls([mock.call.link.set_up()])
 
     def test_plug_dev_exists(self):
         self.device_exists.return_value = True
@@ -166,34 +189,6 @@ class TestBridgeInterfaceDriver(TestBase):
                     'aa:bb:cc:dd:ee:ff')
             self.ip_dev.assert_has_calls([])
             self.assertEquals(log.call_count, 1)
-
-    def test_tunctl_failback(self):
-        def device_exists(dev, root_helper=None):
-            return dev.startswith('brq')
-
-        expected = [mock.call(c, 'sudo') for c in [
-            ['ip', 'tuntap', 'add', 'tap0', 'mode', 'tap'],
-            ['tunctl', '-b', '-t', 'tap0'],
-            ['ip', 'link', 'set', 'tap0', 'address', 'aa:bb:cc:dd:ee:ff'],
-            ['ip', 'link', 'set', 'tap0', 'up']]
-        ]
-
-        self.device_exists.side_effect = device_exists
-        self.ip_dev().tuntap.add.side_effect = RuntimeError
-        self.ip_dev.reset_calls()
-        with mock.patch.object(utils, 'execute') as execute:
-            br = interface.BridgeInterfaceDriver(self.conf)
-            br.plug('01234567-1234-1234-99',
-                    'port-1234',
-                    'tap0',
-                    'aa:bb:cc:dd:ee:ff')
-            execute.assert_called_once_with(['tunctl', '-b', '-t', 'tap0'],
-                                            'sudo')
-        self.ip_dev.assert_has_calls(
-            [mock.call('tap0', 'sudo'),
-             mock.call().tuntap.add(),
-             mock.call().link.set_address('aa:bb:cc:dd:ee:ff'),
-             mock.call().link.set_up()])
 
     def test_unplug(self):
         self.device_exists.return_value = True
