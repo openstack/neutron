@@ -411,6 +411,7 @@ class LinuxBridgeAgentTest(unittest.TestCase):
         self.br_name_prefix = "brq"
         self.gw_name_prefix = "gw-"
         self.tap_name_prefix = "tap"
+        self.v2 = True
         self._linuxbridge_plugin = LinuxBridgePlugin.LinuxBridgePlugin()
         try:
             fh = open(self.config_file)
@@ -434,7 +435,8 @@ class LinuxBridgeAgentTest(unittest.TestCase):
             self.physical_interface,
             self.polling_interval,
             self.reconnect_interval,
-            self.root_helper)
+            self.root_helper,
+            self.v2)
 
     def run_cmd(self, args):
         cmd = shlex.split(self.root_helper) + args
