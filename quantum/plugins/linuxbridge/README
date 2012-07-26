@@ -98,6 +98,8 @@ mysql> FLUSH PRIVILEGES;
   Make sure it matches your mysql configuration.  This file must be updated
   with the addresses and credentials to access the database.
 
+  Note: debug and logging information should be updated in etc/quantum.conf
+
   Note: When running the tests, set the connection type to sqlite, and when
   actually running the server set it to mysql. At any given time, only one
   of these should be active in the conf file (you can comment out the other).
@@ -116,9 +118,13 @@ mysql> FLUSH PRIVILEGES;
   and etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
   to the compute node.
 
+- Copy the quantum.conf file to the compute node
+
+  Note: debug and logging information should be updated in etc/quantum.conf
+
 $ Run the following:
-  python linuxbridge_quantum_agent.py linuxbridge_conf.ini
-  (Use --verbose option to see the logs)
+  python linuxbridge_quantum_agent.py --config-file quantum.conf 
+                                      --config-file linuxbridge_conf.ini
 
   Note that the the user running the agent must have sudo priviliges
   to run various networking commands. Also, the agent can be

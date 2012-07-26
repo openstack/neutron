@@ -21,7 +21,6 @@
 # @author: Isaku Yamahata
 
 import logging as LOG
-from optparse import OptionParser
 import sys
 import time
 
@@ -31,6 +30,7 @@ from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
+from quantum.openstack.common import cfg
 from quantum.plugins.ryu.common import config
 
 OP_STATUS_UP = "UP"
@@ -224,29 +224,15 @@ class OVSQuantumOFPRyuAgent:
 
 
 def main():
-    usagestr = "%prog [OPTIONS] <config file>"
-    parser = OptionParser(usage=usagestr)
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      action="store_true", default=False,
-                      help="turn on verbose logging")
+    cfg.CONF(args=sys.argv, project='quantum')
 
-    options, args = parser.parse_args()
+    # (TODO) gary - swap with common logging
+    logging_config.setup_logging(cfg.CONF)
 
-    if options.verbose:
-        LOG.basicConfig(level=LOG.DEBUG)
-    else:
-        LOG.basicConfig(level=LOG.WARN)
-
-    if len(args) != 1:
-        parser.print_help()
-        sys.exit(1)
-
-    config_file = args[0]
-    conf = config.parse(config_file)
-    integ_br = conf.OVS.integration_bridge
-    root_helper = conf.AGENT.root_helper
-    target_v2_api = conf.AGENT.target_v2_api
-    options = {"sql_connection": conf.DATABASE.sql_connection}
+    integ_br = cfg.CONF.OVS.integration_bridge
+    root_helper = cfg.CONF.AGENT.root_helper
+    target_v2_api = cfg.CONF.AGENT.target_v2_api
+    options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
     db = SqlSoup(options["sql_connection"])
 
     LOG.info("Connecting to database \"%s\" on %s",
