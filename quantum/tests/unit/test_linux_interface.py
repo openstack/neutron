@@ -217,3 +217,72 @@ class TestBridgeInterfaceDriver(TestBase):
 
         self.ip_dev.assert_has_calls([mock.call('tap0', 'sudo'),
                                       mock.call().link.delete()])
+
+
+class TestRyuInterfaceDriver(TestBase):
+    def setUp(self):
+        super(TestRyuInterfaceDriver, self).setUp()
+        self.ryu_mod = mock.Mock()
+        self.ryu_app_mod = self.ryu_mod.app
+        self.ryu_app_client = self.ryu_app_mod.client
+        self.ryu_mod_p = mock.patch.dict('sys.modules',
+                                         {'ryu': self.ryu_mod,
+                                          'ryu.app': self.ryu_app_mod,
+                                          'ryu.app.client':
+                                          self.ryu_app_client})
+        self.ryu_mod_p.start()
+
+    def tearDown(self):
+        self.ryu_mod_p.stop()
+        super(TestRyuInterfaceDriver, self).tearDown()
+
+    @staticmethod
+    def _device_exists(dev, root_helper=None):
+        return dev == 'br-int'
+
+    _vsctl_cmd_init = ['ovs-vsctl', '--timeout=2',
+                       'get', 'Bridge', 'br-int', 'datapath_id']
+
+    def test_init(self):
+        with mock.patch.object(utils, 'execute') as execute:
+            self.device_exists.side_effect = self._device_exists
+            interface.RyuInterfaceDriver(self.conf)
+            execute.assert_called_once_with(self._vsctl_cmd_init,
+                                            root_helper='sudo')
+
+        self.ryu_app_client.OFPClient.assert_called_once_with('127.0.0.1:8080')
+
+    def test_plug(self):
+        vsctl_cmd_plug = ['ovs-vsctl', '--', '--may-exist', 'add-port',
+                          'br-int', 'tap0', '--', 'set', 'Interface', 'tap0',
+                          'type=internal', '--', 'set', 'Interface', 'tap0',
+                          'external-ids:iface-id=port-1234', '--', 'set',
+                          'Interface', 'tap0',
+                          'external-ids:iface-status=active', '--', 'set',
+                          'Interface', 'tap0',
+                          'external-ids:attached-mac=aa:bb:cc:dd:ee:ff']
+        vsctl_cmd_ofport = ['ovs-vsctl', '--timeout=2',
+                            'get', 'Interface', 'tap0', 'ofport']
+
+        with mock.patch.object(utils, 'execute') as execute:
+            self.device_exists.side_effect = self._device_exists
+            ryu = interface.RyuInterfaceDriver(self.conf)
+
+            ryu.plug('01234567-1234-1234-99',
+                     'port-1234',
+                     'tap0',
+                     'aa:bb:cc:dd:ee:ff')
+
+            execute.assert_has_calls([mock.call(self._vsctl_cmd_init,
+                                                root_helper='sudo')])
+            execute.assert_has_calls([mock.call(vsctl_cmd_plug, 'sudo')])
+            execute.assert_has_calls([mock.call(vsctl_cmd_ofport,
+                                                root_helper='sudo')])
+
+        self.ryu_app_client.OFPClient.assert_called_once_with('127.0.0.1:8080')
+
+        expected = [mock.call('sudo'),
+                    mock.call().device('tap0'),
+                    mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
+                    mock.call().device().link.set_up()]
+        self.ip.assert_has_calls(expected)

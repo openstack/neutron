@@ -144,6 +144,16 @@ class OVS_Lib_Test(unittest.TestCase):
         self.assertEqual(self.br.get_port_ofport(pname), ofport)
         self.mox.VerifyAll()
 
+    def test_get_datapath_id(self):
+        datapath_id = '"0000b67f4fbcc149"'
+        utils.execute(["ovs-vsctl", self.TO, "get",
+                       "Bridge", self.BR_NAME, "datapath_id"],
+                      root_helper=self.root_helper).AndReturn(datapath_id)
+        self.mox.ReplayAll()
+
+        self.assertEqual(self.br.get_datapath_id(), datapath_id.strip('"'))
+        self.mox.VerifyAll()
+
     def test_count_flows(self):
         utils.execute(["ovs-ofctl", "dump-flows", self.BR_NAME],
                       root_helper=self.root_helper).AndReturn('ignore'

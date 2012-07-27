@@ -82,6 +82,10 @@ class OVSBridge:
     def get_port_ofport(self, port_name):
         return self.db_get_val("Interface", port_name, "ofport")
 
+    def get_datapath_id(self):
+        return self.db_get_val('Bridge',
+                               self.br_name, 'datapath_id').strip('"')
+
     def _build_flow_expr_arr(self, **kwargs):
         flow_expr_arr = []
         is_delete_expr = kwargs.get('delete', False)
