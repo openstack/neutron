@@ -108,5 +108,6 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def delete_network(self, context, id):
+        result = super(RyuQuantumPluginV2, self).delete_network(context, id)
         self.client.delete_network(id)
-        return super(RyuQuantumPluginV2, self).delete_network(context, id)
+        return result

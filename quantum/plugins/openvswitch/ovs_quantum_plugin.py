@@ -320,9 +320,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def delete_network(self, context, id):
+        result = super(OVSQuantumPluginV2, self).delete_network(context, id)
         ovs_db_v2.remove_vlan_binding(id)
         self.vmap.release(id)
-        return super(OVSQuantumPluginV2, self).delete_network(context, id)
+        return result
 
     def get_network(self, context, id, fields=None, verbose=None):
         net = super(OVSQuantumPluginV2, self).get_network(context, id,

@@ -38,7 +38,8 @@ class VlanBinding(model_base.BASEV2):
     """Represents a binding of vlan_id to network_id"""
     __tablename__ = 'vlan_bindings'
 
-    network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
+    network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id',
+                                                        ondelete="CASCADE"),
                            primary_key=True)
     vlan_id = sa.Column(sa.Integer, nullable=False)
 
