@@ -32,12 +32,13 @@ from quantum.version import version_string
 
 LOG = logging.getLogger(__name__)
 
-bind_opts = [
+core_opts = [
     cfg.StrOpt('bind_host', default='0.0.0.0'),
     cfg.IntOpt('bind_port', default=9696),
     cfg.StrOpt('api_paste_config', default="api-paste.ini"),
     cfg.StrOpt('api_extensions_path', default=""),
     cfg.StrOpt('policy_file', default="policy.json"),
+    cfg.StrOpt('auth_strategy', default='keystone'),
     cfg.StrOpt('core_plugin',
                default='quantum.plugins.sample.SamplePlugin.FakePlugin'),
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00"),
@@ -45,7 +46,7 @@ bind_opts = [
 ]
 
 # Register the configuration options
-cfg.CONF.register_opts(bind_opts)
+cfg.CONF.register_opts(core_opts)
 
 
 def parse(args):
