@@ -24,15 +24,24 @@ from quantum.openstack.common import importutils
 
 LOG = logging.getLogger(__name__)
 quota_opts = [
+    cfg.ListOpt('quota_items',
+                default=['network', 'subnet', 'port'],
+                help='resource name(s) that are supported in quota features'),
+    cfg.IntOpt('default_quota',
+               default=-1,
+               help='default number of resource allowed per tenant, '
+               'minus for unlimited'),
     cfg.IntOpt('quota_network',
                default=10,
-               help='number of networks allowed per tenant, -1 for unlimited'),
+               help='number of networks allowed per tenant,'
+               'minus for unlimited'),
     cfg.IntOpt('quota_subnet',
                default=10,
-               help='number of subnets allowed per tenant, -1 for unlimited'),
+               help='number of subnets allowed per tenant, '
+               'minus for unlimited'),
     cfg.IntOpt('quota_port',
                default=50,
-               help='number of ports allowed per tenant, -1 for unlimited'),
+               help='number of ports allowed per tenant, minus for unlimited'),
     cfg.StrOpt('quota_driver',
                default='quantum.quota.ConfDriver',
                help='default driver to use for quota checks'),
@@ -73,7 +82,8 @@ class ConfDriver(object):
             quotas[resource.name] = resource.default
         return quotas
 
-    def limit_check(self, context, resources, values):
+    def limit_check(self, context, tenant_id,
+                    resources, values):
         """Check simple quota limits.
 
         For limits--those quotas for which there is no usage
@@ -90,6 +100,7 @@ class ConfDriver(object):
         nothing.
 
         :param context: The request context, for access checks.
+        :param tennant_id: The tenant_id to check quota.
         :param resources: A dictionary of the registered resources.
         :param values: A dictionary of the values to check against the
                        quota.
@@ -115,14 +126,12 @@ class ConfDriver(object):
 class BaseResource(object):
     """Describe a single resource for quota checking."""
 
-    def __init__(self, name, flag=None):
+    def __init__(self, name, flag):
         """
         Initializes a Resource.
 
         :param name: The name of the resource, i.e., "instances".
         :param flag: The name of the flag or configuration option
-                     which specifies the default value of the quota
-                     for this resource.
         """
 
         self.name = name
@@ -131,8 +140,10 @@ class BaseResource(object):
     @property
     def default(self):
         """Return the default value of the quota."""
-
-        return cfg.CONF.QUOTAS[self.flag] if self.flag else -1
+        if hasattr(cfg.CONF.QUOTAS, self.flag):
+            return cfg.CONF.QUOTAS[self.flag]
+        else:
+            return cfg.CONF.QUOTAS.default_quota
 
 
 class CountableResource(BaseResource):
@@ -186,8 +197,16 @@ class QuotaEngine(object):
 
     def register_resource(self, resource):
         """Register a resource."""
-
+        if resource.name in self._resources:
+            LOG.warn('%s is already registered.', resource.name)
+            return
         self._resources[resource.name] = resource
+
+    def register_resource_by_name(self, resourcename):
+        """Register a resource by name."""
+        resource = CountableResource(resourcename, _count_resource,
+                                     'quota_' + resourcename)
+        self.register_resource(resource)
 
     def register_resources(self, resources):
         """Register a list of resources."""
@@ -214,7 +233,7 @@ class QuotaEngine(object):
 
         return res.count(context, *args, **kwargs)
 
-    def limit_check(self, context, **values):
+    def limit_check(self, context, tenant_id, **values):
         """Check simple quota limits.
 
         For limits--those quotas for which there is no usage
@@ -236,11 +255,12 @@ class QuotaEngine(object):
         :param context: The request context, for access checks.
         """
 
-        return self._driver.limit_check(context, self._resources, values)
+        return self._driver.limit_check(context, tenant_id,
+                                        self._resources, values)
 
     @property
     def resources(self):
-        return sorted(self._resources.keys())
+        return self._resources
 
 
 QUOTAS = QuotaEngine()
@@ -252,11 +272,9 @@ def _count_resource(context, plugin, resources, tenant_id):
     return len(obj_list) if obj_list else 0
 
 
-resources = [
-    CountableResource('network', _count_resource, 'quota_network'),
-    CountableResource('subnet', _count_resource, 'quota_subnet'),
-    CountableResource('port', _count_resource, 'quota_port'),
-]
-
+resources = []
+for resource_item in cfg.CONF.QUOTAS.quota_items:
+    resources.append(CountableResource(resource_item, _count_resource,
+                                       'quota_' + resource_item))
 
 QUOTAS.register_resources(resources)

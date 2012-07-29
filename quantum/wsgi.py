@@ -32,6 +32,7 @@ import webob.dec
 import webob.exc
 
 from quantum.common import exceptions as exception
+from quantum import context
 from quantum.openstack.common import jsonutils
 
 
@@ -179,6 +180,12 @@ class Request(webob.Request):
         if type in allowed_types:
             return type
         return None
+
+    @property
+    def context(self):
+        if 'quantum.context' not in self.environ:
+            self.environ['quantum.context'] = context.get_admin_context()
+        return self.environ['quantum.context']
 
 
 class ActionDispatcher(object):
@@ -894,14 +901,20 @@ class Controller(object):
         arg_dict['request'] = req
         result = method(**arg_dict)
 
-        if isinstance(result, dict):
-            content_type = req.best_match_content_type()
-            default_xmlns = self.get_default_xmlns(req)
-            body = self._serialize(result, content_type, default_xmlns)
+        if isinstance(result, dict) or result is None:
+            if result is None:
+                status = 204
+                content_type = ''
+                body = None
+            else:
+                status = 200
+                content_type = req.best_match_content_type()
+                default_xmlns = self.get_default_xmlns(req)
+                body = self._serialize(result, content_type, default_xmlns)
 
-            response = webob.Response()
-            response.headers['Content-Type'] = content_type
-            response.body = body
+            response = webob.Response(status=status,
+                                      content_type=content_type,
+                                      body=body)
             msg_dict = dict(url=req.url, status=response.status_int)
             msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
             LOG.debug(msg)

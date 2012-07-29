@@ -72,7 +72,7 @@ class Providernet(object):
     def get_updated(cls):
         return "2012-07-23T10:00:00-00:00"
 
-    def get_extended_attributes(self, version):
+    def get_extended_resources(self, version):
         if version == "2.0":
             return EXTENDED_ATTRIBUTES_2_0
         else:

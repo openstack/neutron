@@ -213,3 +213,7 @@ class InvalidQuotaValue(QuantumException):
 class InvalidSharedSetting(QuantumException):
     message = _("Unable to reconfigure sharing settings for network"
                 "%(network). Multiple tenants are using it")
+
+
+class InvalidExtenstionEnv(QuantumException):
+    message = _("Invalid extension environment: %(reason)s")

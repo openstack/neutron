@@ -30,10 +30,27 @@ from quantum.common import exceptions
 import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import importutils
 from quantum import wsgi
 
 
 LOG = logging.getLogger('quantum.api.extensions')
+
+# Besides the supported_extension_aliases in plugin class,
+# we also support register enabled extensions here so that we
+# can load some mandatory files (such as db models) before initialize plugin
+ENABLED_EXTS = {
+    'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2':
+    {
+        'ext_alias': ["quotas"],
+        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
+    },
+    'quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2':
+    {
+        'ext_alias': ["quotas"],
+        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
+    },
+}
 
 
 class PluginInterface(object):
@@ -132,8 +149,8 @@ class ExtensionDescriptor(object):
         request_exts = []
         return request_exts
 
-    def get_extended_attributes(self, version):
-        """Map describing extended attributes for core resources.
+    def get_extended_resources(self, version):
+        """retrieve extended resources or attributes for core resources.
 
         Extended attributes are implemented by a core plugin similarly
         to the attributes defined in the core, and can appear in
@@ -143,6 +160,9 @@ class ExtensionDescriptor(object):
         map[<resource_name>][<attribute_name>][<attribute_property>]
         specifying the extended resource attribute properties required
         by that API version.
+
+        Extension can add resources and their attr definitions too.
+        The returned map can be integrated into RESOURCE_ATTRIBUTE_MAP.
         """
         return {}
 
@@ -281,7 +301,6 @@ class ExtensionMiddleware(wsgi.Middleware):
 
         self._router = routes.middleware.RoutesMiddleware(self._dispatch,
                                                           mapper)
-
         super(ExtensionMiddleware, self).__init__(application)
 
     @classmethod
@@ -411,12 +430,22 @@ class ExtensionManager(object):
         return request_exts
 
     def extend_resources(self, version, attr_map):
-        """Extend resources with additional attributes."""
+        """Extend resources with additional resources or attributes.
+
+        :param: attr_map, the existing mapping from resource name to
+        attrs definition.
+
+        After this function, we will extend the attr_map if an extension
+        wants to extend this map.
+        """
         for ext in self.extensions.itervalues():
             try:
-                extended_attrs = ext.get_extended_attributes(version)
+                extended_attrs = ext.get_extended_resources(version)
                 for resource, resource_attrs in extended_attrs.iteritems():
-                    attr_map[resource].update(resource_attrs)
+                    if attr_map.get(resource, None):
+                        attr_map[resource].update(resource_attrs)
+                    else:
+                        attr_map[resource] = resource_attrs
             except AttributeError:
                 # Extensions aren't required to have extended
                 # attributes
@@ -433,6 +462,12 @@ class ExtensionManager(object):
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
+        if hasattr(extension, 'check_env'):
+            try:
+                extension.check_env()
+            except exceptions.InvalidExtenstionEnv as ex:
+                LOG.warn(_("Exception loading extension: %s"), unicode(ex))
+                return False
         return True
 
     def _load_all_extensions(self):
@@ -511,6 +546,10 @@ class PluginAwareExtensionManager(ExtensionManager):
         supports_extension = (hasattr(self.plugin,
                                       "supported_extension_aliases") and
                               alias in self.plugin.supported_extension_aliases)
+        plugin_provider = cfg.CONF.core_plugin
+        if not supports_extension and plugin_provider in ENABLED_EXTS:
+            supports_extension = (alias in
+                                  ENABLED_EXTS[plugin_provider]['ext_alias'])
         if not supports_extension:
             LOG.warn("extension %s not supported by plugin %s",
                      alias, self.plugin)
@@ -531,6 +570,11 @@ class PluginAwareExtensionManager(ExtensionManager):
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
+            plugin_provider = cfg.CONF.core_plugin
+            if plugin_provider in ENABLED_EXTS:
+                for model in ENABLED_EXTS[plugin_provider]['ext_db_models']:
+                    LOG.debug('loading model %s', model)
+                    model_class = importutils.import_class(model)
             cls._instance = cls(get_extensions_path(),
                                 QuantumManager.get_plugin())
         return cls._instance

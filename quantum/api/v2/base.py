@@ -265,7 +265,9 @@ class Controller(object):
                             self._resource + '.create.start',
                             notifier_api.INFO,
                             body)
-        body = self._prepare_request_body(request.context, body, True)
+        body = Controller.prepare_request_body(request.context, body, True,
+                                               self._resource, self._attr_info,
+                                               allow_bulk=self._allow_bulk)
         action = "create_%s" % self._resource
         # Check authz
         try:
@@ -280,11 +282,20 @@ class Controller(object):
                                    action,
                                    item[self._resource],
                                    plugin=self._plugin)
-                    count = QUOTAS.count(request.context, self._resource,
-                                         self._plugin, self._collection,
-                                         item[self._resource]['tenant_id'])
-                    kwargs = {self._resource: count + 1}
-                    QUOTAS.limit_check(request.context, **kwargs)
+                    try:
+                        count = QUOTAS.count(request.context, self._resource,
+                                             self._plugin, self._collection,
+                                             item[self._resource]['tenant_id'])
+                        kwargs = {self._resource: count + 1}
+                    except exceptions.QuotaResourceUnknown as e:
+                        # We don't want to quota this resource
+                        LOG.debug(e)
+                    except Exception:
+                        raise
+                    else:
+                        QUOTAS.limit_check(request.context,
+                                           item[self._resource]['tenant_id'],
+                                           **kwargs)
             else:
                 self._validate_network_tenant_ownership(
                     request,
@@ -294,11 +305,20 @@ class Controller(object):
                                action,
                                body[self._resource],
                                plugin=self._plugin)
-                count = QUOTAS.count(request.context, self._resource,
-                                     self._plugin, self._collection,
-                                     body[self._resource]['tenant_id'])
-                kwargs = {self._resource: count + 1}
-                QUOTAS.limit_check(request.context, **kwargs)
+                try:
+                    count = QUOTAS.count(request.context, self._resource,
+                                         self._plugin, self._collection,
+                                         body[self._resource]['tenant_id'])
+                    kwargs = {self._resource: count + 1}
+                except exceptions.QuotaResourceUnknown as e:
+                    # We don't want to quota this resource
+                    LOG.debug(e)
+                except Exception:
+                    raise
+                else:
+                    QUOTAS.limit_check(request.context,
+                                       body[self._resource]['tenant_id'],
+                                       **kwargs)
         except exceptions.PolicyNotAuthorized:
             LOG.exception("Create operation not authorized")
             raise webob.exc.HTTPForbidden()
@@ -366,7 +386,9 @@ class Controller(object):
                             self._resource + '.update.start',
                             notifier_api.INFO,
                             payload)
-        body = self._prepare_request_body(request.context, body, False)
+        body = Controller.prepare_request_body(request.context, body, False,
+                                               self._resource, self._attr_info,
+                                               allow_bulk=self._allow_bulk)
         action = "update_%s" % self._resource
         # Load object to check authz
         # but pass only attributes in the original body and required
@@ -399,7 +421,8 @@ class Controller(object):
                             result)
         return result
 
-    def _populate_tenant_id(self, context, res_dict, is_create):
+    @staticmethod
+    def _populate_tenant_id(context, res_dict, is_create):
 
         if (('tenant_id' in res_dict and
              res_dict['tenant_id'] != context.tenant_id and
@@ -416,7 +439,9 @@ class Controller(object):
                         " that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
-    def _prepare_request_body(self, context, body, is_create):
+    @staticmethod
+    def prepare_request_body(context, body, is_create, resource, attr_info,
+                             allow_bulk=False):
         """ verifies required attributes are in request body, and that
             an attribute is only specified if it is allowed for the given
             operation (create/update).
@@ -425,35 +450,36 @@ class Controller(object):
 
             body argument must be the deserialized body
         """
+        collection = resource + "s"
         if not body:
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
-        body = body or {self._resource: {}}
-        if self._collection in body and self._allow_bulk:
-            bulk_body = [self._prepare_request_body(context,
-                                                    {self._resource: b},
-                                                    is_create)
-                         if self._resource not in b
-                         else self._prepare_request_body(context, b, is_create)
-                         for b in body[self._collection]]
+        body = body or {resource: {}}
+        if collection in body and allow_bulk:
+            bulk_body = [Controller.prepare_request_body(
+                context, {resource: b}, is_create, resource, attr_info,
+                allow_bulk) if resource not in b
+                else Controller.prepare_request_body(
+                    context, b, is_create, resource, attr_info, allow_bulk)
+                for b in body[collection]]
 
             if not bulk_body:
                 raise webob.exc.HTTPBadRequest(_("Resources required"))
 
-            return {self._collection: bulk_body}
+            return {collection: bulk_body}
 
-        elif self._collection in body and not self._allow_bulk:
+        elif collection in body and not allow_bulk:
             raise webob.exc.HTTPBadRequest("Bulk operation not supported")
 
-        res_dict = body.get(self._resource)
+        res_dict = body.get(resource)
         if res_dict is None:
-            msg = _("Unable to find '%s' in request body") % self._resource
+            msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        self._populate_tenant_id(context, res_dict, is_create)
+        Controller._populate_tenant_id(context, res_dict, is_create)
 
         if is_create:  # POST
-            for attr, attr_vals in self._attr_info.iteritems():
+            for attr, attr_vals in attr_info.iteritems():
                 is_required = ('default' not in attr_vals and
                                attr_vals['allow_post'])
                 if is_required and attr not in res_dict:
@@ -469,12 +495,12 @@ class Controller(object):
                     res_dict[attr] = res_dict.get(attr,
                                                   attr_vals.get('default'))
         else:  # PUT
-            for attr, attr_vals in self._attr_info.iteritems():
+            for attr, attr_vals in attr_info.iteritems():
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
                     raise webob.exc.HTTPUnprocessableEntity(msg)
 
-        for attr, attr_vals in self._attr_info.iteritems():
+        for attr, attr_vals in attr_info.iteritems():
             # Convert values if necessary
             if ('convert_to' in attr_vals and
                 attr in res_dict and
