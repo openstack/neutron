@@ -44,18 +44,23 @@ class Providernet(object):
     will also include provider attributes.
     """
 
+    @classmethod
     def get_name(cls):
         return "Provider Network"
 
+    @classmethod
     def get_alias(cls):
         return "provider"
 
+    @classmethod
     def get_description(cls):
         return "Expose mapping of virtual networks to VLANs and flat networks"
 
+    @classmethod
     def get_namespace(cls):
         return "http://docs.openstack.org/ext/provider/api/v1.0"
 
+    @classmethod
     def get_updated(cls):
         return "2012-07-23T10:00:00-00:00"
 
