@@ -172,7 +172,7 @@ def reserve_vlanid():
         raise c_exc.VlanIDNotAvailable()
 
 
-def reserve_specific_vlanid(vlan_id, net_id):
+def reserve_specific_vlanid(vlan_id):
     """Reserve a specific vlanid"""
     LOG.debug("reserve_specific_vlanid() called")
     if vlan_id < 1 or vlan_id > 4094:
@@ -184,7 +184,7 @@ def reserve_specific_vlanid(vlan_id, net_id):
                    filter_by(vlan_id=vlan_id).
                    one())
         if rvlanid["vlan_used"]:
-            raise q_exc.VlanIdInUse(net_id=net_id, vlan_id=vlan_id)
+            raise q_exc.VlanIdInUse(vlan_id=vlan_id)
         LOG.debug("reserving dynamic vlanid %s" % vlan_id)
         rvlanid["vlan_used"] = True
         session.merge(rvlanid)

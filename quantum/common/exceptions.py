@@ -106,8 +106,17 @@ class IpAddressInUse(InUse):
 
 
 class VlanIdInUse(InUse):
-    message = _("Unable to complete operation for network %(net_id)s. "
+    message = _("Unable to create the network. "
                 "The VLAN %(vlan_id)s is in use.")
+
+
+class ResourceExhausted(QuantumException):
+    pass
+
+
+class NoNetworkAvailable(ResourceExhausted):
+    message = _("Unable to create the network. "
+                "No virtual network is available.")
 
 
 class AlreadyAttached(QuantumException):

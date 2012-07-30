@@ -23,6 +23,7 @@ from quantum.plugins.openvswitch.ovs_quantum_plugin import (
 
 
 class VlanMapTest(unittest.TestCase):
+    # TODO(rkukura) Remove this class when removing V1 API
 
     def setUp(self):
         self.vmap = VlanMap()
