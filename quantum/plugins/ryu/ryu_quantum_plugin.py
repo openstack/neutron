@@ -17,16 +17,15 @@
 # @author: Isaku Yamahata
 
 import logging
-import os
 
 from ryu.app import client
 from ryu.app import rest_nw_id
 
 from quantum.common import exceptions as q_exc
-from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
+from quantum.openstack.common import cfg
 from quantum.plugins.ryu.db import api as db_api
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 from quantum.plugins.ryu import ofp_service_type
