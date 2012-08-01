@@ -30,6 +30,7 @@ from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
+from quantum.common import config as logging_config
 from quantum.openstack.common import cfg
 from quantum.plugins.ryu.common import config
 
