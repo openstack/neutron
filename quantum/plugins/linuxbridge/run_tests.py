@@ -48,6 +48,7 @@ if __name__ == '__main__':
     invoke_once = len(sys.argv) > 1
 
     test_config['plugin_name'] = "LinuxBridgePlugin.LinuxBridgePlugin"
+    test_config['plugin_name_v2'] = "lb_quantum_plugin.LinuxBridgePluginV2"
     test_config['default_net_op_status'] = OperationalStatus.UP
     test_config['default_port_op_status'] = OperationalStatus.DOWN
 

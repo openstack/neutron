@@ -25,6 +25,7 @@ import quantum
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.common import exceptions as q_exc
+from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
 from quantum.manager import QuantumManager
@@ -61,7 +62,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             'application/json': json_deserializer,
         }
 
-        plugin = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
+        plugin = test_config.get('plugin_name_v2',
+                                 'quantum.db.db_base_plugin_v2.'
+                                 'QuantumDbPluginV2')
+        LOG.debug("db plugin test, the plugin is:%s", plugin)
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         config.parse(args=args)

@@ -47,6 +47,7 @@ if __name__ == '__main__':
     invoke_once = len(sys.argv) > 1
 
     test_config['plugin_name'] = "ovs_quantum_plugin.OVSQuantumPlugin"
+    test_config['plugin_name_v2'] = "ovs_quantum_plugin.OVSQuantumPluginV2"
     test_config['default_net_op_status'] = OperationalStatus.UP
     test_config['default_port_op_status'] = OperationalStatus.DOWN
 
