@@ -566,8 +566,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                   "and gateway ip")
         ip_ranges = ip_pools[:]
         # Treat gw as IPset as well
-        ip_ranges.append(gateway_ip)
-        ip_sets.append(netaddr.IPSet([gateway_ip]))
+        if gateway_ip:
+            ip_ranges.append(gateway_ip)
+            ip_sets.append(netaddr.IPSet([gateway_ip]))
         # Use integer cursors as an efficient way for implementing
         # comparison and avoiding comparing the same pair twice
         for l_cursor in range(len(ip_sets)):
@@ -593,11 +594,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         pools = []
         if subnet['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
-            # Auto allocate the pool around gateway
-            gw_ip = int(netaddr.IPAddress(subnet['gateway_ip']))
+            # Auto allocate the pool around gateway_ip
             net = netaddr.IPNetwork(subnet['cidr'])
             first_ip = net.first + 1
             last_ip = net.last - 1
+            gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
+
             if gw_ip > first_ip:
                 pools.append({'start': str(netaddr.IPAddress(first_ip)),
                               'end': str(netaddr.IPAddress(gw_ip - 1))})
@@ -657,6 +659,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     for pool in subnet['allocation_pools']],
                'gateway_ip': subnet['gateway_ip'],
                'enable_dhcp': subnet['enable_dhcp']}
+        if subnet['gateway_ip']:
+            res['gateway_ip'] = subnet['gateway_ip']
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None):

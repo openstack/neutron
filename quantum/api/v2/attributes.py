@@ -66,6 +66,12 @@ def _validate_ip_address(data, valid_values=None):
         return msg
 
 
+def _validate_ip_address_or_none(data, valid_values=None):
+    if data is None:
+        return None
+    return _validate_ip_address(data, valid_values)
+
+
 def _validate_subnet(data, valid_values=None):
     try:
         netaddr.IPNetwork(data)
@@ -103,7 +109,6 @@ def convert_to_boolean(data):
     msg = _("%s is not boolean") % data
     raise q_exc.InvalidInput(error_message=msg)
 
-
 HEX_ELEM = '[0-9A-Fa-f]'
 UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{4}', HEX_ELEM + '{4}',
@@ -117,6 +122,7 @@ validators = {'type:boolean': _validate_boolean,
               'type:values': _validate_values,
               'type:mac_address': _validate_mac_address,
               'type:ip_address': _validate_ip_address,
+              'type:ip_address_or_none': _validate_ip_address_or_none,
               'type:subnet': _validate_subnet,
               'type:regex': _validate_regex}
 
@@ -226,7 +232,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True},
         'gateway_ip': {'allow_post': True, 'allow_put': True,
                        'default': ATTR_NOT_SPECIFIED,
-                       'validate': {'type:ip_address': None},
+                       'validate': {'type:ip_address_or_none': None},
                        'is_visible': True},
         #TODO(salvatore-orlando): Enable PUT on allocation_pools
         'allocation_pools': {'allow_post': True, 'allow_put': False,
