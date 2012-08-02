@@ -53,7 +53,7 @@ def init():
 
 def _set_brain(data):
     default_rule = 'default'
-    policy.set_brain(policy.HttpBrain.load_json(data, default_rule))
+    policy.set_brain(policy.Brain.load_json(data, default_rule))
 
 
 def check(context, action, target):
