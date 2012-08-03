@@ -157,9 +157,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'is_visible': True},
-        'mac_ranges': {'allow_post': False, 'allow_put': False,
-                       'is_visible': True},
+                      'is_visible': True}
     },
     'ports': {
         'id': {'allow_post': False, 'allow_put': False,
