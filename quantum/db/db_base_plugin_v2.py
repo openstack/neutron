@@ -49,6 +49,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         sql_connection = 'sqlite:///:memory:'
         db.configure_db({'sql_connection': sql_connection,
                          'base': models_v2.model_base.BASEV2})
+        self._check_base_mac_format()
+
+    def _check_base_mac_format(self):
+        base_mac = cfg.CONF.base_mac.split(':')
+        if len(base_mac) != 6:
+            raise Exception("illegal base_mac format %s", cfg.CONF.base_mac)
 
     def _get_tenant_id_for_create(self, context, resource):
         if context.is_admin and 'tenant_id' in resource:
@@ -138,8 +144,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         max_retries = cfg.CONF.mac_generation_retries
         for i in range(max_retries):
             mac = [int(base_mac[0], 16), int(base_mac[1], 16),
-                   int(base_mac[2], 16), random.randint(0x00, 0x7f),
+                   int(base_mac[2], 16), random.randint(0x00, 0xff),
                    random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+            if base_mac[3] != '00':
+                mac[3] = int(base_mac[3], 16)
             mac_address = ':'.join(map(lambda x: "%02x" % x, mac))
             if QuantumDbPluginV2._check_unique_mac(context, network_id,
                                                    mac_address):
