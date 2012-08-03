@@ -742,7 +742,7 @@ class V2Views(unittest.TestCase):
 
     def test_network(self):
         keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
-                'tenant_id', 'mac_ranges')
+                'tenant_id')
         self._view(keys, 'networks', 'network')
 
     def test_port(self):
