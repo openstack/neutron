@@ -52,11 +52,13 @@ class TestDhcpAgent(unittest.TestCase):
     def test_dhcp_agent_main(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             with mock.patch('quantum.agent.dhcp_agent.DhcpAgent') as dhcp:
-                dhcp_agent.main()
-                dev_mgr.assert_called_once(mock.ANY, 'sudo')
-                dhcp.assert_has_calls([
-                    mock.call(mock.ANY),
-                    mock.call().daemon_loop()])
+                with mock.patch('quantum.agent.dhcp_agent.sys') as mock_sys:
+                    mock_sys.argv = []
+                    dhcp_agent.main()
+                    dev_mgr.assert_called_once(mock.ANY, 'sudo')
+                    dhcp.assert_has_calls([
+                        mock.call(mock.ANY),
+                        mock.call().daemon_loop()])
 
     def test_daemon_loop_survives_get_network_state_delta_failure(self):
         def stop_loop(*args):
@@ -269,6 +271,8 @@ class TestDeviceManager(unittest.TestCase):
             name='filter_by',
             side_effect=get_filter_results)
 
+        self.mock_driver.get_device_name.return_value = 'tap12345678-12'
+
         dh = dhcp_agent.DeviceManager(self.conf, mock_db)
         dh.setup(fake_network)
 
@@ -323,6 +327,7 @@ class TestDeviceManager(unittest.TestCase):
             mock_driver.DEV_NAME_LEN = (
                 interface.LinuxInterfaceDriver.DEV_NAME_LEN)
             mock_driver.port = fake_port
+            mock_driver.get_device_name.return_value = 'tap12345678-12'
             dvr_cls.return_value = mock_driver
 
             dh = dhcp_agent.DeviceManager(self.conf, mock_db)
@@ -330,7 +335,8 @@ class TestDeviceManager(unittest.TestCase):
 
             dvr_cls.assert_called_once_with(self.conf)
             mock_driver.assert_has_calls(
-                [mock.call.unplug('tap12345678-12')])
+                [mock.call.get_device_name(mock.ANY),
+                 mock.call.unplug('tap12345678-12')])
 
 
 class TestAugmentingWrapper(unittest.TestCase):

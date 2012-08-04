@@ -42,6 +42,7 @@ class LinuxInterfaceDriver(object):
 
     # from linux IF_NAMESIZE
     DEV_NAME_LEN = 14
+    DEV_NAME_PREFIX = 'tap'
 
     def __init__(self, conf):
         self.conf = conf
@@ -73,6 +74,9 @@ class LinuxInterfaceDriver(object):
     def check_bridge_exists(self, bridge):
         if not ip_lib.device_exists(bridge):
             raise exception.BridgeDoesNotExist(bridge=bridge)
+
+    def get_device_name(self, port):
+        return (self.DEV_NAME_PREFIX + port.id)[:self.DEV_NAME_LEN]
 
     @abc.abstractmethod
     def plug(self, network_id, port_id, device_name, mac_address):
@@ -115,7 +119,8 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                            mac_address],
                           self.conf.root_helper)
 
-            device = ip_lib.IPDevice(device_name, self.conf.root_helper)
+            ip = ip_lib.IPWrapper(self.conf.root_helper)
+            device = ip.device(device_name)
             device.link.set_address(mac_address)
             if self.conf.network_device_mtu:
                 device.link.set_mtu(self.conf.network_device_mtu)
@@ -135,22 +140,18 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 class BridgeInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating bridge interfaces."""
 
-    BRIDGE_NAME_PREFIX = 'brq'
+    DEV_NAME_PREFIX = 'dhc'
 
     def plug(self, network_id, port_id, device_name, mac_address):
         """Plugin the interface."""
         if not ip_lib.device_exists(device_name):
-            device = ip_lib.IPDevice(device_name, self.conf.root_helper)
-            try:
-                # First, try with 'ip'
-                device.tuntap.add()
-            except RuntimeError, e:
-                # Second option: tunctl
-                utils.execute(['tunctl', '-b', '-t', device_name],
-                              self.conf.root_helper)
+            ip = ip_lib.IPWrapper(self.conf.root_helper)
 
-            device.link.set_address(mac_address)
-            device.link.set_up()
+            tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
+            root_veth, dhcp_veth = ip.add_veth(tap_name, device_name)
+            root_veth.link.set_address(mac_address)
+            root_veth.link.set_up()
+            dhcp_veth.link.set_up()
         else:
             LOG.warn(_("Device %s already exists") % device_name)
 
@@ -163,8 +164,3 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_("Failed unplugging interface '%s'") %
                       device_name)
-
-    def get_bridge(self, network_id):
-        """Returns the name of the bridge interface."""
-        bridge = self.BRIDGE_NAME_PREFIX + network_id[0:11]
-        return bridge
