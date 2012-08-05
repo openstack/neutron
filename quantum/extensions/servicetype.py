@@ -183,6 +183,11 @@ class Servicetype(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """ Returns Extended Resource for service type management """
+        my_plurals = [(key.replace('-', '_'),
+                       key[:-1].replace('-', '_')) for
+                      key in RESOURCE_ATTRIBUTE_MAP.keys()]
+        my_plurals.append(('service_definitions', 'service_definition'))
+        attributes.PLURALS.update(dict(my_plurals))
         controller = base.create_resource(
             COLLECTION_NAME,
             RESOURCE_NAME,

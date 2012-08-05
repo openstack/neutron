@@ -87,7 +87,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
-                    res = self._create_port_bulk('json', 2,
+                    res = self._create_port_bulk(self.fmt, 2,
                                                  net['network']['id'],
                                                  'test',
                                                  True)
@@ -109,7 +109,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                                 *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
-                res = self._create_port_bulk('json', 2, net['network']['id'],
+                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(res, 'ports')
@@ -137,7 +137,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                     return self._do_side_effect(patched_plugin, orig,
                                                 *args, **kwargs)
                 patched_plugin.side_effect = side_effect
-                res = self._create_network_bulk('json', 2, 'test', True)
+                res = self._create_network_bulk(self.fmt, 2, 'test', True)
                 LOG.debug("response is %s" % res)
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(res, 'networks')
@@ -155,7 +155,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                                             *args, **kwargs)
 
             patched_plugin.side_effect = side_effect
-            res = self._create_network_bulk('json', 2, 'test', True)
+            res = self._create_network_bulk(self.fmt, 2, 'test', True)
             # We expect a 500 as we injected a fault in the plugin
             self._validate_behavior_on_bulk_failure(res, 'networks')
 
@@ -185,7 +185,7 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
-                    res = self._create_subnet_bulk('json', 2,
+                    res = self._create_subnet_bulk(self.fmt, 2,
                                                    net['network']['id'],
                                                    'test')
                 # We expect a 500 as we injected a fault in the plugin
@@ -204,9 +204,21 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
 
             patched_plugin.side_effect = side_effect
             with self.network() as net:
-                res = self._create_subnet_bulk('json', 2,
+                res = self._create_subnet_bulk(self.fmt, 2,
                                                net['network']['id'],
                                                'test')
 
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(res, 'subnets')
+
+
+class TestCiscoPortsV2XML(TestCiscoPortsV2):
+    fmt = 'xml'
+
+
+class TestCiscoNetworksV2XML(TestCiscoNetworksV2):
+    fmt = 'xml'
+
+
+class TestCiscoSubnetsV2XML(TestCiscoSubnetsV2):
+    fmt = 'xml'

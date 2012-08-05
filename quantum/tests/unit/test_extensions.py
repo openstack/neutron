@@ -30,6 +30,7 @@ from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
 from quantum.tests.unit import extension_stubs as ext_stubs
 import quantum.tests.unit.extensions
+from quantum.tests.unit import testlib_api
 from quantum import wsgi
 
 
@@ -523,31 +524,38 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
         self.assertTrue("e1" in ext_mgr.extensions)
 
 
-class ExtensionControllerTest(unittest.TestCase):
+class ExtensionControllerTest(testlib_api.WebTestCase):
 
     def setUp(self):
         super(ExtensionControllerTest, self).setUp()
         self.test_app = _setup_extensions_test_app()
 
     def test_index_gets_all_registerd_extensions(self):
-        response = self.test_app.get("/extensions")
-        foxnsox = response.json["extensions"][0]
+        response = self.test_app.get("/extensions." + self.fmt)
+        res_body = self.deserialize(response)
+        foxnsox = res_body["extensions"][0]
 
         self.assertEqual(foxnsox["alias"], "FOXNSOX")
         self.assertEqual(foxnsox["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_extension_can_be_accessed_by_alias(self):
-        foxnsox_extension = self.test_app.get("/extensions/FOXNSOX").json
+        response = self.test_app.get("/extensions/FOXNSOX." + self.fmt)
+        foxnsox_extension = self.deserialize(response)
         foxnsox_extension = foxnsox_extension['extension']
         self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
         self.assertEqual(foxnsox_extension["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
 
     def test_show_returns_not_found_for_non_existent_extension(self):
-        response = self.test_app.get("/extensions/non_existent", status="*")
+        response = self.test_app.get("/extensions/non_existent" + self.fmt,
+                                     status="*")
 
         self.assertEqual(response.status_int, 404)
+
+
+class ExtensionControllerTestXML(ExtensionControllerTest):
+    fmt = 'xml'
 
 
 def app_factory(global_conf, **local_conf):

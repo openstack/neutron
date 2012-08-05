@@ -22,6 +22,7 @@ from webob import exc
 import webtest
 
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.extensions import loadbalancer
 from quantum import manager
@@ -30,6 +31,7 @@ from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_extensions
+from quantum.tests.unit import testlib_api
 
 
 _uuid = uuidutils.generate_uuid
@@ -48,7 +50,8 @@ class LoadBalancerTestExtensionManager(object):
         return []
 
 
-class LoadBalancerExtensionTestCase(unittest2.TestCase):
+class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
+    fmt = 'json'
 
     def setUp(self):
 
@@ -75,6 +78,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         ext_mgr = LoadBalancerTestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
+        super(LoadBalancerExtensionTestCase, self).setUp()
 
     def tearDown(self):
         self._plugin_patcher.stop()
@@ -100,12 +104,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
 
         instance = self.plugin.return_value
         instance.create_vip.return_value = return_value
-        res = self.api.post_json(_get_path('lb/vips'), data)
+        res = self.api.post(_get_path('lb/vips', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
         instance.create_vip.assert_called_with(mock.ANY,
                                                vip=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('vip' in res.json)
-        self.assertEqual(res.json['vip'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('vip', res)
+        self.assertEqual(res['vip'], return_value)
 
     def test_vip_list(self):
         vip_id = _uuid()
@@ -117,7 +124,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_vips.return_value = return_value
 
-        res = self.api.get(_get_path('lb/vips'))
+        res = self.api.get(_get_path('lb/vips', fmt=self.fmt))
 
         instance.get_vips.assert_called_with(mock.ANY, fields=mock.ANY,
                                              filters=mock.ANY)
@@ -135,14 +142,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.update_vip.return_value = return_value
 
-        res = self.api.put_json(_get_path('lb/vips', id=vip_id),
-                                update_data)
+        res = self.api.put(_get_path('lb/vips', id=vip_id, fmt=self.fmt),
+                           self.serialize(update_data))
 
         instance.update_vip.assert_called_with(mock.ANY, vip_id,
                                                vip=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('vip' in res.json)
-        self.assertEqual(res.json['vip'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('vip', res)
+        self.assertEqual(res['vip'], return_value)
 
     def test_vip_get(self):
         vip_id = _uuid()
@@ -155,18 +163,20 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_vip.return_value = return_value
 
-        res = self.api.get(_get_path('lb/vips', id=vip_id))
+        res = self.api.get(_get_path('lb/vips', id=vip_id, fmt=self.fmt))
 
         instance.get_vip.assert_called_with(mock.ANY, vip_id,
                                             fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('vip' in res.json)
-        self.assertEqual(res.json['vip'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('vip', res)
+        self.assertEqual(res['vip'], return_value)
 
     def _test_entity_delete(self, entity):
         """ does the entity deletion based on naming convention  """
         entity_id = _uuid()
-        res = self.api.delete(_get_path('lb/' + entity + 's', id=entity_id))
+        res = self.api.delete(_get_path('lb/' + entity + 's', id=entity_id,
+                                        fmt=self.fmt))
         delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
         delete_entity.assert_called_with(mock.ANY, entity_id)
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
@@ -190,12 +200,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
 
         instance = self.plugin.return_value
         instance.create_pool.return_value = return_value
-        res = self.api.post_json(_get_path('lb/pools'), data)
+        res = self.api.post(_get_path('lb/pools', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
         instance.create_pool.assert_called_with(mock.ANY,
                                                 pool=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('pool' in res.json)
-        self.assertEqual(res.json['pool'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_list(self):
         pool_id = _uuid()
@@ -207,7 +220,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_pools.return_value = return_value
 
-        res = self.api.get(_get_path('lb/pools'))
+        res = self.api.get(_get_path('lb/pools', fmt=self.fmt))
 
         instance.get_pools.assert_called_with(mock.ANY, fields=mock.ANY,
                                               filters=mock.ANY)
@@ -225,14 +238,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.update_pool.return_value = return_value
 
-        res = self.api.put_json(_get_path('lb/pools', id=pool_id),
-                                update_data)
+        res = self.api.put(_get_path('lb/pools', id=pool_id, fmt=self.fmt),
+                           self.serialize(update_data))
 
         instance.update_pool.assert_called_with(mock.ANY, pool_id,
                                                 pool=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('pool' in res.json)
-        self.assertEqual(res.json['pool'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_get(self):
         pool_id = _uuid()
@@ -245,13 +259,14 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_pool.return_value = return_value
 
-        res = self.api.get(_get_path('lb/pools', id=pool_id))
+        res = self.api.get(_get_path('lb/pools', id=pool_id, fmt=self.fmt))
 
         instance.get_pool.assert_called_with(mock.ANY, pool_id,
                                              fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('pool' in res.json)
-        self.assertEqual(res.json['pool'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_delete(self):
         self._test_entity_delete('pool')
@@ -264,13 +279,14 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance.stats.return_value = stats
 
         path = _get_path('lb/pools', id=pool_id,
-                         action="stats")
+                         action="stats", fmt=self.fmt)
         res = self.api.get(path)
 
         instance.stats.assert_called_with(mock.ANY, pool_id)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('stats' in res.json)
-        self.assertEqual(res.json['stats'], stats['stats'])
+        res = self.deserialize(res)
+        self.assertIn('stats', res)
+        self.assertEqual(res['stats'], stats['stats'])
 
     def test_member_create(self):
         member_id = _uuid()
@@ -285,12 +301,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
 
         instance = self.plugin.return_value
         instance.create_member.return_value = return_value
-        res = self.api.post_json(_get_path('lb/members'), data)
+        res = self.api.post(_get_path('lb/members', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
         instance.create_member.assert_called_with(mock.ANY,
                                                   member=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('member' in res.json)
-        self.assertEqual(res.json['member'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('member', res)
+        self.assertEqual(res['member'], return_value)
 
     def test_member_list(self):
         member_id = _uuid()
@@ -302,7 +321,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_members.return_value = return_value
 
-        res = self.api.get(_get_path('lb/members'))
+        res = self.api.get(_get_path('lb/members', fmt=self.fmt))
 
         instance.get_members.assert_called_with(mock.ANY, fields=mock.ANY,
                                                 filters=mock.ANY)
@@ -319,14 +338,16 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.update_member.return_value = return_value
 
-        res = self.api.put_json(_get_path('lb/members', id=member_id),
-                                update_data)
+        res = self.api.put(_get_path('lb/members', id=member_id,
+                                     fmt=self.fmt),
+                           self.serialize(update_data))
 
         instance.update_member.assert_called_with(mock.ANY, member_id,
                                                   member=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('member' in res.json)
-        self.assertEqual(res.json['member'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('member', res)
+        self.assertEqual(res['member'], return_value)
 
     def test_member_get(self):
         member_id = _uuid()
@@ -338,13 +359,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_member.return_value = return_value
 
-        res = self.api.get(_get_path('lb/members', id=member_id))
+        res = self.api.get(_get_path('lb/members', id=member_id,
+                                     fmt=self.fmt))
 
         instance.get_member.assert_called_with(mock.ANY, member_id,
                                                fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('member' in res.json)
-        self.assertEqual(res.json['member'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('member', res)
+        self.assertEqual(res['member'], return_value)
 
     def test_member_delete(self):
         self._test_entity_delete('member')
@@ -365,12 +388,16 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
 
         instance = self.plugin.return_value
         instance.create_health_monitor.return_value = return_value
-        res = self.api.post_json(_get_path('lb/health_monitors'), data)
+        res = self.api.post(_get_path('lb/health_monitors',
+                                      fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
         instance.create_health_monitor.assert_called_with(mock.ANY,
                                                           health_monitor=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('health_monitor' in res.json)
-        self.assertEqual(res.json['health_monitor'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('health_monitor', res)
+        self.assertEqual(res['health_monitor'], return_value)
 
     def test_health_monitor_list(self):
         health_monitor_id = _uuid()
@@ -382,7 +409,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.get_health_monitors.return_value = return_value
 
-        res = self.api.get(_get_path('lb/health_monitors'))
+        res = self.api.get(_get_path('lb/health_monitors', fmt=self.fmt))
 
         instance.get_health_monitors.assert_called_with(
             mock.ANY, fields=mock.ANY, filters=mock.ANY)
@@ -400,15 +427,17 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance = self.plugin.return_value
         instance.update_health_monitor.return_value = return_value
 
-        res = self.api.put_json(_get_path('lb/health_monitors',
-                                          id=health_monitor_id),
-                                update_data)
+        res = self.api.put(_get_path('lb/health_monitors',
+                                     id=health_monitor_id,
+                                     fmt=self.fmt),
+                           self.serialize(update_data))
 
         instance.update_health_monitor.assert_called_with(
             mock.ANY, health_monitor_id, health_monitor=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('health_monitor' in res.json)
-        self.assertEqual(res.json['health_monitor'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('health_monitor', res)
+        self.assertEqual(res['health_monitor'], return_value)
 
     def test_health_monitor_get(self):
         health_monitor_id = _uuid()
@@ -422,13 +451,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance.get_health_monitor.return_value = return_value
 
         res = self.api.get(_get_path('lb/health_monitors',
-                                     id=health_monitor_id))
+                                     id=health_monitor_id,
+                                     fmt=self.fmt))
 
         instance.get_health_monitor.assert_called_with(
             mock.ANY, health_monitor_id, fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
-        self.assertTrue('health_monitor' in res.json)
-        self.assertEqual(res.json['health_monitor'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('health_monitor', res)
+        self.assertEqual(res['health_monitor'], return_value)
 
     def test_health_monitor_delete(self):
         self._test_entity_delete('health_monitor')
@@ -441,12 +472,15 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         return_value = copy.copy(data['health_monitor'])
         instance = self.plugin.return_value
         instance.create_pool_health_monitor.return_value = return_value
-        res = self.api.post_json('/lb/pools/id1/health_monitors', data)
+        res = self.api.post('/lb/pools/id1/health_monitors',
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
         instance.create_pool_health_monitor.assert_called_with(
             mock.ANY, pool_id='id1', health_monitor=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('health_monitor' in res.json)
-        self.assertEqual(res.json['health_monitor'], return_value)
+        res = self.deserialize(res)
+        self.assertIn('health_monitor', res)
+        self.assertEqual(res['health_monitor'], return_value)
 
     def test_delete_pool_health_monitor(self):
         health_monitor_id = _uuid()
@@ -458,3 +492,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         instance.delete_pool_health_monitor.assert_called_with(
             mock.ANY, health_monitor_id, pool_id='id1')
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+
+
+class LoadBalancerExtensionTestCaseXML(LoadBalancerExtensionTestCase):
+    fmt = 'xml'

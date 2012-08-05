@@ -83,8 +83,8 @@ class TestLinuxBridgeSecurityGroups(LinuxBridgeSecurityGroupsTestCase,
             with self.subnet(n):
                 with self.security_group() as sg:
                     security_group_id = sg['security_group']['id']
-                    res = self._create_port('json', n['network']['id'])
-                    port = self.deserialize('json', res)
+                    res = self._create_port(self.fmt, n['network']['id'])
+                    port = self.deserialize(self.fmt, res)
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
                                      'name': port['port']['name'],
@@ -93,7 +93,8 @@ class TestLinuxBridgeSecurityGroups(LinuxBridgeSecurityGroupsTestCase,
 
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
-                    res = self.deserialize('json', req.get_response(self.api))
+                    res = self.deserialize(self.fmt,
+                                           req.get_response(self.api))
                     self.assertEquals(res['port'][ext_sg.SECURITYGROUPS][0],
                                       security_group_id)
                     self._delete('ports', port['port']['id'])
@@ -104,14 +105,18 @@ class TestLinuxBridgeSecurityGroups(LinuxBridgeSecurityGroupsTestCase,
                              mock.ANY, [security_group_id])])
 
 
+class TestLinuxBridgeSecurityGroupsXML(TestLinuxBridgeSecurityGroups):
+    fmt = 'xml'
+
+
 class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
     def test_security_group_get_port_from_device(self):
         with self.network() as n:
             with self.subnet(n):
                 with self.security_group() as sg:
                     security_group_id = sg['security_group']['id']
-                    res = self._create_port('json', n['network']['id'])
-                    port = self.deserialize('json', res)
+                    res = self._create_port(self.fmt, n['network']['id'])
+                    port = self.deserialize(self.fmt, res)
                     fixed_ips = port['port']['fixed_ips']
                     data = {'port': {'fixed_ips': fixed_ips,
                                      'name': port['port']['name'],
@@ -120,7 +125,8 @@ class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
 
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
-                    res = self.deserialize('json', req.get_response(self.api))
+                    res = self.deserialize(self.fmt,
+                                           req.get_response(self.api))
                     port_id = res['port']['id']
                     device_id = port_id[:8]
                     port_dict = lb_db.get_port_from_device(device_id)
@@ -135,3 +141,7 @@ class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
     def test_security_group_get_port_from_device_with_no_port(self):
         port_dict = lb_db.get_port_from_device('bad_device_id')
         self.assertEqual(None, port_dict)
+
+
+class TestLinuxBridgeSecurityGroupsDBXML(TestLinuxBridgeSecurityGroupsDB):
+    fmt = 'xml'

@@ -15,16 +15,16 @@ from quantum.plugins.linuxbridge.db import l2network_db_v2
 from quantum import quota
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_extensions
-
+from quantum.tests.unit import testlib_api
 
 TARGET_PLUGIN = ('quantum.plugins.linuxbridge.lb_quantum_plugin'
                  '.LinuxBridgePluginV2')
 
-
 _get_path = test_api_v2._get_path
 
 
-class QuotaExtensionTestCase(unittest.TestCase):
+class QuotaExtensionTestCase(testlib_api.WebTestCase):
+    fmt = 'json'
 
     def setUp(self):
         db._ENGINE = None
@@ -67,6 +67,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
         app = config.load_paste_app('extensions_test_app')
         ext_middleware = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
         self.api = webtest.TestApp(ext_middleware)
+        super(QuotaExtensionTestCase, self).setUp()
 
     def tearDown(self):
         self._plugin_patcher.stop()
@@ -80,24 +81,27 @@ class QuotaExtensionTestCase(unittest.TestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_quotas_loaded_right(self):
-        res = self.api.get(_get_path('quotas'))
+        res = self.api.get(_get_path('quotas', fmt=self.fmt))
+        quota = self.deserialize(res)
+        self.assertEqual([], quota['quotas'])
         self.assertEqual(200, res.status_int)
 
     def test_quotas_default_values(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id)}
-        res = self.api.get(_get_path('quotas', id=tenant_id),
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                            extra_environ=env)
-        self.assertEqual(10, res.json['quota']['network'])
-        self.assertEqual(10, res.json['quota']['subnet'])
-        self.assertEqual(50, res.json['quota']['port'])
-        self.assertEqual(-1, res.json['quota']['extra1'])
+        quota = self.deserialize(res)
+        self.assertEqual(10, quota['quota']['network'])
+        self.assertEqual(10, quota['quota']['subnet'])
+        self.assertEqual(50, quota['quota']['port'])
+        self.assertEqual(-1, quota['quota']['extra1'])
 
     def test_show_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id + '2',
                                                   is_admin=True)}
-        res = self.api.get(_get_path('quotas', id=tenant_id),
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                            extra_environ=env)
         self.assertEqual(200, res.status_int)
 
@@ -105,7 +109,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id + '2',
                                                   is_admin=False)}
-        res = self.api.get(_get_path('quotas', id=tenant_id),
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                            extra_environ=env, expect_errors=True)
         self.assertEqual(403, res.status_int)
 
@@ -114,10 +118,9 @@ class QuotaExtensionTestCase(unittest.TestCase):
         env = {'quantum.context': context.Context('', tenant_id,
                                                   is_admin=False)}
         quotas = {'quota': {'network': 100}}
-        res = self.api.put_json(_get_path('quotas', id=tenant_id,
-                                          fmt='json'),
-                                quotas, extra_environ=env,
-                                expect_errors=True)
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env,
+                           expect_errors=True)
         self.assertEqual(403, res.status_int)
 
     def test_update_quotas_with_admin(self):
@@ -125,19 +128,20 @@ class QuotaExtensionTestCase(unittest.TestCase):
         env = {'quantum.context': context.Context('', tenant_id + '2',
                                                   is_admin=True)}
         quotas = {'quota': {'network': 100}}
-        res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
-                                quotas, extra_environ=env)
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env)
         self.assertEqual(200, res.status_int)
         env2 = {'quantum.context': context.Context('', tenant_id)}
-        res = self.api.get(_get_path('quotas', id=tenant_id),
-                           extra_environ=env2).json
-        self.assertEqual(100, res['quota']['network'])
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env2)
+        quota = self.deserialize(res)
+        self.assertEqual(100, quota['quota']['network'])
 
     def test_delete_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id + '2',
                                                   is_admin=True)}
-        res = self.api.delete(_get_path('quotas', id=tenant_id, fmt='json'),
+        res = self.api.delete(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                               extra_environ=env)
         self.assertEqual(204, res.status_int)
 
@@ -145,7 +149,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id,
                                                   is_admin=False)}
-        res = self.api.delete(_get_path('quotas', id=tenant_id, fmt='json'),
+        res = self.api.delete(_get_path('quotas', id=tenant_id, fmt=self.fmt),
                               extra_environ=env, expect_errors=True)
         self.assertEqual(403, res.status_int)
 
@@ -161,8 +165,9 @@ class QuotaExtensionTestCase(unittest.TestCase):
         env = {'quantum.context': context.Context('', tenant_id,
                                                   is_admin=True)}
         quotas = {'quota': {'network': 5}}
-        res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
-                                quotas, extra_environ=env)
+        res = self.api.put(_get_path('quotas', id=tenant_id,
+                                     fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env)
         self.assertEqual(200, res.status_int)
         quota.QUOTAS.limit_check(context.Context('', tenant_id),
                                  tenant_id,
@@ -173,8 +178,9 @@ class QuotaExtensionTestCase(unittest.TestCase):
         env = {'quantum.context': context.Context('', tenant_id,
                                                   is_admin=True)}
         quotas = {'quota': {'network': 5}}
-        res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
-                                quotas, extra_environ=env)
+        res = self.api.put(_get_path('quotas', id=tenant_id,
+                                     fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env)
         self.assertEqual(200, res.status_int)
         with self.assertRaises(exceptions.OverQuota):
             quota.QUOTAS.limit_check(context.Context('', tenant_id),
@@ -187,3 +193,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
             quota.QUOTAS.limit_check(context.Context('', tenant_id),
                                      tenant_id,
                                      network=-1)
+
+
+class QuotaExtensionTestCaseXML(QuotaExtensionTestCase):
+    fmt = 'xml'

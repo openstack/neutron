@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest2 as unittest
+
+from quantum.api.v2 import attributes
 from quantum import wsgi
 
 
@@ -30,3 +33,28 @@ def create_request(path, body, content_type, method='GET',
     if context:
         req.environ['quantum.context'] = context
     return req
+
+
+class WebTestCase(unittest.TestCase):
+    fmt = 'json'
+
+    def setUp(self):
+        json_deserializer = wsgi.JSONDeserializer()
+        xml_deserializer = wsgi.XMLDeserializer(
+            attributes.get_attr_metadata())
+        self._deserializers = {
+            'application/json': json_deserializer,
+            'application/xml': xml_deserializer,
+        }
+        super(WebTestCase, self).setUp()
+
+    def deserialize(self, response):
+        ctype = 'application/%s' % self.fmt
+        data = self._deserializers[ctype].deserialize(response.body)['body']
+        return data
+
+    def serialize(self, data):
+        ctype = 'application/%s' % self.fmt
+        result = wsgi.Serializer(
+            attributes.get_attr_metadata()).serialize(data, ctype)
+        return result

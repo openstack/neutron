@@ -257,6 +257,8 @@ class Loadbalancer(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
+        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
+        attr.PLURALS.update(dict(my_plurals))
         resources = []
         plugin = manager.QuantumManager.get_service_plugins()[
             constants.LOADBALANCER]

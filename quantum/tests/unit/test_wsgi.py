@@ -15,11 +15,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import socket
 
+import mock
 import unittest2 as unittest
 
+from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions as exception
 from quantum import wsgi
 
@@ -256,3 +258,116 @@ class ResourceTest(unittest.TestCase):
         request = FakeRequest()
         result = resource(request)
         self.assertEqual(400, result.status_int)
+
+
+class XMLDictSerializerTest(unittest.TestCase):
+    def test_xml(self):
+        NETWORK = {'network': {'test': None,
+                               'tenant_id': 'test-tenant',
+                               'name': 'net1',
+                               'admin_state_up': True,
+                               'subnets': [],
+                               'dict': {},
+                               'int': 3,
+                               'long': 4L,
+                               'float': 5.0,
+                               'prefix:external': True,
+                               'tests': [{'test1': 'value1'},
+                                         {'test2': 2, 'test3': 3}]}}
+        # XML is:
+        # <network xmlns="http://openstack.org/quantum/api/v2.0"
+        #    xmlns:prefix="http://xxxx.yy.com"
+        #    xmlns:quantum="http://openstack.org/quantum/api/v2.0"
+        #    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        #    <subnets quantum:type="list" />  # Empty List
+        #    <int quantum:type="int">3</int>  # Integer text
+        #    <int quantum:type="long">4</int>  # Long text
+        #    <int quantum:type="float">5.0</int>  # Float text
+        #    <dict quantum:type="dict" />     # Empty Dict
+        #    <name>net1</name>
+        #    <admin_state_up quantum:type="bool">True</admin_state_up> # Bool
+        #    <test xsi:nil="true" />          # None
+        #    <tenant_id>test-tenant</tenant_id>
+        #    # We must have a namespace defined in root for prefix:external
+        #    <prefix:external quantum:type="bool">True</prefix:external>
+        #    <tests>                          # List
+        #       <test><test1>value1</test1></test>
+        #       <test><test3 quantum:type="int">3</test3>
+        #             <test2 quantum:type="int">2</test2>
+        #       </test></tests>
+        # </network>
+
+        metadata = attributes.get_attr_metadata()
+        ns = {'prefix': 'http://xxxx.yy.com'}
+        metadata[constants.EXT_NS] = ns
+        metadata['plurals'] = {'tests': 'test'}
+        serializer = wsgi.XMLDictSerializer(metadata)
+        result = serializer.serialize(NETWORK)
+        deserializer = wsgi.XMLDeserializer(metadata)
+        new_net = deserializer.deserialize(result)['body']
+        self.assertEqual(NETWORK, new_net)
+
+    def test_None(self):
+        data = None
+        # Since it is None, we use xsi:nil='true'.
+        # In addition, we use an
+        # virtual XML root _v_root to wrap the XML doc.
+        # XML is:
+        # <_v_root xsi:nil="true"
+        #          xmlns="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
+        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
+        result = serializer.serialize(data)
+        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
+        new_data = deserializer.deserialize(result)['body']
+        self.assertIsNone(new_data)
+
+    def test_empty_dic_xml(self):
+        data = {}
+        # Since it is an empty dict, we use quantum:type='dict' and
+        # an empty XML element to represent it. In addition, we use an
+        # virtual XML root _v_root to wrap the XML doc.
+        # XML is:
+        # <_v_root quantum:type="dict"
+        #          xmlns="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
+        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
+        result = serializer.serialize(data)
+        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
+        new_data = deserializer.deserialize(result)['body']
+        self.assertEqual(data, new_data)
+
+    def test_non_root_one_item_dic_xml(self):
+        data = {'test1': 1}
+        # We have a key in this dict, and its value is an integer.
+        # XML is:
+        # <test1 quantum:type="int"
+        #        xmlns="http://openstack.org/quantum/api/v2.0"
+        #        xmlns:quantum="http://openstack.org/quantum/api/v2.0"
+        #        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        # 1</test1>
+
+        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
+        result = serializer.serialize(data)
+        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
+        new_data = deserializer.deserialize(result)['body']
+        self.assertEqual(data, new_data)
+
+    def test_non_root_two_items_dic_xml(self):
+        data = {'test1': 1, 'test2': '2'}
+        # We have no root element in this data, We will use a virtual
+        # root element _v_root to wrap the doct.
+        # The XML is:
+        # <_v_root xmlns="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:quantum="http://openstack.org/quantum/api/v2.0"
+        #          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        #    <test1 quantum:type="int">1</test1><test2>2</test2>
+        # </_v_root>
+
+        serializer = wsgi.XMLDictSerializer(attributes.get_attr_metadata())
+        result = serializer.serialize(data)
+        deserializer = wsgi.XMLDeserializer(attributes.get_attr_metadata())
+        new_data = deserializer.deserialize(result)['body']
+        self.assertEqual(data, new_data)
