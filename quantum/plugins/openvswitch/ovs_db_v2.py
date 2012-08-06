@@ -20,7 +20,9 @@ import logging
 
 from sqlalchemy.orm import exc
 
+from quantum.api import api_common
 from quantum.common import exceptions as q_exc
+from quantum.db import models_v2
 import quantum.db.api as db
 from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch import ovs_models_v2
@@ -169,3 +171,62 @@ def release_vlan_id(vlan_id):
                 session.delete(record)
         except exc.NoResultFound:
             LOG.error("vlan id %s not found in release_vlan_id" % vlan_id)
+
+
+def get_port(port_id):
+    session = db.get_session()
+    try:
+        port = session.query(models_v2.Port).filter_by(id=port_id).one()
+    except exc.NoResultFound:
+        port = None
+    return port
+
+
+def set_port_status(port_id, status):
+    session = db.get_session()
+    try:
+        port = session.query(models_v2.Port).filter_by(id=port_id).one()
+        port['status'] = status
+        if status == api_common.PORT_STATUS_DOWN:
+            port['device_id'] = ''
+        session.merge(port)
+        session.flush()
+    except exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id)
+
+
+def get_tunnels():
+    session = db.get_session()
+    try:
+        tunnels = session.query(ovs_models_v2.TunnelInfo).all()
+    except exc.NoResultFound:
+        return []
+    return [{'id': tunnel.id,
+             'ip_address': tunnel.ip_address} for tunnel in tunnels]
+
+
+def generate_tunnel_id(session):
+    try:
+        tunnels = session.query(ovs_models_v2.TunnelInfo).all()
+    except exc.NoResultFound:
+        return 0
+    tunnel_ids = ([tunnel['id'] for tunnel in tunnels])
+    if tunnel_ids:
+        id = max(tunnel_ids)
+    else:
+        id = 0
+    return id + 1
+
+
+def add_tunnel(ip):
+    session = db.get_session()
+    try:
+        tunnel = (session.query(ovs_models_v2.TunnelInfo).
+                  filter_by(ip_address=ip).one())
+    except exc.NoResultFound:
+        # Generate an id for the tunnel
+        id = generate_tunnel_id(session)
+        tunnel = ovs_models_v2.TunnelInfo(ip, id)
+        session.add(tunnel)
+        session.flush()
+    return tunnel

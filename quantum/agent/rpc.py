@@ -15,6 +15,7 @@
 
 from quantum.common import topics
 from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import proxy
 
 
 def create_consumers(dispatcher, prefix, topic_details):
@@ -34,3 +35,35 @@ def create_consumers(dispatcher, prefix, topic_details):
         connection.create_consumer(topic_name, dispatcher, fanout=True)
     connection.consume_in_thread()
     return connection
+
+
+class PluginApi(proxy.RpcProxy):
+    '''Agent side of the rpc API.
+
+    API version history:
+        1.0 - Initial version.
+
+    '''
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(PluginApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+
+    def get_device_details(self, context, device, agent_id):
+        return self.call(context,
+                         self.make_msg('get_device_details', device=device,
+                                       agent_id=agent_id),
+                         topic=self.topic)
+
+    def update_device_down(self, context, device, agent_id):
+        return self.call(context,
+                         self.make_msg('update_device_down', device=device,
+                                       agent_id=agent_id),
+                         topic=self.topic)
+
+    def tunnel_sync(self, context, tunnel_ip):
+        return self.call(context,
+                         self.make_msg('tunnel_sync', tunnel_ip=tunnel_ip),
+                         topic=self.topic)

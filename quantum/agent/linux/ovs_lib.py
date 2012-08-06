@@ -89,7 +89,6 @@ class OVSBridge:
     def _build_flow_expr_arr(self, **kwargs):
         flow_expr_arr = []
         is_delete_expr = kwargs.get('delete', False)
-
         if not is_delete_expr:
             prefix = ("hard_timeout=%s,idle_timeout=%s,priority=%s" %
                      (kwargs.get('hard_timeout', '0'),
@@ -206,3 +205,24 @@ class OVSBridge:
                 edge_ports.append(p)
 
         return edge_ports
+
+    def get_vif_port_set(self):
+        edge_ports = set()
+        port_names = self.get_port_name_list()
+        for name in port_names:
+            external_ids = self.db_get_map("Interface", name, "external_ids")
+            if "iface-id" in external_ids and "attached-mac" in external_ids:
+                edge_ports.add(external_ids['iface-id'])
+            elif ("xs-vif-uuid" in external_ids and
+                  "attached-mac" in external_ids):
+                # if this is a xenserver and iface-id is not automatically
+                # synced to OVS from XAPI, we grab it from XAPI directly
+                iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
+                edge_ports.add(iface_id)
+        return edge_ports
+
+    def get_vif_port(self, port_name):
+        external_ids = self.db_get_map("Interface", port_name, "external_ids")
+        ofport = self.db_get_val("Interface", port_name, "ofport")
+        return VifPort(port_name, ofport, external_ids["iface-id"],
+                       external_ids["attached-mac"], self)

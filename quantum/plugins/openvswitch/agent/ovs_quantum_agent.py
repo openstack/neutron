@@ -24,11 +24,18 @@ import logging
 import sys
 import time
 
+import eventlet
 from sqlalchemy.ext import sqlsoup
 
+from quantum.agent import rpc as agent_rpc
 from quantum.agent.linux import ovs_lib
+from quantum.agent.linux import utils
 from quantum.common import config as logging_config
+from quantum.common import topics
 from quantum.openstack.common import cfg
+from quantum.openstack.common import context
+from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config
 
 logging.basicConfig()
@@ -120,15 +127,87 @@ class Portv2(object):
         return hash(self.id)
 
 
+class OVSRpcCallbacks():
+
+    # Set RPC API version to 1.0 by default.
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self, context, int_br, local_ip=None, tun_br=None):
+        self.context = context
+        self.int_br = int_br
+        # Tunneling variables
+        self.local_ip = local_ip
+        self.tun_br = tun_br
+
+    def network_delete(self, context, **kwargs):
+        LOG.debug("network_delete received")
+        network_id = kwargs.get('network_id')
+        # (TODO) garyk delete the bridge interface
+        LOG.debug("Delete %s", network_id)
+
+    def port_update(self, context, **kwargs):
+        LOG.debug("port_update received")
+        port = kwargs.get('port')
+        port_name = 'tap%s' % port['id'][0:11]
+        vif_port = self.int_br.get_vif_port(port_name)
+        if port['admin_state_up']:
+            vlan_id = kwargs.get('vlan_id')
+            # create the networking for the port
+            self.int_br.set_db_attribute("Port", vif_port.port_name,
+                                         "tag", str(vlan_id))
+            self.int_br.delete_flows(in_port=vif_port.ofport)
+        else:
+            self.int_br.clear_db_attribute("Port", vif_port.port_name, "tag")
+
+    def tunnel_update(self, context, **kwargs):
+        LOG.debug("tunnel_update received")
+        tunnel_ip = kwargs.get('tunnel_ip')
+        tunnel_id = kwargs.get('tunnel_id')
+        if tunnel_ip == self.local_ip:
+            return
+        tun_name = 'gre-%s' % tunnel_id
+        self.tun_br.add_tunnel_port(tun_name, tunnel_ip)
+
+    def create_rpc_dispatcher(self):
+        '''Get the rpc dispatcher for this manager.
+
+        If a manager would like to set an rpc API version, or support more than
+        one class as the target of rpc messages, override this method.
+        '''
+        return dispatcher.RpcDispatcher([self])
+
+
 class OVSQuantumAgent(object):
 
     def __init__(self, integ_br, root_helper, polling_interval,
-                 reconnect_interval, target_v2_api=False):
+                 reconnect_interval, target_v2_api, rpc):
         self.root_helper = root_helper
         self.setup_integration_br(integ_br)
         self.polling_interval = polling_interval
         self.reconnect_interval = reconnect_interval
         self.target_v2_api = target_v2_api
+        self.rpc = rpc
+        if rpc:
+            self.setup_rpc(integ_br)
+
+    def setup_rpc(self, integ_br):
+        mac = utils.get_interface_mac(integ_br)
+        self.agent_id = '%s' % (mac.replace(":", ""))
+        self.topic = topics.AGENT
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+
+        # RPC network init
+        self.context = context.RequestContext('quantum', 'quantum',
+                                              is_admin=False)
+        # Handle updates from service
+        self.callbacks = OVSRpcCallbacks(self.context, self.int_br)
+        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        # Define the listening consumers for the agent
+        consumers = [[topics.PORT, topics.UPDATE],
+                     [topics.NETWORK, topics.DELETE]]
+        self.connection = agent_rpc.create_consumers(self.dispatcher,
+                                                     self.topic,
+                                                     consumers)
 
     def port_bound(self, port, vlan_id):
         self.int_br.set_db_attribute("Port", port.port_name,
@@ -145,7 +224,7 @@ class OVSQuantumAgent(object):
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
 
-    def daemon_loop(self, db_connection_url):
+    def db_loop(self, db_connection_url):
         '''Main processing loop for Non-Tunneling Agent.
 
         :param options: database information - in the event need to reconnect
@@ -247,6 +326,102 @@ class OVSQuantumAgent(object):
 
             time.sleep(self.polling_interval)
 
+    def update_ports(self, registered_ports):
+        ports = self.int_br.get_vif_port_set()
+        if ports == registered_ports:
+            return
+        added = ports - registered_ports
+        removed = registered_ports - ports
+        return {'current': ports,
+                'added': added,
+                'removed': removed}
+
+    def treat_devices_added(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Port %s added", device)
+            try:
+                details = self.plugin_rpc.get_device_details(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("Unable to get port details for %s: %s", device, e)
+                resync = True
+                continue
+            if 'port_id' in details:
+                LOG.info("Port %s updated. Details: %s", device, details)
+                port_name = 'tap%s' % details['port_id'][0:11]
+                port = self.int_br.get_vif_port(port_name)
+                if details['admin_state_up']:
+                    self.port_bound(port, details['vlan_id'])
+                else:
+                    self.port_unbound(port, True)
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def treat_devices_removed(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Attachment %s removed", device)
+            try:
+                details = self.plugin_rpc.update_device_down(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("port_removed failed for %s: %s", device, e)
+                resync = True
+            if details['exists']:
+                LOG.info("Port %s updated.", device)
+                # Nothing to do regarding local networking
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def process_network_ports(self, port_info):
+        resync_a = False
+        resync_b = False
+        if 'added' in port_info:
+            resync_a = self.treat_devices_added(port_info['added'])
+        if 'removed' in port_info:
+            resync_b = self.treat_devices_removed(port_info['removed'])
+        # If one of the above opertaions fails => resync with plugin
+        return (resync_a | resync_b)
+
+    def rpc_loop(self):
+        sync = True
+        ports = set()
+
+        while True:
+            start = time.time()
+            if sync:
+                LOG.info("Agent out of sync with plugin!")
+                ports.clear()
+                sync = False
+
+            port_info = self.update_ports(ports)
+
+            # notify plugin about port deltas
+            if port_info:
+                LOG.debug("Agent loop has new devices!")
+                # If treat devices fails - indicates must resync with plugin
+                sync = self.process_network_ports(port_info)
+                ports = port_info['current']
+
+            # sleep till end of polling interval
+            elapsed = (time.time() - start)
+            if (elapsed < self.polling_interval):
+                time.sleep(self.polling_interval - elapsed)
+            else:
+                LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
+                          self.polling_interval, elapsed)
+
+    def daemon_loop(self, db_connection_url):
+        if self.rpc:
+            self.rpc_loop()
+        else:
+            self.db_loop(db_connection_url)
+
 
 class OVSQuantumTunnelAgent(object):
     '''Implements OVS-based tunneling.
@@ -273,7 +448,8 @@ class OVSQuantumTunnelAgent(object):
     MAX_VLAN_TAG = 4094
 
     def __init__(self, integ_br, tun_br, local_ip, root_helper,
-                 polling_interval, reconnect_interval, target_v2_api=False):
+                 polling_interval, reconnect_interval, target_v2_api,
+                 rpc):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -283,6 +459,7 @@ class OVSQuantumTunnelAgent(object):
         :param polling_interval: interval (secs) to poll DB.
         :param reconnect_internal: retry interval (secs) on DB error.
         :param target_v2_api: if True  use v2 api.
+        :param rpc: if True use RPC interface to interface with plugin.
         '''
         self.root_helper = root_helper
         self.available_local_vlans = set(
@@ -298,6 +475,30 @@ class OVSQuantumTunnelAgent(object):
         self.tunnel_count = 0
         self.setup_tunnel_br(tun_br)
         self.target_v2_api = target_v2_api
+        self.rpc = rpc
+        if rpc:
+            self.setup_rpc(integ_br)
+
+    def setup_rpc(self, integ_br):
+        mac = utils.get_interface_mac(integ_br)
+        self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
+        self.topic = topics.AGENT
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+
+        # RPC network init
+        self.context = context.RequestContext('quantum', 'quantum',
+                                              is_admin=False)
+        # Handle updates from service
+        self.callbacks = OVSRpcCallbacks(self.context, self.int_br,
+                                         self.local_ip, self.tun_br)
+        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        # Define the listening consumers for the agent
+        consumers = [[topics.PORT, topics.UPDATE],
+                     [topics.NETWORK, topics.DELETE],
+                     [config.TUNNEL, topics.UPDATE]]
+        self.connection = agent_rpc.create_consumers(self.dispatcher,
+                                                     self.topic,
+                                                     consumers)
 
     def provision_local_vlan(self, net_uuid, lsw_id):
         '''Provisions a local VLAN.
@@ -431,7 +632,7 @@ class OVSQuantumTunnelAgent(object):
             except:
                 LOG.exception("Problem connecting to database")
 
-    def daemon_loop(self, db_connection_url):
+    def db_loop(self, db_connection_url):
         '''Main processing loop for Tunneling Agent.
 
         :param options: database information - in the event need to reconnect
@@ -547,6 +748,123 @@ class OVSQuantumTunnelAgent(object):
                 LOG.exception("Main-loop Exception:")
                 self.rollback_until_success(db)
 
+    def update_ports(self, registered_ports):
+        ports = self.int_br.get_vif_port_set()
+        if ports == registered_ports:
+            return
+        added = ports - registered_ports
+        removed = registered_ports - ports
+        return {'current': ports,
+                'added': added,
+                'removed': removed}
+
+    def treat_devices_added(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Port %s added", device)
+            try:
+                details = self.plugin_rpc.get_device_details(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("Unable to get port details for %s: %s", device, e)
+                resync = True
+                continue
+            if 'port_id' in details:
+                LOG.info("Port %s updated. Details: %s", device, details)
+                port_name = 'tap%s' % details['port_id'][0:11]
+                port = self.int_br.get_vif_port(port_name)
+                if details['admin_state_up']:
+                    self.port_bound(port, details['network_id'],
+                                    details['vlan_id'])
+                else:
+                    self.port_unbound(port, details['network_id'])
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def treat_devices_removed(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Attachment %s removed", device)
+            try:
+                details = self.plugin_rpc.update_device_down(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("port_removed failed for %s: %s", device, e)
+                resync = True
+            if details['exists']:
+                LOG.info("Port %s updated.", device)
+                # Nothing to do regarding local networking
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def process_network_ports(self, port_info):
+        resync_a = False
+        resync_b = False
+        if 'added' in port_info:
+            resync_a = self.treat_devices_added(port_info['added'])
+        if 'removed' in port_info:
+            resync_b = self.treat_devices_removed(port_info['removed'])
+        # If one of the above opertaions fails => resync with plugin
+        return (resync_a | resync_b)
+
+    def tunnel_sync(self):
+        resync = False
+        try:
+            details = self.plugin_rpc.tunnel_sync(self.context, self.local_ip)
+            tunnels = details['tunnels']
+            for tunnel in tunnels:
+                if self.local_ip != tunnel['ip_address']:
+                    tun_name = 'gre-%s' % tunnel['id']
+                    self.tun_br.add_tunnel_port(tun_name, tunnel['ip_address'])
+        except Exception as e:
+            LOG.debug("Unable to sync tunnel IP %s: %s", self.local_ip, e)
+            resync = True
+        return resync
+
+    def rpc_loop(self):
+        sync = True
+        ports = set()
+        tunnel_sync = True
+
+        while True:
+            start = time.time()
+            if sync:
+                LOG.info("Agent out of sync with plugin!")
+                ports.clear()
+                sync = False
+
+            # Notify the plugin of tunnel IP
+            if tunnel_sync:
+                LOG.info("Agent tunnel out of sync with plugin!")
+                tunnel_sync = self.tunnel_sync()
+
+            port_info = self.update_ports(ports)
+
+            # notify plugin about port deltas
+            if port_info:
+                LOG.debug("Agent loop has new devices!")
+                # If treat devices fails - indicates must resync with plugin
+                sync = self.process_network_ports(port_info)
+                ports = port_info['current']
+
+            # sleep till end of polling interval
+            elapsed = (time.time() - start)
+            if (elapsed < self.polling_interval):
+                time.sleep(self.polling_interval - elapsed)
+            else:
+                LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
+                          self.polling_interval, elapsed)
+
+    def daemon_loop(self, db_connection_url):
+        if self.rpc:
+            self.rpc_loop()
+        else:
+            self.db_loop(db_connection_url)
+
 
 def main():
     cfg.CONF(args=sys.argv, project='quantum')
@@ -561,9 +879,14 @@ def main():
     polling_interval = cfg.CONF.AGENT.polling_interval
     reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
     root_helper = cfg.CONF.AGENT.root_helper
+    rpc = cfg.CONF.AGENT.rpc
 
     # Determine API Version to use
     target_v2_api = cfg.CONF.AGENT.target_v2_api
+
+    # RPC only works with v2
+    if rpc and not target_v2_api:
+        rpc = False
 
     if enable_tunneling:
         # Get parameters for OVSQuantumTunnelAgent
@@ -572,11 +895,11 @@ def main():
         local_ip = cfg.CONF.OVS.local_ip
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, local_ip, root_helper,
                                        polling_interval, reconnect_interval,
-                                       target_v2_api)
+                                       target_v2_api, rpc)
     else:
         # Get parameters for OVSQuantumAgent.
         plugin = OVSQuantumAgent(integ_br, root_helper, polling_interval,
-                                 reconnect_interval, target_v2_api)
+                                 reconnect_interval, target_v2_api, rpc)
 
     # Start everything.
     plugin.daemon_loop(db_connection_url)
@@ -584,4 +907,5 @@ def main():
     sys.exit(0)
 
 if __name__ == "__main__":
+    eventlet.monkey_patch()
     main()

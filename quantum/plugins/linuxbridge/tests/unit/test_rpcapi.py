@@ -21,10 +21,10 @@ Unit Tests for linuxbridge rpc
 import stubout
 import unittest2
 
+from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
-from quantum.plugins.linuxbridge.agent import linuxbridge_quantum_agent as alb
 from quantum.plugins.linuxbridge import lb_quantum_plugin as plb
 
 
@@ -77,14 +77,14 @@ class rpcApiTestCase(unittest2.TestCase):
                           port='fake_port', vlan_id='fake_vlan_id')
 
     def test_device_details(self):
-        rpcapi = alb.PluginApi(topics.PLUGIN)
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_lb_api(rpcapi, topics.PLUGIN,
                           'get_device_details', rpc_method='call',
                           device='fake_device',
                           agent_id='fake_agent_id')
 
     def test_update_device_down(self):
-        rpcapi = alb.PluginApi(topics.PLUGIN)
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_lb_api(rpcapi, topics.PLUGIN,
                           'update_device_down', rpc_method='call',
                           device='fake_device',
