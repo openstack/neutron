@@ -1,4 +1,5 @@
 # Copyright 2012 Nicira Networks, Inc.
+# All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,26 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Brad Hall, Nicira Networks, Inc.
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
 
-import logging
-import unittest
-
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
-from quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin import NvpPlugin
-
-
-logging.basicConfig(level=logging.DEBUG)
-LOG = logging.getLogger("test_check")
-
-
-class NvpTests(unittest.TestCase):
-    def setUp(self):
-        self.quantum = NvpPlugin()
-
-    def tearDown(self):
-        pass
-
-    # These nvplib functions will throw an exception if the check fails
-    def test_check_default_transport_zone(self):
-        nvplib.check_default_transport_zone(self.quantum.controller)
+# This will get updated at build time.  Version 0 indicates developer build.
+PLUGIN_VERSION = "0"

@@ -1,0 +1,18 @@
+{"display_name": "%(uuid)s",
+   "_relations":
+   {"LogicalPortStatus":
+      {"type": "LogicalSwitchPortStatus",
+       "fabric_status_up": false,
+       "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s/status",
+       "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"}
+   },
+ "tags":
+   [{"scope": "q_port_id", "tag": "%(quantum_port_id)s"},
+    {"scope": "vm_id", "tag": "%(quantum_device_id)s"},
+    {"scope": "os_tid", "tag": "%(tenant_id)s"}],
+ "uuid": "%(uuid)s",
+ "admin_status_enabled": true,
+ "type": "LogicalSwitchPortConfig",
+ "_schema": "/ws.v1/schema/LogicalSwitchPortConfig",
+ "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s"
+ }

@@ -1,4 +1,5 @@
-# Copyright 2012 Nicira Networks, Inc.
+# Copyright 2012 Nicira, Inc.
+# All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,23 +13,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-#@author: Somik Behera, Nicira Networks, Inc.
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# @author: Somik Behera, Nicira Networks, Inc.
 
 import httplib  # basic HTTP library for HTTPS connections
 import logging
-
-
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
-    import NvpApiClientEventlet
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
-    import NvpGenericRequestEventlet
-
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
+    client_eventlet, request_eventlet)
 
 LOG = logging.getLogger("NVPApiHelper")
 LOG.setLevel(logging.INFO)
 
 
-class NVPApiHelper(NvpApiClientEventlet):
+class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
     '''
     Helper class to do basic login, cookie management, and provide base
     method to send HTTP requests.
@@ -51,13 +49,14 @@ class NVPApiHelper(NvpApiClientEventlet):
             from unresponsive controllers, etc) should finish within this
             timeout.
         :param http_timeout: how long to wait before aborting an
-            unresponsive controller
+            unresponsive controller (and allow for retries to another
+            controller in the cluster)
         :param retries: the number of concurrent connections.
         :param redirects: the number of concurrent connections.
         :param failover_time: minimum time between controller failover and new
             connections allowed.
         '''
-        NvpApiClientEventlet.__init__(
+        client_eventlet.NvpApiClientEventlet.__init__(
             self, api_providers, user, password, concurrent_connections,
             failover_time=failover_time)
 
@@ -85,12 +84,12 @@ class NVPApiHelper(NvpApiClientEventlet):
         if password:
             self._password = password
 
-        return NvpApiClientEventlet.login(self)
+        return client_eventlet.NvpApiClientEventlet.login(self)
 
     def request(self, method, url, body="", content_type="application/json"):
         '''Issues request to controller.'''
 
-        g = NvpGenericRequestEventlet(
+        g = request_eventlet.NvpGenericRequestEventlet(
             self, method, url, body, content_type, auto_login=True,
             request_timeout=self._request_timeout,
             http_timeout=self._http_timeout,
@@ -127,9 +126,8 @@ class NVPApiHelper(NvpApiClientEventlet):
         # Continue processing for non-error condition.
         if (status != httplib.OK and status != httplib.CREATED
                 and status != httplib.NO_CONTENT):
-            LOG.error(
-                "%s to %s, unexpected response code: %d (content = '%s')" %
-                (method, url, response.status, response.body))
+            LOG.error("%s to %s, unexpected response code: %d (content = '%s')"
+                      % (method, url, response.status, response.body))
             return None
 
         return response.body
@@ -149,16 +147,17 @@ class NVPApiHelper(NvpApiClientEventlet):
     def zero(self):
         raise NvpApiException()
 
-    error_codes = {
-        404: fourZeroFour,
-        409: fourZeroNine,
-        503: fiveZeroThree,
-        403: fourZeroThree,
-        301: zero,
-        307: zero,
-        400: zero,
-        500: zero,
-    }
+    # TODO(del): ensure error_codes are handled/raised appropriately
+    # in api_client.
+    error_codes = {404: fourZeroFour,
+                   409: fourZeroNine,
+                   503: fiveZeroThree,
+                   403: fourZeroThree,
+                   301: zero,
+                   307: zero,
+                   400: zero,
+                   500: zero,
+                   503: zero}
 
 
 class NvpApiException(Exception):

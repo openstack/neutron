@@ -1,0 +1,10 @@
+[DEFAULT]
+
+[DATABASE]
+sql_connection = sqlite://
+
+[CLUSTER:fake]
+default_tz_uuid = fake_tz_uuid
+nova_zone_id = whatever
+nvp_cluster_uuid = fake_cluster_uuid
+nvp_controller_connection=fake:443:admin:admin:30:10:2:2

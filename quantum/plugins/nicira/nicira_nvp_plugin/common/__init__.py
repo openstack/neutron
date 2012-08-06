@@ -1,4 +1,5 @@
 # Copyright 2012 Nicira Networks, Inc.
+# All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,6 +13,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-#@author: Brad Hall, Nicira Networks, Inc.
-#@author: Dave Lapsley, Nicira Networks, Inc.
-#@author: Aaron Rosen, Nicira Networks, Inc.
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#

@@ -1,0 +1,12 @@
+{
+   "display_name": "%(display_name)s",
+   "uuid": "%(uuid)s",
+   "tags": [{"scope": "os_tid", "tag": "%(tenant_id)s"}],
+   "type": "LogicalSwitchConfig",
+   "_schema": "/ws.v1/schema/LogicalSwitchConfig",
+   "port_isolation_enabled": false,
+   "transport_zones": [
+      {"zone_uuid": "%(zone_uuid)s",
+      "transport_type": "stt"}],
+   "_href": "/ws.v1/lswitch/%(uuid)s"
+}

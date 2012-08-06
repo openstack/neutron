@@ -211,8 +211,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
         self.assertTrue(retval is None)
 
     def test_redirect_params_setup_https_with_cooki(self):
-        with patch('nicira_nvp_plugin.api_client.client_eventlet'
-                   '.NvpApiClientEventlet') as mock:
+        with patch('quantum.plugins.nicira.nicira_nvp_plugin.api_client.'
+                   'client_eventlet.NvpApiClientEventlet') as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = 'mycookie'
@@ -226,8 +226,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
             self.assertTrue(api_client.acquire_connection.called)
 
     def test_redirect_params_setup_htttps_and_query(self):
-        with patch('nicira_nvp_plugin.api_client.client_eventlet'
-                   '.NvpApiClientEventlet') as mock:
+        with patch('quantum.plugins.nicira.nicira_nvp_plugin.api_client.'
+                   'client_eventlet.NvpApiClientEventlet') as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = 'mycookie'
@@ -241,8 +241,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
             self.assertTrue(api_client.acquire_connection.called)
 
     def test_redirect_params_setup_https_connection_no_cookie(self):
-        with patch('nicira_nvp_plugin.api_client.client_eventlet'
-                   '.NvpApiClientEventlet') as mock:
+        with patch('quantum.plugins.nicira.nicira_nvp_plugin.api_client.'
+                   'client_eventlet.NvpApiClientEventlet') as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = None
@@ -256,8 +256,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
             self.assertTrue(api_client.acquire_connection.called)
 
     def test_redirect_params_setup_https_and_query_no_cookie(self):
-        with patch('nicira_nvp_plugin.api_client.client_eventlet'
-                   '.NvpApiClientEventlet') as mock:
+        with patch('quantum.plugins.nicira.nicira_nvp_plugin.api_client.'
+                   'client_eventlet.NvpApiClientEventlet') as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = None
@@ -270,8 +270,8 @@ class NvpApiRequestEventletTest(unittest.TestCase):
             self.assertTrue(api_client.acquire_connection.called)
 
     def test_redirect_params_path_only_with_query(self):
-        with patch('nicira_nvp_plugin.api_client.client_eventlet'
-                   '.NvpApiClientEventlet') as mock:
+        with patch('quantum.plugins.nicira.nicira_nvp_plugin.api_client.'
+                   'client_eventlet.NvpApiClientEventlet') as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = None

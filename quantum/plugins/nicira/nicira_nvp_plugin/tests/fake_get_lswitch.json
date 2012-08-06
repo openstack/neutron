@@ -1,0 +1,10 @@
+{"display_name": "%(display_name)s",
+ "_href": "/ws.v1/lswitch/%(uuid)s",
+ "_schema": "/ws.v1/schema/LogicalSwitchConfig",
+ "_relations": {"LogicalSwitchStatus":
+     {"fabric_status": true,
+      "type": "LogicalSwitchStatus",
+      "_href": "/ws.v1/lswitch/%(uuid)s/status",
+      "_schema": "/ws.v1/schema/LogicalSwitchStatus"}},
+ "type": "LogicalSwitchConfig",
+ "uuid": "%(uuid)s"}

@@ -1,4 +1,5 @@
-# Copyright (C) 2009-2012 Nicira Networks, Inc. All Rights Reserved.
+# Copyright 2009-2012 Nicira Networks, Inc.
+# All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,6 +12,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Author: David Lapsley <dlapsley@nicira.com>, Nicira Networks, Inc.
 
@@ -28,8 +31,6 @@ class NvpApiClient(object):
 
     __metaclass__ = ABCMeta
 
-    # Default connection timeout for a controller.  After CONN_IDLE_TIMEOUT
-    # seconds the client attempt to reconnect.
     CONN_IDLE_TIMEOUT = 60 * 15
 
     @abstractmethod

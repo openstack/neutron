@@ -1,4 +1,5 @@
-# Copyright 2012 Nicira Networks, Inc.
+# Copyright 2012 Nicira, Inc.
+# All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,33 +13,37 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
+# @author: Aaron Rosen, Nicira Networks, Inc.
+
 
 import ConfigParser
+import json
+import hashlib
 import logging
+import netaddr
 import os
 import sys
+import traceback
+import urllib
+import uuid
 
+
+from common import config
+from quantum.plugins.nicira.nicira_nvp_plugin.api_client import client_eventlet
 import NvpApiClient
 import nvplib
+from nvp_plugin_version import PLUGIN_VERSION
 
+from quantum.api.v2 import attributes
 from quantum.common import exceptions as exception
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.client_eventlet \
-    import (
-        DEFAULT_CONCURRENT_CONNECTIONS,
-        DEFAULT_FAILOVER_TIME,
-    )
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.request_eventlet \
-    import (
-        DEFAULT_REQUEST_TIMEOUT,
-        DEFAULT_HTTP_TIMEOUT,
-        DEFAULT_RETRIES,
-        DEFAULT_REDIRECTS,
-    )
-
-
-LOG = logging.getLogger("QuantumPlugin")
+from quantum.db import api as db
+from quantum.db import db_base_plugin_v2
+from quantum.db import models_v2
+from quantum.openstack.common import cfg
 
 
 CONFIG_FILE = "nvp.ini"
@@ -46,106 +51,56 @@ CONFIG_FILE_PATHS = []
 if os.environ.get('QUANTUM_HOME', None):
     CONFIG_FILE_PATHS.append('%s/etc' % os.environ['QUANTUM_HOME'])
 CONFIG_FILE_PATHS.append("/etc/quantum/plugins/nicira")
-CONFIG_KEYS = ["DEFAULT_TZ_UUID", "NVP_CONTROLLER_IP", "PORT", "USER",
-               "PASSWORD"]
+LOG = logging.getLogger("QuantumPlugin")
 
 
-def initConfig(cfile=None):
-    config = ConfigParser.ConfigParser()
-    if cfile is None:
-        if os.path.exists(CONFIG_FILE):
-            cfile = CONFIG_FILE
-        else:
-            cfile = find_config(os.path.abspath(os.path.dirname(__file__)))
-
-    if cfile is None:
-        raise Exception("Configuration file \"%s\" doesn't exist" % (cfile))
-    LOG.info("Using configuration file: %s" % cfile)
-    config.read(cfile)
-    LOG.debug("Config: %s" % config)
-    return config
-
-
-def find_config(basepath):
-    LOG.info("Looking for %s in %s" % (CONFIG_FILE, basepath))
-    for root, dirs, files in os.walk(basepath, followlinks=True):
-        if CONFIG_FILE in files:
-            return os.path.join(root, CONFIG_FILE)
-    for alternate_path in CONFIG_FILE_PATHS:
-        p = os.path.join(alternate_path, CONFIG_FILE)
-        if os.path.exists(p):
-            return p
-    return None
-
-
-def parse_config(config):
-    """Backwards compatible parsing.
-
-    :param config: ConfigParser object initilized with nvp.ini.
-    :returns: A tuple consisting of a control cluster object and a
-        plugin_config variable.
-    raises: In general, system exceptions are not caught but are propagated
-        up to the user. Config parsing is still very lightweight.
-        At some point, error handling needs to be significantly
-        enhanced to provide user friendly error messages, clean program
-        exists, rather than exceptions propagated to the user.
+def parse_config():
+    """Parse the supplied plugin configuration.
+`
+    :param config: a ConfigParser() object encapsulating nvp.ini.
+    :returns: A tuple: (clusters, plugin_config). 'clusters' is a list of
+        NVPCluster objects, 'plugin_config' is a dictionary with plugin
+        parameters (currently only 'max_lp_per_bridged_ls').
     """
-    # Extract plugin config parameters.
-    try:
-        failover_time = config.get('NVP', 'failover_time')
-    except ConfigParser.NoOptionError, e:
-        failover_time = str(DEFAULT_FAILOVER_TIME)
+    db_options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
+    db_options.update({'base': models_v2.model_base.BASEV2})
+    sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
+    db_options.update({"sql_max_retries": sql_max_retries})
+    reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
+    db_options.update({"reconnect_interval": reconnect_interval})
+    nvp_options = {'max_lp_per_bridged_ls': cfg.CONF.NVP.max_lp_per_bridged_ls}
+    nvp_options.update({'failover_time': cfg.CONF.NVP.failover_time})
+    nvp_options.update({'concurrent_connections':
+                        cfg.CONF.NVP.concurrent_connections})
 
-    try:
-        concurrent_connections = config.get('NVP', 'concurrent_connections')
-    except ConfigParser.NoOptionError, e:
-        concurrent_connections = str(DEFAULT_CONCURRENT_CONNECTIONS)
+    nvp_conf = config.ClusterConfigOptions(cfg.CONF)
+    cluster_names = config.register_cluster_groups(nvp_conf)
+    nvp_conf.log_opt_values(LOG, logging.DEBUG)
 
-    plugin_config = {
-        'failover_time': failover_time,
-        'concurrent_connections': concurrent_connections,
-    }
-    LOG.info('parse_config(): plugin_config == "%s"' % plugin_config)
-
-    cluster = NVPCluster('cluster1')
-
-    # Extract connection information.
-    try:
-        defined_connections = config.get('NVP', 'NVP_CONTROLLER_CONNECTIONS')
-
-        for conn_key in defined_connections.split():
-            args = [config.get('NVP', 'DEFAULT_TZ_UUID')]
-            args.extend(config.get('NVP', conn_key).split(':'))
-            try:
-                cluster.add_controller(*args)
-            except Exception, e:
-                LOG.fatal('Invalid connection parameters: %s' % str(e))
-                sys.exit(1)
-
-        return cluster, plugin_config
-    except Exception, e:
-        LOG.info('No new style connections defined: %s' % e)
-
-        # Old style controller specification.
-        args = [config.get('NVP', k) for k in CONFIG_KEYS]
-        try:
-            cluster.add_controller(*args)
-        except Exception, e:
-            LOG.fatal('Invalid connection parameters.')
-            sys.exit(1)
-
-    return cluster, plugin_config
+    clusters_options = []
+    for cluster_name in cluster_names:
+        clusters_options.append(
+            {'name': cluster_name,
+             'default_tz_uuid':
+             nvp_conf[cluster_name].default_tz_uuid,
+             'nvp_cluster_uuid':
+             nvp_conf[cluster_name].nvp_cluster_uuid,
+             'nova_zone_id':
+             nvp_conf[cluster_name].nova_zone_id,
+             'nvp_controller_connection':
+             nvp_conf[cluster_name].nvp_controller_connection, })
+    LOG.debug("cluster options:%s", clusters_options)
+    return db_options, nvp_options, clusters_options
 
 
 class NVPCluster(object):
-    """Encapsulates controller connection and api_client.
+    """Encapsulates controller connection and api_client for a cluster.
 
-    Initialized within parse_config().
-    Accessed within the NvpPlugin class.
+    Accessed within the NvpPluginV2 class.
 
     Each element in the self.controllers list is a dictionary that
     contains the following keys:
-        ip, port, user, password, default_tz_uuid
+        ip, port, user, password, default_tz_uuid, uuid, zone
 
     There may be some redundancy here, but that has been done to provide
     future flexibility.
@@ -165,10 +120,9 @@ class NVPCluster(object):
         ss.append('] }')
         return ''.join(ss)
 
-    def add_controller(self, default_tz_uuid, ip, port, user, password,
-                       request_timeout=DEFAULT_REQUEST_TIMEOUT,
-                       http_timeout=DEFAULT_HTTP_TIMEOUT,
-                       retries=DEFAULT_RETRIES, redirects=DEFAULT_REDIRECTS):
+    def add_controller(self, ip, port, user, password, request_timeout,
+                       http_timeout, retries, redirects,
+                       default_tz_uuid, uuid=None, zone=None):
         """Add a new set of controller parameters.
 
         :param ip: IP address of controller.
@@ -181,12 +135,16 @@ class NVPCluster(object):
         :param redirects: maximum number of server redirect responses to
             follow.
         :param default_tz_uuid: default transport zone uuid.
+        :param uuid: UUID of this cluster (used in MDI configs).
+        :param zone: Zone of this cluster (used in MDI configs).
         """
 
-        keys = ['ip', 'port', 'user', 'password', 'default_tz_uuid']
+        keys = [
+            'ip', 'user', 'password', 'default_tz_uuid', 'uuid', 'zone']
         controller_dict = dict([(k, locals()[k]) for k in keys])
 
-        int_keys = ['request_timeout', 'http_timeout', 'retries', 'redirects']
+        int_keys = [
+            'port', 'request_timeout', 'http_timeout', 'retries', 'redirects']
         for k in int_keys:
             controller_dict[k] = int(locals()[k])
 
@@ -239,279 +197,615 @@ class NVPCluster(object):
     def default_tz_uuid(self):
         return self.controllers[0]['default_tz_uuid']
 
+    @property
+    def zone(self):
+        return self.controllers[0]['zone']
 
-class NvpPlugin(object):
+    @property
+    def uuid(self):
+        return self.controllers[0]['uuid']
+
+
+class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
-    NvpPlugin is a Quantum plugin that provides L2 Virtual Network
+    NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
     """
-    supported_extension_aliases = ["portstats"]
 
-    def __init__(self, configfile=None, loglevel=None, cli=False):
+    def __init__(self, loglevel=None):
         if loglevel:
             logging.basicConfig(level=loglevel)
             nvplib.LOG.setLevel(loglevel)
             NvpApiClient.LOG.setLevel(loglevel)
 
-        config = initConfig(configfile)
-        self.controller, self.plugin_config = parse_config(config)
-        c = self.controller
-        api_providers = [(x['ip'], x['port'], True) for x in c.controllers]
+        self.db_opts, self.nvp_opts, self.clusters_opts = parse_config()
+        self.clusters = []
+        for c_opts in self.clusters_opts:
+            # Password is guaranteed to be the same across all controllers
+            # in the same NVP cluster.
+            cluster = NVPCluster(c_opts['name'])
+            for controller_connection in c_opts['nvp_controller_connection']:
+                args = controller_connection.split(':')
+                try:
+                    args.extend([c_opts['default_tz_uuid'],
+                                 c_opts['nvp_cluster_uuid'],
+                                 c_opts['nova_zone_id']])
+                    cluster.add_controller(*args)
+                except Exception:
+                    LOG.exception("Invalid connection parameters for "
+                                  "controller %s in cluster %s",
+                                  controller_connection,
+                                  c_opts['name'])
+                    raise
 
-        c.api_client = NvpApiClient.NVPApiHelper(
-            api_providers, c.user, c.password,
-            request_timeout=c.request_timeout, http_timeout=c.http_timeout,
-            retries=c.retries, redirects=c.redirects,
-            failover_time=int(self.plugin_config['failover_time']),
-            concurrent_connections=int(
-                self.plugin_config['concurrent_connections']))
+            api_providers = [(x['ip'], x['port'], True)
+                             for x in cluster.controllers]
+            cluster.api_client = NvpApiClient.NVPApiHelper(
+                api_providers, cluster.user, cluster.password,
+                request_timeout=cluster.request_timeout,
+                http_timeout=cluster.http_timeout,
+                retries=cluster.retries,
+                redirects=cluster.redirects,
+                failover_time=self.nvp_opts['failover_time'],
+                concurrent_connections=self.nvp_opts['concurrent_connections'])
 
-        c.api_client.login()
+            # TODO(salvatore-orlando): do login at first request,
+            # not when plugin, is instantiated
+            cluster.api_client.login()
 
-        # For testing..
-        self.api_client = self.controller.api_client
+            # TODO(pjb): What if the cluster isn't reachable this
+            # instant?  It isn't good to fall back to invalid cluster
+            # strings.
+            # Default for future-versions
+            self.clusters.append(cluster)
+
+        # Connect and configure ovs_quantum db
+        options = {
+            'sql_connection': self.db_opts['sql_connection'],
+            'sql_max_retries': self.db_opts['sql_max_retries'],
+            'reconnect_interval': self.db_opts['reconnect_interval'],
+            'base': models_v2.model_base.BASEV2,
+        }
+        db.configure_db(options)
+
+    @property
+    def cluster(self):
+        if len(self.clusters):
+            return self.clusters[0]
+        return None
+
+    def clear_state(self):
+        nvplib.clear_state(self.clusters[0])
 
     def get_all_networks(self, tenant_id, **kwargs):
-        """
-        Returns a dictionary containing all <network_uuid, network_name> for
-        the specified tenant.
-
-        :returns: a list of mapping sequences with the following signature:
-                     [{'net-id': uuid that uniquely identifies
-                                      the particular quantum network,
-                        'net-name': a human-readable name associated
-                                      with network referenced by net-id
-                      },
-                       ....
-                       {'net-id': uuid that uniquely identifies the
-                                       particular quantum network,
-                        'net-name': a human-readable name associated
-                                       with network referenced by net-id
-                      }
-                   ]
-        :raises: None
-        """
-        networks = nvplib.get_all_networks(self.controller, tenant_id, [])
-        LOG.debug("get_all_networks() completed for tenant %s: %s" %
-                  (tenant_id, networks))
+        networks = []
+        for c in self.clusters:
+            networks.extend(nvplib.get_all_networks(c, tenant_id, networks))
+        LOG.debug("get_all_networks() completed for tenant %s: %s" % (
+            tenant_id, networks))
         return networks
 
-    def create_network(self, tenant_id, net_name, **kwargs):
+    def create_network(self, context, network):
         """
-        Creates a new Virtual Network, and assigns it a symbolic name.
         :returns: a sequence of mappings with the following signature:
-                    {'net-id': uuid that uniquely identifies the
-                                     particular quantum network,
-                     'net-name': a human-readable name associated
-                                    with network referenced by net-id
+                    {'id': UUID representing the network.
+                     'name': Human-readable name identifying the network.
+                     'tenant_id': Owner of network. only admin user
+                                  can specify a tenant_id other than its own.
+                     'admin_state_up': Sets admin state of network. if down,
+                                       network does not forward packets.
+                     'status': Indicates whether network is currently
+                               operational (limit values to "ACTIVE", "DOWN",
+                               "BUILD", and "ERROR"?
+                     'subnets': Subnets associated with this network. Plan
+                                to allow fully specified subnets as part of
+                                network create.
                    }
-        :raises:
+        :raises: exception.NoImplementedError
         """
-        kwargs["controller"] = self.controller
-        return nvplib.create_network(tenant_id, net_name, **kwargs)
+        # FIXME(arosen) implement admin_state_up = False in NVP
+        if network['network']['admin_state_up'] is False:
+            LOG.warning("Network with admin_state_up=False are not yet "
+                        "supported by this plugin. Ignoring setting for "
+                        "network %s",
+                        network['network'].get('name', '<unknown>'))
 
-    def create_custom_network(self, tenant_id, net_name, transport_zone,
-                              controller):
-        return self.create_network(tenant_id, net_name,
-                                   network_type="custom",
-                                   transport_zone=transport_zone,
-                                   controller=controller)
+        tenant_id = self._get_tenant_id_for_create(context, network)
+        # TODO(salvatore-orlando): if the network is shared this should be
+        # probably stored into the lswitch with a tag
+        # TODO(salvatore-orlando): Important - provider networks support
+        # (might require a bridged TZ)
+        net = nvplib.create_network(network['network']['tenant_id'],
+                                    network['network']['name'],
+                                    clusters=self.clusters)
 
-    def delete_network(self, tenant_id, netw_id):
+        network['network']['id'] = net['net-id']
+        return super(NvpPluginV2, self).create_network(context, network)
+
+    def delete_network(self, context, id):
         """
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
 
-        :returns: a sequence of mappings with the following signature:
-                    {'net-id': uuid that uniquely identifies the
-                                 particular quantum network
-                   }
+        :returns: None
         :raises: exception.NetworkInUse
         :raises: exception.NetworkNotFound
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
+
+        super(NvpPluginV2, self).delete_network(context, id)
+        pairs = self._get_lswitch_cluster_pairs(id, context.tenant_id)
+        for (cluster, switches) in pairs:
+            nvplib.delete_networks(cluster, id, switches)
+
+        LOG.debug("delete_network() completed for tenant: %s" %
+                  context.tenant_id)
+
+    def _get_lswitch_cluster_pairs(self, netw_id, tenant_id):
+        """Figure out the set of lswitches on each cluster that maps to this
+           network id"""
+        pairs = []
+        for c in self.clusters:
+            lswitches = []
+            try:
+                ls = nvplib.get_network(c, netw_id)
+                lswitches.append(ls['uuid'])
+            except exception.NetworkNotFound:
+                continue
+            pairs.append((c, lswitches))
+        if len(pairs) == 0:
             raise exception.NetworkNotFound(net_id=netw_id)
-        nvplib.delete_network(self.controller, netw_id)
+        LOG.debug("Returning pairs for network: %s" % (pairs))
+        return pairs
 
-        LOG.debug("delete_network() completed for tenant: %s" % tenant_id)
-        return {'net-id': netw_id}
-
-    def get_network_details(self, tenant_id, netw_id):
+    def get_network(self, context, id, fields=None, verbose=None):
         """
-        Retrieves a list of all the remote vifs that
-        are attached to the network.
+        Retrieves all attributes of the network, NOT including
+        the ports of that network.
 
         :returns: a sequence of mappings with the following signature:
-                    {'net-id': uuid that uniquely identifies the
-                                particular quantum network
-                     'net-name': a human-readable name associated
-                                 with network referenced by net-id
-                     'net-ifaces': ['vif1_on_network_uuid',
-                                    'vif2_on_network_uuid',...,'vifn_uuid']
+                    {'id': UUID representing the network.
+                     'name': Human-readable name identifying the network.
+                     'tenant_id': Owner of network. only admin user
+                                  can specify a tenant_id other than its own.
+                     'admin_state_up': Sets admin state of network. if down,
+                                       network does not forward packets.
+                     'status': Indicates whether network is currently
+                               operational (limit values to "ACTIVE", "DOWN",
+                               "BUILD", and "ERROR"?
+                     'subnets': Subnets associated with this network. Plan
+                                to allow fully specified subnets as part of
+                                network create.
                    }
+
         :raises: exception.NetworkNotFound
         :raises: exception.QuantumException
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        result = None
-        remote_vifs = []
-        switch = netw_id
-        lports = nvplib.query_ports(self.controller, switch,
-                                    relations="LogicalPortAttachment")
+        result = {}
+        lswitch_query = "&uuid=%s" % id
+        # always look for the tenant_id in the resource itself rather than
+        # the context, as with shared networks context.tenant_id and
+        # network['tenant_id'] might differ on GETs
+        # goto to the plugin DB and fecth the network
+        network = self._get_network(context, id, verbose)
+        # TODO(salvatore-orlando): verify whether the query on os_tid is
+        # redundant or not.
+        if context.is_admin is False:
+            tenant_query = ("&tag=%s&tag_scope=os_tid"
+                            % network['tenant_id'])
+        else:
+            tenant_query = ""
+        # Then fetch the correspondiong logical switch in NVP as well
+        # TODO(salvatore-orlando): verify whether the step on NVP
+        # can be completely avoided
+        lswitch_url_path = (
+            "/ws.v1/lswitch?"
+            "fields=uuid,display_name%s%s"
+            % (tenant_query, lswitch_query))
+        try:
+            for c in self.clusters:
+                lswitch_results = nvplib.get_all_query_pages(
+                    lswitch_url_path, c)
+                if lswitch_results:
+                    result['lswitch-display-name'] = (
+                        lswitch_results[0]['display_name'])
+                    break
+        except Exception:
+            LOG.error("Unable to get switches: %s" % traceback.format_exc())
+            raise exception.QuantumException()
 
-        for port in lports:
-            relation = port["_relations"]
-            vic = relation["LogicalPortAttachment"]
-            if "vif_uuid" in vic:
-                remote_vifs.append(vic["vif_uuid"])
+        if 'lswitch-display-name' not in result:
+            raise exception.NetworkNotFound(net_id=id)
 
-        if not result:
-            result = nvplib.get_network(self.controller, switch)
+        d = {'id': id,
+             'name': result['lswitch-display-name'],
+             'tenant_id': network['tenant_id'],
+             'admin_state_up': True,
+             'status': 'ACTIVE',
+             'shared': network['shared'],
+             'subnets': []}
 
-        d = {
-            "net-id": netw_id,
-            "net-ifaces": remote_vifs,
-            "net-name": result["display_name"],
-            "net-op-status": "UP",
-        }
-        LOG.debug("get_network_details() completed for tenant %s: %s" %
-                  (tenant_id, d))
+        LOG.debug("get_network() completed for tenant %s: %s" % (
+                  context.tenant_id, d))
         return d
 
-    def update_network(self, tenant_id, netw_id, **kwargs):
+    def get_networks(self, context, filters=None, fields=None, verbose=None):
+        """
+        Retrieves all attributes of the network, NOT including
+        the ports of that network.
+
+        :returns: a sequence of mappings with the following signature:
+                    {'id': UUID representing the network.
+                     'name': Human-readable name identifying the network.
+                     'tenant_id': Owner of network. only admin user
+                                  can specify a tenant_id other than its own.
+                     'admin_state_up': Sets admin state of network. if down,
+                                       network does not forward packets.
+                     'status': Indicates whether network is currently
+                               operational (limit values to "ACTIVE", "DOWN",
+                               "BUILD", and "ERROR"?
+                     'subnets': Subnets associated with this network. Plan
+                                to allow fully specified subnets as part of
+                                network create.
+                   }
+
+        :raises: exception.NetworkNotFound
+        :raises: exception.QuantumException
+        """
+        result = {}
+        nvp_lswitches = []
+        quantum_lswitches = (
+            super(NvpPluginV2, self).get_networks(context, filters))
+
+        if context.is_admin and not filters.get("tenant_id"):
+            tenant_filter = ""
+        elif filters.get("tenant_id"):
+            tenant_filter = ""
+            for tenant in filters.get("tenant_id"):
+                tenant_filter += "&tag=%s&tag_scope=os_tid" % tenant
+        else:
+            tenant_filter = "&tag=%s&tag_scope=os_tid" % context.tenant_id
+
+        lswitch_filters = "uuid,display_name,fabric_status"
+        lswitch_url_path = (
+            "/ws.v1/lswitch?fields=%s&relations=LogicalSwitchStatus%s"
+            % (lswitch_filters, tenant_filter))
+        try:
+            for c in self.clusters:
+                res = nvplib.get_all_query_pages(
+                    lswitch_url_path, c)
+
+                nvp_lswitches.extend(res)
+        except Exception:
+            LOG.error("Unable to get switches: %s" % traceback.format_exc())
+            raise exception.QuantumException()
+
+        # TODO (Aaron) This can be optimized
+        if filters.get("id"):
+            filtered_lswitches = []
+            for nvp_lswitch in nvp_lswitches:
+                for id in filters.get("id"):
+                    if id == nvp_lswitch['uuid']:
+                        filtered_lswitches.append(nvp_lswitch)
+            nvp_lswitches = filtered_lswitches
+
+        for quantum_lswitch in quantum_lswitches:
+            Found = False
+            for nvp_lswitch in nvp_lswitches:
+                if nvp_lswitch["uuid"] == quantum_lswitch["id"]:
+                    if (nvp_lswitch["_relations"]["LogicalSwitchStatus"]
+                            ["fabric_status"]):
+                        quantum_lswitch["status"] = "ACTIVE"
+                    else:
+                        quantum_lswitch["status"] = "DOWN"
+                    quantum_lswitch["name"] = nvp_lswitch["display_name"]
+                    nvp_lswitches.remove(nvp_lswitch)
+                    Found = True
+                    break
+
+            if not Found:
+                raise Exception("Quantum and NVP Databases are out of Sync!")
+        # do not make the case in which switches are found in NVP
+        # but not in Quantum catastrophic.
+        if len(nvp_lswitches):
+            LOG.warning("Found %s logical switches not bound "
+                        "to Quantum networks. Quantum and NVP are "
+                        "potentially out of sync", len(nvp_lswitches))
+
+        LOG.debug("get_networks() completed for tenant %s" % context.tenant_id)
+
+        if fields:
+            ret_fields = []
+            for quantum_lswitch in quantum_lswitches:
+                row = {}
+                for field in fields:
+                    row[field] = quantum_lswitch[field]
+                ret_fields.append(row)
+            return ret_fields
+
+        return quantum_lswitches
+
+    def update_network(self, context, id, network):
         """
         Updates the properties of a particular Virtual Network.
 
-        :returns: a sequence of mappings representing the new network
-                    attributes, with the following signature:
-                    {'net-id': uuid that uniquely identifies the
-                                 particular quantum network
-                     'net-name': the new human-readable name
-                                  associated with network referenced by net-id
+        :returns: a sequence of mappings with the following signature:
+        {'id': UUID representing the network.
+         'name': Human-readable name identifying the network.
+         'tenant_id': Owner of network. only admin user
+                      can specify a tenant_id other than its own.
+        'admin_state_up': Sets admin state of network. if down,
+                          network does not forward packets.
+        'status': Indicates whether network is currently
+                  operational (limit values to "ACTIVE", "DOWN",
+                               "BUILD", and "ERROR"?
+        'subnets': Subnets associated with this network. Plan
+                   to allow fully specified subnets as part of
+                   network create.
                    }
+
+        :raises: exception.NetworkNotFound
+        :raises: exception.NoImplementedError
+        """
+
+        if network["network"].get("admin_state_up"):
+            if network['network']["admin_state_up"] is False:
+                raise exception.NotImplementedError("admin_state_up=False "
+                                                    "networks are not "
+                                                    "supported.")
+        params = {}
+        params["network"] = network["network"]
+        pairs = self._get_lswitch_cluster_pairs(id, context.tenant_id)
+
+        #Only field to update in NVP is name
+        if network['network'].get("name"):
+            for (cluster, switches) in pairs:
+                for switch in switches:
+                    result = nvplib.update_network(cluster, switch, **params)
+
+        LOG.debug("update_network() completed for tenant: %s" %
+                  context.tenant_id)
+        return super(NvpPluginV2, self).update_network(context, id, network)
+
+    def get_ports(self, context, filters=None, fields=None, verbose=None):
+        """
+        Returns all ports from given tenant
+
+        :returns: a sequence of mappings with the following signature:
+        {'id': UUID representing the network.
+         'name': Human-readable name identifying the network.
+         'tenant_id': Owner of network. only admin user
+                      can specify a tenant_id other than its own.
+        'admin_state_up': Sets admin state of network. if down,
+                          network does not forward packets.
+        'status': Indicates whether network is currently
+                  operational (limit values to "ACTIVE", "DOWN",
+                               "BUILD", and "ERROR"?
+        'subnets': Subnets associated with this network. Plan
+                   to allow fully specified subnets as part of
+                   network create.
+                   }
+
         :raises: exception.NetworkNotFound
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        result = nvplib.update_network(self.controller, netw_id, **kwargs)
-        LOG.debug("update_network() completed for tenant: %s" % tenant_id)
-        return {
-            'net-id': netw_id,
-            'net-name': result["display_name"],
-            'net-op-status': "UP",
-        }
+        quantum_lports = super(NvpPluginV2, self).get_ports(context, filters)
+        vm_filter = ""
+        tenant_filter = ""
+        # This is used when calling delete_network. Quantum checks to see if
+        # the network has any ports.
+        if filters.get("network_id"):
+            # FIXME (Aaron) If we get more than one network_id this won't work
+            lswitch = filters["network_id"][0]
+        else:
+            lswitch = "*"
 
-    def get_all_ports(self, tenant_id, netw_id, **kwargs):
-        """
-        Retrieves all port identifiers belonging to the
-        specified Virtual Network.
+        if filters.get("device_id"):
+            for vm_id in filters.get("device_id"):
+                vm_filter = ("%stag_scope=vm_id&tag=%s&" % (vm_filter,
+                             hashlib.sha1(vm_id).hexdigest()))
+        else:
+            vm_id = ""
 
-        :returns: a list of mapping sequences with the following signature:
-                     [{'port-id': uuid representing a particular port
-                                    on the specified quantum network
-                      },
-                       ....
-                       {'port-id': uuid representing a particular port
-                                     on the specified quantum network
-                      }
-                     ]
-        :raises: exception.NetworkNotFound
-        """
-        ids = []
-        filters = kwargs.get("filter_opts") or {}
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        LOG.debug("Getting logical ports on lswitch: %s" % netw_id)
-        lports = nvplib.query_ports(self.controller, netw_id, fields="uuid",
-                                    filters=filters)
-        for port in lports:
-            ids.append({"port-id": port["uuid"]})
+        if filters.get("tenant_id"):
+            for tenant in filters.get("tenant_id"):
+                tenant_filter = ("%stag_scope=os_tid&tag=%s&" %
+                                 (tenant_filter, tenant))
 
-        # Delete from the filter so that Quantum doesn't attempt to filter on
-        # this too
-        if filters and "attachment" in filters:
-            del filters["attachment"]
+        nvp_lports = {}
 
-        LOG.debug("get_all_ports() completed for tenant: %s" % tenant_id)
-        LOG.debug("returning port listing:")
-        LOG.debug(ids)
-        return ids
+        lport_fields_str = ("tags,admin_status_enabled,display_name,"
+                            "fabric_status_up")
+        try:
+            for c in self.clusters:
+                lport_query_path = (
+                    "/ws.v1/lswitch/%s/lport?fields=%s&%s%stag_scope=q_port_id"
+                    "&relations=LogicalPortStatus" %
+                    (lswitch, lport_fields_str, vm_filter, tenant_filter))
 
-    def create_port(self, tenant_id, netw_id, port_init_state=None, **params):
+                ports = nvplib.get_all_query_pages(lport_query_path, c)
+                if ports:
+                    for port in ports:
+                        for tag in port["tags"]:
+                            if tag["scope"] == "q_port_id":
+                                nvp_lports[tag["tag"]] = port
+
+        except Exception:
+            LOG.error("Unable to get ports: %s" % traceback.format_exc())
+            raise exception.QuantumException()
+
+        lports = []
+        for quantum_lport in quantum_lports:
+            try:
+                quantum_lport["admin_state_up"] = (
+                    nvp_lports[quantum_lport["id"]]["admin_status_enabled"])
+
+                quantum_lport["name"] = (
+                    nvp_lports[quantum_lport["id"]]["display_name"])
+
+                if (nvp_lports[quantum_lport["id"]]
+                        ["_relations"]
+                        ["LogicalPortStatus"]
+                        ["fabric_status_up"]):
+                    quantum_lport["status"] = "ACTIVE"
+                else:
+                    quantum_lport["status"] = "DOWN"
+
+                del nvp_lports[quantum_lport["id"]]
+                lports.append(quantum_lport)
+            except KeyError:
+                raise Exception("Quantum and NVP Databases are out of Sync!")
+        # do not make the case in which ports are found in NVP
+        # but not in Quantum catastrophic.
+        if len(nvp_lports):
+            LOG.warning("Found %s logical ports not bound "
+                        "to Quantum ports. Quantum and NVP are "
+                        "potentially out of sync", len(nvp_lports))
+
+        if fields:
+            ret_fields = []
+            for lport in lports:
+                row = {}
+                for field in fields:
+                    row[field] = lport[field]
+                ret_fields.append(row)
+            return ret_fields
+        return lports
+
+    def create_port(self, context, port):
         """
         Creates a port on the specified Virtual Network.
+        Returns:
 
-        :returns: a mapping sequence with the following signature:
-                    {'port-id': uuid representing the created port
-                                   on specified quantum network
-                   }
+        {"id": uuid represeting the port.
+         "network_id": uuid of network.
+         "tenant_id": tenant_id
+         "mac_address": mac address to use on this port.
+         "admin_state_up": Sets admin state of port. if down, port
+                           does not forward packets.
+         "status": dicates whether port is currently operational
+                   (limit values to "ACTIVE", "DOWN", "BUILD", and
+                   "ERROR"?)
+         "fixed_ips": list of subnet ID's and IP addresses to be used on
+                      this port
+         "device_id": identifies the device (e.g., virtual server) using
+                      this port.
+        }
+
         :raises: exception.NetworkNotFound
         :raises: exception.StateInvalid
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        params["controller"] = self.controller
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        result = nvplib.create_port(tenant_id, netw_id, port_init_state,
-                                    **params)
-        d = {
-            "port-id": result["uuid"],
-            "port-op-status": result["port-op-status"],
-        }
-        LOG.debug("create_port() completed for tenant %s: %s" % (tenant_id, d))
-        return d
 
-    def update_port(self, tenant_id, netw_id, portw_id, **params):
+        # Set admin_state_up False since not created in NVP set
+        port["port"]["admin_state_up"] = False
+
+        # First we allocate port in quantum database
+        try:
+            quantum_db = super(NvpPluginV2, self).create_port(context, port)
+        except Exception as e:
+            raise e
+
+        # Update fields obtained from quantum db
+        port["port"].update(quantum_db)
+
+        # We want port to be up in NVP
+        port["port"]["admin_state_up"] = True
+        params = {}
+        params["max_lp_per_bridged_ls"] = \
+            self.nvp_opts["max_lp_per_bridged_ls"]
+        params["port"] = port["port"]
+        params["clusters"] = self.clusters
+        tenant_id = self._get_tenant_id_for_create(context, port["port"])
+
+        try:
+            port["port"], nvp_port_id = nvplib.create_port(tenant_id,
+                                                           **params)
+            nvplib.plug_interface(self.clusters, port["port"]["network_id"],
+                                  nvp_port_id, "VifAttachment",
+                                  port["port"]["id"])
+        except Exception as e:
+            # failed to create port in NVP delete port from quantum_db
+            super(NvpPluginV2, self).delete_port(context, port["port"]["id"])
+            raise e
+
+        d = {"port-id": port["port"]["id"],
+             "port-op-status": port["port"]["status"]}
+
+        LOG.debug("create_port() completed for tenant %s: %s" %
+                  (tenant_id, d))
+
+        # update port with admin_state_up True
+        port_update = {"port": {"admin_state_up": True}}
+        return super(NvpPluginV2, self).update_port(context,
+                                                    port["port"]["id"],
+                                                    port_update)
+
+    def update_port(self, context, id, port):
         """
         Updates the properties of a specific port on the
         specified Virtual Network.
+        Returns:
 
-        :returns: a mapping sequence with the following signature:
-                    {'port-id': uuid representing the
-                                 updated port on specified quantum network
-                     'port-state': update port state (UP or DOWN)
-                   }
+        {"id": uuid represeting the port.
+         "network_id": uuid of network.
+         "tenant_id": tenant_id
+         "mac_address": mac address to use on this port.
+         "admin_state_up": sets admin state of port. if down, port
+                           does not forward packets.
+         "status": dicates whether port is currently operational
+                   (limit values to "ACTIVE", "DOWN", "BUILD", and
+                   "ERROR"?)
+        "fixed_ips": list of subnet ID's and IP addresses to be used on
+                     this port
+        "device_id": identifies the device (e.g., virtual server) using
+                     this port.
+        }
+
         :raises: exception.StateInvalid
         :raises: exception.PortNotFound
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        LOG.debug("Update port request: %s" % (params))
-        params["controller"] = self.controller
-        result = nvplib.update_port(netw_id, portw_id, **params)
-        LOG.debug("update_port() completed for tenant: %s" % tenant_id)
-        port = {
-            'port-id': portw_id,
-            'port-state': result["admin_status_enabled"],
-            'port-op-status': result["port-op-status"],
-        }
-        LOG.debug("returning updated port %s: " % port)
-        return port
+        params = {}
 
-    def delete_port(self, tenant_id, netw_id, portw_id):
+        quantum_db = super(NvpPluginV2, self).get_port(context, id)
+
+        port_nvp, cluster = (
+            nvplib.get_port_by_quantum_tag(self.clusters,
+                                           quantum_db["network_id"], id))
+
+        LOG.debug("Update port request: %s" % (params))
+
+        params["cluster"] = cluster
+        params["port"] = port["port"]
+        result = nvplib.update_port(quantum_db["network_id"],
+                                    port_nvp["uuid"], **params)
+        LOG.debug("update_port() completed for tenant: %s" % context.tenant_id)
+
+        return super(NvpPluginV2, self).update_port(context, id, port)
+
+    def delete_port(self, context, id):
         """
         Deletes a port on a specified Virtual Network,
         if the port contains a remote interface attachment,
         the remote interface is first un-plugged and then the port
         is deleted.
 
-        :returns: a mapping sequence with the following signature:
-                    {'port-id': uuid representing the deleted port
-                                 on specified quantum network
-                   }
+        :returns: None
         :raises: exception.PortInUse
         :raises: exception.PortNotFound
         :raises: exception.NetworkNotFound
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        nvplib.delete_port(self.controller, netw_id, portw_id)
-        LOG.debug("delete_port() completed for tenant: %s" % tenant_id)
-        return {"port-id": portw_id}
 
-    def get_port_details(self, tenant_id, netw_id, portw_id):
+        port, cluster = nvplib.get_port_by_quantum_tag(self.clusters,
+                                                       '*', id)
+        if port is None:
+            raise exception.PortNotFound(port_id=id)
+        # TODO(bgh): if this is a bridged network and the lswitch we just got
+        # back will have zero ports after the delete we should garbage collect
+        # the lswitch.
+        nvplib.delete_port(cluster, port)
+
+        LOG.debug("delete_port() completed for tenant: %s" % context.tenant_id)
+        return  super(NvpPluginV2, self).delete_port(context, id)
+
+    def get_port(self, context, id, fields=None, verbose=None):
         """
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
@@ -519,89 +813,31 @@ class NvpPlugin(object):
         :returns: a mapping sequence with the following signature:
                     {'port-id': uuid representing the port on
                                  specified quantum network
-                     'net-id': uuid representing the particular
-                                quantum network
                      'attachment': uuid of the virtual interface
                                    bound to the port, None otherwise
+                     'port-op-status': operational status of the port
+                     'port-state': admin status of the port
                     }
         :raises: exception.PortNotFound
         :raises: exception.NetworkNotFound
         """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        port = nvplib.get_port(self.controller, netw_id, portw_id,
-                               "LogicalPortAttachment")
-        state = "ACTIVE" if port["admin_status_enabled"] else "DOWN"
-        op_status = nvplib.get_port_status(self.controller, netw_id, portw_id)
 
-        relation = port["_relations"]
-        attach_type = relation["LogicalPortAttachment"]["type"]
+        quantum_db = super(NvpPluginV2, self).get_port(context, id, fields,
+                                                       verbose)
 
-        vif_uuid = "None"
-        if attach_type == "VifAttachment":
-            vif_uuid = relation["LogicalPortAttachment"]["vif_uuid"]
+        port, cluster = (
+            nvplib.get_port_by_quantum_tag(self.clusters,
+                                           quantum_db["network_id"], id))
 
-        d = {
-            "port-id": portw_id, "attachment": vif_uuid,
-            "net-id": netw_id, "port-state": state,
-            "port-op-status": op_status,
-        }
-        LOG.debug("Port details for tenant %s: %s" % (tenant_id, d))
-        return d
+        quantum_db["admin_state_up"] = port["admin_status_enabled"]
+        if port["_relations"]["LogicalPortStatus"]["fabric_status_up"]:
+            quantum_db["status"] = "ACTIVE"
+        else:
+            quantum_db["status"] = "DOWN"
 
-    def plug_interface(self, tenant_id, netw_id, portw_id,
-                       remote_interface_id):
-        """
-        Attaches a remote interface to the specified port on the
-        specified Virtual Network.
+        LOG.debug("Port details for tenant %s: %s" %
+                  (context.tenant_id, quantum_db))
+        return quantum_db
 
-        :returns: None
-        :raises: exception.NetworkNotFound
-        :raises: exception.PortNotFound
-        :raises: exception.AlreadyAttached
-                    (? should the network automatically unplug/replug)
-        """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        result = nvplib.plug_interface(self.controller, netw_id,
-                                       portw_id, "VifAttachment",
-                                       attachment=remote_interface_id)
-        LOG.debug("plug_interface() completed for %s: %s" %
-                  (tenant_id, result))
-
-    def unplug_interface(self, tenant_id, netw_id, portw_id):
-        """
-        Detaches a remote interface from the specified port on the
-        specified Virtual Network.
-
-        :returns: None
-        :raises: exception.NetworkNotFound
-        :raises: exception.PortNotFound
-        """
-        if not nvplib.check_tenant(self.controller, netw_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=netw_id)
-        result = nvplib.unplug_interface(self.controller, netw_id, portw_id)
-
-        LOG.debug("unplug_interface() completed for tenant %s: %s" %
-                  (tenant_id, result))
-
-    def get_port_stats(self, tenant_id, network_id, port_id):
-        """
-        Returns port statistics for a given port.
-
-        {
-          "rx_packets": 0,
-          "rx_bytes": 0,
-          "tx_errors": 0,
-          "rx_errors": 0,
-          "tx_bytes": 0,
-          "tx_packets": 0
-        }
-
-        :returns: dict() of stats
-        :raises: exception.NetworkNotFound
-        :raises: exception.PortNotFound
-        """
-        if not nvplib.check_tenant(self.controller, network_id, tenant_id):
-            raise exception.NetworkNotFound(net_id=network_id)
-        return nvplib.get_port_stats(self.controller, network_id, port_id)
+    def get_plugin_version(self):
+        return PLUGIN_VERSION
