@@ -26,6 +26,7 @@ import sys
 
 from paste import deploy
 
+from quantum.api.v2 import attributes
 from quantum.openstack.common import cfg
 from quantum.version import version_string
 
@@ -52,6 +53,13 @@ cfg.CONF.register_opts(core_opts)
 def parse(args):
     cfg.CONF(args=args, project='quantum',
              version='%%prog %s' % version_string())
+
+    # Validate that the base_mac is of the correct format
+    msg = attributes._validate_regex(cfg.CONF.base_mac,
+                                     attributes.MAC_PATTERN)
+    if msg:
+        msg = "Base MAC: %s" % msg
+        raise Exception(msg)
 
 
 def setup_logging(conf):

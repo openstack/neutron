@@ -49,12 +49,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         sql_connection = 'sqlite:///:memory:'
         db.configure_db({'sql_connection': sql_connection,
                          'base': models_v2.model_base.BASEV2})
-        self._check_base_mac_format()
-
-    def _check_base_mac_format(self):
-        base_mac = cfg.CONF.base_mac.split(':')
-        if len(base_mac) != 6:
-            raise Exception("illegal base_mac format %s", cfg.CONF.base_mac)
 
     def _get_tenant_id_for_create(self, context, resource):
         if context.is_admin and 'tenant_id' in resource:

@@ -116,6 +116,9 @@ HEX_ELEM = '[0-9A-Fa-f]'
 UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{4}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{12}'])
+# Note: In order to ensure that the MAC address is unicast the first byte
+# must be even.
+MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
 validators = {'type:boolean': _validate_boolean,
