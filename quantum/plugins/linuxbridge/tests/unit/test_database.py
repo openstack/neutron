@@ -220,7 +220,7 @@ class L2networkDBTest(unittest.TestCase):
         vlan_id = 7  # outside range dynamically allocated
         with self.assertRaises(c_exc.VlanIDNotFound):
             l2network_db.is_vlanid_used(vlan_id)
-        l2network_db.reserve_specific_vlanid(vlan_id, "net-id")
+        l2network_db.reserve_specific_vlanid(vlan_id)
         self.assertTrue(l2network_db.is_vlanid_used(vlan_id))
         count = len(l2network_db.get_all_vlanids())
         self.assertEqual(count, orig_count + 1)
@@ -239,7 +239,7 @@ class L2networkDBTest(unittest.TestCase):
         self.assertGreater(orig_count, 0)
         vlan_id = 1007  # inside range dynamically allocated
         self.assertFalse(l2network_db.is_vlanid_used(vlan_id))
-        l2network_db.reserve_specific_vlanid(vlan_id, "net-id")
+        l2network_db.reserve_specific_vlanid(vlan_id)
         self.assertTrue(l2network_db.is_vlanid_used(vlan_id))
         count = len(l2network_db.get_all_vlanids())
         self.assertEqual(count, orig_count)

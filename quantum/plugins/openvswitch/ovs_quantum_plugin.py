@@ -43,10 +43,12 @@ LOG = logging.getLogger("ovs_quantum_plugin")
 
 # Exception thrown if no more VLANs are available
 class NoFreeVLANException(Exception):
+    # TODO(rkukura) Remove this class when removing V1 API
     pass
 
 
 class VlanMap(object):
+    # TODO(rkukura) Remove this class when removing V1 API
     vlans = {}
     net_ids = {}
     free_vlans = set()
@@ -89,8 +91,7 @@ class VlanMap(object):
             msg = _("Specified VLAN %s outside legal range (1-4094)") % vlan_id
             raise q_exc.InvalidInput(error_message=msg)
         if self.vlans.get(vlan_id):
-            raise q_exc.VlanIdInUse(net_id=network_id,
-                                    vlan_id=vlan_id)
+            raise q_exc.VlanIdInUse(vlan_id=vlan_id)
         self.free_vlans.discard(vlan_id)
         self.set_vlan(vlan_id, network_id)
 
@@ -114,6 +115,7 @@ class VlanMap(object):
 
 
 class OVSQuantumPlugin(QuantumPluginBase):
+    # TODO(rkukura) Remove this class when removing V1 API
 
     def __init__(self, configfile=None):
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
@@ -274,8 +276,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         options.update({"reconnect_interval": reconnect_interval})
         db.configure_db(options)
 
-        self.vmap = VlanMap(cfg.CONF.OVS.vlan_min, cfg.CONF.OVS.vlan_max)
-        self.vmap.populate_already_used(ovs_db_v2.get_vlans())
+        # update the vlan_id table based on current configuration
+        ovs_db_v2.update_vlan_id_pool()
 
     # TODO(rkukura) Use core mechanism for attribute authorization
     # when available.
@@ -301,9 +303,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             vlan_id = network['network'].get('provider:vlan_id')
             if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
                 self._enforce_provider_set_auth(context, net)
-                self.vmap.acquire_specific(int(vlan_id), str(net['id']))
+                ovs_db_v2.reserve_specific_vlan_id(vlan_id)
             else:
-                vlan_id = self.vmap.acquire(str(net['id']))
+                vlan_id = ovs_db_v2.reserve_vlan_id()
         except Exception:
             super(OVSQuantumPluginV2, self).delete_network(context, net['id'])
             raise
@@ -320,9 +322,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def delete_network(self, context, id):
+        vlan_id = ovs_db_v2.get_vlan(id)
         result = super(OVSQuantumPluginV2, self).delete_network(context, id)
-        ovs_db_v2.remove_vlan_binding(id)
-        self.vmap.release(id)
+        ovs_db_v2.release_vlan_id(vlan_id)
         return result
 
     def get_network(self, context, id, fields=None, verbose=None):

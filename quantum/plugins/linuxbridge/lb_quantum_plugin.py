@@ -69,7 +69,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             vlan_id = network['network'].get('provider:vlan_id')
             if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
                 self._enforce_provider_set_auth(context, net)
-                cdb.reserve_specific_vlanid(int(vlan_id), net['id'])
+                cdb.reserve_specific_vlanid(int(vlan_id))
             else:
                 vlan_id = cdb.reserve_vlanid()
             cdb.add_vlan_binding(vlan_id, net['id'])
@@ -88,8 +88,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def delete_network(self, context, id):
-        result = super(LinuxBridgePluginV2, self).delete_network(context, id)
         vlan_binding = cdb.get_vlan_binding(id)
+        result = super(LinuxBridgePluginV2, self).delete_network(context, id)
         cdb.release_vlanid(vlan_binding['vlan_id'])
         return result
 
