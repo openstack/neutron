@@ -17,9 +17,17 @@ from quantum.api.v2 import attributes
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
-        # TODO(rkukura): specify validation
-        'provider:vlan_id': {'allow_post': True, 'allow_put': False,
+        'provider:network_type': {'allow_post': True, 'allow_put': True,
+                                  'validate': {'type:values': ['flat',
+                                                               'vlan']},
+                                  'default': attributes.ATTR_NOT_SPECIFIED,
+                                  'is_visible': True},
+        'provider:physical_network': {'allow_post': True, 'allow_put': True,
+                                      'default': attributes.ATTR_NOT_SPECIFIED,
+                                      'is_visible': True},
+        'provider:vlan_id': {'allow_post': True, 'allow_put': True,
                              'convert_to': int,
+                             'validate': {'type:range': (1, 4095)},
                              'default': attributes.ATTR_NOT_SPECIFIED,
                              'is_visible': True},
     }

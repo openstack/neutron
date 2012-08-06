@@ -755,7 +755,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def update_network(self, context, id, network):
         n = network['network']
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             network = self._get_network(context, id)
             # validate 'shared' parameter
             if 'shared' in n:
@@ -764,7 +764,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_network_dict(network)
 
     def delete_network(self, context, id):
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             network = self._get_network(context, id)
 
             filter = {'network_id': [id]}
@@ -874,7 +874,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         s = subnet['subnet']
         self._validate_subnet(s)
 
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             if "dns_nameservers" in s:
                 old_dns_list = self._get_dns_by_subnet(context, id)
 
@@ -922,7 +922,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_subnet_dict(subnet)
 
     def delete_subnet(self, context, id):
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
             # Check if ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
@@ -999,7 +999,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def update_port(self, context, id, port):
         p = port['port']
 
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
             # Check if the IPs need to be updated
             if 'fixed_ips' in p:
@@ -1024,7 +1024,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_port_dict(port)
 
     def delete_port(self, context, id):
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
 
             allocated_qry = context.session.query(models_v2.IPAllocation)

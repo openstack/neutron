@@ -14,38 +14,46 @@
 # limitations under the License.
 
 import sqlalchemy as sa
-from sqlalchemy import orm
 
 from quantum.db import model_base
 
 
-class VlanID(model_base.BASEV2):
-    """Represents a vlan_id usage"""
-    __tablename__ = 'vlan_ids'
+class NetworkState(model_base.BASEV2):
+    """Represents state of vlan_id on physical network"""
+    __tablename__ = 'network_states'
 
-    vlan_id = sa.Column(sa.Integer, nullable=False, primary_key=True)
-    vlan_used = sa.Column(sa.Boolean, nullable=False)
+    physical_network = sa.Column(sa.String(64), nullable=False,
+                                 primary_key=True)
+    vlan_id = sa.Column(sa.Integer, nullable=False, primary_key=True,
+                        autoincrement=False)
+    allocated = sa.Column(sa.Boolean, nullable=False)
 
-    def __init__(self, vlan_id):
+    def __init__(self, physical_network, vlan_id):
+        self.physical_network = physical_network
         self.vlan_id = vlan_id
-        self.vlan_used = False
+        self.allocated = False
 
     def __repr__(self):
-        return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
+        return "<NetworkState(%s,%d,%s)>" % (self.physical_network,
+                                             self.vlan_id, self.allocated)
 
 
-class VlanBinding(model_base.BASEV2):
-    """Represents a binding of vlan_id to network_id"""
-    __tablename__ = 'vlan_bindings'
+class NetworkBinding(model_base.BASEV2):
+    """Represents binding of virtual network to physical_network and vlan_id"""
+    __tablename__ = 'network_bindings'
 
-    network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id',
-                                                        ondelete="CASCADE"),
+    network_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            primary_key=True)
+    physical_network = sa.Column(sa.String(64), nullable=False)
     vlan_id = sa.Column(sa.Integer, nullable=False)
 
-    def __init__(self, vlan_id, network_id):
-        self.vlan_id = vlan_id
+    def __init__(self, network_id, physical_network, vlan_id):
         self.network_id = network_id
+        self.physical_network = physical_network
+        self.vlan_id = vlan_id
 
     def __repr__(self):
-        return "<VlanBinding(%d,%s)>" % (self.vlan_id, self.network_id)
+        return "<NetworkBinding(%s,%s,%d)>" % (self.network_id,
+                                               self.physical_network,
+                                               self.vlan_id)

@@ -16,6 +16,7 @@
 import unittest
 
 from quantum.openstack.common import cfg
+from quantum.plugins.openvswitch.common import config
 
 
 class ConfigurationTest(unittest.TestCase):

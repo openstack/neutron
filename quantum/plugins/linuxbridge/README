@@ -58,9 +58,9 @@ quantum_use_dhcp=true
 
 Make the Linux Bridge plugin the current quantum plugin
 
-- edit quantum.conf and change the core_plugin according to the API version
-V1: "core_plugin = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin"
-V2: "core_plugin = quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2"
+- edit quantum.conf and change the core_plugin
+
+core_plugin = quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2
 
 # -- Database config.
 
@@ -104,10 +104,26 @@ mysql> FLUSH PRIVILEGES;
   actually running the server set it to mysql. At any given time, only one
   of these should be active in the conf file (you can comment out the other).
 
-- Remember to change the interface configuration to indicate the correct
-  ethernet interface on that particular host which is being used to participate
-  in the Quantum networks. This configuration has to be applied on each host
-  on which the agent runs.
+- On the quantum server, network_vlan_ranges must be configured in
+  linuxbridge_conf.ini to specify the names of the physical networks
+  managed by the linuxbridge plugin, along with the ranges of VLAN IDs
+  available on each physical network for allocation to virtual
+  networks. An entry of the form
+  "<physical_network>:<vlan_min>:<vlan_max>" specifies a VLAN range on
+  the named physical network. An entry of the form
+  "<physical_network>" specifies a named network without making a
+  range of VLANs available for allocation. Networks specified using
+  either form are available for adminstrators to create provider flat
+  networks and provider VLANs. Multiple VLAN ranges can be specified
+  for the same physical network.
+
+  The following example linuxbridge_conf.ini entry shows three
+  physical networks that can be used to create provider networks, with
+  ranges of VLANs available for allocation on two of them:
+
+  [VLANS]
+  network_vlan_ranges = physnet1:1000:2999,physnet1:3000:3999,physnet2,physnet3:1:4094
+
 
 # -- Agent configuration
 
@@ -121,6 +137,22 @@ mysql> FLUSH PRIVILEGES;
 - Copy the quantum.conf file to the compute node
 
   Note: debug and logging information should be updated in etc/quantum.conf
+
+- On each compute node, the network_interface_mappings must be
+  configured in linuxbridge_conf.ini to map each physical network name
+  to the physical interface connecting the node to that physical
+  network. Entries are of the form
+  "<physical_network>:<physical_interface>". For example, one compute
+  node may use the following physical_inteface_mappings entries:
+
+  [LINUX_BRIDGE]
+  physical_interface_mappings = physnet1:eth1,physnet2:eth2,physnet3:eth3
+
+  while another might use:
+
+  [LINUX_BRIDGE]
+  physical_interface_mappings = physnet1:em3,physnet2:em2,physnet3:em1
+
 
 $ Run the following:
   python linuxbridge_quantum_agent.py --config-file quantum.conf 

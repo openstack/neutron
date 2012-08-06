@@ -16,3 +16,6 @@ api_extensions_path = unit/extensions
 
 # Paste configuration file
 api_paste_config = api-paste.ini.test
+
+# The messaging module to use, defaults to kombu.
+rpc_backend = quantum.openstack.common.rpc.impl_fake
