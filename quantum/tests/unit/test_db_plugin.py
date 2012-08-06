@@ -498,6 +498,30 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             port2 = self.deserialize(fmt, res)
             self.assertEquals(res.status_int, 409)
 
+    def test_mac_generation(self):
+        cfg.CONF.set_override('base_mac', "12:34:56:00:00:00")
+        with self.port() as port:
+            mac = port['port']['mac_address']
+            # check that MAC address matches base MAC
+            base_mac = cfg.CONF.base_mac
+            self.assertTrue(mac.startswith("12:34:56"))
+
+    def test_mac_generation_4octet(self):
+        cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
+        with self.port() as port:
+            mac = port['port']['mac_address']
+            # check that MAC address matches base MAC
+            base_mac = cfg.CONF.base_mac
+            self.assertTrue(mac.startswith("12:34:56:78"))
+
+    def test_bad_mac_format(self):
+        cfg.CONF.set_override('base_mac', "bad_mac")
+        try:
+            self.plugin._check_base_mac_format()
+        except:
+            return
+        self.fail("No exception for illegal base_mac format")
+
     def test_mac_exhaustion(self):
         # rather than actually consuming all MAC (would take a LONG time)
         # we just raise the exception that would result.
