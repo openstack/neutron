@@ -99,7 +99,7 @@ CMD_PORT_TRUNK = """
                     </trunk>
                   </mode>
                 </switchport>
-              </__XML__MODE_if-ethernet-switch>C:  1: Missing docstring
+              </__XML__MODE_if-ethernet-switch>
             </ethernet>
           </interface>
 """
@@ -121,7 +121,7 @@ CMD_NO_SWITCHPORT = """
 
 CMD_NO_VLAN_INT_SNIPPET = """
           <interface>
-            <ethernet>C:  1: Missing docstring
+            <ethernet>
               <interface>%s</interface>
               <__XML__MODE_if-ethernet-switch>
                 <switchport></switchport>

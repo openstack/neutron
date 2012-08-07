@@ -26,7 +26,8 @@ from quantum.common import exceptions as exc
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
+from quantum.plugins.cisco.common import cisco_exceptions as excep
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import nexus_db_v2 as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
@@ -51,8 +52,7 @@ class NexusPlugin(L2DevicePluginBase):
         self._nexus_ip = conf.NEXUS_IP_ADDRESS
         self._nexus_username = cred.Store.get_username(conf.NEXUS_IP_ADDRESS)
         self._nexus_password = cred.Store.get_password(conf.NEXUS_IP_ADDRESS)
-        self._nexus_first_port = conf.NEXUS_FIRST_PORT
-        self._nexus_second_port = conf.NEXUS_SECOND_PORT
+        self._nexus_ports = conf.NEXUS_PORTS
         self._nexus_ssh_port = conf.NEXUS_SSH_PORT
 
     def get_all_networks(self, tenant_id):
@@ -74,10 +74,12 @@ class NexusPlugin(L2DevicePluginBase):
         self._client.create_vlan(
             vlan_name, str(vlan_id), self._nexus_ip,
             self._nexus_username, self._nexus_password,
-            self._nexus_first_port, self._nexus_second_port,
-            self._nexus_ssh_port)
-        nxos_db.add_nexusport_binding(self._nexus_first_port, str(vlan_id))
-        nxos_db.add_nexusport_binding(self._nexus_second_port, str(vlan_id))
+            self._nexus_ports, self._nexus_ssh_port)
+        for ports in self._nexus_ports:
+            try:
+                nxos_db.add_nexusport_binding(ports, str(vlan_id))
+            except:
+                raise excep.NexusPortBindingAlreadyExists(port_id=ports)
 
         new_net_dict = {const.NET_ID: net_id,
                         const.NET_NAME: net_name,
@@ -105,8 +107,7 @@ class NexusPlugin(L2DevicePluginBase):
             self._client.delete_vlan(
                 str(vlan_id), self._nexus_ip,
                 self._nexus_username, self._nexus_password,
-                self._nexus_first_port, self._nexus_second_port,
-                self._nexus_ssh_port)
+                self._nexus_ports, self._nexus_ssh_port)
             return net
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)

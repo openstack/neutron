@@ -32,8 +32,7 @@ CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'},
 
 SECTION = CP['SWITCH']
 NEXUS_IP_ADDRESS = SECTION['nexus_ip_address']
-NEXUS_FIRST_PORT = SECTION['nexus_first_port']
-NEXUS_SECOND_PORT = SECTION['nexus_second_port']
+NEXUS_PORTS = SECTION['ports']
 NEXUS_SSH_PORT = SECTION['nexus_ssh_port']
 
 SECTION = CP['DRIVER']

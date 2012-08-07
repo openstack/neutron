@@ -25,7 +25,7 @@ import logging
 
 from ncclient import manager
 
-from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
 
@@ -110,8 +110,7 @@ class CiscoNEXUSDriver():
         mgr.edit_config(target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_first_interface,
-                    nexus_second_interface, nexus_ssh_port):
+                    nexus_password, nexus_ports, nexus_ssh_port):
         """
         Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
         given the VLAN ID and Name and Interface Number
@@ -121,14 +120,11 @@ class CiscoNEXUSDriver():
             self.enable_vlan(man, vlan_id, vlan_name)
             vlan_ids = self.build_vlans_cmd()
             LOG.debug("NexusDriver VLAN IDs: %s" % vlan_ids)
-            self.enable_vlan_on_trunk_int(man, nexus_first_interface,
-                                          vlan_ids)
-            self.enable_vlan_on_trunk_int(man, nexus_second_interface,
-                                          vlan_ids)
+            for ports in nexus_ports:
+                self.enable_vlan_on_trunk_int(man, ports, vlan_ids)
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                    nexus_first_interface, nexus_second_interface,
-                    nexus_ssh_port):
+                    nexus_ports, nexus_ssh_port):
         """
         Delete a VLAN and Disables trunk mode an interface on Nexus Switch
         given the VLAN ID and Interface Number
@@ -136,10 +132,8 @@ class CiscoNEXUSDriver():
         with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
                                nexus_password) as man:
             self.disable_vlan(man, vlan_id)
-            self.disable_vlan_on_trunk_int(man, nexus_first_interface,
-                                           vlan_id)
-            self.disable_vlan_on_trunk_int(man, nexus_second_interface,
-                                           vlan_id)
+            for ports in nexus_ports:
+                self.disable_vlan_on_trunk_int(man, ports, vlan_id)
 
     def build_vlans_cmd(self):
         """

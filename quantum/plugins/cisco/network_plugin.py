@@ -29,7 +29,7 @@ from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.quantum_plugin_base import QuantumPluginBase
+from quantum.quantum_plugin_base_v2 import QuantumPluginBaseV2
 
 LOG = logging.getLogger(__name__)
 
