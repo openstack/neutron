@@ -254,6 +254,38 @@ PYTHONPATH=. python quantum/plugins/cisco/client/cli.py create_multiport <tenant
 
     (Note that you should not be using the create port core API in the above case.)
 
+Using an independent plugin as a device sub-plugin
+-------------------------------------------------
+
+If you would like to use an independent virtual switch plugin as one of the sub-plugins
+(for eg: the OpenVSwitch plugin) with the nexus device sub-plugin perform the following steps:
+
+(The following instructions are with respect to the OpenVSwitch plugin)
+1. Update etc/quantum/plugins/cisco/l2network_plugin.ini
+   In the [MODEL] section of the configuration file put the following configuration
+   (note that this should be the only configuration in this section, all other configuration
+   should be either removed or commented)
+
+    model_class=quantum.plugins.cisco.models.virt_phy_sw_v2.VirtualPhysicalSwitchModelV2
+
+2. Update etc/quantum/plugins/cisco/cisco_plugins.ini
+   In the [PLUGINS] section of the configuration file put the following configuration:
+
+   vswitch_plugin=quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2
+
+3. Set the DB name, the same name has to be configured in three places:
+   In etc/quantum/plugins/cisco/conf/db_conn.ini set the "name" value
+   In /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini set the "sql_connection"
+   In /etc/quantum/dhcp_agent.ini set the "db_connection"
+
+4. The range of VLAN IDs has to be set in the OpenVSwitch configuration file:
+   In /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+   Set:
+   vlan_min = <lower_id>
+   vlan_max = <higher_id>
+   enable_tunneling = False
+
+5. For Nexus device sub-plugin configuration refer to the above sections
 
 How to test the installation
 ----------------------------
