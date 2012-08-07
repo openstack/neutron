@@ -191,8 +191,10 @@ class IpLinkCommand(IpDeviceCommandBase):
         return self._parse_line(self._run('show', self.name, options='o'))
 
     def _parse_line(self, value):
-        device_name, settings = value.replace("\\", '').split('>', 1)
+        if not value:
+            return {}
 
+        device_name, settings = value.replace("\\", '').split('>', 1)
         tokens = settings.split()
         keys = tokens[::2]
         values = [int(v) if v.isdigit() else v for v in tokens[1::2]]
@@ -286,4 +288,4 @@ def device_exists(device_name, root_helper=None, namespace=None):
         address = IPDevice(device_name, root_helper, namespace).link.address
     except RuntimeError:
         return False
-    return True
+    return bool(address)
