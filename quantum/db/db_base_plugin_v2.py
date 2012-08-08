@@ -240,6 +240,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 last_ip=ip_address)
             context.session.add(ip_range)
             LOG.debug("Recycle: created new %s-%s", ip_address, ip_address)
+        QuantumDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
+                                                port_id, ip_address)
+
+    @staticmethod
+    def _delete_ip_allocation(context, network_id, subnet_id, port_id,
+                              ip_address):
 
         # Delete the IP address from the IPAllocate table
         LOG.debug("Delete allocated IP %s (%s/%s/%s)", ip_address,
@@ -834,9 +840,14 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             allocated = allocated_qry.filter_by(port_id=id).all()
             if allocated:
                 for a in allocated:
-                    # Gateway address will not be recycled
                     subnet = self._get_subnet(context, a['subnet_id'])
                     if a['ip_address'] == subnet['gateway_ip']:
+                        # Gateway address will not be recycled, but we do
+                        # need to delete the allocation from the DB
+                        QuantumDbPluginV2._delete_ip_allocation(
+                            context,
+                            a['network_id'], a['subnet_id'],
+                            id, a['ip_address'])
                         LOG.debug("Gateway address (%s/%s) is not recycled",
                                   a['ip_address'], a['subnet_id'])
                         continue
