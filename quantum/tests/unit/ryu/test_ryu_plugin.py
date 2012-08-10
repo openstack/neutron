@@ -28,7 +28,15 @@ class RyuPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         ryu_app_client = ryu_app_mod.client
         rest_nw_id = ryu_app_mod.rest_nw_id
         rest_nw_id.NW_ID_EXTERNAL = '__NW_ID_EXTERNAL__'
+        rest_nw_id.NW_ID_RESERVED = '__NW_ID_RESERVED__'
+        rest_nw_id.NW_ID_VPORT_GRE = '__NW_ID_VPORT_GRE__'
         rest_nw_id.NW_ID_UNKNOWN = '__NW_ID_UNKNOWN__'
+        rest_nw_id.RESERVED_NETWORK_IDS = [
+            rest_nw_id.NW_ID_EXTERNAL,
+            rest_nw_id.NW_ID_RESERVED,
+            rest_nw_id.NW_ID_VPORT_GRE,
+            rest_nw_id.NW_ID_UNKNOWN,
+        ]
         return mock.patch.dict('sys.modules',
                                {'ryu': ryu_mod,
                                 'ryu.app': ryu_app_mod,

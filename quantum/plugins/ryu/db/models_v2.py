@@ -14,24 +14,42 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from sqlalchemy import Column, Integer, String
+import sqlalchemy as sa
 
+from quantum.db import model_base
 from quantum.db import models_v2
 
 
-class OFPServer(models_v2.model_base.BASEV2):
-    """Openflow Server/API address"""
+class OFPServer(model_base.BASEV2):
+    """Openflow Server/API address."""
     __tablename__ = 'ofp_server'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    address = Column(String(255))       # netloc <host ip address>:<port>
-    host_type = Column(String(255))     # server type
-                                        # Controller, REST_API
-
-    def __init__(self, address, host_type):
-        self.address = address
-        self.host_type = host_type
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    address = sa.Column(sa.String(64))        # netloc <host ip address>:<port>
+    host_type = sa.Column(sa.String(255))     # server type
+                                              # Controller, REST_API
 
     def __repr__(self):
         return "<OFPServer(%s,%s,%s)>" % (self.id, self.address,
                                           self.host_type)
+
+
+class TunnelKeyLast(model_base.BASEV2):
+    """Lastly allocated Tunnel key. The next key allocation will be started
+    from this value + 1
+    """
+    last_key = sa.Column(sa.Integer, primary_key=True)
+
+    def __repr__(self):
+        return "<TunnelKeyLast(%x)>" % self.last_key
+
+
+class TunnelKey(model_base.BASEV2):
+    """Netowrk ID <-> tunnel key mapping."""
+    network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
+                           nullable=False)
+    tunnel_key = sa.Column(sa.Integer, primary_key=True,
+                           nullable=False, autoincrement=False)
+
+    def __repr__(self):
+        return "<TunnelKey(%s,%x)>" % (self.network_id, self.tunnel_key)
