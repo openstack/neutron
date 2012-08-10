@@ -90,7 +90,7 @@ class IPWrapper(SubProcessBase):
             lo = ip.device('lo')
             lo.link.set_up()
         else:
-            ip = IP(self.root_helper, name)
+            ip = IPWrapper(self.root_helper, name)
         return ip
 
     def add_device_to_namespace(self, device):

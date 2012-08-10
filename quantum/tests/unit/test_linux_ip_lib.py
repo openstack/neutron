@@ -15,9 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
 import mock
+import unittest2 as unittest
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
@@ -174,11 +173,21 @@ class TestIpWrapper(unittest.TestCase):
 
     def test_ensure_namespace(self):
         with mock.patch.object(ip_lib, 'IPDevice') as ip_dev:
+            ip = ip_lib.IPWrapper('sudo')
+            with mock.patch.object(ip.netns, 'exists') as ns_exists:
+                ns_exists.return_value = False
+                ns = ip.ensure_namespace('ns')
+                self.execute.assert_has_calls(
+                    [mock.call([], 'netns', ('add', 'ns'), 'sudo', None)])
+                ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
+                                         mock.call().link.set_up()])
+
+    def test_ensure_namespace_existing(self):
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd:
+            ip_ns_cmd.exists.return_value = True
             ns = ip_lib.IPWrapper('sudo').ensure_namespace('ns')
-            self.execute.assert_has_calls([mock.call('o', 'netns', ('list',),
-                                                     'sudo', None)])
-            ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
-                                     mock.call().link.set_up()])
+            self.assertFalse(self.execute.called)
+            self.assertEqual(ns.namespace, 'ns')
 
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
