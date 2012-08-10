@@ -231,7 +231,9 @@ class DeviceManager(object):
         port = self._get_or_create_port(network)
         interface_name = self.get_interface_name(network, port)
 
-        if ip_lib.device_exists(interface_name):
+        if ip_lib.device_exists(interface_name,
+                                self.conf.root_helper,
+                                network.id):
             if not reuse_existing:
                 raise exceptions.PreexistingDeviceFailure(
                     dev_name=interface_name)

@@ -94,7 +94,7 @@ class TestABCDriver(TestBase):
         bc = BaseChild(self.conf)
         bc.init_l3(FakePort(), 'tap0')
         self.ip_dev.assert_has_calls(
-            [mock.call('tap0', 'sudo'),
+            [mock.call('tap0', 'sudo', '12345678-1234-5678-90ab-ba0987654321'),
              mock.call().addr.list(scope='global', filters=['permanent']),
              mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255'),
              mock.call().addr.delete(4, '172.16.77.240/24')])
@@ -127,7 +127,10 @@ class TestOVSInterfaceDriver(TestBase):
                     mock.call().device('tap0'),
                     mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
         expected.extend(additional_expectation)
-        expected.extend([mock.call().device().link.set_up()])
+        expected.extend(
+            [mock.call().ensure_namespace('01234567-1234-1234-99'),
+             mock.call().ensure_namespace().add_device_to_namespace(mock.ANY),
+             mock.call().device().link.set_up()])
 
         self.ip.assert_has_calls(expected)
 
@@ -172,9 +175,10 @@ class TestBridgeInterfaceDriver(TestBase):
                 'aa:bb:cc:dd:ee:ff')
 
         self.ip.assert_has_calls(
-            [mock.call(),
-             mock.call('sudo'),
-             mock.call().add_veth('tap0', 'dhc0')])
+            [mock.call('sudo'),
+             mock.call().add_veth('tap0', 'dhc0'),
+             mock.call().ensure_namespace('01234567-1234-1234-99'),
+             mock.call().ensure_namespace().add_device_to_namespace(mock.ANY)])
 
         root_veth.assert_has_calls([mock.call.link.set_up()])
         ns_veth.assert_has_calls([mock.call.link.set_up()])
@@ -237,7 +241,7 @@ class TestRyuInterfaceDriver(TestBase):
         super(TestRyuInterfaceDriver, self).tearDown()
 
     @staticmethod
-    def _device_exists(dev, root_helper=None):
+    def _device_exists(dev, root_helper=None, namespace=None):
         return dev == 'br-int'
 
     _vsctl_cmd_init = ['ovs-vsctl', '--timeout=2',
@@ -281,8 +285,12 @@ class TestRyuInterfaceDriver(TestBase):
 
         self.ryu_app_client.OFPClient.assert_called_once_with('127.0.0.1:8080')
 
-        expected = [mock.call('sudo'),
-                    mock.call().device('tap0'),
-                    mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
-                    mock.call().device().link.set_up()]
+        expected = [
+            mock.call('sudo'),
+            mock.call().device('tap0'),
+            mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
+            mock.call().ensure_namespace('01234567-1234-1234-99'),
+            mock.call().ensure_namespace().add_device_to_namespace(mock.ANY),
+            mock.call().device().link.set_up()]
+
         self.ip.assert_has_calls(expected)

@@ -52,7 +52,9 @@ class LinuxInterfaceDriver(object):
 
     def init_l3(self, port, device_name):
         """Set the L3 settings for the interface using data from the port."""
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper)
+        device = ip_lib.IPDevice(device_name,
+                                 self.conf.root_helper,
+                                 port.network.id)
 
         previous = {}
         for address in device.addr.list(scope='global', filters=['permanent']):
@@ -107,7 +109,10 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         self.check_bridge_exists(bridge)
 
-        if not ip_lib.device_exists(device_name):
+        if not ip_lib.device_exists(device_name,
+                                    self.conf.root_helper,
+                                    namespace=network_id):
+
             utils.execute(['ovs-vsctl',
                            '--', '--may-exist', 'add-port', bridge,
                            device_name,
@@ -127,6 +132,9 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             device.link.set_address(mac_address)
             if self.conf.network_device_mtu:
                 device.link.set_mtu(self.conf.network_device_mtu)
+
+            namespace = ip.ensure_namespace(network_id)
+            namespace.add_device_to_namespace(device)
             device.link.set_up()
         else:
             LOG.error(_('Device %s already exists') % device)
@@ -147,14 +155,21 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
 
     def plug(self, network_id, port_id, device_name, mac_address):
         """Plugin the interface."""
-        if not ip_lib.device_exists(device_name):
+        if not ip_lib.device_exists(device_name,
+                                    self.conf.root_helper,
+                                    namespace=network_id):
             ip = ip_lib.IPWrapper(self.conf.root_helper)
 
             tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
             root_veth, dhcp_veth = ip.add_veth(tap_name, device_name)
             root_veth.link.set_address(mac_address)
+
+            namespace = ip.ensure_namespace(network_id)
+            namespace.add_device_to_namespace(root_veth)
+
             root_veth.link.set_up()
             dhcp_veth.link.set_up()
+
         else:
             LOG.warn(_("Device %s already exists") % device_name)
 

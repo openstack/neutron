@@ -280,7 +280,9 @@ class TestDhcpLocalProcess(TestBase):
             lp.disable()
 
         delegate.assert_has_calls([mock.call.destroy(network)])
-        self.execute.assert_called_once_with(['kill', '-9', 5], 'sudo')
+        exp_args = ['ip', 'netns', 'exec',
+                    'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-9', 5]
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo')
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:
@@ -311,7 +313,10 @@ class TestDnsmasq(TestBase):
             return '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/%s' % kind
 
         expected = [
-            'NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
+            'ip',
+            'netns',
+            'exec',
+            'cccccccc-cccc-cccc-cccc-cccccccccccc',
             'dnsmasq',
             '--no-hosts',
             '--no-resolv',
@@ -347,7 +352,7 @@ class TestDnsmasq(TestBase):
                               device_delegate=delegate)
             dm.spawn_process()
             self.assertTrue(mocks['_output_opts_file'].called)
-            self.execute.assert_called_once_with(expected, 'sudo')
+            self.execute.assert_called_once_with(expected, root_helper='sudo')
 
     def test_spawn(self):
         self._test_spawn([])
@@ -388,6 +393,8 @@ class TestDnsmasq(TestBase):
 """.lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
         exp_opt_data = "tag:tag0,option:router,192.168.0.1"
+        exp_args = ['ip', 'netns', 'exec',
+                    'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-HUP', 5]
 
         with mock.patch('os.path.isdir') as isdir:
             isdir.return_value = True
@@ -398,4 +405,4 @@ class TestDnsmasq(TestBase):
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
-        self.execute.assert_called_once_with(['kill', '-HUP', 5], 'sudo')
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo')

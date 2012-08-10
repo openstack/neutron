@@ -360,6 +360,7 @@ class TestDeviceManager(unittest.TestCase):
         self.conf.register_opts(dhcp_agent.DeviceManager.OPTS)
         self.conf.set_override('interface_driver',
                                'quantum.agent.linux.interface.NullDriver')
+        self.conf.root_helper = 'sudo'
 
         self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
