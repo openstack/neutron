@@ -20,8 +20,10 @@ import logging
 from sqlalchemy import func
 from sqlalchemy.orm import exc
 
+from quantum.api import api_common
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
+from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
@@ -281,3 +283,31 @@ def update_vlan_binding(netid, newvlanid=None):
         return binding
     except exc.NoResultFound:
         raise q_exc.NetworkNotFound(net_id=netid)
+
+
+def get_port_from_device(device):
+    """Get port from database"""
+    LOG.debug("get_port_from_device() called")
+    session = db.get_session()
+    ports = session.query(models_v2.Port).all()
+    if not ports:
+        return
+    for port in ports:
+        if port['id'].startswith(device):
+            return port
+    return
+
+
+def set_port_status(port_id, status):
+    """Set the port status"""
+    LOG.debug("set_port_status as %s called", status)
+    session = db.get_session()
+    try:
+        port = session.query(models_v2.Port).filter_by(id=port_id).one()
+        port['status'] = status
+        if status == api_common.OperationalStatus.DOWN:
+            port['device_id'] = ''
+        session.merge(port)
+        session.flush()
+    except exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id)

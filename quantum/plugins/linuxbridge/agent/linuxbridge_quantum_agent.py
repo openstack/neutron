@@ -30,10 +30,18 @@ import subprocess
 import sys
 import time
 
+import eventlet
+import pyudev
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
-from quantum.openstack.common import cfg
+from quantum.agent.rpc import create_consumers
 from quantum.common import config as logging_config
+from quantum.common import topics
+from quantum.openstack.common import cfg
+from quantum.openstack.common import context
+from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher
+from quantum.openstack.common.rpc import proxy
 from quantum.plugins.linuxbridge.common import config
 
 from quantum.agent.linux import utils
@@ -312,24 +320,96 @@ class LinuxBridge:
             LOG.debug("Done deleting subinterface %s" % interface)
 
 
-class LinuxBridgeQuantumAgent:
+class PluginApi(proxy.RpcProxy):
+    '''Agent side of the linux bridge rpc API.
+
+    API version history:
+        1.0 - Initial version.
+
+    '''
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(PluginApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+
+    def get_device_details(self, context, device, agent_id):
+        return self.call(context,
+                         self.make_msg('get_device_details', device=device,
+                                       agent_id=agent_id),
+                         topic=self.topic)
+
+    def update_device_down(self, context, device, agent_id):
+        return self.call(context,
+                         self.make_msg('update_device_down', device=device,
+                                       agent_id=agent_id),
+                         topic=self.topic)
+
+
+class LinuxBridgeRpcCallbacks():
+
+    # Set RPC API version to 1.0 by default.
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self, context, linux_br):
+        self.context = context
+        self.linux_br = linux_br
+
+    def network_delete(self, context, **kwargs):
+        LOG.debug("network_delete received")
+        network_id = kwargs.get('network_id')
+        bridge_name = self.linux_br.get_bridge_name(network_id)
+        # (TODO) garyk delete the bridge interface
+        LOG.debug("Delete %s", bridge_name)
+
+    def port_update(self, context, **kwargs):
+        LOG.debug("port_update received")
+        port = kwargs.get('port')
+        if port['admin_state_up']:
+            vlan_id = kwargs.get('vlan_id')
+            # create the networking for the port
+            self.linux_br.add_interface(port['network_id'],
+                                        vlan_id,
+                                        port['id'])
+        else:
+            bridge_name = self.linux_br.get_bridge_name(port['network_id'])
+            tap_device_name = self.linux_br.get_tap_device_name(port['id'])
+            self.linux_br.remove_interface(bridge_name, tap_device_name)
+
+    def create_rpc_dispatcher(self):
+        '''Get the rpc dispatcher for this manager.
+
+        If a manager would like to set an rpc API version, or support more than
+        one class as the target of rpc messages, override this method.
+        '''
+        return dispatcher.RpcDispatcher([self])
+
+
+class LinuxBridgeQuantumAgentDB:
 
     def __init__(self, br_name_prefix, physical_interface, polling_interval,
-                 reconnect_interval, root_helper, target_v2_api):
+                 reconnect_interval, root_helper, target_v2_api,
+                 db_connection_url):
         self.polling_interval = polling_interval
-        self.reconnect_interval = reconnect_interval
         self.root_helper = root_helper
         self.setup_linux_bridge(br_name_prefix, physical_interface)
-        self.db_connected = False
         self.target_v2_api = target_v2_api
+        self.reconnect_interval = reconnect_interval
+        self.db_connected = False
+        self.db_connection_url = db_connection_url
 
     def setup_linux_bridge(self, br_name_prefix, physical_interface):
         self.linux_br = LinuxBridge(br_name_prefix, physical_interface,
                                     self.root_helper)
 
-    def process_port_binding(self, port_id, network_id, interface_id,
-                             vlan_id):
+    def process_port_binding(self, network_id, interface_id, vlan_id):
         return self.linux_br.add_interface(network_id, vlan_id, interface_id)
+
+    def remove_port_binding(self, network_id, interface_id):
+        bridge_name = self.linux_br.get_bridge_name(network_id)
+        tap_device_name = self.linux_br.get_tap_device_name(interface_id)
+        return self.linux_br.remove_interface(bridge_name, tap_device_name)
 
     def process_unplugged_interfaces(self, plugged_interfaces):
         """
@@ -434,8 +514,7 @@ class LinuxBridgeQuantumAgent:
             interface_id = pb['interface_id']
 
             vlan_id = str(vlan_bindings[pb['network_id']]['vlan_id'])
-            if self.process_port_binding(port_id,
-                                         pb['network_id'],
+            if self.process_port_binding(pb['network_id'],
                                          interface_id,
                                          vlan_id):
                 if self.target_v2_api:
@@ -466,7 +545,7 @@ class LinuxBridgeQuantumAgent:
         return {VLAN_BINDINGS: vlan_bindings,
                 PORT_BINDINGS: port_bindings}
 
-    def daemon_loop(self, db_connection_url):
+    def daemon_loop(self):
         old_vlan_bindings = {}
         old_port_bindings = []
         self.db_connected = False
@@ -474,7 +553,7 @@ class LinuxBridgeQuantumAgent:
         while True:
             if not self.db_connected:
                 time.sleep(self.reconnect_interval)
-                db = SqlSoup(db_connection_url)
+                db = SqlSoup(self.db_connection_url)
                 self.db_connected = True
                 LOG.info("Connecting to database \"%s\" on %s" %
                          (db.engine.url.database, db.engine.url.host))
@@ -484,6 +563,158 @@ class LinuxBridgeQuantumAgent:
             old_vlan_bindings = bindings[VLAN_BINDINGS]
             old_port_bindings = bindings[PORT_BINDINGS]
             time.sleep(self.polling_interval)
+
+
+class LinuxBridgeQuantumAgentRPC:
+
+    def __init__(self, br_name_prefix, physical_interface, polling_interval,
+                 root_helper):
+        self.polling_interval = polling_interval
+        self.root_helper = root_helper
+        self.setup_linux_bridge(br_name_prefix, physical_interface)
+        self.setup_rpc(physical_interface)
+
+    def setup_rpc(self, physical_interface):
+        mac = utils.get_interface_mac(physical_interface)
+        self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
+        self.topic = topics.AGENT
+        self.plugin_rpc = PluginApi(topics.PLUGIN)
+
+        # RPC network init
+        self.context = context.RequestContext('quantum', 'quantum',
+                                              is_admin=False)
+        # Handle updates from service
+        self.callbacks = LinuxBridgeRpcCallbacks(self.context,
+                                                 self.linux_br)
+        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        # Define the listening consumers for the agent
+        consumers = [[topics.PORT, topics.UPDATE],
+                     [topics.NETWORK, topics.DELETE]]
+        self.connection = create_consumers(self.dispatcher, self.topic,
+                                           consumers)
+        self.udev = pyudev.Context()
+        monitor = pyudev.Monitor.from_netlink(self.udev)
+        monitor.filter_by('net')
+
+    def setup_linux_bridge(self, br_name_prefix, physical_interface):
+        self.linux_br = LinuxBridge(br_name_prefix, physical_interface,
+                                    self.root_helper)
+
+    def process_port_binding(self, network_id, interface_id, vlan_id):
+        return self.linux_br.add_interface(network_id, vlan_id, interface_id)
+
+    def remove_port_binding(self, network_id, interface_id):
+        bridge_name = self.linux_br.get_bridge_name(network_id)
+        tap_device_name = self.linux_br.get_tap_device_name(interface_id)
+        return self.linux_br.remove_interface(bridge_name, tap_device_name)
+
+    def update_devices(self, registered_devices):
+        devices = self.udev_get_all_tap_devices()
+        if devices == registered_devices:
+            return
+        added = devices - registered_devices
+        removed = registered_devices - devices
+        return {'current': devices,
+                'added': added,
+                'removed': removed}
+
+    def udev_get_all_tap_devices(self):
+        devices = set()
+        for device in self.udev.list_devices(subsystem='net'):
+            name = self.udev_get_name(device)
+            if self.is_tap_device(name):
+                devices.add(name)
+        return devices
+
+    def is_tap_device(self, name):
+        return name.startswith(TAP_INTERFACE_PREFIX)
+
+    def udev_get_name(self, device):
+        return device.sys_name
+
+    def process_network_devices(self, device_info):
+        resync_a = False
+        resync_b = False
+        if 'added' in device_info:
+            resync_a = self.treat_devices_added(device_info['added'])
+        if 'removed' in device_info:
+            resync_b = self.treat_devices_removed(device_info['removed'])
+        # If one of the above operations fails => resync with plugin
+        return (resync_a | resync_b)
+
+    def treat_devices_added(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Port %s added", device)
+            try:
+                details = self.plugin_rpc.get_device_details(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("Unable to get port details for %s: %s", device, e)
+                resync = True
+                continue
+            if 'port_id' in details:
+                LOG.info("Port %s updated. Details: %s", device, details)
+                if details['admin_state_up']:
+                    # create the networking for the port
+                    self.process_port_binding(details['network_id'],
+                                              details['port_id'],
+                                              details['vlan_id'])
+                else:
+                    self.remove_port_binding(details['network_id'],
+                                             details['port_id'])
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def treat_devices_removed(self, devices):
+        resync = False
+        for device in devices:
+            LOG.info("Attachment %s removed", device)
+            try:
+                details = self.plugin_rpc.update_device_down(self.context,
+                                                             device,
+                                                             self.agent_id)
+            except Exception as e:
+                LOG.debug("port_removed failed for %s: %s", device, e)
+                resync = True
+            if details['exists']:
+                LOG.info("Port %s updated.", device)
+                # Nothing to do regarding local networking
+            else:
+                LOG.debug("Device %s not defined on plugin", device)
+        return resync
+
+    def daemon_loop(self):
+        sync = True
+        devices = set()
+
+        LOG.info("LinuxBridge Agent RPC Daemon Started!")
+
+        while True:
+            start = time.time()
+            if sync:
+                LOG.info("Agent out of sync with plugin!")
+                devices.clear()
+                sync = False
+
+            device_info = self.update_devices(devices)
+
+            # notify plugin about device deltas
+            if device_info:
+                LOG.debug("Agent loop has new devices!")
+                # If treat devices fails - indicates must resync with plugin
+                sync = self.process_network_devices(device_info)
+                devices = device_info['current']
+
+            # sleep till end of polling interval
+            elapsed = (time.time() - start)
+            if (elapsed < self.polling_interval):
+                time.sleep(self.polling_interval - elapsed)
+            else:
+                LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
+                          self.polling_interval, elapsed)
 
 
 def main():
@@ -497,15 +728,29 @@ def main():
     polling_interval = cfg.CONF.AGENT.polling_interval
     reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
     root_helper = cfg.CONF.AGENT.root_helper
-    'Establish database connection and load models'
-    db_connection_url = cfg.CONF.DATABASE.sql_connection
-    plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
-                                     polling_interval, reconnect_interval,
-                                     root_helper, cfg.CONF.AGENT.target_v2_api)
-    LOG.info("Agent initialized successfully, now running... ")
-    plugin.daemon_loop(db_connection_url)
+    rpc = cfg.CONF.AGENT.rpc
+    if not cfg.CONF.AGENT.target_v2_api:
+        rpc = False
 
+    if rpc:
+        plugin = LinuxBridgeQuantumAgentRPC(br_name_prefix,
+                                            physical_interface,
+                                            polling_interval,
+                                            root_helper)
+    else:
+        db_connection_url = cfg.CONF.DATABASE.sql_connection
+        target_v2_api = cfg.CONF.AGENT.target_v2_api
+        plugin = LinuxBridgeQuantumAgentDB(br_name_prefix,
+                                           physical_interface,
+                                           polling_interval,
+                                           reconnect_interval,
+                                           root_helper,
+                                           target_v2_api,
+                                           db_connection_url)
+    LOG.info("Agent initialized successfully, now running... ")
+    plugin.daemon_loop()
     sys.exit(0)
 
 if __name__ == "__main__":
+    eventlet.monkey_patch()
     main()
