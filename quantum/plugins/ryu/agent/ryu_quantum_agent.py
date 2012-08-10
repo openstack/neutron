@@ -130,13 +130,12 @@ def check_ofp_mode(db):
 
 
 class OVSQuantumOFPRyuAgent:
-    def __init__(self, integ_br, db, root_helper, target_v2_api=False):
+    def __init__(self, integ_br, db, root_helper):
         self.root_helper = root_helper
         (ofp_controller_addr, ofp_rest_api_addr) = check_ofp_mode(db)
 
         self.nw_id_external = rest_nw_id.NW_ID_EXTERNAL
         self.api = OFPClient(ofp_rest_api_addr)
-        self.target_v2_api = target_v2_api
         self._setup_integration_br(integ_br, ofp_controller_addr)
 
     def _setup_integration_br(self, integ_br, ofp_controller_addr):
@@ -151,16 +150,10 @@ class OVSQuantumOFPRyuAgent:
 
     def _all_bindings(self, db):
         """return interface id -> port which include network id bindings"""
-        if self.target_v2_api:
-            return dict((port.device_id, port) for port in db.ports.all())
-        else:
-            return dict((port.interface_id, port) for port in db.ports.all())
+        return dict((port.device_id, port) for port in db.ports.all())
 
     def _set_port_status(self, port, status):
-        if self.target_v2_api:
-            port.status = status
-        else:
-            port.op_status = status
+        port.status = status
 
     def daemon_loop(self, db):
         # on startup, register all existing ports
@@ -232,13 +225,12 @@ def main():
 
     integ_br = cfg.CONF.OVS.integration_bridge
     root_helper = cfg.CONF.AGENT.root_helper
-    target_v2_api = cfg.CONF.AGENT.target_v2_api
     options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
     db = SqlSoup(options["sql_connection"])
 
     LOG.info("Connecting to database \"%s\" on %s",
              db.engine.url.database, db.engine.url.host)
-    plugin = OVSQuantumOFPRyuAgent(integ_br, db, root_helper, target_v2_api)
+    plugin = OVSQuantumOFPRyuAgent(integ_br, db, root_helper)
     plugin.daemon_loop(db)
 
     sys.exit(0)

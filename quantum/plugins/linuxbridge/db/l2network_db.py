@@ -27,13 +27,12 @@ from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
-from quantum.plugins.linuxbridge.db import l2network_models
 from quantum.plugins.linuxbridge.db import l2network_models_v2
 
 LOG = logging.getLogger(__name__)
 
 # The global variable for the database version model
-L2_MODEL = l2network_models
+L2_MODEL = l2network_models_v2
 
 
 def initialize(base=None):
@@ -44,7 +43,6 @@ def initialize(base=None):
                    cfg.CONF.DATABASE.reconnect_interval})
     if base:
         options.update({"base": base})
-        L2_MODEL = l2network_models_v2
     db.configure_db(options)
     create_vlanids()
 
@@ -182,7 +180,7 @@ def reserve_specific_vlanid(vlan_id):
         raise q_exc.InvalidInput(error_message=msg)
     session = db.get_session()
     try:
-        rvlanid = (session.query(l2network_models.VlanID).
+        rvlanid = (session.query(l2network_models_v2.VlanID).
                    filter_by(vlan_id=vlan_id).
                    one())
         if rvlanid["vlan_used"]:
@@ -191,7 +189,7 @@ def reserve_specific_vlanid(vlan_id):
         rvlanid["vlan_used"] = True
         session.merge(rvlanid)
     except exc.NoResultFound:
-        rvlanid = l2network_models.VlanID(vlan_id)
+        rvlanid = l2network_models_v2.VlanID(vlan_id)
         LOG.debug("reserving non-dynamic vlanid %s" % vlan_id)
         rvlanid["vlan_used"] = True
         session.add(rvlanid)

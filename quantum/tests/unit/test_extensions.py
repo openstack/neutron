@@ -19,10 +19,10 @@ import os
 import unittest
 
 import routes
+import webob
 from webtest import AppError
 from webtest import TestApp
 
-from quantum.api import faults
 from quantum.common import config
 from quantum.common import exceptions
 from quantum.extensions import extensions
@@ -32,7 +32,7 @@ from quantum.extensions.extensions import (
     PluginAwareExtensionManager,
 )
 from quantum.openstack.common import jsonutils
-from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
+from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
 from quantum.tests.unit import BaseTest
 from quantum.tests.unit.extension_stubs import (
     ExtensionExpectingPluginInterface,
@@ -65,6 +65,15 @@ class ExtensionsTestApp(wsgi.Router):
         super(ExtensionsTestApp, self).__init__(mapper)
 
 
+class FakePluginWithExtension(QuantumDbPluginV2):
+    """A fake plugin used only for extension testing in this file."""
+
+    supported_extension_aliases = ["FOXNSOX"]
+
+    def method_to_support_foxnsox_extension(self, context):
+        self._log("method_to_support_foxnsox_extension", context)
+
+
 class ResourceExtensionTest(unittest.TestCase):
 
     class ResourceExtensionController(wsgi.Controller):
@@ -76,8 +85,7 @@ class ResourceExtensionTest(unittest.TestCase):
             return {'data': {'id': id}}
 
         def notimplemented_function(self, request, id):
-            return faults.Quantum10HTTPError(
-                exceptions.NotImplementedError("notimplemented_function"))
+            return webob.exc.HTTPClientError(NotImplementedError())
 
         def custom_member_action(self, request, id):
             return {'member_action': 'value'}
@@ -473,8 +481,9 @@ def setup_base_app():
 
 def setup_extensions_middleware(extension_manager=None):
     extension_manager = (extension_manager or
-                         PluginAwareExtensionManager(extensions_path,
-                                                     QuantumEchoPlugin()))
+                         PluginAwareExtensionManager(
+                             extensions_path,
+                             FakePluginWithExtension()))
     config_file = 'quantum.conf.test'
     args = ['--config-file', etcdir(config_file)]
     config.parse(args=args)

@@ -30,7 +30,6 @@ ovs_opts = [
 ]
 
 agent_opts = [
-    cfg.BoolOpt('target_v2_api', default=True),
     cfg.IntOpt('polling_interval', default=2),
     cfg.StrOpt('root_helper', default='sudo'),
 ]

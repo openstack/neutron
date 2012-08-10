@@ -15,46 +15,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
-import mox
+import unittest2
 
 from quantum.openstack.common import cfg
-from quantum.plugins.ryu.tests.unit.basetest import BaseRyuTest
-from quantum.plugins.ryu.tests.unit import fake_plugin
-from quantum.plugins.ryu.tests.unit import utils
+from quantum.plugins.ryu.common import config
 
 
-class PluginBaseTest(BaseRyuTest):
-    """Class conisting of OVSQuantumPluginBase unit tests"""
-    def setUp(self):
-        super(PluginBaseTest, self).setUp()
-        self.ini_file = utils.create_fake_ryu_ini()
-
-    def tearDown(self):
-        os.unlink(self.ini_file)
-        super(PluginBaseTest, self).tearDown()
-
-    def test_create_delete_network(self):
-        # mox.StubOutClassWithMocks can't be used for class with metaclass
-        # overrided
-        driver_mock = self.mox.CreateMock(fake_plugin.FakePluginDriver)
-        self.mox.StubOutWithMock(fake_plugin, 'FakePluginDriver',
-                                 use_mock_anything=True)
-
-        fake_plugin.FakePluginDriver(mox.IgnoreArg()).AndReturn(driver_mock)
-        driver_mock.create_network(mox.IgnoreArg())
-        driver_mock.delete_network(mox.IgnoreArg())
-        self.mox.ReplayAll()
-        plugin = fake_plugin.FakePlugin(configfile=self.ini_file)
-
-        tenant_id = 'tenant_id'
-        net_name = 'net_name'
-        ret = plugin.create_network(tenant_id, net_name)
-
-        plugin.delete_network(tenant_id, ret['net-id'])
-        self.mox.VerifyAll()
-
+class ConfigurationTest(unittest2.TestCase):
+    """Configuration file Tests"""
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
         self.assertEqual('sqlite://', cfg.CONF.DATABASE.sql_connection)
