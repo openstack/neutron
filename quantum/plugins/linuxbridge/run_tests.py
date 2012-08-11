@@ -35,7 +35,6 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(__file__))
 
 
-from quantum.api.api_common import OperationalStatus
 from quantum.common.test_lib import run_tests, test_config
 import quantum.tests.unit
 
@@ -47,10 +46,7 @@ if __name__ == '__main__':
     # we should only invoked the tests once
     invoke_once = len(sys.argv) > 1
 
-    test_config['plugin_name'] = "LinuxBridgePlugin.LinuxBridgePlugin"
     test_config['plugin_name_v2'] = "lb_quantum_plugin.LinuxBridgePluginV2"
-    test_config['default_net_op_status'] = OperationalStatus.UP
-    test_config['default_port_op_status'] = OperationalStatus.DOWN
 
     cwd = os.getcwd()
     c = config.Config(stream=sys.stdout,

@@ -26,50 +26,11 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
-from quantum.plugins.ryu.db import api as db_api
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 from quantum.plugins.ryu import ofp_service_type
-from quantum.plugins.ryu import ovs_quantum_plugin_base
 from quantum.plugins.ryu.common import config
 
 LOG = logging.getLogger(__name__)
-
-
-class OFPRyuDriver(ovs_quantum_plugin_base.OVSQuantumPluginDriverBase):
-    def __init__(self, conf):
-        super(OFPRyuDriver, self).__init__()
-        ofp_con_host = conf.OVS.openflow_controller
-        ofp_api_host = conf.OVS.openflow_rest_api
-
-        if ofp_con_host is None or ofp_api_host is None:
-            raise q_exc.Invalid("invalid configuration. check ryu.ini")
-
-        hosts = [(ofp_con_host, ofp_service_type.CONTROLLER),
-                 (ofp_api_host, ofp_service_type.REST_API)]
-        db_api.set_ofp_servers(hosts)
-
-        self.client = client.OFPClient(ofp_api_host)
-        self.client.update_network(rest_nw_id.NW_ID_EXTERNAL)
-
-        # register known all network list on startup
-        self._create_all_tenant_network()
-
-    def _create_all_tenant_network(self):
-        networks = db.network_all_tenant_list()
-        for net in networks:
-            self.client.update_network(net.uuid)
-
-    def create_network(self, net):
-        self.client.create_network(net.uuid)
-
-    def delete_network(self, net):
-        self.client.delete_network(net.uuid)
-
-
-class RyuQuantumPlugin(ovs_quantum_plugin_base.OVSQuantumPluginBase):
-    def __init__(self, configfile=None):
-        super(RyuQuantumPlugin, self).__init__(__file__, configfile)
-        self.driver = OFPRyuDriver(self.conf)
 
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
