@@ -178,7 +178,7 @@ class TestBridgeInterfaceDriver(TestBase):
             [mock.call('sudo'),
              mock.call().add_veth('tap0', 'dhc0'),
              mock.call().ensure_namespace('01234567-1234-1234-99'),
-             mock.call().ensure_namespace().add_device_to_namespace(mock.ANY)])
+             mock.call().ensure_namespace().add_device_to_namespace(ns_veth)])
 
         root_veth.assert_has_calls([mock.call.link.set_up()])
         ns_veth.assert_has_calls([mock.call.link.set_up()])

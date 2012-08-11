@@ -165,7 +165,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             root_veth.link.set_address(mac_address)
 
             namespace = ip.ensure_namespace(network_id)
-            namespace.add_device_to_namespace(root_veth)
+            namespace.add_device_to_namespace(dhcp_veth)
 
             root_veth.link.set_up()
             dhcp_veth.link.set_up()
