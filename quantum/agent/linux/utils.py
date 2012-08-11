@@ -23,7 +23,9 @@ import os
 import shlex
 import socket
 import struct
-import subprocess
+
+from eventlet.green import subprocess
+
 
 LOG = logging.getLogger(__name__)
 
