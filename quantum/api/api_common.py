@@ -19,11 +19,14 @@ import logging
 
 from webob import exc
 
-from quantum.api import faults
 from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)
+
+# Port Status
+PORT_STATUS_UP = "UP"
+PORT_STATUS_DOWN = "DOWN"
 
 
 class QuantumController(object):

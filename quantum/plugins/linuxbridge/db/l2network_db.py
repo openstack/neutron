@@ -303,7 +303,7 @@ def set_port_status(port_id, status):
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()
         port['status'] = status
-        if status == api_common.OperationalStatus.DOWN:
+        if status == api_common.PORT_STATUS_DOWN:
             port['device_id'] = ''
         session.merge(port)
         session.flush()

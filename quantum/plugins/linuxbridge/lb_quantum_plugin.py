@@ -64,7 +64,7 @@ class LinuxBridgeRpcCallbacks():
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
             # Set the port status to UP
-            cdb.set_port_status(port['id'], api_common.OperationalStatus.UP)
+            cdb.set_port_status(port['id'], api_common.PORT_STATUS_UP)
         else:
             entry = {'device': device}
             LOG.debug("%s can not be found in database", device)
@@ -81,7 +81,7 @@ class LinuxBridgeRpcCallbacks():
             entry = {'device': device,
                      'exists': True}
             # Set port status to DOWN
-            cdb.set_port_status(port['id'], api_common.OperationalStatus.DOWN)
+            cdb.set_port_status(port['id'], api_common.PORT_STATUS_UP)
         else:
             entry = {'device': device,
                      'exists': False}
