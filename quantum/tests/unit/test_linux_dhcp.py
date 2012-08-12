@@ -168,6 +168,7 @@ class TestBase(unittest.TestCase):
         self.conf.register_opts(dhcp.OPTS)
         self.conf(args=args)
         self.conf.set_override('state_path', '')
+        self.conf.use_namespaces = True
 
         self.replace_p = mock.patch('quantum.agent.linux.dhcp.replace_file')
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')

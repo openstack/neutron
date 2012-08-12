@@ -53,7 +53,9 @@ class DhcpAgent(object):
                    help="The time in seconds between state poll requests."),
         cfg.IntOpt('reconnect_interval',
                    default=5,
-                   help="The time in seconds between db reconnect attempts.")
+                   help="The time in seconds between db reconnect attempts."),
+        cfg.BoolOpt('use_namespaces', default=True,
+                    help="Allow overlapping IP.")
     ]
 
     def __init__(self, conf):
@@ -211,7 +213,6 @@ class DeviceManager(object):
     def __init__(self, conf, db):
         self.conf = conf
         self.db = db
-
         if not conf.interface_driver:
             LOG.error(_('You must specify an interface driver'))
         self.driver = importutils.import_object(conf.interface_driver, conf)
@@ -232,9 +233,14 @@ class DeviceManager(object):
         port = self._get_or_create_port(network)
         interface_name = self.get_interface_name(network, port)
 
-        if ip_lib.device_exists(interface_name,
-                                self.conf.root_helper,
-                                network.id):
+        if self.conf.use_namespaces:
+            namespace = network.id
+        else:
+            namespace = None
+
+        if  ip_lib.device_exists(interface_name,
+                                 self.conf.root_helper,
+                                 namespace):
             if not reuse_existing:
                 raise exceptions.PreexistingDeviceFailure(
                     dev_name=interface_name)
@@ -245,7 +251,7 @@ class DeviceManager(object):
                              port.id,
                              interface_name,
                              port.mac_address,
-                             namespace=network.id)
+                             namespace=namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
@@ -254,7 +260,7 @@ class DeviceManager(object):
             ip_cidrs.append(ip_cidr)
 
         self.driver.init_l3(interface_name, ip_cidrs,
-                            namespace=network.id)
+                            namespace=namespace)
 
     def destroy(self, network):
         self.driver.unplug(self.get_interface_name(network))
