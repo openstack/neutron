@@ -99,7 +99,7 @@ class IPWrapper(SubProcessBase):
 
     @classmethod
     def get_namespaces(cls, root_helper):
-        output = cls._execute('netns', ('list',), root_helper=root_helper)
+        output = cls._execute('', 'netns', ('list',), root_helper=root_helper)
         return [l.strip() for l in output.split('\n')]
 
 

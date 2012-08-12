@@ -92,21 +92,37 @@ class TestABCDriver(TestBase):
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
 
         bc = BaseChild(self.conf)
-        bc.init_l3(FakePort(), 'tap0')
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns)
         self.ip_dev.assert_has_calls(
-            [mock.call('tap0', 'sudo', '12345678-1234-5678-90ab-ba0987654321'),
+            [mock.call('tap0', 'sudo', namespace=ns),
              mock.call().addr.list(scope='global', filters=['permanent']),
              mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255'),
              mock.call().addr.delete(4, '172.16.77.240/24')])
 
 
 class TestOVSInterfaceDriver(TestBase):
-    def test_plug(self, additional_expectation=[]):
+
+    def test_plug_no_ns(self):
+        self._test_plug()
+
+    def test_plug_with_ns(self):
+        self._test_plug(namespace='01234567-1234-1234-99')
+
+    def test_plug_alt_bridge(self):
+        self._test_plug(bridge='br-foo')
+
+    def _test_plug(self, additional_expectation=[], bridge=None,
+                   namespace=None):
+
+        if not bridge:
+            bridge = 'br-int'
+
         def device_exists(dev, root_helper=None, namespace=None):
-            return dev == 'br-int'
+            return dev == bridge
 
         vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
-                     'br-int', 'tap0', '--', 'set', 'Interface', 'tap0',
+                     bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
                      'type=internal', '--', 'set', 'Interface', 'tap0',
                      'external-ids:iface-id=port-1234', '--', 'set',
                      'Interface', 'tap0',
@@ -120,29 +136,35 @@ class TestOVSInterfaceDriver(TestBase):
             ovs.plug('01234567-1234-1234-99',
                      'port-1234',
                      'tap0',
-                     'aa:bb:cc:dd:ee:ff')
+                     'aa:bb:cc:dd:ee:ff',
+                     bridge=bridge,
+                     namespace=namespace)
             execute.assert_called_once_with(vsctl_cmd, 'sudo')
 
         expected = [mock.call('sudo'),
                     mock.call().device('tap0'),
                     mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
         expected.extend(additional_expectation)
-        expected.extend(
-            [mock.call().ensure_namespace('01234567-1234-1234-99'),
-             mock.call().ensure_namespace().add_device_to_namespace(mock.ANY),
-             mock.call().device().link.set_up()])
+        if namespace:
+            expected.extend(
+                [mock.call().ensure_namespace(namespace),
+                 mock.call().ensure_namespace().add_device_to_namespace(
+                     mock.ANY)])
+        expected.extend([mock.call().device().link.set_up()])
 
         self.ip.assert_has_calls(expected)
 
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)
-        self.test_plug([mock.call().device().link.set_mtu(9000)])
+        self._test_plug([mock.call().device().link.set_mtu(9000)])
 
-    def test_unplug(self):
+    def test_unplug(self, bridge=None):
+        if not bridge:
+            bridge = 'br-int'
         with mock.patch('quantum.agent.linux.ovs_lib.OVSBridge') as ovs_br:
             ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('tap0')
-            ovs_br.assert_has_calls([mock.call('br-int', 'sudo'),
+            ovs_br.assert_has_calls([mock.call(bridge, 'sudo'),
                                      mock.call().delete_port('tap0')])
 
 
@@ -152,7 +174,13 @@ class TestBridgeInterfaceDriver(TestBase):
         device_name = br.get_device_name(FakePort())
         self.assertEqual('dhcabcdef01-12', device_name)
 
-    def test_plug(self):
+    def test_plug_no_ns(self):
+        self._test_plug()
+
+    def test_plug_with_ns(self):
+        self._test_plug(namespace='01234567-1234-1234-99')
+
+    def _test_plug(self, namespace=None):
         def device_exists(device, root_helper=None, namespace=None):
             return device.startswith('brq')
 
@@ -172,13 +200,17 @@ class TestBridgeInterfaceDriver(TestBase):
         br.plug('01234567-1234-1234-99',
                 'port-1234',
                 'dhc0',
-                'aa:bb:cc:dd:ee:ff')
+                'aa:bb:cc:dd:ee:ff',
+                namespace=namespace)
 
-        self.ip.assert_has_calls(
-            [mock.call('sudo'),
-             mock.call().add_veth('tap0', 'dhc0'),
-             mock.call().ensure_namespace('01234567-1234-1234-99'),
-             mock.call().ensure_namespace().add_device_to_namespace(ns_veth)])
+        ip_calls = [mock.call('sudo'), mock.call().add_veth('tap0', 'dhc0')]
+        if namespace:
+            ip_calls.extend([
+                mock.call().ensure_namespace('01234567-1234-1234-99'),
+                mock.call().ensure_namespace().add_device_to_namespace(
+                    ns_veth)])
+
+        self.ip.assert_has_calls(ip_calls)
 
         root_veth.assert_has_calls([mock.call.link.set_up()])
         ns_veth.assert_has_calls([mock.call.link.set_up()])
@@ -240,25 +272,24 @@ class TestRyuInterfaceDriver(TestBase):
         self.ryu_mod_p.stop()
         super(TestRyuInterfaceDriver, self).tearDown()
 
-    @staticmethod
-    def _device_exists(dev, root_helper=None, namespace=None):
-        return dev == 'br-int'
+    def test_plug_no_ns(self):
+        self._test_plug()
 
-    _vsctl_cmd_init = ['ovs-vsctl', '--timeout=2',
-                       'get', 'Bridge', 'br-int', 'datapath_id']
+    def test_plug_with_ns(self):
+        self._test_plug(namespace='01234567-1234-1234-99')
 
-    def test_init(self):
-        with mock.patch.object(utils, 'execute') as execute:
-            self.device_exists.side_effect = self._device_exists
-            interface.RyuInterfaceDriver(self.conf)
-            execute.assert_called_once_with(self._vsctl_cmd_init,
-                                            root_helper='sudo')
+    def test_plug_alt_bridge(self):
+        self._test_plug(bridge='br-foo')
 
-        self.ryu_app_client.OFPClient.assert_called_once_with('127.0.0.1:8080')
+    def _test_plug(self, namespace=None, bridge=None):
+        if not bridge:
+            bridge = 'br-int'
 
-    def test_plug(self):
+        def _device_exists(dev, root_helper=None, namespace=None):
+            return dev == bridge
+
         vsctl_cmd_plug = ['ovs-vsctl', '--', '--may-exist', 'add-port',
-                          'br-int', 'tap0', '--', 'set', 'Interface', 'tap0',
+                          bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
                           'type=internal', '--', 'set', 'Interface', 'tap0',
                           'external-ids:iface-id=port-1234', '--', 'set',
                           'Interface', 'tap0',
@@ -267,17 +298,21 @@ class TestRyuInterfaceDriver(TestBase):
                           'external-ids:attached-mac=aa:bb:cc:dd:ee:ff']
         vsctl_cmd_ofport = ['ovs-vsctl', '--timeout=2',
                             'get', 'Interface', 'tap0', 'ofport']
+        vsctl_cmd_dp = ['ovs-vsctl', '--timeout=2',
+                        'get', 'Bridge', bridge, 'datapath_id']
 
         with mock.patch.object(utils, 'execute') as execute:
-            self.device_exists.side_effect = self._device_exists
+            self.device_exists.side_effect = _device_exists
             ryu = interface.RyuInterfaceDriver(self.conf)
 
             ryu.plug('01234567-1234-1234-99',
                      'port-1234',
                      'tap0',
-                     'aa:bb:cc:dd:ee:ff')
+                     'aa:bb:cc:dd:ee:ff',
+                     bridge=bridge,
+                     namespace=namespace)
 
-            execute.assert_has_calls([mock.call(self._vsctl_cmd_init,
+            execute.assert_has_calls([mock.call(vsctl_cmd_dp,
                                                 root_helper='sudo')])
             execute.assert_has_calls([mock.call(vsctl_cmd_plug, 'sudo')])
             execute.assert_has_calls([mock.call(vsctl_cmd_ofport,
@@ -288,9 +323,12 @@ class TestRyuInterfaceDriver(TestBase):
         expected = [
             mock.call('sudo'),
             mock.call().device('tap0'),
-            mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
-            mock.call().ensure_namespace('01234567-1234-1234-99'),
-            mock.call().ensure_namespace().add_device_to_namespace(mock.ANY),
-            mock.call().device().link.set_up()]
+            mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
+        if namespace:
+            expected.extend([
+                mock.call().ensure_namespace(namespace),
+                mock.call().ensure_namespace().add_device_to_namespace(
+                    mock.ANY)])
+        expected.extend([mock.call().device().link.set_up()])
 
         self.ip.assert_has_calls(expected)

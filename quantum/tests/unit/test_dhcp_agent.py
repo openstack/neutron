@@ -34,6 +34,23 @@ class FakeModel:
         return str(self.__dict__)
 
 
+class FakePortModel(FakeModel):
+    fixed_ips = []
+
+
+class FakeFixedIPModel(object):
+
+    def __init__(self, ip_address, cidr):
+        self.subnet = FakeSubnetModel(cidr)
+        self.ip_address = ip_address
+
+
+class FakeSubnetModel(object):
+
+    def __init__(self, cidr):
+        self.cidr = cidr
+
+
 class TestDhcpAgent(unittest.TestCase):
     def setUp(self):
         self.conf = config.setup_conf()
@@ -384,17 +401,22 @@ class TestDeviceManager(unittest.TestCase):
         self.client_cls_p.stop()
 
     def test_setup(self):
+        port_id = '12345678-1234-aaaa-1234567890ab'
+        network_id = '12345678-1234-5678-1234567890ab'
         fake_subnets = [FakeModel('12345678-aaaa-aaaa-1234567890ab'),
                         FakeModel('12345678-bbbb-bbbb-1234567890ab')]
 
-        fake_network = FakeModel('12345678-1234-5678-1234567890ab',
+        fake_network = FakeModel(network_id,
                                  tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                                  subnets=fake_subnets)
 
-        fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
-                              mac_address='aa:bb:cc:dd:ee:ff')
-
-        port_dict = dict(mac_address='aa:bb:cc:dd:ee:ff', allocations=[], id=1)
+        fake_port = FakePortModel(port_id, mac_address='aa:bb:cc:dd:ee:ff',
+                                  network_id=network_id,
+                                  allocations=[])
+        fake_port.fixed_ips.append(FakeFixedIPModel('172.9.9.9',
+                                                    '172.9.9.0/24'))
+        port_dict = dict(mac_address='aa:bb:cc:dd:ee:ff',
+                         allocations=[], id=1)
 
         self.client_inst.create_port.return_value = dict(port=port_dict)
         self.device_exists.return_value = False
@@ -427,11 +449,14 @@ class TestDeviceManager(unittest.TestCase):
             mock.call.create_port(mock.ANY)])
 
         self.mock_driver.assert_has_calls([
-            mock.call.plug('12345678-1234-5678-1234567890ab',
-                           '12345678-1234-aaaa-1234567890ab',
+            mock.call.get_device_name(mock.ANY),
+            mock.call.plug(network_id,
+                           port_id,
                            'tap12345678-12',
-                           'aa:bb:cc:dd:ee:ff'),
-            mock.call.init_l3(mock.ANY, 'tap12345678-12')]
+                           'aa:bb:cc:dd:ee:ff',
+                           namespace=network_id),
+            mock.call.init_l3('tap12345678-12', ['172.9.9.9/24'],
+                              namespace=network_id)]
         )
 
     def test_destroy(self):
