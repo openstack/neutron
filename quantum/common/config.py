@@ -45,6 +45,8 @@ core_opts = [
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00"),
     cfg.IntOpt('mac_generation_retries', default=16),
     cfg.BoolOpt('allow_bulk', default=True),
+    cfg.IntOpt('max_dns_nameservers', default=5),
+    cfg.IntOpt('max_subnet_host_routes', default=20),
 ]
 
 # Register the configuration options

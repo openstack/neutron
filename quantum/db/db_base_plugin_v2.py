@@ -125,6 +125,20 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise q_exc.PortNotFound(port_id=id)
         return port
 
+    def _get_dns_by_subnet(self, context, subnet_id):
+        try:
+            dns_qry = context.session.query(models_v2.DNSNameServer)
+            return dns_qry.filter_by(subnet_id=subnet_id).all()
+        except exc.NoResultFound:
+            return []
+
+    def _get_route_by_subnet(self, context, subnet_id):
+        try:
+            route_qry = context.session.query(models_v2.Route)
+            return route_qry.filter_by(subnet_id=subnet_id).all()
+        except exc.NoResultFound:
+            return []
+
     def _fields(self, resource, fields):
         if fields:
             return dict(((key, item) for key, item in resource.iteritems()
@@ -588,6 +602,18 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
+    def _validate_host_route(self, route):
+        try:
+            netaddr.IPNetwork(route['destination'])
+            netaddr.IPAddress(route['nexthop'])
+        except netaddr.core.AddrFormatError:
+            err_msg = ("invalid route: %s" % (str(route)))
+            raise q_exc.InvalidInput(error_message=err_msg)
+        except ValueError:
+            # netaddr.IPAddress would raise this
+            err_msg = ("invalid route: %s" % (str(route)))
+            raise q_exc.InvalidInput(error_message=err_msg)
+
     def _allocate_pools_for_subnet(self, context, subnet):
         """Create IP allocation pools for a given subnet
 
@@ -663,9 +689,16 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                      'end': pool['last_ip']}
                                     for pool in subnet['allocation_pools']],
                'gateway_ip': subnet['gateway_ip'],
-               'enable_dhcp': subnet['enable_dhcp']}
+               'enable_dhcp': subnet['enable_dhcp'],
+               'dns_nameservers': [dns['address']
+                                   for dns in subnet['dns_nameservers']],
+               'host_routes': [{'destination': route['destination'],
+                                'nexthop': route['nexthop']}
+                               for route in subnet['routes']],
+               }
         if subnet['gateway_ip']:
             res['gateway_ip'] = subnet['gateway_ip']
+
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None):
@@ -755,8 +788,37 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def create_subnet_bulk(self, context, subnets):
         return self._create_bulk('subnet', context, subnets)
 
+    def _validate_subnet(self, s):
+        """a subroutine to validate a subnet spec"""
+        # check if the number of DNS nameserver exceeds the quota
+        if 'dns_nameservers' in s and \
+                s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED:
+            if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
+                raise q_exc.DNSNameServersExhausted(
+                    subnet_id=id,
+                    quota=cfg.CONF.max_dns_nameservers)
+            for dns in s['dns_nameservers']:
+                try:
+                    netaddr.IPAddress(dns)
+                except Exception:
+                    raise q_exc.InvalidInput(
+                        error_message=("error parsing dns address %s" % dns))
+
+        # check if the number of host routes exceeds the quota
+        if 'host_routes' in s and \
+                s['host_routes'] != attributes.ATTR_NOT_SPECIFIED:
+            if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
+                raise q_exc.HostRoutesExhausted(
+                    subnet_id=id,
+                    quota=cfg.CONF.max_subnet_host_routes)
+            # check if the routes are all valid
+            for rt in s['host_routes']:
+                self._validate_host_route(rt)
+
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
+        self._validate_subnet(s)
+
         net = netaddr.IPNetwork(s['cidr'])
         if s['gateway_ip'] == attributes.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
@@ -771,10 +833,25 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                       network_id=s['network_id'],
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
-                                      gateway_ip=s['gateway_ip'],
-                                      enable_dhcp=s['enable_dhcp'])
-            context.session.add(subnet)
+                                      enable_dhcp=s['enable_dhcp'],
+                                      gateway_ip=s['gateway_ip'])
+
+            # perform allocate pools first, since it might raise an error
             pools = self._allocate_pools_for_subnet(context, s)
+
+            context.session.add(subnet)
+            if s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED:
+                for addr in s['dns_nameservers']:
+                    ns = models_v2.DNSNameServer(address=addr,
+                                                 subnet_id=subnet.id)
+                    context.session.add(ns)
+
+            if s['host_routes'] != attributes.ATTR_NOT_SPECIFIED:
+                for rt in s['host_routes']:
+                    route = models_v2.Route(subnet_id=subnet.id,
+                                            destination=rt['destination'],
+                                            nexthop=rt['nexthop'])
+                    context.session.add(route)
             for pool in pools:
                 ip_pool = models_v2.IPAllocationPool(subnet=subnet,
                                                      first_ip=pool['start'],
@@ -785,11 +862,60 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     first_ip=pool['start'],
                     last_ip=pool['end'])
                 context.session.add(ip_range)
+
         return self._make_subnet_dict(subnet)
 
     def update_subnet(self, context, id, subnet):
+        """Update the subnet with new info. The change however will not be
+           realized until the client renew the dns lease or we support
+           gratuitous DHCP offers"""
+
         s = subnet['subnet']
+        self._validate_subnet(s)
+
         with context.session.begin():
+            if "dns_nameservers" in s:
+                old_dns_list = self._get_dns_by_subnet(context, id)
+
+                new_dns_addr_set = set(s["dns_nameservers"])
+                old_dns_addr_set = set([dns['address']
+                                        for dns in old_dns_list])
+
+                for dns_addr in old_dns_addr_set - new_dns_addr_set:
+                    for dns in old_dns_list:
+                        if dns['address'] == dns_addr:
+                            context.session.delete(dns)
+                for dns_addr in new_dns_addr_set - old_dns_addr_set:
+                    dns = models_v2.DNSNameServer(
+                        address=dns_addr,
+                        subnet_id=id)
+                    context.session.add(dns)
+                del s["dns_nameservers"]
+
+            def _combine(ht):
+                return ht['destination'] + "_" + ht['nexthop']
+
+            if "host_routes" in s:
+                old_route_list = self._get_route_by_subnet(context, id)
+
+                new_route_set = set([_combine(route)
+                                     for route in s['host_routes']])
+
+                old_route_set = set([_combine(route)
+                                     for route in old_route_list])
+
+                for route_str in old_route_set - new_route_set:
+                    for route in old_route_list:
+                        if _combine(route) == route_str:
+                            context.session.delete(route)
+                for route_str in new_route_set - old_route_set:
+                    route = models_v2.Route(
+                        destination=route_str.partition("_")[0],
+                        nexthop=route_str.partition("_")[2],
+                        subnet_id=id)
+                    context.session.add(route)
+                del s["host_routes"]
+
             subnet = self._get_subnet(context, id)
             subnet.update(s)
         return self._make_subnet_dict(subnet)
@@ -802,6 +928,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             allocated = allocated_qry.filter_by(subnet_id=id).all()
             if allocated:
                 raise q_exc.SubnetInUse(subnet_id=id)
+
             context.session.delete(subnet)
 
     def get_subnet(self, context, id, fields=None, verbose=None):

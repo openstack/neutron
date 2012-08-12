@@ -73,6 +73,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         # Update the plugin
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
+        cfg.CONF.max_dns_nameservers = 2
+        cfg.CONF.max_subnet_host_routes = 2
         self.api = APIRouter()
 
         def _is_native_bulk_supported():
@@ -179,7 +181,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                            'tenant_id': self._tenant_id}}
         for arg in ('allocation_pools',
                     'ip_version', 'tenant_id',
-                    'enable_dhcp'):
+                    'enable_dhcp', 'allocation_pools',
+                    'dns_nameservers', 'host_routes'):
             # Arg must be present and not null (but can be false)
             if arg in kwargs and kwargs[arg] is not None:
                 data['subnet'][arg] = kwargs[arg]
@@ -258,7 +261,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         return self._create_bulk(fmt, number, 'port', base_data, **kwargs)
 
     def _make_subnet(self, fmt, network, gateway, cidr,
-                     allocation_pools=None, ip_version=4, enable_dhcp=True):
+                     allocation_pools=None, ip_version=4, enable_dhcp=True,
+                     dns_nameservers=None, host_routes=None):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
@@ -266,7 +270,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                   tenant_id=network['network']['tenant_id'],
                                   allocation_pools=allocation_pools,
                                   ip_version=ip_version,
-                                  enable_dhcp=enable_dhcp)
+                                  enable_dhcp=enable_dhcp,
+                                  dns_nameservers=dns_nameservers,
+                                  host_routes=host_routes)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= 400:
@@ -330,7 +336,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                fmt='json',
                ip_version=4,
                allocation_pools=None,
-               enable_dhcp=True):
+               enable_dhcp=True,
+               dns_nameservers=None,
+               host_routes=None):
         # TODO(anyone) DRY this
         # NOTE(salvatore-orlando): we can pass the network object
         # to gen function anyway, and then avoid the repetition
@@ -342,7 +350,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                            cidr,
                                            allocation_pools,
                                            ip_version,
-                                           enable_dhcp)
+                                           enable_dhcp,
+                                           dns_nameservers,
+                                           host_routes)
                 yield subnet
                 self._delete('subnets', subnet['subnet']['id'])
         else:
@@ -352,7 +362,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                        cidr,
                                        allocation_pools,
                                        ip_version,
-                                       enable_dhcp)
+                                       enable_dhcp,
+                                       dns_nameservers,
+                                       host_routes)
             yield subnet
             self._delete('subnets', subnet['subnet']['id'])
 
@@ -1717,3 +1729,177 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self.assertEquals(res.status_int, 422)
+
+    def test_create_subnet_with_one_dns(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        dns_nameservers = ['1.2.3.4']
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools,
+                                 dns_nameservers=dns_nameservers)
+
+    def test_create_subnet_with_two_dns(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        dns_nameservers = ['1.2.3.4', '4.3.2.1']
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools,
+                                 dns_nameservers=dns_nameservers)
+
+    def test_create_subnet_with_too_many_dns(self):
+        with self.network() as network:
+            dns_list = ['1.1.1.1', '2.2.2.2', '3.3.3.3']
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.0.1',
+                               'dns_nameservers': dns_list}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_with_one_host_route(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        host_routes = [{'destination': '135.207.0.0/16',
+                       'nexthop': '1.2.3.4'}]
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools,
+                                 host_routes=host_routes)
+
+    def test_create_subnet_with_two_host_routes(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        host_routes = [{'destination': '135.207.0.0/16',
+                       'nexthop': '1.2.3.4'},
+                       {'destination': '12.0.0.0/8',
+                       'nexthop': '4.3.2.1'}]
+
+        self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools,
+                                 host_routes=host_routes)
+
+    def test_create_subnet_with_too_many_routes(self):
+        with self.network() as network:
+            host_routes = [{'destination': '135.207.0.0/16',
+                            'nexthop': '1.2.3.4'},
+                           {'destination': '12.0.0.0/8',
+                            'nexthop': '4.3.2.1'},
+                           {'destination': '141.212.0.0/16',
+                            'nexthop': '2.2.2.2'}]
+
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.0.1',
+                               'host_routes': host_routes}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_dns(self):
+        with self.subnet() as subnet:
+            data = {'subnet': {'dns_nameservers': ['11.0.0.1']}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(res['subnet']['dns_nameservers'],
+                             data['subnet']['dns_nameservers'])
+
+    def test_update_subnet_dns_with_too_many_entries(self):
+        with self.subnet() as subnet:
+            dns_list = ['1.1.1.1', '2.2.2.2', '3.3.3.3']
+            data = {'subnet': {'dns_nameservers': dns_list}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_route(self):
+        with self.subnet() as subnet:
+            data = {'subnet': {'host_routes':
+                    [{'destination': '12.0.0.0/8', 'nexthop': '1.2.3.4'}]}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(res['subnet']['host_routes'],
+                             data['subnet']['host_routes'])
+
+    def test_update_subnet_route_with_too_many_entries(self):
+        with self.subnet() as subnet:
+            data = {'subnet': {'host_routes': [
+                    {'destination': '12.0.0.0/8', 'nexthop': '1.2.3.4'},
+                    {'destination': '13.0.0.0/8', 'nexthop': '1.2.3.5'},
+                    {'destination': '14.0.0.0/8', 'nexthop': '1.2.3.6'}]}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_delete_subnet_with_dns(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        dns_nameservers = ['1.2.3.4']
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4,
+                                   dns_nameservers=dns_nameservers)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
+
+    def test_delete_subnet_with_route(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        host_routes = [{'destination': '135.207.0.0/16',
+                        'nexthop': '1.2.3.4'}]
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4,
+                                   host_routes=host_routes)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
+
+    def test_delete_subnet_with_dns_and_route(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        dns_nameservers = ['1.2.3.4']
+        host_routes = [{'destination': '135.207.0.0/16',
+                        'nexthop': '1.2.3.4'}]
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4,
+                                   dns_nameservers=dns_nameservers,
+                                   host_routes=host_routes)
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
