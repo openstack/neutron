@@ -54,14 +54,14 @@ def _get_hostname():
 cfg.CONF.register_opt(cfg.StrOpt('host', default=_get_hostname()))
 
 
-def fields(request):
+def _fields(request):
     """
     Extracts the list of fields to return
     """
     return [v for v in request.GET.getall('fields') if v]
 
 
-def filters(request):
+def _filters(request, attr_info):
     """
     Extracts the filters from the request string
 
@@ -77,14 +77,27 @@ def filters(request):
     for key in set(request.GET):
         if key in ('verbose', 'fields'):
             continue
-
         values = [v for v in request.GET.getall(key) if v]
-        if values:
+        if not attr_info.get(key) and values:
             res[key] = values
+            continue
+        result_values = []
+        convert_to = (attr_info.get(key) and attr_info[key].get('convert_to')
+                      or None)
+        for value in values:
+            if convert_to:
+                try:
+                    result_values.append(convert_to(value))
+                except exceptions.InvalidInput as e:
+                    raise webob.exc.HTTPUnprocessableEntity(str(e))
+            else:
+                result_values.append(value)
+        if result_values:
+            res[key] = result_values
     return res
 
 
-def verbose(request):
+def _verbose(request):
     """
     Determines the verbose fields for a request
 
@@ -160,9 +173,9 @@ class Controller(object):
         # NOTE(salvatore-orlando): The following ensures that fields which
         # are needed for authZ policy validation are not stripped away by the
         # plugin before returning.
-        original_fields, fields_to_add = self._do_field_list(fields(request))
-        kwargs = {'filters': filters(request),
-                  'verbose': verbose(request),
+        original_fields, fields_to_add = self._do_field_list(_fields(request))
+        kwargs = {'filters': _filters(request, self._attr_info),
+                  'verbose': _verbose(request),
                   'fields': original_fields}
         obj_getter = getattr(self._plugin, "get_%s" % self._collection)
         obj_list = obj_getter(request.context, **kwargs)
@@ -183,7 +196,7 @@ class Controller(object):
 
     def _item(self, request, id, do_authz=False, field_list=None):
         """Retrieves and formats a single element of the requested entity"""
-        kwargs = {'verbose': verbose(request),
+        kwargs = {'verbose': _verbose(request),
                   'fields': field_list}
         action = "get_%s" % self._resource
         obj_getter = getattr(self._plugin, action)
@@ -205,7 +218,7 @@ class Controller(object):
             # NOTE(salvatore-orlando): The following ensures that fields
             # which are needed for authZ policy validation are not stripped
             # away by the plugin before returning.
-            field_list, added_fields = self._do_field_list(fields(request))
+            field_list, added_fields = self._do_field_list(_fields(request))
             return {self._resource:
                     self._view(self._item(request,
                                           id,

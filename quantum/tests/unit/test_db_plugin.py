@@ -1313,6 +1313,30 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                 self.assertEquals(res['networks'][1]['name'],
                                   net2['network']['name'])
 
+    def test_list_networks_with_parameters(self):
+        with self.network(name='net1', admin_status_up=False) as net1:
+            with self.network(name='net2') as net2:
+                req = self.new_list_request('networks',
+                                            params='admin_state_up=False')
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEquals(1, len(res['networks']))
+                self.assertEquals(res['networks'][0]['name'],
+                                  net1['network']['name'])
+                req = self.new_list_request('networks',
+                                            params='admin_state_up=true')
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEquals(1, len(res['networks']))
+                self.assertEquals(res['networks'][0]['name'],
+                                  net2['network']['name'])
+
+    def test_list_networks_with_parameters_invalid_values(self):
+        with self.network(name='net1', admin_status_up=False) as net1:
+            with self.network(name='net2') as net2:
+                req = self.new_list_request('networks',
+                                            params='admin_state_up=fake')
+                res = req.get_response(self.api)
+                self.assertEquals(422, res.status_int)
+
     def test_show_network(self):
         with self.network(name='net1') as net:
             req = self.new_show_request('networks', net['network']['id'])
@@ -1671,6 +1695,26 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                       subnet['subnet']['cidr'])
                     self.assertEquals(res2['cidr'],
                                       subnet2['subnet']['cidr'])
+
+    def test_list_subnets_with_parameter(self):
+        # NOTE(jkoelker) This would be a good place to use contextlib.nested
+        #                or just drop 2.6 support ;)
+        with self.network() as network:
+            with self.subnet(network=network, gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24') as subnet:
+                with self.subnet(network=network, gateway_ip='10.0.1.1',
+                                 cidr='10.0.1.0/24') as subnet2:
+                    req = self.new_list_request(
+                        'subnets',
+                        params='ip_version=4&ip_version=6')
+                    res = self.deserialize('json',
+                                           req.get_response(self.api))
+                    self.assertEquals(2, len(res['subnets']))
+                    req = self.new_list_request('subnets',
+                                                params='ip_version=6')
+                    res = self.deserialize('json',
+                                           req.get_response(self.api))
+                    self.assertEquals(0, len(res['subnets']))
 
     def test_invalid_ip_version(self):
         with self.network() as network:
