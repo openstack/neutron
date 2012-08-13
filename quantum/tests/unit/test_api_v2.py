@@ -551,16 +551,17 @@ class JSONV2TestCase(APIv2TestBase):
         self.assertEqual(res.status_int, 422)
 
     def test_create_bulk(self):
-        data = {'networks': [{'name': 'net1', 'admin_state_up': True,
+        data = {'networks': [{'name': 'net1',
+                              'admin_state_up': True,
                               'tenant_id': _uuid()},
-                             {'name': 'net2', 'admin_state_up': True,
+                             {'name': 'net2',
+                              'admin_state_up': True,
                               'tenant_id': _uuid()}]}
 
         def side_effect(context, network):
-            nets = network.copy()
-            for net in nets['networks']:
-                net.update({'subnets': []})
-            return nets
+            net = network.copy()
+            net['network'].update({'subnets': []})
+            return net['network']
 
         instance = self.plugin.return_value
         instance.create_network.side_effect = side_effect
@@ -904,7 +905,6 @@ class ExtensionTestCase(unittest.TestCase):
         self.api = None
         self.plugin = None
         cfg.CONF.reset()
-
         # Restore the global RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 

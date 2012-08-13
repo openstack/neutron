@@ -43,7 +43,8 @@ core_opts = [
     cfg.StrOpt('core_plugin',
                default='quantum.plugins.sample.SamplePlugin.FakePlugin'),
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00"),
-    cfg.IntOpt('mac_generation_retries', default=16)
+    cfg.IntOpt('mac_generation_retries', default=16),
+    cfg.BoolOpt('allow_bulk', default=True),
 ]
 
 # Register the configuration options

@@ -196,7 +196,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             super(LinuxBridgePluginV2, self).delete_network(context,
                                                             net['id'])
             raise
-
         return net
 
     def update_network(self, context, id, network):

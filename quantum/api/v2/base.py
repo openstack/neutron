@@ -117,14 +117,22 @@ def verbose(request):
 
 
 class Controller(object):
-    def __init__(self, plugin, collection, resource, attr_info):
+    def __init__(self, plugin, collection, resource,
+                 attr_info, allow_bulk=False):
         self._plugin = plugin
         self._collection = collection
         self._resource = resource
         self._attr_info = attr_info
+        self._allow_bulk = allow_bulk
+        self._native_bulk = self._is_native_bulk_supported()
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
+
+    def _is_native_bulk_supported(self):
+        native_bulk_attr_name = ("_%s__native_bulk_support"
+                                 % self._plugin.__class__.__name__)
+        return getattr(self._plugin, native_bulk_attr_name, False)
 
     def _is_visible(self, attr):
         attr_val = self._attr_info.get(attr)
@@ -209,6 +217,32 @@ class Controller(object):
             # doesn't exist
             raise webob.exc.HTTPNotFound()
 
+    def _emulate_bulk_create(self, obj_creator, request, body):
+        objs = []
+        try:
+            for item in body[self._collection]:
+                kwargs = {self._resource: item}
+                objs.append(self._view(obj_creator(request.context,
+                                                   **kwargs)))
+            return objs
+        # Note(salvatore-orlando): broad catch as in theory a plugin
+        # could raise any kind of exception
+        except Exception as ex:
+            for obj in objs:
+                delete_action = "delete_%s" % self._resource
+                obj_deleter = getattr(self._plugin, delete_action)
+                try:
+                    obj_deleter(request.context, obj['id'])
+                except Exception:
+                    # broad catch as our only purpose is to log the exception
+                    LOG.exception("Unable to undo add for %s %s",
+                                  self._resource, obj['id'])
+            # TODO(salvatore-orlando): The object being processed when the
+            # plugin raised might have been created or not in the db.
+            # We need a way for ensuring that if it has been created,
+            # it is then deleted
+            raise
+
     def create(self, request, body=None):
         """Creates a new instance of the requested entity"""
         notifier_api.notify(request.context,
@@ -216,10 +250,8 @@ class Controller(object):
                             self._resource + '.create.start',
                             notifier_api.INFO,
                             body)
-        body = self._prepare_request_body(request.context, body, True,
-                                          allow_bulk=True)
+        body = self._prepare_request_body(request.context, body, True)
         action = "create_%s" % self._resource
-
         # Check authz
         try:
             if self._collection in body:
@@ -256,16 +288,30 @@ class Controller(object):
             LOG.exception("Create operation not authorized")
             raise webob.exc.HTTPForbidden()
 
-        obj_creator = getattr(self._plugin, action)
-        kwargs = {self._resource: body}
-        obj = obj_creator(request.context, **kwargs)
-        result = {self._resource: self._view(obj)}
-        notifier_api.notify(request.context,
-                            self._publisher_id,
-                            self._resource + '.create.end',
-                            notifier_api.INFO,
-                            result)
-        return result
+        def notify(create_result):
+            notifier_api.notify(request.context,
+                                self._publisher_id,
+                                self._resource + '.create.end',
+                                notifier_api.INFO,
+                                create_result)
+            return create_result
+
+        if self._collection in body and self._native_bulk:
+            # plugin does atomic bulk create operations
+            obj_creator = getattr(self._plugin, "%s_bulk" % action)
+            objs = obj_creator(request.context, body)
+            return notify({self._collection: [self._view(obj)
+                                              for obj in objs]})
+        else:
+            obj_creator = getattr(self._plugin, action)
+            if self._collection in body:
+                # Emulate atomic bulk behavior
+                objs = self._emulate_bulk_create(obj_creator, request, body)
+                return notify({self._collection: objs})
+            else:
+                kwargs = {self._resource: body}
+                obj = obj_creator(request.context, **kwargs)
+                return notify({self._resource: self._view(obj)})
 
     def delete(self, request, id):
         """Deletes the specified entity"""
@@ -355,8 +401,7 @@ class Controller(object):
                         " that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
-    def _prepare_request_body(self, context, body, is_create,
-                              allow_bulk=False):
+    def _prepare_request_body(self, context, body, is_create):
         """ verifies required attributes are in request body, and that
             an attribute is only specified if it is allowed for the given
             operation (create/update).
@@ -369,7 +414,7 @@ class Controller(object):
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
         body = body or {self._resource: {}}
-        if self._collection in body and allow_bulk:
+        if self._collection in body and self._allow_bulk:
             bulk_body = [self._prepare_request_body(context,
                                                     {self._resource: b},
                                                     is_create)
@@ -382,7 +427,7 @@ class Controller(object):
 
             return {self._collection: bulk_body}
 
-        elif self._collection in body and not allow_bulk:
+        elif self._collection in body and not self._allow_bulk:
             raise webob.exc.HTTPBadRequest("Bulk operation not supported")
 
         res_dict = body.get(self._resource)
@@ -459,8 +504,8 @@ class Controller(object):
             })
 
 
-def create_resource(collection, resource, plugin, params):
-    controller = Controller(plugin, collection, resource, params)
+def create_resource(collection, resource, plugin, params, allow_bulk=False):
+    controller = Controller(plugin, collection, resource, params, allow_bulk)
 
     # NOTE(jkoelker) To anyone wishing to add "proper" xml support
     #                this is where you do it

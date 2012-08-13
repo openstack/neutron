@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import contextlib
+import copy
 import logging
 import mock
 import os
@@ -36,6 +37,7 @@ from quantum.wsgi import Serializer, JSONDeserializer
 
 LOG = logging.getLogger(__name__)
 
+DB_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 
@@ -62,10 +64,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             'application/json': json_deserializer,
         }
 
-        plugin = test_config.get('plugin_name_v2',
-                                 'quantum.db.db_base_plugin_v2.'
-                                 'QuantumDbPluginV2')
-        LOG.debug("db plugin test, the plugin is:%s", plugin)
+        plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         config.parse(args=args)
@@ -73,6 +72,14 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         self.api = APIRouter()
+
+        def _is_native_bulk_supported():
+            plugin_obj = QuantumManager.get_plugin()
+            native_bulk_attr_name = ("_%s__native_bulk_support"
+                                     % plugin_obj.__class__.__name__)
+            return getattr(plugin_obj, native_bulk_attr_name, False)
+
+        self._skip_native_bulk = not _is_native_bulk_supported()
 
     def tearDown(self):
         super(QuantumDbPluginV2TestCase, self).tearDown()
@@ -118,6 +125,28 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
+    def _create_bulk(self, fmt, number, resource, data, name='test', **kwargs):
+        """ Creates a bulk request for any kind of resource """
+        objects = []
+        collection = "%ss" % resource
+        for i in range(0, number):
+            obj = copy.deepcopy(data)
+            obj[resource]['name'] = "%s_%s" % (name, i)
+            if 'override' in kwargs and i in kwargs['override']:
+                obj[resource].update(kwargs['override'][i])
+            objects.append(obj)
+        req_data = {collection: objects}
+        req = self.new_create_request(collection, req_data, fmt)
+        if ('set_context' in kwargs and
+                kwargs['set_context'] is True and
+                'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+        elif 'context' in kwargs:
+            req.environ['quantum.context'] = kwargs['context']
+        return req.get_response(self.api)
+
     def _create_network(self, fmt, name, admin_status_up, **kwargs):
         data = {'network': {'name': name,
                             'admin_state_up': admin_status_up,
@@ -133,6 +162,12 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                 '', kwargs['tenant_id'])
 
         return network_req.get_response(self.api)
+
+    def _create_network_bulk(self, fmt, number, name,
+                             admin_status_up, **kwargs):
+        base_data = {'network': {'admin_state_up': admin_status_up,
+                                 'tenant_id': self._tenant_id}}
+        return self._create_bulk(fmt, number, 'network', base_data, **kwargs)
 
     def _create_subnet(self, fmt, net_id, cidr,
                        expected_res_status=None, **kwargs):
@@ -156,6 +191,19 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         if expected_res_status:
             self.assertEqual(subnet_res.status_int, expected_res_status)
         return subnet_res
+
+    def _create_subnet_bulk(self, fmt, number, net_id, name,
+                            ip_version=4, **kwargs):
+        base_data = {'subnet': {'network_id': net_id,
+                                'ip_version': ip_version,
+                                'tenant_id': self._tenant_id}}
+        # auto-generate cidrs as they should not overlap
+        overrides = dict((k, v)
+                         for (k, v) in zip(range(0, number),
+                                           [{'cidr': "10.0.%s.0/24" % num}
+                                            for num in range(0, number)]))
+        kwargs.update({'override': overrides})
+        return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
     def _create_port(self, fmt, net_id, expected_res_status=None, **kwargs):
         content_type = 'application/' + fmt
@@ -196,6 +244,13 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             self.assertEqual(port_res.status_int, expected_res_status)
         return port_res
 
+    def _create_port_bulk(self, fmt, number, net_id, name,
+                          admin_status_up, **kwargs):
+        base_data = {'port': {'network_id': net_id,
+                              'admin_state_up': admin_status_up,
+                              'tenant_id': self._tenant_id}}
+        return self._create_bulk(fmt, number, 'port', base_data, **kwargs)
+
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True):
         res = self._create_subnet(fmt,
@@ -219,6 +274,29 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def _delete(self, collection, id):
         req = self.new_delete_request(collection, id)
         req.get_response(self.api)
+
+    def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
+        """ Invoked by test cases for injecting failures in plugin """
+        def second_call(*args, **kwargs):
+            raise Exception('boom')
+        patched_plugin.side_effect = second_call
+        return orig(*args, **kwargs)
+
+    def _validate_behavior_on_bulk_failure(self, res, collection):
+        self.assertEqual(res.status_int, 500)
+        req = self.new_list_request(collection)
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 200)
+        items = self.deserialize('json', res)
+        self.assertEqual(len(items[collection]), 0)
+
+    def _validate_behavior_on_bulk_success(self, res, collection,
+                                           names=['test_0', 'test_1']):
+        self.assertEqual(res.status_int, 201)
+        items = self.deserialize('json', res)[collection]
+        self.assertEqual(len(items), 2)
+        self.assertEqual(items[0]['name'], 'test_0')
+        self.assertEqual(items[1]['name'], 'test_1')
 
     @contextlib.contextmanager
     def network(self, name='net1',
@@ -428,6 +506,90 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             for k, v in keys:
                 self.assertEquals(port['port'][k], v)
             self.assertTrue('mac_address' in port['port'])
+
+    def test_create_ports_bulk_native(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk port create")
+        with self.network() as net:
+            res = self._create_port_bulk('json', 2, net['network']['id'],
+                                         'test', True)
+            self._validate_behavior_on_bulk_success(res, 'ports')
+
+    def test_create_ports_bulk_emulated(self):
+        real_has_attr = hasattr
+
+        #ensures the API choose the emulation code path
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            with self.network() as net:
+                res = self._create_port_bulk('json', 2, net['network']['id'],
+                                             'test', True)
+                self._validate_behavior_on_bulk_success(res, 'ports')
+
+    def test_create_ports_bulk_wrong_input(self):
+        with self.network() as net:
+            overrides = {1: {'admin_state_up': 'doh'}}
+            res = self._create_port_bulk('json', 2, net['network']['id'],
+                                         'test', True,
+                                         override=overrides)
+            self.assertEqual(res.status_int, 400)
+            req = self.new_list_request('ports')
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 200)
+            ports = self.deserialize('json', res)
+            self.assertEqual(len(ports['ports']), 0)
+
+    def test_create_ports_bulk_emulated_plugin_failure(self):
+        real_has_attr = hasattr
+
+        #ensures the API choose the emulation code path
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            orig = QuantumManager.get_plugin().create_port
+            with mock.patch.object(QuantumManager.get_plugin(),
+                                   'create_port') as patched_plugin:
+
+                def side_effect(*args, **kwargs):
+                    return self._do_side_effect(patched_plugin, orig,
+                                                *args, **kwargs)
+
+                patched_plugin.side_effect = side_effect
+                with self.network() as net:
+                    res = self._create_port_bulk('json', 2,
+                                                 net['network']['id'],
+                                                 'test',
+                                                 True)
+                    # We expect a 500 as we injected a fault in the plugin
+                    self._validate_behavior_on_bulk_failure(res, 'ports')
+
+    def test_create_ports_bulk_native_plugin_failure(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk port create")
+        ctx = context.get_admin_context()
+        with self.network() as net:
+            orig = QuantumManager._instance.plugin.create_port
+            with mock.patch.object(QuantumManager._instance.plugin,
+                                   'create_port') as patched_plugin:
+
+                def side_effect(*args, **kwargs):
+                    return self._do_side_effect(patched_plugin, orig,
+                                                *args, **kwargs)
+
+                patched_plugin.side_effect = side_effect
+                res = self._create_port_bulk('json', 2, net['network']['id'],
+                                             'test', True, context=ctx)
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(res, 'ports')
 
     def test_list_ports(self):
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
@@ -1061,6 +1223,77 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                           network['network']['id'])
             self.assertEqual(req.get_response(self.api).status_int, 409)
 
+    def test_create_networks_bulk_native(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk network create")
+        res = self._create_network_bulk('json', 2, 'test', True)
+        self._validate_behavior_on_bulk_success(res, 'networks')
+
+    def test_create_networks_bulk_emulated(self):
+        real_has_attr = hasattr
+
+        #ensures the API choose the emulation code path
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            res = self._create_network_bulk('json', 2, 'test', True)
+            self._validate_behavior_on_bulk_success(res, 'networks')
+
+    def test_create_networks_bulk_wrong_input(self):
+        res = self._create_network_bulk('json', 2, 'test', True,
+                                        override={1:
+                                                  {'admin_state_up': 'doh'}})
+        self.assertEqual(res.status_int, 400)
+        req = self.new_list_request('networks')
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 200)
+        nets = self.deserialize('json', res)
+        self.assertEqual(len(nets['networks']), 0)
+
+    def test_create_networks_bulk_emulated_plugin_failure(self):
+        real_has_attr = hasattr
+
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        orig = QuantumManager.get_plugin().create_network
+        #ensures the API choose the emulation code path
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            with mock.patch.object(QuantumManager.get_plugin(),
+                                   'create_network') as patched_plugin:
+
+                def side_effect(*args, **kwargs):
+                    return self._do_side_effect(patched_plugin, orig,
+                                                *args, **kwargs)
+
+                patched_plugin.side_effect = side_effect
+                res = self._create_network_bulk('json', 2, 'test', True)
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(res, 'networks')
+
+    def test_create_networks_bulk_native_plugin_failure(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk network create")
+        orig = QuantumManager.get_plugin().create_network
+        with mock.patch.object(QuantumManager.get_plugin(),
+                               'create_network') as patched_plugin:
+
+            def side_effect(*args, **kwargs):
+                return self._do_side_effect(patched_plugin, orig,
+                                            *args, **kwargs)
+
+            patched_plugin.side_effect = side_effect
+            res = self._create_network_bulk('json', 2, 'test', True)
+            # We expect a 500 as we injected a fault in the plugin
+            self._validate_behavior_on_bulk_failure(res, 'networks')
+
     def test_list_networks(self):
         with self.network(name='net1') as net1:
             with self.network(name='net2') as net2:
@@ -1156,6 +1389,77 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                      cidr=cidr_2):
                         pass
                 self.assertEquals(ctx_manager.exception.code, 400)
+
+    def test_create_subnets_bulk_native(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk subnet create")
+        with self.network() as net:
+            res = self._create_subnet_bulk('json', 2, net['network']['id'],
+                                           'test')
+            self._validate_behavior_on_bulk_success(res, 'subnets')
+
+    def test_create_subnets_bulk_emulated(self):
+        real_has_attr = hasattr
+
+        #ensures the API choose the emulation code path
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            with self.network() as net:
+                res = self._create_subnet_bulk('json', 2,
+                                               net['network']['id'],
+                                               'test')
+                self._validate_behavior_on_bulk_success(res, 'subnets')
+
+    def test_create_subnets_bulk_emulated_plugin_failure(self):
+        real_has_attr = hasattr
+
+        #ensures the API choose the emulation code path
+        def fakehasattr(item, attr):
+            if attr.endswith('__native_bulk_support'):
+                return False
+            return real_has_attr(item, attr)
+
+        with mock.patch('__builtin__.hasattr',
+                        new=fakehasattr):
+            orig = QuantumManager.get_plugin().create_subnet
+            with mock.patch.object(QuantumManager.get_plugin(),
+                                   'create_subnet') as patched_plugin:
+
+                def side_effect(*args, **kwargs):
+                    self._do_side_effect(patched_plugin, orig,
+                                         *args, **kwargs)
+
+                patched_plugin.side_effect = side_effect
+                with self.network() as net:
+                    res = self._create_subnet_bulk('json', 2,
+                                                   net['network']['id'],
+                                                   'test')
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(res, 'subnets')
+
+    def test_create_subnets_bulk_native_plugin_failure(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk subnet create")
+        orig = QuantumManager._instance.plugin.create_subnet
+        with mock.patch.object(QuantumManager._instance.plugin,
+                               'create_subnet') as patched_plugin:
+            def side_effect(*args, **kwargs):
+                return self._do_side_effect(patched_plugin, orig,
+                                            *args, **kwargs)
+
+            patched_plugin.side_effect = side_effect
+            with self.network() as net:
+                res = self._create_subnet_bulk('json', 2,
+                                               net['network']['id'],
+                                               'test')
+
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(res, 'subnets')
 
     def test_delete_subnet(self):
         gateway_ip = '10.0.0.1'

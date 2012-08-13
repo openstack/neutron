@@ -41,6 +41,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         certain events.
     """
 
+    # This attribute specifies whether the plugin supports or not
+    # bulk operations. Name mangling is used in order to ensure it
+    # is qualified by class
+    __native_bulk_support = True
+
     def __init__(self):
         # NOTE(jkoelker) This is an incomlete implementation. Subclasses
         #                must override __init__ and setup the database
@@ -673,12 +678,34 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                "device_id": port["device_id"]}
         return self._fields(res, fields)
 
+    def _create_bulk(self, resource, context, request_items):
+        objects = []
+        collection = "%ss" % resource
+        items = request_items[collection]
+        context.session.begin(subtransactions=True)
+        try:
+            for item in items:
+                obj_creator = getattr(self, 'create_%s' % resource)
+                objects.append(obj_creator(context, item))
+            context.session.commit()
+        except Exception:
+            LOG.exception("An exception occured while creating "
+                          "the port:%s", item)
+            context.session.rollback()
+            raise
+        return objects
+
+    def create_network_bulk(self, context, networks):
+        return self._create_bulk('network', context, networks)
+
     def create_network(self, context, network):
+        """ handle creation of a single network """
+        # single request processing
         n = network['network']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, n)
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             network = models_v2.Network(tenant_id=tenant_id,
                                         id=n.get('id') or utils.str_uuid(),
                                         name=n['name'],
@@ -721,6 +748,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     filters=filters, fields=fields,
                                     verbose=verbose)
 
+    def create_subnet_bulk(self, context, subnets):
+        return self._create_bulk('subnet', context, subnets)
+
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
         net = netaddr.IPNetwork(s['cidr'])
@@ -728,7 +758,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
 
         tenant_id = self._get_tenant_id_for_create(context, s)
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(network, s['cidr'])
             subnet = models_v2.Subnet(tenant_id=tenant_id,
@@ -780,13 +810,16 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     filters=filters, fields=fields,
                                     verbose=verbose)
 
+    def create_port_bulk(self, context, ports):
+        return self._create_bulk('port', context, ports)
+
     def create_port(self, context, port):
         p = port['port']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
 
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             network = self._get_network(context, p["network_id"])
 
             # Ensure that a MAC address is defined and it is unique on the
@@ -817,7 +850,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         # Update the allocated IP's
         if ips:
-            with context.session.begin():
+            with context.session.begin(subtransactions=True):
                 for ip in ips:
                     LOG.debug("Allocated IP %s (%s/%s/%s)", ip['ip_address'],
                               port['network_id'], ip['subnet_id'], port.id)

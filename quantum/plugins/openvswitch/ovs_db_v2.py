@@ -40,8 +40,8 @@ def get_vlans():
     return [(binding.vlan_id, binding.network_id) for binding in bindings]
 
 
-def get_vlan(net_id):
-    session = db.get_session()
+def get_vlan(net_id, session=None):
+    session = session or db.get_session()
     try:
         binding = (session.query(ovs_models_v2.VlanBinding).
                    filter_by(network_id=net_id).
@@ -51,11 +51,10 @@ def get_vlan(net_id):
     return binding.vlan_id
 
 
-def add_vlan_binding(vlan_id, net_id):
-    session = db.get_session()
-    binding = ovs_models_v2.VlanBinding(vlan_id, net_id)
-    session.add(binding)
-    session.flush()
+def add_vlan_binding(vlan_id, net_id, session):
+    with session.begin(subtransactions=True):
+        binding = ovs_models_v2.VlanBinding(vlan_id, net_id)
+        session.add(binding)
     return binding
 
 
@@ -114,10 +113,9 @@ def get_vlan_id(vlan_id):
         return None
 
 
-def reserve_vlan_id():
+def reserve_vlan_id(session):
     """Reserve an unused vlan_id"""
 
-    session = db.get_session()
     with session.begin(subtransactions=True):
         record = (session.query(ovs_models_v2.VlanID).
                   filter_by(vlan_used=False).
@@ -129,14 +127,13 @@ def reserve_vlan_id():
     return record.vlan_id
 
 
-def reserve_specific_vlan_id(vlan_id):
+def reserve_specific_vlan_id(vlan_id, session):
     """Reserve a specific vlan_id"""
 
     if vlan_id < 1 or vlan_id > 4094:
         msg = _("Specified VLAN %s outside legal range (1-4094)") % vlan_id
         raise q_exc.InvalidInput(error_message=msg)
 
-    session = db.get_session()
     with session.begin(subtransactions=True):
         try:
             record = (session.query(ovs_models_v2.VlanID).

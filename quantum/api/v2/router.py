@@ -69,7 +69,6 @@ class APIRouter(wsgi.Router):
     def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()
         plugin = manager.QuantumManager.get_plugin()
-
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
 
@@ -81,8 +80,10 @@ class APIRouter(wsgi.Router):
                      'port': 'ports'}
 
         def _map_resource(collection, resource, params):
+            allow_bulk = cfg.CONF.allow_bulk
             controller = base.create_resource(collection, resource,
-                                              plugin, params)
+                                              plugin, params,
+                                              allow_bulk=allow_bulk)
             mapper_kwargs = dict(controller=controller,
                                  requirements=REQUIREMENTS,
                                  **col_kwargs)

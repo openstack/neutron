@@ -177,6 +177,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     be updated to take advantage of it.
     """
 
+    # This attribute specifies whether the plugin supports or not
+    # bulk operations. Name mangling is used in order to ensure it
+    # is qualified by class
+    __native_bulk_support = True
     supported_extension_aliases = ["provider"]
 
     def __init__(self, configfile=None):
@@ -227,7 +231,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def _extend_network_dict(self, context, network):
         if self._check_provider_view_auth(context, network):
             if not self.enable_tunneling:
-                network['provider:vlan_id'] = ovs_db_v2.get_vlan(network['id'])
+                network['provider:vlan_id'] = ovs_db_v2.get_vlan(
+                    network['id'], context.session)
 
     def create_network(self, context, network):
         net = super(OVSQuantumPluginV2, self).create_network(context, network)
@@ -235,15 +240,15 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             vlan_id = network['network'].get('provider:vlan_id')
             if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
                 self._enforce_provider_set_auth(context, net)
-                ovs_db_v2.reserve_specific_vlan_id(vlan_id)
+                ovs_db_v2.reserve_specific_vlan_id(vlan_id, context.session)
             else:
-                vlan_id = ovs_db_v2.reserve_vlan_id()
+                vlan_id = ovs_db_v2.reserve_vlan_id(context.session)
         except Exception:
             super(OVSQuantumPluginV2, self).delete_network(context, net['id'])
             raise
 
         LOG.debug("Created network: %s" % net['id'])
-        ovs_db_v2.add_vlan_binding(vlan_id, str(net['id']))
+        ovs_db_v2.add_vlan_binding(vlan_id, str(net['id']), context.session)
         self._extend_network_dict(context, net)
         return net
 
