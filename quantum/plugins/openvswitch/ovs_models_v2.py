@@ -65,3 +65,18 @@ class TunnelIP(model_base.BASEV2):
 
     def __repr__(self):
         return "<TunnelIP(%s)>" % (self.ip_address)
+
+
+class TunnelInfo(model_base.BASEV2):
+    """Represents remote tunnel information in tunnel mode."""
+    __tablename__ = 'tunnel_info'
+
+    ip_address = Column(String(64), primary_key=True)
+    id = Column(Integer, nullable=False)
+
+    def __init__(self, ip_address, id):
+        self.ip_address = ip_address
+        self.id = id
+
+    def __repr__(self):
+        return "<TunnelInfo(%s,%s)>" % (self.ip_address, self.id)

@@ -34,14 +34,13 @@ import eventlet
 import pyudev
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
-from quantum.agent.rpc import create_consumers
+from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
-from quantum.openstack.common.rpc import proxy
 from quantum.plugins.linuxbridge.common import config
 
 from quantum.agent.linux import utils
@@ -320,33 +319,6 @@ class LinuxBridge:
             LOG.debug("Done deleting subinterface %s" % interface)
 
 
-class PluginApi(proxy.RpcProxy):
-    '''Agent side of the linux bridge rpc API.
-
-    API version history:
-        1.0 - Initial version.
-
-    '''
-
-    BASE_RPC_API_VERSION = '1.0'
-
-    def __init__(self, topic):
-        super(PluginApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
-
-    def get_device_details(self, context, device, agent_id):
-        return self.call(context,
-                         self.make_msg('get_device_details', device=device,
-                                       agent_id=agent_id),
-                         topic=self.topic)
-
-    def update_device_down(self, context, device, agent_id):
-        return self.call(context,
-                         self.make_msg('update_device_down', device=device,
-                                       agent_id=agent_id),
-                         topic=self.topic)
-
-
 class LinuxBridgeRpcCallbacks():
 
     # Set RPC API version to 1.0 by default.
@@ -578,7 +550,7 @@ class LinuxBridgeQuantumAgentRPC:
         mac = utils.get_interface_mac(physical_interface)
         self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
         self.topic = topics.AGENT
-        self.plugin_rpc = PluginApi(topics.PLUGIN)
+        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
 
         # RPC network init
         self.context = context.RequestContext('quantum', 'quantum',
@@ -590,8 +562,9 @@ class LinuxBridgeQuantumAgentRPC:
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE]]
-        self.connection = create_consumers(self.dispatcher, self.topic,
-                                           consumers)
+        self.connection = agent_rpc.create_consumers(self.dispatcher,
+                                                     self.topic,
+                                                     consumers)
         self.udev = pyudev.Context()
         monitor = pyudev.Monitor.from_netlink(self.udev)
         monitor.filter_by('net')

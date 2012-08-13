@@ -17,6 +17,9 @@
 from quantum.openstack.common import cfg
 
 
+# Topic for tunnel notifications between the plugin and agent
+TUNNEL = 'tunnel'
+
 database_opts = [
     cfg.StrOpt('sql_connection', default='sqlite://'),
     cfg.IntOpt('sql_max_retries', default=-1),
@@ -37,6 +40,7 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2),
     cfg.StrOpt('root_helper', default='sudo'),
     cfg.StrOpt('log_file', default=None),
+    cfg.BoolOpt('rpc', default=True),
 ]
 
 
