@@ -23,6 +23,8 @@ import unittest2
 import webob.exc
 
 import quantum
+from quantum.api.v2 import attributes
+from quantum.api.v2.attributes import ATTR_NOT_SPECIFIED
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.common import exceptions as q_exc
@@ -175,12 +177,16 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                            'cidr': cidr,
                            'ip_version': 4,
                            'tenant_id': self._tenant_id}}
-        for arg in ('gateway_ip', 'allocation_pools',
+        for arg in ('allocation_pools',
                     'ip_version', 'tenant_id',
                     'enable_dhcp'):
             # Arg must be present and not null (but can be false)
             if arg in kwargs and kwargs[arg] is not None:
                 data['subnet'][arg] = kwargs[arg]
+
+        if kwargs.get('gateway_ip', ATTR_NOT_SPECIFIED) != ATTR_NOT_SPECIFIED:
+            data['subnet']['gateway_ip'] = kwargs['gateway_ip']
+
         subnet_req = self.new_create_request('subnets', data, fmt)
         if (kwargs.get('set_context') and 'tenant_id' in kwargs):
             # create a specific auth context for this request
@@ -319,7 +325,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
 
     @contextlib.contextmanager
     def subnet(self, network=None,
-               gateway_ip=None,
+               gateway_ip=ATTR_NOT_SPECIFIED,
                cidr='10.0.0.0/24',
                fmt='json',
                ip_version=4,
@@ -887,7 +893,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                           net_id=net_id,
                                           cidr='2607:f0d0:1002:51::0/124',
                                           ip_version=6,
-                                          gateway_ip=None)
+                                          gateway_ip=ATTR_NOT_SPECIFIED)
                 subnet2 = self.deserialize(fmt, res)
                 kwargs = {"fixed_ips":
                           [{'subnet_id': subnet['subnet']['id']},
@@ -1521,6 +1527,27 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.0.100'}]
         self._test_create_subnet(gateway_ip=gateway_ip,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_with_none_gateway(self):
+        cidr = '10.0.0.0/24'
+        self._test_create_subnet(gateway_ip=None,
+                                 cidr=cidr)
+
+    def test_create_subnet_with_none_gateway_fully_allocated(self):
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.1',
+                             'end': '10.0.0.254'}]
+        self._test_create_subnet(gateway_ip=None,
+                                 cidr=cidr,
+                                 allocation_pools=allocation_pools)
+
+    def test_create_subnet_with_none_gateway_allocation_pool(self):
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.100'}]
+        self._test_create_subnet(gateway_ip=None,
                                  cidr=cidr,
                                  allocation_pools=allocation_pools)
 
