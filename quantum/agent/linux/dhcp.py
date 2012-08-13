@@ -112,9 +112,12 @@ class DhcpLocalProcess(DhcpBase):
 
         if self.active:
             cmd = ['kill', '-9', pid]
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=self.network.id)
-            ip_wrapper.netns.execute(cmd)
+            if self.conf.use_namespaces:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                              namespace=self.network.id)
+                ip_wrapper.netns.execute(cmd)
+            else:
+                utils.execute(cmd, self.root_helper)
             self.device_delegate.destroy(self.network)
         elif pid:
             LOG.debug(_('DHCP for %s pid %d is stale, ignoring command') %
@@ -222,9 +225,12 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dnsmasq_dns_server:
             cmd.append('--server=%s' % self.conf.dnsmasq_dns_server)
 
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      namespace=self.network.id)
-        ip_wrapper.netns.execute(cmd)
+        if self.conf.use_namespaces:
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=self.network.id)
+            ip_wrapper.netns.execute(cmd)
+        else:
+            utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
         """If all subnets turn off dhcp, kill the process."""
@@ -238,9 +244,13 @@ class Dnsmasq(DhcpLocalProcess):
         self._output_hosts_file()
         self._output_opts_file()
         cmd = ['kill', '-HUP', self.pid]
-        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      namespace=self.network.id)
-        ip_wrapper.netns.execute(cmd)
+
+        if self.conf.use_namespaces:
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=self.network.id)
+            ip_wrapper.netns.execute(cmd)
+        else:
+            utils.execute(cmd, self.root_helper)
         LOG.debug(_('Reloading allocations for network: %s') % self.network.id)
 
     def _output_hosts_file(self):
