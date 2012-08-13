@@ -454,7 +454,7 @@ class ExtensionControllerTest(unittest.TestCase):
 
     def test_extension_can_be_accessed_by_alias(self):
         foxnsox_extension = self.test_app.get("/extensions/FOXNSOX").json
-
+        foxnsox_extension = foxnsox_extension['extension']
         self.assertEqual(foxnsox_extension["alias"], "FOXNSOX")
         self.assertEqual(foxnsox_extension["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")

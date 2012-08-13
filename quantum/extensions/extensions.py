@@ -221,7 +221,7 @@ class ExtensionController(wsgi.Controller):
         if not ext:
             raise webob.exc.HTTPNotFound(
                 _("Extension with alias %s does not exist") % id)
-        return self._translate(ext)
+        return dict(extension=self._translate(ext))
 
     def delete(self, request, id):
         raise webob.exc.HTTPNotFound()
