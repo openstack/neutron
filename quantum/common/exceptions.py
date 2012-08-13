@@ -100,6 +100,18 @@ class MacAddressInUse(InUse):
                 "The mac address %(mac)s is in use.")
 
 
+class HostRoutesExhausted(QuantumException):
+    # NOTE(xchenum): probably make sense to use quota exceeded exception?
+    message = _("Unable to complete operation for %(subnet_id)s. "
+                "The number of host routes exceeds the limit %(quota).")
+
+
+class DNSNameServersExhausted(QuantumException):
+    # NOTE(xchenum): probably make sense to use quota exceeded exception?
+    message = _("Unable to complete operation for %(subnet_id)s. "
+                "The number of DNS nameservers exceeds the limit %(quota).")
+
+
 class IpAddressInUse(InUse):
     message = _("Unable to complete operation for network %(net_id)s. "
                 "The IP address %(ip_address)s is in use.")

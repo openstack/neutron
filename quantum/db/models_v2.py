@@ -99,6 +99,25 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     device_owner = sa.Column(sa.String(255), nullable=False)
 
 
+class DNSNameServer(model_base.BASEV2):
+    """Internal representation of a DNS nameserver."""
+    address = sa.Column(sa.String(128), nullable=False, primary_key=True)
+    subnet_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('subnets.id',
+                                        ondelete="CASCADE"),
+                          primary_key=True)
+
+
+class Route(model_base.BASEV2):
+    """Represents a route for a subnet or port."""
+    destination = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    nexthop = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    subnet_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('subnets.id',
+                                        ondelete="CASCADE"),
+                          primary_key=True)
+
+
 class Subnet(model_base.BASEV2, HasId, HasTenant):
     """Represents a quantum subnet.
 
@@ -114,10 +133,12 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
                                         backref='subnet',
                                         lazy="dynamic")
     enable_dhcp = sa.Column(sa.Boolean())
-
-    #TODO(danwent):
-    # - dns_namservers
-    # - additional_routes
+    dns_nameservers = orm.relationship(DNSNameServer,
+                                       backref='subnet',
+                                       cascade='delete')
+    routes = orm.relationship(Route,
+                              backref='subnet',
+                              cascade='delete')
 
 
 class Network(model_base.BASEV2, HasId, HasTenant):
