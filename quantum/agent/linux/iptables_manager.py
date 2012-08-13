@@ -194,7 +194,7 @@ class IptablesManager(object):
     """
 
     def __init__(self, _execute=None, state_less=False,
-                 root_helper=None, use_ipv6=False):
+                 root_helper=None, use_ipv6=False, namespace=None):
         if _execute:
             self.execute = _execute
         else:
@@ -202,6 +202,7 @@ class IptablesManager(object):
 
         self.use_ipv6 = use_ipv6
         self.root_helper = root_helper
+        self.namespace = namespace
 
         self.ipv4 = {'filter': IptablesTable()}
         self.ipv6 = {'filter': IptablesTable()}
@@ -276,12 +277,18 @@ class IptablesManager(object):
 
         for cmd, tables in s:
             for table in tables:
-                current_table = (self.execute(['%s-save' % cmd, '-t', table],
+                args = ['%s-save' % cmd, '-t', table]
+                if self.namespace:
+                    args = ['ip', 'netns', 'exec', self.namespace] + args
+                current_table = (self.execute(args,
                                  root_helper=self.root_helper))
                 current_lines = current_table.split('\n')
                 new_filter = self._modify_rules(current_lines,
                                                 tables[table])
-                self.execute(['%s-restore' % (cmd)],
+                args = ['%s-restore' % (cmd)]
+                if self.namespace:
+                    args = ['ip', 'netns', 'exec', self.namespace] + args
+                self.execute(args,
                              process_input='\n'.join(new_filter),
                              root_helper=self.root_helper)
         LOG.debug(("IPTablesManager.apply completed with success"))

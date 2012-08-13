@@ -149,7 +149,7 @@ class TestIpWrapper(unittest.TestCase):
                            'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                            'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
-        self.execute.assert_called_once_with('netns', ('list',),
+        self.execute.assert_called_once_with('', 'netns', ('list',),
                                              root_helper='sudo')
 
     def test_add_tuntap(self):

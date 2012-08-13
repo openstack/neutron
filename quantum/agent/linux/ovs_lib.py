@@ -89,7 +89,7 @@ class OVSBridge:
     def _build_flow_expr_arr(self, **kwargs):
         flow_expr_arr = []
         is_delete_expr = kwargs.get('delete', False)
-        print "kwargs = %s" % kwargs
+
         if not is_delete_expr:
             prefix = ("hard_timeout=%s,idle_timeout=%s,priority=%s" %
                      (kwargs.get('hard_timeout', '0'),
