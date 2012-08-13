@@ -96,6 +96,7 @@ class Port(model_base.BASEV2, HasId, HasTenant):
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
     device_id = sa.Column(sa.String(255), nullable=False)
+    device_owner = sa.Column(sa.String(255), nullable=False)
 
 
 class Subnet(model_base.BASEV2, HasId, HasTenant):

@@ -600,13 +600,15 @@ class JSONV2TestCase(APIv2TestBase):
         full_input = {'port': {'admin_state_up': True,
                                'mac_address': attributes.ATTR_NOT_SPECIFIED,
                                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                               'device_owner': '',
                                'host_routes': attributes.ATTR_NOT_SPECIFIED}}
         full_input['port'].update(initial_input['port'])
         return_value = {'id': _uuid(), 'status': 'ACTIVE',
                         'admin_state_up': True,
                         'mac_address': 'ca:fe:de:ad:be:ef',
                         'host_routes': [],
-                        'device_id': device_id}
+                        'device_id': device_id,
+                        'device_owner': ''}
         return_value.update(initial_input['port'])
 
         instance = self.plugin.return_value

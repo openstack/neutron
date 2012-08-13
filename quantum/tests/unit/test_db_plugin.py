@@ -215,9 +215,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
+
         for arg in ('admin_state_up', 'device_id',
-                    'mac_address', 'fixed_ips',
-                    'name', 'tenant_id'):
+                    'mac_address', 'name', 'fixed_ips',
+                    'tenant_id', 'device_owner'):
             # Arg must be present and not empty
             if arg in kwargs and kwargs[arg]:
                 data['port'][arg] = kwargs[arg]
@@ -494,6 +495,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                              'tenant_id': 'bad_tenant_id',
                              'admin_state_up': True,
                              'device_id': 'fake_device',
+                             'device_owner': 'fake_owner',
                              'fixed_ips': []}}
 
             port_req = self.new_create_request('ports', data)

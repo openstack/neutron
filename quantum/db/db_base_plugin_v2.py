@@ -679,7 +679,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                "fixed_ips": [{'subnet_id': ip["subnet_id"],
                               'ip_address': ip["ip_address"]}
                              for ip in port["fixed_ips"]],
-               "device_id": port["device_id"]}
+               "device_id": port["device_id"],
+               "device_owner": port["device_owner"]}
         return self._fields(res, fields)
 
     def _create_bulk(self, resource, context, request_items):
@@ -849,7 +850,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                   mac_address=p['mac_address'],
                                   admin_state_up=p['admin_state_up'],
                                   status="ACTIVE",
-                                  device_id=p['device_id'])
+                                  device_id=p['device_id'],
+                                  device_owner=p['device_owner'])
             context.session.add(port)
 
         # Update the allocated IP's

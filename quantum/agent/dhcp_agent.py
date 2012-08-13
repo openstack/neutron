@@ -182,7 +182,9 @@ class DhcpAgent(object):
             driver = self.dhcp_driver_cls(self.conf,
                                           network,
                                           self.conf.root_helper,
-                                          DeviceManager(self.conf, self.db))
+                                          DeviceManager(self.conf,
+                                                        self.db,
+                                                        'network:dhcp'))
             getattr(driver, action)()
 
         except Exception, e:
@@ -210,9 +212,10 @@ class DeviceManager(object):
                    help="The driver used to manage the virtual interface.")
     ]
 
-    def __init__(self, conf, db):
+    def __init__(self, conf, db, device_owner=''):
         self.conf = conf
         self.db = db
+        self.device_owner = device_owner
         if not conf.interface_driver:
             LOG.error(_('You must specify an interface driver'))
         self.driver = importutils.import_object(conf.interface_driver, conf)
@@ -294,6 +297,7 @@ class DeviceManager(object):
         body = dict(port=dict(
             admin_state_up=True,
             device_id=self.get_device_id(network),
+            device_owner=self.device_owner,
             network_id=network.id,
             tenant_id=network.tenant_id,
             fixed_ips=[dict(subnet_id=s.id) for s in network.subnets]))
