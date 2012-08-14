@@ -49,6 +49,7 @@ linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
 ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 meta_plugin_config_path = 'etc/quantum/plugins/metaplugin'
+nec_plugin_config_path = 'etc/quantum/plugins/nec'
 
 DataFiles = [
     (config_path,
@@ -72,7 +73,8 @@ DataFiles = [
         ['etc/quantum/plugins/nicira/nvp.ini']),
     (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
     (meta_plugin_config_path,
-        ['etc/quantum/plugins/metaplugin/metaplugin.ini'])
+        ['etc/quantum/plugins/metaplugin/metaplugin.ini']),
+    (nec_plugin_config_path, ['etc/quantum/plugins/nec/nec.ini']),
 ]
 
 setuptools.setup(
@@ -102,6 +104,8 @@ setuptools.setup(
             'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
             'quantum-ryu-agent = '
             'quantum.plugins.ryu.agent.ryu_quantum_agent:main',
+            'quantum-nec-agent = '
+            'quantum.plugins.nec.agent.nec_quantum_agent:main',
             'quantum-server = quantum.server:main',
         ]
     },
