@@ -75,36 +75,6 @@ class Port(object):
     """
 
     def __init__(self, p):
-        self.uuid = p.uuid
-        self.network_id = p.network_id
-        self.interface_id = p.interface_id
-        self.state = p.state
-        self.status = p.op_status
-
-    def __eq__(self, other):
-        '''Compare only fields that will cause us to re-wire.'''
-        try:
-            return (self and other
-                    and self.interface_id == other.interface_id
-                    and self.state == other.state)
-        except:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.uuid)
-
-
-class Portv2(object):
-    """Represents a quantumv2 port.
-
-    Class stores port data in a ORM-free way, so attributres are
-    still available even if a row has been deleted.
-    """
-
-    def __init__(self, p):
         self.id = p.id
         self.network_id = p.network_id
         self.device_id = p.device_id
@@ -180,12 +150,11 @@ class OVSRpcCallbacks():
 class OVSQuantumAgent(object):
 
     def __init__(self, integ_br, root_helper, polling_interval,
-                 reconnect_interval, target_v2_api, rpc):
+                 reconnect_interval, rpc):
         self.root_helper = root_helper
         self.setup_integration_br(integ_br)
         self.polling_interval = polling_interval
         self.reconnect_interval = reconnect_interval
-        self.target_v2_api = target_v2_api
         self.rpc = rpc
         if rpc:
             self.setup_rpc(integ_br)
@@ -251,10 +220,7 @@ class OVSQuantumAgent(object):
                 continue
 
             for port in ports:
-                if self.target_v2_api:
-                    all_bindings[port.id] = port
-                else:
-                    all_bindings[port.interface_id] = port
+                all_bindings[port.id] = port
 
             vlan_bindings = {}
             try:
@@ -448,8 +414,7 @@ class OVSQuantumTunnelAgent(object):
     MAX_VLAN_TAG = 4094
 
     def __init__(self, integ_br, tun_br, local_ip, root_helper,
-                 polling_interval, reconnect_interval, target_v2_api,
-                 rpc):
+                 polling_interval, reconnect_interval, rpc):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -458,7 +423,6 @@ class OVSQuantumTunnelAgent(object):
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
         :param reconnect_internal: retry interval (secs) on DB error.
-        :param target_v2_api: if True  use v2 api.
         :param rpc: if True use RPC interface to interface with plugin.
         '''
         self.root_helper = root_helper
@@ -474,7 +438,6 @@ class OVSQuantumTunnelAgent(object):
         self.local_ip = local_ip
         self.tunnel_count = 0
         self.setup_tunnel_br(tun_br)
-        self.target_v2_api = target_v2_api
         self.rpc = rpc
         if rpc:
             self.setup_rpc(integ_br)
@@ -647,12 +610,8 @@ class OVSQuantumTunnelAgent(object):
 
         while True:
             try:
-                if self.target_v2_api:
-                    all_bindings = dict((p.id, Portv2(p))
-                                        for p in db.ports.all())
-                else:
-                    all_bindings = dict((p.interface_id, Port(p))
-                                        for p in db.ports.all())
+                all_bindings = dict((p.id, Port(p))
+                                    for p in db.ports.all())
                 all_bindings_vif_port_ids = set(all_bindings)
                 lsw_id_bindings = dict((bind.network_id, bind.vlan_id)
                                        for bind in db.vlan_bindings.all())
@@ -881,13 +840,6 @@ def main():
     root_helper = cfg.CONF.AGENT.root_helper
     rpc = cfg.CONF.AGENT.rpc
 
-    # Determine API Version to use
-    target_v2_api = cfg.CONF.AGENT.target_v2_api
-
-    # RPC only works with v2
-    if rpc and not target_v2_api:
-        rpc = False
-
     if enable_tunneling:
         # Get parameters for OVSQuantumTunnelAgent
         tun_br = cfg.CONF.OVS.tunnel_bridge
@@ -895,11 +847,11 @@ def main():
         local_ip = cfg.CONF.OVS.local_ip
         plugin = OVSQuantumTunnelAgent(integ_br, tun_br, local_ip, root_helper,
                                        polling_interval, reconnect_interval,
-                                       target_v2_api, rpc)
+                                       rpc)
     else:
         # Get parameters for OVSQuantumAgent.
         plugin = OVSQuantumAgent(integ_br, root_helper, polling_interval,
-                                 reconnect_interval, target_v2_api, rpc)
+                                 reconnect_interval, rpc)
 
     # Start everything.
     plugin.daemon_loop(db_connection_url)

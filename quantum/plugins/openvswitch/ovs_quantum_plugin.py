@@ -27,7 +27,6 @@ from quantum.api import api_common
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
-from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
@@ -196,10 +195,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         # update the vlan_id table based on current configuration
         ovs_db_v2.update_vlan_id_pool()
         self.rpc = cfg.CONF.AGENT.rpc
-        if cfg.CONF.AGENT.rpc and cfg.CONF.AGENT.target_v2_api:
+        if cfg.CONF.AGENT.rpc:
             self.setup_rpc()
-        if not cfg.CONF.AGENT.target_v2_api:
-            self.rpc = False
 
     def setup_rpc(self):
         # RPC support
