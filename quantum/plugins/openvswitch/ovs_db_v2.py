@@ -188,6 +188,7 @@ def set_port_status(port_id, status):
         port['status'] = status
         if status == api_common.PORT_STATUS_DOWN:
             port['device_id'] = ''
+            port['device_owner'] = ''
         session.merge(port)
         session.flush()
     except exc.NoResultFound:
