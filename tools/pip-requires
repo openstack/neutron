@@ -6,7 +6,6 @@ httplib2
 iso8601>=0.1.4
 lxml
 netaddr
-python-gflags==1.3
 python-quantumclient>=0.1,<0.2
 pyudev
 sqlalchemy>0.6.4

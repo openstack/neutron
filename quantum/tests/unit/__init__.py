@@ -24,13 +24,12 @@ import unittest
 
 setattr(__builtin__, '_', lambda x: x)
 
-from quantum.common import flags
+from quantum.openstack.common import cfg
 
 
-FLAGS = flags.FLAGS
 reldir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
 absdir = os.path.abspath(reldir)
-FLAGS.state_path = absdir
+cfg.CONF.state_path = absdir
 
 
 class BaseTest(unittest.TestCase):

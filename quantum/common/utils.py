@@ -29,12 +29,10 @@ import subprocess
 import uuid
 
 from quantum.common import exceptions as exception
-from quantum.common import flags
+from quantum.openstack.common import cfg
 from quantum.openstack.common.exception import ProcessExecutionError
 
-
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-FLAGS = flags.FLAGS
 
 
 def boolize(subject):
@@ -98,37 +96,6 @@ def read_cached_file(filename, cache_info, reload_func=None):
     return cache_info['data']
 
 
-class LazyPluggable(object):
-    """A pluggable backend loaded lazily based on some value."""
-
-    def __init__(self, pivot, **backends):
-        self.__backends = backends
-        self.__pivot = pivot
-        self.__backend = None
-
-    def __get_backend(self):
-        if not self.__backend:
-            backend_name = self.__pivot.value
-            if backend_name not in self.__backends:
-                raise exception.Error('Invalid backend: %s' % backend_name)
-
-            backend = self.__backends[backend_name]
-            if isinstance(backend, tuple):
-                name = backend[0]
-                fromlist = backend[1]
-            else:
-                name = backend
-                fromlist = backend
-
-            self.__backend = __import__(name, None, None, fromlist)
-            logging.info('backend %s', self.__backend)
-        return self.__backend
-
-    def __getattr__(self, key):
-        backend = self.__get_backend()
-        return getattr(backend, key)
-
-
 def find_config_file(options, config_file):
     """
     Return the first config file found.
@@ -150,8 +117,8 @@ def find_config_file(options, config_file):
                         fix_path(os.path.join('~', '.quantum-venv', 'etc',
                                               'quantum')),
                         fix_path('~'),
-                        os.path.join(FLAGS.state_path, 'etc'),
-                        os.path.join(FLAGS.state_path, 'etc', 'quantum'),
+                        os.path.join(cfg.CONF.state_path, 'etc'),
+                        os.path.join(cfg.CONF.state_path, 'etc', 'quantum'),
                         fix_path(os.path.join('~', '.local',
                                               'etc', 'quantum')),
                         '/usr/etc/quantum',

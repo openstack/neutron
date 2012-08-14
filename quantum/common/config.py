@@ -47,6 +47,7 @@ core_opts = [
     cfg.BoolOpt('allow_bulk', default=True),
     cfg.IntOpt('max_dns_nameservers', default=5),
     cfg.IntOpt('max_subnet_host_routes', default=20),
+    cfg.StrOpt('state_path', default='.'),
 ]
 
 # Register the configuration options
