@@ -77,8 +77,7 @@ class CiscoNEXUSFakeDriver():
         pass
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_first_interface,
-                    nexus_second_interface, nexus_ssh_port):
+                    nexus_password, nexus_ports, nexus_ssh_port):
         """
         Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
         given the VLAN ID and Name and Interface Number
@@ -86,8 +85,7 @@ class CiscoNEXUSFakeDriver():
         pass
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                    nexus_first_interface, nexus_second_interface,
-                    nexus_ssh_port):
+                    nexus_ports, nexus_ssh_port):
         """
         Delete a VLAN and Disables trunk mode an interface on Nexus Switch
         given the VLAN ID and Interface Number

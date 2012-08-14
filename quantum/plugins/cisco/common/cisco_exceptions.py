@@ -137,6 +137,11 @@ class NexusPortBindingNotFound(exceptions.QuantumException):
     message = _("Nexus Port Binding %(port_id) is not present")
 
 
+class NexusPortBindingAlreadyExists(exceptions.QuantumException):
+    """NexusPort Binding alredy exists"""
+    message = _("Nexus Port Binding %(port_id) already exists")
+
+
 class UcsmBindingNotFound(exceptions.QuantumException):
     """Ucsm Binding is not present"""
     message = _("Ucsm Binding with ip %(ucsm_ip) is not present")

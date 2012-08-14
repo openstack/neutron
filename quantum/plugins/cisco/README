@@ -97,10 +97,9 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin
 # This will be the address at which Quantum sends and receives configuration
 # information via SSHv2.
 nexus_ip_address=10.0.0.1
-# Port numbers on the Nexus switch to each one of the UCSM 6120s is connected
-# Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10".
-nexus_first_port=1/10
-nexus_second_port=1/11
+# Port numbers on the Nexus switch to each one of the compute nodes are connected
+# Use shortened interface syntax, e.g. "1/10" not "Ethernet1/10" and "," between ports.
+ports=1/10,1/11,1/12
 #Port number where SSH will be running on the Nexus switch.  Typically this is 22
 #unless you've configured your switch otherwise.
 nexus_ssh_port=22
@@ -278,16 +277,14 @@ nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin
    When not using Nexus hardware use the following dummy configuration verbatim:
 [SWITCH]
 nexus_ip_address=1.1.1.1
-nexus_first_port=1/10
-nexus_second_port=1/11
+ports=1/10,1/11,1/12
 nexus_ssh_port=22
 [DRIVER]
 name=quantum.plugins.cisco.tests.unit.v2.nexus.fake_nexus_driver.CiscoNEXUSFakeDriver
    Or when using Nexus hardware (put the values relevant to your setup):
 [SWITCH]
 nexus_ip_address=1.1.1.1
-nexus_first_port=1/10
-nexus_second_port=1/11
+ports=1/10,1/11,1/12
 nexus_ssh_port=22
 [DRIVER]
 name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
