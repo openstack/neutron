@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import logging
 import random
 
@@ -26,6 +27,7 @@ from quantum.common import utils
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.openstack.common import timeutils
 from quantum import quantum_plugin_base_v2
 
 
@@ -265,6 +267,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             LOG.debug("Recycle: created new %s-%s", ip_address, ip_address)
         QuantumDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
                                                 port_id, ip_address)
+
+    @staticmethod
+    def _default_allocation_expiration():
+        return (timeutils.utcnow() +
+                datetime.timedelta(seconds=cfg.CONF.dhcp_lease_duration))
 
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, port_id,
@@ -1016,7 +1023,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 for ip in ips:
                     allocated = models_v2.IPAllocation(
                         network_id=port['network_id'], port_id=port.id,
-                        ip_address=ip['ip_address'], subnet_id=ip['subnet_id'])
+                        ip_address=ip['ip_address'], subnet_id=ip['subnet_id'],
+                        expiration=self._default_allocation_expiration())
                     context.session.add(allocated)
 
             port.update(p)
