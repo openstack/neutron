@@ -18,20 +18,25 @@
 
 """Root wrapper for Quantum
 
-   Uses modules in quantum.rootwrap containing filters for commands
-   that quantum agents are allowed to run as another user.
+   Filters which commands quantum is allowed to run as another user.
 
-   To switch to using this, you should:
-   * Set "--root_helper=sudo quantum-rootwrap" in the agents config file.
-   * Allow quantum to run quantum-rootwrap as root in quantum_sudoers:
-     quantum ALL = (root) NOPASSWD: /usr/bin/quantum-rootwrap
-     (all other commands can be removed from this file)
+   To use this, you should set the following in quantum.conf and the
+   various .ini files for the agent plugins:
+   root_helper=sudo quantum-rootwrap /etc/quantum/rootwrap.conf
 
+   You also need to let the quantum user run quantum-rootwrap as root in
+     /etc/sudoers:
+   quantum ALL = (root) NOPASSWD: /usr/bin/quantum-rootwrap
+                                  /etc/quantum/rootwrap.conf *
+
+   Filter specs live in /etc/quantum/rootwrap.d/*.filters, or
+   other locations pointed to by /etc/quantum/rootwrap.conf.
    To make allowed commands node-specific, your packaging should only
-   install quantum/rootwrap/quantum-*-agent.py on compute nodes where
-   agents that need root privileges are run.
+   install apropriate .filters for commands which are needed on each
+   node.
 """
 
+import ConfigParser
 import os
 import subprocess
 import sys
@@ -39,15 +44,29 @@ import sys
 
 RC_UNAUTHORIZED = 99
 RC_NOCOMMAND = 98
+RC_BADCONFIG = 97
+
 
 if __name__ == '__main__':
     # Split arguments, require at least a command
     execname = sys.argv.pop(0)
-    if len(sys.argv) == 0:
+    # argv[0] required; path to conf file
+    if len(sys.argv) < 2:
         print "%s: %s" % (execname, "No command specified")
         sys.exit(RC_NOCOMMAND)
 
+    configfile = sys.argv.pop(0)
     userargs = sys.argv[:]
+
+    # Load configuration
+    config = ConfigParser.RawConfigParser()
+    config.read(configfile)
+    try:
+        filters_path = config.get("DEFAULT", "filters_path").split(",")
+        filters = None
+    except ConfigParser.Error:
+        print "%s: Incorrect configuration file: %s" % (execname, configfile)
+        sys.exit(RC_BADCONFIG)
 
     # Add ../ to sys.path to allow running from branch
     possible_topdir = os.path.normpath(os.path.join(os.path.abspath(execname),
@@ -58,7 +77,7 @@ if __name__ == '__main__':
     from quantum.rootwrap import wrapper
 
     # Execute command if it matches any of the loaded filters
-    filters = wrapper.load_filters()
+    filters = wrapper.load_filters(filters_path)
     filtermatch = wrapper.match_filter(filters, userargs)
     if filtermatch:
         obj = subprocess.Popen(filtermatch.get_command(userargs),

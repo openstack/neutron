@@ -39,6 +39,7 @@ EagerResources = [
 ]
 
 ProjectScripts = [
+    'bin/quantum-rootwrap',
 ]
 
 config_path = 'etc/quantum/'
@@ -54,6 +55,7 @@ nec_plugin_config_path = 'etc/quantum/plugins/nec'
 DataFiles = [
     (config_path,
         ['etc/quantum.conf',
+         'etc/rootwrap.conf',
          'etc/api-paste.ini',
          'etc/policy.json',
          'etc/dhcp_agent.ini']),

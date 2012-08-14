@@ -1,0 +1,25 @@
+# quantum-rootwrap command filters for nodes on which quantum is
+# expected to control network
+#
+# This file should be owned by (and only-writeable by) the root user
+
+# format seems to be
+# cmd-name: filter-name, raw-command, user, args
+
+[Filters]
+
+# ryu-agent
+# unclear whether both variants are necessary, but I'm transliterating
+# from the old mechanism
+
+# quantum/plugins/ryu/agent/ryu_quantum_agent.py:
+#   "ovs-vsctl", "--timeout=2", ...
+ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
+ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
+ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
+ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+
+# quantum/plugins/ryu/agent/ryu_quantum_agent.py:
+#   "xe", "vif-param-get", ...
+xe: CommandFilter, /bin/xe, root
+xe_usr: CommandFilter, /usr/bin/xe, root
