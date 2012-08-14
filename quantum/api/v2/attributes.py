@@ -27,6 +27,10 @@ from quantum.common import exceptions as q_exc
 LOG = logging.getLogger(__name__)
 
 
+def is_attr_set(attribute):
+    return attribute not in (None, ATTR_NOT_SPECIFIED)
+
+
 def _validate_boolean(data, valid_values=None):
     if data in [True, False]:
         return
@@ -43,6 +47,19 @@ def _validate_values(data, valid_values=None):
         msg_dict = dict(data=data, values=valid_values)
         msg = _("%(data)s is not in %(values)s") % msg_dict
         LOG.debug("validate_values: %s", msg)
+        return msg
+
+
+def _validate_range(data, valid_values=None):
+    min_value = valid_values[0]
+    max_value = valid_values[1]
+    if data >= min_value and data <= max_value:
+        return
+    else:
+        msg_dict = dict(data=data, min_value=min_value, max_value=max_value)
+        msg = _("%(data)s is not in range %(min_value)s through "
+                "%(max_value)s") % msg_dict
+        LOG.debug("validate_range: %s", msg)
         return msg
 
 
@@ -120,6 +137,7 @@ MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 # Dictionary that maintains a list of validation functions
 validators = {'type:boolean': _validate_boolean,
               'type:values': _validate_values,
+              'type:range': _validate_range,
               'type:mac_address': _validate_mac_address,
               'type:ip_address': _validate_ip_address,
               'type:ip_address_or_none': _validate_ip_address_or_none,

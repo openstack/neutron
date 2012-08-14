@@ -140,7 +140,9 @@ def reserve_specific_vlan_id(vlan_id, session):
                       filter_by(vlan_id=vlan_id).
                       one())
             if record.vlan_used:
-                raise q_exc.VlanIdInUse(vlan_id=vlan_id)
+                # REVISIT(rkukura) pass phyiscal_network
+                raise q_exc.VlanIdInUse(vlan_id=vlan_id,
+                                        physical_network='default')
             LOG.debug("reserving specific vlan %s from pool" % vlan_id)
             record.vlan_used = True
         except exc.NoResultFound:

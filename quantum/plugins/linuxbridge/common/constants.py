@@ -17,47 +17,11 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 
-PORT_STATE = 'port-state'
+FLAT_VLAN_ID = -1
+
 PORT_UP = "ACTIVE"
 PORT_DOWN = "DOWN"
 
-UUID = 'uuid'
-TENANTID = 'tenant_id'
-NETWORKID = 'network_id'
-NETWORKNAME = 'name'
-NETWORKPORTS = 'ports'
-OPSTATUS = 'op_status'
-INTERFACEID = 'interface_id'
-PORTSTATE = 'state'
-PORTID = 'port_id'
-PPNAME = 'name'
-PPVLANID = 'vlan_id'
 VLANID = 'vlan_id'
-VLANNAME = 'vlan_name'
-
-ATTACHMENT = 'attachment'
 PORT_ID = 'port-id'
-PORT_OP_STATUS = 'port-op-status'
-
 NET_ID = 'net-id'
-NET_NAME = 'net-name'
-NET_PORTS = 'net-ports'
-NET_OP_STATUS = 'net-op-status'
-NET_VLAN_NAME = 'net-vlan-name'
-NET_VLAN_ID = 'net-vlan-id'
-NET_TENANTS = 'net-tenants'
-
-USERNAME = 'username'
-PASSWORD = 'password'
-
-DELIMITERS = "[,;:\b\s]"
-
-UUID_LENGTH = 36
-
-UNPLUGGED = '(detached)'
-
-ASSOCIATION_STATUS = 'association_status'
-
-ATTACHED = 'attached'
-
-DETACHED = 'detached'

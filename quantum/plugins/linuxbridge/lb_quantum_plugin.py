@@ -14,10 +14,13 @@
 # limitations under the License.
 
 import logging
+import sys
 
 from quantum.api import api_common
 from quantum.api.v2 import attributes
+from quantum.common import exceptions as q_exc
 from quantum.common import topics
+from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.openstack.common import context
@@ -25,7 +28,8 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy
-from quantum.plugins.linuxbridge.db import l2network_db as cdb
+from quantum.plugins.linuxbridge.common import constants
+from quantum.plugins.linuxbridge.db import l2network_db_v2 as db
 from quantum import policy
 
 
@@ -39,8 +43,8 @@ class LinuxBridgeRpcCallbacks():
     # Device names start with "tap"
     TAP_PREFIX_LEN = 3
 
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, rpc_context):
+        self.rpc_context = rpc_context
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -50,38 +54,40 @@ class LinuxBridgeRpcCallbacks():
         '''
         return dispatcher.RpcDispatcher([self])
 
-    def get_device_details(self, context, **kwargs):
+    def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details"""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug("Device %s details requested from %s", device, agent_id)
-        port = cdb.get_port_from_device(device[self.TAP_PREFIX_LEN:])
+        port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
         if port:
-            vlan_binding = cdb.get_vlan_binding(port['network_id'])
+            binding = db.get_network_binding(db_api.get_session(),
+                                             port['network_id'])
             entry = {'device': device,
-                     'vlan_id': vlan_binding['vlan_id'],
+                     'physical_network': binding.physical_network,
+                     'vlan_id': binding.vlan_id,
                      'network_id': port['network_id'],
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
             # Set the port status to UP
-            cdb.set_port_status(port['id'], api_common.PORT_STATUS_UP)
+            db.set_port_status(port['id'], api_common.PORT_STATUS_UP)
         else:
             entry = {'device': device}
             LOG.debug("%s can not be found in database", device)
         return entry
 
-    def update_device_down(self, context, **kwargs):
+    def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent"""
         # (TODO) garyk - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug("Device %s no longer exists on %s", device, agent_id)
-        port = cdb.get_port_from_device(device[self.TAP_PREFIX_LEN:])
+        port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
         if port:
             entry = {'device': device,
                      'exists': True}
             # Set port status to DOWN
-            cdb.set_port_status(port['id'], api_common.PORT_STATUS_UP)
+            db.set_port_status(port['id'], api_common.PORT_STATUS_DOWN)
         else:
             entry = {'device': device,
                      'exists': False}
@@ -115,10 +121,11 @@ class AgentNotifierApi(proxy.RpcProxy):
                                        network_id=network_id),
                          topic=self.topic_network_delete)
 
-    def port_update(self, context, port, vlan_id):
+    def port_update(self, context, port, physical_network, vlan_id):
         self.fanout_cast(context,
                          self.make_msg('port_update',
                                        port=port,
+                                       physical_network=physical_network,
                                        vlan_id=vlan_id),
                          topic=self.topic_port_update)
 
@@ -137,24 +144,29 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     be updated to take advantage of it.
     """
 
+    # This attribute specifies whether the plugin supports or not
+    # bulk operations. Name mangling is used in order to ensure it
+    # is qualified by class
+    __native_bulk_support = True
+
     supported_extension_aliases = ["provider"]
 
     def __init__(self):
-        cdb.initialize(base=models_v2.model_base.BASEV2)
+        db.initialize()
+        self._parse_network_vlan_ranges()
+        db.sync_network_states(self.network_vlan_ranges)
         self.rpc = cfg.CONF.AGENT.rpc
-        if cfg.CONF.AGENT.rpc and cfg.CONF.AGENT.target_v2_api:
-            self.setup_rpc()
-        if not cfg.CONF.AGENT.target_v2_api:
-            self.rpc = False
+        if self.rpc:
+            self._setup_rpc()
         LOG.debug("Linux Bridge Plugin initialization complete")
 
-    def setup_rpc(self):
+    def _setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.context = context.RequestContext('quantum', 'quantum',
-                                              is_admin=False)
+        self.rpc_context = context.RequestContext('quantum', 'quantum',
+                                                  is_admin=False)
         self.conn = rpc.create_connection(new=True)
-        self.callbacks = LinuxBridgeRpcCallbacks(self.context)
+        self.callbacks = LinuxBridgeRpcCallbacks(self.rpc_context)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
@@ -162,7 +174,32 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         self.conn.consume_in_thread()
         self.notifier = AgentNotifierApi(topics.AGENT)
 
-    # TODO(rkukura) Use core mechanism for attribute authorization
+    def _parse_network_vlan_ranges(self):
+        self.network_vlan_ranges = {}
+        for entry in cfg.CONF.VLANS.network_vlan_ranges:
+            if ':' in entry:
+                try:
+                    physical_network, vlan_min, vlan_max = entry.split(':')
+                    self._add_network_vlan_range(physical_network,
+                                                 int(vlan_min),
+                                                 int(vlan_max))
+                except ValueError as ex:
+                    LOG.error("Invalid network VLAN range: \'%s\' - %s" %
+                              (entry, ex))
+                    sys.exit(1)
+            else:
+                self._add_network(entry)
+        LOG.debug("network VLAN ranges: %s" % self.network_vlan_ranges)
+
+    def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
+        self._add_network(physical_network)
+        self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
+
+    def _add_network(self, physical_network):
+        if physical_network not in self.network_vlan_ranges:
+            self.network_vlan_ranges[physical_network] = []
+
+    # REVISIT(rkukura) Use core mechanism for attribute authorization
     # when available.
 
     def _check_provider_view_auth(self, context, network):
@@ -177,40 +214,119 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def _extend_network_dict(self, context, network):
         if self._check_provider_view_auth(context, network):
-            vlan_binding = cdb.get_vlan_binding(network['id'])
-            network['provider:vlan_id'] = vlan_binding['vlan_id']
+            binding = db.get_network_binding(context.session, network['id'])
+            network['provider:physical_network'] = binding.physical_network
+            if binding.vlan_id == constants.FLAT_VLAN_ID:
+                network['provider:network_type'] = 'flat'
+                network['provider:vlan_id'] = None
+            else:
+                network['provider:network_type'] = 'vlan'
+                network['provider:vlan_id'] = binding.vlan_id
+
+    def _process_provider_create(self, context, attrs):
+        network_type = attrs.get('provider:network_type')
+        physical_network = attrs.get('provider:physical_network')
+        vlan_id = attrs.get('provider:vlan_id')
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        vlan_id_set = attributes.is_attr_set(vlan_id)
+
+        if not (network_type_set or physical_network_set or vlan_id_set):
+            return (None, None, None)
+
+        # Authorize before exposing plugin details to client
+        self._enforce_provider_set_auth(context, attrs)
+
+        if not network_type_set:
+            msg = _("provider:network_type required")
+            raise q_exc.InvalidInput(error_message=msg)
+        elif network_type == 'flat':
+            if vlan_id_set:
+                msg = _("provider:vlan_id specified for flat network")
+                raise q_exc.InvalidInput(error_message=msg)
+            else:
+                vlan_id = constants.FLAT_VLAN_ID
+        elif network_type == 'vlan':
+            if not vlan_id_set:
+                msg = _("provider:vlan_id required")
+                raise q_exc.InvalidInput(error_message=msg)
+        else:
+            msg = _("invalid provider:network_type %s" % network_type)
+            raise q_exc.InvalidInput(error_message=msg)
+
+        if physical_network_set:
+            if physical_network not in self.network_vlan_ranges:
+                msg = _("unknown provider:physical_network %s" %
+                        physical_network)
+                raise q_exc.InvalidInput(error_message=msg)
+        elif 'default' in self.network_vlan_ranges:
+            physical_network = 'default'
+        else:
+            msg = _("provider:physical_network required")
+            raise q_exc.InvalidInput(error_message=msg)
+
+        return (network_type, physical_network, vlan_id)
+
+    def _check_provider_update(self, context, attrs):
+        network_type = attrs.get('provider:network_type')
+        physical_network = attrs.get('provider:physical_network')
+        vlan_id = attrs.get('provider:vlan_id')
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        vlan_id_set = attributes.is_attr_set(vlan_id)
+
+        if not (network_type_set or physical_network_set or vlan_id_set):
+            return
+
+        # Authorize before exposing plugin details to client
+        self._enforce_provider_set_auth(context, attrs)
+
+        msg = _("plugin does not support updating provider attributes")
+        raise q_exc.InvalidInput(error_message=msg)
 
     def create_network(self, context, network):
-        net = super(LinuxBridgePluginV2, self).create_network(context,
-                                                              network)
-        try:
-            vlan_id = network['network'].get('provider:vlan_id')
-            if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
-                self._enforce_provider_set_auth(context, net)
-                cdb.reserve_specific_vlanid(int(vlan_id))
+        (network_type, physical_network,
+         vlan_id) = self._process_provider_create(context,
+                                                  network['network'])
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            if not network_type:
+                physical_network, vlan_id = db.reserve_network(session)
             else:
-                vlan_id = cdb.reserve_vlanid()
-            cdb.add_vlan_binding(vlan_id, net['id'])
+                db.reserve_specific_network(session, physical_network, vlan_id)
+            net = super(LinuxBridgePluginV2, self).create_network(context,
+                                                                  network)
+            db.add_network_binding(session, net['id'],
+                                   physical_network, vlan_id)
             self._extend_network_dict(context, net)
-        except:
-            super(LinuxBridgePluginV2, self).delete_network(context,
-                                                            net['id'])
-            raise
+            # note - exception will rollback entire transaction
         return net
 
     def update_network(self, context, id, network):
-        net = super(LinuxBridgePluginV2, self).update_network(context, id,
-                                                              network)
-        self._extend_network_dict(context, net)
+        self._check_provider_update(context, network['network'])
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(LinuxBridgePluginV2, self).update_network(context, id,
+                                                                  network)
+            self._extend_network_dict(context, net)
         return net
 
     def delete_network(self, context, id):
-        vlan_binding = cdb.get_vlan_binding(id)
-        result = super(LinuxBridgePluginV2, self).delete_network(context, id)
-        cdb.release_vlanid(vlan_binding['vlan_id'])
+        session = context.session
+        with session.begin(subtransactions=True):
+            binding = db.get_network_binding(session, id)
+            result = super(LinuxBridgePluginV2, self).delete_network(context,
+                                                                     id)
+            db.release_network(session, binding.physical_network,
+                               binding.vlan_id, self.network_vlan_ranges)
+            # the network_binding record is deleted via cascade from
+            # the network record, so explicit removal is not necessary
         if self.rpc:
-            self.notifier.network_delete(self.context, id)
-        return result
+            self.notifier.network_delete(self.rpc_context, id)
 
     def get_network(self, context, id, fields=None, verbose=None):
         net = super(LinuxBridgePluginV2, self).get_network(context, id,
@@ -233,7 +349,9 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         port = super(LinuxBridgePluginV2, self).update_port(context, id, port)
         if self.rpc:
             if original_port['admin_state_up'] != port['admin_state_up']:
-                vlan_binding = cdb.get_vlan_binding(port['network_id'])
-                self.notifier.port_update(self.context, port,
-                                          vlan_binding['vlan_id'])
+                binding = db.get_network_binding(context.session,
+                                                 port['network_id'])
+                self.notifier.port_update(self.rpc_context, port,
+                                          binding.physical_network,
+                                          binding.vlan_id)
         return port

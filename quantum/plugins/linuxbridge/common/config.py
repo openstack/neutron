@@ -19,10 +19,15 @@
 
 from quantum.openstack.common import cfg
 
+DEFAULT_VLAN_RANGES = ['default:1000:2999']
+DEFAULT_INTERFACE_MAPPINGS = ['default:eth1']
+
 
 vlan_opts = [
-    cfg.IntOpt('vlan_start', default=1000),
-    cfg.IntOpt('vlan_end', default=3000),
+    cfg.ListOpt('network_vlan_ranges',
+                default=DEFAULT_VLAN_RANGES,
+                help="List of <physical_network>:<vlan_min>:<vlan_max> "
+                "or <physical_network>"),
 ]
 
 database_opts = [
@@ -32,13 +37,14 @@ database_opts = [
 ]
 
 bridge_opts = [
-    cfg.StrOpt('physical_interface', default='eth1'),
+    cfg.ListOpt('physical_interface_mappings',
+                default=DEFAULT_INTERFACE_MAPPINGS,
+                help="List of <physical_network>:<physical_interface>"),
 ]
 
 agent_opts = [
     cfg.IntOpt('polling_interval', default=2),
     cfg.StrOpt('root_helper', default='sudo'),
-    cfg.BoolOpt('target_v2_api', default=False),
     cfg.BoolOpt('rpc', default=True),
 ]
 

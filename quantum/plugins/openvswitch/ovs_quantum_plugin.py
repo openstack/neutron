@@ -234,15 +234,86 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 network['provider:vlan_id'] = ovs_db_v2.get_vlan(
                     network['id'], context.session)
 
+    def _process_provider_create(self, context, attrs):
+        network_type = attrs.get('provider:network_type')
+        physical_network = attrs.get('provider:physical_network')
+        vlan_id = attrs.get('provider:vlan_id')
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        vlan_id_set = attributes.is_attr_set(vlan_id)
+
+        if not (network_type_set or physical_network_set or vlan_id_set):
+            return (None, None, None)
+
+        # Authorize before exposing plugin details to client
+        self._enforce_provider_set_auth(context, attrs)
+
+        if not network_type_set:
+            msg = _("provider:network_type required")
+            raise q_exc.InvalidInput(error_message=msg)
+        elif network_type == 'flat':
+            msg = _("plugin does not support flat networks")
+            raise q_exc.InvalidInput(error_message=msg)
+        # REVISIT(rkukura) to be enabled in phase 3
+        #    if vlan_id_set:
+        #        msg = _("provider:vlan_id specified for flat network")
+        #        raise q_exc.InvalidInput(error_message=msg)
+        #    else:
+        #        vlan_id = db.FLAT_VLAN_ID
+        elif network_type == 'vlan':
+            if not vlan_id_set:
+                msg = _("provider:vlan_id required")
+                raise q_exc.InvalidInput(error_message=msg)
+        else:
+            msg = _("invalid provider:network_type %s" % network_type)
+            raise q_exc.InvalidInput(error_message=msg)
+
+        if physical_network_set:
+            msg = _("plugin does not support specifying physical_network")
+            raise q_exc.InvalidInput(error_message=msg)
+        # REVISIT(rkukura) to be enabled in phase 3
+        #    if physical_network not in self.physical_networks:
+        #        msg = _("unknown provider:physical_network %s" %
+        #                physical_network)
+        #        raise q_exc.InvalidInput(error_message=msg)
+        #elif 'default' in self.physical_networks:
+        #    physical_network = 'default'
+        #else:
+        #    msg = _("provider:physical_network required")
+        #    raise q_exc.InvalidInput(error_message=msg)
+
+        return (network_type, physical_network, vlan_id)
+
+    def _check_provider_update(self, context, attrs):
+        network_type = attrs.get('provider:network_type')
+        physical_network = attrs.get('provider:physical_network')
+        vlan_id = attrs.get('provider:vlan_id')
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        vlan_id_set = attributes.is_attr_set(vlan_id)
+
+        if not (network_type_set or physical_network_set or vlan_id_set):
+            return
+
+        # Authorize before exposing plugin details to client
+        self._enforce_provider_set_auth(context, attrs)
+
+        msg = _("plugin does not support updating provider attributes")
+        raise q_exc.InvalidInput(error_message=msg)
+
     def create_network(self, context, network):
+        (network_type, physical_network,
+         vlan_id) = self._process_provider_create(context,
+                                                  network['network'])
+
         net = super(OVSQuantumPluginV2, self).create_network(context, network)
         try:
-            vlan_id = network['network'].get('provider:vlan_id')
-            if vlan_id not in (None, attributes.ATTR_NOT_SPECIFIED):
-                self._enforce_provider_set_auth(context, net)
-                ovs_db_v2.reserve_specific_vlan_id(vlan_id, context.session)
-            else:
+            if not network_type:
                 vlan_id = ovs_db_v2.reserve_vlan_id(context.session)
+            else:
+                ovs_db_v2.reserve_specific_vlan_id(vlan_id, context.session)
         except Exception:
             super(OVSQuantumPluginV2, self).delete_network(context, net['id'])
             raise
@@ -253,6 +324,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def update_network(self, context, id, network):
+        self._check_provider_update(context, network['network'])
+
         net = super(OVSQuantumPluginV2, self).update_network(context, id,
                                                              network)
         self._extend_network_dict(context, net)
