@@ -71,6 +71,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
+        # If test_config specifies some config-file, use it, as well
+        for config_file in test_config.get('config_files', []):
+            args.extend(['--config-file', config_file])
         config.parse(args=args)
         # Update the plugin
         cfg.CONF.set_override('core_plugin', plugin)
