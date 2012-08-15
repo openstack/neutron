@@ -12,13 +12,13 @@
  available at: http://docs.openstack.org .  This includes:
 
  Quantum Administrator Guide
- http://docs.openstack.org/incubation/openstack-network/admin/content/
+ http://docs.openstack.org/trunk/openstack-network/admin/content/
 
  Quantum API Reference:
- http://docs.openstack.org/incubation/openstack-network/developer/quantum-api-1.0/content/
+ http://wiki.openstack.org/Quantum/APIv2-specification/
 
  The start of some developer documentation is available at:
  http://wiki.openstack.org/QuantumDevelopment
 
  For help using or hacking on Quantum, you can send mail to
- netstack@lists.launchpad.net .
+ openstack-dev@lists.openstack.org .
