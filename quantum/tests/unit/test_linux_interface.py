@@ -54,6 +54,7 @@ class FakePort:
     fixed_ips = [FakeAllocation]
     device_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     network = FakeNetwork()
+    network_id = network.id
 
 
 class TestBase(unittest.TestCase):
@@ -252,7 +253,7 @@ class TestBridgeInterfaceDriver(TestBase):
             br.unplug('tap0')
             log.assert_called_once()
 
-        self.ip_dev.assert_has_calls([mock.call('tap0', 'sudo'),
+        self.ip_dev.assert_has_calls([mock.call('tap0', 'sudo', None),
                                       mock.call().link.delete()])
 
 

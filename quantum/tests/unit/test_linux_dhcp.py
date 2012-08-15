@@ -133,6 +133,9 @@ class TestDhcpBase(unittest.TestCase):
             def disable(self):
                 self.called.append('disable')
 
+            def update_l3(self):
+                pass
+
             def reload_allocations(self):
                 pass
 
@@ -284,6 +287,20 @@ class TestDhcpLocalProcess(TestBase):
         exp_args = ['ip', 'netns', 'exec',
                     'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-9', 5]
         self.execute.assert_called_once_with(exp_args, root_helper='sudo')
+
+    def test_update_l3(self):
+        delegate = mock.Mock()
+        fake_net = FakeDualNetwork()
+        with mock.patch.object(LocalChild, 'active') as active:
+            active.__get__ = mock.Mock(return_value=False)
+            lp = LocalChild(self.conf,
+                            fake_net,
+                            device_delegate=delegate)
+            lp.update_l3()
+
+            delegate.assert_has_calls(
+                [mock.call.update_l3(fake_net)])
+            self.assertEqual(lp.called, ['reload'])
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:

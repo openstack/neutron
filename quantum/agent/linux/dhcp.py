@@ -74,6 +74,10 @@ class DhcpBase(object):
     def disable(self):
         """Disable dhcp for this network."""
 
+    @abc.abstractmethod
+    def update_l3(self, subnet, reason):
+        """Alert the driver that a subnet has changed."""
+
     def restart(self):
         """Restart the dhcp service for the network."""
         self.disable()
@@ -124,6 +128,11 @@ class DhcpLocalProcess(DhcpBase):
                       (self.network.id, pid))
         else:
             LOG.debug(_('No DHCP started for %s') % self.network.id)
+
+    def update_l3(self):
+        """Update the L3 settings for the interface and reload settings."""
+        self.device_delegate.update_l3(self.network)
+        self.reload_allocations()
 
     def get_conf_file_name(self, kind, ensure_conf_dir=False):
         """Returns the file name for a given kind of config file."""

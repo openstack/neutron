@@ -31,6 +31,7 @@ from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
+from quantum.db import db_base_plugin_v2
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_extensions

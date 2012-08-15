@@ -90,7 +90,7 @@ class LinuxInterfaceDriver(object):
         """Plug in the interface."""
 
     @abc.abstractmethod
-    def unplug(self, device_name, bridge=None):
+    def unplug(self, device_name, bridge=None, namespace=None):
         """Unplug the interface."""
 
 
@@ -99,7 +99,7 @@ class NullDriver(LinuxInterfaceDriver):
              bridge=None, namespace=None):
         pass
 
-    def unplug(self, device_name, bridge=None):
+    def unplug(self, device_name, bridge=None, namespace=None):
         pass
 
 
@@ -143,7 +143,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             namespace_obj.add_device_to_namespace(device)
         device.link.set_up()
 
-    def unplug(self, device_name, bridge=None):
+    def unplug(self, device_name, bridge=None, namespace=None):
         """Unplug the interface."""
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
@@ -180,9 +180,9 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         else:
             LOG.warn(_("Device %s already exists") % device_name)
 
-    def unplug(self, device_name, bridge=None):
+    def unplug(self, device_name, bridge=None, namespace=None):
         """Unplug the interface."""
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper)
+        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
         try:
             device.link.delete()
             LOG.debug(_("Unplugged interface '%s'") % device_name)

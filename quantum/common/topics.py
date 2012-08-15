@@ -23,6 +23,7 @@ UPDATE = 'update'
 
 AGENT = 'q-agent-notifier'
 PLUGIN = 'q-plugin'
+DHCP = 'q-dhcp-notifer'
 
 
 def get_topic_name(prefix, table, operation):
