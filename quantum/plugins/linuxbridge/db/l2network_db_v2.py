@@ -17,7 +17,7 @@ import logging
 
 from sqlalchemy.orm import exc
 
-from quantum.api import api_common
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
 from quantum.db import models_v2
@@ -188,7 +188,7 @@ def set_port_status(port_id, status):
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()
         port['status'] = status
-        if status == api_common.PORT_STATUS_DOWN:
+        if status == constants.PORT_STATUS_DOWN:
             port['device_id'] = ''
             port['device_owner'] = ''
         session.merge(port)

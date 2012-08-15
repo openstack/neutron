@@ -20,6 +20,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc, joinedload
 
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.plugins.cisco.db import models
 
@@ -192,7 +193,8 @@ def port_update(port_id, net_id, **kwargs):
     session = get_session()
     for key in kwargs.keys():
         if key == "state":
-            if kwargs[key] not in ('ACTIVE', 'DOWN'):
+            if kwargs[key] not in (constants.PORT_STATUS_ACTIVE,
+                                   constants.PORT_STATUS_DOWN):
                 raise q_exc.StateInvalid(port_state=kwargs[key])
         port[key] = kwargs[key]
     session.merge(port)

@@ -39,6 +39,7 @@ import nvplib
 from nvp_plugin_version import PLUGIN_VERSION
 
 from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions as exception
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
@@ -420,7 +421,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
              'name': result['lswitch-display-name'],
              'tenant_id': network['tenant_id'],
              'admin_state_up': True,
-             'status': 'ACTIVE',
+             'status': constants.NET_STATUS_ACTIVE,
              'shared': network['shared'],
              'subnets': []}
 
@@ -494,9 +495,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 if nvp_lswitch["uuid"] == quantum_lswitch["id"]:
                     if (nvp_lswitch["_relations"]["LogicalSwitchStatus"]
                             ["fabric_status"]):
-                        quantum_lswitch["status"] = "ACTIVE"
+                        quantum_lswitch["status"] = constants.NET_STATUS_ACTIVE
                     else:
-                        quantum_lswitch["status"] = "DOWN"
+                        quantum_lswitch["status"] = constants.NET_STATUS_DOWN
                     quantum_lswitch["name"] = nvp_lswitch["display_name"]
                     nvp_lswitches.remove(nvp_lswitch)
                     Found = True
@@ -645,9 +646,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                         ["_relations"]
                         ["LogicalPortStatus"]
                         ["fabric_status_up"]):
-                    quantum_lport["status"] = "ACTIVE"
+                    quantum_lport["status"] = constants.PORT_STATUS_ACTIVE
                 else:
-                    quantum_lport["status"] = "DOWN"
+                    quantum_lport["status"] = constants.PORT_STATUS_DOWN
 
                 del nvp_lports[quantum_lport["id"]]
                 lports.append(quantum_lport)
@@ -831,9 +832,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         quantum_db["admin_state_up"] = port["admin_status_enabled"]
         if port["_relations"]["LogicalPortStatus"]["fabric_status_up"]:
-            quantum_db["status"] = "ACTIVE"
+            quantum_db["status"] = constants.PORT_STATUS_ACTIVE
         else:
-            quantum_db["status"] = "DOWN"
+            quantum_db["status"] = constants.PORT_STATUS_DOWN
 
         LOG.debug("Port details for tenant %s: %s" %
                   (context.tenant_id, quantum_db))

@@ -16,8 +16,8 @@
 import logging
 import sys
 
-from quantum.api import api_common
 from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import api as db_api
@@ -29,7 +29,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy
-from quantum.plugins.linuxbridge.common import constants
+from quantum.plugins.linuxbridge.common import constants as lconst
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as db
 from quantum import policy
 
@@ -71,7 +71,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
             # Set the port status to UP
-            db.set_port_status(port['id'], api_common.PORT_STATUS_UP)
+            db.set_port_status(port['id'], constants.PORT_STATUS_ACTIVE)
         else:
             entry = {'device': device}
             LOG.debug("%s can not be found in database", device)
@@ -88,7 +88,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
             entry = {'device': device,
                      'exists': True}
             # Set port status to DOWN
-            db.set_port_status(port['id'], api_common.PORT_STATUS_DOWN)
+            db.set_port_status(port['id'], constants.PORT_STATUS_DOWN)
         else:
             entry = {'device': device,
                      'exists': False}
@@ -217,7 +217,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         if self._check_provider_view_auth(context, network):
             binding = db.get_network_binding(context.session, network['id'])
             network['provider:physical_network'] = binding.physical_network
-            if binding.vlan_id == constants.FLAT_VLAN_ID:
+            if binding.vlan_id == lconst.FLAT_VLAN_ID:
                 network['provider:network_type'] = 'flat'
                 network['provider:vlan_id'] = None
             else:
@@ -247,7 +247,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 msg = _("provider:vlan_id specified for flat network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
-                vlan_id = constants.FLAT_VLAN_ID
+                vlan_id = lconst.FLAT_VLAN_ID
         elif network_type == 'vlan':
             if not vlan_id_set:
                 msg = _("provider:vlan_id required")

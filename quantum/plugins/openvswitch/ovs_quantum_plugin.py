@@ -23,8 +23,8 @@
 import logging
 import os
 
-from quantum.api import api_common
 from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import api as db
@@ -75,7 +75,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
             # Set the port status to UP
-            ovs_db_v2.set_port_status(port['id'], api_common.PORT_STATUS_UP)
+            ovs_db_v2.set_port_status(port['id'], constants.PORT_STATUS_ACTIVE)
         else:
             entry = {'device': device}
             LOG.debug("%s can not be found in database", device)
@@ -92,7 +92,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
             entry = {'device': device,
                      'exists': True}
             # Set port status to DOWN
-            ovs_db_v2.set_port_status(port['id'], api_common.PORT_STATUS_DOWN)
+            ovs_db_v2.set_port_status(port['id'], constants.PORT_STATUS_DOWN)
         else:
             entry = {'device': device,
                      'exists': False}

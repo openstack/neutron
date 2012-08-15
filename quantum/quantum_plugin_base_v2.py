@@ -162,7 +162,7 @@ class QuantumPluginBaseV2(object):
         :returns: a mapping sequence with the following signature:
                     {'port-id': uuid representing the
                                  updated port on specified quantum network
-                     'port-state': update port state( UP or DOWN)
+                     'port-state': update port state( ACTIVE or DOWN)
                     }
         :raises: exception.StateInvalid
         :raises: exception.PortNotFound

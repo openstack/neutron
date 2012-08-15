@@ -34,6 +34,7 @@ import re
 import subprocess
 import sys
 
+from quantum.common import constants
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as l2db
@@ -232,7 +233,7 @@ def connect_vm(tenant_id, vm_image_id, service_instance_id, *args):
 def create_multiport(tenant_id, networks_list, *args):
     """Creates ports on a single host"""
     ports_info = {'multiport':
-                  {'status': 'ACTIVE',
+                  {'status': constants.PORT_STATUS_ACTIVE,
                    'net_id_list': networks_list,
                    'ports_desc': {'key': 'value'}}}
     request_url = "/multiport"

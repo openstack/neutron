@@ -37,6 +37,7 @@ import NvpApiClient
 
 #FIXME(danwent): I'd like this file to get to the point where it has
 # no quantum-specific logic in it
+from quantum.common import constants
 from quantum.common import exceptions as exception
 
 LOCAL_LOGGING = False
@@ -277,7 +278,7 @@ def create_network(tenant_id, net_name, **kwargs):
                    "tags": [{"tag": tenant_id, "scope": "os_tid"}]}
 
     net = create_lswitch(cluster, lswitch_obj)
-    net['net-op-status'] = "UP"
+    net['net-op-status'] = constants.NET_STATUS_ACTIVE
     return net
 
 
@@ -441,9 +442,9 @@ def get_port_status(cluster, lswitch_id, port_id):
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
     if r['link_status_up'] is True:
-        return "UP"
+        return constants.PORT_STATUS_ACTIVE
     else:
-        return "DOWN"
+        return constants.PORT_STATUS_DOWN
 
 
 def plug_interface(clusters, lswitch_id, port, type, attachment=None):

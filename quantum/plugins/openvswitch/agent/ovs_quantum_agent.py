@@ -30,6 +30,7 @@ from sqlalchemy.ext import sqlsoup
 from quantum.agent import rpc as agent_rpc
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
+from quantum.common import constants
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.openstack.common import cfg
@@ -40,10 +41,6 @@ from quantum.plugins.openvswitch.common import config
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
-
-# Global constants.
-OP_STATUS_UP = "UP"
-OP_STATUS_DOWN = "DOWN"
 
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = "4095"
@@ -258,7 +255,8 @@ class OVSQuantumAgent(object):
                                  % (old_b, str(p)))
                         self.port_unbound(p, True)
                         if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].status = OP_STATUS_DOWN
+                            all_bindings[p.vif_id].status = (
+                                constants.PORT_STATUS_DOWN)
                     if new_b is not None:
                         # If we don't have a binding we have to stick it on
                         # the dead vlan
@@ -266,7 +264,8 @@ class OVSQuantumAgent(object):
                         vlan_id = vlan_bindings.get(net_id, DEAD_VLAN_TAG)
                         self.port_bound(p, vlan_id)
                         if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].status = OP_STATUS_UP
+                            all_bindings[p.vif_id].status = (
+                                constants.PORT_STATUS_ACTIVE)
                         LOG.info(("Adding binding to net-id = %s "
                                   "for %s on vlan %s") %
                                  (new_b, str(p), vlan_id))
@@ -278,7 +277,8 @@ class OVSQuantumAgent(object):
                         old_b = old_local_bindings[vif_id]
                         self.port_unbound(old_vif_ports[vif_id], False)
                     if vif_id in all_bindings:
-                        all_bindings[vif_id].status = OP_STATUS_DOWN
+                        all_bindings[vif_id].status = (
+                            constants.PORT_STATUS_DOWN)
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings
@@ -667,7 +667,8 @@ class OVSQuantumTunnelAgent(object):
                                  + " added to dead vlan")
                         self.port_unbound(p, old_net_uuid)
                         if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].status = OP_STATUS_DOWN
+                            all_bindings[p.vif_id].status = (
+                                constants.PORT_STATUS_DOWN)
                         if not new_port:
                             self.port_dead(p)
 
@@ -680,7 +681,8 @@ class OVSQuantumTunnelAgent(object):
 
                         lsw_id = lsw_id_bindings[new_net_uuid]
                         self.port_bound(p, new_net_uuid, lsw_id)
-                        all_bindings[p.vif_id].status = OP_STATUS_UP
+                        all_bindings[p.vif_id].status = (
+                            constants.PORT_STATUS_ACTIVE)
                         LOG.info("Port %s on net-id = %s bound to %s " % (
                                  str(p), new_net_uuid,
                                  str(self.local_vlan_map[new_net_uuid])))
@@ -688,7 +690,8 @@ class OVSQuantumTunnelAgent(object):
                 for vif_id in disappeared_vif_ports_ids:
                     LOG.info("Port Disappeared: " + vif_id)
                     if vif_id in all_bindings:
-                        all_bindings[vif_id].status = OP_STATUS_DOWN
+                        all_bindings[vif_id].status = (
+                            constants.PORT_STATUS_DOWN)
                     old_port = old_local_bindings.get(vif_id)
                     if old_port:
                         self.port_unbound(old_vif_ports[vif_id],

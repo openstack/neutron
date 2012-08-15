@@ -22,6 +22,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.common import utils
 from quantum.db import api as db
@@ -756,7 +757,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                         name=n['name'],
                                         admin_state_up=n['admin_state_up'],
                                         shared=n['shared'],
-                                        status="ACTIVE")
+                                        status=constants.NET_STATUS_ACTIVE)
             context.session.add(network)
         return self._make_network_dict(network)
 
@@ -983,7 +984,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                   network_id=p['network_id'],
                                   mac_address=p['mac_address'],
                                   admin_state_up=p['admin_state_up'],
-                                  status="ACTIVE",
+                                  status=constants.PORT_STATUS_ACTIVE,
                                   device_id=p['device_id'],
                                   device_owner=p['device_owner'])
             context.session.add(port)

@@ -31,11 +31,9 @@ from sqlalchemy.ext.sqlsoup import SqlSoup
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
 from quantum.common import config as logging_config
+from quantum.common import constants
 from quantum.openstack.common import cfg
 from quantum.plugins.ryu.common import config
-
-OP_STATUS_UP = "UP"
-OP_STATUS_DOWN = "DOWN"
 
 
 class OVSBridge(ovs_lib.OVSBridge):
@@ -167,7 +165,8 @@ class OVSQuantumOFPRyuAgent:
                 net_id = all_bindings[port.vif_id].network_id
                 local_bindings[port.vif_id] = net_id
                 self._port_update(net_id, port)
-                self._set_port_status(all_bindings[port.vif_id], OP_STATUS_UP)
+                self._set_port_status(all_bindings[port.vif_id],
+                                      constants.PORT_STATUS_ACTIVE)
                 LOG.info("Updating binding to net-id = %s for %s",
                          net_id, str(port))
         db.commit()
@@ -196,11 +195,11 @@ class OVSQuantumOFPRyuAgent:
                              old_b, str(port))
                     if port.vif_id in all_bindings:
                         self._set_port_status(all_bindings[port.vif_id],
-                                              OP_STATUS_DOWN)
+                                              constants.PORT_STATUS_DOWN)
                 if not new_b:
                     if port.vif_id in all_bindings:
                         self._set_port_status(all_bindings[port.vif_id],
-                                              OP_STATUS_UP)
+                                              constants.PORT_STATUS_ACTIVE)
                     LOG.info("Adding binding to net-id = %s for %s",
                              new_b, str(port))
 
@@ -209,7 +208,7 @@ class OVSQuantumOFPRyuAgent:
                     LOG.info("Port Disappeared: %s", vif_id)
                     if vif_id in all_bindings:
                         self._set_port_status(all_bindings[port.vif_id],
-                                              OP_STATUS_DOWN)
+                                              constants.PORT_STATUS_DOWN)
 
             old_vif_ports = new_vif_ports
             old_local_bindings = new_local_bindings

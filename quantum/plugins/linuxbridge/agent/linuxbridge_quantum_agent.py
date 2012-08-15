@@ -37,13 +37,14 @@ from sqlalchemy.ext.sqlsoup import SqlSoup
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
+from quantum.common import constants
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.linuxbridge.common import config
-from quantum.plugins.linuxbridge.common import constants
+from quantum.plugins.linuxbridge.common import constants as lconst
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -59,8 +60,6 @@ DEVICE_NAME_PLACEHOLDER = "device_name"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
 VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
-OP_STATUS_UP = "UP"
-OP_STATUS_DOWN = "DOWN"
 # Default inteval values
 DEFAULT_POLLING_INTERVAL = 2
 DEFAULT_RECONNECT_INTERVAL = 2
@@ -255,7 +254,7 @@ class LinuxBridge:
                               tap_device_name], root_helper=self.root_helper):
                 return False
 
-        if int(vlan_id) == constants.FLAT_VLAN_ID:
+        if int(vlan_id) == lconst.FLAT_VLAN_ID:
             self.ensure_flat_bridge(network_id, physical_interface)
         else:
             self.ensure_vlan_bridge(network_id, physical_interface, vlan_id)
@@ -508,7 +507,7 @@ class LinuxBridgeQuantumAgentDB:
                                          interface_id,
                                          physical_network,
                                          vlan_id):
-                all_bindings[port_id].status = OP_STATUS_UP
+                all_bindings[port_id].status = constants.PORT_STATUS_ACTIVE
 
             plugged_interfaces.append(interface_id)
 

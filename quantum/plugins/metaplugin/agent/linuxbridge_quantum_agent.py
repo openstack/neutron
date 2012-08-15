@@ -31,6 +31,7 @@ from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.openstack.common import cfg
 from quantum.common import config as logging_config
+from quantum.common import constants
 from quantum.plugins.linuxbridge.common import config
 import quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent as lb
 
@@ -42,8 +43,6 @@ LOG = logging.getLogger(__name__)
 BRIDGE_NAME_PREFIX = "brq"
 VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
-OP_STATUS_UP = "UP"
-OP_STATUS_DOWN = "DOWN"
 # Default inteval values
 DEFAULT_POLLING_INTERVAL = 2
 DEFAULT_RECONNECT_INTERVAL = 2
@@ -105,7 +104,7 @@ class MetaLinuxBridgeQuantumAgent(lb.LinuxBridgeQuantumAgent):
                 entry = {'network_id': bind.network_id, 'state': bind.state,
                          'op_status': bind.op_status, 'uuid': bind.uuid,
                          'interface_id': bind.interface_id}
-                append_entry = bind.state == 'ACTIVE'
+                append_entry = bind.state == constants.PORT_STATUS_ACTIVE
             if append_entry:
                 port_bindings.append(entry)
 
@@ -122,9 +121,10 @@ class MetaLinuxBridgeQuantumAgent(lb.LinuxBridgeQuantumAgent):
                                          interface_id,
                                          vlan_id):
                 if self.target_v2_api:
-                    all_bindings[port_id].status = OP_STATUS_UP
+                    all_bindings[port_id].status = constants.PORT_STATUS_ACTIVE
                 else:
-                    all_bindings[port_id].op_status = OP_STATUS_UP
+                    all_bindings[port_id].op_status = (
+                        constants.PORT_STATUS_ACTIVE)
 
             plugged_interfaces.append(interface_id)
 

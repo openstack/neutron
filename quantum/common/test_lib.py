@@ -44,6 +44,8 @@ import unittest
 from nose import core
 from nose import result
 
+from quantum.common import constants
+
 
 class _AnsiColorizer(object):
     """
@@ -283,6 +285,6 @@ def run_tests(c=None):
 # quantum/plugins/openvswitch/ )
 test_config = {
     "plugin_name": "quantum.plugins.sample.SamplePlugin.FakePlugin",
-    "default_net_op_status": "UP",
-    "default_port_op_status": "UP",
+    "default_net_op_status": constants.NET_STATUS_ACTIVE,
+    "default_port_op_status": constants.PORT_STATUS_ACTIVE,
 }
