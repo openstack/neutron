@@ -66,7 +66,10 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                        in cfg.CONF.META.plugin_list.split(',')]
         for flavor, plugin_provider in plugin_list:
             self.plugins[flavor] = self._load_plugin(plugin_provider)
+            # Needed to clear _ENGINE for each plugin
+            db._ENGINE = None
 
+        db.configure_db(options)
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':
             extension_list = [method_set.split(':')
