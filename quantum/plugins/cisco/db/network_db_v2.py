@@ -146,7 +146,7 @@ def get_all_vlan_bindings():
     LOG.debug("get_all_vlan_bindings() called")
     session = db.get_session()
     try:
-        bindings = session.query(network_models_v2.VlanBinding).all()
+        bindings = session.query(network_models_v2.Vlan_Binding).all()
         return bindings
     except exc.NoResultFound:
         return []
@@ -157,7 +157,7 @@ def get_vlan_binding(netid):
     LOG.debug("get_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(network_models_v2.VlanBinding).
+        binding = (session.query(network_models_v2.Vlan_Binding).
                    filter_by(network_id=netid).one())
         return binding
     except exc.NoResultFound:
@@ -169,12 +169,12 @@ def add_vlan_binding(vlanid, vlanname, netid):
     LOG.debug("add_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(network_models_v2.VlanBinding).
+        binding = (session.query(network_models_v2.Vlan_Binding).
                    filter_by(vlan_id=vlanid).one())
         raise c_exc.NetworkVlanBindingAlreadyExists(vlan_id=vlanid,
                                                     network_id=netid)
     except exc.NoResultFound:
-        binding = network_models_v2.VlanBinding(vlanid, vlanname, netid)
+        binding = network_models_v2.Vlan_Binding(vlanid, vlanname, netid)
         session.add(binding)
         session.flush()
         return binding
@@ -185,7 +185,7 @@ def remove_vlan_binding(netid):
     LOG.debug("remove_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(network_models_v2.VlanBinding).
+        binding = (session.query(network_models_v2.Vlan_Binding).
                    filter_by(network_id=netid).one())
         session.delete(binding)
         session.flush()
@@ -199,7 +199,7 @@ def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
     LOG.debug("update_vlan_binding() called")
     session = db.get_session()
     try:
-        binding = (session.query(network_models_v2.VlanBinding).
+        binding = (session.query(network_models_v2.Vlan_Binding).
                    filter_by(network_id=netid).one())
         if newvlanid:
             binding["vlan_id"] = newvlanid

@@ -71,10 +71,14 @@ class NexusPlugin(L2DevicePluginBase):
         for this VLAN
         """
         LOG.debug("NexusPlugin:create_network() called\n")
+        vlan_ids = ''
+        for key in kwargs:
+            if key == 'vlan_ids':
+                vlan_ids = kwargs['vlan_ids']
         self._client.create_vlan(
             vlan_name, str(vlan_id), self._nexus_ip,
             self._nexus_username, self._nexus_password,
-            self._nexus_ports, self._nexus_ssh_port)
+            self._nexus_ports, self._nexus_ssh_port, vlan_ids)
         for ports in self._nexus_ports:
             try:
                 nxos_db.add_nexusport_binding(ports, str(vlan_id))
@@ -95,10 +99,15 @@ class NexusPlugin(L2DevicePluginBase):
         from the relevant interfaces
         """
         LOG.debug("NexusPlugin:delete_network() called\n")
+        vlan_id = None
         context = kwargs[const.CONTEXT]
         base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
-        vlan_id = self._get_vlan_id_for_network(tenant_id, net_id,
-                                                context, base_plugin_ref)
+        for key in kwargs:
+            if key == 'vlan_id':
+                vlan_id = kwargs['vlan_id']
+        if vlan_id is None:
+            vlan_id = self._get_vlan_id_for_network(tenant_id, net_id,
+                                                    context, base_plugin_ref)
         ports_id = nxos_db.get_nexusport_binding(vlan_id)
         LOG.debug("NexusPlugin: Interfaces to be disassociated: %s" % ports_id)
         nxos_db.remove_nexusport_binding(vlan_id)
@@ -185,10 +194,8 @@ class NexusPlugin(L2DevicePluginBase):
         """
         Obtain the VLAN ID given the Network ID
         """
-        net = self._get_network(tenant_id, network_id, context,
-                                base_plugin_ref)
-        vlan_id = net[const.NET_VLAN_ID]
-        return vlan_id
+        vlan = cdb.get_vlan_binding(network_id)
+        return vlan.vlan_id
 
     def _get_network(self, tenant_id, network_id, context, base_plugin_ref):
         """
@@ -197,8 +204,5 @@ class NexusPlugin(L2DevicePluginBase):
         network = base_plugin_ref._get_network(context, network_id)
         if not network:
             raise exc.NetworkNotFound(net_id=network_id)
-        vlan = cdb.get_vlan_binding(network_id)
         return {const.NET_ID: network_id, const.NET_NAME: network.name,
-                const.NET_PORTS: network.ports,
-                const.NET_VLAN_NAME: vlan.vlan_name,
-                const.NET_VLAN_ID: vlan.vlan_id}
+                const.NET_PORTS: network.ports}

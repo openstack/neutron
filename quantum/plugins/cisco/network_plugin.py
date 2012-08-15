@@ -29,45 +29,83 @@ from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
-from quantum.quantum_plugin_base_v2 import QuantumPluginBaseV2
 
 LOG = logging.getLogger(__name__)
 
 
 class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
-    Plugin with v2 API support for multiple sub-plugins
+    Meta-Plugin with v2 API support for multiple sub-plugins.
     """
     supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
                                    "Cisco qos", "Cisco Nova Tenant",
                                    "Cisco Multiport"]
+    _methods_to_delegate = ['create_network', 'delete_network',
+                            'update_network', 'get_network', 'get_networks',
+                            'create_port', 'delete_port', 'update_port',
+                            'get_port', 'get_ports',
+                            'create_subnet', 'delete_subnet', 'update_subnet',
+                            'get_subnet', 'get_subnets']
+    _master = True
+
+    def __init__(self):
+        """
+        Loads the model class, initializes the DB, and credential store.
+        """
+        self._model = importutils.import_object(conf.MODEL_CLASS)
+        if hasattr(self._model, "MANAGE_STATE") and self._model.MANAGE_STATE:
+            self._master = False
+            LOG.debug("Model %s manages state" % conf.MODEL_CLASS)
+        else:
+            cdb.initialize()
+            cred.Store.initialize()
+
+        if hasattr(self._model, "supported_extension_aliases"):
+            self.supported_extension_aliases.extend(
+                self._model.supported_extension_aliases)
+
+        super(PluginV2, self).__init__()
+        LOG.debug("Plugin initialization complete")
+
+    def __getattribute__(self, name):
+        """
+        When the configured model class offers to manage the state of the
+        logical resources, we delegate the core API calls directly to it.
+        """
+        master = object.__getattribute__(self, "_master")
+        methods = object.__getattribute__(self, "_methods_to_delegate")
+        if not master and name in methods:
+            return getattr(object.__getattribute__(self, "_model"),
+                           name)
+        else:
+            return object.__getattribute__(self, name)
+
+    def __getattr__(self, name):
+        """
+        This delegates the calls to the extensions explicitly implemented by
+        the model.
+        """
+        if hasattr(self._model, name):
+            return getattr(self._model, name)
 
     """
     Core API implementation
     """
-    def __init__(self):
-        """
-        Initializes the DB, and credential store.
-        """
-        cdb.initialize()
-        cred.Store.initialize()
-        self._model = importutils.import_object(conf.MODEL_CLASS)
-        super(PluginV2, self).__init__()
-        LOG.debug("Plugin initialization complete")
-
     def create_network(self, context, network):
         """
         Creates a new Virtual Network, and assigns it
         a symbolic name.
         """
         LOG.debug("create_network() called\n")
-        new_network = super(PluginV2, self).create_network(context, network)
+        new_network = super(PluginV2, self).create_network(context,
+                                                           network)
         try:
             self._invoke_device_plugins(self._func_name(), [context,
                                                             new_network])
             return new_network
         except:
-            super(PluginV2, self).delete_network(context, new_network['id'])
+            super(PluginV2, self).delete_network(context,
+                                                 new_network['id'])
             raise
 
     def update_network(self, context, id, network):
@@ -79,7 +117,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         try:
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             network])
-            return super(PluginV2, self).update_network(context, id, network)
+            return super(PluginV2, self).update_network(context, id,
+                                                        network)
         except:
             raise
 
@@ -92,7 +131,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         #We first need to check if there are any ports on this network
         with context.session.begin():
             network = self._get_network(context, id)
-
             filter = {'network_id': [id]}
             ports = self.get_ports(context, filters=filter)
             if ports:
@@ -108,6 +146,22 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             return super(PluginV2, self).delete_network(context, id)
         except:
             raise
+
+    def get_network(self, context, id, fields=None, verbose=None):
+        """
+        Gets a particular network
+        """
+        LOG.debug("get_network() called\n")
+        return super(PluginV2, self).get_network(context, id,
+                                                 fields, verbose)
+
+    def get_networks(self, context, filters=None, fields=None, verbose=None):
+        """
+        Gets all networks
+        """
+        LOG.debug("get_networks() called\n")
+        return super(PluginV2, self).get_networks(context, filters,
+                                                  fields, verbose)
 
     def create_port(self, context, port):
         """
@@ -446,9 +500,11 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     def _invoke_device_plugins(self, function_name, args):
         """
-        All device-specific calls are delegated to the model
+        Device-specific calls including core API and extensions are
+        delegated to the model.
         """
-        return getattr(self._model, function_name)(*args)
+        if hasattr(self._model, function_name):
+            return getattr(self._model, function_name)(*args)
 
     def _func_name(self, offset=0):
         """Getting the name of the calling funciton"""

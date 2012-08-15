@@ -21,6 +21,7 @@ import os
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.db import api as db
+from quantum.manager import QuantumManager
 from quantum.plugins.cisco.db import network_models_v2
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
@@ -38,7 +39,7 @@ class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def setUp(self):
         db._ENGINE = None
         db._MAKER = None
-
+        QuantumManager._instance = None
         self._tenant_id = 'test-tenant'
 
         json_deserializer = JSONDeserializer()
