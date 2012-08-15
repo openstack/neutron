@@ -52,7 +52,7 @@ class Flavor(object):
     def get_updated(cls):
         return "2012-07-20T10:00:00-00:00"
 
-    def get_extended_attributes(self, version):
+    def get_extended_resources(self, version):
         if version == "2.0":
             return FLAVOR_ATTRIBUTE
         else:
