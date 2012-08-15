@@ -15,6 +15,7 @@
 
 import contextlib
 import copy
+import datetime
 import logging
 import mock
 import os
@@ -34,6 +35,7 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import timeutils
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer, JSONDeserializer
@@ -2028,3 +2030,14 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)
+
+    def test_default_allocation_expiration(self):
+        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
+        timeutils.utcnow.override_time = reference
+
+        cfg.CONF.set_override('dhcp_lease_duration', 120)
+        expires = QuantumManager.get_plugin()._default_allocation_expiration()
+        timeutils.utcnow
+        cfg.CONF.reset()
+        timeutils.utcnow.override_time = None
+        self.assertEqual(expires, reference + datetime.timedelta(seconds=120))
