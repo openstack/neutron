@@ -213,7 +213,7 @@ def port_set_attachment(net_id, port_id, new_interface_id):
         # We are setting, not clearing, the attachment-id
         if port['interface_id']:
             raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
-                                  att_id=port['interface_id'])
+                                  device_id=port['interface_id'])
 
         try:
             port = (session.query(models.Port).
@@ -256,7 +256,7 @@ def port_destroy(net_id, port_id):
                 one())
         if port['interface_id']:
             raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
-                                  att_id=port['interface_id'])
+                                  device_id=port['interface_id'])
         session.delete(port)
         session.flush()
         return port
@@ -281,7 +281,7 @@ def port_set_attachment_by_id(port_id, new_interface_id):
     if new_interface_id != "":
         if port['interface_id']:
             raise q_exc.PortInUse(port_id=port_id,
-                                  att_id=port['interface_id'])
+                                  device_id=port['interface_id'])
 
         try:
             port = session.query(models.Port).filter_by(

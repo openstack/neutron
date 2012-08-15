@@ -50,11 +50,14 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-def _get_path(resource, id=None, fmt=None):
+def _get_path(resource, id=None, action=None, fmt=None):
     path = '/%s' % resource
 
     if id is not None:
         path = path + '/%s' % id
+
+    if action is not None:
+        path = path + '/%s' % action
 
     if fmt is not None:
         path = path + '.%s' % fmt

@@ -1067,11 +1067,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_port_dict(port, fields)
 
     def get_ports(self, context, filters=None, fields=None, verbose=None):
-        fixed_ips = filters.pop('fixed_ips', [])
+        fixed_ips = filters.pop('fixed_ips', []) if filters else []
         ports = self._get_collection(context, models_v2.Port,
                                      self._make_port_dict,
                                      filters=filters, fields=fields,
                                      verbose=verbose)
+
         if ports and fixed_ips:
             filtered_ports = []
             for port in ports:

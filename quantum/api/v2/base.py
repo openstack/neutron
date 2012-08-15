@@ -32,6 +32,7 @@ XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
 
 FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.InUse: webob.exc.HTTPConflict,
+             exceptions.BadRequest: webob.exc.HTTPBadRequest,
              exceptions.ResourceExhausted: webob.exc.HTTPServiceUnavailable,
              exceptions.MacAddressGenerationFailure:
              webob.exc.HTTPServiceUnavailable,
@@ -132,8 +133,11 @@ def _verbose(request):
 
 
 class Controller(object):
-    def __init__(self, plugin, collection, resource,
-                 attr_info, allow_bulk=False):
+
+    def __init__(self, plugin, collection, resource, attr_info,
+                 allow_bulk=False, member_actions=None):
+        if member_actions is None:
+            member_actions = []
         self._plugin = plugin
         self._collection = collection
         self._resource = resource
@@ -143,6 +147,7 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
+        self._member_actions = member_actions
 
     def _is_native_bulk_supported(self):
         native_bulk_attr_name = ("_%s__native_bulk_support"
@@ -157,6 +162,7 @@ class Controller(object):
         # make sure fields_to_strip is iterable
         if not fields_to_strip:
             fields_to_strip = []
+
         return dict(item for item in data.iteritems()
                     if self._is_visible(item[0])
                     and not item[0] in fields_to_strip)
@@ -169,6 +175,14 @@ class Controller(object):
                              if attr not in original_fields]
             original_fields.extend(self._policy_attrs)
         return original_fields, fields_to_add
+
+    def __getattr__(self, name):
+        if name in self._member_actions:
+            def _handle_action(request, id, body=None):
+                return getattr(self._plugin, name)(request.context, id, body)
+            return _handle_action
+        else:
+            raise AttributeError
 
     def _items(self, request, do_authz=False):
         """Retrieves and formats a list of elements of the requested entity"""
@@ -545,8 +559,10 @@ class Controller(object):
             })
 
 
-def create_resource(collection, resource, plugin, params, allow_bulk=False):
-    controller = Controller(plugin, collection, resource, params, allow_bulk)
+def create_resource(collection, resource, plugin, params, allow_bulk=False,
+                    member_actions=None):
+    controller = Controller(plugin, collection, resource, params, allow_bulk,
+                            member_actions=member_actions)
 
     # NOTE(jkoelker) To anyone wishing to add "proper" xml support
     #                this is where you do it
