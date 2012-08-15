@@ -22,41 +22,69 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from quantum.db.models_v2 import model_base
 
 
-class VlanID(model_base.BASEV2):
-    """Represents a vlan_id usage"""
-    __tablename__ = 'vlan_ids'
+class VlanAllocation(model_base.BASEV2):
+    """Represents allocation state of vlan_id on physical network"""
+    __tablename__ = 'ovs_vlan_allocations'
 
-    vlan_id = Column(Integer, nullable=False, primary_key=True)
-    vlan_used = Column(Boolean, nullable=False)
+    physical_network = Column(String(64), nullable=False, primary_key=True)
+    vlan_id = Column(Integer, nullable=False, primary_key=True,
+                     autoincrement=False)
+    allocated = Column(Boolean, nullable=False)
 
-    def __init__(self, vlan_id):
+    def __init__(self, physical_network, vlan_id):
+        self.physical_network = physical_network
         self.vlan_id = vlan_id
-        self.vlan_used = False
+        self.allocated = False
 
     def __repr__(self):
-        return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
+        return "<VlanAllocation(%s,%d,%s)>" % (self.physical_network,
+                                               self.vlan_id, self.allocated)
 
 
-class VlanBinding(model_base.BASEV2):
-    """Represents a binding of network_id to vlan_id."""
-    __tablename__ = 'vlan_bindings'
+class TunnelAllocation(model_base.BASEV2):
+    """Represents allocation state of tunnel_id"""
+    __tablename__ = 'ovs_tunnel_allocations'
 
-    network_id = Column(String(36), ForeignKey('networks.id',
-                                               ondelete="CASCADE"),
+    tunnel_id = Column(Integer, nullable=False, primary_key=True,
+                       autoincrement=False)
+    allocated = Column(Boolean, nullable=False)
+
+    def __init__(self, tunnel_id):
+        self.tunnel_id = tunnel_id
+        self.allocated = False
+
+    def __repr__(self):
+        return "<TunnelAllocation(%d,%s)>" % (self.tunnel_id, self.allocated)
+
+
+class NetworkBinding(model_base.BASEV2):
+    """Represents binding of virtual network to physical realization"""
+    __tablename__ = 'ovs_network_bindings'
+
+    network_id = Column(String(36),
+                        ForeignKey('networks.id', ondelete="CASCADE"),
                         primary_key=True)
-    vlan_id = Column(Integer, nullable=False)
+    network_type = Column(String(32), nullable=False)  # 'gre', 'vlan', 'flat'
+    physical_network = Column(String(64))
+    physical_id = Column(Integer)  # tunnel_id or vlan_id
 
-    def __init__(self, vlan_id, network_id):
+    def __init__(self, network_id, network_type, physical_network,
+                 physical_id):
         self.network_id = network_id
-        self.vlan_id = vlan_id
+        self.network_type = network_type
+        self.physical_network = physical_network
+        self.physical_id = physical_id
 
     def __repr__(self):
-        return "<VlanBinding(%s,%s)>" % (self.vlan_id, self.network_id)
+        return "<NetworkBinding(%s,%s,%s,%d)>" % (self.network_id,
+                                                  self.network_type,
+                                                  self.physical_network,
+                                                  self.physical_id)
 
 
 class TunnelIP(model_base.BASEV2):
-    """Represents a remote IP in tunnel mode."""
-    __tablename__ = 'tunnel_ips'
+    """Represents tunnel endpoint in DB mode"""
+    __tablename__ = 'ovs_tunnel_ips'
 
     ip_address = Column(String(255), primary_key=True)
 
@@ -67,9 +95,9 @@ class TunnelIP(model_base.BASEV2):
         return "<TunnelIP(%s)>" % (self.ip_address)
 
 
-class TunnelInfo(model_base.BASEV2):
-    """Represents remote tunnel information in tunnel mode."""
-    __tablename__ = 'tunnel_info'
+class TunnelEndpoint(model_base.BASEV2):
+    """Represents tunnel endpoint in RPC mode"""
+    __tablename__ = 'ovs_tunnel_endpoints'
 
     ip_address = Column(String(64), primary_key=True)
     id = Column(Integer, nullable=False)
@@ -79,4 +107,4 @@ class TunnelInfo(model_base.BASEV2):
         self.id = id
 
     def __repr__(self):
-        return "<TunnelInfo(%s,%s)>" % (self.ip_address, self.id)
+        return "<TunnelEndpoint(%s,%s)>" % (self.ip_address, self.id)

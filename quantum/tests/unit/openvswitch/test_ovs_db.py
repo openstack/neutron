@@ -17,96 +17,204 @@ import unittest2
 
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
-from quantum.db import models_v2
-from quantum.plugins.openvswitch.common import config
-from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch import ovs_db_v2
 
+PHYS_NET = 'physnet1'
 VLAN_MIN = 10
 VLAN_MAX = 19
+VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
+UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)]}
+TUN_MIN = 100
+TUN_MAX = 109
+TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
+UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
+TEST_NETWORK_ID = 'abcdefghijklmnopqrstuvwxyz'
 
 
-class OVSVlanIdsTest(unittest2.TestCase):
+class VlanAllocationsTest(unittest2.TestCase):
     def setUp(self):
-        cfg.CONF.set_override('vlan_min', VLAN_MIN, group='OVS')
-        cfg.CONF.set_override('vlan_max', VLAN_MAX, group='OVS')
-
-        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
-        options.update({'base': models_v2.model_base.BASEV2})
-        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
-        options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
-        options.update({"reconnect_interval": reconnect_interval})
-        db.configure_db(options)
-
-        ovs_db_v2.update_vlan_id_pool()
+        ovs_db_v2.initialize()
+        ovs_db_v2.sync_vlan_allocations(VLAN_RANGES)
+        self.session = db.get_session()
 
     def tearDown(self):
         db.clear_db()
-        cfg.CONF.reset()
 
-    def test_update_vlan_id_pool(self):
-        self.assertIsNone(ovs_db_v2.get_vlan_id(VLAN_MIN - 1))
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MIN).vlan_used)
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MIN + 1).vlan_used)
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MAX).vlan_used)
-        self.assertIsNone(ovs_db_v2.get_vlan_id(VLAN_MAX + 1))
+    def test_sync_vlan_allocations(self):
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MIN - 1))
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN + 1).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX).allocated)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MAX + 1))
 
-        cfg.CONF.set_override('vlan_min', VLAN_MIN + 5, group='OVS')
-        cfg.CONF.set_override('vlan_max', VLAN_MAX + 5, group='OVS')
-        ovs_db_v2.update_vlan_id_pool()
+        ovs_db_v2.sync_vlan_allocations(UPDATED_VLAN_RANGES)
 
-        self.assertIsNone(ovs_db_v2.get_vlan_id(VLAN_MIN + 5 - 1))
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MIN + 5).vlan_used)
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MIN + 5 + 1).vlan_used)
-        self.assertFalse(ovs_db_v2.get_vlan_id(VLAN_MAX + 5).vlan_used)
-        self.assertIsNone(ovs_db_v2.get_vlan_id(VLAN_MAX + 5 + 1))
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MIN + 5 - 1))
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN + 5).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN + 5 + 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX + 5 - 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX + 5).
+                         allocated)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MAX + 5 + 1))
 
-    def test_vlan_id_pool(self):
-        session = db.get_session()
+    def test_vlan_pool(self):
         vlan_ids = set()
         for x in xrange(VLAN_MIN, VLAN_MAX + 1):
-            vlan_id = ovs_db_v2.reserve_vlan_id(db.get_session())
+            physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
+            self.assertEqual(physical_network, PHYS_NET)
             self.assertGreaterEqual(vlan_id, VLAN_MIN)
             self.assertLessEqual(vlan_id, VLAN_MAX)
             vlan_ids.add(vlan_id)
 
         with self.assertRaises(q_exc.NoNetworkAvailable):
-            vlan_id = ovs_db_v2.reserve_vlan_id(session)
+            physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
+
+        ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop(),
+                               VLAN_RANGES)
+        physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
+        self.assertEqual(physical_network, PHYS_NET)
+        self.assertGreaterEqual(vlan_id, VLAN_MIN)
+        self.assertLessEqual(vlan_id, VLAN_MAX)
+        vlan_ids.add(vlan_id)
 
         for vlan_id in vlan_ids:
-            ovs_db_v2.release_vlan_id(vlan_id)
+            ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id,
+                                   VLAN_RANGES)
 
-    def test_invalid_specific_vlan_id(self):
-        session = db.get_session()
-        with self.assertRaises(q_exc.InvalidInput):
-            vlan_id = ovs_db_v2.reserve_specific_vlan_id(0, session)
-
-        with self.assertRaises(q_exc.InvalidInput):
-            vlan_id = ovs_db_v2.reserve_specific_vlan_id(4095, session)
-
-    def test_specific_vlan_id_inside_pool(self):
-        session = db.get_session()
+    def test_specific_vlan_inside_pool(self):
         vlan_id = VLAN_MIN + 5
-        self.assertFalse(ovs_db_v2.get_vlan_id(vlan_id).vlan_used)
-        ovs_db_v2.reserve_specific_vlan_id(vlan_id, session)
-        self.assertTrue(ovs_db_v2.get_vlan_id(vlan_id).vlan_used)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       vlan_id).allocated)
+        ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
+        self.assertTrue(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                      vlan_id).allocated)
 
         with self.assertRaises(q_exc.VlanIdInUse):
-            ovs_db_v2.reserve_specific_vlan_id(vlan_id, session)
+            ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
 
-        ovs_db_v2.release_vlan_id(vlan_id)
-        self.assertFalse(ovs_db_v2.get_vlan_id(vlan_id).vlan_used)
+        ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       vlan_id).allocated)
 
-    def test_specific_vlan_id_outside_pool(self):
-        session = db.get_session()
+    def test_specific_vlan_outside_pool(self):
         vlan_id = VLAN_MAX + 5
-        self.assertIsNone(ovs_db_v2.get_vlan_id(vlan_id))
-        ovs_db_v2.reserve_specific_vlan_id(vlan_id, session)
-        self.assertTrue(ovs_db_v2.get_vlan_id(vlan_id).vlan_used)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET, vlan_id))
+        ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
+        self.assertTrue(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                      vlan_id).allocated)
 
         with self.assertRaises(q_exc.VlanIdInUse):
-            ovs_db_v2.reserve_specific_vlan_id(vlan_id, session)
+            ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
 
-        ovs_db_v2.release_vlan_id(vlan_id)
-        self.assertIsNone(ovs_db_v2.get_vlan_id(vlan_id))
+        ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET, vlan_id))
+
+
+class TunnelAllocationsTest(unittest2.TestCase):
+    def setUp(self):
+        ovs_db_v2.initialize()
+        ovs_db_v2.sync_tunnel_allocations(TUNNEL_RANGES)
+        self.session = db.get_session()
+
+    def tearDown(self):
+        db.clear_db()
+
+    def test_sync_tunnel_allocations(self):
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MIN - 1))
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN).allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN + 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MAX).allocated)
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MAX + 1))
+
+        ovs_db_v2.sync_tunnel_allocations(UPDATED_TUNNEL_RANGES)
+
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MIN + 5 - 1))
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN + 5).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN + 5 + 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MAX + 5 - 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MAX + 5).
+                         allocated)
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MAX + 5 + 1))
+
+    def test_tunnel_pool(self):
+        tunnel_ids = set()
+        for x in xrange(TUN_MIN, TUN_MAX + 1):
+            tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
+            self.assertGreaterEqual(tunnel_id, TUN_MIN)
+            self.assertLessEqual(tunnel_id, TUN_MAX)
+            tunnel_ids.add(tunnel_id)
+
+        with self.assertRaises(q_exc.NoNetworkAvailable):
+            tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
+
+        ovs_db_v2.release_tunnel(self.session, tunnel_ids.pop(), TUNNEL_RANGES)
+        tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
+        self.assertGreaterEqual(tunnel_id, TUN_MIN)
+        self.assertLessEqual(tunnel_id, TUN_MAX)
+        tunnel_ids.add(tunnel_id)
+
+        for tunnel_id in tunnel_ids:
+            ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)
+
+    def test_specific_tunnel_inside_pool(self):
+        tunnel_id = TUN_MIN + 5
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
+        ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
+        self.assertTrue(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
+
+        with self.assertRaises(q_exc.TunnelIdInUse):
+            ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
+
+        ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
+
+    def test_specific_tunnel_outside_pool(self):
+        tunnel_id = TUN_MAX + 5
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(tunnel_id))
+        ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
+        self.assertTrue(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
+
+        with self.assertRaises(q_exc.TunnelIdInUse):
+            ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
+
+        ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)
+        self.assertIsNone(ovs_db_v2.get_tunnel_allocation(tunnel_id))
+
+
+class NetworkBindingsTest(unittest2.TestCase):
+    def setUp(self):
+        ovs_db_v2.initialize()
+        self.session = db.get_session()
+
+    def tearDown(self):
+        db.clear_db()
+
+    def test_add_network_binding(self):
+        self.assertIsNone(ovs_db_v2.get_network_binding(self.session,
+                                                        TEST_NETWORK_ID))
+        ovs_db_v2.add_network_binding(self.session, TEST_NETWORK_ID, 'vlan',
+                                      PHYS_NET, 1234)
+        binding = ovs_db_v2.get_network_binding(self.session, TEST_NETWORK_ID)
+        self.assertIsNotNone(binding)
+        self.assertEqual(binding.network_id, TEST_NETWORK_ID)
+        self.assertEqual(binding.network_type, 'vlan')
+        self.assertEqual(binding.physical_network, PHYS_NET)
+        self.assertEqual(binding.physical_id, 1234)

@@ -71,6 +71,11 @@ class OVSBridge:
         self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
         self.run_vsctl(["add-br", self.br_name])
 
+    def add_port(self, port_name):
+        self.run_vsctl(["--", "--may-exist", "add-port", self.br_name,
+                        port_name])
+        return self.get_port_ofport(port_name)
+
     def delete_port(self, port_name):
         self.run_vsctl(["--", "--if-exists", "del-port", self.br_name,
                         port_name])

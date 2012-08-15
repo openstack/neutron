@@ -22,7 +22,6 @@ from quantum.plugins.openvswitch.common import config
 class ConfigurationTest(unittest.TestCase):
 
     def test_defaults(self):
-        self.assertFalse(cfg.CONF.OVS.enable_tunneling)
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
         self.assertEqual('br-tun', cfg.CONF.OVS.tunnel_bridge)
         self.assertEqual('sqlite://', cfg.CONF.DATABASE.sql_connection)
@@ -30,3 +29,14 @@ class ConfigurationTest(unittest.TestCase):
         self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
+
+        mappings = cfg.CONF.OVS.bridge_mappings
+        self.assertEqual(1, len(mappings))
+        self.assertEqual('default:br-eth1', mappings[0])
+
+        ranges = cfg.CONF.OVS.network_vlan_ranges
+        self.assertEqual(1, len(ranges))
+        self.assertEqual('default:1000:2999', ranges[0])
+
+        ranges = cfg.CONF.OVS.tunnel_id_ranges
+        self.assertEqual(0, len(ranges))

@@ -17,8 +17,9 @@
 from quantum.openstack.common import cfg
 
 
-# Topic for tunnel notifications between the plugin and agent
-TUNNEL = 'tunnel'
+DEFAULT_BRIDGE_MAPPINGS = ['default:br-eth1']
+DEFAULT_VLAN_RANGES = ['default:1000:2999']
+DEFAULT_TUNNEL_RANGES = []
 
 database_opts = [
     cfg.StrOpt('sql_connection', default='sqlite://'),
@@ -27,18 +28,24 @@ database_opts = [
 ]
 
 ovs_opts = [
-    cfg.BoolOpt('enable_tunneling', default=False),
     cfg.StrOpt('integration_bridge', default='br-int'),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
     cfg.StrOpt('local_ip', default='10.0.0.3'),
-    cfg.IntOpt('vlan_min', default=1),
-    cfg.IntOpt('vlan_max', default=4094),
+    cfg.ListOpt('bridge_mappings',
+                default=DEFAULT_BRIDGE_MAPPINGS,
+                help="List of <physical_network>:<bridge>"),
+    cfg.ListOpt('network_vlan_ranges',
+                default=DEFAULT_VLAN_RANGES,
+                help="List of <physical_network>:<vlan_min>:<vlan_max> "
+                "or <physical_network>"),
+    cfg.ListOpt('tunnel_id_ranges',
+                default=DEFAULT_TUNNEL_RANGES,
+                help="List of <tun_min>:<tun_max>"),
 ]
 
 agent_opts = [
     cfg.IntOpt('polling_interval', default=2),
     cfg.StrOpt('root_helper', default='sudo'),
-    cfg.StrOpt('log_file', default=None),
     cfg.BoolOpt('rpc', default=True),
 ]
 

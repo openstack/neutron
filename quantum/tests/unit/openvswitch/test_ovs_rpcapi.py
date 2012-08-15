@@ -26,7 +26,7 @@ from quantum.common import topics
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
 from quantum.plugins.openvswitch import ovs_quantum_plugin as povs
-from quantum.plugins.openvswitch.common import config
+from quantum.plugins.openvswitch.common import constants
 
 
 class rpcApiTestCase(unittest2.TestCase):
@@ -81,7 +81,7 @@ class rpcApiTestCase(unittest2.TestCase):
         rpcapi = povs.AgentNotifierApi(topics.AGENT)
         self._test_ovs_api(rpcapi,
                            topics.get_topic_name(topics.AGENT,
-                                                 config.TUNNEL,
+                                                 constants.TUNNEL,
                                                  topics.UPDATE),
                            'tunnel_update', rpc_method='fanout_cast',
                            tunnel_ip='fake_ip', tunnel_id='fake_id')

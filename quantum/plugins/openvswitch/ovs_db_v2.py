@@ -30,146 +30,242 @@ from quantum.plugins.openvswitch import ovs_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def get_vlans():
-    session = db.get_session()
-    try:
-        bindings = (session.query(ovs_models_v2.VlanBinding).
-                    all())
-    except exc.NoResultFound:
-        return []
-    return [(binding.vlan_id, binding.network_id) for binding in bindings]
+def initialize():
+    options = {"sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection}
+    options.update({"sql_max_retries": cfg.CONF.DATABASE.sql_max_retries})
+    options.update({"reconnect_interval":
+                   cfg.CONF.DATABASE.reconnect_interval})
+    options.update({"base": models_v2.model_base.BASEV2})
+    db.configure_db(options)
 
 
-def get_vlan(net_id, session=None):
+def get_network_binding(session, network_id):
     session = session or db.get_session()
     try:
-        binding = (session.query(ovs_models_v2.VlanBinding).
-                   filter_by(network_id=net_id).
+        binding = (session.query(ovs_models_v2.NetworkBinding).
+                   filter_by(network_id=network_id).
                    one())
+        return binding
     except exc.NoResultFound:
         return
-    return binding.vlan_id
 
 
-def add_vlan_binding(vlan_id, net_id, session):
+def add_network_binding(session, network_id, network_type,
+                        physical_network, physical_id):
     with session.begin(subtransactions=True):
-        binding = ovs_models_v2.VlanBinding(vlan_id, net_id)
+        binding = ovs_models_v2.NetworkBinding(network_id, network_type,
+                                               physical_network,
+                                               physical_id)
         session.add(binding)
-    return binding
 
 
-def remove_vlan_binding(net_id):
+def sync_vlan_allocations(network_vlan_ranges):
+    """Synchronize vlan_allocations table with configured VLAN ranges"""
+
+    session = db.get_session()
+    with session.begin():
+        # process vlan ranges for each physical network separately
+        for physical_network, vlan_ranges in network_vlan_ranges.iteritems():
+
+            # determine current configured allocatable vlans for this
+            # physical network
+            vlan_ids = set()
+            for vlan_range in vlan_ranges:
+                vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
+
+            # remove from table unallocated vlans not currently allocatable
+            try:
+                allocs = (session.query(ovs_models_v2.VlanAllocation).
+                          filter_by(physical_network=physical_network).
+                          all())
+                for alloc in allocs:
+                    try:
+                        # see if vlan is allocatable
+                        vlan_ids.remove(alloc.vlan_id)
+                    except KeyError:
+                        # it's not allocatable, so check if its allocated
+                        if not alloc.allocated:
+                            # it's not, so remove it from table
+                            LOG.debug("removing vlan %s on physical network "
+                                      "%s from pool" %
+                                      (alloc.vlan_id, physical_network))
+                            session.delete(alloc)
+            except exc.NoResultFound:
+                pass
+
+            # add missing allocatable vlans to table
+            for vlan_id in sorted(vlan_ids):
+                alloc = ovs_models_v2.VlanAllocation(physical_network, vlan_id)
+                session.add(alloc)
+
+
+def get_vlan_allocation(physical_network, vlan_id):
     session = db.get_session()
     try:
-        binding = (session.query(ovs_models_v2.VlanBinding).
-                   filter_by(network_id=net_id).
-                   one())
-        session.delete(binding)
+        alloc = (session.query(ovs_models_v2.VlanAllocation).
+                 filter_by(physical_network=physical_network,
+                           vlan_id=vlan_id).
+                 one())
+        return alloc
     except exc.NoResultFound:
-        pass
-    session.flush()
+        return
 
 
-def update_vlan_id_pool():
-    """Update vlan_ids based on current configuration."""
+def reserve_vlan(session):
+    with session.begin(subtransactions=True):
+        alloc = (session.query(ovs_models_v2.VlanAllocation).
+                 filter_by(allocated=False).
+                 first())
+        if alloc:
+            LOG.debug("reserving vlan %s on physical network %s from pool" %
+                      (alloc.vlan_id, alloc.physical_network))
+            alloc.allocated = True
+            return (alloc.physical_network, alloc.vlan_id)
+    raise q_exc.NoNetworkAvailable()
 
-    # determine current dynamically-allocated range
-    vlans = set(xrange(cfg.CONF.OVS.vlan_min,
-                       cfg.CONF.OVS.vlan_max + 1))
+
+def reserve_specific_vlan(session, physical_network, vlan_id):
+    with session.begin(subtransactions=True):
+        try:
+            alloc = (session.query(ovs_models_v2.VlanAllocation).
+                     filter_by(physical_network=physical_network,
+                               vlan_id=vlan_id).
+                     one())
+            if alloc.allocated:
+                raise q_exc.VlanIdInUse(vlan_id=vlan_id,
+                                        physical_network=physical_network)
+            LOG.debug("reserving specific vlan %s on physical network %s "
+                      "from pool" % (vlan_id, physical_network))
+            alloc.allocated = True
+        except exc.NoResultFound:
+            LOG.debug("reserving specific vlan %s on physical network %s "
+                      "outside pool" % (vlan_id, physical_network))
+            alloc = ovs_models_v2.VlanAllocation(physical_network, vlan_id)
+            alloc.allocated = True
+            session.add(alloc)
+
+
+def release_vlan(session, physical_network, vlan_id, network_vlan_ranges):
+    with session.begin(subtransactions=True):
+        try:
+            alloc = (session.query(ovs_models_v2.VlanAllocation).
+                     filter_by(physical_network=physical_network,
+                               vlan_id=vlan_id).
+                     one())
+            alloc.allocated = False
+            inside = False
+            for vlan_range in network_vlan_ranges.get(physical_network, []):
+                if vlan_id >= vlan_range[0] and vlan_id <= vlan_range[1]:
+                    inside = True
+                    break
+            if not inside:
+                session.delete(alloc)
+            LOG.debug("releasing vlan %s on physical network %s %s pool" %
+                      (vlan_id, physical_network,
+                       inside and "to" or "outside"))
+        except exc.NoResultFound:
+            LOG.warning("vlan_id %s on physical network %s not found" %
+                        (vlan_id, physical_network))
+
+
+def sync_tunnel_allocations(tunnel_id_ranges):
+    """Synchronize tunnel_allocations table with configured tunnel ranges"""
+
+    # determine current configured allocatable tunnels
+    tunnel_ids = set()
+    for tunnel_id_range in tunnel_id_ranges:
+        tun_min, tun_max = tunnel_id_range
+        if tun_max + 1 - tun_min > 1000000:
+            LOG.error("Skipping unreasonable tunnel ID range %s:%s" %
+                      tunnel_id_range)
+        else:
+            tunnel_ids |= set(xrange(tun_min, tun_max + 1))
 
     session = db.get_session()
-    with session.begin(subtransactions=True):
-        # remove unused vlan_ids outside current range
+    with session.begin():
+        # remove from table unallocated tunnels not currently allocatable
         try:
-            records = (session.query(ovs_models_v2.VlanID).
-                       all())
-            for record in records:
+            allocs = (session.query(ovs_models_v2.TunnelAllocation).
+                      all())
+            for alloc in allocs:
                 try:
-                    vlans.remove(record.vlan_id)
+                    # see if tunnel is allocatable
+                    tunnel_ids.remove(alloc.tunnel_id)
                 except KeyError:
-                    if not record.vlan_used:
-                        LOG.debug("removing vlan %s from pool"
-                                  % record.vlan_id)
-                        session.delete(record)
+                    # it's not allocatable, so check if its allocated
+                    if not alloc.allocated:
+                        # it's not, so remove it from table
+                        LOG.debug("removing tunnel %s from pool" %
+                                  alloc.tunnel_id)
+                        session.delete(alloc)
         except exc.NoResultFound:
             pass
 
-        # add missing vlan_ids
-        for vlan in vlans:
-            record = ovs_models_v2.VlanID(vlan)
-            session.add(record)
+        # add missing allocatable tunnels to table
+        for tunnel_id in sorted(tunnel_ids):
+            alloc = ovs_models_v2.TunnelAllocation(tunnel_id)
+            session.add(alloc)
 
 
-def get_vlan_id(vlan_id):
-    """Get state of specified vlan"""
-
+def get_tunnel_allocation(tunnel_id):
     session = db.get_session()
     try:
-        record = (session.query(ovs_models_v2.VlanID).
-                  filter_by(vlan_id=vlan_id).
-                  one())
-        return record
+        alloc = (session.query(ovs_models_v2.TunnelAllocation).
+                 filter_by(tunnel_id=tunnel_id).
+                 one())
+        return alloc
     except exc.NoResultFound:
-        return None
+        return
 
 
-def reserve_vlan_id(session):
-    """Reserve an unused vlan_id"""
-
+def reserve_tunnel(session):
     with session.begin(subtransactions=True):
-        record = (session.query(ovs_models_v2.VlanID).
-                  filter_by(vlan_used=False).
-                  first())
-        if not record:
-            raise q_exc.NoNetworkAvailable()
-        LOG.debug("reserving vlan %s from pool" % record.vlan_id)
-        record.vlan_used = True
-    return record.vlan_id
+        alloc = (session.query(ovs_models_v2.TunnelAllocation).
+                 filter_by(allocated=False).
+                 first())
+        if alloc:
+            LOG.debug("reserving tunnel %s from pool" % alloc.tunnel_id)
+            alloc.allocated = True
+            return alloc.tunnel_id
+    raise q_exc.NoNetworkAvailable()
 
 
-def reserve_specific_vlan_id(vlan_id, session):
-    """Reserve a specific vlan_id"""
-
-    if vlan_id < 1 or vlan_id > 4094:
-        msg = _("Specified VLAN %s outside legal range (1-4094)") % vlan_id
-        raise q_exc.InvalidInput(error_message=msg)
-
+def reserve_specific_tunnel(session, tunnel_id):
     with session.begin(subtransactions=True):
         try:
-            record = (session.query(ovs_models_v2.VlanID).
-                      filter_by(vlan_id=vlan_id).
-                      one())
-            if record.vlan_used:
-                # REVISIT(rkukura) pass phyiscal_network
-                raise q_exc.VlanIdInUse(vlan_id=vlan_id,
-                                        physical_network='default')
-            LOG.debug("reserving specific vlan %s from pool" % vlan_id)
-            record.vlan_used = True
+            alloc = (session.query(ovs_models_v2.TunnelAllocation).
+                     filter_by(tunnel_id=tunnel_id).
+                     one())
+            if alloc.allocated:
+                raise q_exc.TunnelIdInUse(tunnel_id=tunnel_id)
+            LOG.debug("reserving specific tunnel %s from pool" % tunnel_id)
+            alloc.allocated = True
         except exc.NoResultFound:
-            LOG.debug("reserving specific vlan %s outside pool" % vlan_id)
-            record = ovs_models_v2.VlanID(vlan_id)
-            record.vlan_used = True
-            session.add(record)
+            LOG.debug("reserving specific tunnel %s outside pool" % tunnel_id)
+            alloc = ovs_models_v2.TunnelAllocation(tunnel_id)
+            alloc.allocated = True
+            session.add(alloc)
 
 
-def release_vlan_id(vlan_id):
-    """Set the vlan state to be unused, and delete if not in range"""
-
-    session = db.get_session()
+def release_tunnel(session, tunnel_id, tunnel_id_ranges):
     with session.begin(subtransactions=True):
         try:
-            record = (session.query(ovs_models_v2.VlanID).
-                      filter_by(vlan_id=vlan_id).
-                      one())
-            record.vlan_used = False
-            if (vlan_id >= cfg.CONF.OVS.vlan_min and
-                vlan_id <= cfg.CONF.OVS.vlan_max):
-                LOG.debug("releasing vlan %s to pool" % vlan_id)
-            else:
-                LOG.debug("removing vlan %s outside pool" % vlan_id)
-                session.delete(record)
+            alloc = (session.query(ovs_models_v2.TunnelAllocation).
+                     filter_by(tunnel_id=tunnel_id).
+                     one())
+            alloc.allocated = False
+            inside = False
+            for tunnel_id_range in tunnel_id_ranges:
+                if (tunnel_id >= tunnel_id_range[0]
+                    and tunnel_id <= tunnel_id_range[1]):
+                    inside = True
+                    break
+            if not inside:
+                session.delete(alloc)
+            LOG.debug("releasing tunnel %s %s pool" %
+                      (tunnel_id, inside and "to" or "outside"))
         except exc.NoResultFound:
-            LOG.error("vlan id %s not found in release_vlan_id" % vlan_id)
+            LOG.warning("tunnel_id %s not found" % tunnel_id)
 
 
 def get_port(port_id):
@@ -192,19 +288,19 @@ def set_port_status(port_id, status):
         raise q_exc.PortNotFound(port_id=port_id)
 
 
-def get_tunnels():
+def get_tunnel_endpoints():
     session = db.get_session()
     try:
-        tunnels = session.query(ovs_models_v2.TunnelInfo).all()
+        tunnels = session.query(ovs_models_v2.TunnelEndpoint).all()
     except exc.NoResultFound:
         return []
     return [{'id': tunnel.id,
              'ip_address': tunnel.ip_address} for tunnel in tunnels]
 
 
-def generate_tunnel_id(session):
+def _generate_tunnel_id(session):
     try:
-        tunnels = session.query(ovs_models_v2.TunnelInfo).all()
+        tunnels = session.query(ovs_models_v2.TunnelEndpoint).all()
     except exc.NoResultFound:
         return 0
     tunnel_ids = ([tunnel['id'] for tunnel in tunnels])
@@ -215,15 +311,14 @@ def generate_tunnel_id(session):
     return id + 1
 
 
-def add_tunnel(ip):
+def add_tunnel_endpoint(ip):
     session = db.get_session()
     try:
-        tunnel = (session.query(ovs_models_v2.TunnelInfo).
+        tunnel = (session.query(ovs_models_v2.TunnelEndpoint).
                   filter_by(ip_address=ip).one())
     except exc.NoResultFound:
-        # Generate an id for the tunnel
-        id = generate_tunnel_id(session)
-        tunnel = ovs_models_v2.TunnelInfo(ip, id)
+        id = _generate_tunnel_id(session)
+        tunnel = ovs_models_v2.TunnelEndpoint(ip, id)
         session.add(tunnel)
         session.flush()
     return tunnel
