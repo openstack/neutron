@@ -98,6 +98,8 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'quantum-dhcp-agent = quantum.agent.dhcp_agent:main',
+            'quantum-dhcp-agent-dnsmasq-lease-update ='
+            'quantum.agent.linux.dhcp:Dnsmasq.lease_update',
             'quantum-l3-agent = quantum.agent.l3_nat_agent:main',
             'quantum-linuxbridge-agent ='
             'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',

@@ -450,6 +450,16 @@ class TestIpNetnsCommand(TestIPCmdBase):
                                              'link', 'list'],
                                             root_helper='sudo')
 
+    def test_execute_env_var_prepend(self):
+        self.parent.namespace = 'ns'
+        with mock.patch('quantum.agent.linux.utils.execute') as execute:
+            env = dict(FOO=1, BAR=2)
+            self.netns_cmd.execute(['ip', 'link', 'list'], env)
+            execute.assert_called_once_with(
+                ['FOO=1', 'BAR=2', 'ip', 'netns', 'exec', 'ns', 'ip', 'link',
+                 'list'],
+                root_helper='sudo')
+
 
 class TestDeviceExists(unittest.TestCase):
     def test_device_exists(self):

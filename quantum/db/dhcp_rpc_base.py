@@ -171,3 +171,19 @@ class DhcpRpcCallbackMixin(object):
                     del fixed_ips[i]
                     break
             plugin.update_port(context, port['id'], dict(port=port))
+
+    def update_lease_expiration(self, context, **kwargs):
+        """Release the fixed_ip associated the subnet on a port."""
+        host = kwargs.get('host')
+        network_id = kwargs.get('network_id')
+        ip_address = kwargs.get('ip_address')
+        lease_remaining = kwargs.get('lease_remaining')
+
+        LOG.debug('Updating lease expiration for %s on network %s from %s.',
+                  ip_address, network_id, host)
+
+        context = augment_context(context)
+        plugin = manager.QuantumManager.get_plugin()
+
+        plugin.update_fixed_ip_lease_expiration(context, network_id,
+                                                ip_address, lease_remaining)

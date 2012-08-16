@@ -269,13 +269,14 @@ class IpNetnsCommand(IpCommandBase):
                 ['ip', 'netns', 'delete', name],
                 root_helper=self._parent.root_helper)
 
-    def execute(self, cmds):
+    def execute(self, cmds, addl_env={}):
         if not self._parent.root_helper:
             raise exceptions.SudoRequired()
         elif not self._parent.namespace:
             raise Exception(_('No namespace defined for parent'))
         else:
             return utils.execute(
+                ['%s=%s' % pair for pair in addl_env.items()] +
                 ['ip', 'netns', 'exec', self._parent.namespace] + list(cmds),
                 root_helper=self._parent.root_helper)
 

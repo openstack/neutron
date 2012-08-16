@@ -281,6 +281,21 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return (timeutils.utcnow() +
                 datetime.timedelta(seconds=cfg.CONF.dhcp_lease_duration))
 
+    def update_fixed_ip_lease_expiration(self, context, network_id,
+                                         ip_address, lease_remaining):
+
+        expiration = timeutils.utcnow() + datetime.timedelta(lease_remaining)
+
+        query = context.session.query(models_v2.IPAllocation)
+        query = query.filter_by(network_id=network_id, ip_address=ip_address)
+
+        try:
+            fixed_ip = query.one()
+            fixed_ip.expiration = expiration
+        except exc.NoResultFound:
+            LOG.debug("No fixed IP found that matches the network %s and "
+                      "ip address %s.", network_id, ip_address)
+
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, port_id,
                               ip_address):
@@ -1014,7 +1029,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         network_id=port['network_id'],
                         port_id=port.id,
                         ip_address=ip['ip_address'],
-                        subnet_id=ip['subnet_id'])
+                        subnet_id=ip['subnet_id'],
+                        expiration=self._default_allocation_expiration()
+                    )
                     context.session.add(allocated)
 
         return self._make_port_dict(port)

@@ -16,6 +16,7 @@
 #    under the License.
 
 import os
+import socket
 import tempfile
 import unittest2 as unittest
 
@@ -24,6 +25,7 @@ import mock
 from quantum.agent.linux import dhcp
 from quantum.agent.common import config
 from quantum.openstack.common import cfg
+from quantum.openstack.common import jsonutils
 
 
 class FakeIPAllocation:
@@ -169,6 +171,8 @@ class TestBase(unittest.TestCase):
                 os.path.join(root, 'etc', 'quantum.conf.test')]
         self.conf = config.setup_conf()
         self.conf.register_opts(dhcp.OPTS)
+        self.conf.register_opt(cfg.StrOpt('dhcp_lease_relay_socket',
+                               default='$state_path/dhcp/lease_relay'))
         self.conf(args=args)
         self.conf.set_override('state_path', '')
         self.conf.use_namespaces = True
@@ -330,7 +334,15 @@ class TestDnsmasq(TestBase):
         def mock_get_conf_file_name(kind, ensure_conf_dir=False):
             return '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/%s' % kind
 
+        def fake_argv(index):
+            if index == 0:
+                return '/usr/local/bin/quantum-dhcp-agent'
+            else:
+                raise IndexError
+
         expected = [
+            'QUANTUM_RELAY_SOCKET_PATH=/dhcp/lease_relay',
+            'QUANTUM_NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
             'ip',
             'netns',
             'exec',
@@ -346,6 +358,8 @@ class TestDnsmasq(TestBase):
             '--pid-file=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/pid',
             '--dhcp-hostsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host',
             '--dhcp-optsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts',
+            ('--dhcp-script=/usr/local/bin/quantum-dhcp-agent-'
+             'dnsmasq-lease-update'),
             '--leasefile-ro',
             '--dhcp-range=set:tag0,192.168.0.0,static,120s',
             '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s'
@@ -366,11 +380,15 @@ class TestDnsmasq(TestBase):
             mocks['_output_opts_file'].return_value = (
                 '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
             )
-            dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                              device_delegate=delegate)
-            dm.spawn_process()
-            self.assertTrue(mocks['_output_opts_file'].called)
-            self.execute.assert_called_once_with(expected, root_helper='sudo')
+
+            with mock.patch.object(dhcp.sys, 'argv') as argv:
+                argv.__getitem__.side_effect = fake_argv
+                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                                  device_delegate=delegate)
+                dm.spawn_process()
+                self.assertTrue(mocks['_output_opts_file'].called)
+                self.execute.assert_called_once_with(expected,
+                                                     root_helper='sudo')
 
     def test_spawn(self):
         self._test_spawn([])
@@ -424,3 +442,66 @@ class TestDnsmasq(TestBase):
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
         self.execute.assert_called_once_with(exp_args, root_helper='sudo')
+
+    def _test_lease_relay_script_helper(self, action, lease_remaining,
+                                        path_exists=True):
+        relay_path = '/dhcp/relay_socket'
+        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        mac_address = 'aa:bb:cc:dd:ee:ff'
+        ip_address = '192.168.1.9'
+
+        json_rep = jsonutils.dumps(dict(network_id=network_id,
+                                        lease_remaining=lease_remaining,
+                                        mac_address=mac_address,
+                                        ip_address=ip_address))
+
+        environ = {
+            'QUANTUM_NETWORK_ID': network_id,
+            'QUANTUM_RELAY_SOCKET_PATH': relay_path,
+            'DNSMASQ_TIME_REMAINING': '120',
+        }
+
+        def fake_environ(name, default=None):
+            return environ.get(name, default)
+
+        with mock.patch('os.environ') as mock_environ:
+            mock_environ.get.side_effect = fake_environ
+
+            with mock.patch.object(dhcp, 'sys') as mock_sys:
+                mock_sys.argv = [
+                    'lease-update',
+                    action,
+                    mac_address,
+                    ip_address,
+                ]
+
+                with mock.patch('socket.socket') as mock_socket:
+                    mock_conn = mock.Mock()
+                    mock_socket.return_value = mock_conn
+
+                    with mock.patch('os.path.exists') as mock_exists:
+                        mock_exists.return_value = path_exists
+
+                        dhcp.Dnsmasq.lease_update()
+
+                        mock_exists.assert_called_once_with(relay_path)
+                        if path_exists:
+                            mock_socket.assert_called_once_with(
+                                socket.AF_UNIX, socket.SOCK_STREAM)
+
+                            mock_conn.assert_has_calls(
+                                [mock.call.connect(relay_path),
+                                 mock.call.send(json_rep),
+                                 mock.call.close()])
+
+    def test_lease_relay_script_add(self):
+        self._test_lease_relay_script_helper('add', 120)
+
+    def test_lease_relay_script_old(self):
+        self._test_lease_relay_script_helper('old', 120)
+
+    def test_lease_relay_script_del(self):
+        self._test_lease_relay_script_helper('del', 0)
+
+    def test_lease_relay_script_add_socket_missing(self):
+        self._test_lease_relay_script_helper('add', 120, False)
