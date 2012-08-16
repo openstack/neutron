@@ -50,7 +50,6 @@ def canonicalize_emails(changelog, mapping):
 
 # Get requirements from the first file that exists
 def get_reqs_from_files(requirements_files):
-    reqs_in = []
     for requirements_file in requirements_files:
         if os.path.exists(requirements_file):
             return open(requirements_file, 'r').read().split('\n')
