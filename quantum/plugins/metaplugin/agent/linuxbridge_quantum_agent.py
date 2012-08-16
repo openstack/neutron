@@ -43,9 +43,6 @@ LOG = logging.getLogger(__name__)
 BRIDGE_NAME_PREFIX = "brq"
 VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
-# Default inteval values
-DEFAULT_POLLING_INTERVAL = 2
-DEFAULT_RECONNECT_INTERVAL = 2
 
 
 class MetaLinuxBridgeQuantumAgent(lb.LinuxBridgeQuantumAgent):

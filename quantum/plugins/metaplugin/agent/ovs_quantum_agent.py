@@ -39,10 +39,6 @@ LOG = logging.getLogger(__name__)
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = "4095"
 
-# Default interval values
-DEFAULT_POLLING_INTERVAL = 2
-DEFAULT_RECONNECT_INTERVAL = 2
-
 
 class MetaOVSQuantumAgent(OVSQuantumAgent):
 

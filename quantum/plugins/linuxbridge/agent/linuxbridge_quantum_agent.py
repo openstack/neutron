@@ -55,14 +55,10 @@ TAP_INTERFACE_PREFIX = "tap"
 BRIDGE_FS = "/sys/devices/virtual/net/"
 BRIDGE_NAME_PLACEHOLDER = "bridge_name"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + BRIDGE_NAME_PLACEHOLDER + "/brif/"
-PORT_OPSTATUS_UPDATESQL = "UPDATE ports SET op_status = '%s' WHERE uuid = '%s'"
 DEVICE_NAME_PLACEHOLDER = "device_name"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
 VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
-# Default inteval values
-DEFAULT_POLLING_INTERVAL = 2
-DEFAULT_RECONNECT_INTERVAL = 2
 
 
 class LinuxBridge:
