@@ -19,6 +19,7 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
 import logging
+import re
 import shlex
 import signal
 import subprocess
@@ -47,6 +48,17 @@ class OVSBridge:
     def __init__(self, br_name, root_helper):
         self.br_name = br_name
         self.root_helper = root_helper
+        self.re_id = self.re_compile_id()
+
+    def re_compile_id(self):
+        external = 'external_ids\s*'
+        mac = 'attached-mac="(?P<vif_mac>([a-fA-F\d]{2}:){5}([a-fA-F\d]{2}))"'
+        iface = 'iface-id="(?P<vif_id>[^"]+)"'
+        name = 'name\s*:\s"(?P<port_name>[^"]*)"'
+        port = 'ofport\s*:\s(?P<ofport>\d+)'
+        _re = ('%(external)s:\s{ ( %(mac)s,? | %(iface)s,? | . )* }'
+               ' \s+ %(name)s \s+ %(port)s' % locals())
+        return re.compile(_re, re.M | re.X)
 
     def run_vsctl(self, args):
         full_args = ["ovs-vsctl", "--timeout=2"] + args
@@ -221,8 +233,20 @@ class OVSBridge:
                 edge_ports.add(iface_id)
         return edge_ports
 
-    def get_vif_port(self, port_name):
-        external_ids = self.db_get_map("Interface", port_name, "external_ids")
-        ofport = self.db_get_val("Interface", port_name, "ofport")
-        return VifPort(port_name, ofport, external_ids["iface-id"],
-                       external_ids["attached-mac"], self)
+    def get_vif_port_by_id(self, port_id):
+        args = ['--', '--columns=external_ids,name,ofport',
+                'find', 'Interface',
+                'external_ids:iface-id="%s"' % port_id]
+        result = self.run_vsctl(args)
+        if not result:
+            return
+        match = self.re_id.search(result)
+        try:
+            vif_mac = match.group('vif_mac')
+            vif_id = match.group('vif_id')
+            port_name = match.group('port_name')
+            ofport = int(match.group('ofport'))
+            return VifPort(port_name, ofport, vif_id, vif_mac, self)
+        except Exception, e:
+            LOG.info("Unable to parse regex results. Exception: %s", e)
+            return
