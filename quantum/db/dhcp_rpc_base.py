@@ -106,8 +106,8 @@ class DhcpRpcCallbackMixin(object):
 
         if retval is None:
             # No previous port exists, so create a new one.
-            LOG.debug('DHCP port %s for %s created', device_id, network_id,
-                      host)
+            LOG.debug('DHCP port %s on network %s does not exist on %s',
+                      device_id, network_id, host)
 
             network = plugin.get_network(context, network_id)
 
