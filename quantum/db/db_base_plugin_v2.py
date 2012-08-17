@@ -736,7 +736,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             context.session.commit()
         except Exception:
             LOG.exception("An exception occured while creating "
-                          "the port:%s", item)
+                          "the %s:%s", resource, item)
             context.session.rollback()
             raise
         return objects
