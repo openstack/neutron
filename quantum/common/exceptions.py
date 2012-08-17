@@ -103,13 +103,13 @@ class MacAddressInUse(InUse):
 class HostRoutesExhausted(QuantumException):
     # NOTE(xchenum): probably make sense to use quota exceeded exception?
     message = _("Unable to complete operation for %(subnet_id)s. "
-                "The number of host routes exceeds the limit %(quota).")
+                "The number of host routes exceeds the limit %(quota)s.")
 
 
 class DNSNameServersExhausted(QuantumException):
     # NOTE(xchenum): probably make sense to use quota exceeded exception?
     message = _("Unable to complete operation for %(subnet_id)s. "
-                "The number of DNS nameservers exceeds the limit %(quota).")
+                "The number of DNS nameservers exceeds the limit %(quota)s.")
 
 
 class IpAddressInUse(InUse):
@@ -211,8 +211,8 @@ class InvalidQuotaValue(QuantumException):
 
 
 class InvalidSharedSetting(QuantumException):
-    message = _("Unable to reconfigure sharing settings for network"
-                "%(network). Multiple tenants are using it")
+    message = _("Unable to reconfigure sharing settings for network "
+                "%(network)s. Multiple tenants are using it")
 
 
 class InvalidExtenstionEnv(QuantumException):
