@@ -34,6 +34,10 @@ class QuantumException(OpenstackException):
     message = _("An unknown exception occurred.")
 
 
+class BadRequest(QuantumException):
+    message = _('Bad %(resource)s request: %(msg)s')
+
+
 class NotFound(QuantumException):
     pass
 
@@ -86,13 +90,13 @@ class NetworkInUse(InUse):
 
 class SubnetInUse(InUse):
     message = _("Unable to complete operation on subnet %(subnet_id)s. "
-                "There is used by one or more ports.")
+                "One or more ports have an IP allocation from this subnet.")
 
 
 class PortInUse(InUse):
     message = _("Unable to complete operation on port %(port_id)s "
-                "for network %(net_id)s. The attachment '%(att_id)s"
-                "is plugged into the logical port.")
+                "for network %(net_id)s. Port already has an attached"
+                "device %(device_id)s.")
 
 
 class MacAddressInUse(InUse):

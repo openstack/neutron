@@ -30,6 +30,7 @@ from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
+from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
@@ -162,7 +163,8 @@ class AgentNotifierApi(proxy.RpcProxy):
                          topic=self.topic_tunnel_update)
 
 
-class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                         l3_db.L3_NAT_db_mixin):
     """Implement the Quantum abstractions using Open vSwitch.
 
     Depending on whether tunneling is enabled, either a GRE tunnel or
@@ -181,7 +183,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider"]
+    supported_extension_aliases = ["provider", "os-quantum-router"]
 
     def __init__(self, configfile=None):
         self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
@@ -361,3 +363,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 vlan_id = ovs_db_v2.get_vlan(port['network_id'])
                 self.notifier.port_update(self.context, port, vlan_id)
         return port
+
+    def delete_port(self, context, id):
+        self.disassociate_floatingips(context, id)
+        return super(OVSQuantumPluginV2, self).delete_port(context, id)
