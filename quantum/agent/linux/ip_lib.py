@@ -262,7 +262,12 @@ class IpNetnsCommand(IpCommandBase):
         return IPWrapper(self._parent.root_helper, name)
 
     def delete(self, name):
-        self._as_root('delete', name)
+        if not self._parent.root_helper:
+            raise exceptions.SudoRequired()
+        else:
+            return utils.execute(
+                ['ip', 'netns', 'delete', name],
+                root_helper=self._parent.root_helper)
 
     def execute(self, cmds):
         if not self._parent.root_helper:

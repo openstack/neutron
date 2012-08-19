@@ -423,8 +423,10 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.assertEqual(ns.namespace, 'ns')
 
     def test_delete_namespace(self):
-        self.netns_cmd.delete('ns')
-        self._assert_sudo([], ('delete', 'ns'))
+        with mock.patch('quantum.agent.linux.utils.execute') as execute:
+            self.netns_cmd.delete('ns')
+            execute.assert_called_once_with(['ip', 'netns', 'delete', 'ns'],
+                                            root_helper='sudo')
 
     def test_namespace_exists(self):
         retval = '\n'.join(NETNS_SAMPLE)
