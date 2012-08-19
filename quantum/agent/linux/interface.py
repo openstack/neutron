@@ -86,7 +86,7 @@ class LinuxInterfaceDriver(object):
 
     @abc.abstractmethod
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None):
+             bridge=None, namespace=None, prefix=None):
         """Plug in the interface."""
 
     @abc.abstractmethod
@@ -96,7 +96,7 @@ class LinuxInterfaceDriver(object):
 
 class NullDriver(LinuxInterfaceDriver):
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None):
+             bridge=None, namespace=None, prefix=None):
         pass
 
     def unplug(self, device_name, bridge=None, namespace=None):
@@ -107,7 +107,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an OVS bridge."""
 
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None):
+             bridge=None, namespace=None, prefix=None):
         """Plug in the interface."""
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
@@ -156,17 +156,21 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 class BridgeInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating bridge interfaces."""
 
-    DEV_NAME_PREFIX = 'dhc'
+    DEV_NAME_PREFIX = 'ns-'
 
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None):
+             bridge=None, namespace=None, prefix=None):
         """Plugin the interface."""
         if not ip_lib.device_exists(device_name,
                                     self.conf.root_helper,
                                     namespace=namespace):
             ip = ip_lib.IPWrapper(self.conf.root_helper)
 
-            tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
+            # Enable agent to define the prefix
+            if prefix:
+                tap_name = device_name.replace(prefix, 'tap')
+            else:
+                tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
             root_veth, dhcp_veth = ip.add_veth(tap_name, device_name)
             root_veth.link.set_address(mac_address)
 
@@ -202,11 +206,12 @@ class RyuInterfaceDriver(OVSInterfaceDriver):
         self.ryu_client = OFPClient(self.conf.ryu_api_host)
 
     def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None):
+             bridge=None, namespace=None, prefix=None):
         """Plug in the interface."""
         super(RyuInterfaceDriver, self).plug(network_id, port_id, device_name,
                                              mac_address, bridge=bridge,
-                                             namespace=namespace)
+                                             namespace=namespace,
+                                             prefix=prefix)
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
 
@@ -254,9 +259,11 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         driver = self._get_driver_by_network_id(port.network_id)
         return driver.get_device_name(port)
 
-    def plug(self, network_id, port_id, device_name, mac_address):
+    def plug(self, network_id, port_id, device_name, mac_address,
+             bridge=None, namespace=None, prefix=None):
         driver = self._get_driver_by_network_id(network_id)
-        return driver.plug(network_id, port_id, device_name, mac_address)
+        return driver.plug(network_id, port_id, device_name, mac_address,
+                           bridge=bridge, namespace=namespace, prefix=prefix)
 
     def unplug(self, device_name):
         driver = self._get_driver_by_device_name(device_name)

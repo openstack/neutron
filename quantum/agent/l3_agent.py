@@ -276,7 +276,8 @@ class L3NATAgent(object):
             self.driver.plug(None, ex_gw_port['id'], interface_name,
                              ex_gw_port['mac_address'],
                              bridge=self.conf.external_network_bridge,
-                             namespace=ri.ns_name())
+                             namespace=ri.ns_name(),
+                             prefix=EXTERNAL_DEV_PREFIX)
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
                             namespace=ri.ns_name())
 
@@ -331,7 +332,8 @@ class L3NATAgent(object):
                                     root_helper=self.conf.root_helper,
                                     namespace=ri.ns_name()):
             self.driver.plug(None, port_id, interface_name, mac_address,
-                             namespace=ri.ns_name())
+                             namespace=ri.ns_name(),
+                             prefix=INTERNAL_DEV_PREFIX)
 
         self.driver.init_l3(interface_name, [internal_cidr],
                             namespace=ri.ns_name())
