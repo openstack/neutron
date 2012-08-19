@@ -15,10 +15,18 @@
 #    under the License.
 # @author: Ryota MIBU
 
+import logging
+
+from sqlalchemy.orm import exc
+
 from quantum.api.v2 import attributes
 from quantum.common import utils
 from quantum.db import db_base_plugin_v2
+from quantum.plugins.nec.common import exceptions as q_exc
 from quantum.plugins.nec.db import models as nmodels
+
+
+LOG = logging.getLogger(__name__)
 
 
 class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):

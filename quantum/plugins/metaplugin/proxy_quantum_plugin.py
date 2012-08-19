@@ -15,12 +15,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
+
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantumclient.common import exceptions
 from quantumclient.v2_0 import client
+
+
+LOG = logging.getLogger(__name__)
 
 
 class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
@@ -70,7 +75,6 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._get_client().delete_subnet(id)
         except exceptions.NotFound:
             LOG.warn("subnet in remote have already deleted")
-            pass
         return super(ProxyPluginV2, self).delete_subnet(context, id)
 
     def create_network(self, context, network):
@@ -97,9 +101,8 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def delete_network(self, context, id):
         try:
             self._get_client().delete_network(id)
-        except exceptions.NetworkNotFound:
+        except exceptions.NetworkNotFoundClient:
             LOG.warn("network in remote have already deleted")
-            pass
         return super(ProxyPluginV2, self).delete_network(context, id)
 
     def create_port(self, context, port):
@@ -126,7 +129,6 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def delete_port(self, context, id):
         try:
             self._get_client().delete_port(id)
-        except exceptions.portNotFound:
+        except exceptions.PortNotFoundClient:
             LOG.warn("port in remote have already deleted")
-            pass
         return super(ProxyPluginV2, self).delete_port(context, id)

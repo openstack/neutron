@@ -62,7 +62,7 @@ class QuotaSetsController(wsgi.Controller):
         return dict((k, v['limit']) for k, v in values.items())
 
     def create(self, request, body=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def index(self, request):
         context = request.context
