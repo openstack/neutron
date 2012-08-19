@@ -41,14 +41,16 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     One or more servers to a nexus switch.
     """
     MANAGE_STATE = True
+    __native_bulk_support = True
     supported_extension_aliases = []
     _plugins = {}
     _inventory = {}
     _methods_to_delegate = ['update_network', 'get_network', 'get_networks',
-                            'create_port', 'delete_port', 'update_port',
-                            'get_port', 'get_ports',
-                            'create_subnet', 'delete_subnet', 'update_subnet',
-                            'get_subnet', 'get_subnets']
+                            'create_port', 'create_port_bulk', 'delete_port',
+                            'update_port', 'get_port', 'get_ports',
+                            'create_subnet', 'create_subnet_bulk',
+                            'delete_subnet', 'update_subnet', 'get_subnet',
+                            'get_subnets', ]
 
     def __init__(self):
         """
@@ -69,15 +71,32 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 LOG.debug("Loaded device inventory %s\n" %
                           conf.PLUGINS[const.INVENTORY][key])
 
+        if hasattr(self._plugins[const.VSWITCH_PLUGIN],
+                   "supported_extension_aliases"):
+            self.supported_extension_aliases.extend(
+                self._plugins[const.VSWITCH_PLUGIN].
+                supported_extension_aliases)
+
         LOG.debug("%s.%s init done" % (__name__, self.__class__.__name__))
 
     def __getattribute__(self, name):
-        methods = object.__getattribute__(self, "_methods_to_delegate")
+        """
+        This delegates the calls to the methods implemented only by the OVS
+        sub-plugin.
+        """
+        super_getattr = super(VirtualPhysicalSwitchModelV2,
+                              self).__getattribute__
+        methods = super_getattr('_methods_to_delegate')
+
         if name in methods:
-            return getattr(object.__getattribute__(self, "_plugins")
-                           [const.VSWITCH_PLUGIN], name)
-        else:
-            return object.__getattribute__(self, name)
+            plugin = super_getattr('_plugins')[const.VSWITCH_PLUGIN]
+            return getattr(plugin, name)
+
+        try:
+            return super_getattr(name)
+        except AttributeError:
+            plugin = super_getattr('_plugins')[const.VSWITCH_PLUGIN]
+            return getattr(plugin, name)
 
     def _func_name(self, offset=0):
         """Get the name of the calling function"""
@@ -169,6 +188,36 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                                           self._func_name(),
                                                           args)
             return ovs_output[0]
+        except:
+            # TODO (Sumit): Check if we need to perform any rollback here
+            raise
+
+    def create_network_bulk(self, context, networks):
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        LOG.debug("create_network_bulk() called\n")
+        try:
+            args = [context, networks]
+            ovs_output = self._plugins[
+                const.VSWITCH_PLUGIN].create_network_bulk(context, networks)
+            vlan_ids = odb.get_vlans()
+            vlanids = ''
+            for v_id in vlan_ids:
+                vlanids = str(v_id[0]) + ',' + vlanids
+            vlanids = vlanids.strip(',')
+            LOG.debug("ovs_output: %s\n " % ovs_output)
+            ovs_networks = ovs_output
+            for ovs_network in ovs_networks:
+                vlan_id = odb.get_vlan(ovs_network['id'])
+                vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
+                args = [ovs_network['tenant_id'], ovs_network['name'],
+                        ovs_network['id'], vlan_name, vlan_id,
+                        {'vlan_ids':vlanids}]
+                nexus_output = self._invoke_plugin_per_device(
+                    const.NEXUS_PLUGIN, "create_network", args)
+            return ovs_output
         except:
             # TODO (Sumit): Check if we need to perform any rollback here
             raise

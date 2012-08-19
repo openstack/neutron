@@ -22,6 +22,7 @@ import logging
 
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum import quantum_plugin_base_v2
@@ -46,6 +47,8 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         configured, and load the inventories those device plugins for which the
         inventory is configured
         """
+        cdb.initialize()
+        cred.Store.initialize()
         self._vlan_mgr = importutils.import_object(conf.MANAGER_CLASS)
         for key in conf.PLUGINS[const.PLUGINS].keys():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]

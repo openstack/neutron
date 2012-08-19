@@ -20,6 +20,8 @@ import webtest
 
 from quantum.api.v2 import router
 from quantum.common import config
+from quantum.extensions.extensions import PluginAwareExtensionManager
+from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_api_v2
 
@@ -35,6 +37,10 @@ class APIv2TestCase(test_api_v2.APIv2TestCase):
 
     def setUp(self):
         plugin = 'quantum.plugins.cisco.network_plugin.PluginV2'
+        # Ensure 'stale' patched copies of the plugin are never returned
+        QuantumManager._instance = None
+        # Ensure existing ExtensionManager is not used
+        PluginAwareExtensionManager._instance = None
         # Create the default configurations
         args = ['--config-file', curdir('quantumv2.conf.cisco.test')]
         config.parse(args=args)
