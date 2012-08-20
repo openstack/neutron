@@ -219,7 +219,8 @@ class L3NATAgent(object):
         for p in new_ports:
             self._set_subnet_info(p)
             ri.internal_ports.append(p)
-            self.internal_network_added(ri, ex_gw_port, p['id'],
+            self.internal_network_added(ri, ex_gw_port,
+                                        p['network_id'], p['id'],
                                         p['ip_cidr'], p['mac_address'])
 
         for p in old_ports:
@@ -305,7 +306,8 @@ class L3NATAgent(object):
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.conf.root_helper,
                                     namespace=ri.ns_name()):
-            self.driver.plug(None, ex_gw_port['id'], interface_name,
+            self.driver.plug(ex_gw_port['network_id'],
+                             ex_gw_port['id'], interface_name,
                              ex_gw_port['mac_address'],
                              bridge=self.conf.external_network_bridge,
                              namespace=ri.ns_name(),
@@ -367,13 +369,13 @@ class L3NATAgent(object):
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
 
-    def internal_network_added(self, ri, ex_gw_port, port_id,
+    def internal_network_added(self, ri, ex_gw_port, network_id, port_id,
                                internal_cidr, mac_address):
         interface_name = self.get_internal_device_name(port_id)
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.conf.root_helper,
                                     namespace=ri.ns_name()):
-            self.driver.plug(None, port_id, interface_name, mac_address,
+            self.driver.plug(network_id, port_id, interface_name, mac_address,
                              namespace=ri.ns_name(),
                              prefix=INTERNAL_DEV_PREFIX)
 

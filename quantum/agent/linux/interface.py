@@ -24,6 +24,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
 from quantum.common import exceptions
+from quantum.extensions.flavor import (FLAVOR_NETWORK)
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 
@@ -244,7 +245,7 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
 
     def _get_driver_by_network_id(self, network_id):
         network = self.quantum.show_network(network_id)
-        flavor = network['network']['flavor:id']
+        flavor = network['network'][FLAVOR_NETWORK]
         return self.flavor_driver_map[flavor]
 
     def _get_driver_by_device_name(self, device_name, namespace=None):

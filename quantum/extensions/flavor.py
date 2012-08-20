@@ -21,12 +21,21 @@ from quantum.api.v2 import attributes
 
 LOG = logging.getLogger(__name__)
 
+FLAVOR_NETWORK = 'flavor:network'
+FLAVOR_ROUTER = 'flavor:router'
+
 FLAVOR_ATTRIBUTE = {
     'networks': {
-    'flavor:id': {'allow_post': True,
-                  'allow_put': False,
-                  'is_visible': True,
-                  'default': attributes.ATTR_NOT_SPECIFIED}
+    FLAVOR_NETWORK: {'allow_post': True,
+                     'allow_put': False,
+                     'is_visible': True,
+                     'default': attributes.ATTR_NOT_SPECIFIED}
+    },
+    'routers': {
+    FLAVOR_ROUTER: {'allow_post': True,
+                    'allow_put': False,
+                    'is_visible': True,
+                    'default': attributes.ATTR_NOT_SPECIFIED}
     }
 }
 
@@ -34,7 +43,7 @@ FLAVOR_ATTRIBUTE = {
 class Flavor(object):
     @classmethod
     def get_name(cls):
-        return "Flavor for each network"
+        return "Flavor support for network and router"
 
     @classmethod
     def get_alias(cls):

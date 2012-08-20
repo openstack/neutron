@@ -17,24 +17,37 @@
 
 import logging
 
-from quantum.common import exceptions as exc
-
 from quantum.api.v2 import attributes
+from quantum.common import exceptions as exc
 from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import l3_db
 from quantum.db import models_v2
+from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.plugins.metaplugin.common import config
 from quantum.plugins.metaplugin import meta_db_v2
-from quantum.plugins.metaplugin.meta_models_v2 import Flavor
+from quantum.plugins.metaplugin.meta_models_v2 import (NetworkFlavor,
+                                                       RouterFlavor)
 from quantum import policy
 
 LOG = logging.getLogger("metaplugin")
 
 
-class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+# Metaplugin  Exceptions
+class FlavorNotFound(exc.NotFound):
+    message = _("Flavor %(flavor)s could not be found")
+
+
+class FaildToAddFlavorBinding(exc.QuantumException):
+    message = _("Failed to add flavor binding")
+
+
+class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                   l3_db.L3_NAT_db_mixin):
+
     def __init__(self, configfile=None):
         LOG.debug("Start initializing metaplugin")
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
@@ -45,7 +58,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         options.update({"reconnect_interval": reconnect_interval})
         self.supported_extension_aliases = \
             cfg.CONF.META.supported_extension_aliases.split(',')
-        self.supported_extension_aliases.append('flavor')
+        self.supported_extension_aliases += ['flavor', 'os-quantum-router']
 
         # Ignore config option overapping
         def _is_opt_registered(opts, opt):
@@ -69,7 +82,30 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             # Needed to clear _ENGINE for each plugin
             db._ENGINE = None
 
+        self.l3_plugins = {}
+        l3_plugin_list = [plugin_set.split(':')
+                          for plugin_set
+                          in cfg.CONF.META.l3_plugin_list.split(',')]
+        for flavor, plugin_provider in l3_plugin_list:
+            if flavor in self.plugins:
+                self.l3_plugins[flavor] = self.plugins[flavor]
+            else:
+                # For l3 only plugin
+                self.l3_plugins[flavor] = self._load_plugin(plugin_provider)
+                db._ENGINE = None
+
+        self.default_flavor = cfg.CONF.META.default_flavor
+        if not self.default_flavor in self.plugins:
+            raise exc.Invalid('default_flavor %s is not plugin list' %
+                              self.default_flavor)
+
+        self.default_l3_flavor = cfg.CONF.META.default_l3_flavor
+        if not self.default_l3_flavor in self.l3_plugins:
+            raise exc.Invalid('default_l3_flavor %s is not plugin list' %
+                              self.default_l3_flavor)
+
         db.configure_db(options)
+
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':
             extension_list = [method_set.split(':')
@@ -80,27 +116,20 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         self.default_flavor = cfg.CONF.META.default_flavor
 
-        if not self.default_flavor in self.plugins:
-            raise exc.Invalid('default_flavor %s is not plugin list' %
-                              self.default_flavor)
-
     def _load_plugin(self, plugin_provider):
         LOG.debug("Plugin location:%s", plugin_provider)
-        # If the plugin can't be found let them know gracefully
-        try:
-            LOG.info("Loading Plugin: %s" % plugin_provider)
-            plugin_klass = importutils.import_class(plugin_provider)
-        except exc.ClassNotFound:
-            LOG.exception("Error loading plugin")
-            raise Exception("Plugin not found.  You can install a "
-                            "plugin with: pip install <plugin-name>\n"
-                            "Example: pip install quantum-sample-plugin")
+        plugin_klass = importutils.import_class(plugin_provider)
         return plugin_klass()
 
     def _get_plugin(self, flavor):
         if not flavor in self.plugins:
-            raise Exception("Plugin for flavor %s not found." % flavor)
+            raise FlavorNotFound(flavor=flavor)
         return self.plugins[flavor]
+
+    def _get_l3_plugin(self, flavor):
+        if not flavor in self.l3_plugins:
+            raise FlavorNotFound(flavor=flavor)
+        return self.l3_plugins[flavor]
 
     def __getattr__(self, key):
         # At first,  try to pickup extension command from extension_map
@@ -111,8 +140,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             if plugin and hasattr(plugin, key):
                 return getattr(plugin, key)
 
-        # Second, try to match extension method in order of pluign list
-
+        # Second, try to match extension method in order of plugin list
         for flavor, plugin in self.plugins.items():
             if hasattr(plugin, key):
                 return getattr(plugin, key)
@@ -121,22 +149,23 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         raise AttributeError
 
     def _extend_network_dict(self, context, network):
-        network['flavor:id'] = self._get_flavor_by_network_id(network['id'])
+        flavor = self._get_flavor_by_network_id(network['id'])
+        network[FLAVOR_NETWORK] = flavor
 
     def create_network(self, context, network):
         n = network['network']
-        flavor = n.get('flavor:id')
+        flavor = n.get(FLAVOR_NETWORK)
         if not str(flavor) in self.plugins:
             flavor = self.default_flavor
         plugin = self._get_plugin(flavor)
         net = plugin.create_network(context, network)
         LOG.debug("Created network: %s with flavor %s " % (net['id'], flavor))
         try:
-            meta_db_v2.add_flavor_binding(flavor, str(net['id']))
-        except Exception as e:
-            LOG.error('failed to add flavor bindings')
+            meta_db_v2.add_network_flavor_binding(flavor, str(net['id']))
+        except:
+            LOG.exception('failed to add flavor bindings')
             plugin.delete_network(context, net['id'])
-            raise Exception('Failed to create network')
+            raise FaildToAddFlavorBinding()
 
         LOG.debug("Created network: %s" % net['id'])
         self._extend_network_dict(context, net)
@@ -151,19 +180,20 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         flavor = meta_db_v2.get_flavor_by_network(id)
         plugin = self._get_plugin(flavor)
         net = plugin.get_network(context, id, fields)
-        if not fields or 'flavor:id' in fields:
+        if not fields or FLAVOR_NETWORK in fields:
             self._extend_network_dict(context, net)
         return net
 
     def get_networks_with_flavor(self, context, filters=None,
                                  fields=None):
         collection = self._model_query(context, models_v2.Network)
-        collection = collection.join(Flavor,
-                                     models_v2.Network.id == Flavor.network_id)
+        model = NetworkFlavor
+        collection = collection.join(model,
+                                     models_v2.Network.id == model.network_id)
         if filters:
             for key, value in filters.iteritems():
-                if key == 'flavor:id':
-                    column = Flavor.flavor
+                if key == FLAVOR_NETWORK:
+                    column = NetworkFlavor.flavor
                 else:
                     column = getattr(models_v2.Network, key, None)
                 if column:
@@ -177,6 +207,9 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def _get_flavor_by_network_id(self, network_id):
         return meta_db_v2.get_flavor_by_network(network_id)
+
+    def _get_flavor_by_router_id(self, router_id):
+        return meta_db_v2.get_flavor_by_router(router_id)
 
     def _get_plugin_by_network_id(self, network_id):
         flavor = self._get_flavor_by_network_id(network_id)
@@ -194,7 +227,10 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         plugin = self._get_plugin_by_network_id(port_in_db['network_id'])
         return plugin.update_port(context, id, port)
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+        self.disassociate_floatingips(context, id)
         port_in_db = self.get_port(context, id)
         plugin = self._get_plugin_by_network_id(port_in_db['network_id'])
         return plugin.delete_port(context, id)
@@ -215,3 +251,68 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         s = self.get_subnet(context, id)
         plugin = self._get_plugin_by_network_id(s['network_id'])
         return plugin.delete_subnet(context, id)
+
+    def _extend_router_dict(self, context, router):
+        flavor = self._get_flavor_by_router_id(router['id'])
+        router[FLAVOR_ROUTER] = flavor
+
+    def create_router(self, context, router):
+        r = router['router']
+        flavor = r.get(FLAVOR_ROUTER)
+        if not str(flavor) in self.l3_plugins:
+            flavor = self.default_l3_flavor
+        plugin = self._get_l3_plugin(flavor)
+        r_in_db = plugin.create_router(context, router)
+        LOG.debug("Created router: %s with flavor %s " % (r_in_db['id'],
+                                                          flavor))
+        try:
+            meta_db_v2.add_router_flavor_binding(flavor, str(r_in_db['id']))
+        except:
+            LOG.exception('failed to add flavor bindings')
+            plugin.delete_router(context, r_in_db['id'])
+            raise FaildToAddFlavorBinding()
+
+        LOG.debug("Created router: %s" % r_in_db['id'])
+        self._extend_router_dict(context, r_in_db)
+        return r_in_db
+
+    def update_router(self, context, id, router):
+        flavor = meta_db_v2.get_flavor_by_router(id)
+        plugin = self._get_l3_plugin(flavor)
+        return plugin.update_router(context, id, router)
+
+    def delete_router(self, context, id):
+        flavor = meta_db_v2.get_flavor_by_router(id)
+        plugin = self._get_l3_plugin(flavor)
+        return plugin.delete_router(context, id)
+
+    def get_router(self, context, id, fields=None):
+        flavor = meta_db_v2.get_flavor_by_router(id)
+        plugin = self._get_l3_plugin(flavor)
+        router = plugin.get_router(context, id, fields)
+        if not fields or FLAVOR_ROUTER in fields:
+            self._extend_router_dict(context, router)
+        return router
+
+    def get_routers_with_flavor(self, context, filters=None,
+                                fields=None):
+        collection = self._model_query(context, l3_db.Router)
+        r_model = RouterFlavor
+        collection = collection.join(r_model,
+                                     l3_db.Router.id == r_model.router_id)
+        if filters:
+            for key, value in filters.iteritems():
+                if key == FLAVOR_ROUTER:
+                    column = RouterFlavor.flavor
+                else:
+                    column = getattr(l3_db.Router, key, None)
+                if column:
+                    collection = collection.filter(column.in_(value))
+        return [self._make_router_dict(c, fields) for c in collection.all()]
+
+    def get_routers(self, context, filters=None, fields=None):
+        routers = self.get_routers_with_flavor(context, filters,
+                                               None)
+        return [self.get_router(context, router['id'],
+                                fields)
+                for router in routers]

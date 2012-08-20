@@ -23,8 +23,9 @@ from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
-from quantum.openstack.common import cfg
 from quantum.agent.dhcp_agent import DeviceManager
+from quantum.extensions.flavor import (FLAVOR_NETWORK)
+from quantum.openstack.common import cfg
 
 
 class BaseChild(interface.LinuxInterfaceDriver):
@@ -345,7 +346,7 @@ class TestMetaInterfaceDriver(TestBase):
         self.client_inst = mock.Mock()
         client_cls.return_value = self.client_inst
 
-        fake_network = {'network': {'flavor:id': 'fake1'}}
+        fake_network = {'network': {FLAVOR_NETWORK: 'fake1'}}
         fake_port = {'ports':
                      [{'mac_address':
                       'aa:bb:cc:dd:ee:ffa', 'network_id': 'test'}]}
