@@ -40,25 +40,28 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
                                    "Cisco qos", "Cisco Nova Tenant",
                                    "Cisco Multiport"]
-    _methods_to_delegate = ['create_network', 'delete_network',
-                            'update_network', 'get_network', 'get_networks',
-                            'create_port', 'delete_port', 'update_port',
-                            'get_port', 'get_ports',
-                            'create_subnet', 'delete_subnet', 'update_subnet',
-                            'get_subnet', 'get_subnets']
+    _methods_to_delegate = ['create_network', 'create_network_bulk',
+                            'delete_network', 'update_network', 'get_network',
+                            'get_networks',
+                            'create_port', 'create_port_bulk', 'delete_port',
+                            'update_port', 'get_port', 'get_ports',
+                            'create_subnet', 'create_subnet_bulk',
+                            'delete_subnet', 'update_subnet',
+                            'get_subnet', 'get_subnets', ]
     _master = True
 
     def __init__(self):
         """
-        Loads the model class, initializes the DB, and credential store.
+        Loads the model class.
         """
         self._model = importutils.import_object(conf.MODEL_CLASS)
         if hasattr(self._model, "MANAGE_STATE") and self._model.MANAGE_STATE:
             self._master = False
             LOG.debug("Model %s manages state" % conf.MODEL_CLASS)
-        else:
-            cdb.initialize()
-            cred.Store.initialize()
+            native_bulk_attr_name = ("_%s__native_bulk_support"
+                                     % self._model.__class__.__name__)
+            self.__native_bulk_support = getattr(self._model,
+                                                 native_bulk_attr_name, False)
 
         if hasattr(self._model, "supported_extension_aliases"):
             self.supported_extension_aliases.extend(
