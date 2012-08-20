@@ -115,16 +115,17 @@ class OVSRpcCallbacks():
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")
         port = kwargs.get('port')
-        port_name = 'tap%s' % port['id'][0:11]
-        vif_port = self.int_br.get_vif_port(port_name)
-        if port['admin_state_up']:
-            vlan_id = kwargs.get('vlan_id')
-            # create the networking for the port
-            self.int_br.set_db_attribute("Port", vif_port.port_name,
-                                         "tag", str(vlan_id))
-            self.int_br.delete_flows(in_port=vif_port.ofport)
-        else:
-            self.int_br.clear_db_attribute("Port", vif_port.port_name, "tag")
+        vif_port = self.int_br.get_vif_port_by_id(port['id'])
+        if vif_port:
+            if port['admin_state_up']:
+                vlan_id = kwargs.get('vlan_id')
+                # create the networking for the port
+                self.int_br.set_db_attribute("Port", vif_port.port_name,
+                                             "tag", str(vlan_id))
+                self.int_br.delete_flows(in_port=vif_port.ofport)
+            else:
+                self.int_br.clear_db_attribute("Port", vif_port.port_name,
+                                               "tag")
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
@@ -316,12 +317,12 @@ class OVSQuantumAgent(object):
                 continue
             if 'port_id' in details:
                 LOG.info("Port %s updated. Details: %s", device, details)
-                port_name = 'tap%s' % details['port_id'][0:11]
-                port = self.int_br.get_vif_port(port_name)
-                if details['admin_state_up']:
-                    self.port_bound(port, details['vlan_id'])
-                else:
-                    self.port_unbound(port, True)
+                port = self.int_br.get_vif_port_by_id(details['port_id'])
+                if port:
+                    if details['admin_state_up']:
+                        self.port_bound(port, details['vlan_id'])
+                    else:
+                        self.port_unbound(port, True)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
         return resync
@@ -734,13 +735,13 @@ class OVSQuantumTunnelAgent(object):
                 continue
             if 'port_id' in details:
                 LOG.info("Port %s updated. Details: %s", device, details)
-                port_name = 'tap%s' % details['port_id'][0:11]
-                port = self.int_br.get_vif_port(port_name)
-                if details['admin_state_up']:
-                    self.port_bound(port, details['network_id'],
-                                    details['vlan_id'])
-                else:
-                    self.port_unbound(port, details['network_id'])
+                port = self.int_br.get_vif_port_by_id(details['port_id'])
+                if port:
+                    if details['admin_state_up']:
+                        self.port_bound(port, details['network_id'],
+                                        details['vlan_id'])
+                    else:
+                        self.port_unbound(port, details['network_id'])
             else:
                 LOG.debug("Device %s not defined on plugin", device)
         return resync

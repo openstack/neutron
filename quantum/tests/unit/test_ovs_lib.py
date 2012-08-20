@@ -277,3 +277,18 @@ class OVS_Lib_Test(unittest.TestCase):
         self.mox.ReplayAll()
         self.br.clear_db_attribute("Port", pname, "tag")
         self.mox.VerifyAll()
+
+    def test_port_id_regex(self):
+        result = ('external_ids        : {attached-mac="fa:16:3e:23:5b:f2",'
+                  ' iface-id="5c1321a7-c73f-4a77-95e6-9f86402e5c8f",'
+                  ' iface-status=active}\nname                :'
+                  ' "dhc5c1321a7-c7"\nofport              : 2\n')
+        match = self.br.re_id.search(result)
+        vif_mac = match.group('vif_mac')
+        vif_id = match.group('vif_id')
+        port_name = match.group('port_name')
+        ofport = int(match.group('ofport'))
+        self.assertEqual(vif_mac, 'fa:16:3e:23:5b:f2')
+        self.assertEqual(vif_id, '5c1321a7-c73f-4a77-95e6-9f86402e5c8f')
+        self.assertEqual(port_name, 'dhc5c1321a7-c7')
+        self.assertEqual(ofport, 2)
