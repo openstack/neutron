@@ -36,16 +36,8 @@ class Versions(object):
         """Respond to a request for all Quantum API versions."""
         version_objs = [
             {
-                "id": "v1.0",
-                "status": "DEPRECATED",
-            },
-            {
-                "id": "v1.1",
-                "status": "CURRENT",
-            },
-            {
                 "id": "v2.0",
-                "status": "PROPOSED",
+                "status": "CURRENT",
             },
         ]
 
