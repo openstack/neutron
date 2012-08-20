@@ -18,6 +18,9 @@ from quantum.agent.linux import utils
 from quantum.common import exceptions
 
 
+LOOPBACK_DEVNAME = 'lo'
+
+
 class SubProcessBase(object):
     def __init__(self, root_helper=None, namespace=None):
         self.root_helper = root_helper
@@ -62,7 +65,7 @@ class IPWrapper(SubProcessBase):
     def device(self, name):
         return IPDevice(name, self.root_helper, self.namespace)
 
-    def get_devices(self):
+    def get_devices(self, exclude_loopback=False):
         retval = []
         output = self._execute('o', 'link', ('list',),
                                self.root_helper, self.namespace)
@@ -71,7 +74,12 @@ class IPWrapper(SubProcessBase):
                 continue
             tokens = line.split(':', 2)
             if len(tokens) >= 3:
-                retval.append(IPDevice(tokens[1].strip(),
+                name = tokens[1].strip()
+
+                if exclude_loopback and name == LOOPBACK_DEVNAME:
+                    continue
+
+                retval.append(IPDevice(name,
                                        self.root_helper,
                                        self.namespace))
         return retval
@@ -90,11 +98,22 @@ class IPWrapper(SubProcessBase):
     def ensure_namespace(self, name):
         if not self.netns.exists(name):
             ip = self.netns.add(name)
-            lo = ip.device('lo')
+            lo = ip.device(LOOPBACK_DEVNAME)
             lo.link.set_up()
         else:
             ip = IPWrapper(self.root_helper, name)
         return ip
+
+    def namespace_is_empty(self):
+        return not self.get_devices(exclude_loopback=True)
+
+    def garbage_collect_namespace(self):
+        """Conditionally destroy the namespace if it is empty."""
+        if self.namespace and self.netns.exists(self.namespace):
+            if self.namespace_is_empty():
+                self.netns.delete(self.namespace)
+                return True
+        return False
 
     def add_device_to_namespace(self, device):
         if self.namespace:

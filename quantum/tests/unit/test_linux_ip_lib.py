@@ -206,6 +206,72 @@ class TestIpWrapper(unittest.TestCase):
             self.assertFalse(self.execute.called)
             self.assertEqual(ns.namespace, 'ns')
 
+    def test_namespace_is_empty_no_devices(self):
+        ip = ip_lib.IPWrapper('sudo', 'ns')
+        with mock.patch.object(ip, 'get_devices') as get_devices:
+            get_devices.return_value = []
+
+            self.assertTrue(ip.namespace_is_empty())
+            get_devices.assert_called_once_with(exclude_loopback=True)
+
+    def test_namespace_is_empty(self):
+        ip = ip_lib.IPWrapper('sudo', 'ns')
+        with mock.patch.object(ip, 'get_devices') as get_devices:
+            get_devices.return_value = [mock.Mock()]
+
+            self.assertFalse(ip.namespace_is_empty())
+            get_devices.assert_called_once_with(exclude_loopback=True)
+
+    def test_garbage_collect_namespace_does_not_exist(self):
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
+            ip_ns_cmd_cls.return_value.exists.return_value = False
+            ip = ip_lib.IPWrapper('sudo', 'ns')
+            with mock.patch.object(ip, 'namespace_is_empty') as mock_is_empty:
+
+                self.assertFalse(ip.garbage_collect_namespace())
+                ip_ns_cmd_cls.assert_has_calls([mock.call().exists('ns')])
+                self.assertNotIn(mock.call().delete('ns'),
+                                 ip_ns_cmd_cls.return_value.mock_calls)
+                self.assertEqual(mock_is_empty.mock_calls, [])
+
+    def test_garbage_collect_namespace_existing_empty_ns(self):
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
+            ip_ns_cmd_cls.return_value.exists.return_value = True
+
+            ip = ip_lib.IPWrapper('sudo', 'ns')
+
+            with mock.patch.object(ip, 'namespace_is_empty') as mock_is_empty:
+                mock_is_empty.return_value = True
+                self.assertTrue(ip.garbage_collect_namespace())
+
+                mock_is_empty.assert_called_once_with()
+                expected = [mock.call().exists('ns'),
+                            mock.call().delete('ns')]
+                ip_ns_cmd_cls.assert_has_calls(expected)
+
+    def test_garbage_collect_namespace_existing_not_empty(self):
+        lo_device = mock.Mock()
+        lo_device.name = 'lo'
+        tap_device = mock.Mock()
+        tap_device.name = 'tap1'
+
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
+            ip_ns_cmd_cls.return_value.exists.return_value = True
+
+            ip = ip_lib.IPWrapper('sudo', 'ns')
+
+            with mock.patch.object(ip, 'namespace_is_empty') as mock_is_empty:
+                mock_is_empty.return_value = False
+
+                self.assertFalse(ip.garbage_collect_namespace())
+
+                mock_is_empty.assert_called_once_with()
+                expected = [mock.call(ip),
+                            mock.call().exists('ns')]
+                self.assertEqual(ip_ns_cmd_cls.mock_calls, expected)
+                self.assertNotIn(mock.call().delete('ns'),
+                                 ip_ns_cmd_cls.mock_calls)
+
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
         ip_lib.IPWrapper('sudo', 'ns').add_device_to_namespace(dev)
