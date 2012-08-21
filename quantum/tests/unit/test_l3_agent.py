@@ -189,6 +189,7 @@ class TestBasicRouterOperations(unittest.TestCase):
                       'fixed_ips': [{'ip_address': '19.4.4.4',
                                      'subnet_id': _uuid()}]}
         internal_port = {'id': _uuid(),
+                         'admin_state_up': True,
                          'fixed_ips': [{'ip_address': '35.4.4.4',
                                         'subnet_id': _uuid()}],
                          'mac_address': 'ca:fe:de:ad:be:ef'}
@@ -221,6 +222,21 @@ class TestBasicRouterOperations(unittest.TestCase):
         self.client_inst.list_ports.return_value = {'ports': []}
         agent.process_router(ri)
 
+    def testSingleLoopRouterRemoval(self):
+        agent = l3_agent.L3NATAgent(self.conf)
+
+        self.client_inst.list_ports.return_value = {'ports': []}
+
+        self.client_inst.list_routers.return_value = {'routers': [
+            {'id': _uuid()}]}
+        agent.do_single_loop()
+
+        self.client_inst.list_routers.return_value = {'routers': []}
+        agent.do_single_loop()
+
+        # verify that remove is called
+        self.assertEquals(self.mock_ip.get_devices.call_count, 1)
+
     def testDaemonLoop(self):
 
         # just take a pass through the loop, then raise on time.sleep()
@@ -231,8 +247,6 @@ class TestBasicRouterOperations(unittest.TestCase):
             pass
 
         time_sleep.side_effect = ExpectedException()
-        self.client_inst.list_routers.return_value = {'routers':
-                                                      [{'id': _uuid()}]}
 
         agent = l3_agent.L3NATAgent(self.conf)
         self.assertRaises(ExpectedException, agent.daemon_loop)
@@ -250,7 +264,7 @@ class TestBasicRouterOperations(unittest.TestCase):
                                                  FakeDev('qgw-aaaa')]
 
         agent = l3_agent.L3NATAgent(self.conf)
-        agent._destroy_router_namespaces()
+        agent._destroy_all_router_namespaces()
 
     def testMain(self):
         agent_mock_p = mock.patch('quantum.agent.l3_agent.L3NATAgent')
