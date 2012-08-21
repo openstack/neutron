@@ -140,6 +140,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     routes = orm.relationship(Route,
                               backref='subnet',
                               cascade='delete')
+    shared = sa.Column(sa.Boolean)
 
 
 class Network(model_base.BASEV2, HasId, HasTenant):

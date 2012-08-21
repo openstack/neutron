@@ -200,7 +200,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         for arg in ('allocation_pools',
                     'ip_version', 'tenant_id',
                     'enable_dhcp', 'allocation_pools',
-                    'dns_nameservers', 'host_routes'):
+                    'dns_nameservers', 'host_routes',
+                    'shared'):
             # Arg must be present and not null (but can be false)
             if arg in kwargs and kwargs[arg] is not None:
                 data['subnet'][arg] = kwargs[arg]
@@ -281,7 +282,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
 
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
-                     dns_nameservers=None, host_routes=None):
+                     dns_nameservers=None, host_routes=None, shared=None):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
@@ -291,7 +292,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                   ip_version=ip_version,
                                   enable_dhcp=enable_dhcp,
                                   dns_nameservers=dns_nameservers,
-                                  host_routes=host_routes)
+                                  host_routes=host_routes,
+                                  shared=shared)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= 400:
@@ -384,7 +386,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                allocation_pools=None,
                enable_dhcp=True,
                dns_nameservers=None,
-               host_routes=None):
+               host_routes=None,
+               shared=None):
         # TODO(anyone) DRY this
         # NOTE(salvatore-orlando): we can pass the network object
         # to gen function anyway, and then avoid the repetition
@@ -398,7 +401,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                            ip_version,
                                            enable_dhcp,
                                            dns_nameservers,
-                                           host_routes)
+                                           host_routes,
+                                           shared=shared)
                 yield subnet
                 self._delete('subnets', subnet['subnet']['id'])
         else:
@@ -410,7 +414,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                        ip_version,
                                        enable_dhcp,
                                        dns_nameservers,
-                                       host_routes)
+                                       host_routes,
+                                       shared=shared)
             yield subnet
             self._delete('subnets', subnet['subnet']['id'])
 
@@ -572,6 +577,23 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                 self.assertEquals(port['port'][k], v)
             self.assertTrue('mac_address' in port['port'])
             self._delete('ports', port['port']['id'])
+
+    def test_create_port_public_network_with_ip(self):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                keys = [('admin_state_up', True), ('status', 'ACTIVE'),
+                        ('fixed_ips', [{'subnet_id': subnet['subnet']['id'],
+                                        'ip_address': '10.0.0.2'}])]
+                port_res = self._create_port('json',
+                                             network['network']['id'],
+                                             201,
+                                             tenant_id='another_tenant',
+                                             set_context=True)
+                port = self.deserialize('json', port_res)
+                for k, v in keys:
+                    self.assertEquals(port['port'][k], v)
+                self.assertTrue('mac_address' in port['port'])
+                self._delete('ports', port['port']['id'])
 
     def test_create_ports_bulk_native(self):
         if self._skip_native_bulk:
@@ -1249,6 +1271,22 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             res = self.deserialize('json', req.get_response(self.api))
             self.assertTrue(res['network']['shared'])
 
+    def test_update_network_with_subnet_set_shared(self):
+        with self.network(shared=False) as network:
+            with self.subnet(network=network) as subnet:
+                data = {'network': {'shared': True}}
+                req = self.new_update_request('networks',
+                                              data,
+                                              network['network']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertTrue(res['network']['shared'])
+                # must query db to see whether subnet's shared attribute
+                # has been updated or not
+                ctx = context.Context('', '', is_admin=True)
+                subnet_db = QuantumManager.get_plugin()._get_subnet(
+                    ctx, subnet['subnet']['id'])
+                self.assertEqual(subnet_db['shared'], True)
+
     def test_update_network_set_not_shared_single_tenant(self):
         with self.network(shared=True) as network:
             res1 = self._create_port('json',
@@ -1751,6 +1789,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                      allocation_pools=allocation_pools)
         self.assertEquals(ctx_manager.exception.code, 400)
 
+    def test_create_subnet_shared_returns_422(self):
+        cidr = '10.0.0.0/24'
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(cidr=cidr,
+                                     shared=True)
+        self.assertEquals(ctx_manager.exception.code, 422)
+
     def test_update_subnet(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
@@ -1759,6 +1804,15 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             res = self.deserialize('json', req.get_response(self.api))
             self.assertEqual(res['subnet']['gateway_ip'],
                              data['subnet']['gateway_ip'])
+
+    def test_update_subnet_shared_returns_422(self):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'shared': True}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 422)
 
     def test_show_subnet(self):
         with self.network() as network:

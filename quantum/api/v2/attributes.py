@@ -275,6 +275,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'convert_to': convert_to_boolean,
                         'validate': {'type:boolean': None},
                         'is_visible': True},
+        SHARED: {'allow_post': False,
+                 'allow_put': False,
+                 'default': False,
+                 'is_visible': False},
     }
 }
 
