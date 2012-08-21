@@ -278,7 +278,11 @@ RESOURCE_ATTRIBUTE_MAP = {
         SHARED: {'allow_post': False,
                  'allow_put': False,
                  'default': False,
-                 'is_visible': False},
+                 'convert_to': convert_to_boolean,
+                 'validate': {'type:boolean': None},
+                 'is_visible': False,
+                 'required_by_policy': True,
+                 'enforce_policy': True},
     }
 }
 

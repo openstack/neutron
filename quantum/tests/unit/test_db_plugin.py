@@ -1843,6 +1843,28 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     self.assertEquals(res2['cidr'],
                                       subnet2['subnet']['cidr'])
 
+    def test_list_subnets_shared(self):
+        with self.network(shared=True) as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                with self.subnet(cidr='10.0.1.0/24') as priv_subnet:
+                    # normal user should see only 1 subnet
+                    req = self.new_list_request('subnets')
+                    req.environ['quantum.context'] = context.Context(
+                        '', 'some_tenant')
+                    res = self.deserialize('json',
+                                           req.get_response(self.api))
+                    self.assertEqual(len(res['subnets']), 1)
+                    self.assertEquals(res['subnets'][0]['cidr'],
+                                      subnet['subnet']['cidr'])
+                    # admin will see both subnets
+                    admin_req = self.new_list_request('subnets')
+                    admin_res = self.deserialize(
+                        'json', admin_req.get_response(self.api))
+                    self.assertEqual(len(admin_res['subnets']), 2)
+                    cidrs = [sub['cidr'] for sub in admin_res['subnets']]
+                    self.assertIn(subnet['subnet']['cidr'], cidrs)
+                    self.assertIn(priv_subnet['subnet']['cidr'], cidrs)
+
     def test_list_subnets_with_parameter(self):
         # NOTE(jkoelker) This would be a good place to use contextlib.nested
         #                or just drop 2.6 support ;)

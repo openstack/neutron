@@ -13,8 +13,13 @@
     "networks:shared:read": [["rule:regular_user"]],
     "networks:shared:write": [["rule:admin_only"]],
 
+    "subnets:private:read": [["rule:admin_or_owner"]],
+    "subnets:private:write": [["rule:admin_or_owner"]],
+    "subnets:shared:read": [["rule:regular_user"]],
+    "subnets:shared:write": [["rule:admin_only"]],
+
     "create_subnet": [["rule:admin_or_network_owner"]],
-    "get_subnet": [["rule:admin_or_owner"]],
+    "get_subnet": [],
     "update_subnet": [["rule:admin_or_network_owner"]],
     "delete_subnet": [["rule:admin_or_network_owner"]],
 
