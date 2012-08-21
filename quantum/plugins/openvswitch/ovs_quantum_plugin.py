@@ -353,7 +353,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):
-        if self.agent_pc:
+        if self.agent_rpc:
             original_port = super(OVSQuantumPluginV2, self).get_port(context,
                                                                      id)
         port = super(OVSQuantumPluginV2, self).update_port(context, id, port)
