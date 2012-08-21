@@ -197,9 +197,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # update the vlan_id table based on current configuration
         ovs_db_v2.update_vlan_id_pool()
-        self.rpc = cfg.CONF.AGENT.rpc
-        if cfg.CONF.AGENT.rpc:
-            self.setup_rpc()
+        self.agent_rpc = cfg.CONF.AGENT.rpc
+        self.setup_rpc()
 
     def setup_rpc(self):
         # RPC support
@@ -335,7 +334,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         vlan_id = ovs_db_v2.get_vlan(id)
         result = super(OVSQuantumPluginV2, self).delete_network(context, id)
         ovs_db_v2.release_vlan_id(vlan_id)
-        if self.rpc:
+        if self.agent_rpc:
             self.notifier.network_delete(self.context, id)
         return result
 
@@ -354,11 +353,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):
-        if self.rpc:
+        if self.agent_pc:
             original_port = super(OVSQuantumPluginV2, self).get_port(context,
                                                                      id)
         port = super(OVSQuantumPluginV2, self).update_port(context, id, port)
-        if self.rpc:
+        if self.agent_rpc:
             if original_port['admin_state_up'] != port['admin_state_up']:
                 vlan_id = ovs_db_v2.get_vlan(port['network_id'])
                 self.notifier.port_update(self.context, port, vlan_id)
