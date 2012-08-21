@@ -156,9 +156,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         db.initialize()
         self._parse_network_vlan_ranges()
         db.sync_network_states(self.network_vlan_ranges)
-        self.rpc = cfg.CONF.AGENT.rpc
-        if self.rpc:
-            self._setup_rpc()
+        self.agent_rpc = cfg.CONF.AGENT.rpc
+        self._setup_rpc()
         LOG.debug("Linux Bridge Plugin initialization complete")
 
     def _setup_rpc(self):
@@ -326,7 +325,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                binding.vlan_id, self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
-        if self.rpc:
+        if self.agent_rpc:
             self.notifier.network_delete(self.rpc_context, id)
 
     def get_network(self, context, id, fields=None, verbose=None):
@@ -344,11 +343,11 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):
-        if self.rpc:
+        if self.agent_rpc:
             original_port = super(LinuxBridgePluginV2, self).get_port(context,
                                                                       id)
         port = super(LinuxBridgePluginV2, self).update_port(context, id, port)
-        if self.rpc:
+        if self.agent_rpc:
             if original_port['admin_state_up'] != port['admin_state_up']:
                 binding = db.get_network_binding(context.session,
                                                  port['network_id'])
