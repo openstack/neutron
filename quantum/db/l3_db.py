@@ -358,9 +358,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 router_qry = context.session.query(Router)
                 try:
                     router = router_qry.filter_by(id=p['device_id']).one()
-                    #TODO(danwent): confirm that this router has a floating
-                    # ip enabled gateway with support for this floating IP
-                    # network
                     return router['id']
                 except exc.NoResultFound:
                     pass
@@ -369,7 +366,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             subnet_id=internal_subnet_id,
             port_id=internal_port['id'])
 
-    def get_assoc_data(self, context, fip):
+    def get_assoc_data(self, context, fip, floating_network_id):
         """When a floating IP is associated with an internal port,
         we need to extract/determine some data associated with the
         internal port, including the internal_ip_address, and router_id.
@@ -410,6 +407,19 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         router_id = self._get_router_for_internal_subnet(context,
                                                          internal_port,
                                                          internal_subnet_id)
+        # confirm that this router has a floating
+        # ip enabled gateway with support for this floating IP network
+        try:
+            port_qry = context.session.query(models_v2.Port)
+            ports = port_qry.filter_by(
+                network_id=floating_network_id,
+                device_id=router_id,
+                device_owner=DEVICE_OWNER_ROUTER_GW).one()
+        except exc.NoResultFound:
+            raise l3.ExternalGatewayForFloatingIPNotFound(
+                subnet_id=internal_subnet_id,
+                port_id=internal_port['id'])
+
         return (fip['port_id'], internal_ip_address, router_id)
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
@@ -424,32 +434,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 pass
             port_id, internal_ip_address, router_id = self.get_assoc_data(
                 context,
-                fip)
-            # Assign external address for floating IP
-            # fetch external gateway port
-            ports = self.get_ports(context, filters={'device_id': [router_id]})
-            if not ports:
-                msg = ("The router %s needed for association a floating ip "
-                       "to port %s does not have an external gateway"
-                       % (router_id, port_id))
-                raise q_exc.BadRequest(resource='floatingip', msg=msg)
-            # retrieve external subnet identifier
-            # NOTE: by design we cannot have more than 1 IP on ext gw port
-            ext_subnet_id = ports[0]['fixed_ips'][0]['subnet_id']
-            # ensure floating ip address is taken from this subnet
-            for fixed_ip in external_port['fixed_ips']:
-                if fixed_ip['subnet_id'] == ext_subnet_id:
-                    floatingip_db.update(
-                        {'floating_ip_address': fixed_ip['ip_address'],
-                         'floating_port_id': external_port['id']})
-        else:
-            # fallback choice (first IP address on external port)
-            floatingip_db.update(
-                {'floating_ip_address':
-                    external_port['fixed_ips'][0]['ip_address'],
-                 'floating_port_id':
-                    external_port['id']})
-
+                fip,
+                floatingip_db['floating_network_id'])
         floatingip_db.update({'fixed_ip_address': internal_ip_address,
                               'fixed_port_id': port_id,
                               'router_id': router_id})
@@ -480,12 +466,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self.delete_port(context, external_port['id'])
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
+        floating_ip_address = external_port['fixed_ips'][0]['ip_address']
         try:
             with context.session.begin(subtransactions=True):
                 floatingip_db = FloatingIP(
                     id=fip_id,
                     tenant_id=tenant_id,
-                    floating_network_id=fip['floating_network_id'])
+                    floating_network_id=fip['floating_network_id'],
+                    floating_ip_address=floating_ip_address,
+                    floating_port_id=external_port['id'])
                 fip['tenant_id'] = tenant_id
                 # Update association with internal port
                 # and define external IP address
