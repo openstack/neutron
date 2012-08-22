@@ -23,6 +23,7 @@ from quantum.common import topics
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
+from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
@@ -131,7 +132,8 @@ class AgentNotifierApi(proxy.RpcProxy):
                          topic=self.topic_port_update)
 
 
-class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                          l3_db.L3_NAT_db_mixin):
     """Implement the Quantum abstractions using Linux bridging.
 
     A new VLAN is created for each network.  An agent is relied upon
@@ -150,7 +152,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     # is qualified by class
     __native_bulk_support = True
 
-    supported_extension_aliases = ["provider"]
+    supported_extension_aliases = ["provider", "os-quantum-router"]
 
     def __init__(self):
         db.initialize()
@@ -355,3 +357,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                           binding.physical_network,
                                           binding.vlan_id)
         return port
+
+    def delete_port(self, context, id):
+        self.disassociate_floatingips(context, id)
+        return super(LinuxBridgePluginV2, self).delete_port(context, id)

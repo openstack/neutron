@@ -174,7 +174,7 @@ class TestBridgeInterfaceDriver(TestBase):
     def test_get_device_name(self):
         br = interface.BridgeInterfaceDriver(self.conf)
         device_name = br.get_device_name(FakePort())
-        self.assertEqual('dhcabcdef01-12', device_name)
+        self.assertEqual('ns-abcdef01-12', device_name)
 
     def test_plug_no_ns(self):
         self._test_plug()
@@ -201,11 +201,11 @@ class TestBridgeInterfaceDriver(TestBase):
         br = interface.BridgeInterfaceDriver(self.conf)
         br.plug('01234567-1234-1234-99',
                 'port-1234',
-                'dhc0',
+                'ns-0',
                 'aa:bb:cc:dd:ee:ff',
                 namespace=namespace)
 
-        ip_calls = [mock.call('sudo'), mock.call().add_veth('tap0', 'dhc0')]
+        ip_calls = [mock.call('sudo'), mock.call().add_veth('tap0', 'ns-0')]
         if namespace:
             ip_calls.extend([
                 mock.call().ensure_namespace('01234567-1234-1234-99'),
