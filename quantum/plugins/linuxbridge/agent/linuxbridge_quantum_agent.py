@@ -226,8 +226,13 @@ class LinuxBridge:
 
         # Check if the interface is part of the bridge
         if not self.interface_exists_on_bridge(bridge_name, interface):
-            utils.execute(['brctl', 'addif', bridge_name, interface],
-                          root_helper=self.root_helper)
+            try:
+                utils.execute(['brctl', 'addif', bridge_name, interface],
+                              root_helper=self.root_helper)
+            except Exception as e:
+                LOG.error("Unable to add %s to %s! Exception: %s", interface,
+                          bridge_name, e)
+                return
 
     def add_tap_interface(self, network_id, physical_interface, vlan_id,
                           tap_device_name):
