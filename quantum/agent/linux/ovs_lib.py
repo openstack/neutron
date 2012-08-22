@@ -40,7 +40,7 @@ class VifPort:
     def __str__(self):
         return ("iface-id=" + self.vif_id + ", vif_mac=" +
                 self.vif_mac + ", port_name=" + self.port_name +
-                ", ofport=" + str(self.ofport) + ", bridge_name = " +
+                ", ofport=" + str(self.ofport) + ", bridge_name =" +
                 self.switch.br_name)
 
 
@@ -62,7 +62,10 @@ class OVSBridge:
 
     def run_vsctl(self, args):
         full_args = ["ovs-vsctl", "--timeout=2"] + args
-        return utils.execute(full_args, root_helper=self.root_helper)
+        try:
+            return utils.execute(full_args, root_helper=self.root_helper)
+        except Exception, e:
+            LOG.error("Unable to execute %s. Exception: %s", full_args, e)
 
     def reset_bridge(self):
         self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
@@ -82,7 +85,10 @@ class OVSBridge:
 
     def run_ofctl(self, cmd, args):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
-        return utils.execute(full_args, root_helper=self.root_helper)
+        try:
+            return utils.execute(full_args, root_helper=self.root_helper)
+        except Exception, e:
+            LOG.error("Unable to execute %s. Exception: %s", full_args, e)
 
     def count_flows(self):
         flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
@@ -167,11 +173,15 @@ class OVSBridge:
         return self.get_port_ofport(local_name)
 
     def db_get_map(self, table, record, column):
-        str = self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
-        return self.db_str_to_map(str)
+        output = self.run_vsctl(["get", table, record, column])
+        if output:
+            str = output.rstrip("\n\r")
+            return self.db_str_to_map(str)
 
     def db_get_val(self, table, record, column):
-        return self.run_vsctl(["get", table, record, column]).rstrip("\n\r")
+        output = self.run_vsctl(["get", table, record, column])
+        if output:
+            return output.rstrip("\n\r")
 
     def db_str_to_map(self, full_str):
         list = full_str.strip("{}").split(", ")
@@ -185,16 +195,20 @@ class OVSBridge:
 
     def get_port_name_list(self):
         res = self.run_vsctl(["list-ports", self.br_name])
-        return res.split("\n")[0:-1]
+        if res:
+            return res.strip().split("\n")
+        return []
 
     def get_port_stats(self, port_name):
         return self.db_get_map("Interface", port_name, "statistics")
 
     def get_xapi_iface_id(self, xs_vif_uuid):
-        return utils.execute(["xe", "vif-param-get", "param-name=other-config",
-                              "param-key=nicira-iface-id",
-                              "uuid=%s" % xs_vif_uuid],
-                             root_helper=self.root_helper).strip()
+        args = ["xe", "vif-param-get", "param-name=other-config",
+                "param-key=nicira-iface-id", "uuid=%s" % xs_vif_uuid]
+        try:
+            return utils.execute(args, root_helper=self.root_helper).strip()
+        except Exception, e:
+            LOG.error("Unable to execute %s. Exception: %s", args, e)
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
