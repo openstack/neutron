@@ -71,7 +71,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             'application/json': json_deserializer,
         }
 
-        plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
+        if not plugin:
+            plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         # If test_config specifies some config-file, use it, as well
