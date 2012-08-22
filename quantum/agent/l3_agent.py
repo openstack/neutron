@@ -89,6 +89,7 @@ class L3NATAgent(object):
 
     def __init__(self, conf):
         self.conf = conf
+        self.router_info = {}
 
         if not conf.interface_driver:
             LOG.error(_('You must specify an interface driver'))
@@ -120,36 +121,35 @@ class L3NATAgent(object):
         linux_utils.execute(['sysctl', '-w', 'net.ipv4.ip_forward=0'],
                             self.conf.root_helper, check_exit_code=False)
 
-        self._destroy_router_namespaces()
+        self._destroy_all_router_namespaces()
 
         # enable forwarding
         linux_utils.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'],
                             self.conf.root_helper, check_exit_code=False)
 
-    def _destroy_router_namespaces(self):
+    def _destroy_all_router_namespaces(self):
         """Destroy all router namespaces on the host to eliminate
         all stale linux devices, iptables rules, and namespaces.
         """
         root_ip = ip_lib.IPWrapper(self.conf.root_helper)
         for ns in root_ip.get_namespaces(self.conf.root_helper):
             if ns.startswith(NS_PREFIX):
-                ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
-                                         namespace=ns)
-                for d in ns_ip.get_devices():
-                    if d.name.startswith(INTERNAL_DEV_PREFIX):
-                        # device is on default bridge
-                        self.driver.unplug(d.name)
-                    elif d.name.startswith(EXTERNAL_DEV_PREFIX):
-                        self.driver.unplug(d.name,
-                                           bridge=
-                                           self.conf.external_network_bridge)
+                try:
+                    self._destroy_router_namespace(ns)
+                except:
+                    LOG.exception("couldn't delete namespace '%s'" % ns)
 
-                # FIXME(danwent): disabling actual deletion of namespace
-                # until we figure out why it fails.  Having deleted all
-                # devices, the only harm here should be the clutter of
-                # the namespace lying around.
-
-                # ns_ip.netns.delete(ns)
+    def _destroy_router_namespace(self, namespace):
+        ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
+                                 namespace=namespace)
+        for d in ns_ip.get_devices():
+            if d.name.startswith(INTERNAL_DEV_PREFIX):
+                # device is on default bridge
+                self.driver.unplug(d.name)
+            elif d.name.startswith(EXTERNAL_DEV_PREFIX):
+                self.driver.unplug(d.name,
+                                   bridge=self.conf.external_network_bridge)
+        ns_ip.netns.delete(namespace)
 
     def daemon_loop(self):
 
@@ -159,21 +159,33 @@ class L3NATAgent(object):
         # update notifications.
         # Likewise, it does not handle removing routers
 
-        self.router_info = {}
         while True:
             try:
-                #TODO(danwent): provide way to limit this to a single
-                # router, for model where agent runs in dedicated VM
-                for r in self.qclient.list_routers()['routers']:
-                    if r['id'] not in self.router_info:
-                        self.router_info[r['id']] = (RouterInfo(r['id'],
-                                                     self.conf.root_helper))
-                    ri = self.router_info[r['id']]
-                    self.process_router(ri)
+                self.do_single_loop()
             except:
                 LOG.exception("Error running l3_nat daemon_loop")
 
             time.sleep(self.polling_interval)
+
+    def do_single_loop(self):
+        prev_router_ids = set(self.router_info)
+        cur_router_ids = set()
+
+        # identify and update new or modified routers
+        for r in self.qclient.list_routers()['routers']:
+            cur_router_ids.add(r['id'])
+            if r['id'] not in self.router_info:
+                self.router_info[r['id']] = RouterInfo(r['id'],
+                                                       self.conf.root_helper)
+            ri = self.router_info[r['id']]
+            self.process_router(ri)
+
+        # identify and remove routers that no longer exist
+        for router_id in prev_router_ids - cur_router_ids:
+            ri = self.router_info[router_id]
+            del self.router_info[router_id]
+            self._destroy_router_namespace(ri.ns_name())
+        prev_router_ids = cur_router_ids
 
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
@@ -195,21 +207,24 @@ class L3NATAgent(object):
             device_owner=l3_db.DEVICE_OWNER_ROUTER_INTF)['ports']
 
         existing_port_ids = set([p['id'] for p in ri.internal_ports])
-        current_port_ids = set([p['id'] for p in internal_ports])
+        current_port_ids = set([p['id'] for p in internal_ports
+                                if p['admin_state_up']])
+        new_ports = [p for p in internal_ports if
+                     p['id'] in current_port_ids and
+                     p['id'] not in existing_port_ids]
+        old_ports = [p for p in ri.internal_ports if
+                     p['id'] not in current_port_ids]
 
-        for p in internal_ports:
-            if p['id'] not in existing_port_ids:
-                self._set_subnet_info(p)
-                ri.internal_ports.append(p)
-                self.internal_network_added(ri, ex_gw_port, p['id'],
-                                            p['ip_cidr'], p['mac_address'])
+        for p in new_ports:
+            self._set_subnet_info(p)
+            ri.internal_ports.append(p)
+            self.internal_network_added(ri, ex_gw_port, p['id'],
+                                        p['ip_cidr'], p['mac_address'])
 
-        port_ids_to_remove = existing_port_ids - current_port_ids
-        for p in ri.internal_ports:
-            if p['id'] in port_ids_to_remove:
-                ri.internal_ports.remove(p)
-                self.internal_network_removed(ri, ex_gw_port, p['id'],
-                                              p['ip_cidr'])
+        for p in old_ports:
+            ri.internal_ports.remove(p)
+            self.internal_network_removed(ri, ex_gw_port, p['id'],
+                                          p['ip_cidr'])
 
         internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
 
