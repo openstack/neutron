@@ -142,6 +142,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         except exc.NoResultFound:
             return []
 
+    def _get_subnets_by_network(self, context, network_id):
+        try:
+            subnet_qry = context.session.query(models_v2.Subnet)
+            return subnet_qry.filter_by(network_id=network_id).all()
+        except exc.NoResultFound:
+            return []
+
     def _fields(self, resource, fields):
         if fields:
             return dict(((key, item) for key, item in resource.iteritems()
@@ -769,6 +776,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             if 'shared' in n:
                 self._validate_shared_update(context, id, network, n)
             network.update(n)
+            # also update shared in all the subnets for this network
+            subnets = self._get_subnets_by_network(context, id)
+            for subnet in subnets:
+                subnet['shared'] = network['shared']
         return self._make_network_dict(network)
 
     def delete_network(self, context, id):
@@ -836,6 +847,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
             self._validate_subnet_cidr(network, s['cidr'])
+            # The 'shared' attribute for subnets is for internal plugin
+            # use only. It is not exposed through the API
             subnet = models_v2.Subnet(tenant_id=tenant_id,
                                       id=s.get('id') or utils.str_uuid(),
                                       name=s['name'],
@@ -843,7 +856,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                       ip_version=s['ip_version'],
                                       cidr=s['cidr'],
                                       enable_dhcp=s['enable_dhcp'],
-                                      gateway_ip=s['gateway_ip'])
+                                      gateway_ip=s['gateway_ip'],
+                                      shared=network.shared)
 
             # perform allocate pools first, since it might raise an error
             pools = self._allocate_pools_for_subnet(context, s)
