@@ -208,7 +208,7 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(200, response.status_int)
         self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
-    def test_returns_404_for_non_existant_extension(self):
+    def test_returns_404_for_non_existent_extension(self):
         test_app = _setup_extensions_test_app(SimpleExtensionManager(None))
 
         response = test_app.get("/non_extistant_extension", status='*')
@@ -240,10 +240,10 @@ class ActionExtensionTest(unittest.TestCase):
                                            content_type='application/json')
         self.assertEqual("Tweedle Bailey Deleted.", response.body)
 
-    def test_returns_404_for_non_existant_action(self):
-        non_existant_action = 'blah_action'
+    def test_returns_404_for_non_existent_action(self):
+        non_existent_action = 'blah_action'
         action_params = dict(name="test")
-        req_body = jsonutils.dumps({non_existant_action: action_params})
+        req_body = jsonutils.dumps({non_existent_action: action_params})
 
         response = self.extension_app.post("/dummy_resources/1/action",
                                            req_body,
@@ -252,7 +252,7 @@ class ActionExtensionTest(unittest.TestCase):
 
         self.assertEqual(404, response.status_int)
 
-    def test_returns_404_for_non_existant_resource(self):
+    def test_returns_404_for_non_existent_resource(self):
         action_name = 'add_tweedle'
         action_params = dict(name='Beetle')
         req_body = jsonutils.dumps({action_name: action_params})
@@ -459,8 +459,8 @@ class ExtensionControllerTest(unittest.TestCase):
         self.assertEqual(foxnsox_extension["namespace"],
                          "http://www.fox.in.socks/api/ext/pie/v1.0")
 
-    def test_show_returns_not_found_for_non_existant_extension(self):
-        response = self.test_app.get("/extensions/non_existant", status="*")
+    def test_show_returns_not_found_for_non_existent_extension(self):
+        response = self.test_app.get("/extensions/non_existent", status="*")
 
         self.assertEqual(response.status_int, 404)
 
