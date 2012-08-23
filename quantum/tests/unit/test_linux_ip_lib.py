@@ -55,6 +55,23 @@ ADDR_SAMPLE = ("""
        valid_lft forever preferred_lft forever
 """)
 
+GATEWAY_SAMPLE1 = ("""
+default via 10.35.19.254  metric 100
+10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
+""")
+
+GATEWAY_SAMPLE2 = ("""
+default via 10.35.19.254  metric 100
+""")
+
+GATEWAY_SAMPLE3 = ("""
+10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
+""")
+
+GATEWAY_SAMPLE4 = ("""
+default via 10.35.19.254
+""")
+
 
 class TestSubProcessBase(unittest.TestCase):
     def setUp(self):
@@ -383,17 +400,23 @@ class TestIpAddrCommand(TestIPCmdBase):
     def test_list(self):
         expected = [
             dict(ip_version=4, scope='global',
-                 dynamic=False, cidr='172.16.77.240/24'),
+                 dynamic=False, cidr='172.16.77.240/24',
+                 broadcast='172.16.77.255'),
             dict(ip_version=6, scope='global',
-                 dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64'),
+                 dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64',
+                 broadcast='::'),
             dict(ip_version=6, scope='global',
-                 dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64'),
+                 dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64',
+                 broadcast='::'),
             dict(ip_version=6, scope='global',
-                 dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64'),
+                 dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64',
+                 broadcast='::'),
             dict(ip_version=6, scope='global',
-                 dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64'),
+                 dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64',
+                 broadcast='::'),
             dict(ip_version=6, scope='link',
-                 dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64')]
+                 dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64',
+                 broadcast='::')]
 
         self.parent._run = mock.Mock(return_value=ADDR_SAMPLE)
         self.assertEquals(self.addr_cmd.list(), expected)
@@ -402,13 +425,54 @@ class TestIpAddrCommand(TestIPCmdBase):
     def test_list_filtered(self):
         expected = [
             dict(ip_version=4, scope='global',
-                 dynamic=False, cidr='172.16.77.240/24')]
+                 dynamic=False, cidr='172.16.77.240/24',
+                 broadcast='172.16.77.255')]
 
         output = '\n'.join(ADDR_SAMPLE.split('\n')[0:4])
         self.parent._run.return_value = output
         self.assertEquals(self.addr_cmd.list('global', filters=['permanent']),
                           expected)
         self._assert_call([], ('show', 'tap0', 'permanent', 'scope', 'global'))
+
+
+class TestIpRouteCommand(TestIPCmdBase):
+    def setUp(self):
+        super(TestIpRouteCommand, self).setUp()
+        self.parent.name = 'eth0'
+        self.command = 'route'
+        self.route_cmd = ip_lib.IpRouteCommand(self.parent)
+
+    def test_add_gateway(self):
+        gateway = '192.168.45.100'
+        metric = 100
+        self.route_cmd.add_gateway(gateway, metric)
+        self._assert_sudo([],
+                          ('add', 'default', 'via', gateway,
+                           'metric', metric,
+                           'dev', self.parent.name))
+
+    def test_del_gateway(self):
+        gateway = '192.168.45.100'
+        self.route_cmd.delete_gateway(gateway)
+        self._assert_sudo([],
+                          ('del', 'default', 'via', gateway,
+                           'dev', self.parent.name))
+
+    def test_get_gateway(self):
+        test_cases = [{'sample': GATEWAY_SAMPLE1,
+                       'expected': {'gateway':'10.35.19.254',
+                                    'metric': 100}},
+                      {'sample': GATEWAY_SAMPLE2,
+                       'expected': {'gateway':'10.35.19.254',
+                                    'metric': 100}},
+                      {'sample': GATEWAY_SAMPLE3,
+                       'expected': None},
+                      {'sample': GATEWAY_SAMPLE4,
+                       'expected': {'gateway': '10.35.19.254'}}]
+        for test_case in test_cases:
+            self.parent._run = mock.Mock(return_value=test_case['sample'])
+            self.assertEquals(self.route_cmd.get_gateway(),
+                              test_case['expected'])
 
 
 class TestIpNetnsCommand(TestIPCmdBase):
