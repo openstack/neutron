@@ -24,13 +24,13 @@ from quantum.openstack.common import cfg
 import quantum.common.utils as utils
 from quantum.openstack.common import policy
 
-
 _POLICY_PATH = None
 _POLICY_CACHE = {}
 
 
 def reset():
     global _POLICY_PATH
+    global _POLICY_CACHE
     _POLICY_PATH = None
     _POLICY_CACHE = {}
     policy.reset()
@@ -188,5 +188,6 @@ def enforce(context, action, target, plugin=None):
     real_target = _build_target(action, target, plugin, context)
     match_list = _build_match_list(action, real_target)
     credentials = context.to_dict()
+
     policy.enforce(match_list, real_target, credentials,
                    exceptions.PolicyNotAuthorized, action=action)

@@ -250,6 +250,7 @@ class QuantumPolicyTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.patcher.stop()
+        quantum.policy.reset()
 
     def test_nonadmin_write_on_private_returns_403(self):
         action = "update_network"
