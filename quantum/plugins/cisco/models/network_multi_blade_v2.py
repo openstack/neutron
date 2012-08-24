@@ -148,11 +148,11 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # TODO (Sumit): Check if we need to perform any rollback here
             raise
 
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 
@@ -210,11 +210,11 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # TODO (Sumit): Check if we need to perform any rollback here
             raise
 
-    def get_port(self, context, id, fields=None, verbose=None):
+    def get_port(self, context, id, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def get_ports(self, context, filters=None, fields=None, verbose=None):
+    def get_ports(self, context, filters=None, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 
@@ -244,7 +244,7 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def get_subnet(self, context, id, fields=None, verbose=None):
+    def get_subnet(self, context, id, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 
@@ -252,7 +252,7 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def get_subnets(self, context, filters=None, fields=None, verbose=None):
+    def get_subnets(self, context, filters=None, fields=None):
         """Currently there is no processing required for the device plugins"""
         pass
 

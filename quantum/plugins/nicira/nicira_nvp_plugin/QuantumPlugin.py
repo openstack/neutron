@@ -358,7 +358,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         LOG.debug("Returning pairs for network: %s" % (pairs))
         return pairs
 
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         """
         Retrieves all attributes of the network, NOT including
         the ports of that network.
@@ -387,7 +387,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         # the context, as with shared networks context.tenant_id and
         # network['tenant_id'] might differ on GETs
         # goto to the plugin DB and fecth the network
-        network = self._get_network(context, id, verbose)
+        network = self._get_network(context, id)
         # TODO(salvatore-orlando): verify whether the query on os_tid is
         # redundant or not.
         if context.is_admin is False:
@@ -429,7 +429,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                   context.tenant_id, d))
         return d
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         """
         Retrieves all attributes of the network, NOT including
         the ports of that network.
@@ -567,7 +567,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                   context.tenant_id)
         return super(NvpPluginV2, self).update_network(context, id, network)
 
-    def get_ports(self, context, filters=None, fields=None, verbose=None):
+    def get_ports(self, context, filters=None, fields=None):
         """
         Returns all ports from given tenant
 
@@ -806,7 +806,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         LOG.debug("delete_port() completed for tenant: %s" % context.tenant_id)
         return  super(NvpPluginV2, self).delete_port(context, id)
 
-    def get_port(self, context, id, fields=None, verbose=None):
+    def get_port(self, context, id, fields=None):
         """
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
@@ -823,8 +823,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: exception.NetworkNotFound
         """
 
-        quantum_db = super(NvpPluginV2, self).get_port(context, id, fields,
-                                                       verbose)
+        quantum_db = super(NvpPluginV2, self).get_port(context, id, fields)
 
         port, cluster = (
             nvplib.get_port_by_quantum_tag(self.clusters,

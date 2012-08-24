@@ -77,9 +77,9 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class L3_NAT_db_mixin(l3.RouterPluginBase):
     """Mixin class to add L3/NAT router methods to db_plugin_base_v2"""
 
-    def _get_router(self, context, id, verbose=None):
+    def _get_router(self, context, id):
         try:
-            router = self._get_by_id(context, Router, id, verbose=verbose)
+            router = self._get_by_id(context, Router, id)
         except exc.NoResultFound:
             raise l3.RouterNotFound(router_id=id)
         except exc.MultipleResultsFound:
@@ -191,15 +191,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             # thanks to cascading on the ORM relationship
             context.session.delete(router)
 
-    def get_router(self, context, id, fields=None, verbose=None):
-        router = self._get_router(context, id, verbose=verbose)
+    def get_router(self, context, id, fields=None):
+        router = self._get_router(context, id)
         return self._make_router_dict(router, fields)
 
-    def get_routers(self, context, filters=None, fields=None, verbose=None):
+    def get_routers(self, context, filters=None, fields=None):
         return self._get_collection(context, Router,
                                     self._make_router_dict,
-                                    filters=filters, fields=fields,
-                                    verbose=verbose)
+                                    filters=filters, fields=fields)
 
     def _check_for_dup_router_subnet(self, context, router_id,
                                      network_id, subnet_id):
@@ -315,10 +314,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                          "interface on subnet %(subnet_id)s"
                                          % locals())
 
-    def _get_floatingip(self, context, id, verbose=None):
+    def _get_floatingip(self, context, id):
         try:
-            floatingip = self._get_by_id(context, FloatingIP, id,
-                                         verbose=verbose)
+            floatingip = self._get_by_id(context, FloatingIP, id)
         except exc.NoResultFound:
             raise l3.FloatingIPNotFound(floatingip_id=id)
         except exc.MultipleResultsFound:
@@ -508,16 +506,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             context.session.delete(floatingip)
         self.delete_port(context, floatingip['floating_port_id'])
 
-    def get_floatingip(self, context, id, fields=None, verbose=None):
-        floatingip = self._get_floatingip(context, id, verbose=verbose)
+    def get_floatingip(self, context, id, fields=None):
+        floatingip = self._get_floatingip(context, id)
         return self._make_floatingip_dict(floatingip, fields)
 
-    def get_floatingips(self, context, filters=None, fields=None,
-                        verbose=None):
+    def get_floatingips(self, context, filters=None, fields=None):
         return self._get_collection(context, FloatingIP,
                                     self._make_floatingip_dict,
-                                    filters=filters, fields=fields,
-                                    verbose=verbose)
+                                    filters=filters, fields=fields)
 
     def disassociate_floatingips(self, context, port_id):
         with context.session.begin(subtransactions=True):

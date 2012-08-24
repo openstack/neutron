@@ -52,10 +52,9 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
                'status': packet_filter['status']}
         return self._fields(res, fields)
 
-    def _get_packet_filter(self, context, id, verbose=None):
+    def _get_packet_filter(self, context, id):
         try:
-            packet_filter = self._get_by_id(context, nmodels.PacketFilter, id,
-                                            verbose=verbose)
+            packet_filter = self._get_by_id(context, nmodels.PacketFilter, id)
         except exc.NoResultFound:
             raise q_exc.PacketFilterNotFound(id=id)
         except exc.MultipleResultsFound:
@@ -63,18 +62,16 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
             raise q_exc.PacketFilterNotFound(id=id)
         return packet_filter
 
-    def get_packet_filter(self, context, id, fields=None, verbose=None):
-        packet_filter = self._get_packet_filter(context, id, verbose=verbose)
+    def get_packet_filter(self, context, id, fields=None):
+        packet_filter = self._get_packet_filter(context, id)
         return self._make_packet_filter_dict(packet_filter, fields)
 
-    def get_packet_filters(self, context, filters=None, fields=None,
-                           verbose=None):
+    def get_packet_filters(self, context, filters=None, fields=None):
         return self._get_collection(context,
                                     nmodels.PacketFilter,
                                     self._make_packet_filter_dict,
                                     filters=filters,
-                                    fields=fields,
-                                    verbose=verbose)
+                                    fields=fields)
 
     def create_packet_filter(self, context, packet_filter):
         pf = packet_filter['packet_filter']

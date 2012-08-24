@@ -338,15 +338,14 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self.notifier.network_delete(self.context, id)
         return result
 
-    def get_network(self, context, id, fields=None, verbose=None):
-        net = super(OVSQuantumPluginV2, self).get_network(context, id,
-                                                          None, verbose)
+    def get_network(self, context, id, fields=None):
+        net = super(OVSQuantumPluginV2, self).get_network(context, id, None)
         self._extend_network_dict(context, net)
         return self._fields(net, fields)
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         nets = super(OVSQuantumPluginV2, self).get_networks(context, filters,
-                                                            None, verbose)
+                                                            None)
         for net in nets:
             self._extend_network_dict(context, net)
         # TODO(rkukura): Filter on extended attributes.

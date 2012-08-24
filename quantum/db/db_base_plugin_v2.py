@@ -82,21 +82,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 query = query.filter(model.tenant_id == context.tenant_id)
         return query
 
-    def _get_by_id(self, context, model, id, joins=(), verbose=None):
+    def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
-        if verbose:
-            if verbose and isinstance(verbose, list):
-                options = [orm.joinedload(join) for join in joins
-                           if join in verbose]
-            else:
-                options = [orm.joinedload(join) for join in joins]
-            query = query.options(*options)
         return query.filter_by(id=id).one()
 
-    def _get_network(self, context, id, verbose=None):
+    def _get_network(self, context, id):
         try:
-            network = self._get_by_id(context, models_v2.Network, id,
-                                      joins=('subnets',), verbose=verbose)
+            network = self._get_by_id(context, models_v2.Network, id)
         except exc.NoResultFound:
             raise q_exc.NetworkNotFound(net_id=id)
         except exc.MultipleResultsFound:
@@ -104,10 +96,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise q_exc.NetworkNotFound(net_id=id)
         return network
 
-    def _get_subnet(self, context, id, verbose=None):
+    def _get_subnet(self, context, id):
         try:
-            subnet = self._get_by_id(context, models_v2.Subnet, id,
-                                     verbose=verbose)
+            subnet = self._get_by_id(context, models_v2.Subnet, id)
         except exc.NoResultFound:
             raise q_exc.SubnetNotFound(subnet_id=id)
         except exc.MultipleResultsFound:
@@ -115,10 +106,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise q_exc.SubnetNotFound(subnet_id=id)
         return subnet
 
-    def _get_port(self, context, id, verbose=None):
+    def _get_port(self, context, id):
         try:
-            port = self._get_by_id(context, models_v2.Port, id,
-                                   verbose=verbose)
+            port = self._get_by_id(context, models_v2.Port, id)
         except exc.NoResultFound:
             # NOTE(jkoelker) The PortNotFound exceptions requires net_id
             #                kwarg in order to set the message correctly
@@ -156,7 +146,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return resource
 
     def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None, verbose=None):
+                        fields=None):
         collection = self._model_query(context, model)
         if filters:
             for key, value in filters.iteritems():
@@ -796,15 +786,14 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             subnets_qry.filter_by(network_id=id).delete()
             context.session.delete(network)
 
-    def get_network(self, context, id, fields=None, verbose=None):
-        network = self._get_network(context, id, verbose=verbose)
+    def get_network(self, context, id, fields=None):
+        network = self._get_network(context, id)
         return self._make_network_dict(network, fields)
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         return self._get_collection(context, models_v2.Network,
                                     self._make_network_dict,
-                                    filters=filters, fields=fields,
-                                    verbose=verbose)
+                                    filters=filters, fields=fields)
 
     def create_subnet_bulk(self, context, subnets):
         return self._create_bulk('subnet', context, subnets)
@@ -955,15 +944,14 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
             context.session.delete(subnet)
 
-    def get_subnet(self, context, id, fields=None, verbose=None):
-        subnet = self._get_subnet(context, id, verbose=verbose)
+    def get_subnet(self, context, id, fields=None):
+        subnet = self._get_subnet(context, id)
         return self._make_subnet_dict(subnet, fields)
 
-    def get_subnets(self, context, filters=None, fields=None, verbose=None):
+    def get_subnets(self, context, filters=None, fields=None):
         return self._get_collection(context, models_v2.Subnet,
                                     self._make_subnet_dict,
-                                    filters=filters, fields=fields,
-                                    verbose=verbose)
+                                    filters=filters, fields=fields)
 
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
@@ -1077,16 +1065,15 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                                   port_id=id)
             context.session.delete(port)
 
-    def get_port(self, context, id, fields=None, verbose=None):
-        port = self._get_port(context, id, verbose=verbose)
+    def get_port(self, context, id, fields=None):
+        port = self._get_port(context, id)
         return self._make_port_dict(port, fields)
 
-    def get_ports(self, context, filters=None, fields=None, verbose=None):
+    def get_ports(self, context, filters=None, fields=None):
         fixed_ips = filters.pop('fixed_ips', []) if filters else []
         ports = self._get_collection(context, models_v2.Port,
                                      self._make_port_dict,
-                                     filters=filters, fields=fields,
-                                     verbose=verbose)
+                                     filters=filters, fields=fields)
 
         if ports and fixed_ips:
             filtered_ports = []

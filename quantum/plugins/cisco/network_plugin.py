@@ -150,21 +150,19 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         except:
             raise
 
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         """
         Gets a particular network
         """
         LOG.debug("get_network() called\n")
-        return super(PluginV2, self).get_network(context, id,
-                                                 fields, verbose)
+        return super(PluginV2, self).get_network(context, id, fields)
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         """
         Gets all networks
         """
         LOG.debug("get_networks() called\n")
-        return super(PluginV2, self).get_networks(context, filters,
-                                                  fields, verbose)
+        return super(PluginV2, self).get_networks(context, filters, fields)
 
     def create_port(self, context, port):
         """

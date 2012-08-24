@@ -66,7 +66,7 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_subnet(self, context, id, fields=None, verbose=None):
+    def get_subnet(self, context, id, fields=None):
         pass
 
     @abstractmethod
@@ -74,7 +74,7 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_subnets(self, context, filters=None, fields=None, verbose=None):
+    def get_subnets(self, context, filters=None, fields=None):
         pass
 
     @abstractmethod
@@ -105,11 +105,11 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         pass
 
     @abstractmethod
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         pass
 
     @abstractmethod
@@ -188,9 +188,9 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_port(self, context, id, fields=None, verbose=None):
+    def get_port(self, context, id, fields=None):
         pass
 
     @abstractmethod
-    def get_ports(self, context, filters=None, fields=None, verbose=None):
+    def get_ports(self, context, filters=None, fields=None):
         pass

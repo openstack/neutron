@@ -169,7 +169,7 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_router(self, context, id, fields=None, verbose=None):
+    def get_router(self, context, id, fields=None):
         pass
 
     @abstractmethod
@@ -177,7 +177,7 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_routers(self, context, filters=None, fields=None, verbose=None):
+    def get_routers(self, context, filters=None, fields=None):
         pass
 
     @abstractmethod
@@ -197,7 +197,7 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_floatingip(self, context, id, fields=None, verbose=None):
+    def get_floatingip(self, context, id, fields=None):
         pass
 
     @abstractmethod
@@ -205,6 +205,5 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_floatingips(self, context, filters=None, fields=None,
-                        verbose=None):
+    def get_floatingips(self, context, filters=None, fields=None):
         pass

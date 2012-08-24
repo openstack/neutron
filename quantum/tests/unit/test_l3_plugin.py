@@ -136,7 +136,6 @@ class L3NatExtensionTestCase(unittest.TestCase):
         res = self.api.get(_get_path('routers'))
 
         instance.get_routers.assert_called_with(mock.ANY, fields=mock.ANY,
-                                                verbose=mock.ANY,
                                                 filters=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
 
@@ -174,8 +173,7 @@ class L3NatExtensionTestCase(unittest.TestCase):
         res = self.api.get(_get_path('routers', id=router_id))
 
         instance.get_router.assert_called_with(mock.ANY, router_id,
-                                               fields=mock.ANY,
-                                               verbose=mock.ANY)
+                                               fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         self.assertTrue('router' in res.json)
         router = res.json['router']
