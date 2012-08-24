@@ -18,10 +18,9 @@ import os
 import mock
 
 import quantum.common.test_lib as test_lib
-from quantum.plugins.nicira.nicira_nvp_plugin.tests import fake_nvpapiclient
+from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.test_db_plugin as test_plugin
 
-NICIRA_PATH = '../../plugins/nicira/nicira_nvp_plugin'
 NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
 
 
@@ -30,12 +29,11 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
     _plugin_name = ('%s.QuantumPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
 
     def setUp(self):
-        config_file_path = os.path.abspath('%s/tests/nvp.ini.test'
-                                           % NICIRA_PATH)
-        test_lib.test_config['config_files'] = [config_file_path]
+        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
+        test_lib.test_config['config_files'] = [os.path.join(etc_path,
+                                                             'nvp.ini.test')]
         # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(os.path.abspath('%s/tests'
-                                                          % NICIRA_PATH))
+        fc = fake_nvpapiclient.FakeClient(etc_path)
         self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
                                       % NICIRA_PKG_PATH, autospec=True)
         instance = self.mock_nvpapi.start()

@@ -28,7 +28,7 @@ class OFCManagerTest(unittest.TestCase):
     """Class conisting of OFCManager unit tests"""
 
     def setUp(self):
-        driver = "quantum.plugins.nec.tests.unit.stub_ofc_driver.StubOFCDriver"
+        driver = "quantum.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
         ndb.initialize()
         self.ofc = ofc_manager.OFCManager()
