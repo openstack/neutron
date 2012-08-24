@@ -100,9 +100,11 @@ class NexusPlugin(L2DevicePluginBase):
         """
         LOG.debug("NexusPlugin:delete_network() called\n")
         vlan_id = None
-        context = kwargs[const.CONTEXT]
-        base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
         for key in kwargs:
+            if key == const.CONTEXT:
+                context = kwargs[const.CONTEXT]
+            if key == const.BASE_PLUGIN_REF:
+                base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
             if key == 'vlan_id':
                 vlan_id = kwargs['vlan_id']
         if vlan_id is None:
@@ -111,13 +113,12 @@ class NexusPlugin(L2DevicePluginBase):
         ports_id = nxos_db.get_nexusport_binding(vlan_id)
         LOG.debug("NexusPlugin: Interfaces to be disassociated: %s" % ports_id)
         nxos_db.remove_nexusport_binding(vlan_id)
-        net = self._get_network(tenant_id, net_id, context, base_plugin_ref)
-        if net:
+        if net_id:
             self._client.delete_vlan(
                 str(vlan_id), self._nexus_ip,
                 self._nexus_username, self._nexus_password,
                 self._nexus_ports, self._nexus_ssh_port)
-            return net
+            return net_id
         # Network not found
         raise exc.NetworkNotFound(net_id=net_id)
 

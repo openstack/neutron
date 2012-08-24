@@ -125,19 +125,17 @@ CMD_NO_VLAN_INT_SNIPPET = """
               <interface>%s</interface>
               <__XML__MODE_if-ethernet-switch>
                 <switchport></switchport>
-                <no>
                 <switchport>
                   <trunk>
                     <allowed>
                       <vlan>
-                        <__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                          <allow-vlans>%s</allow-vlans>
-                        </__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
+                        <remove>
+                          <vlan>%s</vlan>
+                        </remove>
                       </vlan>
                     </allowed>
                   </trunk>
                 </switchport>
-               </no>
               </__XML__MODE_if-ethernet-switch>
             </ethernet>
           </interface>
