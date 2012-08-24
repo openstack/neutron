@@ -218,8 +218,8 @@ htmlhelp_basename = 'quantumdoc'
 # (source start file, target name, title, author,
 # documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Quantum.tex', u'Quantum Documentation',
-   u'Quantum development team', 'manual'),
+    ('index', 'Quantum.tex', u'Quantum Documentation',
+     u'Quantum development team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
