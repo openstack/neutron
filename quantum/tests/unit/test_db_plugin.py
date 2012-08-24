@@ -56,14 +56,22 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
 
     def setUp(self, plugin=None):
         super(QuantumDbPluginV2TestCase, self).setUp()
-
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
         db._ENGINE = None
         db._MAKER = None
         # Make sure at each test a new instance of the plugin is returned
         QuantumManager._instance = None
-
+        # Save the attributes map in case the plugin will alter it
+        # loading extensions
+        # Note(salvatore-orlando): shallow copy is not good enough in
+        # this case, but copy.deepcopy does not seem to work, since it
+        # causes test failures
+        self._attribute_map_bk = {}
+        for item in attributes.RESOURCE_ATTRIBUTE_MAP:
+            self._attribute_map_bk[item] = (attributes.
+                                            RESOURCE_ATTRIBUTE_MAP[item].
+                                            copy())
         self._tenant_id = 'test-tenant'
 
         json_deserializer = JSONDeserializer()
@@ -105,6 +113,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         db._ENGINE = None
         db._MAKER = None
         cfg.CONF.reset()
+        # Restore the original attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
 
     def _req(self, method, resource, data=None, fmt='json',
              id=None, params=None, action=None):
