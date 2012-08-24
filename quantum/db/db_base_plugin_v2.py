@@ -710,6 +710,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                'host_routes': [{'destination': route['destination'],
                                 'nexthop': route['nexthop']}
                                for route in subnet['routes']],
+               'shared': subnet['shared']
                }
         if subnet['gateway_ip']:
             res['gateway_ip'] = subnet['gateway_ip']
