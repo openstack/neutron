@@ -20,22 +20,24 @@ import os
 import mox
 import mock
 import uuid
+import unittest
+import stubout
 
 from quantum.common import config
 from quantum.common.exceptions import NotImplementedError
 from quantum.db import api as db
+from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
 from quantum.plugins.metaplugin.proxy_quantum_plugin import ProxyPluginV2
-from quantum.plugins.metaplugin.tests.unit.basetest import BaseMetaTest
-from quantum.plugins.metaplugin.tests.unit import fake_plugin
+from quantum.tests.unit.metaplugin import fake_plugin
 from quantum import context
 
 CONF_FILE = ""
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 META_PATH = "quantum.plugins.metaplugin"
-FAKE_PATH = "%s.tests.unit" % META_PATH
+FAKE_PATH = "quantum.tests.unit.metaplugin"
 PROXY_PATH = "%s.proxy_quantum_plugin.ProxyPluginV2" % META_PATH
 PLUGIN_LIST = \
     'fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2,proxy:%s' % \
@@ -46,16 +48,23 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class PluginBaseTest(BaseMetaTest):
+class MetaQuantumPluginV2Test(unittest.TestCase):
     """Class conisting of MetaQuantumPluginV2 unit tests"""
 
     def setUp(self):
-        super(PluginBaseTest, self).setUp()
+        super(MetaQuantumPluginV2Test, self).setUp()
         db._ENGINE = None
         db._MAKER = None
         self.fake_tenant_id = str(uuid.uuid4())
         self.context = context.get_admin_context()
 
+        sql_connection = 'sqlite:///:memory:'
+        options = {"sql_connection": sql_connection}
+        options.update({'base': models_v2.model_base.BASEV2})
+        db.configure_db(options)
+
+        self.mox = mox.Mox()
+        self.stubs = stubout.StubOutForTesting()
         args = ['--config-file', etcdir('quantum.conf.test')]
         #config.parse(args=args)
         # Update the plugin
@@ -68,7 +77,8 @@ class PluginBaseTest(BaseMetaTest):
         cfg.CONF.set_override('plugin_list', PLUGIN_LIST, 'META')
         cfg.CONF.set_override('default_flavor', 'fake2', 'META')
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
-
+        #TODO(nati) remove this after subnet quota change is merged
+        cfg.CONF.max_dns_nameservers = 10
         self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
         self.client_inst = mock.Mock()
@@ -93,6 +103,7 @@ class PluginBaseTest(BaseMetaTest):
     def _fake_network(self, flavor):
         data = {'network': {'name': flavor,
                             'admin_state_up': True,
+                            'shared': False,
                             'tenant_id': self.fake_tenant_id,
                             'flavor:id': flavor}}
         return data
@@ -102,7 +113,9 @@ class PluginBaseTest(BaseMetaTest):
                          'network_id': net_id,
                          'admin_state_up': True,
                          'device_id': 'bad_device_id',
+                         'device_owner': 'bad_device_owner',
                          'admin_state_up': True,
+                         'host_routes': [],
                          'fixed_ips': [],
                          'mac_address':
                          self.plugin._generate_mac(self.context, net_id),
@@ -114,6 +127,8 @@ class PluginBaseTest(BaseMetaTest):
         return {'subnet': {'name': net_id,
                            'network_id': net_id,
                            'gateway_ip': '10.0.0.1',
+                           'dns_nameservers': ['10.0.0.2'],
+                           'host_routes': [],
                            'cidr': '10.0.0.0/24',
                            'allocation_pools': allocation_pools,
                            'enable_dhcp': True,
@@ -266,3 +281,10 @@ class PluginBaseTest(BaseMetaTest):
             self.fail("AttributeError Error is not raised")
 
         self.fail("No Error is not raised")
+
+    def tearDown(self):
+        self.mox.UnsetStubs()
+        self.stubs.UnsetAll()
+        self.stubs.SmartUnsetAll()
+        self.mox.VerifyAll()
+        db.clear_db()
