@@ -144,16 +144,16 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         plugin = self._get_plugin(flavor)
         return plugin.delete_network(context, id)
 
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         flavor = meta_db_v2.get_flavor_by_network(id)
         plugin = self._get_plugin(flavor)
-        net = plugin.get_network(context, id, fields, verbose)
+        net = plugin.get_network(context, id, fields)
         if not fields or 'flavor:id' in fields:
             self._extend_network_dict(context, net)
         return net
 
     def get_networks_with_flavor(self, context, filters=None,
-                                 fields=None, verbose=None):
+                                 fields=None):
         collection = self._model_query(context, models_v2.Network)
         collection = collection.join(Flavor,
                                      models_v2.Network.id == Flavor.network_id)
@@ -167,11 +167,9 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                     collection = collection.filter(column.in_(value))
         return [self._make_network_dict(c, fields) for c in collection.all()]
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
-        nets = self.get_networks_with_flavor(context, filters,
-                                             None, verbose)
-        return [self.get_network(context, net['id'],
-                                 fields, verbose)
+    def get_networks(self, context, filters=None, fields=None):
+        nets = self.get_networks_with_flavor(context, filters, None)
+        return [self.get_network(context, net['id'], fields)
                 for net in nets]
 
     def _get_flavor_by_network_id(self, network_id):

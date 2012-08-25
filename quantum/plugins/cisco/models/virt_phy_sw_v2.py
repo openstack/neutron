@@ -251,11 +251,11 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         except:
             raise
 
-    def get_network(self, context, id, fields=None, verbose=None):
+    def get_network(self, context, id, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def get_networks(self, context, filters=None, fields=None, verbose=None):
+    def get_networks(self, context, filters=None, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
@@ -263,11 +263,11 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def get_port(self, context, id, fields=None, verbose=None):
+    def get_port(self, context, id, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def get_ports(self, context, filters=None, fields=None, verbose=None):
+    def get_ports(self, context, filters=None, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
@@ -287,7 +287,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def get_subnet(self, context, id, fields=None, verbose=None):
+    def get_subnet(self, context, id, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
@@ -295,6 +295,6 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def get_subnets(self, context, filters=None, fields=None, verbose=None):
+    def get_subnets(self, context, filters=None, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass

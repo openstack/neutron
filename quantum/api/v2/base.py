@@ -21,7 +21,6 @@ import webob.exc
 from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions
-from quantum.common import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum import policy
@@ -70,7 +69,7 @@ def _filters(request, attr_info):
 
     Returns a dict of lists for the filters:
 
-    check=a&check=b&name=Bob&verbose=True&verbose=other
+    check=a&check=b&name=Bob&
 
     becomes
 
@@ -78,7 +77,7 @@ def _filters(request, attr_info):
     """
     res = {}
     for key in set(request.GET):
-        if key in ('verbose', 'fields'):
+        if key == 'fields':
             continue
         values = [v for v in request.GET.getall(key) if v]
         if not attr_info.get(key) and values:
@@ -98,38 +97,6 @@ def _filters(request, attr_info):
         if result_values:
             res[key] = result_values
     return res
-
-
-def _verbose(request):
-    """
-    Determines the verbose fields for a request
-
-    Returns a list of items that are requested to be verbose:
-
-    check=a&check=b&name=Bob&verbose=True&verbose=other
-
-    returns
-
-    [True]
-
-    and
-
-    check=a&check=b&name=Bob&verbose=other
-
-    returns
-
-    ['other']
-
-    """
-    verbose = [utils.boolize(v) for v in request.GET.getall('verbose') if v]
-
-    # NOTE(jkoelker) verbose=<bool> trumps all other verbose settings
-    if True in verbose:
-        return True
-    elif False in verbose:
-        return False
-
-    return verbose
 
 
 class Controller(object):
@@ -191,7 +158,6 @@ class Controller(object):
         # plugin before returning.
         original_fields, fields_to_add = self._do_field_list(_fields(request))
         kwargs = {'filters': _filters(request, self._attr_info),
-                  'verbose': _verbose(request),
                   'fields': original_fields}
         obj_getter = getattr(self._plugin, "get_%s" % self._collection)
         obj_list = obj_getter(request.context, **kwargs)
@@ -205,15 +171,13 @@ class Controller(object):
                                         "get_%s" % self._resource,
                                         obj,
                                         plugin=self._plugin)]
-
         return {self._collection: [self._view(obj,
                                               fields_to_strip=fields_to_add)
                                    for obj in obj_list]}
 
     def _item(self, request, id, do_authz=False, field_list=None):
         """Retrieves and formats a single element of the requested entity"""
-        kwargs = {'verbose': _verbose(request),
-                  'fields': field_list}
+        kwargs = {'fields': field_list}
         action = "get_%s" % self._resource
         obj_getter = getattr(self._plugin, action)
         obj = obj_getter(request.context, id, **kwargs)

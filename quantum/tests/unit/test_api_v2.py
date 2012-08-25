@@ -165,77 +165,6 @@ class APIv2TestCase(APIv2TestBase):
     #                raises without being caught. Using unittest2
     #                or dropping 2.6 support so we can use addCleanup
     #                will get around this.
-    def test_verbose_attr(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': 'foo'})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=['foo'])
-
-    def test_multiple_verbose_attr(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': ['foo', 'bar']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=['foo',
-                                                               'bar'])
-
-    def test_verbose_false_str(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': 'false'})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=False)
-
-    def test_verbose_true_str(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': 'true'})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=True)
-
-    def test_verbose_true_trump_attr(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': ['true', 'foo']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=True)
-
-    def test_verbose_false_trump_attr(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': ['false', 'foo']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=False)
-
-    def test_verbose_true_trump_false(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'verbose': ['true', 'false']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=mock.ANY,
-                                                      verbose=True)
-
     def _do_field_list(self, resource, base_fields):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
         policy_attrs = [name for (name, info) in attr_info.items()
@@ -252,8 +181,7 @@ class APIv2TestCase(APIv2TestBase):
         fields = self._do_field_list('networks', ['foo'])
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=fields,
-                                                      verbose=mock.ANY)
+                                                      fields=fields)
 
     def test_fields_multiple(self):
         instance = self.plugin.return_value
@@ -263,8 +191,7 @@ class APIv2TestCase(APIv2TestBase):
         self.api.get(_get_path('networks'), {'fields': ['foo', 'bar']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=fields,
-                                                      verbose=mock.ANY)
+                                                      fields=fields)
 
     def test_fields_multiple_with_empty(self):
         instance = self.plugin.return_value
@@ -274,8 +201,7 @@ class APIv2TestCase(APIv2TestBase):
         self.api.get(_get_path('networks'), {'fields': ['foo', '']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=fields,
-                                                      verbose=mock.ANY)
+                                                      fields=fields)
 
     def test_fields_empty(self):
         instance = self.plugin.return_value
@@ -284,8 +210,7 @@ class APIv2TestCase(APIv2TestBase):
         self.api.get(_get_path('networks'), {'fields': ''})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=[],
-                                                      verbose=mock.ANY)
+                                                      fields=[])
 
     def test_fields_multiple_empty(self):
         instance = self.plugin.return_value
@@ -294,8 +219,7 @@ class APIv2TestCase(APIv2TestBase):
         self.api.get(_get_path('networks'), {'fields': ['', '']})
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=mock.ANY,
-                                                      fields=[],
-                                                      verbose=mock.ANY)
+                                                      fields=[])
 
     def test_filters(self):
         instance = self.plugin.return_value
@@ -305,8 +229,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {'foo': ['bar']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_empty(self):
         instance = self.plugin.return_value
@@ -316,8 +239,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_multiple_empty(self):
         instance = self.plugin.return_value
@@ -327,8 +249,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_multiple_with_empty(self):
         instance = self.plugin.return_value
@@ -338,8 +259,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {'foo': ['bar']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_multiple_values(self):
         instance = self.plugin.return_value
@@ -349,8 +269,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {'foo': ['bar', 'bar2']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_multiple(self):
         instance = self.plugin.return_value
@@ -361,8 +280,7 @@ class APIv2TestCase(APIv2TestBase):
         filters = {'foo': ['bar'], 'foo2': ['bar2']}
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=mock.ANY)
+                                                      fields=mock.ANY)
 
     def test_filters_with_fields(self):
         instance = self.plugin.return_value
@@ -373,34 +291,7 @@ class APIv2TestCase(APIv2TestBase):
         fields = self._do_field_list('networks', ['foo'])
         instance.get_networks.assert_called_once_with(mock.ANY,
                                                       filters=filters,
-                                                      fields=fields,
-                                                      verbose=mock.ANY)
-
-    def test_filters_with_verbose(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'foo': 'bar',
-                                             'verbose': 'true'})
-        filters = {'foo': ['bar']}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY,
-                                                      verbose=True)
-
-    def test_filters_with_fields_and_verbose(self):
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-
-        self.api.get(_get_path('networks'), {'foo': 'bar',
-                                             'fields': 'foo',
-                                             'verbose': 'true'})
-        filters = {'foo': ['bar']}
-        fields = self._do_field_list('networks', ['foo'])
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=fields,
-                                                      verbose=True)
+                                                      fields=fields)
 
 
 # Note: since all resources use the same controller and validation
