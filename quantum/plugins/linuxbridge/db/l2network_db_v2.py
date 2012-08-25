@@ -188,9 +188,6 @@ def set_port_status(port_id, status):
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()
         port['status'] = status
-        if status == constants.PORT_STATUS_DOWN:
-            port['device_id'] = ''
-            port['device_owner'] = ''
         session.merge(port)
         session.flush()
     except exc.NoResultFound:
