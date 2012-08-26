@@ -16,7 +16,6 @@
 import inspect
 import logging
 import mock
-import os
 
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
@@ -35,35 +34,17 @@ from quantum.wsgi import JSONDeserializer
 LOG = logging.getLogger(__name__)
 
 
-def curdir(*p):
-    return os.path.join(os.path.dirname(__file__), *p)
+class CiscoNetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
-
-class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
+    _plugin_name = 'quantum.plugins.cisco.network_plugin.PluginV2'
 
     def setUp(self):
+        super(CiscoNetworkPluginV2TestCase, self).setUp()
         db._ENGINE = None
         db._MAKER = None
         QuantumManager._instance = None
-        self._tenant_id = 'test-tenant'
-
-        json_deserializer = JSONDeserializer()
-        self._deserializers = {
-            'application/json': json_deserializer,
-        }
-
-        plugin = 'quantum.plugins.cisco.network_plugin.PluginV2'
-        # Create the default configurations
-        args = ['--config-file', curdir('quantumv2.conf.cisco.test')]
-        # If test_config specifies some config-file, use it, as well
-        for config_file in test_config.get('config_files', []):
-            args.extend(['--config-file', config_file])
-        config.parse(args=args)
         # Update the plugin
-        cfg.CONF.set_override('core_plugin', plugin)
-        cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
-        cfg.CONF.max_dns_nameservers = 2
-        cfg.CONF.max_subnet_host_routes = 2
+        cfg.CONF.set_override('core_plugin', self._plugin_name)
 
         def new_init():
             db.configure_db({'sql_connection': 'sqlite://',
@@ -81,9 +62,6 @@ class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         self._skip_native_bulk = not _is_native_bulk_supported()
 
-        ext_mgr = test_config.get('extension_manager', None)
-        if ext_mgr:
-            self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         LOG.debug("%s.%s.%s done" % (__name__, self.__class__.__name__,
                                      inspect.stack()[0][3]))
 
@@ -105,13 +83,19 @@ class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         return plugin_ref
 
 
-class TestV2HTTPResponse(NetworkPluginV2TestCase,
-                         test_db_plugin.TestV2HTTPResponse):
+class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
+                        test_db_plugin.TestBasicGet):
+    pass
+
+
+class TestCiscoV2HTTPResponse(CiscoNetworkPluginV2TestCase,
+                              test_db_plugin.TestV2HTTPResponse):
 
     pass
 
 
-class TestPortsV2(NetworkPluginV2TestCase, test_db_plugin.TestPortsV2):
+class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
+                       test_db_plugin.TestPortsV2):
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -163,7 +147,8 @@ class TestPortsV2(NetworkPluginV2TestCase, test_db_plugin.TestPortsV2):
                 self._validate_behavior_on_bulk_failure(res, 'ports')
 
 
-class TestNetworksV2(NetworkPluginV2TestCase, test_db_plugin.TestNetworksV2):
+class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
+                          test_db_plugin.TestNetworksV2):
 
     def test_create_networks_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -207,7 +192,8 @@ class TestNetworksV2(NetworkPluginV2TestCase, test_db_plugin.TestNetworksV2):
             self._validate_behavior_on_bulk_failure(res, 'networks')
 
 
-class TestSubnetsV2(NetworkPluginV2TestCase, test_db_plugin.TestSubnetsV2):
+class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
+                         test_db_plugin.TestSubnetsV2):
 
     def test_create_subnets_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr

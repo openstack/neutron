@@ -14,10 +14,12 @@
 # limitations under the License.
 
 import logging
+import mock
 import unittest
 
 from quantum.common import exceptions as exc
 from quantum.db import api as db
+from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as creds
 from quantum.plugins.cisco.db import network_db_v2 as cdb
@@ -28,7 +30,16 @@ from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
 LOG = logging.getLogger(__name__)
 
 
-class TestNexusPlugin(unittest.TestCase):
+NEXUS_IP_ADDRESS = '1.1.1.1'
+NEXUS_USERNAME = 'username'
+NEXUS_PASSWORD = 'password'
+NEXUS_PORTS = ['1/10']
+NEXUS_SSH_PORT = '22'
+NEXUS_DRIVER = ('quantum.plugins.cisco.tests.unit.v2.nexus.'
+                'fake_nexus_driver.CiscoNEXUSFakeDriver')
+
+
+class TestCiscoNexusPlugin(unittest.TestCase):
 
     def setUp(self):
         """
@@ -43,9 +54,24 @@ class TestNexusPlugin(unittest.TestCase):
         self.second_net_id = 000005
         self.second_vlan_name = "q-" + str(self.second_net_id) + "vlan"
         self.second_vlan_id = 265
-        cdb.initialize()
-        creds.Store.initialize()
-        self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
+
+        def new_cdb_init():
+            db.configure_db({'sql_connection': 'sqlite://',
+                             'base': network_models_v2.model_base.BASEV2})
+
+        def new_nexus_init(self):
+            self._client = importutils.import_object(NEXUS_DRIVER)
+            self._nexus_ip = NEXUS_IP_ADDRESS
+            self._nexus_username = NEXUS_USERNAME
+            self._nexus_password = NEXUS_PASSWORD
+            self._nexus_ports = NEXUS_PORTS
+            self._nexus_ssh_port = NEXUS_SSH_PORT
+
+        with mock.patch.object(cdb, 'initialize', new=new_cdb_init):
+            cdb.initialize()
+            with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
+                                   '__init__', new=new_nexus_init):
+                self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
 
     def test_create_delete_network(self):
         """
