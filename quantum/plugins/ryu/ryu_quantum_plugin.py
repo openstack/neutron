@@ -22,13 +22,17 @@ from ryu.app import client
 from ryu.app import rest_nw_id
 
 from quantum.common import exceptions as q_exc
+from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
+from quantum.db.dhcp_rpc_base import DhcpRpcCallbackMixin
 from quantum.openstack.common import cfg
-from quantum.plugins.ryu.db import api_v2 as db_api_v2
+from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.ryu import ofp_service_type
 from quantum.plugins.ryu.common import config
+from quantum.plugins.ryu.db import api_v2 as db_api_v2
 
 LOG = logging.getLogger(__name__)
 
@@ -53,9 +57,17 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         self.client = client.OFPClient(ofp_api_host)
         self.client.update_network(rest_nw_id.NW_ID_EXTERNAL)
+        self._setup_rpc()
 
         # register known all network list on startup
         self._create_all_tenant_network()
+
+    def _setup_rpc(self):
+        self.conn = rpc.create_connection(new=True)
+        self.callback = DhcpRpcCallbackMixin()
+        self.dispatcher = dispatcher.RpcDispatcher([self.callback])
+        self.conn.create_consumer(topics.PLUGIN, self.dispatcher, fanout=False)
+        self.conn.consume_in_thread()
 
     def _create_all_tenant_network(self):
         networks = db_api_v2.network_all_tenant_list()
