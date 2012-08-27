@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import socket
 import uuid
 
 import mock
@@ -25,6 +26,7 @@ from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.common import exceptions
 from quantum.openstack.common import cfg
+from quantum.openstack.common import jsonutils
 
 
 class FakeModel:
@@ -71,6 +73,7 @@ fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
 class TestDhcpAgent(unittest.TestCase):
     def setUp(self):
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         self.driver_cls_p = mock.patch(
             'quantum.agent.dhcp_agent.importutils.import_class')
         self.driver = mock.Mock(name='driver')
@@ -104,11 +107,13 @@ class TestDhcpAgent(unittest.TestCase):
 
                 dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
                 with mock.patch.object(dhcp, 'enable_dhcp_helper') as enable:
-                    dhcp.run()
-                    enable.assert_called_once_with('a')
-                    plug.assert_called_once_with('q-plugin', mock.ANY)
-                    mock_plugin.assert_has_calls(
-                        [mock.call.get_active_networks()])
+                    with mock.patch.object(dhcp, 'lease_relay') as relay:
+                        dhcp.run()
+                        enable.assert_called_once_with('a')
+                        plug.assert_called_once_with('q-plugin', mock.ANY)
+                        mock_plugin.assert_has_calls(
+                            [mock.call.get_active_networks()])
+                        relay.assert_has_mock_calls([mock.call.run()])
 
         self.notification.assert_has_calls([mock.call.run_dispatch()])
 
@@ -346,6 +351,16 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
                                               network_id='netid',
                                               subnet_id='subid',
                                               device_id='devid',
+                                              host='foo')
+
+    def test_update_lease_expiration(self):
+        with mock.patch.object(self.proxy, 'cast') as mock_cast:
+            self.proxy.update_lease_expiration('netid', 'ipaddr', 1)
+            mock_cast.assert_called()
+        self.make_msg.assert_called_once_with('update_lease_expiration',
+                                              network_id='netid',
+                                              ip_address='ipaddr',
+                                              lease_remaining=1,
                                               host='foo')
 
 
@@ -623,6 +638,138 @@ class TestDeviceManager(unittest.TestCase):
                 dh = dhcp_agent.DeviceManager(cfg.CONF, None)
                 uuid5.called_once_with(uuid.NAMESPACE_DNS, 'localhost')
                 self.assertEqual(dh.get_device_id(fake_network), expected)
+
+
+class TestDhcpLeaseRelay(unittest.TestCase):
+    def setUp(self):
+        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
+        self.unlink_p = mock.patch('os.unlink')
+        self.unlink = self.unlink_p.start()
+
+    def tearDown(self):
+        self.unlink_p.stop()
+
+    def test_init_relay_socket_path_no_prev_socket(self):
+        with mock.patch('os.path.exists') as exists:
+            exists.return_value = False
+            self.unlink.side_effect = OSError
+
+            relay = dhcp_agent.DhcpLeaseRelay(None)
+
+            self.unlink.assert_called_once_with(
+                cfg.CONF.dhcp_lease_relay_socket)
+            exists.assert_called_once_with(cfg.CONF.dhcp_lease_relay_socket)
+
+    def test_init_relay_socket_path_prev_socket_exists(self):
+        with mock.patch('os.path.exists') as exists:
+            exists.return_value = False
+
+            relay = dhcp_agent.DhcpLeaseRelay(None)
+
+            self.unlink.assert_called_once_with(
+                cfg.CONF.dhcp_lease_relay_socket)
+            self.assertFalse(exists.called)
+
+    def test_init_relay_socket_path_prev_socket_unlink_failure(self):
+        self.unlink.side_effect = OSError
+        with mock.patch('os.path.exists') as exists:
+            exists.return_value = True
+            with self.assertRaises(OSError):
+                relay = dhcp_agent.DhcpLeaseRelay(None)
+
+                self.unlink.assert_called_once_with(
+                    cfg.CONF.dhcp_lease_relay_socket)
+                exists.assert_called_once_with(
+                    cfg.CONF.dhcp_lease_relay_socket)
+
+    def test_validate_field_valid(self):
+        relay = dhcp_agent.DhcpLeaseRelay(None)
+        retval = relay._validate_field('1b', '\d[a-f]')
+        self.assertEqual(retval, '1b')
+
+    def test_validate_field_invalid(self):
+        relay = dhcp_agent.DhcpLeaseRelay(None)
+        with self.assertRaises(ValueError):
+            retval = relay._validate_field('zz', '\d[a-f]')
+
+    def test_handler_valid_data(self):
+        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        ip_address = '192.168.1.9'
+        lease_remaining = 120
+
+        json_rep = jsonutils.dumps(dict(network_id=network_id,
+                                        lease_remaining=lease_remaining,
+                                        ip_address=ip_address))
+        handler = mock.Mock()
+        mock_sock = mock.Mock()
+        mock_sock.recv.return_value = json_rep
+
+        relay = dhcp_agent.DhcpLeaseRelay(handler)
+
+        relay._handler(mock_sock, mock.Mock())
+        mock_sock.assert_has_calls([mock.call.recv(1024), mock.call.close()])
+        handler.called_once_with(network_id, ip_address, lease_remaining)
+
+    def test_handler_invalid_data(self):
+        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        ip_address = '192.168.x.x'
+        lease_remaining = 120
+
+        json_rep = jsonutils.dumps(
+            dict(network_id=network_id,
+                 lease_remaining=lease_remaining,
+                 ip_address=ip_address))
+
+        handler = mock.Mock()
+        mock_sock = mock.Mock()
+        mock_sock.recv.return_value = json_rep
+
+        relay = dhcp_agent.DhcpLeaseRelay(handler)
+
+        with mock.patch.object(relay, '_validate_field') as validate:
+            validate.side_effect = ValueError
+
+            with mock.patch.object(dhcp_agent.LOG, 'warn') as log:
+
+                relay._handler(mock_sock, mock.Mock())
+                mock_sock.assert_has_calls(
+                    [mock.call.recv(1024), mock.call.close()])
+                self.assertFalse(handler.called)
+                self.assertTrue(log.called)
+
+    def test_handler_other_exception(self):
+        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        ip_address = '192.168.x.x'
+        lease_remaining = 120
+
+        json_rep = jsonutils.dumps(
+            dict(network_id=network_id,
+                 lease_remaining=lease_remaining,
+                 ip_address=ip_address))
+        handler = mock.Mock()
+        mock_sock = mock.Mock()
+        mock_sock.recv.side_effect = Exception
+
+        relay = dhcp_agent.DhcpLeaseRelay(handler)
+
+        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+            relay._handler(mock_sock, mock.Mock())
+            mock_sock.assert_has_calls([mock.call.recv(1024)])
+            self.assertFalse(handler.called)
+            self.assertTrue(log.called)
+
+    def test_start(self):
+        with mock.patch.object(dhcp_agent, 'eventlet') as mock_eventlet:
+            handler = mock.Mock()
+            relay = dhcp_agent.DhcpLeaseRelay(handler)
+            relay.start()
+
+            mock_eventlet.assert_has_calls(
+                [mock.call.listen(cfg.CONF.dhcp_lease_relay_socket,
+                                  family=socket.AF_UNIX),
+                 mock.call.spawn(mock_eventlet.serve,
+                                 mock.call.listen.return_value,
+                                 relay._handler)])
 
 
 class TestDictModel(unittest.TestCase):

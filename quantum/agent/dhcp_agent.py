@@ -16,6 +16,8 @@
 #    under the License.
 
 import logging
+import os
+import re
 import socket
 import sys
 import uuid
@@ -28,11 +30,13 @@ from quantum.agent.common import config
 from quantum.agent.linux import dhcp
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
+from quantum.api.v2 import attributes
 from quantum.common import exceptions
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import importutils
+from quantum.openstack.common import jsonutils
 from quantum.openstack.common.rpc import proxy
 from quantum.version import version_string
 
@@ -59,6 +63,7 @@ class DhcpAgent(object):
 
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)
         self.notifications = agent_rpc.NotificationDispatcher()
+        self.lease_relay = DhcpLeaseRelay(self.update_lease)
 
     def run(self):
         """Activate the DHCP agent."""
@@ -66,6 +71,7 @@ class DhcpAgent(object):
         for network_id in self.plugin_rpc.get_active_networks():
             self.enable_dhcp_helper(network_id)
 
+        self.lease_relay.start()
         self.notifications.run_dispatch(self)
 
     def call_driver(self, action, network):
@@ -81,6 +87,10 @@ class DhcpAgent(object):
 
         except Exception, e:
             LOG.warn('Unable to %s dhcp. Exception: %s' % (action, e))
+
+    def update_lease(self, network_id, ip_address, time_remaining):
+        self.plugin_rpc.update_lease_expiration(network_id, ip_address,
+                                                time_remaining)
 
     def enable_dhcp_helper(self, network_id):
         """Enable DHCP for a network that meets enabling criteria."""
@@ -235,6 +245,16 @@ class DhcpPluginApi(proxy.RpcProxy):
                                        device_id=device_id,
                                        host=self.host),
                          topic=self.topic)
+
+    def update_lease_expiration(self, network_id, ip_address, lease_remaining):
+        """Make a remote process call to update the ip lease expiration."""
+        self.cast(self.context,
+                  self.make_msg('update_lease_expiration',
+                                network_id=network_id,
+                                ip_address=ip_address,
+                                lease_remaining=lease_remaining,
+                                host=self.host),
+                  topic=self.topic)
 
 
 class NetworkCache(object):
@@ -401,10 +421,75 @@ class DictModel(object):
             setattr(self, key, value)
 
 
+class DhcpLeaseRelay(object):
+    """UNIX domain socket server for processing lease updates.
+
+    Network namespace isolation prevents the DHCP process from notifying
+    Quantum directly.  This class works around the limitation by using the
+    domain socket to pass the information.  This class handles message.
+    receiving and then calls the callback method.
+    """
+
+    OPTS = [
+        cfg.StrOpt('dhcp_lease_relay_socket',
+                   default='$state_path/dhcp/lease_relay',
+                   help='Location to DHCP lease relay UNIX domain socket')
+    ]
+
+    def __init__(self, lease_update_callback):
+        self.callback = lease_update_callback
+
+        try:
+            os.unlink(cfg.CONF.dhcp_lease_relay_socket)
+        except OSError:
+            if os.path.exists(cfg.CONF.dhcp_lease_relay_socket):
+                raise
+
+    def _validate_field(self, value, regex):
+        """Validate value against a regular expression and return if valid."""
+        match = re.match(regex, value)
+
+        if match:
+            return value
+        raise ValueError(_("Value %s does not match regex: %s") %
+                         (value, regex))
+
+    def _handler(self, client_sock, client_addr):
+        """Handle incoming lease relay stream connection.
+
+        This method will only read the first 1024 bytes and then close the
+        connection.  The limit exists to limit the impact of misbehaving
+        clients.
+        """
+        try:
+            msg = client_sock.recv(1024)
+            data = jsonutils.loads(msg)
+            client_sock.close()
+
+            network_id = self._validate_field(data['network_id'],
+                                              attributes.UUID_PATTERN)
+            ip_address = str(netaddr.IPAddress(data['ip_address']))
+            lease_remaining = int(data['lease_remaining'])
+            self.callback(network_id, ip_address, lease_remaining)
+        except ValueError, e:
+            LOG.warn(_('Unable to parse lease relay msg to dict.'))
+            LOG.warn(_('Exception value: %s') % e)
+            LOG.warn(_('Message representation: %s') % repr(msg))
+        except Exception, e:
+            LOG.exception(_('Unable update lease. Exception'))
+
+    def start(self):
+        """Spawn a green thread to run the lease relay unix socket server."""
+        listener = eventlet.listen(cfg.CONF.dhcp_lease_relay_socket,
+                                   family=socket.AF_UNIX)
+        eventlet.spawn(eventlet.serve, listener, self._handler)
+
+
 def main():
     eventlet.monkey_patch()
     cfg.CONF.register_opts(DhcpAgent.OPTS)
     cfg.CONF.register_opts(DeviceManager.OPTS)
+    cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
     cfg.CONF.register_opts(dhcp.OPTS)
     cfg.CONF.register_opts(interface.OPTS)
     cfg.CONF(args=sys.argv, project='quantum')

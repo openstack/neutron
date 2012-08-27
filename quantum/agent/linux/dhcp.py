@@ -19,8 +19,11 @@ import abc
 import logging
 import os
 import re
+import socket
 import StringIO
+import sys
 import tempfile
+import textwrap
 
 import netaddr
 
@@ -28,6 +31,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import jsonutils
 
 LOG = logging.getLogger(__name__)
 
@@ -190,12 +194,20 @@ class Dnsmasq(DhcpLocalProcess):
 
     _TAG_PREFIX = 'tag%d'
 
+    QUANTUM_NETWORK_ID_KEY = 'QUANTUM_NETWORK_ID'
+    QUANTUM_RELAY_SOCKET_PATH_KEY = 'QUANTUM_RELAY_SOCKET_PATH'
+
     def spawn_process(self):
         """Spawns a Dnsmasq process for the network."""
         interface_name = self.device_delegate.get_interface_name(self.network)
+
+        env = {
+            self.QUANTUM_NETWORK_ID_KEY: self.network.id,
+            self.QUANTUM_RELAY_SOCKET_PATH_KEY:
+            self.conf.dhcp_lease_relay_socket
+        }
+
         cmd = [
-            # TODO (mark): this is dhcpbridge script we'll need to know
-            # when an IP address has been released
             'dnsmasq',
             '--no-hosts',
             '--no-resolv',
@@ -210,6 +222,7 @@ class Dnsmasq(DhcpLocalProcess):
             #'--dhcp-lease-max=%s' % ?,
             '--dhcp-hostsfile=%s' % self._output_hosts_file(),
             '--dhcp-optsfile=%s' % self._output_opts_file(),
+            '--dhcp-script=%s' % self._lease_relay_script_path(),
             '--leasefile-ro',
         ]
 
@@ -237,8 +250,10 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.use_namespaces:
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                           namespace=self.network.id)
-            ip_wrapper.netns.execute(cmd)
+            ip_wrapper.netns.execute(cmd, addl_env=env)
         else:
+            # For normal sudo prepend the env vars before command
+            cmd = ['%s=%s' % pair for pair in env.items()] + cmd
             utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
@@ -297,6 +312,36 @@ class Dnsmasq(DhcpLocalProcess):
         name = self.get_conf_file_name('opts')
         replace_file(name, '\n'.join(['tag:%s,%s:%s,%s' % o for o in options]))
         return name
+
+    def _lease_relay_script_path(self):
+        return os.path.join(os.path.dirname(sys.argv[0]),
+                            'quantum-dhcp-agent-dnsmasq-lease-update')
+
+    @classmethod
+    def lease_update(cls):
+        network_id = os.environ.get(cls.QUANTUM_NETWORK_ID_KEY)
+        dhcp_relay_socket = os.environ.get(cls.QUANTUM_RELAY_SOCKET_PATH_KEY)
+
+        action = sys.argv[1]
+        if action not in ('add', 'del', 'old'):
+            sys.exit()
+
+        mac_address = sys.argv[2]
+        ip_address = sys.argv[3]
+
+        if action == 'del':
+            lease_remaining = 0
+        else:
+            lease_remaining = int(os.environ.get('DNSMASQ_TIME_REMAINING', 0))
+
+        data = dict(network_id=network_id, mac_address=mac_address,
+                    ip_address=ip_address, lease_remaining=lease_remaining)
+
+        if os.path.exists(dhcp_relay_socket):
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(dhcp_relay_socket)
+            sock.send(jsonutils.dumps(data))
+            sock.close()
 
 
 def replace_file(file_name, data):

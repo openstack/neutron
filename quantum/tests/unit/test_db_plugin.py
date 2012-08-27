@@ -33,6 +33,7 @@ from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import models_v2
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import timeutils
@@ -1220,6 +1221,57 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             res = port_req.get_response(self.api)
             self.assertEquals(res.status_int, 422)
 
+    def test_default_allocation_expiration(self):
+        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
+        timeutils.utcnow.override_time = reference
+
+        cfg.CONF.set_override('dhcp_lease_duration', 120)
+        expires = QuantumManager.get_plugin()._default_allocation_expiration()
+        timeutils.utcnow
+        cfg.CONF.reset()
+        timeutils.utcnow.override_time = None
+        self.assertEqual(expires, reference + datetime.timedelta(seconds=120))
+
+    def test_update_fixed_ip_lease_expiration(self):
+        cfg.CONF.set_override('dhcp_lease_duration', 10)
+        plugin = QuantumManager.get_plugin()
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                plugin.update_fixed_ip_lease_expiration(
+                    update_context,
+                    subnet['subnet']['network_id'],
+                    port['port']['fixed_ips'][0]['ip_address'],
+                    500)
+
+                q = update_context.session.query(models_v2.IPAllocation)
+                q = q.filter_by(
+                    port_id=port['port']['id'],
+                    ip_address=port['port']['fixed_ips'][0]['ip_address'])
+
+                ip_allocation = q.one()
+
+                self.assertGreater(
+                    ip_allocation.expiration - timeutils.utcnow(),
+                    datetime.timedelta(seconds=10))
+
+        cfg.CONF.reset()
+
+    def test_update_fixed_ip_lease_expiration_invalid_address(self):
+        cfg.CONF.set_override('dhcp_lease_duration', 10)
+        plugin = QuantumManager.get_plugin()
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                with mock.patch.object(db_base_plugin_v2, 'LOG') as log:
+                    plugin.update_fixed_ip_lease_expiration(
+                        update_context,
+                        subnet['subnet']['network_id'],
+                        '255.255.255.0',
+                        120)
+                    self.assertTrue(log.mock_calls)
+        cfg.CONF.reset()
+
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):
     # NOTE(cerberus): successful network update and delete are
@@ -2117,14 +2169,3 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)
-
-    def test_default_allocation_expiration(self):
-        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
-        timeutils.utcnow.override_time = reference
-
-        cfg.CONF.set_override('dhcp_lease_duration', 120)
-        expires = QuantumManager.get_plugin()._default_allocation_expiration()
-        timeutils.utcnow
-        cfg.CONF.reset()
-        timeutils.utcnow.override_time = None
-        self.assertEqual(expires, reference + datetime.timedelta(seconds=120))
