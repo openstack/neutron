@@ -43,12 +43,13 @@ EXTERNAL_DEV_PREFIX = 'qgw-'
 
 class RouterInfo(object):
 
-    def __init__(self, router_id, root_helper):
+    def __init__(self, router_id, root_helper, use_namespaces):
         self.router_id = router_id
         self.ex_gw_port = None
         self.internal_ports = []
         self.floating_ips = []
         self.root_helper = root_helper
+        self.use_namespaces = use_namespaces
 
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
@@ -56,7 +57,8 @@ class RouterInfo(object):
             namespace=self.ns_name())
 
     def ns_name(self):
-        return NS_PREFIX + self.router_id
+        if self.use_namespaces:
+            return NS_PREFIX + self.router_id
 
 
 class L3NATAgent(object):
@@ -84,7 +86,12 @@ class L3NATAgent(object):
         #FIXME(danwent): not currently used
         cfg.BoolOpt('send_arp_for_ha',
                     default=True,
-                    help="Send gratuitious ARP when router IP is configured")
+                    help="Send gratuitious ARP when router IP is configured"),
+        cfg.BoolOpt('use_namespaces', default=True,
+                    help="Allow overlapping IP."),
+        cfg.StrOpt('router_id', default='',
+                   help="If namespaces is disabled, the l3 agent can only"
+                        " confgure a router that has the matching router ID.")
     ]
 
     def __init__(self, conf):
@@ -141,7 +148,8 @@ class L3NATAgent(object):
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(d.name,
                                    bridge=self.conf.external_network_bridge)
-        ns_ip.netns.delete(namespace)
+        if self.conf.use_namespaces:
+            ns_ip.netns.delete(namespace)
 
     def _create_router_namespace(self, ri):
             ip_wrapper_root = ip_lib.IPWrapper(self.conf.root_helper)
@@ -172,11 +180,18 @@ class L3NATAgent(object):
         for r in self.qclient.list_routers()['routers']:
             #FIXME(danwent): handle admin state
 
-            cur_router_ids.add(r['id'])
+            # If namespaces are disabled, only process the router associated
+            # with the configured agent id.
+            if (self.conf.use_namespaces or
+                r['id'] == self.conf.router_id):
+                cur_router_ids.add(r['id'])
+            else:
+                continue
             if r['id'] not in self.router_info:
-                self.router_info[r['id']] = RouterInfo(r['id'],
-                                                       self.conf.root_helper)
-                self._create_router_namespace(self.router_info[r['id']])
+                self.router_info[r['id']] = RouterInfo(
+                    r['id'], self.conf.root_helper, self.conf.use_namespaces)
+                if self.conf.use_namespaces:
+                    self._create_router_namespace(self.router_info[r['id']])
 
             ri = self.router_info[r['id']]
             self.process_router(ri)
@@ -320,7 +335,8 @@ class L3NATAgent(object):
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
             ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
                                           namespace=ri.ns_name())
-            ip_wrapper.netns.execute(cmd)
+            if self.conf.use_namespaces:
+                ip_wrapper.netns.execute(cmd)
 
         for (c, r) in self.external_gateway_filter_rules():
             ri.iptables_manager.ipv4['filter'].add_rule(c, r)
