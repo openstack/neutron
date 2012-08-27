@@ -19,6 +19,8 @@
 import inspect
 import logging
 
+from sqlalchemy import orm
+
 from quantum.common import exceptions as exc
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
@@ -136,7 +138,11 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             network = self._get_network(context, id)
             filter = {'network_id': [id]}
             ports = self.get_ports(context, filters=filter)
-            if ports:
+
+            # check if there are any tenant owned ports in-use
+            prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
+            only_svc = all(p['device_owner'].startswith(prefix) for p in ports)
+            if not only_svc:
                 raise exc.NetworkInUse(net_id=id)
         context.session.close()
         #Network does not have any ports, we can proceed to delete
@@ -248,8 +254,12 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             subnet = self._get_subnet(context, id)
             # Check if ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
+            allocated_qry = allocated_qry.options(orm.joinedload('ports'))
             allocated = allocated_qry.filter_by(subnet_id=id).all()
-            if allocated:
+
+            prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
+            if not all(a.ports.device_owner.startswith(prefix) for a in
+                       allocated):
                 raise exc.SubnetInUse(subnet_id=id)
         context.session.close()
         try:

@@ -34,6 +34,8 @@ from quantum import quantum_plugin_base_v2
 
 LOG = logging.getLogger(__name__)
 
+AGENT_OWNER_PREFIX = 'network:'
+
 
 class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     """ A class that implements the v2 Quantum plugin interface
@@ -794,9 +796,19 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
             filter = {'network_id': [id]}
             ports = self.get_ports(context, filters=filter)
-            if ports:
+
+            # check if there are any tenant owned ports in-use
+            only_svc = all(p['device_owner'].startswith(AGENT_OWNER_PREFIX)
+                           for p in ports)
+
+            if not only_svc:
                 raise q_exc.NetworkInUse(net_id=id)
 
+            # clean up network owned ports
+            for port in ports:
+                self._delete_port(context, port['id'])
+
+            # clean up subnets
             subnets_qry = context.session.query(models_v2.Subnet)
             subnets_qry.filter_by(network_id=id).delete()
             context.session.delete(network)
@@ -951,11 +963,19 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
-            # Check if ports are using this subnet
+            # Check if any tenant owned ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
+            allocated_qry = allocated_qry.options(orm.joinedload('ports'))
             allocated = allocated_qry.filter_by(subnet_id=id).all()
-            if allocated:
-                raise q_exc.SubnetInUse(subnet_id=id)
+
+            only_svc = all(a.ports.device_owner.startswith(AGENT_OWNER_PREFIX)
+                           for a in allocated)
+            if not only_svc:
+                raise q_exc.NetworkInUse(subnet_id=id)
+
+            # remove network owned ports
+            for allocation in allocated:
+                context.session.delete(allocation)
 
             context.session.delete(subnet)
 
@@ -1054,33 +1074,36 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def delete_port(self, context, id):
         with context.session.begin(subtransactions=True):
-            port = self._get_port(context, id)
+            self._delete_port(context, id)
 
-            allocated_qry = context.session.query(models_v2.IPAllocation)
-            # recycle all of the IP's
-            # NOTE(garyk) this may be have to be addressed differently when
-            # working with a DHCP server.
-            allocated = allocated_qry.filter_by(port_id=id).all()
-            if allocated:
-                for a in allocated:
-                    subnet = self._get_subnet(context, a['subnet_id'])
-                    if a['ip_address'] == subnet['gateway_ip']:
-                        # Gateway address will not be recycled, but we do
-                        # need to delete the allocation from the DB
-                        QuantumDbPluginV2._delete_ip_allocation(
-                            context,
-                            a['network_id'], a['subnet_id'],
-                            id, a['ip_address'])
-                        LOG.debug("Gateway address (%s/%s) is not recycled",
-                                  a['ip_address'], a['subnet_id'])
-                        continue
+    def _delete_port(self, context, id):
+        port = self._get_port(context, id)
 
-                    QuantumDbPluginV2._recycle_ip(context,
-                                                  network_id=a['network_id'],
-                                                  subnet_id=a['subnet_id'],
-                                                  ip_address=a['ip_address'],
-                                                  port_id=id)
-            context.session.delete(port)
+        allocated_qry = context.session.query(models_v2.IPAllocation)
+        # recycle all of the IP's
+        # NOTE(garyk) this may be have to be addressed differently when
+        # working with a DHCP server.
+        allocated = allocated_qry.filter_by(port_id=id).all()
+        if allocated:
+            for a in allocated:
+                subnet = self._get_subnet(context, a['subnet_id'])
+                if a['ip_address'] == subnet['gateway_ip']:
+                    # Gateway address will not be recycled, but we do
+                    # need to delete the allocation from the DB
+                    QuantumDbPluginV2._delete_ip_allocation(
+                        context,
+                        a['network_id'], a['subnet_id'],
+                        id, a['ip_address'])
+                    LOG.debug("Gateway address (%s/%s) is not recycled",
+                              a['ip_address'], a['subnet_id'])
+                    continue
+
+                QuantumDbPluginV2._recycle_ip(context,
+                                              network_id=a['network_id'],
+                                              subnet_id=a['subnet_id'],
+                                              ip_address=a['ip_address'],
+                                              port_id=id)
+        context.session.delete(port)
 
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)

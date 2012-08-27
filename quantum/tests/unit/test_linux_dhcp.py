@@ -135,9 +135,6 @@ class TestDhcpBase(unittest.TestCase):
             def disable(self):
                 self.called.append('disable')
 
-            def update_l3(self):
-                pass
-
             def reload_allocations(self):
                 pass
 
@@ -227,9 +224,12 @@ class TestDhcpLocalProcess(TestBase):
                 self.assertTrue(makedirs.called)
 
     def test_enable_already_active(self):
+        delegate = mock.Mock()
+        delegate.setup.return_value = 'tap0'
         with mock.patch.object(LocalChild, 'active') as patched:
             patched.__get__ = mock.Mock(return_value=True)
-            lp = LocalChild(self.conf, FakeV4Network())
+            lp = LocalChild(self.conf, FakeV4Network(),
+                            device_delegate=delegate)
             lp.enable()
 
             self.assertEqual(lp.called, ['reload'])
@@ -238,12 +238,13 @@ class TestDhcpLocalProcess(TestBase):
         delegate = mock.Mock(return_value='tap0')
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-            ['active', 'get_conf_file_name']]
+            ['active', 'get_conf_file_name', 'interface_name']]
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             mocks['get_conf_file_name'].return_value = '/dir'
+            mocks['interface_name'].__set__ = mock.Mock()
             lp = LocalChild(self.conf,
                             FakeDualNetwork(),
                             device_delegate=delegate)
@@ -252,12 +253,15 @@ class TestDhcpLocalProcess(TestBase):
             delegate.assert_has_calls(
                 [mock.call.setup(mock.ANY, reuse_existing=True)])
             self.assertEqual(lp.called, ['spawn'])
+            self.assertTrue(mocks['interface_name'].__set__.called)
 
     def test_disable_not_active(self):
-        attrs_to_mock = dict([(a, mock.DEFAULT) for a in ['active', 'pid']])
+        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
+                              ['active', 'interface_name', 'pid']])
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             mocks['pid'].__get__ = mock.Mock(return_value=5)
+            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             with mock.patch.object(dhcp.LOG, 'debug') as log:
                 lp = LocalChild(self.conf, FakeDualNetwork())
                 lp.disable()
@@ -265,10 +269,12 @@ class TestDhcpLocalProcess(TestBase):
                 self.assertIn('stale', msg)
 
     def test_disable_unknown_network(self):
-        attrs_to_mock = dict([(a, mock.DEFAULT) for a in ['active', 'pid']])
+        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
+                              ['active', 'interface_name', 'pid']])
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             mocks['pid'].__get__ = mock.Mock(return_value=None)
+            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             with mock.patch.object(dhcp.LOG, 'debug') as log:
                 lp = LocalChild(self.conf, FakeDualNetwork())
                 lp.disable()
@@ -277,34 +283,20 @@ class TestDhcpLocalProcess(TestBase):
 
     def test_disable(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
-                              ['active', 'pid']])
+                              ['active', 'interface_name', 'pid']])
         delegate = mock.Mock()
-        delegate.intreface_name = 'tap0'
         network = FakeDualNetwork()
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=True)
             mocks['pid'].__get__ = mock.Mock(return_value=5)
+            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             lp = LocalChild(self.conf, network, device_delegate=delegate)
             lp.disable()
 
-        delegate.assert_has_calls([mock.call.destroy(network)])
+        delegate.assert_has_calls([mock.call.destroy(network, 'tap0')])
         exp_args = ['ip', 'netns', 'exec',
                     'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-9', 5]
         self.execute.assert_called_once_with(exp_args, root_helper='sudo')
-
-    def test_update_l3(self):
-        delegate = mock.Mock()
-        fake_net = FakeDualNetwork()
-        with mock.patch.object(LocalChild, 'active') as active:
-            active.__get__ = mock.Mock(return_value=False)
-            lp = LocalChild(self.conf,
-                            fake_net,
-                            device_delegate=delegate)
-            lp.update_l3()
-
-            delegate.assert_has_calls(
-                [mock.call.update_l3(fake_net)])
-            self.assertEqual(lp.called, ['reload'])
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:
@@ -327,6 +319,24 @@ class TestDhcpLocalProcess(TestBase):
             conf_file.return_value = '.doesnotexist/pid'
             lp = LocalChild(self.conf, FakeDualNetwork())
             self.assertIsNone(lp.pid)
+
+    def test_get_interface_name(self):
+        with mock.patch('__builtin__.open') as mock_open:
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.read.return_value = 'tap0'
+            lp = LocalChild(self.conf, FakeDualNetwork())
+            self.assertEqual(lp.interface_name, 'tap0')
+
+    def test_set_interface_name(self):
+        with mock.patch('quantum.agent.linux.dhcp.replace_file') as replace:
+            lp = LocalChild(self.conf, FakeDualNetwork())
+            with mock.patch.object(lp, 'get_conf_file_name') as conf_file:
+                conf_file.return_value = '/interface'
+                lp.interface_name = 'tap0'
+                conf_file.assert_called_once_with('interface',
+                                                  ensure_conf_dir=True)
+                replace.assert_called_once_with(mock.ANY, 'tap0')
 
 
 class TestDnsmasq(TestBase):
@@ -372,7 +382,7 @@ class TestDnsmasq(TestBase):
 
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-            ['_output_opts_file', 'get_conf_file_name']]
+            ['_output_opts_file', 'get_conf_file_name', 'interface_name']]
         )
 
         with mock.patch.multiple(dhcp.Dnsmasq, **attrs_to_mock) as mocks:
@@ -380,6 +390,7 @@ class TestDnsmasq(TestBase):
             mocks['_output_opts_file'].return_value = (
                 '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
             )
+            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
 
             with mock.patch.object(dhcp.sys, 'argv') as argv:
                 argv.__getitem__.side_effect = fake_argv

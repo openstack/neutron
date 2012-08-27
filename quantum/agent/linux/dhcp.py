@@ -78,10 +78,6 @@ class DhcpBase(object):
     def disable(self):
         """Disable dhcp for this network."""
 
-    @abc.abstractmethod
-    def update_l3(self, subnet, reason):
-        """Alert the driver that a subnet has changed."""
-
     def restart(self):
         """Restart the dhcp service for the network."""
         self.disable()
@@ -108,10 +104,12 @@ class DhcpLocalProcess(DhcpBase):
 
     def enable(self):
         """Enables DHCP for this network by spawning a local process."""
+        interface_name = self.device_delegate.setup(self.network,
+                                                    reuse_existing=True)
         if self.active:
             self.reload_allocations()
         elif self._enable_dhcp():
-            self.device_delegate.setup(self.network, reuse_existing=True)
+            self.interface_name = interface_name
             self.spawn_process()
 
     def disable(self):
@@ -126,17 +124,14 @@ class DhcpLocalProcess(DhcpBase):
                 ip_wrapper.netns.execute(cmd)
             else:
                 utils.execute(cmd, self.root_helper)
-            self.device_delegate.destroy(self.network)
+
+            self.device_delegate.destroy(self.network, self.interface_name)
+
         elif pid:
             LOG.debug(_('DHCP for %s pid %d is stale, ignoring command') %
                       (self.network.id, pid))
         else:
             LOG.debug(_('No DHCP started for %s') % self.network.id)
-
-    def update_l3(self):
-        """Update the L3 settings for the interface and reload settings."""
-        self.device_delegate.update_l3(self.network)
-        self.reload_allocations()
 
     def get_conf_file_name(self, kind, ensure_conf_dir=False):
         """Returns the file name for a given kind of config file."""
@@ -179,6 +174,16 @@ class DhcpLocalProcess(DhcpBase):
         except RuntimeError, e:
             return False
 
+    @property
+    def interface_name(self):
+        return self._get_value_from_conf_file('interface')
+
+    @interface_name.setter
+    def interface_name(self, value):
+        interface_file_path = self.get_conf_file_name('interface',
+                                                      ensure_conf_dir=True)
+        replace_file(interface_file_path, value)
+
     @abc.abstractmethod
     def spawn_process(self):
         pass
@@ -199,8 +204,6 @@ class Dnsmasq(DhcpLocalProcess):
 
     def spawn_process(self):
         """Spawns a Dnsmasq process for the network."""
-        interface_name = self.device_delegate.get_interface_name(self.network)
-
         env = {
             self.QUANTUM_NETWORK_ID_KEY: self.network.id,
             self.QUANTUM_RELAY_SOCKET_PATH_KEY:
@@ -213,7 +216,7 @@ class Dnsmasq(DhcpLocalProcess):
             '--no-resolv',
             '--strict-order',
             '--bind-interfaces',
-            '--interface=%s' % interface_name,
+            '--interface=%s' % self.interface_name,
             '--except-interface=lo',
             '--domain=%s' % self.conf.dhcp_domain,
             '--pid-file=%s' % self.get_conf_file_name('pid',

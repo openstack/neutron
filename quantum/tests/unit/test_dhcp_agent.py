@@ -207,27 +207,12 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             self.dhcp.network_update_end(payload)
             disable.assertCalledOnceWith(fake_network.id)
 
-    def test_network_delete_start(self):
+    def test_network_delete_end(self):
         payload = dict(network_id=fake_network.id)
 
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
-            self.dhcp.network_delete_start(payload)
+            self.dhcp.network_delete_end(payload)
             disable.assertCalledOnceWith(fake_network.id)
-
-    def test_subnet_delete_start(self):
-        payload = dict(subnet_id=fake_subnet1.id)
-        self.cache.get_network_by_subnet_id.return_value = fake_network
-
-        self.dhcp.subnet_delete_start(payload)
-
-        self.cache.assert_has_calls(
-            [mock.call.get_network_by_subnet_id(fake_subnet1.id)])
-
-        self.plugin.assert_has_calls(
-            [mock.call.release_port_fixed_ip(fake_network.id,
-                                             mock.ANY,
-                                             fake_subnet1.id)])
-        self.assertEqual(self.call_driver.call_count, 0)
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
         network = FakeModel('12345678-1234-5678-1234567890ab',
@@ -251,7 +236,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.dhcp.subnet_update_end(payload)
 
         self.cache.assert_has_calls([mock.call.put(fake_network)])
-        self.call_driver.assert_called_once_with('update_l3', fake_network)
+        self.call_driver.assert_called_once_with('enable', fake_network)
 
     def test_subnet_update_end_delete_payload(self):
         payload = dict(subnet_id=fake_subnet1.id)
@@ -261,7 +246,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.dhcp.subnet_delete_end(payload)
 
         self.cache.assert_has_calls([mock.call.put(fake_network)])
-        self.call_driver.assert_called_once_with('update_l3', fake_network)
+        self.call_driver.assert_called_once_with('enable', fake_network)
 
     def test_port_update_end(self):
         payload = dict(port=vars(fake_port2))
@@ -548,24 +533,14 @@ class TestDeviceManager(unittest.TestCase):
             plugin.get_dhcp_port.return_value = fake_port
 
             dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
-            dh.destroy(fake_network)
+            dh.destroy(fake_network, 'tap12345678-12')
 
             dvr_cls.assert_called_once_with(cfg.CONF)
             mock_driver.assert_has_calls(
-                [mock.call.get_device_name(mock.ANY),
-                 mock.call.unplug('tap12345678-12',
+                [mock.call.unplug('tap12345678-12',
                                   namespace=fake_network.id)])
             plugin.assert_has_calls(
-                [mock.call.get_dhcp_port(fake_network.id, mock.ANY),
-                 mock.call.release_dhcp_port(fake_network.id, mock.ANY)])
-
-    def test_update_l3(self):
-        fake_network = mock.Mock()
-
-        dh = dhcp_agent.DeviceManager(cfg.CONF, None)
-        with mock.patch.object(dh, 'setup') as setup:
-            dh.update_l3(fake_network)
-            setup.called_once_with(fake_network, True)
+                [mock.call.release_dhcp_port(fake_network.id, mock.ANY)])
 
     def test_get_interface_name(self):
         fake_network = FakeModel('12345678-1234-5678-1234567890ab',

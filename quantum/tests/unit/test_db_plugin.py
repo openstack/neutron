@@ -780,11 +780,25 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_delete_network_if_port_exists(self):
         fmt = 'json'
         with self.port() as port:
-            net_id = port['port']['network_id']
             req = self.new_delete_request('networks',
                                           port['port']['network_id'])
             res = req.get_response(self.api)
             self.assertEquals(res.status_int, 409)
+
+    def test_delete_network_port_exists_owned_by_network(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        # Create new network
+
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        network_id = network['network']['id']
+        port = self._make_port(fmt, network_id, device_owner='network:dhcp')
+        req = self.new_delete_request('networks', network_id)
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
 
     def test_update_port_delete_ip(self):
         with self.subnet() as subnet:
@@ -1700,6 +1714,31 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)
+
+    def test_delete_subnet_port_exists_owned_by_network(self):
+        gateway_ip = '10.0.0.1'
+        cidr = '10.0.0.0/24'
+        fmt = 'json'
+        # Create new network
+        res = self._create_network(fmt=fmt, name='net',
+                                   admin_status_up=True)
+        network = self.deserialize(fmt, res)
+        network_id = network['network']['id']
+        subnet = self._make_subnet(fmt, network, gateway_ip,
+                                   cidr, ip_version=4)
+        port = self._make_port(fmt, network['network']['id'],
+                               device_owner='network:dhcp')
+        req = self.new_delete_request('subnets', subnet['subnet']['id'])
+        res = req.get_response(self.api)
+        self.assertEquals(res.status_int, 204)
+
+    def test_delete_subnet_port_exists_owned_by_other(self):
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                req = self.new_delete_request('subnets',
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 409)
 
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'

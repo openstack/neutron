@@ -122,7 +122,7 @@ class DhcpAgent(object):
         for subnet in network.subnets:
             if subnet.enable_dhcp:
                 self.cache.put(network)
-                self.call_driver('update_l3', network)
+                self.call_driver('enable', network)
                 break
         else:
             self.disable_dhcp_helper(network.id)
@@ -140,18 +140,9 @@ class DhcpAgent(object):
         else:
             self.disable_dhcp_helper(network_id)
 
-    def network_delete_start(self, payload):
-        """Handle the network.detete.start notification event."""
+    def network_delete_end(self, payload):
+        """Handle the network.delete.end notification event."""
         self.disable_dhcp_helper(payload['network_id'])
-
-    def subnet_delete_start(self, payload):
-        """Handle the subnet.detete.start notification event."""
-        subnet_id = payload['subnet_id']
-        network = self.cache.get_network_by_subnet_id(subnet_id)
-        if network:
-            device_id = self.device_manager.get_device_id(network)
-            self.plugin_rpc.release_port_fixed_ip(network.id, device_id,
-                                                  subnet_id)
 
     def subnet_update_end(self, payload):
         """Handle the subnet.update.end notification event."""
@@ -392,20 +383,19 @@ class DeviceManager(object):
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=namespace)
 
-    def destroy(self, network):
+        return interface_name
+
+    def destroy(self, network, device_name):
         """Destroy the device used for the network's DHCP on this host."""
         if self.conf.use_namespaces:
             namespace = network.id
         else:
             namespace = None
 
-        self.driver.unplug(self.get_interface_name(network),
-                           namespace=namespace)
-        self.plugin.release_dhcp_port(network.id, self.get_device_id(network))
+        self.driver.unplug(device_name, namespace=namespace)
 
-    def update_l3(self, network):
-        """Update the L3 attributes for the current network's DHCP device."""
-        self.setup(network, reuse_existing=True)
+        self.plugin.release_dhcp_port(network.id,
+                                      self.get_device_id(network))
 
 
 class DictModel(object):
