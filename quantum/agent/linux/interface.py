@@ -23,6 +23,7 @@ import netaddr
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
+from quantum.common import exceptions
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 
@@ -239,16 +240,15 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
                 driver_set.split(':')
                 for driver_set in
                 self.conf.meta_flavor_driver_mappings.split(',')]:
-            self.flavor_driver_map[flavor] =\
-                self._load_driver(driver_name)
+            self.flavor_driver_map[flavor] = self._load_driver(driver_name)
 
     def _get_driver_by_network_id(self, network_id):
         network = self.quantum.show_network(network_id)
         flavor = network['network']['flavor:id']
         return self.flavor_driver_map[flavor]
 
-    def _get_driver_by_device_name(self, device_name):
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper)
+    def _get_driver_by_device_name(self, device_name, namespace=None):
+        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
         mac_address = device.link.address
         ports = self.quantum.list_ports(mac_address=mac_address)
         if not 'ports' in ports or len(ports['ports']) < 1:
@@ -265,9 +265,9 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         return driver.plug(network_id, port_id, device_name, mac_address,
                            bridge=bridge, namespace=namespace, prefix=prefix)
 
-    def unplug(self, device_name):
-        driver = self._get_driver_by_device_name(device_name)
-        return driver.unplug(device_name)
+    def unplug(self, device_name, bridge=None, namespace=None):
+        driver = self._get_driver_by_device_name(device_name, namespace=None)
+        return driver.unplug(device_name, bridge, namespace)
 
     def _load_driver(self, driver_provider):
         LOG.debug("Driver location:%s", driver_provider)
