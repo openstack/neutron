@@ -15,7 +15,6 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import quantum.openstack.common.rpc
 from quantum.plugins.nec.common import config
 from quantum.tests.unit import test_db_plugin
 
@@ -35,25 +34,13 @@ class NECPluginTestBase(object):
 
         plugin = 'quantum.plugins.nec.nec_plugin.NECPluginV2'
         config.CONF.set_override('core_plugin', plugin)
-        driver = "quantum.plugins.nec.tests.unit.stub_ofc_driver.StubOFCDriver"
+        driver = "quantum.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
         config.CONF.set_override('rpc_backend',
                                  'quantum.openstack.common.rpc.impl_fake')
         self.api = test_db_plugin.APIRouter()
         self._skip_native_bulk = False
-
-
-class TestPortsV2(NECPluginTestBase, test_db_plugin.TestPortsV2):
-    pass
-
-
-class TestNetworksV2(NECPluginTestBase, test_db_plugin.TestNetworksV2):
-    pass
-
-
-# NOTE: This plugin does not override methods for subnet.
-#class TestSubnetsV2(NECPluginTestBase, test_db_plugin.TestSubnetsV2):
-#    pass
+        super(NECPluginTestBase, self).setUp(plugin)
 
 
 # TODO(r-mibu): write UT for packet_filters.
