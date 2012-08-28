@@ -34,6 +34,7 @@ from quantum import context
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
+from quantum.extensions.extensions import PluginAwareExtensionManager
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import timeutils
@@ -63,6 +64,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         db._MAKER = None
         # Make sure at each test a new instance of the plugin is returned
         QuantumManager._instance = None
+        # Make sure at each test according extensions for the plugin is loaded
+        PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
         # loading extensions
         # Note(salvatore-orlando): shallow copy is not good enough in
