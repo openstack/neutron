@@ -256,8 +256,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             allocated = allocated_qry.filter_by(subnet_id=id).all()
 
             prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
-            if not all(a.ports.device_owner.startswith(prefix) for a in
-                       allocated):
+            if not all(not a.port_id or a.ports.device_owner.startswith(prefix)
+                       for a in allocated):
                 raise exc.SubnetInUse(subnet_id=id)
         context.session.close()
         try:

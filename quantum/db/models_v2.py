@@ -76,7 +76,7 @@ class IPAllocation(model_base.BASEV2):
     """
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
                                                      ondelete="CASCADE"),
-                        nullable=False, primary_key=True)
+                        nullable=True)
     ip_address = sa.Column(sa.String(64), nullable=False, primary_key=True)
     subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id',
                                                        ondelete="CASCADE"),

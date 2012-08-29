@@ -191,7 +191,49 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return False
 
     @staticmethod
-    def _recycle_ip(context, network_id, subnet_id, port_id, ip_address):
+    def _hold_ip(context, network_id, subnet_id, port_id, ip_address):
+        alloc_qry = context.session.query(models_v2.IPAllocation)
+        allocated = alloc_qry.filter_by(network_id=network_id,
+                                        port_id=port_id,
+                                        ip_address=ip_address,
+                                        subnet_id=subnet_id).one()
+
+        if not allocated:
+            return
+        if allocated.expiration < timeutils.utcnow():
+            # immediately delete expired allocations
+            QuantumDbPluginV2._recycle_ip(
+                context, network_id, subnet_id, ip_address)
+        else:
+            LOG.debug("Hold allocated IP %s (%s/%s/%s)", ip_address,
+                      network_id, subnet_id, port_id)
+            allocated.port_id = None
+
+    @staticmethod
+    def _recycle_expired_ip_allocations(context, network_id):
+        """Return held ip allocations with expired leases back to the pool."""
+        if network_id in getattr(context, '_recycled_networks', set()):
+            return
+
+        expired_qry = context.session.query(models_v2.IPAllocation)
+        expired_qry = expired_qry.filter_by(network_id=network_id,
+                                            port_id=None)
+        expired_qry = expired_qry.filter(
+            models_v2.IPAllocation.expiration <= timeutils.utcnow())
+
+        for expired in expired_qry.all():
+            QuantumDbPluginV2._recycle_ip(context,
+                                          network_id,
+                                          expired['subnet_id'],
+                                          expired['ip_address'])
+
+        if hasattr(context, '_recycled_networks'):
+            context._recycled_networks.add(network_id)
+        else:
+            context._recycled_networks = set([network_id])
+
+    @staticmethod
+    def _recycle_ip(context, network_id, subnet_id, ip_address):
         """Return an IP address to the pool of free IP's on the network
         subnet.
         """
@@ -266,7 +308,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             context.session.add(ip_range)
             LOG.debug("Recycle: created new %s-%s", ip_address, ip_address)
         QuantumDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
-                                                port_id, ip_address)
+                                                ip_address)
 
     @staticmethod
     def _default_allocation_expiration():
@@ -289,15 +331,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                       "ip address %s.", network_id, ip_address)
 
     @staticmethod
-    def _delete_ip_allocation(context, network_id, subnet_id, port_id,
-                              ip_address):
+    def _delete_ip_allocation(context, network_id, subnet_id, ip_address):
 
         # Delete the IP address from the IPAllocate table
-        LOG.debug("Delete allocated IP %s (%s/%s/%s)", ip_address,
-                  network_id, subnet_id, port_id)
+        LOG.debug("Delete allocated IP %s (%s/%s)", ip_address,
+                  network_id, subnet_id)
         alloc_qry = context.session.query(models_v2.IPAllocation)
         allocated = alloc_qry.filter_by(network_id=network_id,
-                                        port_id=port_id,
                                         ip_address=ip_address,
                                         subnet_id=subnet_id).delete()
 
@@ -474,6 +514,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                              new_ips):
         """Add or remove IPs from the port."""
         ips = []
+
         # Remove all of the intersecting elements
         for original_ip in original_ips[:]:
             for new_ip in new_ips[:]:
@@ -487,12 +528,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips)
         for ip in original_ips:
-            LOG.debug("Port update. Deleting %s", ip)
-            QuantumDbPluginV2._recycle_ip(context,
-                                          network_id=network_id,
-                                          subnet_id=ip['subnet_id'],
-                                          ip_address=ip['ip_address'],
-                                          port_id=port_id)
+            LOG.debug("Port update. Hold %s", ip)
+            QuantumDbPluginV2._hold_ip(context,
+                                       network_id,
+                                       ip['subnet_id'],
+                                       port_id,
+                                       ip['ip_address'])
 
         if to_add:
             LOG.debug("Port update. Adding %s", to_add)
@@ -968,7 +1009,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             allocated_qry = allocated_qry.options(orm.joinedload('ports'))
             allocated = allocated_qry.filter_by(subnet_id=id).all()
 
-            only_svc = all(a.ports.device_owner.startswith(AGENT_OWNER_PREFIX)
+            only_svc = all(not a.port_id or
+                           a.ports.device_owner.startswith(AGENT_OWNER_PREFIX)
                            for a in allocated)
             if not only_svc:
                 raise q_exc.NetworkInUse(subnet_id=id)
@@ -998,6 +1040,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         tenant_id = self._get_tenant_id_for_create(context, p)
 
         with context.session.begin(subtransactions=True):
+            self._recycle_expired_ip_allocations(context, p['network_id'])
             network = self._get_network(context, p["network_id"])
 
             # Ensure that a MAC address is defined and it is unique on the
@@ -1051,6 +1094,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             port = self._get_port(context, id)
             # Check if the IPs need to be updated
             if 'fixed_ips' in p:
+                self._recycle_expired_ip_allocations(context,
+                                                     port['network_id'])
                 original = self._make_port_dict(port)
                 ips = self._update_ips_for_port(context,
                                                 port["network_id"],
@@ -1091,18 +1136,17 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     # Gateway address will not be recycled, but we do
                     # need to delete the allocation from the DB
                     QuantumDbPluginV2._delete_ip_allocation(
-                        context,
-                        a['network_id'], a['subnet_id'],
-                        id, a['ip_address'])
+                        context, a['network_id'],
+                        a['subnet_id'], a['ip_address'])
                     LOG.debug("Gateway address (%s/%s) is not recycled",
                               a['ip_address'], a['subnet_id'])
                     continue
 
-                QuantumDbPluginV2._recycle_ip(context,
-                                              network_id=a['network_id'],
-                                              subnet_id=a['subnet_id'],
-                                              ip_address=a['ip_address'],
-                                              port_id=id)
+                QuantumDbPluginV2._hold_ip(context,
+                                           a['network_id'],
+                                           a['subnet_id'],
+                                           id,
+                                           a['ip_address'])
         context.session.delete(port)
 
     def get_port(self, context, id, fields=None):

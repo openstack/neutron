@@ -856,7 +856,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
                 self.assertEquals(len(ips), 1)
-                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.3')
                 self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
 
     def test_update_port_add_additional_ip(self):
@@ -875,9 +875,9 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
                 self.assertEquals(len(ips), 2)
-                self.assertEquals(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEquals(ips[0]['ip_address'], '10.0.0.3')
                 self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEquals(ips[1]['ip_address'], '10.0.0.3')
+                self.assertEquals(ips[1]['ip_address'], '10.0.0.4')
                 self.assertEquals(ips[1]['subnet_id'], subnet['subnet']['id'])
 
     def test_requested_duplicate_mac(self):
@@ -1192,30 +1192,38 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                     self._delete('ports', p['port']['id'])
 
     def test_recycling(self):
+        # set expirations to past so that recycling is checked
+        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
+        cfg.CONF.set_override('dhcp_lease_duration', 0)
         fmt = 'json'
+
         with self.subnet(cidr='10.0.1.0/24') as subnet:
             with self.port(subnet=subnet) as port:
-                ips = port['port']['fixed_ips']
-                self.assertEquals(len(ips), 1)
-                self.assertEquals(ips[0]['ip_address'], '10.0.1.2')
-                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
-                net_id = port['port']['network_id']
-                ports = []
-                for i in range(16 - 3):
+                with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
+                    mock_utcnow.return_value = reference
+                    ips = port['port']['fixed_ips']
+                    self.assertEquals(len(ips), 1)
+                    self.assertEquals(ips[0]['ip_address'], '10.0.1.2')
+                    self.assertEquals(ips[0]['subnet_id'],
+                                      subnet['subnet']['id'])
+                    net_id = port['port']['network_id']
+                    ports = []
+                    for i in range(16 - 3):
+                        res = self._create_port(fmt, net_id=net_id)
+                        p = self.deserialize(fmt, res)
+                        ports.append(p)
+                    for i in range(16 - 3):
+                        x = random.randrange(0, len(ports), 1)
+                        p = ports.pop(x)
+                        self._delete('ports', p['port']['id'])
                     res = self._create_port(fmt, net_id=net_id)
-                    p = self.deserialize(fmt, res)
-                    ports.append(p)
-                for i in range(16 - 3):
-                    x = random.randrange(0, len(ports), 1)
-                    p = ports.pop(x)
-                    self._delete('ports', p['port']['id'])
-                res = self._create_port(fmt, net_id=net_id)
-                port = self.deserialize(fmt, res)
-                ips = port['port']['fixed_ips']
-                self.assertEquals(len(ips), 1)
-                self.assertEquals(ips[0]['ip_address'], '10.0.1.3')
-                self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self._delete('ports', port['port']['id'])
+                    port = self.deserialize(fmt, res)
+                    ips = port['port']['fixed_ips']
+                    self.assertEquals(len(ips), 1)
+                    self.assertEquals(ips[0]['ip_address'], '10.0.1.3')
+                    self.assertEquals(ips[0]['subnet_id'],
+                                      subnet['subnet']['id'])
+                    self._delete('ports', port['port']['id'])
 
     def test_invalid_admin_state(self):
         with self.network() as network:
@@ -1239,15 +1247,16 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             self.assertEquals(res.status_int, 422)
 
     def test_default_allocation_expiration(self):
-        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
-        timeutils.utcnow.override_time = reference
-
         cfg.CONF.set_override('dhcp_lease_duration', 120)
-        expires = QuantumManager.get_plugin()._default_allocation_expiration()
-        timeutils.utcnow
-        cfg.CONF.reset()
-        timeutils.utcnow.override_time = None
-        self.assertEqual(expires, reference + datetime.timedelta(seconds=120))
+        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
+
+        with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
+            mock_utcnow.return_value = reference
+
+            plugin = QuantumManager.get_plugin()
+            expires = plugin._default_allocation_expiration()
+            self.assertEqual(expires,
+                             reference + datetime.timedelta(seconds=120))
 
     def test_update_fixed_ip_lease_expiration(self):
         cfg.CONF.set_override('dhcp_lease_duration', 10)
@@ -1272,7 +1281,22 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                     ip_allocation.expiration - timeutils.utcnow(),
                     datetime.timedelta(seconds=10))
 
-        cfg.CONF.reset()
+    def test_port_delete_holds_ip(self):
+        plugin = QuantumManager.get_plugin()
+        base_class = db_base_plugin_v2.QuantumDbPluginV2
+        with mock.patch.object(base_class, '_hold_ip') as hold_ip:
+            with self.subnet() as subnet:
+                with self.port(subnet=subnet, no_delete=True) as port:
+                    req = self.new_delete_request('ports', port['port']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEquals(res.status_int, 204)
+
+                    hold_ip.assert_called_once_with(
+                        mock.ANY,
+                        port['port']['network_id'],
+                        port['port']['fixed_ips'][0]['subnet_id'],
+                        port['port']['id'],
+                        port['port']['fixed_ips'][0]['ip_address'])
 
     def test_update_fixed_ip_lease_expiration_invalid_address(self):
         cfg.CONF.set_override('dhcp_lease_duration', 10)
@@ -1287,7 +1311,68 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                         '255.255.255.0',
                         120)
                     self.assertTrue(log.mock_calls)
-        cfg.CONF.reset()
+
+    def test_hold_ip_address(self):
+        plugin = QuantumManager.get_plugin()
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                port_id = port['port']['id']
+                with mock.patch.object(db_base_plugin_v2, 'LOG') as log:
+                    ip_address = port['port']['fixed_ips'][0]['ip_address']
+                    plugin._hold_ip(
+                        update_context,
+                        subnet['subnet']['network_id'],
+                        subnet['subnet']['id'],
+                        port_id,
+                        ip_address)
+                    self.assertTrue(log.mock_calls)
+
+                    q = update_context.session.query(models_v2.IPAllocation)
+                    q = q.filter_by(port_id=None, ip_address=ip_address)
+
+                self.assertEquals(len(q.all()), 1)
+
+    def test_recycle_held_ip_address(self):
+        plugin = QuantumManager.get_plugin()
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                port_id = port['port']['id']
+                port_obj = plugin._get_port(update_context, port_id)
+
+                for fixed_ip in port_obj.fixed_ips:
+                    fixed_ip.active = False
+                    fixed_ip.expiration = datetime.datetime.utcnow()
+
+                with mock.patch.object(plugin, '_recycle_ip') as rc:
+                    plugin._recycle_expired_ip_allocations(
+                        update_context, subnet['subnet']['network_id'])
+                    rc.assertEquals(len(rc.mock_calls), 1)
+                    self.assertEquals(update_context._recycled_networks,
+                                      set([subnet['subnet']['network_id']]))
+
+    def test_recycle_expired_previously_run_within_context(self):
+        plugin = QuantumManager.get_plugin()
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                port_id = port['port']['id']
+                port_obj = plugin._get_port(update_context, port_id)
+
+                update_context._recycled_networks = set(
+                    [subnet['subnet']['network_id']])
+
+                for fixed_ip in port_obj.fixed_ips:
+                    fixed_ip.active = False
+                    fixed_ip.expiration = datetime.datetime.utcnow()
+
+                with mock.patch.object(plugin, '_recycle_ip') as rc:
+                    plugin._recycle_expired_ip_allocations(
+                        update_context, subnet['subnet']['network_id'])
+                    rc.assertFalse(rc.called)
+                    self.assertEquals(update_context._recycled_networks,
+                                      set([subnet['subnet']['network_id']]))
 
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):
