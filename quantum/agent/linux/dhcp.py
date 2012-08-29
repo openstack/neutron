@@ -298,15 +298,25 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _output_opts_file(self):
         """Write a dnsmasq compatible options file."""
-        # TODO (mark): add support for nameservers
         options = []
         for i, subnet in enumerate(self.network.subnets):
             if not subnet.enable_dhcp:
                 continue
-            elif subnet.ip_version == 6:
-                continue
-            else:
-                #NOTE(xchenum) need to handle no gw case
+            if subnet.dns_nameservers:
+                options.append((self._TAG_PREFIX % i,
+                                'option',
+                                'dns-server',
+                                ','.join(subnet.dns_nameservers)))
+
+            host_routes = ["%s,%s" % (hr.destination, hr.nexthop)
+                           for hr in subnet.host_routes]
+            if host_routes:
+                options.append((self._TAG_PREFIX % i,
+                                'option',
+                                'classless-static-route',
+                                ','.join(host_routes)))
+
+            if subnet.ip_version != 6 and subnet.gateway_ip:
                 options.append((self._TAG_PREFIX % i,
                                 'option',
                                 'router',

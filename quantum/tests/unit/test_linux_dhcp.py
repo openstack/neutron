@@ -55,12 +55,24 @@ class FakePort3:
     mac_address = '00:00:0f:aa:bb:cc'
 
 
+class FakeV4HostRoute:
+    destination = '20.0.0.1/24'
+    nexthop = '20.0.0.1'
+
+
+class FakeV6HostRoute:
+    destination = 'gdca:3ba5:a17a:4ba3::/64'
+    nexthop = 'gdca:3ba5:a17a:4ba3::1'
+
+
 class FakeV4Subnet:
     id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
     ip_version = 4
     cidr = '192.168.0.0/24'
     gateway_ip = '192.168.0.1'
     enable_dhcp = True
+    host_routes = [FakeV4HostRoute]
+    dns_nameservers = ['8.8.8.8']
 
 
 class FakeV6Subnet:
@@ -69,6 +81,8 @@ class FakeV6Subnet:
     cidr = 'fdca:3ba5:a17a:4ba3::/64'
     gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
     enable_dhcp = True
+    host_routes = [FakeV6HostRoute]
+    dns_nameservers = ['gdca:3ba5:a17a:4ba3::1']
 
 
 class FakeV4SubnetNoDHCP:
@@ -77,6 +91,8 @@ class FakeV4SubnetNoDHCP:
     cidr = '192.168.1.0/24'
     gateway_ip = '192.168.1.1'
     enable_dhcp = False
+    host_routes = []
+    dns_nameservers = []
 
 
 class FakeV4Network:
@@ -413,7 +429,17 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--server=8.8.8.8'])
 
     def test_output_opts_file(self):
-        expected = 'tag:tag0,option:router,192.168.0.1'
+        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
+        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        expected = """
+tag:tag0,option:dns-server,8.8.8.8
+tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,option:router,192.168.0.1
+tag:tag1,option:dns-server,%s
+tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
+                                                            fake_v6_cidr,
+                                                            fake_v6)
+
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
             dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork())
@@ -422,7 +448,10 @@ class TestDnsmasq(TestBase):
         self.safe.assert_called_once_with('/foo/opts', expected)
 
     def test_output_opts_file_single_dhcp(self):
-        expected = 'tag:tag0,option:router,192.168.0.1'
+        expected = """
+tag:tag0,option:dns-server,8.8.8.8
+tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,option:router,192.168.0.1""".lstrip()
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
             dm = dhcp.Dnsmasq(self.conf, FakeDualNetworkSingleDHCP())
@@ -440,6 +469,17 @@ class TestDnsmasq(TestBase):
 """.lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
         exp_opt_data = "tag:tag0,option:router,192.168.0.1"
+        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
+        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        exp_opt_data = """
+tag:tag0,option:dns-server,8.8.8.8
+tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,option:router,192.168.0.1
+tag:tag1,option:dns-server,%s
+tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
+                                                            fake_v6_cidr,
+                                                            fake_v6)
+
         exp_args = ['ip', 'netns', 'exec',
                     'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-HUP', 5]
 
