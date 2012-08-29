@@ -53,6 +53,13 @@ class FloatingIPPortAlreadyAssociated(qexception.InUse):
     message = _("Port %(port_id) already has a floating IP associated with it")
 
 
+def _validate_uuid_or_none(data, valid_values=None):
+    if data is None:
+        return None
+    return attr._validate_regex(data, attr.UUID_PATTERN)
+
+attr.validators['type:uuid_or_none'] = _validate_uuid_or_none
+
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
     'routers': {
@@ -80,12 +87,15 @@ RESOURCE_ATTRIBUTE_MAP = {
         'floating_ip_address': {'allow_post': False, 'allow_put': False,
                                 'is_visible': True},
         'floating_network_id': {'allow_post': True, 'allow_put': False,
+                                'validate': {'type:regex': attr.UUID_PATTERN},
                                 'is_visible': True},
         'router_id': {'allow_post': False, 'allow_put': False,
                       'is_visible': True, 'default': None},
         'port_id': {'allow_post': True, 'allow_put': True,
+                    'validate': {'type:uuid_or_none': None},
                     'is_visible': True, 'default': None},
         'fixed_ip_address': {'allow_post': True, 'allow_put': True,
+                             'validate': {'type:ip_address_or_none': None},
                              'is_visible': True, 'default': None},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,

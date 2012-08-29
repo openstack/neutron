@@ -31,6 +31,7 @@ from webob import exc
 from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.common.test_lib import test_config
+from quantum.common import utils
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
 from quantum.extensions import extensions
@@ -471,7 +472,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         if port_id:
             data['floatingip']['port_id'] = port_id
             if fixed_ip:
-                data['floatingip']['fixed_ip'] = fixed_ip
+                data['floatingip']['fixed_ip_address'] = fixed_ip
         floatingip_req = self.new_create_request('floatingips', data, fmt)
         return floatingip_req.get_response(self.ext_api)
 
@@ -638,3 +639,21 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   r['router']['id'],
                                                   private_sub['subnet']['id'],
                                                   None)
+
+    def test_create_floatingip_invalid_floating_network_id_returns_422(self):
+        # API-level test - no need to create all objects for l3 plugin
+        res = self._create_floatingip('json', 'iamnotanuuid',
+                                      utils.str_uuid(), '192.168.0.1')
+        self.assertEqual(res.status_int, 422)
+
+    def test_create_floatingip_invalid_floating_port_id_returns_422(self):
+        # API-level test - no need to create all objects for l3 plugin
+        res = self._create_floatingip('json', utils.str_uuid(),
+                                      'iamnotanuuid', '192.168.0.1')
+        self.assertEqual(res.status_int, 422)
+
+    def test_create_floatingip_invalid_fixed_ip_address_returns_422(self):
+        # API-level test - no need to create all objects for l3 plugin
+        res = self._create_floatingip('json', utils.str_uuid(),
+                                      utils.str_uuid(), 'iamnotnanip')
+        self.assertEqual(res.status_int, 422)
