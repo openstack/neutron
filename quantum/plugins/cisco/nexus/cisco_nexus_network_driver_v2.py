@@ -148,3 +148,25 @@ class CiscoNEXUSDriver():
         if vlans == '':
             vlans = 'none'
         return vlans.strip(',')
+
+    def add_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                     nexus_ports, nexus_ssh_port, vlan_ids=None):
+        """
+        Adds a vlan from interfaces on the Nexus switch given the VLAN ID
+        """
+        with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
+                               nexus_password) as man:
+            if not vlan_ids:
+                vlan_ids = self.build_vlans_cmd()
+            for ports in nexus_ports:
+                self.enable_vlan_on_trunk_int(man, ports, vlan_ids)
+
+    def remove_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                        nexus_ports, nexus_ssh_port):
+        """
+        Removes a vlan from interfaces on the Nexus switch given the VLAN ID
+        """
+        with self.nxos_connect(nexus_host, int(nexus_ssh_port), nexus_user,
+                               nexus_password) as man:
+            for ports in nexus_ports:
+                self.disable_vlan_on_trunk_int(man, ports, vlan_id)

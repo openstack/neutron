@@ -27,9 +27,6 @@ from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
 
 
-LOG = logging.getLogger(__name__)
-
-
 NEXUS_IP_ADDRESS = '1.1.1.1'
 NEXUS_USERNAME = 'username'
 NEXUS_PASSWORD = 'password'
@@ -73,7 +70,7 @@ class TestCiscoNexusPlugin(unittest.TestCase):
                                    '__init__', new=new_nexus_init):
                 self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
 
-    def test_create_delete_network(self):
+    def test_a_create_delete_network(self):
         """
         Tests creation of two new Virtual Network.
         Tests deletion of one Virtual Network.
@@ -85,7 +82,6 @@ class TestCiscoNexusPlugin(unittest.TestCase):
         test_nexus_clear_vlan after this test to clean
         up the second vlan created by this test.
         """
-        LOG.debug("test_create_delete_network - START")
         tenant_id = self.tenant_id
         net_name = self.net_name
         net_id = self.net_id
@@ -117,31 +113,104 @@ class TestCiscoNexusPlugin(unittest.TestCase):
                          self.second_vlan_name)
         self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.second_vlan_id)
 
-        netid = self._cisco_nexus_plugin.delete_network(
+        expected_net_id = self._cisco_nexus_plugin.delete_network(
             tenant_id, net_id, vlan_id=str(vlan_id))
 
-        self.assertEqual(netid, net_id)
+        self.assertEqual(expected_net_id, net_id)
 
-        LOG.debug("test_create_delete_network - END")
-
-    def test_nexus_clear_vlan(self):
+    def test_b_nexus_clear_vlan(self):
         """
         Test to clean up second vlan of nexus device
         created by test_create_delete_network. This
         test will fail if it is run individually.
         """
-        LOG.debug("test_nexus_clear_vlan - START")
         tenant_id = self.tenant_id
         second_net_id = self.second_net_id
         second_vlan_id = self.second_vlan_id
 
-        netid = self._cisco_nexus_plugin.delete_network(
+        expected_second_net_id = self._cisco_nexus_plugin.delete_network(
             tenant_id, second_net_id,
             vlan_id=str(second_vlan_id))
 
-        self.assertEqual(netid, second_net_id)
+        self.assertEqual(expected_second_net_id, second_net_id)
 
-        LOG.debug("test_nexus_clear_vlan - END")
+    def test_c_update_network_False(self):
+        """
+        Test to update a network state to False
+        resulting in disabling a vlan corresponding to
+        that network from the configured nexus interfaces
+        """
+        tenant_id = self.tenant_id
+        net_name = self.net_name
+        net_id = self.net_id
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        second_net_name = self.second_net_name
+        second_net_id = self.second_net_id
+        second_vlan_name = self.second_vlan_name
+        second_vlan_id = self.second_vlan_id
+
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+            tenant_id, net_name, net_id,
+            vlan_name, vlan_id, vlan_ids=str(vlan_id))
+
+        vlan_ids = str(vlan_id) + "," + str(second_vlan_id)
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+            tenant_id, second_net_name, second_net_id,
+            second_vlan_name, second_vlan_id,
+            vlan_ids=vlan_ids)
+
+        expected_net_id = self._cisco_nexus_plugin.update_network(
+            tenant_id, net_id, net_admin_state=False,
+            vlan_id=vlan_id, vlan_ids=str(vlan_id))
+
+        self.assertEqual(expected_net_id, net_id)
+
+    def test_d_nexus_clean_vlan_update(self):
+        """
+        Cleans up vlans on the nexus for the two
+        created networks
+        """
+        tenant_id = self.tenant_id
+        net_id = self.net_id
+        vlan_id = self.vlan_id
+        second_net_id = self.second_net_id
+        second_vlan_id = self.second_vlan_id
+
+        netid = self._cisco_nexus_plugin.delete_network(
+            tenant_id, net_id, vlan_id=str(vlan_id))
+
+        self.assertEqual(netid, net_id)
+
+        expected_second_net_id = self._cisco_nexus_plugin.delete_network(
+            tenant_id, second_net_id,
+            vlan_id=str(second_vlan_id))
+
+        self.assertEqual(expected_second_net_id, second_net_id)
+
+    def test_e_update_network_True(self):
+        """
+        Test to update a disabled network state to True
+        resulting in enabling a vlan corresponding to
+        that network to the configured nexus interfaces
+        """
+        tenant_id = self.tenant_id
+        net_name = self.net_name
+        net_id = self.net_id
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        second_vlan_id = self.second_vlan_id
+
+        self.test_c_update_network_False()
+
+        vlan_ids = str(vlan_id) + "," + str(second_vlan_id)
+        expected_net_id = self._cisco_nexus_plugin.update_network(
+            tenant_id, net_id, net_admin_state=True,
+            vlan_id=vlan_id, vlan_ids=str(vlan_ids))
+
+        self.assertEqual(expected_net_id, net_id)
+
+        self.test_d_nexus_clean_vlan_update()
 
     def tearDown(self):
         """Clear the test environment"""

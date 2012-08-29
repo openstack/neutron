@@ -45,7 +45,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     supported_extension_aliases = []
     _plugins = {}
     _inventory = {}
-    _methods_to_delegate = ['update_network', 'get_network', 'get_networks',
+    _methods_to_delegate = ['get_network', 'get_networks',
                             'create_port', 'create_port_bulk', 'delete_port',
                             'update_port', 'get_port', 'get_ports',
                             'create_subnet', 'create_subnet_bulk',
@@ -223,8 +223,24 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def update_network(self, context, id, network):
-        """For this model this method will be delegated to vswitch plugin"""
-        pass
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        LOG.debug("update_network() called\n")
+        args = [context, id, network]
+        ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                    self._func_name(),
+                                                    args)
+        vlan_id = odb.get_vlan(ovs_output[0]['id'])
+        vlan_ids = ','.join(str(vlan[0]) for vlan in odb.get_vlans())
+        args = [ovs_output[0]['tenant_id'], id, {'vlan_id': vlan_id},
+                {'net_admin_state': ovs_output[0]['admin_state_up']},
+                {'vlan_ids': vlan_ids}]
+        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                      self._func_name(),
+                                                      args)
+        return ovs_output[0]
 
     def delete_network(self, context, id):
         """

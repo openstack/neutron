@@ -103,9 +103,9 @@ class NexusPlugin(L2DevicePluginBase):
         for key in kwargs:
             if key == const.CONTEXT:
                 context = kwargs[const.CONTEXT]
-            if key == const.BASE_PLUGIN_REF:
+            elif key == const.BASE_PLUGIN_REF:
                 base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
-            if key == 'vlan_id':
+            elif key == 'vlan_id':
                 vlan_id = kwargs['vlan_id']
         if vlan_id is None:
             vlan_id = self._get_vlan_id_for_network(tenant_id, net_id,
@@ -136,9 +136,22 @@ class NexusPlugin(L2DevicePluginBase):
         Virtual Network.
         """
         LOG.debug("NexusPlugin:update_network() called\n")
-        network = self._get_network(tenant_id, net_id)
-        network[const.NET_NAME] = kwargs["name"]
-        return network
+        if 'net_admin_state' in kwargs:
+            net_admin_state = kwargs['net_admin_state']
+            vlan_id = kwargs['vlan_id']
+            vlan_ids = kwargs['vlan_ids']
+            if not net_admin_state:
+                self._client.remove_vlan_int(
+                    str(vlan_id), self._nexus_ip,
+                    self._nexus_username, self._nexus_password,
+                    self._nexus_ports, self._nexus_ssh_port)
+            else:
+                self._client.add_vlan_int(
+                    str(vlan_id), self._nexus_ip,
+                    self._nexus_username, self._nexus_password,
+                    self._nexus_ports, self._nexus_ssh_port,
+                    vlan_ids)
+        return net_id
 
     def get_all_ports(self, tenant_id, net_id, **kwargs):
         """

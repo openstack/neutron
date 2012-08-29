@@ -97,3 +97,17 @@ class CiscoNEXUSFakeDriver():
         Builds a string with all the VLANs on the same Switch
         """
         pass
+
+    def add_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                     nexus_ports, nexus_ssh_port, vlan_ids=None):
+        """
+        Adds a vlan from interfaces on the Nexus switch given the VLAN ID
+        """
+        pass
+
+    def remove_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                        nexus_ports, nexus_ssh_port):
+        """
+        Removes a vlan from interfaces on the Nexus switch given the VLAN ID
+        """
+        pass
