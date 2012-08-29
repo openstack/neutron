@@ -119,13 +119,11 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         Virtual Network.
         """
         LOG.debug("update_network() called\n")
-        try:
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            network])
-            return super(PluginV2, self).update_network(context, id,
-                                                        network)
-        except:
-            raise
+        upd_net_dict = super(PluginV2, self).update_network(context, id,
+                                                            network)
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        upd_net_dict])
+        return upd_net_dict
 
     def delete_network(self, context, id):
         """

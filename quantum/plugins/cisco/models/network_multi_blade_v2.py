@@ -157,8 +157,19 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def update_network(self, context, id, network):
-        """Currently there is no processing required for the device plugins"""
-        pass
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        n = network
+        vlan = cdb.get_vlan_binding(id)
+        args = [n['tenant_id'], id, {'vlan_id': vlan.vlan_id},
+                {'net_admin_state': n['admin_state_up']},
+                {'vlan_ids': ''}]
+        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                      self._func_name(),
+                                                      args)
+        return nexus_output
 
     def delete_network(self, context, id, kwargs):
         """
