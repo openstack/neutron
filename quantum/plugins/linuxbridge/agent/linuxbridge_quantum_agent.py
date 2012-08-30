@@ -34,6 +34,7 @@ import eventlet
 import pyudev
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
+from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
@@ -65,6 +66,7 @@ class LinuxBridge:
     def __init__(self, interface_mappings, root_helper):
         self.interface_mappings = interface_mappings
         self.root_helper = root_helper
+        self.ip = ip_lib.IPWrapper(self.root_helper)
 
     def device_exists(self, device):
         """Check if ethernet device exists."""
@@ -175,10 +177,19 @@ class LinuxBridge:
         self.ensure_bridge(bridge_name, interface)
         return interface
 
+    def get_interface_details(self, interface):
+        device = self.ip.device(interface)
+        ips = device.addr.list(scope='global')
+
+        # Update default gateway if necessary
+        gateway = device.route.get_gateway(scope='global')
+        return ips, gateway
+
     def ensure_flat_bridge(self, network_id, physical_interface):
         """Create a non-vlan bridge unless it already exists."""
         bridge_name = self.get_bridge_name(network_id)
-        self.ensure_bridge(bridge_name, physical_interface)
+        ips, gateway = self.get_interface_details(physical_interface)
+        self.ensure_bridge(bridge_name, physical_interface, ips, gateway)
         return physical_interface
 
     def ensure_vlan(self, physical_interface, vlan_id):
@@ -198,7 +209,33 @@ class LinuxBridge:
             LOG.debug("Done creating subinterface %s" % interface)
         return interface
 
-    def ensure_bridge(self, bridge_name, interface):
+    def update_interface_ip_details(self, destination, source, ips,
+                                    gateway):
+        if ips or gateway:
+            dst_device = self.ip.device(destination)
+            src_device = self.ip.device(source)
+
+        # Append IP's to bridge if necessary
+        for ip in ips:
+            dst_device.addr.add(ip_version=ip['ip_version'],
+                                cidr=ip['cidr'],
+                                broadcast=ip['broadcast'])
+
+        if gateway:
+            # Ensure that the gateway can be updated by changing the metric
+            metric = 100
+            if 'metric' in gateway:
+                metric = gateway['metric'] - 1
+            dst_device.route.add_gateway(gateway=gateway['gateway'],
+                                         metric=metric)
+            src_device.route.delete_gateway(gateway=gateway['gateway'])
+
+        # Remove IP's from interface
+        for ip in ips:
+            src_device.addr.delete(ip_version=ip['ip_version'],
+                                   cidr=ip['cidr'])
+
+    def ensure_bridge(self, bridge_name, interface, ips=None, gateway=None):
         """
         Create a bridge unless it already exists.
         """
@@ -219,6 +256,9 @@ class LinuxBridge:
                 return
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
+
+        # Update IP info if necessary
+        self.update_interface_ip_details(bridge_name, interface, ips, gateway)
 
         # Check if the interface is part of the bridge
         if not self.interface_exists_on_bridge(bridge_name, interface):
@@ -296,8 +336,16 @@ class LinuxBridge:
             for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
                 for physical_interface in self.interface_mappings.itervalues():
-                    if interface.startswith(physical_interface):
-                        self.delete_vlan(interface)
+                    if physical_interface == interface:
+                        # This is a flat network => return IP's from bridge to
+                        # interface
+                        ips, gateway = self.get_interface_details(bridge_name)
+                        self.update_interface_ip_details(interface,
+                                                         bridge_name,
+                                                         ips, gateway)
+                    else:
+                        if interface.startswith(physical_interface):
+                            self.delete_vlan(interface)
 
             LOG.debug("Deleting bridge %s" % bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
@@ -353,8 +401,8 @@ class LinuxBridgeRpcCallbacks():
         LOG.debug("network_delete received")
         network_id = kwargs.get('network_id')
         bridge_name = self.linux_br.get_bridge_name(network_id)
-        # (TODO) garyk delete the bridge interface
         LOG.debug("Delete %s", bridge_name)
+        self.linux_br.delete_vlan_bridge(bridge_name)
 
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")

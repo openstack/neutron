@@ -110,6 +110,7 @@ class IPDevice(SubProcessBase):
         self.name = name
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
+        self.route = IpRouteCommand(self)
 
     def __eq__(self, other):
         return (other is not None and self.name == other.name
@@ -227,7 +228,10 @@ class IpAddrCommand(IpDeviceCommandBase):
     def flush(self):
         self._as_root('flush', self.name)
 
-    def list(self, scope=None, to=None, filters=[]):
+    def list(self, scope=None, to=None, filters=None):
+        if filters is None:
+            filters = []
+
         retval = []
 
         if scope:
@@ -243,14 +247,61 @@ class IpAddrCommand(IpDeviceCommandBase):
             if parts[0] == 'inet6':
                 version = 6
                 scope = parts[3]
+                broadcast = '::'
             else:
                 version = 4
+                broadcast = parts[3]
                 scope = parts[5]
 
             retval.append(dict(cidr=parts[1],
+                               broadcast=broadcast,
                                scope=scope,
                                ip_version=version,
                                dynamic=('dynamic' == parts[-1])))
+        return retval
+
+
+class IpRouteCommand(IpDeviceCommandBase):
+    COMMAND = 'route'
+
+    def add_gateway(self, gateway, metric=None):
+        args = ['add', 'default', 'via', gateway]
+        if metric:
+            args += ['metric', metric]
+        args += ['dev', self.name]
+        self._as_root(*args)
+
+    def delete_gateway(self, gateway):
+        self._as_root('del',
+                      'default',
+                      'via',
+                      gateway,
+                      'dev',
+                      self.name)
+
+    def get_gateway(self, scope=None, filters=None):
+        if filters is None:
+            filters = []
+
+        retval = None
+
+        if scope:
+            filters += ['scope', scope]
+
+        route_list_lines = self._run('list', 'dev', self.name,
+                                     *filters).split('\n')
+        default_route_line = next((x.strip() for x in
+                                   route_list_lines if
+                                   x.strip().startswith('default')), None)
+        if default_route_line:
+            gateway_index = 2
+            parts = default_route_line.split()
+            retval = dict(gateway=parts[gateway_index])
+            metric_index = 4
+            parts_has_metric = (len(parts) > metric_index)
+            if parts_has_metric:
+                retval.update(metric=int(parts[metric_index]))
+
         return retval
 
 
