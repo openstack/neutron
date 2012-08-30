@@ -142,7 +142,7 @@ class TestDhcpBase(unittest.TestCase):
     def test_restart(self):
         class SubClass(dhcp.DhcpBase):
             def __init__(self):
-                dhcp.DhcpBase.__init__(self, None, None)
+                dhcp.DhcpBase.__init__(self, None, None, None)
                 self.called = []
 
             def enable(self):
@@ -306,12 +306,12 @@ class TestDhcpLocalProcess(TestBase):
             mocks['active'].__get__ = mock.Mock(return_value=True)
             mocks['pid'].__get__ = mock.Mock(return_value=5)
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
-            lp = LocalChild(self.conf, network, device_delegate=delegate)
+            lp = LocalChild(self.conf, network, device_delegate=delegate,
+                            namespace='qdhcp-ns')
             lp.disable()
 
         delegate.assert_has_calls([mock.call.destroy(network, 'tap0')])
-        exp_args = ['ip', 'netns', 'exec',
-                    'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-9', 5]
+        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
         self.execute.assert_called_once_with(exp_args, root_helper='sudo')
 
     def test_pid(self):
@@ -372,7 +372,7 @@ class TestDnsmasq(TestBase):
             'ip',
             'netns',
             'exec',
-            'cccccccc-cccc-cccc-cccc-cccccccccccc',
+            'qdhcp-ns',
             'dnsmasq',
             '--no-hosts',
             '--no-resolv',
@@ -411,7 +411,8 @@ class TestDnsmasq(TestBase):
             with mock.patch.object(dhcp.sys, 'argv') as argv:
                 argv.__getitem__.side_effect = fake_argv
                 dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                  device_delegate=delegate)
+                                  device_delegate=delegate,
+                                  namespace='qdhcp-ns')
                 dm.spawn_process()
                 self.assertTrue(mocks['_output_opts_file'].called)
                 self.execute.assert_called_once_with(expected,
@@ -480,14 +481,14 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
                                                             fake_v6_cidr,
                                                             fake_v6)
 
-        exp_args = ['ip', 'netns', 'exec',
-                    'cccccccc-cccc-cccc-cccc-cccccccccccc', 'kill', '-HUP', 5]
+        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-HUP', 5]
 
         with mock.patch('os.path.isdir') as isdir:
             isdir.return_value = True
             with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
                 pid.__get__ = mock.Mock(return_value=5)
-                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork())
+                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                                  namespace='qdhcp-ns')
                 dm.reload_allocations()
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),

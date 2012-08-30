@@ -118,14 +118,17 @@ class TestDhcpAgent(unittest.TestCase):
         self.notification.assert_has_calls([mock.call.run_dispatch()])
 
     def test_call_driver(self):
+        network = mock.Mock()
+        network.id = '1'
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
-            dhcp.call_driver('foo', '1')
+            dhcp.call_driver('foo', network)
             dev_mgr.assert_called()
             self.driver.assert_called_once_with(cfg.CONF,
                                                 mock.ANY,
                                                 'sudo',
-                                                mock.ANY)
+                                                mock.ANY,
+                                                'qdhcp-1')
 
 
 class TestDhcpAgentEventHandler(unittest.TestCase):
@@ -486,9 +489,11 @@ class TestDeviceManager(unittest.TestCase):
         plugin.assert_has_calls([
             mock.call.get_dhcp_port(fake_network.id, mock.ANY)])
 
+        namespace = dhcp_agent.NS_PREFIX + fake_network.id
+
         expected = [mock.call.init_l3('tap12345678-12',
                                       ['172.9.9.9/24'],
-                                      namespace=fake_network.id)]
+                                      namespace=namespace)]
 
         if not reuse_existing:
             expected.insert(0,
@@ -496,7 +501,7 @@ class TestDeviceManager(unittest.TestCase):
                                            fake_port1.id,
                                            'tap12345678-12',
                                            'aa:bb:cc:dd:ee:ff',
-                                           namespace=fake_network.id))
+                                           namespace=namespace))
 
         self.mock_driver.assert_has_calls(expected)
 
@@ -538,7 +543,7 @@ class TestDeviceManager(unittest.TestCase):
             dvr_cls.assert_called_once_with(cfg.CONF)
             mock_driver.assert_has_calls(
                 [mock.call.unplug('tap12345678-12',
-                                  namespace=fake_network.id)])
+                                  namespace='qdhcp-' + fake_network.id)])
             plugin.assert_has_calls(
                 [mock.call.release_dhcp_port(fake_network.id, mock.ANY)])
 

@@ -64,11 +64,12 @@ class DhcpBase(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, conf, network, root_helper='sudo',
-                 device_delegate=None):
+                 device_delegate=None, namespace=None):
         self.conf = conf
         self.network = network
         self.root_helper = root_helper
         self.device_delegate = device_delegate
+        self.namespace = namespace
 
     @abc.abstractmethod
     def enable(self):
@@ -118,9 +119,8 @@ class DhcpLocalProcess(DhcpBase):
 
         if self.active:
             cmd = ['kill', '-9', pid]
-            if self.conf.use_namespaces:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                              namespace=self.network.id)
+            if self.namespace:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
                 ip_wrapper.netns.execute(cmd)
             else:
                 utils.execute(cmd, self.root_helper)
@@ -250,9 +250,8 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dnsmasq_dns_server:
             cmd.append('--server=%s' % self.conf.dnsmasq_dns_server)
 
-        if self.conf.use_namespaces:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=self.network.id)
+        if self.namespace:
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
             ip_wrapper.netns.execute(cmd, addl_env=env)
         else:
             # For normal sudo prepend the env vars before command
@@ -272,9 +271,8 @@ class Dnsmasq(DhcpLocalProcess):
         self._output_opts_file()
         cmd = ['kill', '-HUP', self.pid]
 
-        if self.conf.use_namespaces:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=self.network.id)
+        if self.namespace:
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
             ip_wrapper.netns.execute(cmd)
         else:
             utils.execute(cmd, self.root_helper)

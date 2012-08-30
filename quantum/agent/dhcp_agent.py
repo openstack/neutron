@@ -41,6 +41,7 @@ from quantum.openstack.common.rpc import proxy
 from quantum.version import version_string
 
 LOG = logging.getLogger(__name__)
+NS_PREFIX = 'qdhcp-'
 
 
 class DhcpAgent(object):
@@ -76,13 +77,18 @@ class DhcpAgent(object):
 
     def call_driver(self, action, network):
         """Invoke an action on a DHCP driver instance."""
+        if self.conf.use_namespaces:
+            namespace = NS_PREFIX + network.id
+        else:
+            namespace = None
         try:
             # the Driver expects something that is duck typed similar to
             # the base models.
             driver = self.dhcp_driver_cls(self.conf,
                                           network,
                                           self.conf.root_helper,
-                                          self.device_manager)
+                                          self.device_manager,
+                                          namespace)
             getattr(driver, action)()
 
         except Exception, e:
@@ -355,7 +361,7 @@ class DeviceManager(object):
         interface_name = self.get_interface_name(network, port)
 
         if self.conf.use_namespaces:
-            namespace = network.id
+            namespace = NS_PREFIX + network.id
         else:
             namespace = None
 
@@ -388,7 +394,7 @@ class DeviceManager(object):
     def destroy(self, network, device_name):
         """Destroy the device used for the network's DHCP on this host."""
         if self.conf.use_namespaces:
-            namespace = network.id
+            namespace = NS_PREFIX + network.id
         else:
             namespace = None
 
