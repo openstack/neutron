@@ -32,11 +32,9 @@
 
     "create_port": [],
     "create_port:mac_address": [["rule:admin_or_network_owner"]],
-    "create_port:host_routes": [["rule:admin_or_network_owner"]],
     "create_port:fixed_ips": [["rule:admin_or_network_owner"]],
     "get_port": [["rule:admin_or_owner"]],
     "update_port": [["rule:admin_or_owner"]],
-    "update_port:host_routes": [["rule:admin_or_network_owner"]],
     "update_port:fixed_ips": [["rule:admin_or_network_owner"]],
     "delete_port": [["rule:admin_or_owner"]]
 }
