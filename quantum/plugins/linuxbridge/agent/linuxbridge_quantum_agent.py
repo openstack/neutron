@@ -216,10 +216,11 @@ class LinuxBridge:
             src_device = self.ip.device(source)
 
         # Append IP's to bridge if necessary
-        for ip in ips:
-            dst_device.addr.add(ip_version=ip['ip_version'],
-                                cidr=ip['cidr'],
-                                broadcast=ip['broadcast'])
+        if ips:
+            for ip in ips:
+                dst_device.addr.add(ip_version=ip['ip_version'],
+                                    cidr=ip['cidr'],
+                                    broadcast=ip['broadcast'])
 
         if gateway:
             # Ensure that the gateway can be updated by changing the metric
@@ -231,9 +232,10 @@ class LinuxBridge:
             src_device.route.delete_gateway(gateway=gateway['gateway'])
 
         # Remove IP's from interface
-        for ip in ips:
-            src_device.addr.delete(ip_version=ip['ip_version'],
-                                   cidr=ip['cidr'])
+        if ips:
+            for ip in ips:
+                src_device.addr.delete(ip_version=ip['ip_version'],
+                                       cidr=ip['cidr'])
 
     def ensure_bridge(self, bridge_name, interface, ips=None, gateway=None):
         """
