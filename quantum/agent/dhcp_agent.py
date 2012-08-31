@@ -435,11 +435,15 @@ class DhcpLeaseRelay(object):
     def __init__(self, lease_update_callback):
         self.callback = lease_update_callback
 
-        try:
-            os.unlink(cfg.CONF.dhcp_lease_relay_socket)
-        except OSError:
-            if os.path.exists(cfg.CONF.dhcp_lease_relay_socket):
-                raise
+        dirname = os.path.dirname(cfg.CONF.dhcp_lease_relay_socket)
+        if os.path.isdir(dirname):
+            try:
+                os.unlink(cfg.CONF.dhcp_lease_relay_socket)
+            except OSError:
+                if os.path.exists(cfg.CONF.dhcp_lease_relay_socket):
+                    raise
+        else:
+            os.makedirs(dirname, 0755)
 
     def _validate_field(self, value, regex):
         """Validate value against a regular expression and return if valid."""
