@@ -432,20 +432,23 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fixed_ips=None, fmt='json', **kwargs):
+    def port(self, subnet=None, fixed_ips=None, fmt='json', no_delete=False,
+             **kwargs):
         if not subnet:
             with self.subnet() as subnet:
                 net_id = subnet['subnet']['network_id']
                 port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
                                        **kwargs)
                 yield port
-                self._delete('ports', port['port']['id'])
+                if not no_delete:
+                    self._delete('ports', port['port']['id'])
         else:
             net_id = subnet['subnet']['network_id']
             port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
                                    **kwargs)
             yield port
-            self._delete('ports', port['port']['id'])
+            if not no_delete:
+                self._delete('ports', port['port']['id'])
 
 
 class TestBasicGet(QuantumDbPluginV2TestCase):

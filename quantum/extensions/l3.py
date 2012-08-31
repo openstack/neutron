@@ -50,7 +50,13 @@ class ExternalGatewayForFloatingIPNotFound(qexception.NotFound):
 
 
 class FloatingIPPortAlreadyAssociated(qexception.InUse):
-    message = _("Port %(port_id) already has a floating IP associated with it")
+    message = _("Port %(port_id)s already has a floating IP"
+                " associated with it")
+
+
+class L3PortInUse(qexception.InUse):
+    message = _("Port %(port_id)s has owner %(device_owner)s and therefore"
+                " cannot be deleted directly via the port API.")
 
 
 def _validate_uuid_or_none(data, valid_values=None):

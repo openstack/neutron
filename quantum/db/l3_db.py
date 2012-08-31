@@ -153,7 +153,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             with context.session.begin(subtransactions=True):
                 router.update({'gw_port_id': None})
                 context.session.add(router)
-            self.delete_port(context, gw_port['id'])
+            self.delete_port(context, gw_port['id'], l3_port_check=False)
 
         if network_id is not None and (gw_port is None or
                                        gw_port['network_id'] != network_id):
@@ -169,7 +169,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                  'name': ''}})
 
             if not len(gw_port['fixed_ips']):
-                self.delete_port(context, gw_port['id'])
+                self.delete_port(context, gw_port['id'], l3_port_check=False)
                 msg = ('No IPs available for external network %s' %
                        network_id)
                 raise q_exc.BadRequest(resource='router', msg=msg)
@@ -244,8 +244,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self._check_for_dup_router_subnet(context, router_id,
                                               port['network_id'],
                                               fixed_ips[0]['subnet_id'])
-            port.update({'device_id': router_id,
-                         'device_owner': DEVICE_OWNER_ROUTER_INTF})
+            with context.session.begin(subtransactions=True):
+                port.update({'device_id': router_id,
+                             'device_owner': DEVICE_OWNER_ROUTER_INTF})
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
             subnet = self._get_subnet(context, subnet_id)
@@ -277,7 +278,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             msg = "Either subnet_id or port_id must be specified"
             raise q_exc.BadRequest(resource='router', msg=msg)
         if 'port_id' in interface_info:
-            port_db = self._get_port(context, interface_info['port_id'])
+            port_id = interface_info['port_id']
+            port_db = self._get_port(context, port_id)
+            if not (port_db['device_owner'] == DEVICE_OWNER_ROUTER_INTF and
+                    port_db['device_id'] == router_id):
+                raise w_exc.HTTPNotFound("Router %(router_id)s does not have "
+                                         " an interface with id %(port_id)s"
+                                         % locals())
             if 'subnet_id' in interface_info:
                 port_subnet_id = port_db['fixed_ips'][0]['subnet_id']
                 if port_subnet_id != interface_info['subnet_id']:
@@ -288,7 +295,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if port_db['device_id'] != router_id:
                 raise w_exc.HTTPConflict("port_id %s not used by router" %
                                          port_db['id'])
-            self.delete_port(context, port_db['id'])
+            self.delete_port(context, port_db['id'], l3_port_check=False)
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
             subnet = self._get_subnet(context, subnet_id)
@@ -303,7 +310,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
                 for p in ports:
                     if p['fixed_ips'][0]['subnet_id'] == subnet_id:
-                        self.delete_port(context, p['id'])
+                        self.delete_port(context, p['id'], l3_port_check=False)
                         found = True
                         break
             except exc.NoResultFound:
@@ -461,7 +468,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if not external_port['fixed_ips']:
             msg = "Unable to find any IP address on external network"
             # remove the external port
-            self.delete_port(context, external_port['id'])
+            self.delete_port(context, external_port['id'], l3_port_check=False)
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
         floating_ip_address = external_port['fixed_ips'][0]['ip_address']
@@ -484,7 +491,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except Exception:
             LOG.exception("Floating IP association failed")
             # Remove the port created for internal purposes
-            self.delete_port(context, external_port['id'])
+            self.delete_port(context, external_port['id'], l3_port_check=False)
             raise
 
         return self._make_floatingip_dict(floatingip_db)
@@ -504,7 +511,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         floatingip = self._get_floatingip(context, id)
         with context.session.begin(subtransactions=True):
             context.session.delete(floatingip)
-        self.delete_port(context, floatingip['floating_port_id'])
+        self.delete_port(context, floatingip['floating_port_id'],
+                         l3_port_check=False)
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
@@ -514,6 +522,21 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         return self._get_collection(context, FloatingIP,
                                     self._make_floatingip_dict,
                                     filters=filters, fields=fields)
+
+    def prevent_l3_port_deletion(self, context, port_id):
+        """ Checks to make sure a port is allowed to be deleted, raising
+        an exception if this is not the case.  This should be called by
+        any plugin when the API requests the deletion of a port, since
+        some ports for L3 are not intended to be deleted directly via a
+        DELETE to /ports, but rather via other API calls that perform the
+        proper deletion checks.
+        """
+        port_db = self._get_port(context, port_id)
+        if port_db['device_owner'] in [DEVICE_OWNER_ROUTER_INTF,
+                                       DEVICE_OWNER_ROUTER_GW,
+                                       DEVICE_OWNER_FLOATINGIP]:
+            raise l3.L3PortInUse(port_id=port_id,
+                                 device_owner=port_db['device_owner'])
 
     def disassociate_floatingips(self, context, port_id):
         with context.session.begin(subtransactions=True):

@@ -220,7 +220,9 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                       l3_db.L3_NAT_db_mixin):
     supported_extension_aliases = ["os-quantum-router"]
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
         self.disassociate_floatingips(context, id)
         return super(TestL3NatPlugin, self).delete_port(context, id)
 
@@ -332,7 +334,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def test_router_add_interface_port(self):
         with self.router() as r:
-            with self.port() as p:
+            with self.port(no_delete=True) as p:
                 body = self._router_interface_action('add',
                                                      r['router']['id'],
                                                      None,
@@ -343,6 +345,12 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 # fetch port and confirm device_id
                 body = self._show('ports', p['port']['id'])
                 self.assertEquals(body['port']['device_id'], r['router']['id'])
+
+                # clean-up
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'])
 
     def test_router_add_interface_dup_subnet1(self):
         with self.router() as r:
@@ -365,7 +373,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def test_router_add_interface_dup_subnet2(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port(subnet=s) as p1:
+                with self.port(subnet=s, no_delete=True) as p1:
                     with self.port(subnet=s) as p2:
                         self._router_interface_action('add',
                                                       r['router']['id'],
@@ -377,6 +385,11 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                       p2['port']['id'],
                                                       expected_code=
                                                       exc.HTTPBadRequest.code)
+                        # clean-up
+                        self._router_interface_action('remove',
+                                                      r['router']['id'],
+                                                      None,
+                                                      p1['port']['id'])
 
     def test_router_add_interface_no_data(self):
         with self.router() as r:
@@ -435,7 +448,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def test_router_remove_router_interface_wrong_subnet_returns_409(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port() as p:
+                with self.port(no_delete=True) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -445,11 +458,16 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   s['subnet']['id'],
                                                   p['port']['id'],
                                                   exc.HTTPConflict.code)
+                    #remove properly to clean-up
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
 
-    def test_router_remove_router_interface_wrong_port_returns_409(self):
+    def test_router_remove_router_interface_wrong_port_returns_404(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port() as p:
+                with self.port(no_delete=True) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -461,7 +479,12 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   r['router']['id'],
                                                   None,
                                                   p2['port']['id'],
-                                                  exc.HTTPConflict.code)
+                                                  exc.HTTPNotFound.code)
+                    # remove correct interface to cleanup
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
                     # remove extra port created
                     self._delete('ports', p2['port']['id'])
 
@@ -607,6 +630,16 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                         {'floatingip':
                                          {'port_id': port_id}},
                                         expected_code=exc.HTTPConflict.code)
+
+    def test_floating_ip_direct_port_delete_returns_409(self):
+        found = False
+        with self.floatingip_with_assoc() as fip:
+            for p in self._list('ports')['ports']:
+                if p['device_owner'] == 'network:floatingip':
+                    self._delete('ports', p['id'],
+                                 expected_code=exc.HTTPConflict.code)
+                    found = True
+        self.assertTrue(found)
 
     def test_create_floatingip_no_ext_gateway_return_404(self):
         with self.subnet() as public_sub:
