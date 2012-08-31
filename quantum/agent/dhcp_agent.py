@@ -365,9 +365,9 @@ class DeviceManager(object):
         else:
             namespace = None
 
-        if  ip_lib.device_exists(interface_name,
-                                 self.conf.root_helper,
-                                 namespace):
+        if ip_lib.device_exists(interface_name,
+                                self.conf.root_helper,
+                                namespace):
             if not reuse_existing:
                 raise exceptions.PreexistingDeviceFailure(
                     dev_name=interface_name)
