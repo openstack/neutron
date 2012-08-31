@@ -14,6 +14,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import copy
 import time
 import unittest
 
@@ -78,13 +79,6 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def testAgentCreate(self):
         agent = l3_agent.L3NATAgent(self.conf)
-
-        # calls to disable/enable routing
-        self.utils_exec.assert_has_calls([
-            mock.call(mock.ANY, self.conf.root_helper,
-                      check_exit_code=mock.ANY),
-            mock.call(mock.ANY, self.conf.root_helper,
-                      check_exit_code=mock.ANY)])
 
         self.device_exists.assert_has_calls(
             [mock.call(self.conf.external_network_bridge)])
@@ -203,7 +197,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         fake_subnet = {'subnet': {'cidr': '19.4.4.0/24',
                                   'gateway_ip': '19.4.4.1'}}
 
-        fake_floatingips = {'floatingips': [
+        fake_floatingips1 = {'floatingips': [
             {'id': _uuid(),
              'floating_ip_address': '8.8.8.8',
              'fixed_ip_address': '7.7.7.7',
@@ -211,7 +205,13 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         self.client_inst.list_ports.side_effect = fake_list_ports1
         self.client_inst.show_subnet.return_value = fake_subnet
-        self.client_inst.list_floatingips.return_value = fake_floatingips
+        self.client_inst.list_floatingips.return_value = fake_floatingips1
+        agent.process_router(ri)
+
+        # remap floating IP to a new fixed ip
+        fake_floatingips2 = copy.deepcopy(fake_floatingips1)
+        fake_floatingips2['floatingips'][0]['fixed_ip_address'] = '7.7.7.8'
+        self.client_inst.list_floatingips.return_value = fake_floatingips2
         agent.process_router(ri)
 
         # remove just the floating ips

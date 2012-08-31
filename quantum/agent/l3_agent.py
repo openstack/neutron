@@ -76,7 +76,7 @@ class L3NATAgent(object):
         cfg.IntOpt('polling_interval',
                    default=3,
                    help="The time in seconds between state poll requests."),
-        cfg.StrOpt('metadata_ip', default='127.0.0.1',
+        cfg.StrOpt('metadata_ip', default='',
                    help="IP address used by Nova metadata server."),
         cfg.IntOpt('metadata_port',
                    default=8775,
@@ -117,15 +117,7 @@ class L3NATAgent(object):
             auth_region=self.conf.auth_region
         )
 
-        # disable forwarding
-        linux_utils.execute(['sysctl', '-w', 'net.ipv4.ip_forward=0'],
-                            self.conf.root_helper, check_exit_code=False)
-
         self._destroy_all_router_namespaces()
-
-        # enable forwarding
-        linux_utils.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'],
-                            self.conf.root_helper, check_exit_code=False)
 
     def _destroy_all_router_namespaces(self):
         """Destroy all router namespaces on the host to eliminate
@@ -151,13 +143,18 @@ class L3NATAgent(object):
                                    bridge=self.conf.external_network_bridge)
         ns_ip.netns.delete(namespace)
 
-    def daemon_loop(self):
+    def _create_router_namespace(self, ri):
+            ip_wrapper_root = ip_lib.IPWrapper(self.conf.root_helper)
+            ip_wrapper_root.netns.add(ri.ns_name())
 
-        #TODO(danwent): this simple diff logic does not handle if a
-        # resource is modified (i.e., ip change on port, or floating ip
-        # mapped from one IP to another).  Will fix this properly with
-        # update notifications.
-        # Likewise, it does not handle removing routers
+            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                          namespace=ri.ns_name())
+            ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+
+    def daemon_loop(self):
+        #TODO(danwent): this simple diff logic does not handle if
+        # details of a router port (e.g., IP, mac) are changed behind
+        # our back.  Will fix this properly with update notifications.
 
         while True:
             try:
@@ -173,10 +170,14 @@ class L3NATAgent(object):
 
         # identify and update new or modified routers
         for r in self.qclient.list_routers()['routers']:
+            #FIXME(danwent): handle admin state
+
             cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
                 self.router_info[r['id']] = RouterInfo(r['id'],
                                                        self.conf.root_helper)
+                self._create_router_namespace(self.router_info[r['id']])
+
             ri = self.router_info[r['id']]
             self.process_router(ri)
 
@@ -246,6 +247,8 @@ class L3NATAgent(object):
         existing_floating_ip_ids = set([fip['id'] for fip in ri.floating_ips])
         cur_floating_ip_ids = set([fip['id'] for fip in floating_ips])
 
+        id_to_fixed_map = {}
+
         for fip in floating_ips:
             if fip['port_id']:
                 if fip['id'] not in existing_floating_ip_ids:
@@ -253,6 +256,9 @@ class L3NATAgent(object):
                     self.floating_ip_added(ri, ex_gw_port,
                                            fip['floating_ip_address'],
                                            fip['fixed_ip_address'])
+
+                # store to see if floatingip was remapped
+                id_to_fixed_map[fip['id']] = fip['fixed_ip_address']
 
         floating_ip_ids_to_remove = (existing_floating_ip_ids -
                                      cur_floating_ip_ids)
@@ -262,6 +268,17 @@ class L3NATAgent(object):
                 self.floating_ip_removed(ri, ri.ex_gw_port,
                                          fip['floating_ip_address'],
                                          fip['fixed_ip_address'])
+            else:
+                # handle remapping of a floating IP
+                cur_fixed_ip = id_to_fixed_map[fip['id']]
+                existing_fixed_ip = fip['fixed_ip_address']
+                if (cur_fixed_ip and existing_fixed_ip and
+                        cur_fixed_ip != existing_fixed_ip):
+                    floating_ip = fip['floating_ip_address']
+                    self.floating_ip_removed(ri, ri.ex_gw_port,
+                                             floating_ip, existing_fixed_ip)
+                    self.floating_ip_added(ri, ri.ex_gw_port,
+                                           floating_ip, cur_fixed_ip)
 
     def _get_ex_gw_port(self, ri):
         ports = self.qclient.list_ports(
@@ -306,7 +323,8 @@ class L3NATAgent(object):
         for (c, r) in self.external_gateway_filter_rules():
             ri.iptables_manager.ipv4['filter'].add_rule(c, r)
         for (c, r) in self.external_gateway_nat_rules(ex_gw_ip,
-                                                      internal_cidrs):
+                                                      internal_cidrs,
+                                                      interface_name):
             ri.iptables_manager.ipv4['nat'].add_rule(c, r)
         ri.iptables_manager.apply()
 
@@ -321,21 +339,30 @@ class L3NATAgent(object):
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         for c, r in self.external_gateway_filter_rules():
             ri.iptables_manager.ipv4['filter'].remove_rule(c, r)
-        for c, r in self.external_gateway_nat_rules(ex_gw_ip, internal_cidrs):
+        for c, r in self.external_gateway_nat_rules(ex_gw_ip, internal_cidrs,
+                                                    interface_name):
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
 
     def external_gateway_filter_rules(self):
-        return [('INPUT', '-s 0.0.0.0/0 -d %s '
+        rules = []
+        if self.conf.metadata_ip:
+            rules.append(('INPUT', '-s 0.0.0.0/0 -d %s '
                           '-p tcp -m tcp --dport %s '
                           '-j ACCEPT' %
-                          (self.conf.metadata_ip, self.conf.metadata_port))]
+                         (self.conf.metadata_ip, self.conf.metadata_port)))
+        return rules
 
-    def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs):
-        rules = [('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
-                  '-p tcp -m tcp --dport 80 -j DNAT '
-                  '--to-destination %s:%s' %
-                  (self.conf.metadata_ip, self.conf.metadata_port))]
+    def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
+                                   interface_name):
+        rules = [('POSTROUTING', '! -i %(interface_name)s '
+                  '! -o %(interface_name)s -m conntrack ! '
+                  '--ctstate DNAT -j ACCEPT' % locals())]
+        if self.conf.metadata_ip:
+            rules.append('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+                         '-p tcp -m tcp --dport 80 -j DNAT '
+                         '--to-destination %s:%s' %
+                         (self.conf.metadata_ip, self.conf.metadata_port))
         for cidr in internal_cidrs:
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
@@ -375,10 +402,12 @@ class L3NATAgent(object):
             ri.iptables_manager.apply()
 
     def internal_network_nat_rules(self, ex_gw_ip, internal_cidr):
-        return [('snat', '-s %s -j SNAT --to-source %s' %
-                 (internal_cidr, ex_gw_ip)),
-                ('POSTROUTING', '-s %s -d %s/32 -j ACCEPT' %
-                 (internal_cidr, self.conf.metadata_ip))]
+        rules = [('snat', '-s %s -j SNAT --to-source %s' %
+                 (internal_cidr, ex_gw_ip))]
+        if self.conf.metadata_ip:
+            rules.append(('POSTROUTING', '-s %s -d %s/32 -j ACCEPT' %
+                          (internal_cidr, self.conf.metadata_ip)))
+        return rules
 
     def floating_ip_added(self, ri, ex_gw_port, floating_ip, fixed_ip):
         ip_cidr = str(floating_ip) + '/32'
