@@ -29,14 +29,17 @@ class SubProcessBase(object):
         else:
             return self._execute(options, command, args)
 
-    def _as_root(self, options, command, args):
+    def _as_root(self, options, command, args, use_root_namespace=False):
         if not self.root_helper:
             raise exceptions.SudoRequired()
+
+        namespace = self.namespace if not use_root_namespace else None
+
         return self._execute(options,
                              command,
                              args,
                              self.root_helper,
-                             self.namespace)
+                             namespace)
 
     @classmethod
     def _execute(cls, options, command, args, root_helper=None,
@@ -132,7 +135,8 @@ class IpCommandBase(object):
     def _as_root(self, *args, **kwargs):
         return self._parent._as_root(kwargs.get('options', []),
                                      self.COMMAND,
-                                     args)
+                                     args,
+                                     kwargs.get('use_root_namespace', False))
 
 
 class IpDeviceCommandBase(IpCommandBase):
@@ -309,16 +313,11 @@ class IpNetnsCommand(IpCommandBase):
     COMMAND = 'netns'
 
     def add(self, name):
-        self._as_root('add', name)
+        self._as_root('add', name, use_root_namespace=True)
         return IPWrapper(self._parent.root_helper, name)
 
     def delete(self, name):
-        if not self._parent.root_helper:
-            raise exceptions.SudoRequired()
-        else:
-            return utils.execute(
-                ['ip', 'netns', 'delete', name],
-                root_helper=self._parent.root_helper)
+        self._as_root('delete', name, use_root_namespace=True)
 
     def execute(self, cmds, addl_env={}):
         if not self._parent.root_helper:
@@ -332,7 +331,7 @@ class IpNetnsCommand(IpCommandBase):
                 root_helper=self._parent.root_helper)
 
     def exists(self, name):
-        output = self._as_root('list', options='o')
+        output = self._as_root('list', options='o', use_root_namespace=True)
 
         for line in output.split('\n'):
             if name == line.strip():
