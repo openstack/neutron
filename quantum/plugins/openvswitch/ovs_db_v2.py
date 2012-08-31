@@ -51,11 +51,11 @@ def get_network_binding(session, network_id):
 
 
 def add_network_binding(session, network_id, network_type,
-                        physical_network, physical_id):
+                        physical_network, segmentation_id):
     with session.begin(subtransactions=True):
         binding = ovs_models_v2.NetworkBinding(network_id, network_type,
                                                physical_network,
-                                               physical_id)
+                                               segmentation_id)
         session.add(binding)
 
 

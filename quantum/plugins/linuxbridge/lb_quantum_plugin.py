@@ -25,6 +25,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import models_v2
+from quantum.extensions import providernet as provider
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
@@ -217,24 +218,25 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _extend_network_dict(self, context, network):
         if self._check_provider_view_auth(context, network):
             binding = db.get_network_binding(context.session, network['id'])
-            network['provider:physical_network'] = binding.physical_network
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
             if binding.vlan_id == lconst.FLAT_VLAN_ID:
-                network['provider:network_type'] = 'flat'
-                network['provider:vlan_id'] = None
+                network[provider.NETWORK_TYPE] = 'flat'
+                network[provider.SEGMENTATION_ID] = None
             else:
-                network['provider:network_type'] = 'vlan'
-                network['provider:vlan_id'] = binding.vlan_id
+                network[provider.NETWORK_TYPE] = 'vlan'
+                network[provider.SEGMENTATION_ID] = binding.vlan_id
 
     def _process_provider_create(self, context, attrs):
-        network_type = attrs.get('provider:network_type')
-        physical_network = attrs.get('provider:physical_network')
-        vlan_id = attrs.get('provider:vlan_id')
+        network_type = attrs.get(provider.NETWORK_TYPE)
+        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
 
         network_type_set = attributes.is_attr_set(network_type)
         physical_network_set = attributes.is_attr_set(physical_network)
-        vlan_id_set = attributes.is_attr_set(vlan_id)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
 
-        if not (network_type_set or physical_network_set or vlan_id_set):
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
             return (None, None, None)
 
         # Authorize before exposing plugin details to client
@@ -244,14 +246,18 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             msg = _("provider:network_type required")
             raise q_exc.InvalidInput(error_message=msg)
         elif network_type == 'flat':
-            if vlan_id_set:
-                msg = _("provider:vlan_id specified for flat network")
+            if segmentation_id_set:
+                msg = _("provider:segmentation_id specified for flat network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
-                vlan_id = lconst.FLAT_VLAN_ID
+                segmentation_id = lconst.FLAT_VLAN_ID
         elif network_type == 'vlan':
-            if not vlan_id_set:
-                msg = _("provider:vlan_id required")
+            if not segmentation_id_set:
+                msg = _("provider:segmentation_id required")
+                raise q_exc.InvalidInput(error_message=msg)
+            if segmentation_id < 1 or segmentation_id > 4094:
+                msg = _("provider:segmentation_id out of range "
+                        "(1 through 4094)")
                 raise q_exc.InvalidInput(error_message=msg)
         else:
             msg = _("invalid provider:network_type %s" % network_type)
@@ -268,18 +274,19 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             msg = _("provider:physical_network required")
             raise q_exc.InvalidInput(error_message=msg)
 
-        return (network_type, physical_network, vlan_id)
+        return (network_type, physical_network, segmentation_id)
 
     def _check_provider_update(self, context, attrs):
-        network_type = attrs.get('provider:network_type')
-        physical_network = attrs.get('provider:physical_network')
-        vlan_id = attrs.get('provider:vlan_id')
+        network_type = attrs.get(provider.NETWORK_TYPE)
+        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
 
         network_type_set = attributes.is_attr_set(network_type)
         physical_network_set = attributes.is_attr_set(physical_network)
-        vlan_id_set = attributes.is_attr_set(vlan_id)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
 
-        if not (network_type_set or physical_network_set or vlan_id_set):
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
             return
 
         # Authorize before exposing plugin details to client

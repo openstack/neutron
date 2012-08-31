@@ -217,4 +217,4 @@ class NetworkBindingsTest(unittest2.TestCase):
         self.assertEqual(binding.network_id, TEST_NETWORK_ID)
         self.assertEqual(binding.network_type, 'vlan')
         self.assertEqual(binding.physical_network, PHYS_NET)
-        self.assertEqual(binding.physical_id, 1234)
+        self.assertEqual(binding.segmentation_id, 1234)

@@ -15,21 +15,24 @@
 
 from quantum.api.v2 import attributes
 
+NETWORK_TYPE = 'provider:network_type'
+PHYSICAL_NETWORK = 'provider:physical_network'
+SEGMENTATION_ID = 'provider:segmentation_id'
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
-        'provider:network_type': {'allow_post': True, 'allow_put': True,
-                                  'validate': {'type:values': ['flat',
-                                                               'vlan']},
-                                  'default': attributes.ATTR_NOT_SPECIFIED,
-                                  'is_visible': True},
-        'provider:physical_network': {'allow_post': True, 'allow_put': True,
-                                      'default': attributes.ATTR_NOT_SPECIFIED,
-                                      'is_visible': True},
-        'provider:vlan_id': {'allow_post': True, 'allow_put': True,
-                             'convert_to': int,
-                             'validate': {'type:range': (1, 4095)},
-                             'default': attributes.ATTR_NOT_SPECIFIED,
-                             'is_visible': True},
+        NETWORK_TYPE: {'allow_post': True, 'allow_put': True,
+                       'validate': {'type:values': ['flat',
+                                                    'vlan']},
+                       'default': attributes.ATTR_NOT_SPECIFIED,
+                       'is_visible': True},
+        PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
+                           'default': attributes.ATTR_NOT_SPECIFIED,
+                           'is_visible': True},
+        SEGMENTATION_ID: {'allow_post': True, 'allow_put': True,
+                          'convert_to': int,
+                          'default': attributes.ATTR_NOT_SPECIFIED,
+                          'is_visible': True},
     }
 }
 
@@ -46,7 +49,7 @@ class Providernet(object):
     To create a provider VLAN network using the CLI with admin rights:
 
        (shell) net-create --tenant_id <tenant-id> <net-name> \
-       --provider:vlan_id <vlan-id>
+       --provider:segmentation_id <vlan-id>
 
     With admin rights, network dictionaries returned from CLI commands
     will also include provider attributes.
