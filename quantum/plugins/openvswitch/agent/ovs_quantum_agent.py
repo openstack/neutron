@@ -199,17 +199,13 @@ class OVSQuantumAgent(object):
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")
         port = kwargs.get('port')
+        network_type = kwargs.get('network_type')
+        segmentation_id = kwargs.get('segmentation_id')
+        physical_network = kwargs.get('physical_network')
         vif_port = self.int_br.get_vif_port_by_id(port['id'])
-        if vif_port:
-            if port['admin_state_up']:
-                vlan_id = kwargs.get('vlan_id')
-                # create the networking for the port
-                self.int_br.set_db_attribute("Port", vif_port.port_name,
-                                             "tag", str(vlan_id))
-                self.int_br.delete_flows(in_port=vif_port.ofport)
-            else:
-                self.int_br.clear_db_attribute("Port", vif_port.port_name,
-                                               "tag")
+        self.treat_vif_port(vif_port, port['id'], port['network_id'],
+                            network_type, physical_network,
+                            segmentation_id, port['admin_state_up'])
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
@@ -607,6 +603,17 @@ class OVSQuantumAgent(object):
                 'added': added,
                 'removed': removed}
 
+    def treat_vif_port(self, vif_port, port_id, network_id, network_type,
+                       physical_network, segmentation_id, admin_state_up):
+        if vif_port:
+            if admin_state_up:
+                self.port_bound(vif_port, network_id, network_type,
+                                physical_network, segmentation_id)
+            else:
+                self.port_dead(vif_port)
+        else:
+            LOG.debug("No VIF port for port %s defined on agent.", port_id)
+
     def treat_devices_added(self, devices):
         resync = False
         for device in devices:
@@ -619,19 +626,19 @@ class OVSQuantumAgent(object):
                 LOG.debug("Unable to get port details for %s: %s", device, e)
                 resync = True
                 continue
+            port = self.int_br.get_vif_port_by_id(details['device'])
             if 'port_id' in details:
                 LOG.info("Port %s updated. Details: %s", device, details)
-                port = self.int_br.get_vif_port_by_id(details['port_id'])
-                if port:
-                    if details['admin_state_up']:
-                        self.port_bound(port, details['network_id'],
-                                        details['network_type'],
-                                        details['physical_network'],
-                                        details['segmentation_id'])
-                    else:
-                        self.port_unbound(port, details['network_id'])
+                self.treat_vif_port(port, details['port_id'],
+                                    details['network_id'],
+                                    details['network_type'],
+                                    details['physical_network'],
+                                    details['segmentation_id'],
+                                    details['admin_state_up'])
             else:
                 LOG.debug("Device %s not defined on plugin", device)
+                if (port and int(port.ofport) != -1):
+                    self.port_dead(port)
         return resync
 
     def treat_devices_removed(self, devices):

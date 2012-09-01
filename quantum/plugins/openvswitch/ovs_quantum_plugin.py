@@ -151,11 +151,14 @@ class AgentNotifierApi(proxy.RpcProxy):
                                        network_id=network_id),
                          topic=self.topic_network_delete)
 
-    def port_update(self, context, port, vlan_id):
+    def port_update(self, context, port, network_type, segmentation_id,
+                    physical_network):
         self.fanout_cast(context,
                          self.make_msg('port_update',
                                        port=port,
-                                       vlan_id=vlan_id),
+                                       network_type=network_type,
+                                       segmentation_id=segmentation_id,
+                                       physical_network=physical_network),
                          topic=self.topic_port_update)
 
     def tunnel_update(self, context, tunnel_ip, tunnel_id):
@@ -425,10 +428,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if original_port['admin_state_up'] != port['admin_state_up']:
                 binding = ovs_db_v2.get_network_binding(None,
                                                         port['network_id'])
-                # REVISIT(rkukura): Either all binding data or no
-                # binding data needed.
                 self.notifier.port_update(self.rpc_context, port,
-                                          binding.segmentation_id)
+                                          binding.network_type,
+                                          binding.segmentation_id,
+                                          binding.physical_network)
         return port
 
     def delete_port(self, context, id, l3_port_check=True):

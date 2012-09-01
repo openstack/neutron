@@ -75,7 +75,10 @@ class rpcApiTestCase(unittest2.TestCase):
                                                  topics.PORT,
                                                  topics.UPDATE),
                            'port_update', rpc_method='fanout_cast',
-                           port='fake_port', vlan_id='fake_vlan_id')
+                           port='fake_port',
+                           network_type='fake_network_type',
+                           segmentation_id='fake_segmentation_id',
+                           physical_network='fake_physical_network')
 
     def test_tunnel_update(self):
         rpcapi = povs.AgentNotifierApi(topics.AGENT)
