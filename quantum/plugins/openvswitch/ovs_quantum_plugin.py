@@ -31,6 +31,7 @@ from quantum.common import topics
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
+from quantum.extensions import providernet as provider
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
@@ -75,7 +76,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up'],
                      'network_type': binding.network_type,
-                     'physical_id': binding.physical_id,
+                     'segmentation_id': binding.segmentation_id,
                      'physical_network': binding.physical_network}
             # Set the port status to UP
             ovs_db_v2.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
@@ -266,27 +267,28 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if self._check_provider_view_auth(context, network):
             binding = ovs_db_v2.get_network_binding(context.session,
                                                     network['id'])
-            network['provider:network_type'] = binding.network_type
+            network[provider.NETWORK_TYPE] = binding.network_type
             if binding.network_type == constants.TYPE_GRE:
-                network['provider:physical_network'] = None
-                network['provider:vlan_id'] = None
+                network[provider.PHYSICAL_NETWORK] = None
+                network[provider.SEGMENTATION_ID] = binding.segmentation_id
             elif binding.network_type == constants.TYPE_FLAT:
-                network['provider:physical_network'] = binding.physical_network
-                network['provider:vlan_id'] = None
+                network[provider.PHYSICAL_NETWORK] = binding.physical_network
+                network[provider.SEGMENTATION_ID] = None
             elif binding.network_type == constants.TYPE_VLAN:
-                network['provider:physical_network'] = binding.physical_network
-                network['provider:vlan_id'] = binding.physical_id
+                network[provider.PHYSICAL_NETWORK] = binding.physical_network
+                network[provider.SEGMENTATION_ID] = binding.segmentation_id
 
     def _process_provider_create(self, context, attrs):
-        network_type = attrs.get('provider:network_type')
-        physical_network = attrs.get('provider:physical_network')
-        vlan_id = attrs.get('provider:vlan_id')
+        network_type = attrs.get(provider.NETWORK_TYPE)
+        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
 
         network_type_set = attributes.is_attr_set(network_type)
         physical_network_set = attributes.is_attr_set(physical_network)
-        vlan_id_set = attributes.is_attr_set(vlan_id)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
 
-        if not (network_type_set or physical_network_set or vlan_id_set):
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
             return (None, None, None)
 
         # Authorize before exposing plugin details to client
@@ -296,14 +298,18 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             msg = _("provider:network_type required")
             raise q_exc.InvalidInput(error_message=msg)
         elif network_type == constants.TYPE_FLAT:
-            if vlan_id_set:
-                msg = _("provider:vlan_id specified for flat network")
+            if segmentation_id_set:
+                msg = _("provider:segmentation_id specified for flat network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
-                vlan_id = constants.FLAT_VLAN_ID
+                segmentation_id = constants.FLAT_VLAN_ID
         elif network_type == constants.TYPE_VLAN:
-            if not vlan_id_set:
-                msg = _("provider:vlan_id required")
+            if not segmentation_id_set:
+                msg = _("provider:segmentation_id required")
+                raise q_exc.InvalidInput(error_message=msg)
+            if segmentation_id < 1 or segmentation_id > 4094:
+                msg = _("provider:segmentation_id out of range "
+                        "(1 through 4094)")
                 raise q_exc.InvalidInput(error_message=msg)
         else:
             msg = _("invalid provider:network_type %s" % network_type)
@@ -320,18 +326,19 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             msg = _("provider:physical_network required")
             raise q_exc.InvalidInput(error_message=msg)
 
-        return (network_type, physical_network, vlan_id)
+        return (network_type, physical_network, segmentation_id)
 
     def _check_provider_update(self, context, attrs):
-        network_type = attrs.get('provider:network_type')
-        physical_network = attrs.get('provider:physical_network')
-        vlan_id = attrs.get('provider:vlan_id')
+        network_type = attrs.get(provider.NETWORK_TYPE)
+        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
 
         network_type_set = attributes.is_attr_set(network_type)
         physical_network_set = attributes.is_attr_set(physical_network)
-        vlan_id_set = attributes.is_attr_set(vlan_id)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
 
-        if not (network_type_set or physical_network_set or vlan_id_set):
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
             return
 
         # Authorize before exposing plugin details to client
@@ -342,26 +349,26 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def create_network(self, context, network):
         (network_type, physical_network,
-         physical_id) = self._process_provider_create(context,
-                                                      network['network'])
+         segmentation_id) = self._process_provider_create(context,
+                                                          network['network'])
 
         session = context.session
         with session.begin(subtransactions=True):
             if not network_type:
                 try:
                     (physical_network,
-                     physical_id) = ovs_db_v2.reserve_vlan(session)
+                     segmentation_id) = ovs_db_v2.reserve_vlan(session)
                     network_type = constants.TYPE_VLAN
                 except q_exc.NoNetworkAvailable:
-                    physical_id = ovs_db_v2.reserve_tunnel(session)
+                    segmentation_id = ovs_db_v2.reserve_tunnel(session)
                     network_type = constants.TYPE_GRE
             else:
                 ovs_db_v2.reserve_specific_vlan(session, physical_network,
-                                                physical_id)
+                                                segmentation_id)
             net = super(OVSQuantumPluginV2, self).create_network(context,
                                                                  network)
             ovs_db_v2.add_network_binding(session, net['id'], network_type,
-                                          physical_network, physical_id)
+                                          physical_network, segmentation_id)
             self._extend_network_dict(context, net)
             # note - exception will rollback entire transaction
         LOG.debug("Created network: %s" % net['id'])
@@ -384,11 +391,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             result = super(OVSQuantumPluginV2, self).delete_network(context,
                                                                     id)
             if binding.network_type == constants.TYPE_GRE:
-                ovs_db_v2.release_tunnel(session, binding.physical_id,
+                ovs_db_v2.release_tunnel(session, binding.segmentation_id,
                                          self.tunnel_id_ranges)
             else:
                 ovs_db_v2.release_vlan(session, binding.physical_network,
-                                       binding.physical_id,
+                                       binding.segmentation_id,
                                        self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
@@ -418,9 +425,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if original_port['admin_state_up'] != port['admin_state_up']:
                 binding = ovs_db_v2.get_network_binding(None,
                                                         port['network_id'])
-                # REVISIT(rkukura): needs other binding data as well
+                # REVISIT(rkukura): Either all binding data or no
+                # binding data needed.
                 self.notifier.port_update(self.rpc_context, port,
-                                          binding.physical_id)
+                                          binding.segmentation_id)
         return port
 
     def delete_port(self, context, id, l3_port_check=True):

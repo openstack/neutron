@@ -51,20 +51,20 @@ DEAD_VLAN_TAG = "4095"
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
 # attributes set).
 class LocalVLANMapping:
-    def __init__(self, vlan, network_type, physical_network, physical_id,
+    def __init__(self, vlan, network_type, physical_network, segmentation_id,
                  vif_ids=None):
         if vif_ids is None:
             vif_ids = []
         self.vlan = vlan
         self.network_type = network_type
         self.physical_network = physical_network
-        self.physical_id = physical_id
+        self.segmentation_id = segmentation_id
         self.vif_ids = vif_ids
 
     def __str__(self):
         return ("lv-id = %s type = %s phys-net = %s phys-id = %s" %
                 (self.vlan, self.network_type, self.physical_network,
-                 self.physical_id))
+                 self.segmentation_id))
 
 
 class Port(object):
@@ -121,6 +121,8 @@ class OVSRpcCallbacks():
         vif_port = self.int_br.get_vif_port_by_id(port['id'])
         if vif_port:
             if port['admin_state_up']:
+                # REVISIT(rkukura) This does not seem right. This
+                # needs to be the local_vlan.
                 vlan_id = kwargs.get('vlan_id')
                 # create the networking for the port
                 self.int_br.set_db_attribute("Port", vif_port.port_name,
@@ -236,13 +238,13 @@ class OVSQuantumAgent(object):
                                                      consumers)
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
-                             physical_id):
+                             segmentation_id):
         '''Provisions a local VLAN.
 
         :param net_uuid: the uuid of the network associated with this vlan.
         :param network_type: the type of the network ('gre', 'vlan', 'flat')
         :param physical_network: the physical network for 'vlan' or 'flat'
-        :param physical_id: the VLAN ID for 'vlan' or tunnel ID for 'tunnel'
+        :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         '''
 
         if not self.available_local_vlans:
@@ -251,15 +253,16 @@ class OVSQuantumAgent(object):
         LOG.info("Assigning %s as local vlan for net-id=%s" % (lvid, net_uuid))
         self.local_vlan_map[net_uuid] = LocalVLANMapping(lvid, network_type,
                                                          physical_network,
-                                                         physical_id)
+                                                         segmentation_id)
 
         if network_type == constants.TYPE_GRE:
             # outbound
             self.tun_br.add_flow(priority=4, in_port=self.patch_int_ofport,
                                  dl_vlan=lvid,
-                                 actions="set_tunnel:%s,normal" % physical_id)
+                                 actions="set_tunnel:%s,normal" %
+                                 segmentation_id)
             # inbound bcast/mcast
-            self.tun_br.add_flow(priority=3, tun_id=physical_id,
+            self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
                                  dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
                                  actions="mod_vlan_vid:%s,output:%s" %
                                  (lvid, self.patch_int_ofport))
@@ -281,11 +284,11 @@ class OVSQuantumAgent(object):
             br.add_flow(priority=4,
                         in_port=self.phys_ofports[physical_network],
                         dl_vlan=lvid,
-                        actions="mod_vlan_vid:%s,normal" % physical_id)
+                        actions="mod_vlan_vid:%s,normal" % segmentation_id)
             # inbound
             self.int_br.add_flow(priority=3,
                                  in_port=self.int_ofports[physical_network],
-                                 dl_vlan=physical_id,
+                                 dl_vlan=segmentation_id,
                                  actions="mod_vlan_vid:%s,normal" % lvid)
         else:
             LOG.error("provisioning unknown network type %s for net-id=%s" %
@@ -300,7 +303,7 @@ class OVSQuantumAgent(object):
         LOG.info("reclaming vlan = %s from net-id = %s" % (lvm.vlan, net_uuid))
 
         if lvm.network_type == constants.TYPE_GRE:
-            self.tun_br.delete_flows(tun_id=lvm.physical_id)
+            self.tun_br.delete_flows(tun_id=lvm.segmentation_id)
             self.tun_br.delete_flows(dl_vlan=lvm.vlan)
         elif network_type == constants.TYPE_FLAT:
             # outbound
@@ -319,7 +322,7 @@ class OVSQuantumAgent(object):
             # inbound
             br = self.int_br
             br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
-                            dl_vlan=lvm.physical_id)
+                            dl_vlan=lvm.segmentation_id)
         else:
             LOG.error("reclaiming unknown network type %s for net-id=%s" %
                       (lvm.network_type, net_uuid))
@@ -328,7 +331,7 @@ class OVSQuantumAgent(object):
         self.available_local_vlans.add(lvm.vlan)
 
     def port_bound(self, port, net_uuid,
-                   network_type, physical_network, physical_id):
+                   network_type, physical_network, segmentation_id):
         '''Bind port to net_uuid/lsw_id and install flow for inbound traffic
         to vm.
 
@@ -336,17 +339,17 @@ class OVSQuantumAgent(object):
         :param net_uuid: the net_uuid this port is to be associated with.
         :param network_type: the type of the network ('gre', 'vlan', 'flat')
         :param physical_network: the physical network for 'vlan' or 'flat'
-        :param physical_id: the VLAN ID for 'vlan' or tunnel ID for 'tunnel'
+        :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         '''
         if net_uuid not in self.local_vlan_map:
             self.provision_local_vlan(net_uuid, network_type,
-                                      physical_network, physical_id)
+                                      physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ids.append(port.vif_id)
 
         if network_type == constants.TYPE_GRE:
             # inbound unicast
-            self.tun_br.add_flow(priority=3, tun_id=physical_id,
+            self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
                                  dl_dst=port.vif_mac,
                                  actions="mod_vlan_vid:%s,normal" % lvm.vlan)
 
@@ -573,7 +576,7 @@ class OVSQuantumAgent(object):
                         self.port_bound(p, new_net_uuid,
                                         bind.network_type,
                                         bind.physical_network,
-                                        bind.physical_id)
+                                        bind.segmentation_id)
                         all_bindings[p.vif_id].status = (
                             q_const.PORT_STATUS_ACTIVE)
                         LOG.info("Port %s on net-id = %s bound to %s " % (
@@ -633,7 +636,7 @@ class OVSQuantumAgent(object):
                         self.port_bound(port, details['network_id'],
                                         details['network_type'],
                                         details['physical_network'],
-                                        details['physical_id'])
+                                        details['segmentation_id'])
                     else:
                         self.port_unbound(port, details['network_id'])
             else:

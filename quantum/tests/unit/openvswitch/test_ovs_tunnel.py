@@ -105,7 +105,7 @@ class TunnelTest(unittest.TestCase):
         self.mox.VerifyAll()
 
     def testReclaimLocalVlan(self):
-        self.mock_tun_bridge.delete_flows(tun_id=LVM.physical_id)
+        self.mock_tun_bridge.delete_flows(tun_id=LVM.segmentation_id)
 
         self.mock_tun_bridge.delete_flows(dl_vlan=LVM.vlan)
 

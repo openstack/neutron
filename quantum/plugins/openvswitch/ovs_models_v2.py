@@ -66,20 +66,20 @@ class NetworkBinding(model_base.BASEV2):
                         primary_key=True)
     network_type = Column(String(32), nullable=False)  # 'gre', 'vlan', 'flat'
     physical_network = Column(String(64))
-    physical_id = Column(Integer)  # tunnel_id or vlan_id
+    segmentation_id = Column(Integer)  # tunnel_id or vlan_id
 
     def __init__(self, network_id, network_type, physical_network,
-                 physical_id):
+                 segmentation_id):
         self.network_id = network_id
         self.network_type = network_type
         self.physical_network = physical_network
-        self.physical_id = physical_id
+        self.segmentation_id = segmentation_id
 
     def __repr__(self):
         return "<NetworkBinding(%s,%s,%s,%d)>" % (self.network_id,
                                                   self.network_type,
                                                   self.physical_network,
-                                                  self.physical_id)
+                                                  self.segmentation_id)
 
 
 class TunnelIP(model_base.BASEV2):
