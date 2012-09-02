@@ -761,6 +761,7 @@ class LinuxBridgeQuantumAgentRPC:
 
 
 def main():
+    eventlet.monkey_patch()
     cfg.CONF(args=sys.argv, project='quantum')
 
     # (TODO) gary - swap with common logging
@@ -798,5 +799,4 @@ def main():
     sys.exit(0)
 
 if __name__ == "__main__":
-    eventlet.monkey_patch()
     main()
