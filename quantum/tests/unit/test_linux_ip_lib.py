@@ -264,11 +264,13 @@ class TestIPCommandBase(unittest.TestCase):
 
     def test_as_root(self):
         self.ip_cmd._as_root('link')
-        self.ip.assert_has_calls([mock.call._as_root([], 'foo', ('link', ))])
+        self.ip.assert_has_calls(
+            [mock.call._as_root([], 'foo', ('link', ), False)])
 
     def test_as_root_with_options(self):
         self.ip_cmd._as_root('link', options='o')
-        self.ip.assert_has_calls([mock.call._as_root('o', 'foo', ('link', ))])
+        self.ip.assert_has_calls(
+            [mock.call._as_root('o', 'foo', ('link', ), False)])
 
 
 class TestIPDeviceCommandBase(unittest.TestCase):
@@ -294,9 +296,10 @@ class TestIPCmdBase(unittest.TestCase):
         self.parent.assert_has_calls([
             mock.call._run(options, self.command, args)])
 
-    def _assert_sudo(self, options, args):
-        self.parent.assert_has_calls([
-            mock.call._as_root(options, self.command, args)])
+    def _assert_sudo(self, options, args, force_root_namespace=False):
+        self.parent.assert_has_calls(
+            [mock.call._as_root(options, self.command, args,
+                                force_root_namespace)])
 
 
 class TestIpLinkCommand(TestIPCmdBase):
@@ -483,28 +486,27 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
     def test_add_namespace(self):
         ns = self.netns_cmd.add('ns')
-        self._assert_sudo([], ('add', 'ns'))
+        self._assert_sudo([], ('add', 'ns'), force_root_namespace=True)
         self.assertEqual(ns.namespace, 'ns')
 
     def test_delete_namespace(self):
         with mock.patch('quantum.agent.linux.utils.execute') as execute:
             self.netns_cmd.delete('ns')
-            execute.assert_called_once_with(['ip', 'netns', 'delete', 'ns'],
-                                            root_helper='sudo')
+            self._assert_sudo([], ('delete', 'ns'), force_root_namespace=True)
 
     def test_namespace_exists(self):
         retval = '\n'.join(NETNS_SAMPLE)
         self.parent._as_root.return_value = retval
         self.assertTrue(
             self.netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-        self._assert_sudo('o', ('list',))
+        self._assert_sudo('o', ('list',), force_root_namespace=True)
 
     def test_namespace_doest_not_exist(self):
         retval = '\n'.join(NETNS_SAMPLE)
         self.parent._as_root.return_value = retval
         self.assertFalse(
             self.netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-        self._assert_sudo('o', ('list',))
+        self._assert_sudo('o', ('list',), force_root_namespace=True)
 
     def test_execute(self):
         self.parent.namespace = 'ns'
