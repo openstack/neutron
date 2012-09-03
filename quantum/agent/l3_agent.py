@@ -361,10 +361,10 @@ class L3NATAgent(object):
                   '! -o %(interface_name)s -m conntrack ! '
                   '--ctstate DNAT -j ACCEPT' % locals())]
         if self.conf.metadata_ip:
-            rules.append('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+            rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
                          '-p tcp -m tcp --dport 80 -j DNAT '
                          '--to-destination %s:%s' %
-                         (self.conf.metadata_ip, self.conf.metadata_port))
+                         (self.conf.metadata_ip, self.conf.metadata_port)))
         for cidr in internal_cidrs:
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
