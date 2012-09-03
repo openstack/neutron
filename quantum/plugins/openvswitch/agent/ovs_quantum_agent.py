@@ -97,59 +97,6 @@ class Port(object):
         return hash(self.id)
 
 
-class OVSRpcCallbacks():
-
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
-
-    def __init__(self, context, int_br, local_ip=None, tun_br=None):
-        self.context = context
-        self.int_br = int_br
-        # Tunneling variables
-        self.local_ip = local_ip
-        self.tun_br = tun_br
-
-    def network_delete(self, context, **kwargs):
-        LOG.debug("network_delete received")
-        network_id = kwargs.get('network_id')
-        # (TODO) garyk delete the bridge interface
-        LOG.debug("Delete %s", network_id)
-
-    def port_update(self, context, **kwargs):
-        LOG.debug("port_update received")
-        port = kwargs.get('port')
-        vif_port = self.int_br.get_vif_port_by_id(port['id'])
-        if vif_port:
-            if port['admin_state_up']:
-                # REVISIT(rkukura) This does not seem right. This
-                # needs to be the local_vlan.
-                vlan_id = kwargs.get('vlan_id')
-                # create the networking for the port
-                self.int_br.set_db_attribute("Port", vif_port.port_name,
-                                             "tag", str(vlan_id))
-                self.int_br.delete_flows(in_port=vif_port.ofport)
-            else:
-                self.int_br.clear_db_attribute("Port", vif_port.port_name,
-                                               "tag")
-
-    def tunnel_update(self, context, **kwargs):
-        LOG.debug("tunnel_update received")
-        tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_id = kwargs.get('tunnel_id')
-        if tunnel_ip == self.local_ip:
-            return
-        tun_name = 'gre-%s' % tunnel_id
-        self.tun_br.add_tunnel_port(tun_name, tunnel_ip)
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return dispatcher.RpcDispatcher([self])
-
-
 class OVSQuantumAgent(object):
     '''Implements OVS-based tunneling, VLANs and flat networks.
 
@@ -182,6 +129,9 @@ class OVSQuantumAgent(object):
 
     # Upper bound on available vlans.
     MAX_VLAN_TAG = 4094
+
+    # Set RPC API version to 1.0 by default.
+    RPC_API_VERSION = '1.0'
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
@@ -226,9 +176,7 @@ class OVSQuantumAgent(object):
         self.context = context.RequestContext('quantum', 'quantum',
                                               is_admin=False)
         # Handle updates from service
-        self.callbacks = OVSRpcCallbacks(self.context, self.int_br,
-                                         self.local_ip, self.tun_br)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.dispatcher = self.create_rpc_dispatcher()
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
@@ -236,6 +184,49 @@ class OVSQuantumAgent(object):
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+
+    def network_delete(self, context, **kwargs):
+        LOG.debug("network_delete received")
+        network_id = kwargs.get('network_id')
+        LOG.debug("Delete %s", network_id)
+        # The network may not be defined on this agent
+        lvm = self.local_vlan_map.get(network_id)
+        if lvm:
+            self.reclaim_local_vlan(network_id, lvm)
+        else:
+            LOG.debug("Network %s not used on agent.", network_id)
+
+    def port_update(self, context, **kwargs):
+        LOG.debug("port_update received")
+        port = kwargs.get('port')
+        vif_port = self.int_br.get_vif_port_by_id(port['id'])
+        if vif_port:
+            if port['admin_state_up']:
+                vlan_id = kwargs.get('vlan_id')
+                # create the networking for the port
+                self.int_br.set_db_attribute("Port", vif_port.port_name,
+                                             "tag", str(vlan_id))
+                self.int_br.delete_flows(in_port=vif_port.ofport)
+            else:
+                self.int_br.clear_db_attribute("Port", vif_port.port_name,
+                                               "tag")
+
+    def tunnel_update(self, context, **kwargs):
+        LOG.debug("tunnel_update received")
+        tunnel_ip = kwargs.get('tunnel_ip')
+        tunnel_id = kwargs.get('tunnel_id')
+        if tunnel_ip == self.local_ip:
+            return
+        tun_name = 'gre-%s' % tunnel_id
+        self.tun_br.add_tunnel_port(tun_name, tunnel_ip)
+
+    def create_rpc_dispatcher(self):
+        '''Get the rpc dispatcher for this manager.
+
+        If a manager would like to set an rpc API version, or support more than
+        one class as the target of rpc messages, override this method.
+        '''
+        return dispatcher.RpcDispatcher([self])
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
                              segmentation_id):
