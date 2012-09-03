@@ -24,7 +24,7 @@ from quantum.plugins.metaplugin import meta_models_v2
 def get_flavor_by_network(net_id):
     session = db.get_session()
     try:
-        binding = (session.query(meta_models_v2.Flavor).
+        binding = (session.query(meta_models_v2.NetworkFlavor).
                    filter_by(network_id=net_id).
                    one())
     except exc.NoResultFound:
@@ -32,9 +32,28 @@ def get_flavor_by_network(net_id):
     return binding.flavor
 
 
-def add_flavor_binding(flavor, net_id):
+def add_network_flavor_binding(flavor, net_id):
     session = db.get_session()
-    binding = meta_models_v2.Flavor(flavor=flavor, network_id=net_id)
+    binding = meta_models_v2.NetworkFlavor(flavor=flavor, network_id=net_id)
+    session.add(binding)
+    session.flush()
+    return binding
+
+
+def get_flavor_by_router(router_id):
+    session = db.get_session()
+    try:
+        binding = (session.query(meta_models_v2.RouterFlavor).
+                   filter_by(router_id=router_id).
+                   one())
+    except exc.NoResultFound:
+        return None
+    return binding.flavor
+
+
+def add_router_flavor_binding(flavor, router_id):
+    session = db.get_session()
+    binding = meta_models_v2.RouterFlavor(flavor=flavor, router_id=router_id)
     session.add(binding)
     session.flush()
     return binding

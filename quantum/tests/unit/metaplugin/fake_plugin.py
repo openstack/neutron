@@ -18,10 +18,12 @@ from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import l3_db
 from quantum.db import models_v2
 
 
-class Fake1(db_base_plugin_v2.QuantumDbPluginV2):
+class Fake1(db_base_plugin_v2.QuantumDbPluginV2,
+            l3_db.L3_NAT_db_mixin):
     def fake_func(self):
         return 'fake1'
 
@@ -45,7 +47,7 @@ class Fake1(db_base_plugin_v2.QuantumDbPluginV2):
         port = super(Fake1, self).update_port(context, id, port)
         return port
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
         return super(Fake1, self).delete_port(context, id)
 
 

@@ -26,7 +26,9 @@ database_opts = [
 
 meta_plugin_opts = [
     cfg.StrOpt('plugin_list', default=''),
+    cfg.StrOpt('l3_plugin_list', default=''),
     cfg.StrOpt('default_flavor', default=''),
+    cfg.StrOpt('default_l3_flavor', default=''),
     cfg.StrOpt('supported_extension_aliases', default=''),
     cfg.StrOpt('extension_map', default='')
 ]

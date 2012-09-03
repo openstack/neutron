@@ -19,6 +19,7 @@ import logging
 
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantumclient.common import exceptions
@@ -28,7 +29,8 @@ from quantumclient.v2_0 import client
 LOG = logging.getLogger(__name__)
 
 
-class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                    l3_db.L3_NAT_db_mixin):
     def __init__(self, configfile=None):
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
@@ -126,7 +128,11 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             LOG.error("update port failed: %e" % e)
         return port_in_db
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+        self.disassociate_floatingips(context, id)
+
         try:
             self._get_client().delete_port(id)
         except exceptions.PortNotFoundClient:

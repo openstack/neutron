@@ -16,17 +16,19 @@
 #    under the License.
 
 import os
-
-import mox
-import mock
 import uuid
-import unittest
+
+import mock
+import mox
 import stubout
+import unittest2 as unittest
 
 from quantum.common import config
 from quantum.common.exceptions import NotImplementedError
 from quantum.db import api as db
 from quantum.db import models_v2
+from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
+from quantum.extensions import l3
 from quantum.openstack.common import cfg
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
 from quantum.plugins.metaplugin.proxy_quantum_plugin import ProxyPluginV2
@@ -39,9 +41,12 @@ ETCDIR = os.path.join(ROOTDIR, 'etc')
 META_PATH = "quantum.plugins.metaplugin"
 FAKE_PATH = "quantum.tests.unit.metaplugin"
 PROXY_PATH = "%s.proxy_quantum_plugin.ProxyPluginV2" % META_PATH
-PLUGIN_LIST = \
-    'fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2,proxy:%s' % \
-    (FAKE_PATH, FAKE_PATH, PROXY_PATH)
+PLUGIN_LIST = """
+fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2,proxy:%s
+""".strip() % (FAKE_PATH, FAKE_PATH, PROXY_PATH)
+L3_PLUGIN_LIST = """
+fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2
+""".strip() % (FAKE_PATH, FAKE_PATH)
 
 
 def etcdir(*p):
@@ -75,7 +80,9 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         cfg.CONF.set_override('admin_password', 'password', 'PROXY')
         cfg.CONF.set_override('admin_tenant_name', 'service', 'PROXY')
         cfg.CONF.set_override('plugin_list', PLUGIN_LIST, 'META')
+        cfg.CONF.set_override('l3_plugin_list', L3_PLUGIN_LIST, 'META')
         cfg.CONF.set_override('default_flavor', 'fake2', 'META')
+        cfg.CONF.set_override('default_l3_flavor', 'fake1', 'META')
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         #TODO(nati) remove this after subnet quota change is merged
         cfg.CONF.max_dns_nameservers = 10
@@ -105,7 +112,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
                             'admin_state_up': True,
                             'shared': False,
                             'tenant_id': self.fake_tenant_id,
-                            'flavor:id': flavor}}
+                            FLAVOR_NETWORK: flavor}}
         return data
 
     def _fake_port(self, net_id):
@@ -134,18 +141,25 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
                            'enable_dhcp': True,
                            'ip_version': 4}}
 
+    def _fake_router(self, flavor):
+        data = {'router': {'name': flavor, 'admin_state_up': True,
+                           'tenant_id': self.fake_tenant_id,
+                           FLAVOR_ROUTER: flavor,
+                           'external_gateway_info': None}}
+        return data
+
     def test_create_delete_network(self):
         network1 = self._fake_network('fake1')
         ret1 = self.plugin.create_network(self.context, network1)
-        self.assertEqual('fake1', ret1['flavor:id'])
+        self.assertEqual('fake1', ret1[FLAVOR_NETWORK])
 
         network2 = self._fake_network('fake2')
         ret2 = self.plugin.create_network(self.context, network2)
-        self.assertEqual('fake2', ret2['flavor:id'])
+        self.assertEqual('fake2', ret2[FLAVOR_NETWORK])
 
         network3 = self._fake_network('proxy')
         ret3 = self.plugin.create_network(self.context, network3)
-        self.assertEqual('proxy', ret3['flavor:id'])
+        self.assertEqual('proxy', ret3[FLAVOR_NETWORK])
 
         db_ret1 = self.plugin.get_network(self.context, ret1['id'])
         self.assertEqual('fake1', db_ret1['name'])
@@ -160,7 +174,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         self.assertEqual(3, len(db_ret4))
 
         db_ret5 = self.plugin.get_networks(self.context,
-                                           {'flavor:id': ['fake1']})
+                                           {FLAVOR_NETWORK: ['fake1']})
         self.assertEqual(1, len(db_ret5))
         self.assertEqual('fake1', db_ret5[0]['name'])
         self.plugin.delete_network(self.context, ret1['id'])
@@ -267,6 +281,26 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         self.plugin.delete_network(self.context, network_ret1['id'])
         self.plugin.delete_network(self.context, network_ret2['id'])
         self.plugin.delete_network(self.context, network_ret3['id'])
+
+    def test_create_delete_router(self):
+        router1 = self._fake_router('fake1')
+        router_ret1 = self.plugin.create_router(self.context, router1)
+        router2 = self._fake_router('fake2')
+        router_ret2 = self.plugin.create_router(self.context, router2)
+
+        self.assertEqual('fake1', router_ret1[FLAVOR_ROUTER])
+        self.assertEqual('fake2', router_ret2[FLAVOR_ROUTER])
+
+        router_in_db1 = self.plugin.get_router(self.context, router_ret1['id'])
+        router_in_db2 = self.plugin.get_router(self.context, router_ret2['id'])
+
+        self.assertEqual('fake1', router_in_db1[FLAVOR_ROUTER])
+        self.assertEqual('fake2', router_in_db2[FLAVOR_ROUTER])
+
+        self.plugin.delete_router(self.context, router_ret1['id'])
+        self.plugin.delete_router(self.context, router_ret2['id'])
+        with self.assertRaises(l3.RouterNotFound):
+            self.plugin.get_router(self.context, router_ret1['id'])
 
     def test_extension_method(self):
         self.assertEqual('fake1', self.plugin.fake_func())

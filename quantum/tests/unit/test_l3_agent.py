@@ -86,6 +86,7 @@ class TestBasicRouterOperations(unittest.TestCase):
     def _test_internal_network_action(self, action):
         port_id = _uuid()
         router_id = _uuid()
+        network_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper)
         agent = l3_agent.L3NATAgent(self.conf)
         interface_name = agent.get_internal_device_name(port_id)
@@ -95,7 +96,8 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         if action == 'add':
             self.device_exists.return_value = False
-            agent.internal_network_added(ri, ex_gw_port, port_id, cidr, mac)
+            agent.internal_network_added(ri, ex_gw_port, network_id,
+                                         port_id, cidr, mac)
             self.assertEquals(self.mock_driver.plug.call_count, 1)
             self.assertEquals(self.mock_driver.init_l3.call_count, 1)
         elif action == 'remove':
@@ -120,6 +122,7 @@ class TestBasicRouterOperations(unittest.TestCase):
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
                       'id': _uuid(),
+                      'network_id': _uuid(),
                       'mac_address': 'ca:fe:de:ad:be:ef',
                       'ip_cidr': '20.0.0.30/24'}
 
@@ -180,9 +183,11 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         # return data so that state is built up
         ex_gw_port = {'id': _uuid(),
+                      'network_id': _uuid(),
                       'fixed_ips': [{'ip_address': '19.4.4.4',
                                      'subnet_id': _uuid()}]}
         internal_port = {'id': _uuid(),
+                         'network_id': _uuid(),
                          'admin_state_up': True,
                          'fixed_ips': [{'ip_address': '35.4.4.4',
                                         'subnet_id': _uuid()}],

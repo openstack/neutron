@@ -21,7 +21,7 @@ from sqlalchemy import Column, String
 from quantum.db import models_v2
 
 
-class Flavor(models_v2.model_base.BASEV2):
+class NetworkFlavor(models_v2.model_base.BASEV2):
     """Represents a binding of network_id to flavor."""
     flavor = Column(String(255))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id',
@@ -29,4 +29,15 @@ class Flavor(models_v2.model_base.BASEV2):
                            primary_key=True)
 
     def __repr__(self):
-        return "<Flavor(%s,%s)>" % (self.flavor, self.network_id)
+        return "<NetworkFlavor(%s,%s)>" % (self.flavor, self.network_id)
+
+
+class RouterFlavor(models_v2.model_base.BASEV2):
+    """Represents a binding of router_id to flavor."""
+    flavor = Column(String(255))
+    router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id',
+                                                       ondelete="CASCADE"),
+                          primary_key=True)
+
+    def __repr__(self):
+        return "<RouterFlavor(%s,%s)>" % (self.flavor, self.router_id)

@@ -1,8 +1,9 @@
 # -- Background
 
-This plugin support multiple plugin at same time. This plugin is for L3 connectivility
-between networks which are realized by different plugins.This plugin add new attribute 'flavor:id'.
-flavor:id correspond to specific plugin ( flavor-plugin mapping could be configureable by plugin_list config.
+This plugin supports multiple plugin at same time. This plugin is for L3 connectivility
+between networks which are realized by different plugins.This plugin adds new attributes 'flavor:network' and 'flavor:router".
+flavor:network corresponds to specific l2 plugin ( flavor-plugin mapping could be configureable by plugin_list config.
+flavor:router corresponds to specific l3 plugin ( flavor-plugin mapping could be configureable by l3_plugin_list config. Note that Metaplugin can provide l3 functionaliteis for l2 plugin which didn't support l3 extension yet.
 This plugin also support extensions. We can map extension to plugin by using extension_map config.
 
 [DATABASE]
@@ -23,9 +24,13 @@ reconnect_interval = 2
 ## This is list of flavor:quantum_plugins
 # extension method is used in the order of this list
 plugin_list= 'openvswitch:quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2,linuxbridge:quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2'
+# plugin for l3
+l3_plugin_list= 'openvswitch:quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2,linuxbridge:quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2'
 
 # Default value of flavor
 default_flavor = 'openvswitch'
+# Default value for l3
+default_l3_flavor = 'openvswitch'
 
 # supported extentions
 supported_extension_aliases = 'providernet'
@@ -41,6 +46,14 @@ extension_map = 'get_port_stats:nvp'
 meta_flavor_driver_mappings = openvswitch:quantum.agent.linux.interface.OVSInterfaceDriver, linuxbridge:quantum.agent.linux.interface.BridgeInterfaceDriver
 # interface driver for MetaPlugin
 interface_driver = quantum.agent.linux.interface.MetaInterfaceDriver
+
+[Proxy]
+auth_url = http://10.0.0.1:35357/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user =      quantum
+admin_password = password
+
 
 # -- Agent
 Agents for Metaplugin are in quantum/plugins/metaplugin/agent
@@ -70,12 +83,10 @@ Example flavor configration for ProxyPluginV2
 
 meta_flavor_driver_mappings = "openvswitch:quantum.agent.linux.interface.OVSInterfaceDriver,proxy:quantum.plugins.metaplugin.proxy_quantum_plugin.ProxyPluginV2"
 
-[Proxy]
-auth_url = http://10.0.0.1:35357/v2.0
-auth_region = RegionOne
-admin_tenant_name = service
-admin_user =      quantum
-admin_password = password
+- Limited L3 support
+In folsom version, l3 is an extension. There is no way to extend exntension attributes.
+so you can set flavor:router value but you can't get flavor:router value in API output.
+L3 agent dont's support flavor:router.
 
 
 
