@@ -148,7 +148,7 @@ class OVSQuantumOFPRyuAgent:
 
     def _all_bindings(self, db):
         """return interface id -> port which include network id bindings"""
-        return dict((port.device_id, port) for port in db.ports.all())
+        return dict((port.id, port) for port in db.ports.all())
 
     def _set_port_status(self, port, status):
         port.status = status
@@ -190,13 +190,13 @@ class OVSQuantumOFPRyuAgent:
                 if old_b == new_b:
                     continue
 
-                if not old_b:
+                if old_b:
                     LOG.info("Removing binding to net-id = %s for %s",
                              old_b, str(port))
                     if port.vif_id in all_bindings:
                         self._set_port_status(all_bindings[port.vif_id],
                                               constants.PORT_STATUS_DOWN)
-                if not new_b:
+                if new_b:
                     if port.vif_id in all_bindings:
                         self._set_port_status(all_bindings[port.vif_id],
                                               constants.PORT_STATUS_ACTIVE)
