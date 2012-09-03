@@ -50,6 +50,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
+    # Plugins, mixin classes implementing extension will register
+    # hooks into the dict below for "augmenting" the "core way" of
+    # building a query for retrieving objects from a model class.
+    # To this aim, the register_model_query_hook and unregister_query_hook
+    # from this class should be invoked
+    _model_query_hooks = {}
 
     def __init__(self):
         # NOTE(jkoelker) This is an incomlete implementation. Subclasses
@@ -73,20 +79,58 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _model_query(self, context, model):
         query = context.session.query(model)
-
+        # define basic filter condition for model query
         # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
         # NOTE(salvatore-orlando): unless the model allows for shared objects
+        query_filter = None
         if not context.is_admin and hasattr(model, 'tenant_id'):
             if hasattr(model, 'shared'):
-                query = query.filter((model.tenant_id == context.tenant_id) |
-                                     (model.shared))
+                query_filter = ((model.tenant_id == context.tenant_id) |
+                                (model.shared))
             else:
-                query = query.filter(model.tenant_id == context.tenant_id)
+                query_filter = (model.tenant_id == context.tenant_id)
+        # Execute query hooks registered from mixins and plugins
+        for _name, hooks in self._model_query_hooks.get(model,
+                                                        {}).iteritems():
+            query_hook = hooks.get('query')
+            filter_hook = hooks.get('filter')
+            if query_hook:
+                query = query_hook(self, context, model, query)
+            if filter_hook:
+                query_filter = filter_hook(self, context, model, query_filter)
+
+        # NOTE(salvatore-orlando): 'if query_filter' will try to evaluate the
+        # condition, raising an exception
+        if query_filter is not None:
+            query = query.filter(query_filter)
         return query
+
+    @classmethod
+    def register_model_query_hook(cls, model, name, query_hook, filter_hook):
+        """ register an hook to be invoked when a query is executed.
+
+        Add the hooks to the _model_query_hooks dict. Models are the keys
+        of this dict, whereas the value is another dict mapping hook names to
+        callables performing the hook.
+        Each hook has a "query" component, used to build the query expression
+        and a "filter" component, which is used to build the filter expression.
+
+        Query hooks take as input the query being built and return a
+        transformed query expression.
+
+        Filter hooks take as input the filter expression being built and return
+        a transformed filter expression
+        """
+        model_hooks = cls._model_query_hooks.get(model)
+        if not model_hooks:
+            # add key to dict
+            model_hooks = {}
+            cls._model_query_hooks[model] = model_hooks
+        model_hooks[name] = {'query': query_hook, 'filter': filter_hook}
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
-        return query.filter_by(id=id).one()
+        return query.filter(model.id == id).one()
 
     def _get_network(self, context, id):
         try:

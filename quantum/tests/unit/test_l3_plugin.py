@@ -21,6 +21,7 @@
 
 import contextlib
 import copy
+import itertools
 import logging
 import unittest
 
@@ -32,8 +33,10 @@ from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum.common import utils
+from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
+from quantum.db import models_v2
 from quantum.extensions import extensions
 from quantum.extensions import l3
 from quantum import manager
@@ -266,6 +269,20 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
 
 
 class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
+
+    def _create_network(self, fmt, name, admin_status_up, **kwargs):
+        """ Override the routine for allowing the router:external attribute """
+        # attributes containing a colon should be passed with
+        # a double underscore
+        new_args = dict(itertools.izip(map(lambda x: x.replace('__', ':'),
+                                           kwargs),
+                                       kwargs.values()))
+        arg_list = (l3.EXTERNAL,)
+        return super(L3NatDBTestCase, self)._create_network(fmt,
+                                                            name,
+                                                            admin_status_up,
+                                                            arg_list=arg_list,
+                                                            **new_args)
 
     def setUp(self):
         test_config['plugin_name_v2'] = (
@@ -567,7 +584,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
-                     {'network': {'router:external': True}})
+                     {'network': {l3.EXTERNAL: True}})
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None):
@@ -794,9 +811,57 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 self.assertEquals(len(body['networks']), 2)
 
                 body = self._list('networks',
-                                  query_params="router:external=True")
+                                  query_params="%s=True" % l3.EXTERNAL)
                 self.assertEquals(len(body['networks']), 1)
 
                 body = self._list('networks',
-                                  query_params="router:external=False")
+                                  query_params="%s=False" % l3.EXTERNAL)
                 self.assertEquals(len(body['networks']), 1)
+
+    def test_network_filter_hook_admin_context(self):
+        plugin = manager.QuantumManager.get_plugin()
+        ctx = context.Context(None, None, is_admin=True)
+        model = models_v2.Network
+        conditions = plugin._network_filter_hook(ctx, model, [])
+        self.assertEqual(conditions, [])
+
+    def test_network_filter_hook_nonadmin_context(self):
+        plugin = manager.QuantumManager.get_plugin()
+        ctx = context.Context('edinson', 'cavani')
+        model = models_v2.Network
+        txt = "externalnetworks.network_id IS NOT NULL"
+        conditions = plugin._network_filter_hook(ctx, model, [])
+        self.assertEqual(conditions.__str__(), txt)
+        # Try to concatenate confitions
+        conditions = plugin._network_filter_hook(ctx, model, conditions)
+        self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt))
+
+    def test_create_port_external_network_non_admin_fails(self):
+        with self.network(router__external=True) as ext_net:
+            with self.subnet(network=ext_net) as ext_subnet:
+                with self.assertRaises(exc.HTTPClientError) as ctx_manager:
+                    with self.port(subnet=ext_subnet,
+                                   set_context='True',
+                                   tenant_id='noadmin'):
+                        pass
+                    self.assertEquals(ctx_manager.exception.code, 403)
+
+    def test_create_port_external_network_admin_suceeds(self):
+        with self.network(router__external=True) as ext_net:
+            with self.subnet(network=ext_net) as ext_subnet:
+                    with self.port(subnet=ext_subnet) as port:
+                        self.assertEqual(port['port']['network_id'],
+                                         ext_net['network']['id'])
+
+    def test_create_external_network_non_admin_fails(self):
+        with self.assertRaises(exc.HTTPClientError) as ctx_manager:
+            with self.network(router__external=True,
+                              set_context='True',
+                              tenant_id='noadmin'):
+                pass
+            self.assertEquals(ctx_manager.exception.code, 403)
+
+    def test_create_external_network_admin_suceeds(self):
+        with self.network(router__external=True) as ext_net:
+            self.assertEqual(ext_net['network'][l3.EXTERNAL],
+                             True)

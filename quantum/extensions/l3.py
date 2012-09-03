@@ -114,13 +114,16 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
 }
 
+EXTERNAL = 'router:external'
 EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {'router:external': {'allow_post': True,
-                                     'allow_put': True,
-                                     'default': attr.ATTR_NOT_SPECIFIED,
-                                     'is_visible': True,
-                                     'convert_to': attr.convert_to_boolean,
-                                     'validate': {'type:boolean': None}}}}
+    'networks': {EXTERNAL: {'allow_post': True,
+                            'allow_put': True,
+                            'default': attr.ATTR_NOT_SPECIFIED,
+                            'is_visible': True,
+                            'convert_to': attr.convert_to_boolean,
+                            'validate': {'type:boolean': None},
+                            'enforce_policy': True,
+                            'required_by_policy': True}}}
 
 l3_quota_opts = [
     cfg.IntOpt('quota_router',

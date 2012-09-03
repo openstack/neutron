@@ -29,6 +29,7 @@ import quantum
 from quantum.common import exceptions
 from quantum.common import utils
 from quantum import context
+from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import policy as common_policy
 from quantum import policy
@@ -218,21 +219,21 @@ class QuantumPolicyTestCase(unittest.TestCase):
         self.rules = {
             "admin_or_network_owner": [["role:admin"],
                                        ["tenant_id:%(network_tenant_id)s"]],
+            "admin_or_owner": [["role:admin"], ["tenant_id:%(tenant_id)s"]],
             "admin_only": [["role:admin"]],
             "regular_user": [["role:user"]],
+            "shared": [["field:networks:shared=True"]],
+            "external": [["field:networks:router:external=True"]],
             "default": [],
 
-            "networks:private:read": [["rule:admin_only"]],
-            "networks:private:write": [["rule:admin_only"]],
-            "networks:shared:read": [["rule:regular_user"]],
-            "networks:shared:write": [["rule:admin_only"]],
-
-            "create_network": [],
+            "create_network": [["rule:admin_or_owner"]],
             "create_network:shared": [["rule:admin_only"]],
             "update_network": [],
             "update_network:shared": [["rule:admin_only"]],
 
-            "get_network": [],
+            "get_network": [["rule:admin_or_owner"],
+                            ["rule:shared"],
+                            ["rule:external"]],
             "create_port:mac": [["rule:admin_or_network_owner"]],
         }
 
@@ -252,37 +253,37 @@ class QuantumPolicyTestCase(unittest.TestCase):
         self.patcher.stop()
         policy.reset()
 
-    def test_nonadmin_write_on_private_returns_403(self):
-        action = "update_network"
-        user_context = context.Context('', "user", roles=['user'])
-        # 384 is the int value of the bitmask for rw------
-        target = {'tenant_id': 'the_owner', 'shared': False}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          user_context, action, target, None)
+    def _test_action_on_attr(self, context, action, attr, value,
+                             exception=None):
+        action = "%s_network" % action
+        target = {'tenant_id': 'the_owner', attr: value}
+        if exception:
+            self.assertRaises(exception, policy.enforce,
+                              context, action, target, None)
+        else:
+            result = policy.enforce(context, action, target, None)
+            self.assertEqual(result, None)
 
-    def test_nonadmin_read_on_private_returns_403(self):
-        action = "get_network"
+    def _test_nonadmin_action_on_attr(self, action, attr, value,
+                                      exception=None):
         user_context = context.Context('', "user", roles=['user'])
-        # 384 is the int value of the bitmask for rw------
-        target = {'tenant_id': 'the_owner', 'shared': False}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          user_context, action, target, None)
+        self._test_action_on_attr(user_context, action, attr,
+                                  value, exception)
 
-    def test_nonadmin_write_on_shared_returns_403(self):
-        action = "update_network"
-        user_context = context.Context('', "user", roles=['user'])
-        # 384 is the int value of the bitmask for rw-r--r--
-        target = {'tenant_id': 'the_owner', 'shared': True}
-        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          user_context, action, target, None)
+    def test_nonadmin_write_on_private_fails(self):
+        self._test_nonadmin_action_on_attr('create', 'shared', False,
+                                           exceptions.PolicyNotAuthorized)
 
-    def test_nonadmin_read_on_shared_returns_200(self):
-        action = "get_network"
-        user_context = context.Context('', "user", roles=['user'])
-        # 420 is the int value of the bitmask for rw-r--r--
-        target = {'tenant_id': 'the_owner', 'shared': True}
-        result = policy.enforce(user_context, action, target, None)
-        self.assertEqual(result, None)
+    def test_nonadmin_read_on_private_fails(self):
+        self._test_nonadmin_action_on_attr('get', 'shared', False,
+                                           exceptions.PolicyNotAuthorized)
+
+    def test_nonadmin_write_on_shared_fails(self):
+        self._test_nonadmin_action_on_attr('create', 'shared', True,
+                                           exceptions.PolicyNotAuthorized)
+
+    def test_nonadmin_read_on_shared_succeeds(self):
+        self._test_nonadmin_action_on_attr('get', 'shared', True)
 
     def _test_enforce_adminonly_attribute(self, action):
         admin_context = context.get_admin_context()
@@ -298,7 +299,7 @@ class QuantumPolicyTestCase(unittest.TestCase):
 
     def test_enforce_adminoly_attribute_nonadminctx_returns_403(self):
         action = "create_network"
-        target = {'shared': True}
+        target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target, None)
 

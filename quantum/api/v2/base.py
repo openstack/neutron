@@ -43,6 +43,8 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.InvalidSharedSetting: webob.exc.HTTPConflict,
              exceptions.HostRoutesExhausted: webob.exc.HTTPBadRequest,
              exceptions.DNSNameServersExhausted: webob.exc.HTTPBadRequest,
+             # Some plugins enforce policies as well
+             exceptions.PolicyNotAuthorized: webob.exc.HTTPForbidden
              }
 
 QUOTAS = quota.QUOTAS

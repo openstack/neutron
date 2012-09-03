@@ -184,11 +184,13 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             req.environ['quantum.context'] = kwargs['context']
         return req.get_response(self.api)
 
-    def _create_network(self, fmt, name, admin_status_up, **kwargs):
+    def _create_network(self, fmt, name, admin_status_up,
+                        arg_list=None, **kwargs):
         data = {'network': {'name': name,
                             'admin_state_up': admin_status_up,
                             'tenant_id': self._tenant_id}}
-        for arg in ('admin_state_up', 'tenant_id', 'shared'):
+        for arg in (('admin_state_up', 'tenant_id', 'shared') +
+                    (arg_list or ())):
             # Arg must be present and not empty
             if arg in kwargs and kwargs[arg]:
                 data['network'][arg] = kwargs[arg]
@@ -315,10 +317,6 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
-    def _make_port(self, fmt, net_id, **kwargs):
-        res = self._create_port(fmt, net_id, **kwargs)
-        return self.deserialize(fmt, res)
-
     def _api_for_resource(self, resource):
         if resource in ['networks', 'subnets', 'ports']:
             return self.api
@@ -440,15 +438,24 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         if not subnet:
             with self.subnet() as subnet:
                 net_id = subnet['subnet']['network_id']
-                port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
-                                       **kwargs)
+                res = self._create_port(fmt, net_id, **kwargs)
+                port = self.deserialize(fmt, res)
+                # Things can go wrong - raise HTTP exc with res code only
+                # so it can be caught by unit tests
+                if res.status_int >= 400:
+                    raise webob.exc.HTTPClientError(code=res.status_int)
+
                 yield port
                 if not no_delete:
                     self._delete('ports', port['port']['id'])
         else:
             net_id = subnet['subnet']['network_id']
-            port = self._make_port(fmt, net_id, fixed_ips=fixed_ips,
-                                   **kwargs)
+            res = self._create_port(fmt, net_id, **kwargs)
+            port = self.deserialize(fmt, res)
+            # Things can go wrong - raise HTTP exc with res code only
+            # so it can be caught by unit tests
+            if res.status_int >= 400:
+                raise webob.exc.HTTPClientError(code=res.status_int)
             yield port
             if not no_delete:
                 self._delete('ports', port['port']['id'])
@@ -801,7 +808,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                    admin_status_up=True)
         network = self.deserialize(fmt, res)
         network_id = network['network']['id']
-        port = self._make_port(fmt, network_id, device_owner='network:dhcp')
+        self._create_port(fmt, network_id, device_owner='network:dhcp')
         req = self.new_delete_request('networks', network_id)
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)
@@ -1822,8 +1829,9 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         network_id = network['network']['id']
         subnet = self._make_subnet(fmt, network, gateway_ip,
                                    cidr, ip_version=4)
-        port = self._make_port(fmt, network['network']['id'],
-                               device_owner='network:dhcp')
+        self._create_port(fmt,
+                          network['network']['id'],
+                          device_owner='network:dhcp')
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 204)

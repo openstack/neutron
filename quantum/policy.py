@@ -18,12 +18,16 @@
 """
 Policy engine for quantum.  Largely copied from nova.
 """
+import logging
+
 from quantum.api.v2 import attributes
 from quantum.common import exceptions
 from quantum.openstack.common import cfg
 import quantum.common.utils as utils
 from quantum.openstack.common import policy
 
+
+LOG = logging.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
 
@@ -49,14 +53,15 @@ def init():
                            reload_func=_set_brain)
 
 
+def get_resource_and_action(action):
+    """ Extract resource and action (write, read) from api operation """
+    data = action.split(':', 1)[0].split('_', 1)
+    return ("%ss" % data[-1], data[0] != 'get')
+
+
 def _set_brain(data):
     default_rule = 'default'
     policy.set_brain(policy.Brain.load_json(data, default_rule))
-
-
-def _get_resource_and_action(action):
-    data = action.split(':', 1)[0].split('_', 1)
-    return ("%ss" % data[-1], data[0] != 'get')
 
 
 def _is_attribute_explicitly_set(attribute_name, resource, target):
@@ -76,7 +81,7 @@ def _build_target(action, original_target, plugin, context):
     "parent" resource of the targeted one.
     """
     target = original_target.copy()
-    resource, _w = _get_resource_and_action(action)
+    resource, _a = get_resource_and_action(action)
     hierarchy_info = attributes.RESOURCE_HIERARCHY_MAP.get(resource, None)
     if hierarchy_info and plugin:
         # use the 'singular' version of the resource name
@@ -88,31 +93,6 @@ def _build_target(action, original_target, plugin, context):
         data = f(context, target[parent_id], fields=['tenant_id'])
         target['%s_tenant_id' % parent_resource] = data['tenant_id']
     return target
-
-
-def _create_access_rule_match(resource, is_write, shared):
-    if shared == resource[attributes.SHARED]:
-        return ('rule:%s:%s:%s' % (resource,
-                                   shared and 'shared' or 'private',
-                                   is_write and 'write' or 'read'), )
-
-
-def _build_perm_match(action, target):
-    """Create the permission rule match.
-
-    Given the current access right on a network (shared/private), and
-    the type of the current operation (read/write), builds a match
-    rule of the type <resource>:<sharing_mode>:<operation_type>
-    """
-    resource, is_write = _get_resource_and_action(action)
-    res_map = attributes.RESOURCE_ATTRIBUTE_MAP
-    if (resource in res_map and
-            attributes.SHARED in res_map[resource] and
-            attributes.SHARED in target):
-        return ('rule:%s:%s:%s' % (resource,
-                                   target[attributes.SHARED]
-                                   and 'shared' or 'private',
-                                   is_write and 'write' or 'read'), )
 
 
 def _build_match_list(action, target):
@@ -127,24 +107,48 @@ def _build_match_list(action, target):
     """
 
     match_list = ('rule:%s' % action,)
-    resource, is_write = _get_resource_and_action(action)
-    # assigning to variable with short name for improving readability
-    res_map = attributes.RESOURCE_ATTRIBUTE_MAP
-    if resource in res_map:
-        for attribute_name in res_map[resource]:
-            if _is_attribute_explicitly_set(attribute_name,
-                                            res_map[resource],
-                                            target):
-                attribute = res_map[resource][attribute_name]
-                if 'enforce_policy' in attribute and is_write:
-                    match_list += ('rule:%s:%s' % (action,
-                                                   attribute_name),)
-    # add permission-based rule (for shared resources)
-    perm_match = _build_perm_match(action, target)
-    if perm_match:
-        match_list += perm_match
-    # the policy engine must AND between all the rules
+    resource, is_write = get_resource_and_action(action)
+    if is_write:
+        # assigning to variable with short name for improving readability
+        res_map = attributes.RESOURCE_ATTRIBUTE_MAP
+        if resource in res_map:
+            for attribute_name in res_map[resource]:
+                if _is_attribute_explicitly_set(attribute_name,
+                                                res_map[resource],
+                                                target):
+                    attribute = res_map[resource][attribute_name]
+                    if 'enforce_policy' in attribute and is_write:
+                        match_list += ('rule:%s:%s' % (action,
+                                                       attribute_name),)
     return [match_list]
+
+
+@policy.register('field')
+def check_field(brain, match_kind, match, target_dict, cred_dict):
+    # If this method is invoked for the wrong kind of match
+    # which should never happen, just skip the check and don't
+    # fail the policy evaluation
+    if match_kind != 'field':
+        LOG.warning("Field check function invoked with wrong match_kind:%s",
+                    match_kind)
+        return True
+    resource, field_value = match.split(':', 1)
+    field, value = field_value.split('=', 1)
+    target_value = target_dict.get(field)
+    # target_value might be a boolean, explicitly compare with None
+    if target_value is None:
+        LOG.debug("Unable to find requested field: %s in target: %s",
+                  field, target_dict)
+        return False
+    # Value migth need conversion - we need help from the attribute map
+    conv_func = attributes.RESOURCE_ATTRIBUTE_MAP[resource][field].get(
+        'convert_to', lambda x: x)
+    if target_value != conv_func(value):
+        LOG.debug("%s does not match the value in the target object:%s",
+                  conv_func(value), target_value)
+        return False
+    # If we manage to get here, the policy check is successful
+    return True
 
 
 def check(context, action, target, plugin=None):
@@ -184,10 +188,8 @@ def enforce(context, action, target, plugin=None):
     """
 
     init()
-
     real_target = _build_target(action, target, plugin, context)
     match_list = _build_match_list(action, real_target)
     credentials = context.to_dict()
-
     policy.enforce(match_list, real_target, credentials,
                    exceptions.PolicyNotAuthorized, action=action)

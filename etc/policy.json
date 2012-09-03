@@ -3,6 +3,8 @@
     "admin_or_network_owner": [["role:admin"], ["tenant_id:%(network_tenant_id)s"]],
     "admin_only": [["role:admin"]],
     "regular_user": [],
+    "shared": [["field:networks:shared=True"]],
+    "external": [["field:networks:router:external=True"]],
     "default": [["rule:admin_or_owner"]],
 
     "extension:provider_network:view": [["rule:admin_only"]],
@@ -11,27 +13,22 @@
     "extension:router:view": [["rule:regular_user"]],
     "extension:router:set": [["rule:admin_only"]],
 
-    "networks:private:read": [["rule:admin_or_owner"]],
-    "networks:private:write": [["rule:admin_or_owner"]],
-    "networks:shared:read": [["rule:regular_user"]],
-    "networks:shared:write": [["rule:admin_only"]],
-
     "subnets:private:read": [["rule:admin_or_owner"]],
     "subnets:private:write": [["rule:admin_or_owner"]],
     "subnets:shared:read": [["rule:regular_user"]],
     "subnets:shared:write": [["rule:admin_only"]],
 
     "create_subnet": [["rule:admin_or_network_owner"]],
-    "get_subnet": [],
+    "get_subnet": [["rule:admin_or_owner"], ["rule:shared"]],
     "update_subnet": [["rule:admin_or_network_owner"]],
     "delete_subnet": [["rule:admin_or_network_owner"]],
 
     "create_network": [],
-    "get_network": [],
+    "get_network": [["rule:admin_or_owner"], ["rule:shared"], ["rule:external"]],
     "create_network:shared": [["rule:admin_only"]],
-    "update_network": [],
-    "update_network:shared": [["rule:admin_only"]],
-    "delete_network": [],
+    "create_network:router:external": [["rule:admin_only"]],
+    "update_network": [["rule:admin_or_owner"]],
+    "delete_network": [["rule:admin_or_owner"]],
 
     "create_port": [],
     "create_port:mac_address": [["rule:admin_or_network_owner"]],
