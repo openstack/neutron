@@ -112,6 +112,7 @@ setuptools.setup(
             'quantum-nec-agent = '
             'quantum.plugins.nec.agent.nec_quantum_agent:main',
             'quantum-server = quantum.server:main',
+            'quantum-debug = quantum.debug.shell:main',
         ]
     },
 )
