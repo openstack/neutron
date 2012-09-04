@@ -25,6 +25,7 @@ from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.db.dhcp_rpc_base import DhcpRpcCallbackMixin
 from quantum.openstack.common import cfg
@@ -37,7 +38,11 @@ from quantum.plugins.ryu.db import api_v2 as db_api_v2
 LOG = logging.getLogger(__name__)
 
 
-class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                         l3_db.L3_NAT_db_mixin):
+
+    supported_extension_aliases = ["os-quantum-router"]
+
     def __init__(self, configfile=None):
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
@@ -83,3 +88,11 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         result = super(RyuQuantumPluginV2, self).delete_network(context, id)
         self.client.delete_network(id)
         return result
+
+    def delete_port(self, context, id, l3_port_check=True):
+        # if needed, check to see if this is a port owned by
+        # and l3-router. If so, we should prevent deletion.
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+        self.disassociate_floatingips(context, id)
+        return super(RyuQuantumPluginV2, self).delete_port(context, id)
