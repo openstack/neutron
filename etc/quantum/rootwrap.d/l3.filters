@@ -12,8 +12,10 @@
 sysctl: CommandFilter, /sbin/sysctl, root
 
 # ip_lib
-ip: CommandFilter, /sbin/ip, root
-ip_usr: CommandFilter, /usr/sbin/ip, root
+ip: IpFilter, /sbin/ip, root
+ip_usr: IpFilter, /usr/sbin/ip, root
+ip_exec: IpNetnsExecFilter, /sbin/ip, root
+ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root
 
 # ovs_lib (if OVSInterfaceDriver is used)
 ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root

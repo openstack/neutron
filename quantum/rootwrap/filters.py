@@ -44,6 +44,11 @@ class CommandFilter(object):
         return None
 
 
+class ExecCommandFilter(CommandFilter):
+    def exec_args(self, userargs):
+        return []
+
+
 class RegExpFilter(CommandFilter):
     """Command filter doing regexp matching for every argument"""
 
@@ -163,3 +168,29 @@ class ReadFileFilter(CommandFilter):
         if len(userargs) != 2:
             return False
         return True
+
+
+class IpFilter(CommandFilter):
+    """Specific filter for the ip utility to that does not match exec."""
+
+    def match(self, userargs):
+        if userargs[0] == 'ip':
+            if userargs[1] == 'netns':
+                if userargs[2] in ('list', 'add', 'delete'):
+                    return True
+                else:
+                    return False
+            else:
+                return True
+
+
+class IpNetnsExecFilter(ExecCommandFilter):
+    """Specific filter for the ip utility to that does match exec."""
+    def match(self, userargs):
+        if userargs[:3] == ['ip', 'netns', 'exec']:
+            return True
+        else:
+            return False
+
+    def exec_args(self, userargs):
+        return userargs[4:]
