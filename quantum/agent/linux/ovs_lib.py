@@ -55,7 +55,7 @@ class OVSBridge:
         mac = 'attached-mac="(?P<vif_mac>([a-fA-F\d]{2}:){5}([a-fA-F\d]{2}))"'
         iface = 'iface-id="(?P<vif_id>[^"]+)"'
         name = 'name\s*:\s"(?P<port_name>[^"]*)"'
-        port = 'ofport\s*:\s(?P<ofport>\d+)'
+        port = 'ofport\s*:\s(?P<ofport>-?\d+)'
         _re = ('%(external)s:\s{ ( %(mac)s,? | %(iface)s,? | . )* }'
                ' \s+ %(name)s \s+ %(port)s' % locals())
         return re.compile(_re, re.M | re.X)
