@@ -19,11 +19,14 @@
 
 from quantum.openstack.common import cfg
 
-DEFAULT_VLAN_RANGES = ['default:1000:2999']
-DEFAULT_INTERFACE_MAPPINGS = ['default:eth1']
+DEFAULT_VLAN_RANGES = []
+DEFAULT_INTERFACE_MAPPINGS = []
 
 
 vlan_opts = [
+    cfg.StrOpt('tenant_network_type', default='local',
+               help="Network type for tenant networks "
+               "(local, vlan, or none)"),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
                 help="List of <physical_network>:<vlan_min>:<vlan_max> "

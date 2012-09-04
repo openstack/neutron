@@ -137,6 +137,10 @@ class TunnelIdInUse(InUse):
                 "The tunnel ID %(tunnel_id)s is in use.")
 
 
+class TenantNetworksDisabled(QuantumException):
+    message = _("Tenant network creation is not enabled.")
+
+
 class ResourceExhausted(QuantumException):
     pass
 

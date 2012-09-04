@@ -229,7 +229,7 @@ class OVSQuantumAgent(object):
         '''Provisions a local VLAN.
 
         :param net_uuid: the uuid of the network associated with this vlan.
-        :param network_type: the type of the network ('gre', 'vlan', 'flat')
+        :param network_type: the network type ('gre', 'vlan', 'flat', 'local')
         :param physical_network: the physical network for 'vlan' or 'flat'
         :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         '''
@@ -277,6 +277,9 @@ class OVSQuantumAgent(object):
                                  in_port=self.int_ofports[physical_network],
                                  dl_vlan=segmentation_id,
                                  actions="mod_vlan_vid:%s,normal" % lvid)
+        elif network_type == constants.TYPE_LOCAL:
+            # no flows needed for local networks
+            pass
         else:
             LOG.error("provisioning unknown network type %s for net-id=%s" %
                       (network_type, net_uuid))
@@ -311,6 +314,9 @@ class OVSQuantumAgent(object):
             br = self.int_br
             br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
                             dl_vlan=lvm.segmentation_id)
+        elif lvm.network_type == constants.TYPE_LOCAL:
+            # no flows needed for local networks
+            pass
         else:
             LOG.error("reclaiming unknown network type %s for net-id=%s" %
                       (lvm.network_type, net_uuid))
@@ -325,7 +331,7 @@ class OVSQuantumAgent(object):
 
         :param port: a ovslib.VifPort object.
         :param net_uuid: the net_uuid this port is to be associated with.
-        :param network_type: the type of the network ('gre', 'vlan', 'flat')
+        :param network_type: the network type ('gre', 'vlan', 'flat', 'local')
         :param physical_network: the physical network for 'vlan' or 'flat'
         :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         '''
