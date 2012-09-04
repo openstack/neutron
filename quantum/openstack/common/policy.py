@@ -173,7 +173,7 @@ class Brain(object):
             LOG.warning(_("Inheritance-based rules are deprecated; update "
                           "_check_%s") % match_kind)
             func = (lambda brain, kind, value, target, cred:
-                    old_func(value, target, cred))
+                        old_func(value, target, cred))
 
         if not func:
             LOG.error(_("No handler for matches of kind %s") % match_kind)
@@ -296,5 +296,5 @@ def _check_generic(brain, match_kind, match, target_dict, cred_dict):
     # TODO(termie): do dict inspection via dot syntax
     match = match % target_dict
     if match_kind in cred_dict:
-        return match == cred_dict[match_kind]
+        return match == unicode(cred_dict[match_kind])
     return False

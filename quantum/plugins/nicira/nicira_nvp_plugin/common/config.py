@@ -61,10 +61,12 @@ class ClusterConfigOptions(cfg.CommonConfigOpts):
         """
         if group is None and name in self._groups:
             return self.GroupAttr(self, self._get_group(name))
+
         info = self._get_opt_info(name, group)
-        default, opt, override = [info[k] for k in sorted(info.keys())]
-        if override is not None:
-            return override
+        opt = info['opt']
+
+        if 'override' in info:
+            return info['override']
 
         values = []
         if self._cparser is not None:
@@ -96,8 +98,8 @@ class ClusterConfigOptions(cfg.CommonConfigOpts):
         if values:
             return values
 
-        if default is not None:
-            return default
+        if 'default' in info:
+            return info['default']
 
         return opt.default
 

@@ -93,13 +93,13 @@ def set_time_override(override_time=datetime.datetime.utcnow()):
 
 
 def advance_time_delta(timedelta):
-    """Advance overriden time using a datetime.timedelta."""
+    """Advance overridden time using a datetime.timedelta."""
     assert(not utcnow.override_time is None)
     utcnow.override_time += timedelta
 
 
 def advance_time_seconds(seconds):
-    """Advance overriden time by seconds."""
+    """Advance overridden time by seconds."""
     advance_time_delta(datetime.timedelta(0, seconds))
 
 
@@ -122,6 +122,5 @@ def marshall_now(now=None):
 def unmarshall_time(tyme):
     """Unmarshall a datetime dict."""
     return datetime.datetime(day=tyme['day'], month=tyme['month'],
-                             year=tyme['year'], hour=tyme['hour'],
-                             minute=tyme['minute'], second=tyme['second'],
-                             microsecond=tyme['microsecond'])
+                 year=tyme['year'], hour=tyme['hour'], minute=tyme['minute'],
+                 second=tyme['second'], microsecond=tyme['microsecond'])
