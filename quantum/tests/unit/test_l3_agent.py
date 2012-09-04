@@ -73,7 +73,8 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def testRouterInfoCreate(self):
         id = _uuid()
-        ri = l3_agent.RouterInfo(id, self.conf.root_helper)
+        ri = l3_agent.RouterInfo(id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
 
         self.assertTrue(ri.ns_name().endswith(id))
 
@@ -87,7 +88,8 @@ class TestBasicRouterOperations(unittest.TestCase):
         port_id = _uuid()
         router_id = _uuid()
         network_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper)
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
         agent = l3_agent.L3NATAgent(self.conf)
         interface_name = agent.get_internal_device_name(port_id)
         cidr = '99.0.1.9/24'
@@ -115,7 +117,8 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def _test_external_gateway_action(self, action):
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper)
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
         agent = l3_agent.L3NATAgent(self.conf)
         internal_cidrs = ['100.0.1.0/24', '200.74.0.0/16']
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -148,7 +151,8 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def _test_floating_ip_action(self, action):
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper)
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
         agent = l3_agent.L3NATAgent(self.conf)
         floating_ip = '20.0.0.100'
         fixed_ip = '10.0.0.23'
@@ -179,7 +183,8 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         agent = l3_agent.L3NATAgent(self.conf)
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper)
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
 
         # return data so that state is built up
         ex_gw_port = {'id': _uuid(),
