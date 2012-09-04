@@ -287,12 +287,13 @@ class OVSQuantumAgent(object):
         :param net_uuid: the network uuid associated with this vlan.
         :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
             vif_ids) mapping.'''
-        LOG.info("reclaming vlan = %s from net-id = %s" % (lvm.vlan, net_uuid))
+        LOG.info("reclaiming vlan = %s from net-id = %s" %
+                 (lvm.vlan, net_uuid))
 
         if lvm.network_type == constants.TYPE_GRE:
             self.tun_br.delete_flows(tun_id=lvm.segmentation_id)
             self.tun_br.delete_flows(dl_vlan=lvm.vlan)
-        elif network_type == constants.TYPE_FLAT:
+        elif lvm.network_type == constants.TYPE_FLAT:
             # outbound
             br = self.phys_brs[lvm.physical_network]
             br.delete_flows(in_port=self.phys_ofports[lvm.physical_network],
@@ -301,7 +302,7 @@ class OVSQuantumAgent(object):
             br = self.int_br
             br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
                             dl_vlan=0xffff)
-        elif network_type == constants.TYPE_VLAN:
+        elif lvm.network_type == constants.TYPE_VLAN:
             # outbound
             br = self.phys_brs[lvm.physical_network]
             br.delete_flows(in_port=self.phys_ofports[lvm.physical_network],
