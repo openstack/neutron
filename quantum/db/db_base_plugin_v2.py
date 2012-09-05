@@ -693,12 +693,14 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             first_ip = net.first + 1
             last_ip = net.last - 1
             gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
-
-            if gw_ip > first_ip:
+            # Use the gw_ip to find a point for splitting allocation pools
+            # for this subnet
+            split_ip = min(max(gw_ip, net.first), net.last)
+            if split_ip > first_ip:
                 pools.append({'start': str(netaddr.IPAddress(first_ip)),
-                              'end': str(netaddr.IPAddress(gw_ip - 1))})
-            if gw_ip < last_ip:
-                pools.append({'start': str(netaddr.IPAddress(gw_ip + 1)),
+                              'end': str(netaddr.IPAddress(split_ip - 1))})
+            if split_ip < last_ip:
+                pools.append({'start': str(netaddr.IPAddress(split_ip + 1)),
                               'end': str(netaddr.IPAddress(last_ip))})
             # return auto-generated pools
             # no need to check for their validity
