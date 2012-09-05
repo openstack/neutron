@@ -120,16 +120,22 @@ class DhcpAgent(object):
         of the network.
 
         """
-        if not self.cache.get_network_by_id(network_id):
+        old_network = self.cache.get_network_by_id(network_id)
+        if not old_network:
             # DHCP current not running for network.
-            self.enable_dhcp_helper(network_id)
+            return self.enable_dhcp_helper(network_id)
 
         network = self.plugin_rpc.get_network_info(network_id)
-        for subnet in network.subnets:
-            if subnet.enable_dhcp:
-                self.cache.put(network)
-                self.call_driver('enable', network)
-                break
+
+        old_cidrs = set(s.cidr for s in old_network.subnets if s.enable_dhcp)
+        new_cidrs = set(s.cidr for s in network.subnets if s.enable_dhcp)
+
+        if new_cidrs and old_cidrs == new_cidrs:
+            self.call_driver('reload_allocations', network)
+            self.cache.put(network)
+        elif new_cidrs:
+            self.call_driver('restart', network)
+            self.cache.put(network)
         else:
             self.disable_dhcp_helper(network.id)
 

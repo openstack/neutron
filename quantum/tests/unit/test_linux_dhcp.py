@@ -164,8 +164,8 @@ class TestDhcpBase(unittest.TestCase):
             def enable(self):
                 self.called.append('enable')
 
-            def disable(self):
-                self.called.append('disable')
+            def disable(self, retain_port=False):
+                self.called.append('disable %s' % retain_port)
 
             def reload_allocations(self):
                 pass
@@ -176,7 +176,7 @@ class TestDhcpBase(unittest.TestCase):
 
         c = SubClass()
         c.restart()
-        self.assertEquals(c.called, ['disable', 'enable'])
+        self.assertEquals(c.called, ['disable True', 'enable'])
 
 
 class LocalChild(dhcp.DhcpLocalProcess):
@@ -188,6 +188,9 @@ class LocalChild(dhcp.DhcpLocalProcess):
 
     def reload_allocations(self):
         self.called.append('reload')
+
+    def restart(self):
+        self.called.append('restart')
 
     def spawn_process(self):
         self.called.append('spawn')
@@ -264,7 +267,7 @@ class TestDhcpLocalProcess(TestBase):
                             device_delegate=delegate)
             lp.enable()
 
-            self.assertEqual(lp.called, ['reload'])
+            self.assertEqual(lp.called, ['restart'])
 
     def test_enable(self):
         delegate = mock.Mock(return_value='tap0')
@@ -312,6 +315,23 @@ class TestDhcpLocalProcess(TestBase):
                 lp.disable()
                 msg = log.call_args[0][0]
                 self.assertIn('No DHCP', msg)
+
+    def test_disable_retain_port(self):
+        attrs_to_mock = dict([(a, mock.DEFAULT) for a in
+                              ['active', 'interface_name', 'pid']])
+        delegate = mock.Mock()
+        network = FakeDualNetwork()
+        with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
+            mocks['active'].__get__ = mock.Mock(return_value=True)
+            mocks['pid'].__get__ = mock.Mock(return_value=5)
+            mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
+            lp = LocalChild(self.conf, network, device_delegate=delegate,
+                            namespace='qdhcp-ns')
+            lp.disable(retain_port=True)
+
+        self.assertFalse(delegate.called)
+        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo')
 
     def test_disable(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in

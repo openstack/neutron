@@ -76,12 +76,12 @@ class DhcpBase(object):
         """Enables DHCP for this network."""
 
     @abc.abstractmethod
-    def disable(self):
+    def disable(self, retain_port=False):
         """Disable dhcp for this network."""
 
     def restart(self):
         """Restart the dhcp service for the network."""
-        self.disable()
+        self.disable(retain_port=True)
         self.enable()
 
     @abc.abstractproperty
@@ -108,12 +108,12 @@ class DhcpLocalProcess(DhcpBase):
         interface_name = self.device_delegate.setup(self.network,
                                                     reuse_existing=True)
         if self.active:
-            self.reload_allocations()
+            self.restart()
         elif self._enable_dhcp():
             self.interface_name = interface_name
             self.spawn_process()
 
-    def disable(self):
+    def disable(self, retain_port=False):
         """Disable DHCP for this network by killing the local process."""
         pid = self.pid
 
@@ -125,7 +125,8 @@ class DhcpLocalProcess(DhcpBase):
             else:
                 utils.execute(cmd, self.root_helper)
 
-            self.device_delegate.destroy(self.network, self.interface_name)
+            if not retain_port:
+                self.device_delegate.destroy(self.network, self.interface_name)
 
         elif pid:
             LOG.debug(_('DHCP for %s pid %d is stale, ignoring command') %

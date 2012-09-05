@@ -46,6 +46,10 @@ fake_subnet2 = FakeModel('dddddddd-dddd-dddd-dddddddddddd',
                          network_id='12345678-1234-5678-1234567890ab',
                          enable_dhcp=False)
 
+fake_subnet3 = FakeModel('bbbbbbbb-1111-2222-bbbbbbbbbbbb',
+                         network_id='12345678-1234-5678-1234567890ab',
+                         cidr='192.168.1.1/24', enable_dhcp=True)
+
 fake_fixed_ip = FakeModel('', subnet=fake_subnet1, ip_address='172.9.9.9')
 
 fake_port1 = FakeModel('12345678-1234-aaaa-1234567890ab',
@@ -218,18 +222,21 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             disable.assertCalledOnceWith(fake_network.id)
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
-        network = FakeModel('12345678-1234-5678-1234567890ab',
+        network = FakeModel('net-id',
                             tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                             admin_state_up=True,
                             subnets=[],
                             ports=[])
 
+        self.cache.get_network_by_id.return_value = network
         self.plugin.get_network_info.return_value = network
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
             self.dhcp.refresh_dhcp_helper(network.id)
             disable.called_once_with_args(network.id)
             self.assertFalse(self.cache.called)
             self.assertFalse(self.call_driver.called)
+            self.cache.assert_has_calls(
+                [mock.call.get_network_by_id('net-id')])
 
     def test_subnet_update_end(self):
         payload = dict(subnet=dict(network_id=fake_network.id))
@@ -239,17 +246,47 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.dhcp.subnet_update_end(payload)
 
         self.cache.assert_has_calls([mock.call.put(fake_network)])
-        self.call_driver.assert_called_once_with('enable', fake_network)
+        self.call_driver.assert_called_once_with('reload_allocations',
+                                                 fake_network)
+
+    def test_subnet_update_end(self):
+        new_state = FakeModel(fake_network.id,
+                              tenant_id=fake_network.tenant_id,
+                              admin_state_up=True,
+                              subnets=[fake_subnet1, fake_subnet3],
+                              ports=[fake_port1])
+
+        payload = dict(subnet=dict(network_id=fake_network.id))
+        self.cache.get_network_by_id.return_value = fake_network
+        self.plugin.get_network_info.return_value = new_state
+
+        self.dhcp.subnet_update_end(payload)
+
+        self.cache.assert_has_calls([mock.call.put(new_state)])
+        self.call_driver.assert_called_once_with('restart',
+                                                 new_state)
 
     def test_subnet_update_end_delete_payload(self):
+        prev_state = FakeModel(fake_network.id,
+                               tenant_id=fake_network.tenant_id,
+                               admin_state_up=True,
+                               subnets=[fake_subnet1, fake_subnet3],
+                               ports=[fake_port1])
+
         payload = dict(subnet_id=fake_subnet1.id)
-        self.cache.get_network_by_subnet_id.return_value = fake_network
+        self.cache.get_network_by_subnet_id.return_value = prev_state
+        self.cache.get_network_by_id.return_value = prev_state
         self.plugin.get_network_info.return_value = fake_network
 
         self.dhcp.subnet_delete_end(payload)
 
-        self.cache.assert_has_calls([mock.call.put(fake_network)])
-        self.call_driver.assert_called_once_with('enable', fake_network)
+        self.cache.assert_has_calls([
+            mock.call.get_network_by_subnet_id(
+                'bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+            mock.call.get_network_by_id('12345678-1234-5678-1234567890ab'),
+            mock.call.put(fake_network)])
+        self.call_driver.assert_called_once_with('restart',
+                                                 fake_network)
 
     def test_port_update_end(self):
         payload = dict(port=vars(fake_port2))
