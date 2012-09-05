@@ -269,3 +269,12 @@ class OVSBridge:
         except Exception, e:
             LOG.info("Unable to parse regex results. Exception: %s", e)
             return
+
+
+def get_bridge_for_iface(root_helper, iface):
+    args = ["ovs-vsctl", "--timeout=2", "iface-to-br", iface]
+    try:
+        return utils.execute(args, root_helper=root_helper).strip()
+    except Exception, e:
+        LOG.error(_("iface %s not found. Exception: %s"), iface, e)
+        return None

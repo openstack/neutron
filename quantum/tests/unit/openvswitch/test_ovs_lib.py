@@ -15,10 +15,10 @@
 #    under the License.
 # @author: Dan Wendlandt, Nicira, Inc.
 
-import unittest
 import uuid
 
 import mox
+import unittest2 as unittest
 
 from quantum.agent.linux import ovs_lib, utils
 
@@ -292,3 +292,25 @@ class OVS_Lib_Test(unittest.TestCase):
         self.assertEqual(vif_id, '5c1321a7-c73f-4a77-95e6-9f86402e5c8f')
         self.assertEqual(port_name, 'dhc5c1321a7-c7')
         self.assertEqual(ofport, 2)
+
+    def test_iface_to_br(self):
+        iface = 'tap0'
+        br = 'br-int'
+        root_helper = 'sudo'
+        utils.execute(["ovs-vsctl", self.TO, "iface-to-br", iface],
+                      root_helper=root_helper).AndReturn('br-int')
+
+        self.mox.ReplayAll()
+        self.assertEqual(ovs_lib.get_bridge_for_iface(root_helper, iface), br)
+        self.mox.VerifyAll()
+
+    def test_iface_to_br(self):
+        iface = 'tap0'
+        br = 'br-int'
+        root_helper = 'sudo'
+        utils.execute(["ovs-vsctl", self.TO, "iface-to-br", iface],
+                      root_helper=root_helper).AndRaise(Exception)
+
+        self.mox.ReplayAll()
+        self.assertIsNone(ovs_lib.get_bridge_for_iface(root_helper, iface))
+        self.mox.VerifyAll()
