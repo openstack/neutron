@@ -301,32 +301,35 @@ class Dnsmasq(DhcpLocalProcess):
             if not subnet.enable_dhcp:
                 continue
             if subnet.dns_nameservers:
-                options.append((self._TAG_PREFIX % i,
-                                'option',
-                                'dns-server',
-                                ','.join(subnet.dns_nameservers)))
+                options.append(
+                    self._format_option(i, 'dns-server',
+                                        ','.join(subnet.dns_nameservers)))
 
             host_routes = ["%s,%s" % (hr.destination, hr.nexthop)
                            for hr in subnet.host_routes]
             if host_routes:
-                options.append((self._TAG_PREFIX % i,
-                                'option',
-                                'classless-static-route',
-                                ','.join(host_routes)))
+                options.append(
+                    self._format_option(i, 'classless-static-route',
+                                        ','.join(host_routes)))
 
-            if subnet.ip_version != 6 and subnet.gateway_ip:
-                options.append((self._TAG_PREFIX % i,
-                                'option',
-                                'router',
-                                subnet.gateway_ip))
+            if subnet.ip_version == 4:
+                if subnet.gateway_ip:
+                    options.append(self._format_option(i, 'router',
+                                                       subnet.gateway_ip))
+                else:
+                    options.append(self._format_option(i, 'router'))
 
         name = self.get_conf_file_name('opts')
-        replace_file(name, '\n'.join(['tag:%s,%s:%s,%s' % o for o in options]))
+        replace_file(name, '\n'.join(options))
         return name
 
     def _lease_relay_script_path(self):
         return os.path.join(os.path.dirname(sys.argv[0]),
                             'quantum-dhcp-agent-dnsmasq-lease-update')
+
+    def _format_option(self, index, option_name, *args):
+        return ','.join(('tag:' + self._TAG_PREFIX % index,
+                         'option:%s' % option_name) + args)
 
     @classmethod
     def lease_update(cls):

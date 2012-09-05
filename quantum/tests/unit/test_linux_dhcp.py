@@ -95,6 +95,16 @@ class FakeV4SubnetNoDHCP:
     dns_nameservers = []
 
 
+class FakeV4SubnetNoGateway:
+    id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    ip_version = 4
+    cidr = '192.168.1.0/24'
+    gateway_ip = None
+    enable_dhcp = True
+    host_routes = []
+    dns_nameservers = []
+
+
 class FakeV4Network:
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     subnets = [FakeV4Subnet()]
@@ -117,6 +127,12 @@ class FakeDualNetworkSingleDHCP:
     id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
     subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
     ports = [FakePort1(), FakePort2(), FakePort3()]
+
+
+class FakeV4NoGatewayNetwork:
+    id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    subnets = [FakeV4SubnetNoGateway()]
+    ports = [FakePort1()]
 
 
 class TestDhcpBase(unittest.TestCase):
@@ -456,6 +472,16 @@ tag:tag0,option:router,192.168.0.1""".lstrip()
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
             dm = dhcp.Dnsmasq(self.conf, FakeDualNetworkSingleDHCP())
+            dm._output_opts_file()
+
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_no_gateway(self):
+        expected = "tag:tag0,option:router"
+
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf, FakeV4NoGatewayNetwork())
             dm._output_opts_file()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
