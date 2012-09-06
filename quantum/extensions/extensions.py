@@ -439,6 +439,8 @@ class ExtensionManager(object):
         wants to extend this map.
         """
         for ext in self.extensions.itervalues():
+            if not hasattr(ext, 'get_extended_resources'):
+                continue
             try:
                 extended_attrs = ext.get_extended_resources(version)
                 for resource, resource_attrs in extended_attrs.iteritems():
@@ -447,9 +449,8 @@ class ExtensionManager(object):
                     else:
                         attr_map[resource] = resource_attrs
             except AttributeError:
-                # Extensions aren't required to have extended
-                # attributes
-                pass
+                LOG.exception("Error fetching extended attributes for "
+                              "extension '%s'" % ext.get_name())
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""

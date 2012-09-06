@@ -344,8 +344,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         self.assertEqual(res.status_int, expected_code)
         return self.deserialize('json', res)
 
-    def _list(self, resource):
-        req = self.new_list_request(resource)
+    def _list(self, resource, fmt='json', query_params=None):
+        req = self.new_list_request(resource, fmt, query_params)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         return self.deserialize('json', res)

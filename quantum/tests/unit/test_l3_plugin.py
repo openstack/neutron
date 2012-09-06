@@ -87,9 +87,9 @@ class L3NatExtensionTestCase(unittest.TestCase):
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
 
-        # Instantiate mock plugin and enable the os-quantum-router  extension
+        # Instantiate mock plugin and enable the 'router' extension
         manager.QuantumManager.get_plugin().supported_extension_aliases = (
-            ["os-quantum-router"])
+            ["router"])
 
         ext_mgr = L3TestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -218,7 +218,45 @@ class L3NatExtensionTestCase(unittest.TestCase):
 # This plugin class is just for testing
 class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                       l3_db.L3_NAT_db_mixin):
-    supported_extension_aliases = ["os-quantum-router"]
+    supported_extension_aliases = ["router"]
+
+    def create_network(self, context, network):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(TestL3NatPlugin, self).create_network(context,
+                                                              network)
+            self._process_l3_create(context, network['network'], net['id'])
+            self._extend_network_dict_l3(context, net)
+        return net
+
+    def update_network(self, context, id, network):
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(TestL3NatPlugin, self).update_network(context, id,
+                                                              network)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_l3(context, net)
+        return net
+
+    def delete_network(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(TestL3NatPlugin, self).delete_network(context, id)
+
+    def get_network(self, context, id, fields=None):
+        net = super(TestL3NatPlugin, self).get_network(context, id, None)
+        self._extend_network_dict_l3(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None):
+        nets = super(TestL3NatPlugin, self).get_networks(context, filters,
+                                                         None)
+        for net in nets:
+            self._extend_network_dict_l3(context, net)
+        nets = self._filter_nets_l3(context, nets, filters)
+
+        return [self._fields(net, fields) for net in nets]
 
     def delete_port(self, context, id, l3_port_check=True):
         if l3_port_check:
@@ -403,6 +441,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def test_router_add_gateway(self):
         with self.router() as r:
             with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
                 self._add_external_gateway_to_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
@@ -422,9 +461,19 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 r['router']['id'],
                 "foobar", expected_code=exc.HTTPNotFound.code)
 
+    def test_router_add_gateway_net_not_external(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                # intentionally do not set net as external
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    expected_code=exc.HTTPBadRequest.code)
+
     def test_router_add_gateway_no_subnet(self):
         with self.router() as r:
             with self.network() as n:
+                self._set_net_external(n['network']['id'])
                 self._add_external_gateway_to_router(
                     r['router']['id'],
                     n['network']['id'], expected_code=exc.HTTPBadRequest.code)
@@ -488,6 +537,10 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     # remove extra port created
                     self._delete('ports', p2['port']['id'])
 
+    def _set_net_external(self, net_id):
+        self._update('networks', net_id,
+                     {'network': {'router:external': True}})
+
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None):
         data = {'floatingip': {'floating_network_id': network_id,
@@ -512,6 +565,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt='json'):
         with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
@@ -542,6 +596,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt='json'):
         with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
             with self.router() as r:
                 self._add_external_gateway_to_router(
                     r['router']['id'],
@@ -643,6 +698,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def test_create_floatingip_no_ext_gateway_return_404(self):
         with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
                     res = self._create_floatingip(
@@ -651,6 +707,17 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                         port_id=private_port['port']['id'])
                     # this should be some kind of error
                     self.assertEqual(res.status_int, exc.HTTPNotFound.code)
+
+    def test_create_floating_non_ext_network_returns_400(self):
+        with self.subnet() as public_sub:
+            # normally we would set the network of public_sub to be
+            # external, but the point of this test is to handle when
+            # that is not the case
+            with self.router() as r:
+                res = self._create_floatingip(
+                    'json',
+                    public_sub['subnet']['network_id'])
+                self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_floatingip_no_public_subnet_returns_400(self):
         with self.network() as public_network:
@@ -690,3 +757,18 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         res = self._create_floatingip('json', utils.str_uuid(),
                                       utils.str_uuid(), 'iamnotnanip')
         self.assertEqual(res.status_int, 422)
+
+    def test_list_nets_external(self):
+        with self.network() as n1:
+            self._set_net_external(n1['network']['id'])
+            with self.network() as n2:
+                body = self._list('networks')
+                self.assertEquals(len(body['networks']), 2)
+
+                body = self._list('networks',
+                                  query_params="router:external=True")
+                self.assertEquals(len(body['networks']), 1)
+
+                body = self._list('networks',
+                                  query_params="router:external=False")
+                self.assertEquals(len(body['networks']), 1)

@@ -189,7 +189,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider", "os-quantum-router"]
+    supported_extension_aliases = ["provider", "router"]
 
     def __init__(self, configfile=None):
         ovs_db_v2.initialize()
@@ -266,7 +266,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                               "extension:provider_network:set",
                               network)
 
-    def _extend_network_dict(self, context, network):
+    def _extend_network_dict_provider(self, context, network):
         if self._check_provider_view_auth(context, network):
             binding = ovs_db_v2.get_network_binding(context.session,
                                                     network['id'])
@@ -372,7 +372,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                  network)
             ovs_db_v2.add_network_binding(session, net['id'], network_type,
                                           physical_network, segmentation_id)
-            self._extend_network_dict(context, net)
+
+            self._process_l3_create(context, network['network'], net['id'])
+            self._extend_network_dict_provider(context, net)
+            self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
         LOG.debug("Created network: %s" % net['id'])
         return net
@@ -384,15 +387,16 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(OVSQuantumPluginV2, self).update_network(context, id,
                                                                  network)
-            self._extend_network_dict(context, net)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_provider(context, net)
+            self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, id):
         session = context.session
         with session.begin(subtransactions=True):
             binding = ovs_db_v2.get_network_binding(session, id)
-            result = super(OVSQuantumPluginV2, self).delete_network(context,
-                                                                    id)
+            super(OVSQuantumPluginV2, self).delete_network(context, id)
             if binding.network_type == constants.TYPE_GRE:
                 ovs_db_v2.release_tunnel(session, binding.segmentation_id,
                                          self.tunnel_id_ranges)
@@ -404,19 +408,23 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # the network record, so explicit removal is not necessary
         if self.agent_rpc:
             self.notifier.network_delete(self.rpc_context, id)
-        return result
 
     def get_network(self, context, id, fields=None):
         net = super(OVSQuantumPluginV2, self).get_network(context, id, None)
-        self._extend_network_dict(context, net)
+        self._extend_network_dict_provider(context, net)
+        self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None):
         nets = super(OVSQuantumPluginV2, self).get_networks(context, filters,
                                                             None)
         for net in nets:
-            self._extend_network_dict(context, net)
-        # TODO(rkukura): Filter on extended attributes.
+            self._extend_network_dict_provider(context, net)
+            self._extend_network_dict_l3(context, net)
+
+        # TODO(rkukura): Filter on extended provider attributes.
+        nets = self._filter_nets_l3(context, nets, filters)
+
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):

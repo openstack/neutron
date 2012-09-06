@@ -33,6 +33,7 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum.openstack.common import cfg
+from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -58,6 +59,12 @@ class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
                                                         ondelete="CASCADE"))
     gw_port = orm.relationship(models_v2.Port)
+
+
+class ExternalNetwork(model_base.BASEV2):
+    network_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
+                           primary_key=True)
 
 
 class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -145,8 +152,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         network_id = info.get('network_id', None) if info else None
         if network_id:
-            #FIXME(danwent): confirm net-id is valid external network
             self._get_network(context, network_id)
+            if not self._network_is_external(context, network_id):
+                msg = "Network %s is not a valid external network" % network_id
+                raise q_exc.BadRequest(resource='router', msg=msg)
 
         # figure out if we need to delete existing port
         if gw_port and gw_port['network_id'] != network_id:
@@ -450,14 +459,17 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, fip)
         fip_id = utils.str_uuid()
 
-        #TODO(danwent): validate that network_id is valid floatingip-network
+        f_net_id = fip['floating_network_id']
+        if not self._network_is_external(context, f_net_id):
+            msg = "Network %s is not a valid external network" % f_net_id
+            raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
         # This external port is never exposed to the tenant.
         # it is used purely for internal system and admin use when
         # managing floating IPs.
         external_port = self.create_port(context, {
             'port':
-            {'network_id': fip['floating_network_id'],
+            {'network_id': f_net_id,
              'mac_address': attributes.ATTR_NOT_SPECIFIED,
              'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
              'admin_state_up': True,
@@ -552,3 +564,80 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 # should never happen
                 raise Exception('Multiple floating IPs found for port %s'
                                 % port_id)
+
+    def _check_l3_view_auth(self, context, network):
+        return policy.check(context,
+                            "extension:router:view",
+                            network)
+
+    def _enforce_l3_set_auth(self, context, network):
+        return policy.enforce(context,
+                              "extension:router:set",
+                              network)
+
+    def _network_is_external(self, context, net_id):
+        try:
+            context.session.query(ExternalNetwork).filter_by(
+                network_id=net_id).one()
+            return True
+        except exc.NoResultFound:
+            return False
+
+    def _extend_network_dict_l3(self, context, network):
+        if self._check_l3_view_auth(context, network):
+            network['router:external'] = self._network_is_external(
+                context, network['id'])
+
+    def _process_l3_create(self, context, net_data, net_id):
+        external = net_data.get('router:external')
+        external_set = attributes.is_attr_set(external)
+
+        if not external_set:
+            return
+
+        self._enforce_l3_set_auth(context, net_data)
+
+        if external:
+            # expects to be called within a plugin's session
+            context.session.add(ExternalNetwork(network_id=net_id))
+
+    def _process_l3_update(self, context, net_data, net_id):
+
+        new_value = net_data.get('router:external')
+        if not attributes.is_attr_set(new_value):
+            return
+
+        self._enforce_l3_set_auth(context, net_data)
+        existing_value = self._network_is_external(context, net_id)
+
+        if existing_value == new_value:
+            return
+
+        if new_value:
+            context.session.add(ExternalNetwork(network_id=net_id))
+        else:
+            # must make sure we do not have any external gateway ports
+            # (and thus, possible floating IPs) on this network before
+            # allow it to be update to external=False
+            try:
+                context.session.query(models_v2.Port).filter_by(
+                    device_owner=DEVICE_OWNER_ROUTER_GW,
+                    network_id=net_id).first()
+                raise ExternalNetworkInUse(net_id=net_id)
+            except exc.NoResultFound:
+                pass  # expected
+
+            context.session.query(ExternalNetwork).filter_by(
+                network_id=net_id).delete()
+
+    def _filter_nets_l3(self, context, nets, filters):
+        vals = filters.get('router:external', [])
+        if not vals:
+            return nets
+
+        ext_nets = set([en['network_id'] for en in
+                        context.session.query(ExternalNetwork).all()])
+        if vals[0]:
+            return [n for n in nets if n['id'] in ext_nets]
+        else:
+            return [n for n in nets if n['id'] not in ext_nets]

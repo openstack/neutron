@@ -8,6 +8,9 @@
     "extension:provider_network:view": [["rule:admin_only"]],
     "extension:provider_network:set": [["rule:admin_only"]],
 
+    "extension:router:view": [["rule:regular_user"]],
+    "extension:router:set": [["rule:admin_only"]],
+
     "networks:private:read": [["rule:admin_or_owner"]],
     "networks:private:write": [["rule:admin_or_owner"]],
     "networks:shared:read": [["rule:regular_user"]],

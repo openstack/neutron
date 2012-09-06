@@ -59,6 +59,11 @@ class L3PortInUse(qexception.InUse):
                 " cannot be deleted directly via the port API.")
 
 
+class ExternalNetworkInUse(qexception.InUse):
+    message = _("External network %(net_id)s cannot be updated to be made "
+                "non-external, since it has existing gateway ports")
+
+
 def _validate_uuid_or_none(data, valid_values=None):
     if data is None:
         return None
@@ -109,6 +114,14 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
 }
 
+EXTENDED_ATTRIBUTES_2_0 = {
+    'networks': {'router:external': {'allow_post': True,
+                                     'allow_put': True,
+                                     'default': attr.ATTR_NOT_SPECIFIED,
+                                     'is_visible': True,
+                                     'convert_to': attr.convert_to_boolean,
+                                     'validate': {'type:boolean': None}}}}
+
 l3_quota_opts = [
     cfg.IntOpt('quota_router',
                default=10,
@@ -125,11 +138,11 @@ class L3(object):
 
     @classmethod
     def get_name(cls):
-        return "Quantum Router"
+        return "Quantum L3 Router"
 
     @classmethod
     def get_alias(cls):
-        return "os-quantum-router"
+        return "router"
 
     @classmethod
     def get_description(cls):
@@ -139,7 +152,7 @@ class L3(object):
 
     @classmethod
     def get_namespace(cls):
-        return "http://docs.openstack.org/ext/os-quantum-router/api/v1.0"
+        return "http://docs.openstack.org/ext/quantum/router/api/v1.0"
 
     @classmethod
     def get_updated(cls):
@@ -172,6 +185,12 @@ class L3(object):
             exts.append(ex)
 
         return exts
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return EXTENDED_ATTRIBUTES_2_0
+        else:
+            return {}
 
 
 class RouterPluginBase(object):
