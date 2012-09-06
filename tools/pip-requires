@@ -13,4 +13,4 @@ netaddr
 python-quantumclient>=2.0
 pyudev
 sqlalchemy>0.6.4
-webob==1.2.0
+webob==1.0.8
