@@ -17,9 +17,10 @@
 import os
 import subprocess
 
+import unittest2 as unittest
+
 from quantum.rootwrap import filters
 from quantum.rootwrap import wrapper
-import unittest
 
 
 class RootwrapTestCase(unittest.TestCase):
@@ -107,6 +108,47 @@ class RootwrapTestCase(unittest.TestCase):
         usercmd = ['cat', goodfn]
         self.assertEqual(f.get_command(usercmd), ['/bin/cat', goodfn])
         self.assertTrue(f.match(usercmd))
+
+    def test_IpFilter_non_netns(self):
+        f = filters.IpFilter('/sbin/ip', 'root')
+        self.assertTrue(f.match(['ip', 'link', 'list']))
+
+    def _test_IpFilter_netns_helper(self, action):
+        f = filters.IpFilter('/sbin/ip', 'root')
+        self.assertTrue(f.match(['ip', 'link', action]))
+
+    def test_IpFilter_netns_add(self):
+        self._test_IpFilter_netns_helper('add')
+
+    def test_IpFilter_netns_delete(self):
+        self._test_IpFilter_netns_helper('delete')
+
+    def test_IpFilter_netns_list(self):
+        self._test_IpFilter_netns_helper('list')
+
+    def test_IpNetnsExecFilter_match(self):
+        f = filters.IpNetnsExecFilter('/sbin/ip', 'root')
+        self.assertTrue(
+            f.match(['ip', 'netns', 'exec', 'foo', 'ip', 'link', 'list']))
+
+    def test_IpNetnsExecFilter_nomatch(self):
+        f = filters.IpNetnsExecFilter('/sbin/ip', 'root')
+        self.assertFalse(f.match(['ip', 'link', 'list']))
+
+    def test_match_filter_recurses_exec_command_filter(self):
+        filter_list = [filters.IpNetnsExecFilter('/sbin/ip', 'root'),
+                       filters.IpFilter('/sbin/ip', 'root')]
+        args = ['ip', 'netns', 'exec', 'foo', 'ip', 'link', 'list']
+
+        self.assertIsNotNone(wrapper.match_filter(filter_list, args))
+
+    def test_match_filter_recurses_exec_command_filter(self):
+        filter_list = [filters.IpNetnsExecFilter('/sbin/ip', 'root'),
+                       filters.IpFilter('/sbin/ip', 'root')]
+        args = ['ip', 'netns', 'exec', 'foo', 'ip', 'netns', 'exec', 'bar',
+                'ip', 'link', 'list']
+
+        self.assertIsNone(wrapper.match_filter(filter_list, args))
 
     def test_skips(self):
         # Check that all filters are skipped and that the last matches

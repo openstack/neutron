@@ -13,5 +13,9 @@
 # from the old mechanism
 brctl: CommandFilter, /sbin/brctl, root
 brctl_usr: CommandFilter, /usr/sbin/brctl, root
-ip: CommandFilter, /sbin/ip, root
-ip_usr: CommandFilter, /usr/sbin/ip, root
+
+# ip_lib
+ip: IpFilter, /sbin/ip, root
+ip_usr: IpFilter, /usr/sbin/ip, root
+ip_exec: IpNetnsExecFilter, /sbin/ip, root
+ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root

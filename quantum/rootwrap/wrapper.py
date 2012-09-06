@@ -54,7 +54,7 @@ def load_filters(filters_path):
     return filterlist
 
 
-def match_filter(filters, userargs):
+def match_filter(filter_list, userargs):
     """
     Checks user command and arguments through command filters and
     returns the first matching filter, or None is none matched.
@@ -62,8 +62,18 @@ def match_filter(filters, userargs):
 
     found_filter = None
 
-    for f in filters:
+    for f in filter_list:
         if f.match(userargs):
+            if isinstance(f, filters.ExecCommandFilter):
+                # This command calls exec verify that remaining args
+                # matches another filter.
+                leaf_filters = [fltr for fltr in filter_list
+                                if not isinstance(fltr,
+                                                  filters.ExecCommandFilter)]
+                args = f.exec_args(userargs)
+                if not args or not match_filter(leaf_filters, args):
+                    continue
+
             # Try other filters if executable is absent
             if not os.access(f.exec_path, os.X_OK):
                 if not found_filter:
