@@ -52,14 +52,14 @@ DEAD_VLAN_TAG = "4095"
 # attributes set).
 class LocalVLANMapping:
     def __init__(self, vlan, network_type, physical_network, segmentation_id,
-                 vif_ids=None):
-        if vif_ids is None:
-            vif_ids = []
+                 vif_ports=None):
+        if vif_ports is None:
+            vif_ports = {}
         self.vlan = vlan
         self.network_type = network_type
         self.physical_network = physical_network
         self.segmentation_id = segmentation_id
-        self.vif_ids = vif_ids
+        self.vif_ports = vif_ports
 
     def __str__(self):
         return ("lv-id = %s type = %s phys-net = %s phys-id = %s" %
@@ -184,6 +184,11 @@ class OVSQuantumAgent(object):
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+
+    def get_net_uuid(self, vif_id):
+        for network_id, vlan_mapping in self.local_vlan_map.iteritems():
+            if vif_id in vlan_mapping.vif_ports:
+                return network_id
 
     def network_delete(self, context, **kwargs):
         LOG.debug("network_delete received")
@@ -333,7 +338,7 @@ class OVSQuantumAgent(object):
             self.provision_local_vlan(net_uuid, network_type,
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
-        lvm.vif_ids.append(port.vif_id)
+        lvm.vif_ports[port.vif_id] = port
 
         if network_type == constants.TYPE_GRE:
             # inbound unicast
@@ -346,28 +351,34 @@ class OVSQuantumAgent(object):
         if int(port.ofport) != -1:
             self.int_br.delete_flows(in_port=port.ofport)
 
-    def port_unbound(self, port, net_uuid):
+    def port_unbound(self, vif_id, net_uuid=None):
         '''Unbind port.
 
         Removes corresponding local vlan mapping object if this is its last
         VIF.
 
-        :param port: a ovslib.VifPort object.
+        :param vif_id: the id of the vif
         :param net_uuid: the net_uuid this port is associated with.'''
-        if net_uuid not in self.local_vlan_map:
+        if net_uuid is None:
+            net_uuid = self.get_net_uuid(vif_id)
+
+        if not self.local_vlan_map.get(net_uuid):
             LOG.info('port_unbound() net_uuid %s not in local_vlan_map' %
                      net_uuid)
             return
         lvm = self.local_vlan_map[net_uuid]
+        if lvm.network_type == 'gre':
+            # remove inbound unicast flow
+            self.tun_br.delete_flows(tun_id=lvm.segmentation_id,
+                                     dl_dst=lvm.vif_ports[vif_id].vif_mac)
 
-        # REVISIT(rkukura): Does inbound unicast flow need to be removed here?
-
-        if port.vif_id in lvm.vif_ids:
-            lvm.vif_ids.remove(port.vif_id)
+        if vif_id in lvm.vif_ports:
+            del lvm.vif_ports[vif_id]
         else:
-            LOG.info('port_unbound: vid_id %s not in list' % port.vif_id)
+            LOG.info('port_unbound: vid_id %s not in local_vlan_map' %
+                     port.vif_id)
 
-        if not lvm.vif_ids:
+        if not lvm.vif_ports:
             self.reclaim_local_vlan(net_uuid, lvm)
 
     def port_dead(self, port):
@@ -546,7 +557,7 @@ class OVSQuantumAgent(object):
                         LOG.info("Removing binding to net-id = " +
                                  old_net_uuid + " for " + str(p)
                                  + " added to dead vlan")
-                        self.port_unbound(p, old_net_uuid)
+                        self.port_unbound(p.vif_id, old_net_uuid)
                         if p.vif_id in all_bindings:
                             all_bindings[p.vif_id].status = (
                                 q_const.PORT_STATUS_DOWN)
@@ -578,8 +589,7 @@ class OVSQuantumAgent(object):
                             q_const.PORT_STATUS_DOWN)
                     old_port = old_local_bindings.get(vif_id)
                     if old_port:
-                        self.port_unbound(old_vif_ports[vif_id],
-                                          old_port.network_id)
+                        self.port_unbound(vif_id, old_port.network_id)
                 # commit any DB changes and expire
                 # data loaded from the database
                 db.commit()
@@ -658,6 +668,7 @@ class OVSQuantumAgent(object):
                 # Nothing to do regarding local networking
             else:
                 LOG.debug("Device %s not defined on plugin", device)
+                self.port_unbound(device)
         return resync
 
     def process_network_ports(self, port_info):
