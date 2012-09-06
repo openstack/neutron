@@ -1663,7 +1663,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
 class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
-    def _test_create_subnet(self, network=None, **kwargs):
+    def _test_create_subnet(self, network=None, expected=None, **kwargs):
         keys = kwargs.copy()
         keys.setdefault('cidr', '10.0.0.0/24')
         keys.setdefault('ip_version', 4)
@@ -1673,6 +1673,11 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             for k in keys:
                 self.assertIn(k, subnet['subnet'])
                 self.assertEquals(subnet['subnet'][k], keys[k])
+            # verify the configured validations are correct
+            if expected:
+                for k in expected:
+                    self.assertIn(k, subnet['subnet'])
+                    self.assertEquals(subnet['subnet'][k], expected[k])
             return subnet
 
     def test_create_subnet(self):
@@ -1870,6 +1875,36 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         self.assertEquals(subnet['subnet']['enable_dhcp'], enable_dhcp)
         self.assertEquals(subnet['subnet']['allocation_pools'],
                           allocation_pools)
+
+    def test_create_subnet_gw_values(self):
+        # Gateway not in subnet
+        gateway = '100.0.0.1'
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.1',
+                             'end': '10.0.0.254'}]
+        expected = {'gateway_ip': gateway,
+                    'cidr': cidr,
+                    'allocation_pools': allocation_pools}
+        subnet = self._test_create_subnet(expected=expected,
+                                          gateway_ip=gateway)
+        # Gateway is last IP in range
+        gateway = '10.0.0.254'
+        allocation_pools = [{'start': '10.0.0.1',
+                             'end': '10.0.0.253'}]
+        expected = {'gateway_ip': gateway,
+                    'cidr': cidr,
+                    'allocation_pools': allocation_pools}
+        subnet = self._test_create_subnet(expected=expected,
+                                          gateway_ip=gateway)
+        # Gateway is first in subnet
+        gateway = '10.0.0.1'
+        allocation_pools = [{'start': '10.0.0.2',
+                             'end': '10.0.0.254'}]
+        expected = {'gateway_ip': gateway,
+                    'cidr': cidr,
+                    'allocation_pools': allocation_pools}
+        subnet = self._test_create_subnet(expected=expected,
+                                          gateway_ip=gateway)
 
     def test_create_subnet_with_allocation_pool(self):
         gateway_ip = '10.0.0.1'
