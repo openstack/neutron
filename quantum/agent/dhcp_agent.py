@@ -38,7 +38,6 @@ from quantum.openstack.common import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common.rpc import proxy
-from quantum.version import version_string
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qdhcp-'
