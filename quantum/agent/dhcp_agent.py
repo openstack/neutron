@@ -89,9 +89,10 @@ class DhcpAgent(object):
                                           self.device_manager,
                                           namespace)
             getattr(driver, action)()
+            return True
 
         except Exception, e:
-            LOG.warn('Unable to %s dhcp. Exception: %s' % (action, e))
+            LOG.exception('Unable to %s dhcp.' % action)
 
     def update_lease(self, network_id, ip_address, time_remaining):
         self.plugin_rpc.update_lease_expiration(network_id, ip_address,
@@ -99,11 +100,18 @@ class DhcpAgent(object):
 
     def enable_dhcp_helper(self, network_id):
         """Enable DHCP for a network that meets enabling criteria."""
-        network = self.plugin_rpc.get_network_info(network_id)
+        try:
+            network = self.plugin_rpc.get_network_info(network_id)
+        except:
+            LOG.exception(_('Network %s RPC info call failed.') % network_id)
+            return
+
+        if not network.admin_state_up:
+            return
+
         for subnet in network.subnets:
             if subnet.enable_dhcp:
-                if network.admin_state_up:
-                    self.call_driver('enable', network)
+                if self.call_driver('enable', network):
                     self.cache.put(network)
                 break
 
