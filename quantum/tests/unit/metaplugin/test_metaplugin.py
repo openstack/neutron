@@ -253,11 +253,8 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         subnet_in_db2 = self.plugin.get_subnet(self.context, subnet2_ret['id'])
         subnet_in_db3 = self.plugin.get_subnet(self.context, subnet3_ret['id'])
 
-        subnet1['subnet']['ip_version'] = 6
         subnet1['subnet']['allocation_pools'].pop()
-        subnet2['subnet']['ip_version'] = 6
         subnet2['subnet']['allocation_pools'].pop()
-        subnet3['subnet']['ip_version'] = 6
         subnet3['subnet']['allocation_pools'].pop()
 
         self.plugin.update_subnet(self.context,
@@ -270,9 +267,9 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         subnet_in_db2 = self.plugin.get_subnet(self.context, subnet2_ret['id'])
         subnet_in_db3 = self.plugin.get_subnet(self.context, subnet3_ret['id'])
 
-        self.assertEqual(6, subnet_in_db1['ip_version'])
-        self.assertEqual(6, subnet_in_db2['ip_version'])
-        self.assertEqual(6, subnet_in_db3['ip_version'])
+        self.assertEqual(4, subnet_in_db1['ip_version'])
+        self.assertEqual(4, subnet_in_db2['ip_version'])
+        self.assertEqual(4, subnet_in_db3['ip_version'])
 
         self.plugin.delete_subnet(self.context, subnet1_ret['id'])
         self.plugin.delete_subnet(self.context, subnet2_ret['id'])
