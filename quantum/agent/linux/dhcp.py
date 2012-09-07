@@ -23,14 +23,12 @@ import socket
 import StringIO
 import sys
 import tempfile
-import textwrap
 
 import netaddr
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
-from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 
 LOG = logging.getLogger(__name__)
