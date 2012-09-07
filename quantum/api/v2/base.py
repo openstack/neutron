@@ -376,8 +376,7 @@ class Controller(object):
                           value['required_by_policy'] or
                           not 'default' in value)]
         orig_obj = self._item(request, id, field_list=field_list)
-        orig_obj.update(body)
-
+        orig_obj.update(body[self._resource])
         try:
             policy.enforce(request.context,
                            action,
