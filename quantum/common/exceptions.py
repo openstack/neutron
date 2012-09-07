@@ -127,6 +127,11 @@ class VlanIdInUse(InUse):
                 "%(physical_network)s is in use.")
 
 
+class FlatNetworkInUse(InUse):
+    message = _("Unable to create the flat network. "
+                "Physical network %(physical_network)s is in use.")
+
+
 class TunnelIdInUse(InUse):
     message = _("Unable to create the network. "
                 "The tunnel ID %(tunnel_id)s is in use.")
