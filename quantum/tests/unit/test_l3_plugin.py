@@ -401,8 +401,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                      r['router']['id'],
                                                      s['subnet']['id'],
                                                      None,
-                                                     expected_code=
-                                                     exc.HTTPBadRequest.code)
+                                                     expected_code=exc.
+                                                     HTTPBadRequest.code)
                 body = self._router_interface_action('remove',
                                                      r['router']['id'],
                                                      s['subnet']['id'],
@@ -421,13 +421,41 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                       r['router']['id'],
                                                       None,
                                                       p2['port']['id'],
-                                                      expected_code=
-                                                      exc.HTTPBadRequest.code)
+                                                      expected_code=exc.
+                                                      HTTPBadRequest.code)
                         # clean-up
                         self._router_interface_action('remove',
                                                       r['router']['id'],
                                                       None,
                                                       p1['port']['id'])
+
+    def test_router_add_interface_overlapped_cidr(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s1:
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s1['subnet']['id'],
+                                              None)
+
+                def try_overlapped_cidr(cidr):
+                    with self.subnet(cidr=cidr) as s2:
+                        self._router_interface_action('add',
+                                                      r['router']['id'],
+                                                      s2['subnet']['id'],
+                                                      None,
+                                                      expected_code=exc.
+                                                      HTTPBadRequest.code)
+                # another subnet with same cidr
+                try_overlapped_cidr('10.0.1.0/24')
+                # another subnet with overlapped cidr including s1
+                try_overlapped_cidr('10.0.0.0/16')
+                # another subnet with overlapped cidr included by s1
+                try_overlapped_cidr('10.0.1.1/32')
+                # clean-up
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              s1['subnet']['id'],
+                                              None)
 
     def test_router_add_interface_no_data(self):
         with self.router() as r:
@@ -435,8 +463,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                  r['router']['id'],
                                                  None,
                                                  None,
-                                                 expected_code=
-                                                 exc.HTTPBadRequest.code)
+                                                 expected_code=exc.
+                                                 HTTPBadRequest.code)
 
     def test_router_add_gateway(self):
         with self.router() as r:
