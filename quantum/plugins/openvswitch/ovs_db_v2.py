@@ -20,11 +20,11 @@ import logging
 
 from sqlalchemy.orm import exc
 
-from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.db import models_v2
 import quantum.db.api as db
 from quantum.openstack.common import cfg
+from quantum.plugins.openvswitch.common import constants
 from quantum.plugins.openvswitch import ovs_models_v2
 
 LOG = logging.getLogger(__name__)
@@ -132,8 +132,12 @@ def reserve_specific_vlan(session, physical_network, vlan_id):
                                vlan_id=vlan_id).
                      one())
             if alloc.allocated:
-                raise q_exc.VlanIdInUse(vlan_id=vlan_id,
-                                        physical_network=physical_network)
+                if vlan_id == constants.FLAT_VLAN_ID:
+                    raise q_exc.FlatNetworkInUse(physical_network=
+                                                 physical_network)
+                else:
+                    raise q_exc.VlanIdInUse(vlan_id=vlan_id,
+                                            physical_network=physical_network)
             LOG.debug("reserving specific vlan %s on physical network %s "
                       "from pool" % (vlan_id, physical_network))
             alloc.allocated = True
