@@ -29,7 +29,6 @@ from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import iptables_manager
-from quantum.agent.linux import utils as linux_utils
 from quantum.db import l3_db
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
