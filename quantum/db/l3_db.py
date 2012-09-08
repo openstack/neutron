@@ -21,6 +21,7 @@
 
 import logging
 
+import netaddr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -215,17 +216,26 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             rport_qry = context.session.query(models_v2.Port)
             rports = rport_qry.filter_by(
                 device_id=router_id,
-                device_owner=DEVICE_OWNER_ROUTER_INTF,
-                network_id=network_id).all()
+                device_owner=DEVICE_OWNER_ROUTER_INTF,).all()
             # its possible these ports on on the same network, but
             # different subnet
+            new_cidr = self._get_subnet(context, subnet_id)['cidr']
+            new_ipnet = netaddr.IPNetwork(new_cidr)
             for p in rports:
                 for ip in p['fixed_ips']:
                     if ip['subnet_id'] == subnet_id:
                         msg = ("Router already has a port on subnet %s"
                                % subnet_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
-
+                    cidr = self._get_subnet(context, ip['subnet_id'])['cidr']
+                    ipnet = netaddr.IPNetwork(cidr)
+                    match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
+                    match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
+                    if match1 or match2:
+                        msg = (("Cidr %s of subnet %s is overlapped "
+                                + "with cidr %s of subnet %s")
+                               % (new_cidr, subnet_id, cidr, ip['subnet_id']))
+                        raise q_exc.BadRequest(resource='router', msg=msg)
         except exc.NoResultFound:
             pass
 
