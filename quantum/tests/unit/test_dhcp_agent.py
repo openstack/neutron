@@ -375,7 +375,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
 
     def test_get_active_networks(self):
         self.proxy.get_active_networks()
-        self.call.assert_called()
+        self.assertTrue(self.call.called)
         self.make_msg.assert_called_once_with('get_active_networks',
                                               host='foo')
 
@@ -383,7 +383,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
         self.call.return_value = dict(a=1)
         retval = self.proxy.get_network_info('netid')
         self.assertEqual(retval.a, 1)
-        self.call.assert_called()
+        self.assertTrue(self.call.called)
         self.make_msg.assert_called_once_with('get_network_info',
                                               network_id='netid',
                                               host='foo')
@@ -392,7 +392,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
         self.call.return_value = dict(a=1)
         retval = self.proxy.get_dhcp_port('netid', 'devid')
         self.assertEqual(retval.a, 1)
-        self.call.assert_called()
+        self.assertTrue(self.call.called)
         self.make_msg.assert_called_once_with('get_dhcp_port',
                                               network_id='netid',
                                               device_id='devid',
@@ -400,7 +400,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
 
     def test_release_dhcp_port(self):
         self.proxy.release_dhcp_port('netid', 'devid')
-        self.call.assert_called()
+        self.assertTrue(self.call.called)
         self.make_msg.assert_called_once_with('release_dhcp_port',
                                               network_id='netid',
                                               device_id='devid',
@@ -408,7 +408,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
 
     def test_release_port_fixed_ip(self):
         self.proxy.release_port_fixed_ip('netid', 'devid', 'subid')
-        self.call.assert_called()
+        self.assertTrue(self.call.called)
         self.make_msg.assert_called_once_with('release_port_fixed_ip',
                                               network_id='netid',
                                               subnet_id='subid',
@@ -418,7 +418,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
     def test_update_lease_expiration(self):
         with mock.patch.object(self.proxy, 'cast') as mock_cast:
             self.proxy.update_lease_expiration('netid', 'ipaddr', 1)
-            mock_cast.assert_called()
+            self.assertTrue(mock_cast.called)
         self.make_msg.assert_called_once_with('update_lease_expiration',
                                               network_id='netid',
                                               ip_address='ipaddr',
