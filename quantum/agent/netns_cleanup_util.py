@@ -1,8 +1,6 @@
 import logging
-import os
 import re
 import sys
-import traceback
 
 import eventlet
 
