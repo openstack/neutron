@@ -25,7 +25,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
 from sqlalchemy.orm import sessionmaker, exc
 
-from quantum.common import exceptions as q_exc
 from quantum.db import model_base
 
 LOG = logging.getLogger(__name__)
