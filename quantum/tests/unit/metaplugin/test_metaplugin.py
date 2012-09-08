@@ -53,6 +53,22 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
+def setup_metaplugin_conf():
+    cfg.CONF.set_override('auth_url', 'http://localhost:35357/v2.0',
+                                      'PROXY')
+    cfg.CONF.set_override('auth_region', 'RegionOne', 'PROXY')
+    cfg.CONF.set_override('admin_user', 'quantum', 'PROXY')
+    cfg.CONF.set_override('admin_password', 'password', 'PROXY')
+    cfg.CONF.set_override('admin_tenant_name', 'service', 'PROXY')
+    cfg.CONF.set_override('plugin_list', PLUGIN_LIST, 'META')
+    cfg.CONF.set_override('l3_plugin_list', L3_PLUGIN_LIST, 'META')
+    cfg.CONF.set_override('default_flavor', 'fake2', 'META')
+    cfg.CONF.set_override('default_l3_flavor', 'fake1', 'META')
+    cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
+    #TODO(nati) remove this after subnet quota change is merged
+    cfg.CONF.max_dns_nameservers = 10
+
+
 class MetaQuantumPluginV2Test(unittest.TestCase):
     """Class conisting of MetaQuantumPluginV2 unit tests"""
 
@@ -68,24 +84,11 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         options.update({'base': models_v2.model_base.BASEV2})
         db.configure_db(options)
 
+        setup_metaplugin_conf()
+
         self.mox = mox.Mox()
         self.stubs = stubout.StubOutForTesting()
         args = ['--config-file', etcdir('quantum.conf.test')]
-        #config.parse(args=args)
-        # Update the plugin
-        cfg.CONF.set_override('auth_url', 'http://localhost:35357/v2.0',
-                                          'PROXY')
-        cfg.CONF.set_override('auth_region', 'RegionOne', 'PROXY')
-        cfg.CONF.set_override('admin_user', 'quantum', 'PROXY')
-        cfg.CONF.set_override('admin_password', 'password', 'PROXY')
-        cfg.CONF.set_override('admin_tenant_name', 'service', 'PROXY')
-        cfg.CONF.set_override('plugin_list', PLUGIN_LIST, 'META')
-        cfg.CONF.set_override('l3_plugin_list', L3_PLUGIN_LIST, 'META')
-        cfg.CONF.set_override('default_flavor', 'fake2', 'META')
-        cfg.CONF.set_override('default_l3_flavor', 'fake1', 'META')
-        cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
-        #TODO(nati) remove this after subnet quota change is merged
-        cfg.CONF.max_dns_nameservers = 10
         self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
         self.client_inst = mock.Mock()
@@ -111,6 +114,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         data = {'network': {'name': flavor,
                             'admin_state_up': True,
                             'shared': False,
+                            'router:external': [],
                             'tenant_id': self.fake_tenant_id,
                             FLAVOR_NETWORK: flavor}}
         return data
@@ -197,17 +201,9 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         port2_ret = self.plugin.create_port(self.context, port2)
         port3_ret = self.plugin.create_port(self.context, port3)
 
-        self.assertEqual('fake1', port1_ret['device_id'])
-        self.assertEqual('fake2', port2_ret['device_id'])
-        self.assertEqual('bad_device_id', port3_ret['device_id'])
-
-        port_in_db1 = self.plugin.get_port(self.context, port1_ret['id'])
-        port_in_db2 = self.plugin.get_port(self.context, port2_ret['id'])
-        port_in_db3 = self.plugin.get_port(self.context, port3_ret['id'])
-
-        self.assertEqual('fake1', port_in_db1['device_id'])
-        self.assertEqual('fake2', port_in_db2['device_id'])
-        self.assertEqual('bad_device_id', port_in_db3['device_id'])
+        self.assertEqual(network_ret1['id'], port1_ret['network_id'])
+        self.assertEqual(network_ret2['id'], port2_ret['network_id'])
+        self.assertEqual(network_ret3['id'], port3_ret['network_id'])
 
         port1['port']['admin_state_up'] = False
         port2['port']['admin_state_up'] = False
