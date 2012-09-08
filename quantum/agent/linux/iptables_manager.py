@@ -21,11 +21,9 @@
 
 """Implements iptables rules using linux utilities."""
 
-import ConfigParser
 import inspect
 import logging
 import os
-import subprocess
 
 from quantum.agent.linux import utils
 
