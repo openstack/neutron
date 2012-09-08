@@ -21,3 +21,9 @@ ovs-ofctl_sbin: CommandFilter, /sbin/ovs-ofctl, root
 ovs-ofctl_sbin_usr: CommandFilter, /usr/sbin/ovs-ofctl, root
 xe: CommandFilter, /sbin/xe, root
 xe_usr: CommandFilter, /usr/sbin/xe, root
+
+# ip_lib
+ip: IpFilter, /sbin/ip, root
+ip_usr: IpFilter, /usr/sbin/ip, root
+ip_exec: IpNetnsExecFilter, /sbin/ip, root
+ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root
