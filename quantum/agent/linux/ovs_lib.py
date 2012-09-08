@@ -20,9 +20,6 @@
 
 import logging
 import re
-import shlex
-import signal
-import subprocess
 
 from quantum.agent.linux import utils
 
