@@ -126,13 +126,29 @@ class TestDhcpAgent(unittest.TestCase):
         network.id = '1'
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
-            dhcp.call_driver('foo', network)
-            dev_mgr.assert_called()
+            self.assertTrue(dhcp.call_driver('foo', network))
+            self.assertTrue(dev_mgr.called)
             self.driver.assert_called_once_with(cfg.CONF,
                                                 mock.ANY,
                                                 'sudo',
                                                 mock.ANY,
                                                 'qdhcp-1')
+
+    def test_call_driver_failure(self):
+        network = mock.Mock()
+        network.id = '1'
+        self.driver.return_value.foo.side_effect = Exception
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+            with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                self.assertIsNone(dhcp.call_driver('foo', network))
+                self.assertTrue(dev_mgr.called)
+                self.driver.assert_called_once_with(cfg.CONF,
+                                                    mock.ANY,
+                                                    'sudo',
+                                                    mock.ANY,
+                                                    'qdhcp-1')
+                self.assertEqual(log.call_count, 1)
 
 
 class TestDhcpAgentEventHandler(unittest.TestCase):
@@ -173,6 +189,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.plugin.assert_has_calls(
             [mock.call.get_network_info(fake_network.id)])
         self.call_driver.assert_called_once_with('enable', fake_network)
+        self.cache.assert_has_calls([mock.call.put(fake_network)])
 
     def test_enable_dhcp_helper_down_network(self):
         self.plugin.get_network_info.return_value = fake_down_network
@@ -180,6 +197,26 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.plugin.assert_has_calls(
             [mock.call.get_network_info(fake_down_network.id)])
         self.assertFalse(self.call_driver.called)
+        self.assertFalse(self.cache.called)
+
+    def test_enable_dhcp_helper_exception_during_rpc(self):
+        self.plugin.get_network_info.side_effect = Exception
+        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+            self.dhcp.enable_dhcp_helper(fake_network.id)
+            self.plugin.assert_has_calls(
+                [mock.call.get_network_info(fake_network.id)])
+            self.assertFalse(self.call_driver.called)
+            self.assertTrue(log.called)
+            self.assertFalse(self.cache.called)
+
+    def test_enable_dhcp_helper_driver_failure(self):
+        self.plugin.get_network_info.return_value = fake_network
+        self.dhcp.enable_dhcp_helper(fake_network.id)
+        self.call_driver.enable.return_value = False
+        self.plugin.assert_has_calls(
+            [mock.call.get_network_info(fake_network.id)])
+        self.call_driver.assert_called_once_with('enable', fake_network)
+        self.assertFalse(self.cache.called)
 
     def test_disable_dhcp_helper_known_network(self):
         self.cache.get_network_by_id.return_value = fake_network
