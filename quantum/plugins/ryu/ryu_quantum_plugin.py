@@ -41,7 +41,7 @@ LOG = logging.getLogger(__name__)
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          l3_db.L3_NAT_db_mixin):
 
-    supported_extension_aliases = ["os-quantum-router"]
+    supported_extension_aliases = ["router"]
 
     def __init__(self, configfile=None):
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
@@ -80,14 +80,43 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self.client.update_network(net.id)
 
     def create_network(self, context, network):
-        net = super(RyuQuantumPluginV2, self).create_network(context, network)
-        self.client.create_network(net['id'])
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(RyuQuantumPluginV2, self).create_network(context,
+                                                                 network)
+            self.client.create_network(net['id'])
+            self._process_l3_create(context, network['network'], net['id'])
+            self._extend_network_dict_l3(context, net)
+        return net
+
+    def update_network(self, context, id, network):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(RyuQuantumPluginV2, self).update_network(context, id,
+                                                                 network)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, id):
-        result = super(RyuQuantumPluginV2, self).delete_network(context, id)
-        self.client.delete_network(id)
-        return result
+        session = context.session
+        with session.begin(subtransactions=True):
+            super(RyuQuantumPluginV2, self).delete_network(context, id)
+            self.client.delete_network(id)
+
+    def get_network(self, context, id, fields=None):
+        net = super(RyuQuantumPluginV2, self).get_network(context, id, None)
+        self._extend_network_dict_l3(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None):
+        nets = super(RyuQuantumPluginV2, self).get_networks(context, filters,
+                                                            None)
+        for net in nets:
+            self._extend_network_dict_l3(context, net)
+        nets = self._filter_nets_l3(context, nets, filters)
+
+        return [self._fields(net, fields) for net in nets]
 
     def delete_port(self, context, id, l3_port_check=True):
         # if needed, check to see if this is a port owned by
