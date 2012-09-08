@@ -15,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 
 from quantum.common import config
 from quantum.openstack.common import cfg
