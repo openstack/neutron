@@ -19,8 +19,6 @@ import logging
 
 from webob import exc
 
-from quantum import wsgi
-
 
 LOG = logging.getLogger(__name__)
 
