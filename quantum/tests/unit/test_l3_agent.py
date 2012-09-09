@@ -237,8 +237,12 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         self.client_inst.list_ports.return_value = {'ports': []}
 
+        self.client_inst.list_networks.return_value = {'networks': []}
+
         self.client_inst.list_routers.return_value = {'routers': [
-            {'id': _uuid()}]}
+            {'id': _uuid(),
+             'admin_state_up': True,
+             'external_gateway_info': {}}]}
         agent.do_single_loop()
 
         self.client_inst.list_routers.return_value = {'routers': []}
