@@ -294,8 +294,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 pool_id = allocation_pool['id']
                 break
         if not pool_id:
-            error_message = ("No allocation pool found for "
-                             "ip address:%s" % ip_address)
+            error_message = _("No allocation pool found for "
+                              "ip address:%s" % ip_address)
             raise q_exc.InvalidInput(error_message=error_message)
         # Two requests will be done on the database. The first will be to
         # search if an entry starts with ip_address + 1 (r1). The second
@@ -709,7 +709,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
-    def _validate_host_route(self, route):
+    def _validate_host_route(self, route, ip_version):
         try:
             netaddr.IPNetwork(route['destination'])
             netaddr.IPAddress(route['nexthop'])
@@ -718,8 +718,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise q_exc.InvalidInput(error_message=err_msg)
         except ValueError:
             # netaddr.IPAddress would raise this
-            err_msg = ("invalid route: %s" % (str(route)))
+            err_msg = _("invalid route: %s") % str(route)
             raise q_exc.InvalidInput(error_message=err_msg)
+        self._validate_ip_version(ip_version, route['nexthop'], 'nexthop')
+        self._validate_ip_version(ip_version, route['destination'],
+                                  'destination')
 
     def _allocate_pools_for_subnet(self, context, subnet):
         """Create IP allocation pools for a given subnet
@@ -912,9 +915,30 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def create_subnet_bulk(self, context, subnets):
         return self._create_bulk('subnet', context, subnets)
 
+    def _validate_ip_version(self, ip_version, addr, name):
+        """Check IP field of a subnet match specified ip version"""
+        ip = netaddr.IPNetwork(addr)
+        if ip.version != ip_version:
+            msg = _("%(name)s '%(addr)s' does not match "
+                    "the ip_version '%(ip_version)s'") % locals()
+            raise q_exc.InvalidInput(error_message=msg)
+
     def _validate_subnet(self, s):
-        """a subroutine to validate a subnet spec"""
-        # check if the number of DNS nameserver exceeds the quota
+        """Validate a subnet spec"""
+
+        # The method requires the subnet spec 's' has 'ip_version' field.
+        # If 's' dict does not have 'ip_version' field in an API call
+        # (e.g., update_subnet()), you need to set 'ip_version' field
+        # before calling this method.
+        ip_ver = s['ip_version']
+
+        if 'cidr' in s:
+            self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
+        if ('gateway_ip' in s and
+            s['gateway_ip'] and
+            s['gateway_ip'] != attributes.ATTR_NOT_SPECIFIED):
+            self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
+
         if 'dns_nameservers' in s and \
                 s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED:
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
@@ -927,8 +951,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 except Exception:
                     raise q_exc.InvalidInput(
                         error_message=("error parsing dns address %s" % dns))
+                self._validate_ip_version(ip_ver, dns, 'dns_nameserver')
 
-        # check if the number of host routes exceeds the quota
         if 'host_routes' in s and \
                 s['host_routes'] != attributes.ATTR_NOT_SPECIFIED:
             if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
@@ -937,7 +961,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     quota=cfg.CONF.max_subnet_host_routes)
             # check if the routes are all valid
             for rt in s['host_routes']:
-                self._validate_host_route(rt)
+                self._validate_host_route(rt, ip_ver)
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
@@ -998,6 +1022,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
            gratuitous DHCP offers"""
 
         s = subnet['subnet']
+        # Fill 'ip_version' field with the current value since
+        # _validate_subnet() expects subnet spec has 'ip_version' field.
+        s['ip_version'] = self._get_subnet(context, id).ip_version
         self._validate_subnet(s)
 
         with context.session.begin(subtransactions=True):

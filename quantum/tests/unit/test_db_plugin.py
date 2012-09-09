@@ -1950,7 +1950,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         allocation_pools = [{'start': 'fe80::2',
                              'end': 'fe80::ffff:fffa:ffff'}]
         self._test_create_subnet(gateway_ip=gateway_ip,
-                                 cidr=cidr,
+                                 cidr=cidr, ip_version=6,
                                  allocation_pools=allocation_pools)
 
     def test_create_subnet_with_large_allocation_pool(self):
@@ -2032,6 +2032,85 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                      shared=True)
         self.assertEquals(ctx_manager.exception.code, 422)
 
+    def test_create_subnet_inconsistent_ipv6_cidrv4(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 6,
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv4_cidrv6(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': 'fe80::0/80',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv4_gatewayv6(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'gateway_ip': 'fe80::1',
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv6_gatewayv4(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': 'fe80::0/80',
+                               'ip_version': 6,
+                               'gateway_ip': '192.168.0.1',
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv6_dns_v4(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': 'fe80::0/80',
+                               'ip_version': 6,
+                               'dns_nameservers': ['192.168.0.1'],
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv4_hostroute_dst_v6(self):
+        host_routes = [{'destination': 'fe80::0/48',
+                        'nexthop': '10.0.2.20'}]
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'host_routes': host_routes,
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_inconsistent_ipv4_hostroute_np_v6(self):
+        host_routes = [{'destination': '172.16.0.0/24',
+                        'nexthop': 'fe80::1'}]
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'host_routes': host_routes,
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
     def test_update_subnet(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
@@ -2049,6 +2128,59 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int, 422)
+
+    def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'gateway_ip': 'fe80::1'}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_inconsistent_ipv6_gatewayv4(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             ip_version=6, cidr='fe80::/48') as subnet:
+                data = {'subnet': {'gateway_ip': '10.1.1.1'}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_inconsistent_ipv4_dns_v6(self):
+        dns_nameservers = ['fe80::1']
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'dns_nameservers': dns_nameservers}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_inconsistent_ipv6_hostroute_dst_v4(self):
+        host_routes = [{'destination': 'fe80::0/48',
+                        'nexthop': '10.0.2.20'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             ip_version=6, cidr='fe80::/48') as subnet:
+                data = {'subnet': {'host_routes': host_routes}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_update_subnet_inconsistent_ipv6_hostroute_np_v4(self):
+        host_routes = [{'destination': '172.16.0.0/24',
+                        'nexthop': 'fe80::1'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             ip_version=6, cidr='fe80::/48') as subnet:
+                data = {'subnet': {'host_routes': host_routes}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
 
     def test_show_subnet(self):
         with self.network() as network:
