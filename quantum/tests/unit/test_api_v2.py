@@ -435,14 +435,14 @@ class JSONV2TestCase(APIv2TestBase):
         data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
         res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
     def test_create_readonly_attr(self):
         data = {'network': {'name': 'net1', 'tenant_id': _uuid(),
                             'status': "ACTIVE"}}
         res = self.api.post_json(_get_path('networks'), data,
                                  expect_errors=True)
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
     def test_create_bulk(self):
         data = {'networks': [{'name': 'net1',
@@ -473,7 +473,7 @@ class JSONV2TestCase(APIv2TestBase):
         data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}
         res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
     def test_create_bulk_partial_body(self):
         data = {'ports': [{'device_id': 'device_1',
@@ -481,7 +481,7 @@ class JSONV2TestCase(APIv2TestBase):
                           {'tenant_id': _uuid()}]}
         res = self.api.post_json(_get_path('ports'), data,
                                  expect_errors=True)
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
     def test_create_attr_not_specified(self):
         net_id = _uuid()
@@ -644,7 +644,7 @@ class JSONV2TestCase(APIv2TestBase):
         data = {'network': {'status': "NANANA"}}
         res = self.api.put_json(_get_path('networks', id=_uuid()), data,
                                 expect_errors=True)
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
 
 class V2Views(unittest.TestCase):
