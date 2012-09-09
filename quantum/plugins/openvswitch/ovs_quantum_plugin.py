@@ -195,15 +195,21 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         ovs_db_v2.initialize()
         self._parse_network_vlan_ranges()
         ovs_db_v2.sync_vlan_allocations(self.network_vlan_ranges)
-        self._parse_tunnel_id_ranges()
-        ovs_db_v2.sync_tunnel_allocations(self.tunnel_id_ranges)
         self.tenant_network_type = cfg.CONF.OVS.tenant_network_type
         if self.tenant_network_type not in [constants.TYPE_LOCAL,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_GRE,
                                             constants.TYPE_NONE]:
-            LOG.error("Invalid tenant_network_type: %s" %
+            LOG.error("Invalid tenant_network_type: %s",
                       self.tenant_network_type)
+            sys.exit(1)
+        self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
+        self.tunnel_id_ranges = []
+        if self.enable_tunneling:
+            self._parse_tunnel_id_ranges()
+            ovs_db_v2.sync_tunnel_allocations(self.tunnel_id_ranges)
+        elif self.tenant_network_type == constants.TYPE_GRE:
+            LOG.error("Tunneling disabled but tenant_network_type is 'gre'")
             sys.exit(1)
         self.agent_rpc = cfg.CONF.AGENT.rpc
         self.setup_rpc()
@@ -233,12 +239,12 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                  int(vlan_min),
                                                  int(vlan_max))
                 except ValueError as ex:
-                    LOG.error("Invalid network VLAN range: \'%s\' - %s" %
-                              (entry, ex))
+                    LOG.error("Invalid network VLAN range: \'%s\' - %s",
+                              entry, ex)
                     sys.exit(1)
             else:
                 self._add_network(entry)
-        LOG.debug("network VLAN ranges: %s" % self.network_vlan_ranges)
+        LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
 
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
@@ -249,17 +255,15 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self.network_vlan_ranges[physical_network] = []
 
     def _parse_tunnel_id_ranges(self):
-        self.tunnel_id_ranges = []
         for entry in cfg.CONF.OVS.tunnel_id_ranges:
             entry = entry.strip()
             try:
                 tun_min, tun_max = entry.split(':')
                 self.tunnel_id_ranges.append((int(tun_min), int(tun_max)))
             except ValueError as ex:
-                LOG.error("Invalid tunnel ID range: \'%s\' - %s" %
-                          (entry, ex))
+                LOG.error("Invalid tunnel ID range: \'%s\' - %s", entry, ex)
                 sys.exit(1)
-        LOG.debug("tunnel ID ranges: %s" % self.tunnel_id_ranges)
+        LOG.info("Tunnel ID ranges: %s", self.tunnel_id_ranges)
 
     # TODO(rkukura) Use core mechanism for attribute authorization
     # when available.
@@ -326,6 +330,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         "(1 through 4094)")
                 raise q_exc.InvalidInput(error_message=msg)
         elif network_type == constants.TYPE_GRE:
+            if not self.enable_tunneling:
+                msg = _("GRE networks are not enabled")
+                raise q_exc.InvalidInput(error_message=msg)
             if physical_network_set:
                 msg = _("provider:physical_network specified for GRE "
                         "network")
@@ -420,7 +427,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_provider(context, net)
             self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
-        LOG.debug("Created network: %s" % net['id'])
+        LOG.debug("Created network: %s", net['id'])
         return net
 
     def update_network(self, context, id, network):
