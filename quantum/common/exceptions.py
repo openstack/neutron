@@ -85,7 +85,7 @@ class InUse(QuantumException):
 
 class NetworkInUse(InUse):
     message = _("Unable to complete operation on network %(net_id)s. "
-                "There is one or more attachments plugged into its ports.")
+                "There is one or more ports still in use on the network.")
 
 
 class SubnetInUse(InUse):
