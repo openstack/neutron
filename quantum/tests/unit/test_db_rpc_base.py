@@ -119,7 +119,7 @@ class TestDhcpRpcCallackMixin(unittest.TestCase):
     def test_get_dhcp_port_create_new(self):
         self.plugin.get_network.return_value = dict(tenant_id='tenantid')
         create_spec = dict(tenant_id='tenantid', device_id='devid',
-                           network_id='netid', name='DHCP Agent',
+                           network_id='netid', name='',
                            admin_state_up=True,
                            device_owner='network:dhcp',
                            mac_address=mock.ANY)

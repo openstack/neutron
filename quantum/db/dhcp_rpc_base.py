@@ -116,7 +116,7 @@ class DhcpRpcCallbackMixin(object):
                 network_id=network_id,
                 tenant_id=network['tenant_id'],
                 mac_address=attributes.ATTR_NOT_SPECIFIED,
-                name='DHCP Agent',
+                name='',
                 device_owner='network:dhcp',
                 fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
 
