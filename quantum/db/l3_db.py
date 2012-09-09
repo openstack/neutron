@@ -399,10 +399,17 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         """
         internal_port = self._get_port(context, fip['port_id'])
         if not internal_port['tenant_id'] == fip['tenant_id']:
-            msg = ('Port %s is associated with a different tenant'
-                   'and therefore cannot be found to floating IP %s'
-                   % (fip['port_id'], fip['id']))
-            raise q_exc.BadRequest(resource='floating', msg=msg)
+            port_id = fip['port_id']
+            if 'id' in fip:
+                floatingip_id = fip['id']
+                msg = _('Port %(port_id)s is associated with a different '
+                        'tenant than Floating IP %(floatingip_id)s and '
+                        'therefore cannot be bound.')
+            else:
+                msg = _('Cannnot create floating IP and bind it to '
+                        'Port %(port_id)s, since that port is owned by a '
+                        'different tenant.')
+            raise q_exc.BadRequest(resource='floatingip', msg=msg % locals())
 
         internal_subnet_id = None
         if 'fixed_ip_address' in fip and fip['fixed_ip_address']:
