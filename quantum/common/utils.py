@@ -21,14 +21,11 @@
 """Utilities and helper functions."""
 
 
-import datetime
-import inspect
 import logging
 import os
 import subprocess
 import uuid
 
-from quantum.common import exceptions as exception
 from quantum.openstack.common import cfg
 from quantum.openstack.common.exception import ProcessExecutionError
 
