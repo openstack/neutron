@@ -36,6 +36,15 @@ LOG = logging.getLogger(__name__)
 
 AGENT_OWNER_PREFIX = 'network:'
 
+# Ports with the following 'device_owner' values will not prevent
+# network deletion.  If delete_network() finds that all ports on a
+# network have these owners, it will explicitly delete each port
+# and allow network deletion to continue.  Similarly, if delete_subnet()
+# finds out that all existing IP Allocations are associated with ports
+# with these owners, it will allow subnet deletion to proceed with the
+# IP allocations being cleaned up by cascade.
+AUTO_DELETE_PORT_OWNERS = ['network:dhcp', 'network:router_interface']
+
 
 class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     """ A class that implements the v2 Quantum plugin interface
@@ -888,10 +897,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ports = self.get_ports(context, filters=filter)
 
             # check if there are any tenant owned ports in-use
-            only_svc = all(p['device_owner'].startswith(AGENT_OWNER_PREFIX)
-                           for p in ports)
+            only_auto_del = all(p['device_owner'] in AUTO_DELETE_PORT_OWNERS
+                                for p in ports)
 
-            if not only_svc:
+            if not only_auto_del:
                 raise q_exc.NetworkInUse(net_id=id)
 
             # clean up network owned ports
@@ -1082,10 +1091,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             allocated_qry = allocated_qry.options(orm.joinedload('ports'))
             allocated = allocated_qry.filter_by(subnet_id=id).all()
 
-            only_svc = all(not a.port_id or
-                           a.ports.device_owner.startswith(AGENT_OWNER_PREFIX)
-                           for a in allocated)
-            if not only_svc:
+            only_auto_del = all(not a.port_id or
+                                a.ports.device_owner in AUTO_DELETE_PORT_OWNERS
+                                for a in allocated)
+            if not only_auto_del:
                 raise q_exc.NetworkInUse(subnet_id=id)
 
             # remove network owned ports
