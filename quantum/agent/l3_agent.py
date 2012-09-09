@@ -90,7 +90,13 @@ class L3NATAgent(object):
                     help="Allow overlapping IP."),
         cfg.StrOpt('router_id', default='',
                    help="If namespaces is disabled, the l3 agent can only"
-                        " confgure a router that has the matching router ID.")
+                        " confgure a router that has the matching router ID."),
+        cfg.BoolOpt('handle_internal_only_routers',
+                    default=True,
+                    help="Agent should implement routers with no gateway"),
+        cfg.StrOpt('gateway_external_network_id', default='',
+                   help="UUID of external network for routers implemented "
+                        "by the agents."),
     ]
 
     def __init__(self, conf):
@@ -171,13 +177,37 @@ class L3NATAgent(object):
 
             time.sleep(self.polling_interval)
 
+    def _fetch_external_net_id(self):
+        """Find UUID of single external network for this agent"""
+        if self.conf.gateway_external_network_id:
+            return self.conf.gateway_external_network_id
+
+        params = {'router:external': True}
+        ex_nets = self.qclient.list_networks(**params)['networks']
+        if len(ex_nets) > 1:
+            raise Exception("must configure 'external_network_id' if "
+                            "Quantum has more than one external network.")
+        if len(ex_nets) == 0:
+            return None
+        return ex_nets[0]['id']
+
     def do_single_loop(self):
         prev_router_ids = set(self.router_info)
         cur_router_ids = set()
 
+        target_ex_net_id = self._fetch_external_net_id()
+
         # identify and update new or modified routers
         for r in self.qclient.list_routers()['routers']:
-            #FIXME(danwent): handle admin state
+            if not r['admin_state_up']:
+                continue
+
+            ex_net_id = r['external_gateway_info'].get('network_id', None)
+            if not ex_net_id and not self.conf.handle_internal_only_routers:
+                continue
+
+            if ex_net_id and ex_net_id != target_ex_net_id:
+                continue
 
             # If namespaces are disabled, only process the router associated
             # with the configured agent id.
