@@ -93,7 +93,7 @@ def _filters(request, attr_info):
                 try:
                     result_values.append(convert_to(value))
                 except exceptions.InvalidInput as e:
-                    raise webob.exc.HTTPUnprocessableEntity(str(e))
+                    raise webob.exc.HTTPBadRequest(str(e))
             else:
                 result_values.append(value)
         if result_values:
@@ -464,11 +464,11 @@ class Controller(object):
                 if is_required and attr not in res_dict:
                     msg = _("Failed to parse request. Required "
                             " attribute '%s' not specified") % attr
-                    raise webob.exc.HTTPUnprocessableEntity(msg)
+                    raise webob.exc.HTTPBadRequest(msg)
 
                 if not attr_vals['allow_post'] and attr in res_dict:
                     msg = _("Attribute '%s' not allowed in POST" % attr)
-                    raise webob.exc.HTTPUnprocessableEntity(msg)
+                    raise webob.exc.HTTPBadRequest(msg)
 
                 if attr_vals['allow_post']:
                     res_dict[attr] = res_dict.get(attr,
@@ -477,7 +477,7 @@ class Controller(object):
             for attr, attr_vals in attr_info.iteritems():
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
-                    raise webob.exc.HTTPUnprocessableEntity(msg)
+                    raise webob.exc.HTTPBadRequest(msg)
 
         for attr, attr_vals in attr_info.iteritems():
             # Convert values if necessary
@@ -498,7 +498,7 @@ class Controller(object):
                     msg_dict = dict(attr=attr, reason=res)
                     msg = _("Invalid input for %(attr)s. "
                             "Reason: %(reason)s.") % msg_dict
-                    raise webob.exc.HTTPUnprocessableEntity(msg)
+                    raise webob.exc.HTTPBadRequest(msg)
         return body
 
     def _validate_network_tenant_ownership(self, request, resource_item):

@@ -785,23 +785,23 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   private_sub['subnet']['id'],
                                                   None)
 
-    def test_create_floatingip_invalid_floating_network_id_returns_422(self):
+    def test_create_floatingip_invalid_floating_network_id_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip('json', 'iamnotanuuid',
                                       utils.str_uuid(), '192.168.0.1')
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
-    def test_create_floatingip_invalid_floating_port_id_returns_422(self):
+    def test_create_floatingip_invalid_floating_port_id_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip('json', utils.str_uuid(),
                                       'iamnotanuuid', '192.168.0.1')
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
-    def test_create_floatingip_invalid_fixed_ip_address_returns_422(self):
+    def test_create_floatingip_invalid_fixed_ip_address_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip('json', utils.str_uuid(),
                                       utils.str_uuid(), 'iamnotnanip')
-        self.assertEqual(res.status_int, 422)
+        self.assertEqual(res.status_int, 400)
 
     def test_list_nets_external(self):
         with self.network() as n1:

@@ -1254,7 +1254,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_default_allocation_expiration(self):
         cfg.CONF.set_override('dhcp_lease_duration', 120)
@@ -1641,7 +1641,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                 req = self.new_list_request('networks',
                                             params='admin_state_up=fake')
                 res = req.get_response(self.api)
-                self.assertEquals(422, res.status_int)
+                self.assertEquals(400, res.status_int)
 
     def test_show_network(self):
         with self.network(name='net1') as net:
@@ -2025,12 +2025,12 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                      allocation_pools=allocation_pools)
         self.assertEquals(ctx_manager.exception.code, 400)
 
-    def test_create_subnet_shared_returns_422(self):
+    def test_create_subnet_shared_returns_400(self):
         cidr = '10.0.0.0/24'
         with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      shared=True)
-        self.assertEquals(ctx_manager.exception.code, 422)
+        self.assertEquals(ctx_manager.exception.code, 400)
 
     def test_update_subnet(self):
         with self.subnet() as subnet:
@@ -2041,14 +2041,14 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             self.assertEqual(res['subnet']['gateway_ip'],
                              data['subnet']['gateway_ip'])
 
-    def test_update_subnet_shared_returns_422(self):
+    def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
             with self.subnet(network=network) as subnet:
                 data = {'subnet': {'shared': True}}
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 422)
+                self.assertEqual(res.status_int, 400)
 
     def test_show_subnet(self):
         with self.network() as network:
@@ -2131,7 +2131,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_invalid_subnet(self):
         with self.network() as network:
@@ -2143,7 +2143,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_invalid_ip_address(self):
         with self.network() as network:
@@ -2155,7 +2155,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_invalid_uuid(self):
         with self.network() as network:
@@ -2167,7 +2167,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEquals(res.status_int, 422)
+            self.assertEquals(res.status_int, 400)
 
     def test_create_subnet_with_one_dns(self):
         gateway_ip = '10.0.0.1'
