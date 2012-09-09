@@ -32,11 +32,10 @@ class ConfigurationTest(unittest.TestCase):
                          cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo',
                          cfg.CONF.AGENT.root_helper)
-
-        ranges = cfg.CONF.VLANS.network_vlan_ranges
-        self.assertEqual(1, len(ranges))
-        self.assertEqual('default:1000:2999', ranges[0])
-
-        mappings = cfg.CONF.LINUX_BRIDGE.physical_interface_mappings
-        self.assertEqual(1, len(mappings))
-        self.assertEqual('default:eth1', mappings[0])
+        self.assertEqual('local',
+                         cfg.CONF.VLANS.tenant_network_type)
+        self.assertEqual(0,
+                         len(cfg.CONF.VLANS.network_vlan_ranges))
+        self.assertEqual(0,
+                         len(cfg.CONF.LINUX_BRIDGE.
+                             physical_interface_mappings))

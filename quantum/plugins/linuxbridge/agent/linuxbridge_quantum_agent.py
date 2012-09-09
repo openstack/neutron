@@ -192,6 +192,11 @@ class LinuxBridge:
         self.ensure_bridge(bridge_name, physical_interface, ips, gateway)
         return physical_interface
 
+    def ensure_local_bridge(self, network_id):
+        """Create a local bridge unless it already exists."""
+        bridge_name = self.get_bridge_name(network_id)
+        self.ensure_bridge(bridge_name)
+
     def ensure_vlan(self, physical_interface, vlan_id):
         """Create a vlan unless it already exists."""
         interface = self.get_subinterface_name(physical_interface, vlan_id)
@@ -237,7 +242,8 @@ class LinuxBridge:
                 src_device.addr.delete(ip_version=ip['ip_version'],
                                        cidr=ip['cidr'])
 
-    def ensure_bridge(self, bridge_name, interface, ips=None, gateway=None):
+    def ensure_bridge(self, bridge_name, interface=None, ips=None,
+                      gateway=None):
         """
         Create a bridge unless it already exists.
         """
@@ -259,6 +265,9 @@ class LinuxBridge:
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
 
+        if not interface:
+            return
+
         # Update IP info if necessary
         self.update_interface_ip_details(bridge_name, interface, ips, gateway)
 
@@ -272,7 +281,7 @@ class LinuxBridge:
                           bridge_name, e)
                 return
 
-    def add_tap_interface(self, network_id, physical_interface, vlan_id,
+    def add_tap_interface(self, network_id, physical_network, vlan_id,
                           tap_device_name):
         """
         If a VIF has been plugged into a network, this function will
@@ -297,13 +306,25 @@ class LinuxBridge:
                               tap_device_name], root_helper=self.root_helper):
                 return False
 
-        if int(vlan_id) == lconst.FLAT_VLAN_ID:
-            self.ensure_flat_bridge(network_id, physical_interface)
+        if int(vlan_id) == lconst.LOCAL_VLAN_ID:
+            self.ensure_local_bridge(network_id)
         else:
-            self.ensure_vlan_bridge(network_id, physical_interface, vlan_id)
+            physical_interface = self.interface_mappings.get(physical_network)
+            if not physical_interface:
+                LOG.error("No mapping for physical network %s" %
+                          physical_network)
+                return False
+
+            if int(vlan_id) == lconst.FLAT_VLAN_ID:
+                self.ensure_flat_bridge(network_id, physical_interface)
+            else:
+                self.ensure_vlan_bridge(network_id, physical_interface,
+                                        vlan_id)
+
         if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
                          root_helper=self.root_helper):
             return False
+
         LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
                                                           bridge_name))
         return True
@@ -317,19 +338,14 @@ class LinuxBridge:
             """
             return False
 
-        physical_interface = self.interface_mappings.get(physical_network)
-        if not physical_interface:
-            LOG.error("No mapping for physical network %s" % physical_network)
-            return False
-
         if interface_id.startswith(GATEWAY_INTERFACE_PREFIX):
             return self.add_tap_interface(network_id,
-                                          physical_interface, vlan_id,
+                                          physical_network, vlan_id,
                                           interface_id)
         else:
             tap_device_name = self.get_tap_device_name(interface_id)
             return self.add_tap_interface(network_id,
-                                          physical_interface, vlan_id,
+                                          physical_network, vlan_id,
                                           tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
@@ -613,9 +629,18 @@ class LinuxBridgeQuantumAgentRPC:
         self.setup_rpc(interface_mappings.values())
 
     def setup_rpc(self, physical_interfaces):
-        # REVISIT try until one succeeds?
-        mac = utils.get_interface_mac(physical_interfaces[0])
+        if physical_interfaces:
+            mac = utils.get_interface_mac(physical_interfaces[0])
+        else:
+            devices = ip_lib.IPWrapper(self.root_helper).get_devices(True)
+            if devices:
+                mac = utils.get_interface_mac(devices[0].name)
+            else:
+                LOG.error("Unable to obtain MAC of any device for agent_id")
+                exit(1)
         self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
+        LOG.info("RPC agent_id: %s" % self.agent_id)
+
         self.topic = topics.AGENT
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
 

@@ -18,10 +18,10 @@
 
 
 FLAT_VLAN_ID = -1
+LOCAL_VLAN_ID = -2
 
-PORT_UP = "ACTIVE"
-PORT_DOWN = "DOWN"
-
-VLANID = 'vlan_id'
-PORT_ID = 'port-id'
-NET_ID = 'net-id'
+# Values for network_type
+TYPE_FLAT = 'flat'
+TYPE_VLAN = 'vlan'
+TYPE_LOCAL = 'local'
+TYPE_NONE = 'none'

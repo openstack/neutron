@@ -19,11 +19,12 @@ NETWORK_TYPE = 'provider:network_type'
 PHYSICAL_NETWORK = 'provider:physical_network'
 SEGMENTATION_ID = 'provider:segmentation_id'
 
+NETWORK_TYPE_VALUES = ['flat', 'gre', 'local', 'vlan']
+
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         NETWORK_TYPE: {'allow_post': True, 'allow_put': True,
-                       'validate': {'type:values': ['flat',
-                                                    'vlan']},
+                       'validate': {'type:values': NETWORK_TYPE_VALUES},
                        'default': attributes.ATTR_NOT_SPECIFIED,
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
@@ -49,6 +50,8 @@ class Providernet(object):
     To create a provider VLAN network using the CLI with admin rights:
 
        (shell) net-create --tenant_id <tenant-id> <net-name> \
+       --provider:network_type vlan \
+       --provider:physical_network <physical-net> \
        --provider:segmentation_id <vlan-id>
 
     With admin rights, network dictionaries returned from CLI commands
@@ -65,7 +68,7 @@ class Providernet(object):
 
     @classmethod
     def get_description(cls):
-        return "Expose mapping of virtual networks to VLANs and flat networks"
+        return "Expose mapping of virtual networks to physical networks"
 
     @classmethod
     def get_namespace(cls):
@@ -73,7 +76,7 @@ class Providernet(object):
 
     @classmethod
     def get_updated(cls):
-        return "2012-07-23T10:00:00-00:00"
+        return "2012-09-07T10:00:00-00:00"
 
     def get_extended_resources(self, version):
         if version == "2.0":
