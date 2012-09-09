@@ -109,7 +109,10 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
         except Exception as e:
             # NOTE(jkoelker) Everyting else is 500
             LOG.exception('%s failed' % action)
-            body = serializer({'QuantumError': str(e)})
+            # Do not expose details of 500 error to clients.
+            msg = _('Request Failed: internal server error while '
+                    'processing your request.')
+            body = serializer({'QuantumError': msg})
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPInternalServerError(**kwargs)
 
