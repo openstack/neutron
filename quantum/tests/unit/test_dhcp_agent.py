@@ -104,22 +104,17 @@ class TestDhcpAgent(unittest.TestCase):
 
     def test_run_completes_single_pass(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
-            with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
-                mock_plugin = mock.Mock()
-                mock_plugin.get_active_networks.return_value = ['a']
-                plug.return_value = mock_plugin
-
-                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
-                with mock.patch.object(dhcp, 'enable_dhcp_helper') as enable:
-                    with mock.patch.object(dhcp, 'lease_relay') as relay:
-                        dhcp.run()
-                        enable.assert_called_once_with('a')
-                        plug.assert_called_once_with('q-plugin', mock.ANY)
-                        mock_plugin.assert_has_calls(
-                            [mock.call.get_active_networks()])
-                        relay.assert_has_mock_calls([mock.call.run()])
-
-        self.notification.assert_has_calls([mock.call.run_dispatch()])
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            attrs_to_mock = dict(
+                [(a, mock.DEFAULT) for a in
+                 ['sync_state', 'lease_relay', 'periodic_resync']])
+            with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
+                dhcp.run()
+                mocks['sync_state'].assert_called_once_with()
+                mocks['periodic_resync'].assert_called_once_with()
+                mocks['lease_relay'].assert_has_mock_calls(
+                    [mock.call.start()])
+                self.notification.assert_has_calls([mock.call.run_dispatch()])
 
     def test_call_driver(self):
         network = mock.Mock()
@@ -149,6 +144,95 @@ class TestDhcpAgent(unittest.TestCase):
                                                     mock.ANY,
                                                     'qdhcp-1')
                 self.assertEqual(log.call_count, 1)
+                self.assertTrue(dhcp.needs_resync)
+
+    def test_update_lease(self):
+        with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp.update_lease('net_id', '192.168.1.1', 120)
+            plug.assert_has_calls(
+                [mock.call().update_lease_expiration(
+                    'net_id', '192.168.1.1', 120)])
+
+    def test_update_lease_failure(self):
+        with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
+            plug.return_value.update_lease_expiration.side_effect = Exception
+
+            with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                dhcp.update_lease('net_id', '192.168.1.1', 120)
+                plug.assert_has_calls(
+                    [mock.call().update_lease_expiration(
+                        'net_id', '192.168.1.1', 120)])
+
+                self.assertTrue(log.called)
+                self.assertTrue(dhcp.needs_resync)
+
+    def _test_sync_state_helper(self, known_networks, active_networks):
+        with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
+            mock_plugin = mock.Mock()
+            mock_plugin.get_active_networks.return_value = active_networks
+            plug.return_value = mock_plugin
+
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+
+            attrs_to_mock = dict(
+                [(a, mock.DEFAULT) for a in
+                 ['refresh_dhcp_helper', 'disable_dhcp_helper', 'cache']])
+
+            with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
+                mocks['cache'].get_network_ids.return_value = known_networks
+                dhcp.sync_state()
+
+                exp_refresh = [
+                    mock.call(net_id) for net_id in active_networks]
+
+                diff = set(known_networks) - set(active_networks)
+                exp_disable = [mock.call(net_id) for net_id in diff]
+
+                mocks['cache'].assert_has_calls([mock.call.get_network_ids()])
+                mocks['refresh_dhcp_helper'].assert_has_called(exp_refresh)
+                mocks['disable_dhcp_helper'].assert_has_called(exp_disable)
+
+    def test_sync_state_initial(self):
+        self._test_sync_state_helper([], ['a'])
+
+    def test_sync_state_same(self):
+        self._test_sync_state_helper(['a'], ['a'])
+
+    def test_sync_state_disabled_net(self):
+        self._test_sync_state_helper(['b'], ['a'])
+
+    def test_sync_state_plugin_error(self):
+        with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
+            mock_plugin = mock.Mock()
+            mock_plugin.get_active_networks.side_effect = Exception
+            plug.return_value = mock_plugin
+
+            with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                dhcp.sync_state()
+
+                self.assertTrue(log.called)
+                self.assertTrue(dhcp.needs_resync)
+
+    def test_periodic_resync(self):
+        dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+        with mock.patch.object(dhcp_agent.eventlet, 'spawn') as spawn:
+            dhcp.periodic_resync()
+            spawn.assert_called_once_with(dhcp._periodic_resync_helper)
+
+    def test_periodoc_resync_helper(self):
+        with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp.needs_resync = True
+            with mock.patch.object(dhcp, 'sync_state') as sync_state:
+                sync_state.side_effect = RuntimeError
+                with self.assertRaises(RuntimeError):
+                    dhcp._periodic_resync_helper()
+                sync_state.assert_called_once_with()
+                sleep.assert_called_once_with(dhcp.conf.resync_interval)
+                self.assertFalse(dhcp.needs_resync)
 
 
 class TestDhcpAgentEventHandler(unittest.TestCase):
@@ -207,6 +291,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
                 [mock.call.get_network_info(fake_network.id)])
             self.assertFalse(self.call_driver.called)
             self.assertTrue(log.called)
+            self.assertTrue(self.dhcp.needs_resync)
             self.assertFalse(self.cache.called)
 
     def test_enable_dhcp_helper_driver_failure(self):
@@ -231,6 +316,16 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id('abcdef')])
         self.assertEqual(self.call_driver.call_count, 0)
+
+    def test_disable_dhcp_helper_driver_failure(self):
+        self.cache.get_network_by_id.return_value = fake_network
+        self.dhcp.disable_dhcp_helper(fake_network.id)
+        self.call_driver.disable.return_value = False
+        self.cache.assert_has_calls(
+            [mock.call.get_network_by_id(fake_network.id)])
+        self.call_driver.assert_called_once_with('disable', fake_network)
+        self.cache.assert_has_calls(
+            [mock.call.get_network_by_id(fake_network.id)])
 
     def test_network_create_end(self):
         payload = dict(network=dict(id=fake_network.id))
@@ -274,6 +369,23 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             self.assertFalse(self.call_driver.called)
             self.cache.assert_has_calls(
                 [mock.call.get_network_by_id('net-id')])
+
+    def test_refresh_dhcp_helper_exception_during_rpc(self):
+        network = FakeModel('net-id',
+                            tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                            admin_state_up=True,
+                            subnets=[],
+                            ports=[])
+
+        self.cache.get_network_by_id.return_value = network
+        self.plugin.get_network_info.side_effect = Exception
+        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+            self.dhcp.refresh_dhcp_helper(network.id)
+            self.assertFalse(self.call_driver.called)
+            self.cache.assert_has_calls(
+                [mock.call.get_network_by_id('net-id')])
+            self.assertTrue(log.called)
+            self.assertTrue(self.dhcp.needs_resync)
 
     def test_subnet_update_end(self):
         payload = dict(subnet=dict(network_id=fake_network.id))
@@ -471,6 +583,12 @@ class TestNetworkCache(unittest.TestCase):
         nc.put(fake_network)
 
         self.assertEqual(nc.get_network_by_id(fake_network.id), fake_network)
+
+    def test_get_network_ids(self):
+        nc = dhcp_agent.NetworkCache()
+        nc.put(fake_network)
+
+        self.assertEqual(nc.get_network_ids(), [fake_network.id])
 
     def test_get_network_by_subnet_id(self):
         nc = dhcp_agent.NetworkCache()
