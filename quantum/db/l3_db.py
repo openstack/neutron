@@ -274,11 +274,18 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             pass
 
     def add_router_interface(self, context, router_id, interface_info):
-        # make sure router exists - will raise if not
-        self._get_router(context, router_id)
+        # make sure router exists
+        router = self._get_router(context, router_id)
         if not interface_info:
             msg = "Either subnet_id or port_id must be specified"
             raise q_exc.BadRequest(resource='router', msg=msg)
+
+        try:
+            policy.enforce(context,
+                           "extension:router:add_router_interface",
+                           self._make_router_dict(router))
+        except q_exc.PolicyNotAuthorized:
+            raise l3.RouterNotFound(router_id=router_id)
 
         if 'port_id' in interface_info:
             if 'subnet_id' in interface_info:
@@ -327,6 +334,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def remove_router_interface(self, context, router_id, interface_info):
         # make sure router exists
         router = self._get_router(context, router_id)
+        try:
+            policy.enforce(context,
+                           "extension:router:remove_router_interface",
+                           self._make_router_dict(router))
+        except q_exc.PolicyNotAuthorized:
+            raise l3.RouterNotFound(router_id=router_id)
 
         if not interface_info:
             msg = "Either subnet_id or port_id must be specified"
