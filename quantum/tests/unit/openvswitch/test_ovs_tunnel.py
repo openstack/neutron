@@ -28,12 +28,13 @@ NET_UUID = '3faeebfe-5d37-11e1-a64b-000c29d5f0a7'
 LS_ID = '42'
 LV_ID = 42
 LV_IDS = [42, 43]
-LVM = ovs_quantum_agent.LocalVLANMapping(LV_ID, 'gre', None, LS_ID, LV_IDS)
 VIF_ID = '404deaec-5d37-11e1-a64b-000c29d5f0a8'
 VIF_MAC = '3c:09:24:1e:78:23'
 OFPORT_NUM = 1
 VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
                            VIF_ID, VIF_MAC, 'switch')
+VIF_PORTS = {LV_ID: VIF_PORT}
+LVM = ovs_quantum_agent.LocalVLANMapping(LV_ID, 'gre', None, LS_ID, VIF_PORTS)
 BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
 
 
@@ -140,6 +141,7 @@ class TunnelTest(unittest.TestCase):
         self.mox.VerifyAll()
 
     def testPortUnbound(self):
+        self.mock_tun_bridge.delete_flows(dl_dst=VIF_MAC, tun_id=LS_ID)
         self.mox.ReplayAll()
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
@@ -147,7 +149,7 @@ class TunnelTest(unittest.TestCase):
                                               'sudo', 2, 2, False)
         a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
-        a.port_unbound(VIF_PORT, NET_UUID)
+        a.port_unbound(VIF_ID, NET_UUID)
         self.mox.VerifyAll()
 
     def testPortDead(self):
