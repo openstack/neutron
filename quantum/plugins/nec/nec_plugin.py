@@ -19,6 +19,7 @@ import logging
 
 from quantum import context
 from quantum.common import topics
+from quantum.db import dhcp_rpc_base
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.nec import ofc_manager
@@ -459,7 +460,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
         super(NECPluginV2, self).delete_packet_filter(context, id)
 
 
-class NECPluginV2RPCCallbacks():
+class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.0'
 
