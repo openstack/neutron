@@ -338,7 +338,7 @@ class IpNetnsCommand(IpCommandBase):
     def delete(self, name):
         self._as_root('delete', name, use_root_namespace=True)
 
-    def execute(self, cmds, addl_env={}):
+    def execute(self, cmds, addl_env={}, check_exit_code=True):
         if not self._parent.root_helper:
             raise exceptions.SudoRequired()
         elif not self._parent.namespace:
@@ -347,7 +347,8 @@ class IpNetnsCommand(IpCommandBase):
             return utils.execute(
                 ['%s=%s' % pair for pair in addl_env.items()] +
                 ['ip', 'netns', 'exec', self._parent.namespace] + list(cmds),
-                root_helper=self._parent.root_helper)
+                root_helper=self._parent.root_helper,
+                check_exit_code=check_exit_code)
 
     def exists(self, name):
         output = self._as_root('list', options='o', use_root_namespace=True)

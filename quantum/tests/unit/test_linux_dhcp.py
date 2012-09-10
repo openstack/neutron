@@ -331,7 +331,8 @@ class TestDhcpLocalProcess(TestBase):
 
         self.assertFalse(delegate.called)
         exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo')
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
+                                             check_exit_code=True)
 
     def test_disable(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
@@ -348,7 +349,8 @@ class TestDhcpLocalProcess(TestBase):
 
         delegate.assert_has_calls([mock.call.destroy(network, 'tap0')])
         exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo')
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
+                                             check_exit_code=True)
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:
@@ -452,7 +454,8 @@ class TestDnsmasq(TestBase):
                 dm.spawn_process()
                 self.assertTrue(mocks['_output_opts_file'].called)
                 self.execute.assert_called_once_with(expected,
-                                                     root_helper='sudo')
+                                                     root_helper='sudo',
+                                                     check_exit_code=True)
 
     def test_spawn(self):
         self._test_spawn([])
@@ -539,7 +542,8 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo')
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
+                                             check_exit_code=True)
 
     def _test_lease_relay_script_helper(self, action, lease_remaining,
                                         path_exists=True):
