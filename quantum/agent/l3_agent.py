@@ -202,7 +202,8 @@ class L3NATAgent(object):
             if not r['admin_state_up']:
                 continue
 
-            ex_net_id = r['external_gateway_info'].get('network_id', None)
+            ex_net_id = (r['external_gateway_info'] and
+                         r['external_gateway_info'].get('network_id'))
             if not ex_net_id and not self.conf.handle_internal_only_routers:
                 continue
 
@@ -381,7 +382,8 @@ class L3NATAgent(object):
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.conf.root_helper,
                                 namespace=ri.ns_name()):
-            self.driver.unplug(interface_name)
+            self.driver.unplug(interface_name,
+                               bridge=self.conf.external_network_bridge)
 
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         for c, r in self.external_gateway_filter_rules():
