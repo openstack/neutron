@@ -46,6 +46,7 @@ NS_PREFIX = 'qdhcp-'
 class DhcpAgent(object):
     OPTS = [
         cfg.StrOpt('root_helper', default='sudo'),
+        cfg.IntOpt('resync_interval', default=30),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help="The driver used to manage the DHCP server."),
@@ -54,6 +55,7 @@ class DhcpAgent(object):
     ]
 
     def __init__(self, conf):
+        self.needs_resync = False
         self.conf = conf
         self.cache = NetworkCache()
 
@@ -67,10 +69,8 @@ class DhcpAgent(object):
 
     def run(self):
         """Activate the DHCP agent."""
-        # enable DHCP for current networks
-        for network_id in self.plugin_rpc.get_active_networks():
-            self.enable_dhcp_helper(network_id)
-
+        self.sync_state()
+        self.periodic_resync()
         self.lease_relay.start()
         self.notifications.run_dispatch(self)
 
@@ -92,17 +92,51 @@ class DhcpAgent(object):
             return True
 
         except Exception, e:
+            self.needs_resync = True
             LOG.exception('Unable to %s dhcp.' % action)
 
     def update_lease(self, network_id, ip_address, time_remaining):
-        self.plugin_rpc.update_lease_expiration(network_id, ip_address,
-                                                time_remaining)
+        try:
+            self.plugin_rpc.update_lease_expiration(network_id, ip_address,
+                                                    time_remaining)
+        except:
+            self.needs_resync = True
+            LOG.exception(_('Unable to update lease'))
+
+    def sync_state(self):
+        """Sync the local DHCP state with Quantum."""
+        LOG.info(_('Synchronizing state'))
+        known_networks = set(self.cache.get_network_ids())
+
+        try:
+            active_networks = set(self.plugin_rpc.get_active_networks())
+            for deleted_id in known_networks - active_networks:
+                self.disable_dhcp_helper(deleted_id)
+
+            for network_id in active_networks:
+                self.refresh_dhcp_helper(network_id)
+        except:
+            self.needs_resync = True
+            LOG.exception(_('Unable to sync network state.'))
+
+    def _periodic_resync_helper(self):
+        """Resync the dhcp state at the configured interval."""
+        while True:
+            eventlet.sleep(self.conf.resync_interval)
+            if self.needs_resync:
+                self.needs_resync = False
+                self.sync_state()
+
+    def periodic_resync(self):
+        """Spawn a thread to periodically resync the dhcp state."""
+        eventlet.spawn(self._periodic_resync_helper)
 
     def enable_dhcp_helper(self, network_id):
         """Enable DHCP for a network that meets enabling criteria."""
         try:
             network = self.plugin_rpc.get_network_info(network_id)
         except:
+            self.needs_resync = True
             LOG.exception(_('Network %s RPC info call failed.') % network_id)
             return
 
@@ -119,8 +153,8 @@ class DhcpAgent(object):
         """Disable DHCP for a network known to the agent."""
         network = self.cache.get_network_by_id(network_id)
         if network:
-            self.call_driver('disable', network)
-            self.cache.remove(network)
+            if self.call_driver('disable', network):
+                self.cache.remove(network)
 
     def refresh_dhcp_helper(self, network_id):
         """Refresh or disable DHCP for a network depending on the current state
@@ -132,7 +166,12 @@ class DhcpAgent(object):
             # DHCP current not running for network.
             return self.enable_dhcp_helper(network_id)
 
-        network = self.plugin_rpc.get_network_info(network_id)
+        try:
+            network = self.plugin_rpc.get_network_info(network_id)
+        except:
+            self.needs_resync = True
+            LOG.exception(_('Network %s RPC info call failed.') % network_id)
+            return
 
         old_cidrs = set(s.cidr for s in old_network.subnets if s.enable_dhcp)
         new_cidrs = set(s.cidr for s in network.subnets if s.enable_dhcp)
@@ -141,8 +180,8 @@ class DhcpAgent(object):
             self.call_driver('reload_allocations', network)
             self.cache.put(network)
         elif new_cidrs:
-            self.call_driver('restart', network)
-            self.cache.put(network)
+            if self.call_driver('restart', network):
+                self.cache.put(network)
         else:
             self.disable_dhcp_helper(network.id)
 
@@ -273,6 +312,9 @@ class NetworkCache(object):
         self.cache = {}
         self.subnet_lookup = {}
         self.port_lookup = {}
+
+    def get_network_ids(self):
+        return self.cache.keys()
 
     def get_network_by_id(self, network_id):
         return self.cache.get(network_id)
