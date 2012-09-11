@@ -31,6 +31,8 @@ LOG = logging.getLogger(__name__)
 
 class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     l3_db.L3_NAT_db_mixin):
+    supported_extension_aliases = ["router"]
+
     def __init__(self, configfile=None):
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})

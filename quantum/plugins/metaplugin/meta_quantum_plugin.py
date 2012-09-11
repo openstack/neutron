@@ -58,7 +58,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         options.update({"reconnect_interval": reconnect_interval})
         self.supported_extension_aliases = \
             cfg.CONF.META.supported_extension_aliases.split(',')
-        self.supported_extension_aliases += ['flavor', 'os-quantum-router']
+        self.supported_extension_aliases += ['flavor', 'router']
 
         # Ignore config option overapping
         def _is_opt_registered(opts, opt):
@@ -152,23 +152,41 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         flavor = self._get_flavor_by_network_id(network['id'])
         network[FLAVOR_NETWORK] = flavor
 
+    def _is_l3_plugin(self, plugin):
+        return 'router' in plugin.supported_extension_aliases
+
     def create_network(self, context, network):
         n = network['network']
         flavor = n.get(FLAVOR_NETWORK)
         if not str(flavor) in self.plugins:
             flavor = self.default_flavor
         plugin = self._get_plugin(flavor)
-        net = plugin.create_network(context, network)
-        LOG.debug("Created network: %s with flavor %s " % (net['id'], flavor))
-        try:
-            meta_db_v2.add_network_flavor_binding(flavor, str(net['id']))
-        except:
-            LOG.exception('failed to add flavor bindings')
-            plugin.delete_network(context, net['id'])
-            raise FaildToAddFlavorBinding()
+        with context.session.begin(subtransactions=True):
+            net = plugin.create_network(context, network)
+            if not self._is_l3_plugin(plugin):
+                self._process_l3_create(context, network['network'], net['id'])
+                self._extend_network_dict_l3(context, net)
+            LOG.debug("Created network: %s with flavor %s " % (net['id'],
+                                                               flavor))
+            try:
+                meta_db_v2.add_network_flavor_binding(flavor, str(net['id']))
+            except:
+                LOG.exception('failed to add flavor bindings')
+                plugin.delete_network(context, net['id'])
+                raise FaildToAddFlavorBinding()
 
         LOG.debug("Created network: %s" % net['id'])
         self._extend_network_dict(context, net)
+        return net
+
+    def update_network(self, context, id, network):
+        flavor = meta_db_v2.get_flavor_by_network(id)
+        plugin = self._get_plugin(flavor)
+        with context.session.begin(subtransactions=True):
+            net = plugin.update_network(context, id, network)
+            if not self._is_l3_plugin(plugin):
+                self._process_l3_update(context, network['network'], id)
+                self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, id):
@@ -180,8 +198,13 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         flavor = meta_db_v2.get_flavor_by_network(id)
         plugin = self._get_plugin(flavor)
         net = plugin.get_network(context, id, fields)
+        net['id'] = id
+        if not fields or 'router:external' in fields:
+            self._extend_network_dict_l3(context, net)
         if not fields or FLAVOR_NETWORK in fields:
             self._extend_network_dict(context, net)
+        if fields and not id in fields:
+            del net['id']
         return net
 
     def get_networks_with_flavor(self, context, filters=None,
@@ -202,8 +225,11 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def get_networks(self, context, filters=None, fields=None):
         nets = self.get_networks_with_flavor(context, filters, None)
-        return [self.get_network(context, net['id'], fields)
+        if filters:
+            nets = self._filter_nets_l3(context, nets, filters)
+        nets = [self.get_network(context, net['id'], fields)
                 for net in nets]
+        return nets
 
     def _get_flavor_by_network_id(self, network_id):
         return meta_db_v2.get_flavor_by_network(network_id)
@@ -228,11 +254,11 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return plugin.update_port(context, id, port)
 
     def delete_port(self, context, id, l3_port_check=True):
-        if l3_port_check:
-            self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
         port_in_db = self.get_port(context, id)
         plugin = self._get_plugin_by_network_id(port_in_db['network_id'])
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+            self.disassociate_floatingips(context, id)
         return plugin.delete_port(context, id)
 
     def create_subnet(self, context, subnet):

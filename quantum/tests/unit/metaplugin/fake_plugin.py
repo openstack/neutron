@@ -24,18 +24,32 @@ from quantum.db import models_v2
 
 class Fake1(db_base_plugin_v2.QuantumDbPluginV2,
             l3_db.L3_NAT_db_mixin):
+    supported_extension_aliases = ['router']
+
     def fake_func(self):
         return 'fake1'
 
     def create_network(self, context, network):
-        net = super(Fake1, self).create_network(context, network)
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(Fake1, self).create_network(context, network)
+            self._process_l3_create(context, network['network'], net['id'])
+            self._extend_network_dict_l3(context, net)
+        return net
+
+    def update_network(self, context, id, network):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(Fake1, self).update_network(context, id,
+                                                    network)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, id):
         return super(Fake1, self).delete_network(context, id)
 
     def create_port(self, context, port):
-        port['port']['device_id'] = self.fake_func()
         port = super(Fake1, self).create_port(context, port)
         return port
 
