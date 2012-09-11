@@ -29,6 +29,7 @@ from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import iptables_manager
+from quantum.agent.linux import utils
 from quantum.db import l3_db
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
@@ -147,22 +148,19 @@ class L3NATAgent(object):
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
                                  namespace=namespace)
-        for d in ns_ip.get_devices():
+        for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
                 # device is on default bridge
-                self.driver.unplug(d.name)
+                self.driver.unplug(d.name, namespace=namespace)
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(d.name,
-                                   bridge=self.conf.external_network_bridge)
-        if self.conf.use_namespaces:
-            ns_ip.netns.delete(namespace)
+                                   bridge=self.conf.external_network_bridge,
+                                   namespace=namespace)
+        #(TODO) Address the failure for the deletion of the namespace
 
     def _create_router_namespace(self, ri):
             ip_wrapper_root = ip_lib.IPWrapper(self.conf.root_helper)
-            ip_wrapper_root.netns.add(ri.ns_name())
-
-            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
-                                          namespace=ri.ns_name())
+            ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
     def daemon_loop(self):
@@ -364,10 +362,13 @@ class L3NATAgent(object):
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if ex_gw_port['subnet']['gateway_ip']:
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
-            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
-                                          namespace=ri.ns_name())
             if self.conf.use_namespaces:
-                ip_wrapper.netns.execute(cmd)
+                ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                              namespace=ri.ns_name())
+                ip_wrapper.netns.execute(cmd, check_exit_code=False)
+            else:
+                utils.execute(cmd, check_exit_code=False,
+                              root_helper=self.conf.root_helper)
 
         for (c, r) in self.external_gateway_filter_rules():
             ri.iptables_manager.ipv4['filter'].add_rule(c, r)
@@ -384,7 +385,8 @@ class L3NATAgent(object):
                                 root_helper=self.conf.root_helper,
                                 namespace=ri.ns_name()):
             self.driver.unplug(interface_name,
-                               bridge=self.conf.external_network_bridge)
+                               bridge=self.conf.external_network_bridge,
+                               namespace=ri.ns_name())
 
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         for c, r in self.external_gateway_filter_rules():
@@ -442,7 +444,7 @@ class L3NATAgent(object):
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.conf.root_helper,
                                 namespace=ri.ns_name()):
-            self.driver.unplug(interface_name)
+            self.driver.unplug(interface_name, namespace=ri.ns_name())
 
         if ex_gw_port:
             ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']

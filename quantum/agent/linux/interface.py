@@ -154,10 +154,6 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         bridge = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
         bridge.delete_port(device_name)
 
-        if namespace:
-            ip = ip_lib.IPWrapper(self.conf.root_helper, namespace)
-            ip.garbage_collect_namespace()
-
 
 class BridgeInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating bridge interfaces."""
@@ -199,10 +195,6 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_("Failed unplugging interface '%s'") %
                       device_name)
-
-        if namespace:
-            ip = ip_lib.IPWrapper(self.conf.root_helper, namespace)
-            ip.garbage_collect_namespace()
 
 
 class RyuInterfaceDriver(OVSInterfaceDriver):
