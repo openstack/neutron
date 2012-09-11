@@ -20,6 +20,7 @@ import logging
 from quantum import context
 from quantum.common import topics
 from quantum.db import dhcp_rpc_base
+from quantum.db import l3_db
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.nec import ofc_manager
@@ -46,7 +47,7 @@ class OperationalStatus:
     ERROR = "ERROR"
 
 
-class NECPluginV2(nec_plugin_base.NECPluginV2Base):
+class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Quantum NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -57,6 +58,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
           at https://github.com/nec-openstack/quantum-openflow-plugin .
     """
 
+    supported_extension_aliases = ["router"]
+
     def __init__(self):
         ndb.initialize()
         self.ofc = ofc_manager.OFCManager()
@@ -64,7 +67,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
         self.packet_filter_enabled = (config.OFC.enable_packet_filter and
                                       self.ofc.driver.filter_supported)
         if self.packet_filter_enabled:
-            self.supported_extension_aliases = ["PacketFilters"]
+            self.supported_extension_aliases.append("PacketFilters")
 
         self.setup_rpc()
 
@@ -180,9 +183,13 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
         """Create a new network entry on DB, and create it on OFC."""
         LOG.debug("NECPluginV2.create_network() called, "
                   "network=%s ." % network)
-        new_net = super(NECPluginV2, self).create_network(context, network)
-        self._update_resource_status(context, "network", new_net['id'],
-                                     OperationalStatus.BUILD)
+        session = context.session
+        with session.begin(subtransactions=True):
+            new_net = super(NECPluginV2, self).create_network(context, network)
+            self._process_l3_create(context, network['network'], new_net['id'])
+            self._extend_network_dict_l3(context, new_net)
+            self._update_resource_status(context, "network", new_net['id'],
+                                         OperationalStatus.BUILD)
 
         try:
             if not self.ofc.exists_ofc_tenant(new_net['tenant_id']):
@@ -208,8 +215,13 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
         """
         LOG.debug("NECPluginV2.update_network() called, "
                   "id=%s network=%s ." % (id, network))
-        old_net = super(NECPluginV2, self).get_network(context, id)
-        new_net = super(NECPluginV2, self).update_network(context, id, network)
+        session = context.session
+        with session.begin(subtransactions=True):
+            old_net = super(NECPluginV2, self).get_network(context, id)
+            new_net = super(NECPluginV2, self).update_network(context, id,
+                                                              network)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_l3(context, new_net)
 
         changed = (old_net['admin_state_up'] is not new_net['admin_state_up'])
         if changed and not new_net['admin_state_up']:
@@ -286,6 +298,18 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
                 reason = "delete_ofc_tenant() failed due to %s" % exc
                 LOG.warn(reason)
 
+    def get_network(self, context, id, fields=None):
+        net = super(NECPluginV2, self).get_network(context, id, None)
+        self._extend_network_dict_l3(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None):
+        nets = super(NECPluginV2, self).get_networks(context, filters, None)
+        for net in nets:
+            self._extend_network_dict_l3(context, net)
+        nets = self._filter_nets_l3(context, nets, filters)
+        return [self._fields(net, fields) for net in nets]
+
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug("NECPluginV2.create_port() called, port=%s ." % port)
@@ -318,7 +342,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
 
         return new_port
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
         """Delete port and packet_filters associated with the port."""
         LOG.debug("NECPluginV2.delete_port() called, id=%s ." % id)
         port = super(NECPluginV2, self).get_port(context, id)
@@ -333,6 +357,11 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base):
             for packet_filter in pfs:
                 self.delete_packet_filter(context, packet_filter['id'])
 
+        # if needed, check to see if this is a port owned by
+        # and l3-router.  If so, we should prevent deletion.
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+        self.disassociate_floatingips(context, id)
         super(NECPluginV2, self).delete_port(context, id)
 
     # For PacketFilter Extension
