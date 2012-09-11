@@ -37,7 +37,7 @@ from quantumclient.v2_0 import client
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
 INTERNAL_DEV_PREFIX = 'qr-'
-EXTERNAL_DEV_PREFIX = 'qgw-'
+EXTERNAL_DEV_PREFIX = 'qg-'
 
 
 class RouterInfo(object):
@@ -116,7 +116,8 @@ class L3NATAgent(object):
 
         self.polling_interval = conf.polling_interval
 
-        if not ip_lib.device_exists(self.conf.external_network_bridge):
+        if (self.conf.external_network_bridge and
+            not ip_lib.device_exists(self.conf.external_network_bridge)):
             raise Exception("external network bridge '%s' does not exist"
                             % self.conf.external_network_bridge)
 
