@@ -92,7 +92,7 @@ class LinuxInterfaceDriver(object):
         """Plug in the interface."""
 
     @abc.abstractmethod
-    def unplug(self, device_name, bridge=None, namespace=None):
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
 
 
@@ -101,12 +101,26 @@ class NullDriver(LinuxInterfaceDriver):
              bridge=None, namespace=None, prefix=None):
         pass
 
-    def unplug(self, device_name, bridge=None, namespace=None):
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         pass
 
 
 class OVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an OVS bridge."""
+
+    def _ovs_add_port(self, bridge, device_name, port_id, mac_address,
+                      internal=True):
+        cmd = ['ovs-vsctl', '--', '--may-exist',
+               'add-port', bridge, device_name]
+        if internal:
+            cmd += ['--', 'set', 'Interface', device_name, 'type=internal']
+        cmd += ['--', 'set', 'Interface', device_name,
+                'external-ids:iface-id=%s' % port_id,
+                '--', 'set', 'Interface', device_name,
+                'external-ids:iface-status=active',
+                '--', 'set', 'Interface', device_name,
+                'external-ids:attached-mac=%s' % mac_address]
+        utils.execute(cmd, self.conf.root_helper)
 
     def plug(self, network_id, port_id, device_name, mac_address,
              bridge=None, namespace=None, prefix=None):
@@ -120,19 +134,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                                     self.conf.root_helper,
                                     namespace=namespace):
 
-            utils.execute(['ovs-vsctl',
-                           '--', '--may-exist', 'add-port', bridge,
-                           device_name,
-                           '--', 'set', 'Interface', device_name,
-                           'type=internal',
-                           '--', 'set', 'Interface', device_name,
-                           'external-ids:iface-id=%s' % port_id,
-                           '--', 'set', 'Interface', device_name,
-                           'external-ids:iface-status=active',
-                           '--', 'set', 'Interface', device_name,
-                           'external-ids:attached-mac=%s' %
-                           mac_address],
-                          self.conf.root_helper)
+            self._ovs_add_port(bridge, device_name, port_id, mac_address)
 
         ip = ip_lib.IPWrapper(self.conf.root_helper)
         device = ip.device(device_name)
@@ -145,7 +147,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             namespace_obj.add_device_to_namespace(device)
         device.link.set_up()
 
-    def unplug(self, device_name, bridge=None, namespace=None):
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
@@ -186,7 +188,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         else:
             LOG.warn(_("Device %s already exists") % device_name)
 
-    def unplug(self, device_name, bridge=None, namespace=None):
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
         try:
@@ -222,6 +224,69 @@ class RyuInterfaceDriver(OVSInterfaceDriver):
         datapath_id = ovs_br.get_datapath_id()
         port_no = ovs_br.get_port_ofport(device_name)
         self.ryu_client.create_port(network_id, datapath_id, port_no)
+
+
+class OVSVethInterfaceDriver(OVSInterfaceDriver):
+    """Driver for creating an OVS interface using veth."""
+
+    DEV_NAME_PREFIX = 'ns-'
+
+    def _get_tap_name(self, device_name, prefix=None):
+        if not prefix:
+            prefix = self.DEV_NAME_PREFIX
+        return device_name.replace(prefix, 'tap')
+
+    def plug(self, network_id, port_id, device_name, mac_address,
+             bridge=None, namespace=None, prefix=None):
+        """Plugin the interface."""
+        if not bridge:
+            bridge = self.conf.ovs_integration_bridge
+
+        self.check_bridge_exists(bridge)
+
+        if not ip_lib.device_exists(device_name,
+                                    self.conf.root_helper,
+                                    namespace=namespace):
+            ip = ip_lib.IPWrapper(self.conf.root_helper)
+
+            tap_name = self._get_tap_name(device_name, prefix)
+            root_veth, ns_veth = ip.add_veth(tap_name, device_name)
+
+            self._ovs_add_port(bridge, tap_name, port_id, mac_address,
+                               internal=False)
+
+            ns_veth.link.set_address(mac_address)
+            if self.conf.network_device_mtu:
+                ns_veth.link.set_mtu(self.conf.network_device_mtu)
+                root_veth.link.set_mtu(self.conf.network_device_mtu)
+
+            if namespace:
+                namespace_obj = ip.ensure_namespace(namespace)
+                namespace_obj.add_device_to_namespace(ns_veth)
+
+            root_veth.link.set_up()
+            ns_veth.link.set_up()
+        else:
+            LOG.warn(_("Device %s already exists") % device_name)
+
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
+        """Unplug the interface."""
+        if not bridge:
+            bridge = self.conf.ovs_integration_bridge
+
+        tap_name = self._get_tap_name(device_name, prefix)
+        self.check_bridge_exists(bridge)
+        ovs = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
+
+        try:
+            ovs.delete_port(tap_name)
+            device = ip_lib.IPDevice(device_name, self.conf.root_helper,
+                                     namespace)
+            device.link.delete()
+            LOG.debug(_("Unplugged interface '%s'") % device_name)
+        except RuntimeError:
+            LOG.error(_("Failed unplugging interface '%s'") %
+                      device_name)
 
 
 class MetaInterfaceDriver(LinuxInterfaceDriver):
@@ -266,9 +331,9 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         return driver.plug(network_id, port_id, device_name, mac_address,
                            bridge=bridge, namespace=namespace, prefix=prefix)
 
-    def unplug(self, device_name, bridge=None, namespace=None):
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         driver = self._get_driver_by_device_name(device_name, namespace=None)
-        return driver.unplug(device_name, bridge, namespace)
+        return driver.unplug(device_name, bridge, namespace, prefix)
 
     def _load_driver(self, driver_provider):
         LOG.debug("Driver location:%s", driver_provider)

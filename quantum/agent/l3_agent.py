@@ -151,11 +151,13 @@ class L3NATAgent(object):
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
                 # device is on default bridge
-                self.driver.unplug(d.name, namespace=namespace)
+                self.driver.unplug(d.name, namespace=namespace,
+                                   prefix=INTERNAL_DEV_PREFIX)
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(d.name,
                                    bridge=self.conf.external_network_bridge,
-                                   namespace=namespace)
+                                   namespace=namespace,
+                                   prefix=EXTERNAL_DEV_PREFIX)
         #(TODO) Address the failure for the deletion of the namespace
 
     def _create_router_namespace(self, ri):
@@ -386,7 +388,8 @@ class L3NATAgent(object):
                                 namespace=ri.ns_name()):
             self.driver.unplug(interface_name,
                                bridge=self.conf.external_network_bridge,
-                               namespace=ri.ns_name())
+                               namespace=ri.ns_name(),
+                               prefix=EXTERNAL_DEV_PREFIX)
 
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         for c, r in self.external_gateway_filter_rules():
@@ -444,7 +447,8 @@ class L3NATAgent(object):
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.conf.root_helper,
                                 namespace=ri.ns_name()):
-            self.driver.unplug(interface_name, namespace=ri.ns_name())
+            self.driver.unplug(interface_name, namespace=ri.ns_name(),
+                               prefix=INTERNAL_DEV_PREFIX)
 
         if ex_gw_port:
             ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
