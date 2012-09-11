@@ -29,6 +29,7 @@ database_opts = [
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int'),
+    cfg.BoolOpt('enable_tunneling', default=False),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
     cfg.StrOpt('local_ip', default='10.0.0.3'),
     cfg.ListOpt('bridge_mappings',

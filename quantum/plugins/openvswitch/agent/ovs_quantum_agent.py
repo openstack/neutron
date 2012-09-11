@@ -135,7 +135,7 @@ class OVSQuantumAgent(object):
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
-                 polling_interval, reconnect_interval, rpc):
+                 polling_interval, reconnect_interval, rpc, enable_tunneling):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -146,6 +146,7 @@ class OVSQuantumAgent(object):
         :param polling_interval: interval (secs) to poll DB.
         :param reconnect_internal: retry interval (secs) on DB error.
         :param rpc: if True use RPC interface to interface with plugin.
+        :param enable_tunneling: if True enable GRE networks.
         '''
         self.root_helper = root_helper
         self.available_local_vlans = set(
@@ -158,9 +159,11 @@ class OVSQuantumAgent(object):
         self.polling_interval = polling_interval
         self.reconnect_interval = reconnect_interval
 
+        self.enable_tunneling = enable_tunneling
         self.local_ip = local_ip
         self.tunnel_count = 0
-        self.setup_tunnel_br(tun_br)
+        if self.enable_tunneling:
+            self.setup_tunnel_br(tun_br)
 
         self.rpc = rpc
         if rpc:
@@ -214,6 +217,8 @@ class OVSQuantumAgent(object):
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug("tunnel_update received")
+        if not self.enable_tunneling:
+            return
         tunnel_ip = kwargs.get('tunnel_ip')
         tunnel_id = kwargs.get('tunnel_id')
         if tunnel_ip == self.local_ip:
@@ -240,54 +245,72 @@ class OVSQuantumAgent(object):
         '''
 
         if not self.available_local_vlans:
-            raise Exception("No local VLAN available for net-id=%s" % net_uuid)
+            LOG.error("No local VLAN available for net-id=%s", net_uuid)
+            return
         lvid = self.available_local_vlans.pop()
-        LOG.info("Assigning %s as local vlan for net-id=%s" % (lvid, net_uuid))
+        LOG.info("Assigning %s as local vlan for net-id=%s", lvid, net_uuid)
         self.local_vlan_map[net_uuid] = LocalVLANMapping(lvid, network_type,
                                                          physical_network,
                                                          segmentation_id)
 
         if network_type == constants.TYPE_GRE:
-            # outbound
-            self.tun_br.add_flow(priority=4, in_port=self.patch_int_ofport,
-                                 dl_vlan=lvid,
-                                 actions="set_tunnel:%s,normal" %
-                                 segmentation_id)
-            # inbound bcast/mcast
-            self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
-                                 dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
-                                 actions="mod_vlan_vid:%s,output:%s" %
-                                 (lvid, self.patch_int_ofport))
+            if self.enable_tunneling:
+                # outbound
+                self.tun_br.add_flow(priority=4, in_port=self.patch_int_ofport,
+                                     dl_vlan=lvid,
+                                     actions="set_tunnel:%s,normal" %
+                                     segmentation_id)
+                # inbound bcast/mcast
+                self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
+                                     dl_dst=
+                                     "01:00:00:00:00:00/01:00:00:00:00:00",
+                                     actions="mod_vlan_vid:%s,output:%s" %
+                                     (lvid, self.patch_int_ofport))
+            else:
+                LOG.error("Cannot provision GRE network for net-id=%s "
+                          "- tunneling disabled", net_uuid)
         elif network_type == constants.TYPE_FLAT:
-            # outbound
-            br = self.phys_brs[physical_network]
-            br.add_flow(priority=4,
-                        in_port=self.phys_ofports[physical_network],
-                        dl_vlan=lvid,
-                        actions="strip_vlan,normal")
-            # inbound
-            self.int_br.add_flow(priority=3,
-                                 in_port=self.int_ofports[physical_network],
-                                 dl_vlan=0xffff,
-                                 actions="mod_vlan_vid:%s,normal" % lvid)
+            if physical_network in self.phys_brs:
+                # outbound
+                br = self.phys_brs[physical_network]
+                br.add_flow(priority=4,
+                            in_port=self.phys_ofports[physical_network],
+                            dl_vlan=lvid,
+                            actions="strip_vlan,normal")
+                # inbound
+                self.int_br.add_flow(priority=3,
+                                     in_port=
+                                     self.int_ofports[physical_network],
+                                     dl_vlan=0xffff,
+                                     actions="mod_vlan_vid:%s,normal" % lvid)
+            else:
+                LOG.error("Cannot provision flat network for net-id=%s "
+                          "- no bridge for physical_network %s", net_uuid,
+                          physical_network)
         elif network_type == constants.TYPE_VLAN:
-            # outbound
-            br = self.phys_brs[physical_network]
-            br.add_flow(priority=4,
-                        in_port=self.phys_ofports[physical_network],
-                        dl_vlan=lvid,
-                        actions="mod_vlan_vid:%s,normal" % segmentation_id)
-            # inbound
-            self.int_br.add_flow(priority=3,
-                                 in_port=self.int_ofports[physical_network],
-                                 dl_vlan=segmentation_id,
-                                 actions="mod_vlan_vid:%s,normal" % lvid)
+            if physical_network in self.phys_brs:
+                # outbound
+                br = self.phys_brs[physical_network]
+                br.add_flow(priority=4,
+                            in_port=self.phys_ofports[physical_network],
+                            dl_vlan=lvid,
+                            actions="mod_vlan_vid:%s,normal" % segmentation_id)
+                # inbound
+                self.int_br.add_flow(priority=3,
+                                     in_port=self.
+                                     int_ofports[physical_network],
+                                     dl_vlan=segmentation_id,
+                                     actions="mod_vlan_vid:%s,normal" % lvid)
+            else:
+                LOG.error("Cannot provision VLAN network for net-id=%s "
+                          "- no bridge for physical_network %s", net_uuid,
+                          physical_network)
         elif network_type == constants.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
-            LOG.error("provisioning unknown network type %s for net-id=%s" %
-                      (network_type, net_uuid))
+            LOG.error("Cannot provision unknown network type %s for "
+                      "net-id=%s", network_type, net_uuid)
 
     def reclaim_local_vlan(self, net_uuid, lvm):
         '''Reclaim a local VLAN.
@@ -295,36 +318,40 @@ class OVSQuantumAgent(object):
         :param net_uuid: the network uuid associated with this vlan.
         :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
             vif_ids) mapping.'''
-        LOG.info("reclaiming vlan = %s from net-id = %s" %
-                 (lvm.vlan, net_uuid))
+        LOG.info("Reclaiming vlan = %s from net-id = %s", lvm.vlan, net_uuid)
 
         if lvm.network_type == constants.TYPE_GRE:
-            self.tun_br.delete_flows(tun_id=lvm.segmentation_id)
-            self.tun_br.delete_flows(dl_vlan=lvm.vlan)
+            if self.enable_tunneling:
+                self.tun_br.delete_flows(tun_id=lvm.segmentation_id)
+                self.tun_br.delete_flows(dl_vlan=lvm.vlan)
         elif lvm.network_type == constants.TYPE_FLAT:
-            # outbound
-            br = self.phys_brs[lvm.physical_network]
-            br.delete_flows(in_port=self.phys_ofports[lvm.physical_network],
-                            dl_vlan=lvm.vlan)
-            # inbound
-            br = self.int_br
-            br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
-                            dl_vlan=0xffff)
+            if lvm.physical_network in self.phy_brs:
+                # outbound
+                br = self.phys_brs[lvm.physical_network]
+                br.delete_flows(in_port=self.phys_ofports[lvm.
+                                                          physical_network],
+                                dl_vlan=lvm.vlan)
+                # inbound
+                br = self.int_br
+                br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
+                                dl_vlan=0xffff)
         elif lvm.network_type == constants.TYPE_VLAN:
-            # outbound
-            br = self.phys_brs[lvm.physical_network]
-            br.delete_flows(in_port=self.phys_ofports[lvm.physical_network],
-                            dl_vlan=lvm.vlan)
-            # inbound
-            br = self.int_br
-            br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
-                            dl_vlan=lvm.segmentation_id)
+            if lvm.physical_network in self.phy_brs:
+                # outbound
+                br = self.phys_brs[lvm.physical_network]
+                br.delete_flows(in_port=self.phys_ofports[lvm.
+                                                          physical_network],
+                                dl_vlan=lvm.vlan)
+                # inbound
+                br = self.int_br
+                br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
+                                dl_vlan=lvm.segmentation_id)
         elif lvm.network_type == constants.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
-            LOG.error("reclaiming unknown network type %s for net-id=%s" %
-                      (lvm.network_type, net_uuid))
+            LOG.error("Cannot reclaim unknown network type %s for net-id=%s",
+                      lvm.network_type, net_uuid)
 
         del self.local_vlan_map[net_uuid]
         self.available_local_vlans.add(lvm.vlan)
@@ -347,10 +374,12 @@ class OVSQuantumAgent(object):
         lvm.vif_ports[port.vif_id] = port
 
         if network_type == constants.TYPE_GRE:
-            # inbound unicast
-            self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
-                                 dl_dst=port.vif_mac,
-                                 actions="mod_vlan_vid:%s,normal" % lvm.vlan)
+            if self.enable_tunneling:
+                # inbound unicast
+                self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
+                                     dl_dst=port.vif_mac,
+                                     actions="mod_vlan_vid:%s,normal" %
+                                     lvm.vlan)
 
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      str(lvm.vlan))
@@ -369,20 +398,20 @@ class OVSQuantumAgent(object):
             net_uuid = self.get_net_uuid(vif_id)
 
         if not self.local_vlan_map.get(net_uuid):
-            LOG.info('port_unbound() net_uuid %s not in local_vlan_map' %
+            LOG.info('port_unbound() net_uuid %s not in local_vlan_map',
                      net_uuid)
             return
         lvm = self.local_vlan_map[net_uuid]
         if lvm.network_type == 'gre':
-            # remove inbound unicast flow
-            self.tun_br.delete_flows(tun_id=lvm.segmentation_id,
-                                     dl_dst=lvm.vif_ports[vif_id].vif_mac)
+            if self.enable_tunneling:
+                # remove inbound unicast flow
+                self.tun_br.delete_flows(tun_id=lvm.segmentation_id,
+                                         dl_dst=lvm.vif_ports[vif_id].vif_mac)
 
         if vif_id in lvm.vif_ports:
             del lvm.vif_ports[vif_id]
         else:
-            LOG.info('port_unbound: vid_id %s not in local_vlan_map' %
-                     port.vif_id)
+            LOG.info('port_unbound: vif_id %s not in local_vlan_map', vif_id)
 
         if not lvm.vif_ports:
             self.reclaim_local_vlan(net_uuid, lvm)
@@ -403,8 +432,6 @@ class OVSQuantumAgent(object):
         :param integ_br: the name of the integration bridge.'''
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
         self.int_br.delete_port("patch-tun")
-        self.patch_tun_ofport = self.int_br.add_patch_port("patch-tun",
-                                                           "patch-int")
         self.int_br.remove_all_flows()
         # switch all traffic using L2 learning
         self.int_br.add_flow(priority=1, actions="normal")
@@ -418,8 +445,15 @@ class OVSQuantumAgent(object):
         :param tun_br: the name of the tunnel bridge.'''
         self.tun_br = ovs_lib.OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
+        self.patch_tun_ofport = self.int_br.add_patch_port("patch-tun",
+                                                           "patch-int")
         self.patch_int_ofport = self.tun_br.add_patch_port("patch-int",
                                                            "patch-tun")
+        if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
+            LOG.error("Failed to create OVS patch port. Cannot have tunneling "
+                      "enabled on this agent, since this version of OVS does "
+                      "not support tunnels or patch ports.")
+            exit(1)
         self.tun_br.remove_all_flows()
         self.tun_br.add_flow(priority=1, actions="drop")
 
@@ -437,8 +471,8 @@ class OVSQuantumAgent(object):
         for physical_network, bridge in bridge_mappings.iteritems():
             # setup physical bridge
             if not ip_lib.device_exists(bridge, self.root_helper):
-                LOG.error("Bridge %s for physical network %s does not exist" %
-                          (bridge, physical_network))
+                LOG.error("Bridge %s for physical network %s does not exist",
+                          bridge, physical_network)
                 sys.exit(1)
             br = ovs_lib.OVSBridge(bridge, self.root_helper)
             br.remove_all_flows()
@@ -477,7 +511,7 @@ class OVSQuantumAgent(object):
 
         new_tunnel_ips = tunnel_ips - old_tunnel_ips
         if new_tunnel_ips:
-            LOG.info("adding tunnels to: %s" % new_tunnel_ips)
+            LOG.info("Adding tunnels to: %s", new_tunnel_ips)
             for ip in new_tunnel_ips:
                 tun_name = "gre-" + str(self.tunnel_count)
                 self.tun_br.add_tunnel_port(tun_name, ip)
@@ -502,8 +536,8 @@ class OVSQuantumAgent(object):
         old_tunnel_ips = set()
 
         db = sqlsoup.SqlSoup(db_connection_url)
-        LOG.info("Connecting to database \"%s\" on %s" %
-                 (db.engine.url.database, db.engine.url.host))
+        LOG.info("Connecting to database \"%s\" on %s",
+                 db.engine.url.database, db.engine.url.host)
 
         while True:
             try:
@@ -514,8 +548,10 @@ class OVSQuantumAgent(object):
                                     for bind in
                                     db.ovs_network_bindings.all())
 
-                tunnel_ips = set(x.ip_address for x in db.ovs_tunnel_ips.all())
-                self.manage_tunnels(tunnel_ips, old_tunnel_ips, db)
+                if self.enable_tunneling:
+                    tunnel_ips = set(x.ip_address for x in
+                                     db.ovs_tunnel_ips.all())
+                    self.manage_tunnels(tunnel_ips, old_tunnel_ips, db)
 
                 # Get bindings from OVS bridge.
                 vif_ports = self.int_br.get_vif_ports()
@@ -574,7 +610,7 @@ class OVSQuantumAgent(object):
                         new_net_uuid = new_port.network_id
                         if new_net_uuid not in net_bindings:
                             LOG.warn("No network binding found for net-id"
-                                     " '%s'" % new_net_uuid)
+                                     " '%s'", new_net_uuid)
                             continue
 
                         bind = net_bindings[new_net_uuid]
@@ -584,9 +620,9 @@ class OVSQuantumAgent(object):
                                         bind.segmentation_id)
                         all_bindings[p.vif_id].status = (
                             q_const.PORT_STATUS_ACTIVE)
-                        LOG.info("Port %s on net-id = %s bound to %s " % (
+                        LOG.info("Port %s on net-id = %s bound to %s ",
                                  str(p), new_net_uuid,
-                                 str(self.local_vlan_map[new_net_uuid])))
+                                 str(self.local_vlan_map[new_net_uuid]))
 
                 for vif_id in disappeared_vif_ports_ids:
                     LOG.info("Port Disappeared: " + vif_id)
@@ -602,7 +638,8 @@ class OVSQuantumAgent(object):
 
                 # sleep and re-initialize state for next pass
                 time.sleep(self.polling_interval)
-                old_tunnel_ips = tunnel_ips
+                if self.enable_tunneling:
+                    old_tunnel_ips = tunnel_ips
                 old_vif_ports = new_vif_ports
                 old_local_bindings = new_local_bindings
 
@@ -714,7 +751,7 @@ class OVSQuantumAgent(object):
                 sync = False
 
             # Notify the plugin of tunnel IP
-            if tunnel_sync:
+            if self.enable_tunneling and tunnel_sync:
                 LOG.info("Agent tunnel out of sync with plugin!")
                 tunnel_sync = self.tunnel_sync()
 
@@ -757,6 +794,7 @@ def main():
     rpc = cfg.CONF.AGENT.rpc
     tun_br = cfg.CONF.OVS.tunnel_bridge
     local_ip = cfg.CONF.OVS.local_ip
+    enable_tunneling = cfg.CONF.OVS.enable_tunneling
 
     bridge_mappings = {}
     for mapping in cfg.CONF.OVS.bridge_mappings:
@@ -765,16 +803,15 @@ def main():
             try:
                 physical_network, bridge = mapping.split(':')
                 bridge_mappings[physical_network] = bridge
-                LOG.debug("physical network %s mapped to bridge %s" %
-                          (physical_network, bridge))
+                LOG.info("Physical network %s mapped to bridge %s",
+                         physical_network, bridge)
             except ValueError as ex:
-                LOG.error("Invalid bridge mapping: \'%s\' - %s" %
-                          (mapping, ex))
+                LOG.error("Invalid bridge mapping: \'%s\' - %s", mapping, ex)
                 sys.exit(1)
 
     plugin = OVSQuantumAgent(integ_br, tun_br, local_ip, bridge_mappings,
                              root_helper, polling_interval,
-                             reconnect_interval, rpc)
+                             reconnect_interval, rpc, enable_tunneling)
 
     # Start everything.
     plugin.daemon_loop(db_connection_url)
