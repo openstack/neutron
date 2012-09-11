@@ -361,8 +361,7 @@ class JSONV2TestCase(APIv2TestBase):
         net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         full_input = {'network': {'admin_state_up': True,
-                                  'shared': False,
-                                  'subnets': []}}
+                                  'shared': False}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
@@ -394,7 +393,7 @@ class JSONV2TestCase(APIv2TestBase):
         env = {'quantum.context': context.Context('', tenant_id)}
         # tenant_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
-        full_input = {'network': {'admin_state_up': True, 'subnets': [],
+        full_input = {'network': {'admin_state_up': True,
                       'shared': False, 'tenant_id': tenant_id}}
         full_input['network'].update(initial_input['network'])
 
@@ -806,8 +805,7 @@ class ExtensionTestCase(unittest.TestCase):
         net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid(),
                                      'v2attrs:something_else': "abc"}}
-        data = {'network': {'admin_state_up': True, 'subnets': [],
-                            'shared': False}}
+        data = {'network': {'admin_state_up': True, 'shared': False}}
         data['network'].update(initial_input['network'])
 
         return_value = {'subnets': [], 'status': "ACTIVE",

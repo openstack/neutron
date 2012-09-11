@@ -174,7 +174,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'default': '', 'is_visible': True},
-        'subnets': {'allow_post': True, 'allow_put': True,
+        'subnets': {'allow_post': False, 'allow_put': False,
                     'default': [],
                     'is_visible': True},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
