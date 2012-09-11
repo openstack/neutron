@@ -578,7 +578,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except Exception:
             LOG.exception("Floating IP association failed")
             # Remove the port created for internal purposes
-            self.delete_port(context, external_port['id'], l3_port_check=False)
+            self.delete_port(context.elevated(), external_port['id'],
+                             l3_port_check=False)
             raise
 
         return self._make_floatingip_dict(floatingip_db)
