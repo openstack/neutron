@@ -12,7 +12,7 @@
 
     "extension:router:view": [["rule:regular_user"]],
     "extension:router:set": [["rule:admin_only"]],
-    "extension:router:add_router_interface": [["rule:admin_only"]],
+    "extension:router:add_router_interface": [["rule:admin_or_owner"]],
     "extension:router:remove_router_interface": [["rule:admin_or_owner"]],
 
     "subnets:private:read": [["rule:admin_or_owner"]],
