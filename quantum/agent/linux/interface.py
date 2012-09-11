@@ -280,13 +280,5 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
 
     def _load_driver(self, driver_provider):
         LOG.debug("Driver location:%s", driver_provider)
-        # If the plugin can't be found let them know gracefully
-        try:
-            LOG.info("Loading Driver: %s" % driver_provider)
-            plugin_klass = importutils.import_class(driver_provider)
-        except ClassNotFound:
-            LOG.exception("Error loading driver")
-            raise Exception("driver_provider not found.  You can install a "
-                            "Driver with: pip install <plugin-name>\n"
-                            "Example: pip install quantum-sample-driver")
+        plugin_klass = importutils.import_class(driver_provider)
         return plugin_klass(self.conf)
