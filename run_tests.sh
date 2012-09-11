@@ -97,7 +97,7 @@ function run_pylint {
 function run_pep8 {
   echo "Running pep8 ..."
 
-  PEP8_EXCLUDE="vcsversion.py,*.pyc"
+  PEP8_EXCLUDE="vcsversion.py,*.pyc,openstack"
   # we now turn off pep8 1.3 E125 check to avoid make change to 
   # openstack-common . 
   PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125 --repeat --show-source"
