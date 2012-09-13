@@ -44,6 +44,7 @@ ProjectScripts = [
 
 config_path = 'etc/quantum/'
 init_path = 'etc/init.d'
+rootwrap_path = 'etc/quantum/rootwrap.d'
 ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
@@ -58,7 +59,16 @@ DataFiles = [
          'etc/rootwrap.conf',
          'etc/api-paste.ini',
          'etc/policy.json',
-         'etc/dhcp_agent.ini']),
+         'etc/dhcp_agent.ini',
+         'etc/l3_agent.ini']),
+    (rootwrap_path,
+        ['etc/quantum/rootwrap.d/dhcp.filters',
+         'etc/quantum/rootwrap.d/iptables-firewall.filters',
+         'etc/quantum/rootwrap.d/l3.filters',
+         'etc/quantum/rootwrap.d/linuxbridge-plugin.filters',
+         'etc/quantum/rootwrap.d/nec-plugin.filters',
+         'etc/quantum/rootwrap.d/openvswitch-plugin.filters',
+         'etc/quantum/rootwrap.d/ryu-plugin.filters']),
     (init_path, ['etc/init.d/quantum-server']),
     (ovs_plugin_config_path,
         ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),
