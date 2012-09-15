@@ -22,11 +22,13 @@ from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
+from quantum.db import l3_db
 from quantum.extensions import _quotav2_model as quotav2_model
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import network_db_v2
 from quantum.plugins.cisco.db import network_models_v2
+from quantum.plugins.openvswitch import ovs_models_v2
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
 from quantum.wsgi import JSONDeserializer
@@ -39,38 +41,13 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     _plugin_name = 'quantum.plugins.cisco.network_plugin.PluginV2'
 
     def setUp(self):
-        super(CiscoNetworkPluginV2TestCase, self).setUp()
-        db._ENGINE = None
-        db._MAKER = None
-        QuantumManager._instance = None
-        # Update the plugin
-        cfg.CONF.set_override('core_plugin', self._plugin_name)
-
         def new_init():
             db.configure_db({'sql_connection': 'sqlite://',
                              'base': network_models_v2.model_base.BASEV2})
 
         with mock.patch.object(network_db_v2,
                                'initialize', new=new_init):
-            self.api = APIRouter()
-
-        def _is_native_bulk_supported():
-            plugin_obj = QuantumManager.get_plugin()
-            native_bulk_attr_name = ("_%s__native_bulk_support"
-                                     % plugin_obj.__class__.__name__)
-            return getattr(plugin_obj, native_bulk_attr_name, False)
-
-        self._skip_native_bulk = not _is_native_bulk_supported()
-
-        LOG.debug("%s.%s.%s done" % (__name__, self.__class__.__name__,
-                                     inspect.stack()[0][3]))
-
-    def tearDown(self):
-        db.clear_db(network_models_v2.model_base.BASEV2)
-        db._ENGINE = None
-        db._MAKER = None
-
-        cfg.CONF.reset()
+            super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
 
     def _get_plugin_ref(self):
         plugin_obj = QuantumManager.get_plugin()
