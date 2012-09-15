@@ -28,6 +28,7 @@ from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco.db import nexus_models_v2
 from quantum.plugins.cisco.db import ucs_models_v2
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
+from quantum.plugins.openvswitch import ovs_models_v2
 
 
 def initialize():
@@ -525,3 +526,14 @@ def update_credential(tenant_id, credential_id,
     except exc.NoResultFound:
         raise c_exc.CredentialNotFound(credential_id=credential_id,
                                        tenant_id=tenant_id)
+
+
+def get_ovs_vlans():
+    session = db.get_session()
+    try:
+        bindings = (session.query(ovs_models_v2.VlanAllocation).
+                    filter_by(allocated=True).
+                    all())
+    except exc.NoResultFound:
+        return []
+    return [binding.vlan_id for binding in bindings]
