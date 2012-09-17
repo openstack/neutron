@@ -802,6 +802,10 @@ def main():
     local_ip = cfg.CONF.OVS.local_ip
     enable_tunneling = cfg.CONF.OVS.enable_tunneling
 
+    if enable_tunneling and not local_ip:
+        LOG.error("Invalid local_ip. (%s)" % repr(local_ip))
+        sys.exit(1)
+
     bridge_mappings = {}
     for mapping in cfg.CONF.OVS.bridge_mappings:
         mapping = mapping.strip()
