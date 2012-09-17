@@ -193,4 +193,7 @@ class IpNetnsExecFilter(ExecCommandFilter):
             return False
 
     def exec_args(self, userargs):
-        return userargs[4:]
+        args = userargs[4:]
+        if args:
+            args[0] = os.path.basename(args[0])
+        return args
