@@ -41,10 +41,15 @@ from nvp_plugin_version import PLUGIN_VERSION
 from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum.common import exceptions as exception
+from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db import dhcp_rpc_base
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.openstack.common import context
+from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher
 
 
 CONFIG_FILE = "nvp.ini"
@@ -92,6 +97,23 @@ def parse_config():
              nvp_conf[cluster_name].nvp_controller_connection, })
     LOG.debug("cluster options:%s", clusters_options)
     return db_options, nvp_options, clusters_options
+
+
+class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+
+    # Set RPC API version to 1.0 by default.
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self, rpc_context):
+        self.rpc_context = rpc_context
+
+    def create_rpc_dispatcher(self):
+        '''Get the rpc dispatcher for this manager.
+
+        If a manager would like to set an rpc API version, or support more than
+        one class as the target of rpc messages, override this method.
+        '''
+        return dispatcher.RpcDispatcher([self])
 
 
 class NVPCluster(object):
@@ -268,6 +290,20 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             'base': models_v2.model_base.BASEV2,
         }
         db.configure_db(options)
+        self.setup_rpc()
+
+    def setup_rpc(self):
+        # RPC support for dhcp
+        self.topic = topics.PLUGIN
+        self.rpc_context = context.RequestContext('quantum', 'quantum',
+                                                  is_admin=False)
+        self.conn = rpc.create_connection(new=True)
+        self.callbacks = NVPRpcCallbacks(self.rpc_context)
+        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.conn.create_consumer(self.topic, self.dispatcher,
+                                  fanout=False)
+        # Consume from all consumers in a thread
+        self.conn.consume_in_thread()
 
     @property
     def cluster(self):
