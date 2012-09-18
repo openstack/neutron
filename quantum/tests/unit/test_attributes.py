@@ -18,6 +18,7 @@
 import unittest2
 
 from quantum.api.v2 import attributes
+from quantum.common import exceptions as q_exc
 
 
 class TestAttributes(unittest2.TestCase):
@@ -83,3 +84,35 @@ class TestAttributes(unittest2.TestCase):
                                          attributes.MAC_PATTERN)
         error = '%s is not valid' % base_mac
         self.assertEquals(msg, error)
+
+
+class TestConvertKvp(unittest2.TestCase):
+
+    def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):
+        result = attributes.convert_kvp_list_to_dict(['True'])
+        self.assertEqual({}, result)
+
+    def test_convert_kvp_list_to_dict_succeeds_for_multiple_values(self):
+        result = attributes.convert_kvp_list_to_dict(
+            ['a=b', 'a=c', 'a=c', 'b=a'])
+        self.assertEqual({'a': ['c', 'b'], 'b': ['a']}, result)
+
+    def test_convert_kvp_list_to_dict_succeeds_for_values(self):
+        result = attributes.convert_kvp_list_to_dict(['a=b', 'c=d'])
+        self.assertEqual({'a': ['b'], 'c': ['d']}, result)
+
+    def test_convert_kvp_str_to_list_fails_for_missing_key(self):
+        with self.assertRaises(q_exc.InvalidInput):
+            attributes.convert_kvp_str_to_list('=a')
+
+    def test_convert_kvp_str_to_list_fails_for_missing_equals(self):
+        with self.assertRaises(q_exc.InvalidInput):
+            attributes.convert_kvp_str_to_list('a')
+
+    def test_convert_kvp_str_to_list_succeeds_for_one_equals(self):
+        result = attributes.convert_kvp_str_to_list('a=')
+        self.assertEqual(['a', ''], result)
+
+    def test_convert_kvp_str_to_list_succeeds_for_two_equals(self):
+        result = attributes.convert_kvp_str_to_list('a=a=a')
+        self.assertEqual(['a', 'a=a'], result)

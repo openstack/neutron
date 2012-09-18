@@ -717,6 +717,19 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             self.assertTrue(port1['port']['id'] in ids)
             self.assertTrue(port2['port']['id'] in ids)
 
+    def test_list_ports_filtered_by_fixed_ip(self):
+        with contextlib.nested(self.port(), self.port()) as (port1, port2):
+            fixed_ips = port1['port']['fixed_ips'][0]
+            query_params = """
+fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
+""".strip() % (fixed_ips['ip_address'],
+               '192.168.126.5',
+               fixed_ips['subnet_id'])
+            req = self.new_list_request('ports', 'json', query_params)
+            port_list = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(len(port_list['ports']), 1)
+            self.assertEqual(port_list['ports'][0]['id'], port1['port']['id'])
+
     def test_list_ports_public_network(self):
         with self.network(shared=True) as network:
             portres_1 = self._create_port('json',
