@@ -126,6 +126,38 @@ def convert_to_boolean(data):
     msg = _("%s is not boolean") % data
     raise q_exc.InvalidInput(error_message=msg)
 
+
+def convert_kvp_str_to_list(data):
+    """Convert a value of the form 'key=value' to ['key', 'value'].
+
+    :raises: q_exc.InvalidInput if any of the strings are malformed
+                                (e.g. do not contain a key).
+    """
+    kvp = [x.strip() for x in data.split('=', 1)]
+    if len(kvp) == 2 and kvp[0]:
+        return kvp
+    msg = _("'%s' is not of the form <key>=[value]") % data
+    raise q_exc.InvalidInput(error_message=msg)
+
+
+def convert_kvp_list_to_dict(kvp_list):
+    """Convert a list of 'key=value' strings to a dict.
+
+    :raises: q_exc.InvalidInput if any of the strings are malformed
+                                (e.g. do not contain a key) or if any
+                                of the keys appear more than once.
+    """
+    if kvp_list == ['True']:
+        # No values were provided (i.e. '--flag-name')
+        return {}
+    kvp_map = {}
+    for kvp_str in kvp_list:
+        key, value = convert_kvp_str_to_list(kvp_str)
+        kvp_map.setdefault(key, set())
+        kvp_map[key].add(value)
+    return dict((x, list(y)) for x, y in kvp_map.iteritems())
+
+
 HEX_ELEM = '[0-9A-Fa-f]'
 UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
                          HEX_ELEM + '{4}', HEX_ELEM + '{4}',
@@ -218,6 +250,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'is_visible': True},
         'fixed_ips': {'allow_post': True, 'allow_put': True,
                       'default': ATTR_NOT_SPECIFIED,
+                      'convert_list_to': convert_kvp_list_to_dict,
                       'enforce_policy': True,
                       'is_visible': True},
         'device_id': {'allow_post': True, 'allow_put': True,

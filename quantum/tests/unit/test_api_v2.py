@@ -293,6 +293,27 @@ class APIv2TestCase(APIv2TestBase):
                                                       filters=filters,
                                                       fields=fields)
 
+    def test_filters_with_convert_to(self):
+        instance = self.plugin.return_value
+        instance.get_ports.return_value = []
+
+        self.api.get(_get_path('ports'), {'admin_state_up': 'true'})
+        filters = {'admin_state_up': [True]}
+        instance.get_ports.assert_called_once_with(mock.ANY,
+                                                   filters=filters,
+                                                   fields=mock.ANY)
+
+    def test_filters_with_convert_list_to(self):
+        instance = self.plugin.return_value
+        instance.get_ports.return_value = []
+
+        self.api.get(_get_path('ports'),
+                     {'fixed_ips': ['ip_address=foo', 'subnet_id=bar']})
+        filters = {'fixed_ips': {'ip_address': ['foo'], 'subnet_id': ['bar']}}
+        instance.get_ports.assert_called_once_with(mock.ANY,
+                                                   filters=filters,
+                                                   fields=mock.ANY)
+
 
 # Note: since all resources use the same controller and validation
 # logic, we actually get really good coverage from testing just networks.

@@ -200,14 +200,18 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                          if key in fields))
         return resource
 
-    def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None):
-        collection = self._model_query(context, model)
+    def _apply_filters_to_query(self, query, model, filters):
         if filters:
             for key, value in filters.iteritems():
                 column = getattr(model, key, None)
                 if column:
-                    collection = collection.filter(column.in_(value))
+                    query = query.filter(column.in_(value))
+        return query
+
+    def _get_collection(self, context, model, dict_func, filters=None,
+                        fields=None):
+        collection = self._model_query(context, model)
+        collection = self._apply_filters_to_query(collection, model, filters)
         return [dict_func(c, fields) for c in collection.all()]
 
     @staticmethod
@@ -1236,35 +1240,23 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_port_dict(port, fields)
 
     def get_ports(self, context, filters=None, fields=None):
-        fixed_ips = filters.pop('fixed_ips', []) if filters else []
-        ports = self._get_collection(context, models_v2.Port,
-                                     self._make_port_dict,
-                                     filters=filters, fields=fields)
+        Port = models_v2.Port
+        IPAllocation = models_v2.IPAllocation
 
-        if ports and fixed_ips:
-            filtered_ports = []
-            for port in ports:
-                if port['fixed_ips']:
-                    ips = port['fixed_ips']
-                    for fixed in fixed_ips:
-                        found = False
-                        # Convert to dictionary (deserialize)
-                        fixed = eval(fixed)
-                        for ip in ips:
-                            if 'ip_address' in fixed and 'subnet_id' in fixed:
-                                if (ip['ip_address'] == fixed['ip_address'] and
-                                        ip['subnet_id'] == fixed['subnet_id']):
-                                    found = True
-                            elif 'ip_address' in fixed:
-                                if ip['ip_address'] == fixed['ip_address']:
-                                    found = True
-                            elif 'subnet_id' in fixed:
-                                if ip['subnet_id'] == fixed['subnet_id']:
-                                    found = True
-                            if found:
-                                filtered_ports.append(port)
-                                break
-                        if found:
-                            break
-            return filtered_ports
-        return ports
+        if not filters:
+            filters = {}
+
+        query = self._model_query(context, Port)
+
+        fixed_ips = filters.pop('fixed_ips', {})
+        ip_addresses = fixed_ips.get('ip_address')
+        subnet_ids = fixed_ips.get('subnet_id')
+        if ip_addresses or subnet_ids:
+            query = query.join(Port.fixed_ips)
+            if ip_addresses:
+                query = query.filter(IPAllocation.ip_address.in_(ip_addresses))
+            if subnet_ids:
+                query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
+
+        query = self._apply_filters_to_query(query, Port, filters)
+        return [self._make_port_dict(c, fields) for c in query.all()]

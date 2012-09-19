@@ -82,20 +82,23 @@ def _filters(request, attr_info):
         if key == 'fields':
             continue
         values = [v for v in request.GET.getall(key) if v]
-        if not attr_info.get(key) and values:
+        key_attr_info = attr_info.get(key, {})
+        if not key_attr_info and values:
             res[key] = values
             continue
-        result_values = []
-        convert_to = (attr_info.get(key) and attr_info[key].get('convert_to')
-                      or None)
-        for value in values:
+        convert_list_to = key_attr_info.get('convert_list_to')
+        if not convert_list_to:
+            convert_to = key_attr_info.get('convert_to')
             if convert_to:
-                try:
-                    result_values.append(convert_to(value))
-                except exceptions.InvalidInput as e:
-                    raise webob.exc.HTTPBadRequest(str(e))
-            else:
-                result_values.append(value)
+                convert_list_to = lambda values_: [convert_to(x)
+                                                   for x in values_]
+        if convert_list_to:
+            try:
+                result_values = convert_list_to(values)
+            except exceptions.InvalidInput as e:
+                raise webob.exc.HTTPBadRequest(str(e))
+        else:
+            result_values = values
         if result_values:
             res[key] = result_values
     return res
