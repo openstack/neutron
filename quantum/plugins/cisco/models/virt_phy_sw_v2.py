@@ -168,6 +168,20 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         binding_seg_id = odb.get_network_binding(None, network_id)
         return binding_seg_id.segmentation_id
 
+    def _get_all_segmentation_ids(self):
+        vlan_ids = cdb.get_ovs_vlans()
+        vlanids = ''
+        for v_id in vlan_ids:
+            if int(v_id) > 0:
+                vlanids = str(v_id) + ',' + vlanids
+        return vlanids.strip(',')
+
+    def _validate_vlan_id(self, vlan_id):
+        if vlan_id and int(vlan_id) > 1:
+            return True
+        else:
+            return False
+
     def create_network(self, context, network):
         """
         Perform this operation in the context of the configured device
@@ -180,12 +194,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                                         self._func_name(),
                                                         args)
             vlan_id = self._get_segmentation_id(ovs_output[0]['id'])
+            if not self._validate_vlan_id(vlan_id):
+                return ovs_output[0]
             vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
-            vlan_ids = cdb.get_ovs_vlans()
-            vlanids = ''
-            for v_id in vlan_ids:
-                vlanids = str(v_id) + ',' + vlanids
-            vlanids = vlanids.strip(',')
+            vlanids = self._get_all_segmentation_ids()
             args = [ovs_output[0]['tenant_id'], ovs_output[0]['name'],
                     ovs_output[0]['id'], vlan_name, vlan_id,
                     {'vlan_ids':vlanids}]
@@ -207,12 +219,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             args = [context, networks]
             ovs_output = self._plugins[
                 const.VSWITCH_PLUGIN].create_network_bulk(context, networks)
-            vlan_ids = cdb.get_ovs_vlans()
-            vlanids = ''
-            for v_id in vlan_ids:
-                vlanids = str(v_id[0]) + ',' + vlanids
-            vlanids = vlanids.strip(',')
             LOG.debug("ovs_output: %s\n " % ovs_output)
+            vlanids = self._get_all_segmentation_ids()
             ovs_networks = ovs_output
             for ovs_network in ovs_networks:
                 vlan_id = self._get_segmentation_id(ovs_network['id'])
@@ -238,10 +246,12 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                                     self._func_name(),
                                                     args)
         vlan_id = self._get_segmentation_id(ovs_output[0]['id'])
-        vlan_ids = ','.join(str(vlan[0]) for vlan in cdb.get_ovs_vlans())
+        if not self._validate_vlan_id(vlan_id):
+            return ovs_output[0]
+        vlanids = self._get_all_segmentation_ids()
         args = [ovs_output[0]['tenant_id'], id, {'vlan_id': vlan_id},
                 {'net_admin_state': ovs_output[0]['admin_state_up']},
-                {'vlan_ids': vlan_ids}]
+                {'vlan_ids': vlanids}]
         nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
                                                       self._func_name(),
                                                       args)
@@ -257,17 +267,16 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             n = base_plugin_ref.get_network(context, id)
             tenant_id = n['tenant_id']
             vlan_id = self._get_segmentation_id(id)
-            output = []
-            args = [tenant_id, id, {const.VLANID:vlan_id},
-                    {const.CONTEXT:context},
-                    {const.BASE_PLUGIN_REF:base_plugin_ref}]
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          self._func_name(),
-                                                          args)
             args = [context, id]
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
+            args = [tenant_id, id, {const.VLANID:vlan_id},
+                    {const.CONTEXT:context},
+                    {const.BASE_PLUGIN_REF:base_plugin_ref}]
+            if self._validate_vlan_id(vlan_id):
+                self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                               self._func_name(), args)
             return ovs_output[0]
         except:
             raise
