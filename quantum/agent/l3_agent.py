@@ -219,20 +219,37 @@ class L3NATAgent(object):
             else:
                 continue
             if r['id'] not in self.router_info:
-                self.router_info[r['id']] = RouterInfo(
-                    r['id'], self.conf.root_helper, self.conf.use_namespaces)
-                if self.conf.use_namespaces:
-                    self._create_router_namespace(self.router_info[r['id']])
+                self._router_added(r['id'])
 
             ri = self.router_info[r['id']]
             self.process_router(ri)
 
         # identify and remove routers that no longer exist
         for router_id in prev_router_ids - cur_router_ids:
-            ri = self.router_info[router_id]
-            del self.router_info[router_id]
-            self._destroy_router_namespace(ri.ns_name())
+            self._router_removed(router_id)
         prev_router_ids = cur_router_ids
+
+    def _router_added(self, router_id):
+        ri = RouterInfo(router_id, self.conf.root_helper,
+                        self.conf.use_namespaces)
+        self.router_info[router_id] = ri
+        if self.conf.use_namespaces:
+            self._create_router_namespace(ri)
+        for c, r in self.metadata_filter_rules():
+            ri.iptables_manager.ipv4['filter'].add_rule(c, r)
+        for c, r in self.metadata_nat_rules():
+            ri.iptables_manager.ipv4['nat'].add_rule(c, r)
+        ri.iptables_manager.apply()
+
+    def _router_removed(self, router_id):
+        ri = self.router_info[router_id]
+        for c, r in self.metadata_filter_rules():
+            ri.iptables_manager.ipv4['filter'].remove_rule(c, r)
+        for c, r in self.metadata_nat_rules():
+            ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
+        ri.iptables_manager.apply()
+        del self.router_info[router_id]
+        self._destroy_router_namespace(ri.ns_name())
 
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
@@ -372,8 +389,6 @@ class L3NATAgent(object):
                 utils.execute(cmd, check_exit_code=False,
                               root_helper=self.conf.root_helper)
 
-        for (c, r) in self.external_gateway_filter_rules():
-            ri.iptables_manager.ipv4['filter'].add_rule(c, r)
         for (c, r) in self.external_gateway_nat_rules(ex_gw_ip,
                                                       internal_cidrs,
                                                       interface_name):
@@ -392,14 +407,12 @@ class L3NATAgent(object):
                                prefix=EXTERNAL_DEV_PREFIX)
 
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-        for c, r in self.external_gateway_filter_rules():
-            ri.iptables_manager.ipv4['filter'].remove_rule(c, r)
         for c, r in self.external_gateway_nat_rules(ex_gw_ip, internal_cidrs,
                                                     interface_name):
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
 
-    def external_gateway_filter_rules(self):
+    def metadata_filter_rules(self):
         rules = []
         if self.conf.metadata_ip:
             rules.append(('INPUT', '-s 0.0.0.0/0 -d %s '
@@ -408,16 +421,20 @@ class L3NATAgent(object):
                          (self.conf.metadata_ip, self.conf.metadata_port)))
         return rules
 
-    def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
-                                   interface_name):
-        rules = [('POSTROUTING', '! -i %(interface_name)s '
-                  '! -o %(interface_name)s -m conntrack ! '
-                  '--ctstate DNAT -j ACCEPT' % locals())]
+    def metadata_nat_rules(self):
+        rules = []
         if self.conf.metadata_ip:
             rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
                          '-p tcp -m tcp --dport 80 -j DNAT '
                          '--to-destination %s:%s' %
                          (self.conf.metadata_ip, self.conf.metadata_port)))
+        return rules
+
+    def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
+                                   interface_name):
+        rules = [('POSTROUTING', '! -i %(interface_name)s '
+                  '! -o %(interface_name)s -m conntrack ! '
+                  '--ctstate DNAT -j ACCEPT' % locals())]
         for cidr in internal_cidrs:
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
