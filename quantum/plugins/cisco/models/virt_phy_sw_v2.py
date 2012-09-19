@@ -164,6 +164,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             else:
                 return func(*args)
 
+    def _get_segmentation_id(self, network_id):
+        binding_seg_id = odb.get_network_binding(None, network_id)
+        return binding_seg_id.segmentation_id
+
     def create_network(self, context, network):
         """
         Perform this operation in the context of the configured device
@@ -175,12 +179,12 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
-            vlan_id = odb.get_vlan(ovs_output[0]['id'])
+            vlan_id = self._get_segmentation_id(ovs_output[0]['id'])
             vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
-            vlan_ids = odb.get_vlans()
+            vlan_ids = cdb.get_ovs_vlans()
             vlanids = ''
             for v_id in vlan_ids:
-                vlanids = str(v_id[0]) + ',' + vlanids
+                vlanids = str(v_id) + ',' + vlanids
             vlanids = vlanids.strip(',')
             args = [ovs_output[0]['tenant_id'], ovs_output[0]['name'],
                     ovs_output[0]['id'], vlan_name, vlan_id,
@@ -203,7 +207,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             args = [context, networks]
             ovs_output = self._plugins[
                 const.VSWITCH_PLUGIN].create_network_bulk(context, networks)
-            vlan_ids = odb.get_vlans()
+            vlan_ids = cdb.get_ovs_vlans()
             vlanids = ''
             for v_id in vlan_ids:
                 vlanids = str(v_id[0]) + ',' + vlanids
@@ -211,7 +215,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             LOG.debug("ovs_output: %s\n " % ovs_output)
             ovs_networks = ovs_output
             for ovs_network in ovs_networks:
-                vlan_id = odb.get_vlan(ovs_network['id'])
+                vlan_id = self._get_segmentation_id(ovs_network['id'])
                 vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
                 args = [ovs_network['tenant_id'], ovs_network['name'],
                         ovs_network['id'], vlan_name, vlan_id,
@@ -233,8 +237,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
-        vlan_id = odb.get_vlan(ovs_output[0]['id'])
-        vlan_ids = ','.join(str(vlan[0]) for vlan in odb.get_vlans())
+        vlan_id = self._get_segmentation_id(ovs_output[0]['id'])
+        vlan_ids = ','.join(str(vlan[0]) for vlan in cdb.get_ovs_vlans())
         args = [ovs_output[0]['tenant_id'], id, {'vlan_id': vlan_id},
                 {'net_admin_state': ovs_output[0]['admin_state_up']},
                 {'vlan_ids': vlan_ids}]
@@ -252,7 +256,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             base_plugin_ref = QuantumManager.get_plugin()
             n = base_plugin_ref.get_network(context, id)
             tenant_id = n['tenant_id']
-            vlan_id = odb.get_vlan(id)
+            vlan_id = self._get_segmentation_id(id)
             output = []
             args = [tenant_id, id, {const.VLANID:vlan_id},
                     {const.CONTEXT:context},
