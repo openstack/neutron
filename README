@@ -15,7 +15,7 @@
  http://docs.openstack.org/trunk/openstack-network/admin/content/
 
  Quantum API Reference:
- http://wiki.openstack.org/Quantum/APIv2-specification/
+ http://docs.openstack.org/api/openstack-network/2.0/content/
 
  The start of some developer documentation is available at:
  http://wiki.openstack.org/QuantumDevelopment
