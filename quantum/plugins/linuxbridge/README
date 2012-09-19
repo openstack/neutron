@@ -167,24 +167,3 @@ $ Run the following:
   As an alternative to coping the agent python file, if quantum is
   installed on the compute node, the agent can be run as
   bin/quantum-linuxbridge-agent.
-
-
-# -- Running Tests
-
-(Note: The plugin ships with a default SQLite in-memory database configuration,
- and can be used to run tests out of the box. Alternatively you can perform the
- DB configuration for a persistent database as mentioned in the Database
- Configuration section.)
-
-- To run tests related to the Plugin and the VLAN management (run the
-  following from the top level Quantum directory):
-  PLUGIN_DIR=quantum/plugins/linuxbridge ./run_tests.sh -N
-
-- The above will not however run the tests for the agent (which deals
-  with creating the bridge and interfaces). To run the agent tests, run the
-  following from the top level Quantum directory:
-  sudo PLUGIN_DIR=quantum/plugins/linuxbridge ./run_tests.sh -N tests.unit._test_linuxbridgeAgent
-
-  (Note: To run the agent tests you should have the environment setup as
-   indicated in the Agent Configuration, and also have the necessary dependencies
-   insalled.)
