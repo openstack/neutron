@@ -23,6 +23,7 @@
 
 import logging
 import os
+import signal
 import subprocess
 import uuid
 
@@ -47,6 +48,12 @@ def boolize(subject):
     return subject
 
 
+def _subprocess_setup():
+    # Python installs a SIGPIPE handler by default. This is usually not what
+    # non-Python subprocesses expect.
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+
 def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
     logging.debug("Running cmd: %s", cmd)
     env = os.environ.copy()
@@ -54,6 +61,7 @@ def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
         env.update(addl_env)
     obj = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           preexec_fn=_subprocess_setup,
                            env=env)
     result = None
     if process_input is not None:
