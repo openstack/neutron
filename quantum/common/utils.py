@@ -48,38 +48,6 @@ def boolize(subject):
     return subject
 
 
-def _subprocess_setup():
-    # Python installs a SIGPIPE handler by default. This is usually not what
-    # non-Python subprocesses expect.
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
-
-def execute(cmd, process_input=None, addl_env=None, check_exit_code=True):
-    logging.debug("Running cmd: %s", cmd)
-    env = os.environ.copy()
-    if addl_env:
-        env.update(addl_env)
-    obj = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           preexec_fn=_subprocess_setup,
-                           env=env)
-    result = None
-    if process_input is not None:
-        result = obj.communicate(process_input)
-    else:
-        result = obj.communicate()
-    obj.stdin.close()
-    if obj.returncode:
-        logging.debug("Result was %s" % (obj.returncode))
-        if check_exit_code and obj.returncode != 0:
-            (stdout, stderr) = result
-            raise ProcessExecutionError(exit_code=obj.returncode,
-                                        stdout=stdout,
-                                        stderr=stderr,
-                                        cmd=cmd)
-    return result
-
-
 def read_cached_file(filename, cache_info, reload_func=None):
     """Read from a file if it has been modified.
 
