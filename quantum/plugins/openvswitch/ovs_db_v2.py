@@ -64,9 +64,17 @@ def sync_vlan_allocations(network_vlan_ranges):
 
     session = db.get_session()
     with session.begin():
-        # process vlan ranges for each physical network separately
-        for physical_network, vlan_ranges in network_vlan_ranges.iteritems():
+        # get existing allocations for all physical networks
+        allocations = dict()
+        allocs = (session.query(ovs_models_v2.VlanAllocation).
+                  all())
+        for alloc in allocs:
+            if alloc.physical_network not in allocations:
+                allocations[alloc.physical_network] = set()
+            allocations[alloc.physical_network].add(alloc)
 
+        # process vlan ranges for each configured physical network
+        for physical_network, vlan_ranges in network_vlan_ranges.iteritems():
             # determine current configured allocatable vlans for this
             # physical network
             vlan_ids = set()
@@ -74,11 +82,8 @@ def sync_vlan_allocations(network_vlan_ranges):
                 vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
 
             # remove from table unallocated vlans not currently allocatable
-            try:
-                allocs = (session.query(ovs_models_v2.VlanAllocation).
-                          filter_by(physical_network=physical_network).
-                          all())
-                for alloc in allocs:
+            if physical_network in allocations:
+                for alloc in allocations[physical_network]:
                     try:
                         # see if vlan is allocatable
                         vlan_ids.remove(alloc.vlan_id)
@@ -90,13 +95,22 @@ def sync_vlan_allocations(network_vlan_ranges):
                                       "%s from pool" %
                                       (alloc.vlan_id, physical_network))
                             session.delete(alloc)
-            except exc.NoResultFound:
-                pass
+                del allocations[physical_network]
 
             # add missing allocatable vlans to table
             for vlan_id in sorted(vlan_ids):
                 alloc = ovs_models_v2.VlanAllocation(physical_network, vlan_id)
                 session.add(alloc)
+
+        # remove from table unallocated vlans for any unconfigured physical
+        # networks
+        for allocs in allocations.itervalues():
+            for alloc in allocs:
+                if not alloc.allocated:
+                    LOG.debug("removing vlan %s on physical network %s"
+                              " from pool" %
+                              (alloc.vlan_id, physical_network))
+                    session.delete(alloc)
 
 
 def get_vlan_allocation(physical_network, vlan_id):
@@ -188,22 +202,19 @@ def sync_tunnel_allocations(tunnel_id_ranges):
     session = db.get_session()
     with session.begin():
         # remove from table unallocated tunnels not currently allocatable
-        try:
-            allocs = (session.query(ovs_models_v2.TunnelAllocation).
-                      all())
-            for alloc in allocs:
-                try:
-                    # see if tunnel is allocatable
-                    tunnel_ids.remove(alloc.tunnel_id)
-                except KeyError:
-                    # it's not allocatable, so check if its allocated
-                    if not alloc.allocated:
-                        # it's not, so remove it from table
-                        LOG.debug("removing tunnel %s from pool" %
-                                  alloc.tunnel_id)
-                        session.delete(alloc)
-        except exc.NoResultFound:
-            pass
+        allocs = (session.query(ovs_models_v2.TunnelAllocation).
+                  all())
+        for alloc in allocs:
+            try:
+                # see if tunnel is allocatable
+                tunnel_ids.remove(alloc.tunnel_id)
+            except KeyError:
+                # it's not allocatable, so check if its allocated
+                if not alloc.allocated:
+                    # it's not, so remove it from table
+                    LOG.debug("removing tunnel %s from pool" %
+                              alloc.tunnel_id)
+                    session.delete(alloc)
 
         # add missing allocatable tunnels to table
         for tunnel_id in sorted(tunnel_ids):
