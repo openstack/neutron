@@ -20,10 +20,12 @@ from quantum.db import api as db
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as lb_db
 
 PHYS_NET = 'physnet1'
+PHYS_NET_2 = 'physnet2'
 VLAN_MIN = 10
 VLAN_MAX = 19
 VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
-UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)]}
+UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
+                       PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
 TEST_NETWORK_ID = 'abcdefghijklmnopqrstuvwxyz'
 
 
@@ -44,6 +46,8 @@ class NetworkStatesTest(unittest2.TestCase):
         self.assertFalse(lb_db.get_network_state(PHYS_NET,
                                                  VLAN_MIN + 1).allocated)
         self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MAX - 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
                                                  VLAN_MAX).allocated)
         self.assertIsNone(lb_db.get_network_state(PHYS_NET,
                                                   VLAN_MAX + 1))
@@ -57,9 +61,44 @@ class NetworkStatesTest(unittest2.TestCase):
         self.assertFalse(lb_db.get_network_state(PHYS_NET,
                                                  VLAN_MIN + 5 + 1).allocated)
         self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MAX + 5 - 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
                                                  VLAN_MAX + 5).allocated)
         self.assertIsNone(lb_db.get_network_state(PHYS_NET,
                                                   VLAN_MAX + 5 + 1))
+
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET_2,
+                                                  VLAN_MIN + 20 - 1))
+        self.assertFalse(lb_db.get_network_state(PHYS_NET_2,
+                                                 VLAN_MIN + 20).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET_2,
+                                                 VLAN_MIN + 20 + 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET_2,
+                                                 VLAN_MAX + 20 - 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET_2,
+                                                 VLAN_MAX + 20).allocated)
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET_2,
+                                                  VLAN_MAX + 20 + 1))
+
+        lb_db.sync_network_states(VLAN_RANGES)
+
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET,
+                                                  VLAN_MIN - 1))
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MIN).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MIN + 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MAX - 1).allocated)
+        self.assertFalse(lb_db.get_network_state(PHYS_NET,
+                                                 VLAN_MAX).allocated)
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET,
+                                                  VLAN_MAX + 1))
+
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET_2,
+                                                  VLAN_MIN + 20))
+        self.assertIsNone(lb_db.get_network_state(PHYS_NET_2,
+                                                  VLAN_MAX + 20))
 
     def test_network_pool(self):
         vlan_ids = set()
