@@ -21,6 +21,7 @@ import fcntl
 import logging
 import os
 import shlex
+import signal
 import socket
 import struct
 
@@ -28,6 +29,12 @@ from eventlet.green import subprocess
 
 
 LOG = logging.getLogger(__name__)
+
+
+def _subprocess_setup():
+    # Python installs a SIGPIPE handler by default. This is usually not what
+    # non-Python subprocesses expect.
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 def execute(cmd, root_helper=None, process_input=None, addl_env=None,
@@ -42,6 +49,7 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         env.update(addl_env)
     obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           preexec_fn=_subprocess_setup,
                            env=env)
 
     _stdout, _stderr = (process_input and
