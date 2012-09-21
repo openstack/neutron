@@ -10,6 +10,7 @@
 
 # l3_agent
 sysctl: CommandFilter, /sbin/sysctl, root
+route: CommandFilter, /sbin/route, root
 
 # ip_lib
 ip: IpFilter, /sbin/ip, root
