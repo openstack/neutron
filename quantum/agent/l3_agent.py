@@ -117,11 +117,6 @@ class L3NATAgent(object):
 
         self.polling_interval = conf.polling_interval
 
-        if (self.conf.external_network_bridge and
-            not ip_lib.device_exists(self.conf.external_network_bridge)):
-            raise Exception("external network bridge '%s' does not exist"
-                            % self.conf.external_network_bridge)
-
         self.qclient = client.Client(
             username=self.conf.admin_user,
             password=self.conf.admin_password,
@@ -193,6 +188,13 @@ class L3NATAgent(object):
         return ex_nets[0]['id']
 
     def do_single_loop(self):
+
+        if (self.conf.external_network_bridge and
+            not ip_lib.device_exists(self.conf.external_network_bridge)):
+            LOG.error("external network bridge '%s' does not exist"
+                      % self.conf.external_network_bridge)
+            return
+
         prev_router_ids = set(self.router_info)
         cur_router_ids = set()
 
