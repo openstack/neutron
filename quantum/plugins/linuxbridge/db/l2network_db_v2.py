@@ -40,23 +40,28 @@ def initialize():
 def sync_network_states(network_vlan_ranges):
     """Synchronize network_states table with current configured VLAN ranges."""
 
-    # process vlan ranges for each physical network separately
-    for physical_network, vlan_ranges in network_vlan_ranges.iteritems():
+    session = db.get_session()
+    with session.begin():
+        # get existing allocations for all physical networks
+        allocations = dict()
+        states = (session.query(l2network_models_v2.NetworkState).
+                  all())
+        for state in states:
+            if state.physical_network not in allocations:
+                allocations[state.physical_network] = set()
+            allocations[state.physical_network].add(state)
 
-        # determine current configured allocatable vlans for this
-        # physical network
-        vlan_ids = set()
-        for vlan_range in vlan_ranges:
-            vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
+        # process vlan ranges for each configured physical network
+        for physical_network, vlan_ranges in network_vlan_ranges.iteritems():
+            # determine current configured allocatable vlans for this
+            # physical network
+            vlan_ids = set()
+            for vlan_range in vlan_ranges:
+                vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
 
-        session = db.get_session()
-        with session.begin():
             # remove from table unallocated vlans not currently allocatable
-            try:
-                states = (session.query(l2network_models_v2.NetworkState).
-                          filter_by(physical_network=physical_network).
-                          all())
-                for state in states:
+            if physical_network in allocations:
+                for state in allocations[physical_network]:
                     try:
                         # see if vlan is allocatable
                         vlan_ids.remove(state.vlan_id)
@@ -68,14 +73,23 @@ def sync_network_states(network_vlan_ranges):
                                       "%s from pool" %
                                       (state.vlan_id, physical_network))
                             session.delete(state)
-            except exc.NoResultFound:
-                pass
+                del allocations[physical_network]
 
             # add missing allocatable vlans to table
             for vlan_id in sorted(vlan_ids):
                 state = l2network_models_v2.NetworkState(physical_network,
                                                          vlan_id)
                 session.add(state)
+
+        # remove from table unallocated vlans for any unconfigured physical
+        # networks
+        for states in allocations.itervalues():
+            for state in states:
+                if not state.allocated:
+                    LOG.debug("removing vlan %s on physical network %s"
+                              " from pool" %
+                              (state.vlan_id, physical_network))
+                    session.delete(state)
 
 
 def get_network_state(physical_network, vlan_id):
