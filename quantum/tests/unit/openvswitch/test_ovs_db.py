@@ -20,10 +20,12 @@ from quantum.db import api as db
 from quantum.plugins.openvswitch import ovs_db_v2
 
 PHYS_NET = 'physnet1'
+PHYS_NET_2 = 'physnet2'
 VLAN_MIN = 10
 VLAN_MAX = 19
 VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
-UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)]}
+UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
+                       PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
 TUN_MIN = 100
 TUN_MAX = 109
 TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
@@ -48,6 +50,8 @@ class VlanAllocationsTest(unittest2.TestCase):
         self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                        VLAN_MIN + 1).allocated)
         self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX - 1).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                        VLAN_MAX).allocated)
         self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                         VLAN_MAX + 1))
@@ -70,6 +74,43 @@ class VlanAllocationsTest(unittest2.TestCase):
                          allocated)
         self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                         VLAN_MAX + 5 + 1))
+
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                        VLAN_MIN + 20 - 1))
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                       VLAN_MIN + 20).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                       VLAN_MIN + 20 + 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                       VLAN_MAX + 20 - 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                       VLAN_MAX + 20).
+                         allocated)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                        VLAN_MAX + 20 + 1))
+
+        ovs_db_v2.sync_vlan_allocations(VLAN_RANGES)
+
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MIN - 1))
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MIN + 1).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX - 1).allocated)
+        self.assertFalse(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                       VLAN_MAX).allocated)
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
+                                                        VLAN_MAX + 1))
+
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                        VLAN_MIN + 20))
+        self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET_2,
+                                                        VLAN_MAX + 20))
 
     def test_vlan_pool(self):
         vlan_ids = set()
@@ -137,6 +178,8 @@ class TunnelAllocationsTest(unittest2.TestCase):
         self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MIN - 1))
         self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN).allocated)
         self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MIN + 1).
+                         allocated)
+        self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MAX - 1).
                          allocated)
         self.assertFalse(ovs_db_v2.get_tunnel_allocation(TUN_MAX).allocated)
         self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MAX + 1))
