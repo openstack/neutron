@@ -193,6 +193,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         if network_id is not None and (gw_port is None or
                                        gw_port['network_id'] != network_id):
+            subnets = self._get_subnets_by_network(context,
+                                                   network_id)
+            for subnet in subnets:
+                self._check_for_dup_router_subnet(context, router_id,
+                                                  network_id, subnet['id'])
+
             # Port has no 'tenant-id', as it is hidden from user
             gw_port = self.create_port(context.elevated(), {
                 'port':
@@ -250,8 +256,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         try:
             rport_qry = context.session.query(models_v2.Port)
             rports = rport_qry.filter_by(
-                device_id=router_id,
-                device_owner=DEVICE_OWNER_ROUTER_INTF,).all()
+                device_id=router_id).all()
             # its possible these ports on on the same network, but
             # different subnet
             new_cidr = self._get_subnet(context, subnet_id)['cidr']
