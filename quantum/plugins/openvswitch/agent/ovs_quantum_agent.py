@@ -744,25 +744,31 @@ class OVSQuantumAgent(object):
         tunnel_sync = True
 
         while True:
-            start = time.time()
-            if sync:
-                LOG.info("Agent out of sync with plugin!")
-                ports.clear()
-                sync = False
+            try:
+                start = time.time()
+                if sync:
+                    LOG.info("Agent out of sync with plugin!")
+                    ports.clear()
+                    sync = False
 
-            # Notify the plugin of tunnel IP
-            if self.enable_tunneling and tunnel_sync:
-                LOG.info("Agent tunnel out of sync with plugin!")
-                tunnel_sync = self.tunnel_sync()
+                # Notify the plugin of tunnel IP
+                if self.enable_tunneling and tunnel_sync:
+                    LOG.info("Agent tunnel out of sync with plugin!")
+                    tunnel_sync = self.tunnel_sync()
 
-            port_info = self.update_ports(ports)
+                port_info = self.update_ports(ports)
 
-            # notify plugin about port deltas
-            if port_info:
-                LOG.debug("Agent loop has new devices!")
-                # If treat devices fails - indicates must resync with plugin
-                sync = self.process_network_ports(port_info)
-                ports = port_info['current']
+                # notify plugin about port deltas
+                if port_info:
+                    LOG.debug("Agent loop has new devices!")
+                    # If treat devices fails - must resync with plugin
+                    sync = self.process_network_ports(port_info)
+                    ports = port_info['current']
+
+            except:
+                LOG.exception("Error in agent event loop")
+                sync = True
+                tunnel_sync = True
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)
