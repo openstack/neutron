@@ -81,9 +81,6 @@ class TestBasicRouterOperations(unittest.TestCase):
     def testAgentCreate(self):
         agent = l3_agent.L3NATAgent(self.conf)
 
-        self.device_exists.assert_has_calls(
-            [mock.call(self.conf.external_network_bridge)])
-
     def _test_internal_network_action(self, action):
         port_id = _uuid()
         router_id = _uuid()
@@ -250,6 +247,9 @@ class TestBasicRouterOperations(unittest.TestCase):
 
         # verify that remove is called
         self.assertEquals(self.mock_ip.get_devices.call_count, 1)
+
+        self.device_exists.assert_has_calls(
+            [mock.call(self.conf.external_network_bridge)])
 
     def testDaemonLoop(self):
 
