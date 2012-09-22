@@ -33,6 +33,7 @@ from quantum import quantum_plugin_base_v2
 
 
 LOG = logging.getLogger(__name__)
+TEST_DB = "quantum.test.db"
 
 AGENT_OWNER_PREFIX = 'network:'
 
@@ -71,8 +72,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         #                must override __init__ and setup the database
         #                and not call into this class's __init__.
         #                This connection is setup as memory for the tests.
-        sql_connection = 'sqlite:///:memory:'
-        db.configure_db({'sql_connection': sql_connection,
+        db.configure_db({'sql_connection': "sqlite:///%s" % TEST_DB,
                          'base': models_v2.model_base.BASEV2})
 
     def _get_tenant_id_for_create(self, context, resource):

@@ -56,7 +56,3 @@ class TestRyuPortsV2(test_plugin.TestPortsV2, RyuPluginV2TestCase):
 
 class TestRyuNetworksV2(test_plugin.TestNetworksV2, RyuPluginV2TestCase):
     pass
-
-
-class TestRyuSubnetsV2(test_plugin.TestSubnetsV2, RyuPluginV2TestCase):
-    pass

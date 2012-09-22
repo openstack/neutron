@@ -19,3 +19,6 @@ api_paste_config = api-paste.ini.test
 
 # The messaging module to use, defaults to kombu.
 rpc_backend = quantum.openstack.common.rpc.impl_fake
+
+[DATABASE]
+sql_connection = 'sqlite:///quantum.test.db'

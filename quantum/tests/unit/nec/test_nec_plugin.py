@@ -39,7 +39,3 @@ class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase):
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):
     pass
-
-
-class TestNecSubnetsV2(test_plugin.TestSubnetsV2, NecPluginV2TestCase):
-    pass

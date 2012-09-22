@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import unittest2
 
 from quantum.db import api as db
@@ -27,7 +28,7 @@ from quantum.plugins.ryu import ofp_service_type
 
 class RyuDBTest(unittest2.TestCase):
     def setUp(self):
-        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
+        options = {"sql_connection": 'sqlite:///quantum.test.db'}
         options.update({'base': models_v2.model_base.BASEV2})
         reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
         options.update({"reconnect_interval": reconnect_interval})
