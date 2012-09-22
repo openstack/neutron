@@ -232,3 +232,8 @@ class FakeClient:
         method = args[0]
         handler = getattr(self, "handle_%s" % method.lower())
         return handler(*args[1:])
+
+    def reset_all(self):
+        self._fake_lswitch_dict.clear()
+        self._fake_lport_dict.clear()
+        self._fake_lportstatus_dict.clear()

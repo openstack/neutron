@@ -43,8 +43,3 @@ class TestOpenvswitchPortsV2(test_plugin.TestPortsV2,
 class TestOpenvswitchNetworksV2(test_plugin.TestNetworksV2,
                                 OpenvswitchPluginV2TestCase):
     pass
-
-
-class TestOpenvswitchSubnetsV2(test_plugin.TestSubnetsV2,
-                               OpenvswitchPluginV2TestCase):
-    pass

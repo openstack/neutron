@@ -33,19 +33,20 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         test_lib.test_config['config_files'] = [os.path.join(etc_path,
                                                              'nvp.ini.test')]
         # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(etc_path)
+        self.fc = fake_nvpapiclient.FakeClient(etc_path)
         self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
                                       % NICIRA_PKG_PATH, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
 
         def _fake_request(*args, **kwargs):
-            return fc.fake_request(*args, **kwargs)
+            return self.fc.fake_request(*args, **kwargs)
 
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
 
     def tearDown(self):
+        self.fc.reset_all()
         super(NiciraPluginV2TestCase, self).tearDown()
         self.mock_nvpapi.stop()
 
@@ -65,8 +66,4 @@ class TestNiciraPortsV2(test_plugin.TestPortsV2, NiciraPluginV2TestCase):
 
 class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                            NiciraPluginV2TestCase):
-    pass
-
-
-class TestNiciraSubnetsV2(test_plugin.TestSubnetsV2, NiciraPluginV2TestCase):
     pass

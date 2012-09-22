@@ -43,8 +43,3 @@ class TestLinuxBridgePortsV2(test_plugin.TestPortsV2,
 class TestLinuxBridgeNetworksV2(test_plugin.TestNetworksV2,
                                 LinuxBridgePluginV2TestCase):
     pass
-
-
-class TestLinuxBridgeSubnetsV2(test_plugin.TestSubnetsV2,
-                               LinuxBridgePluginV2TestCase):
-    pass
