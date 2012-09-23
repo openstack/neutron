@@ -24,11 +24,11 @@
 import logging
 import os
 import signal
-import subprocess
 import uuid
 
+from eventlet.green import subprocess
+
 from quantum.openstack.common import cfg
-from quantum.openstack.common.exception import ProcessExecutionError
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -120,3 +120,16 @@ def find_config_file(options, config_file):
 def str_uuid():
     """Return a uuid as a string"""
     return str(uuid.uuid4())
+
+
+def _subprocess_setup():
+    # Python installs a SIGPIPE handler by default. This is usually not what
+    # non-Python subprocesses expect.
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+
+def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
+                     env=None):
+    return subprocess.Popen(args, shell=shell, stdin=stdin, stdout=stdout,
+                            stderr=stderr, preexec_fn=_subprocess_setup,
+                            env=env)

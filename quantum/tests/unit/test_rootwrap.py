@@ -19,6 +19,7 @@ import subprocess
 
 import unittest2 as unittest
 
+from quantum.common import utils
 from quantum.rootwrap import filters
 from quantum.rootwrap import wrapper
 
@@ -65,7 +66,7 @@ class RootwrapTestCase(unittest.TestCase):
         self.assertEqual(env.get('QUANTUM_NETWORK_ID'), 'foobar')
 
     def test_KillFilter(self):
-        p = subprocess.Popen(["/bin/sleep", "5"])
+        p = utils.subprocess_popen(["/bin/sleep", "5"])
         f = filters.KillFilter("root", "/bin/sleep", "-9", "-HUP")
         f2 = filters.KillFilter("root", "/usr/bin/sleep", "-9", "-HUP")
         usercmd = ['kill', '-ALRM', p.pid]
