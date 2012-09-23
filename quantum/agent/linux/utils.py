@@ -27,14 +27,10 @@ import struct
 
 from eventlet.green import subprocess
 
+from quantum.common import utils
+
 
 LOG = logging.getLogger(__name__)
-
-
-def _subprocess_setup():
-    # Python installs a SIGPIPE handler by default. This is usually not what
-    # non-Python subprocesses expect.
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 def execute(cmd, root_helper=None, process_input=None, addl_env=None,
@@ -47,10 +43,11 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
     env = os.environ.copy()
     if addl_env:
         env.update(addl_env)
-    obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           preexec_fn=_subprocess_setup,
-                           env=env)
+    obj = utils.subprocess_popen(cmd, shell=False,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 env=env)
 
     _stdout, _stderr = (process_input and
                         obj.communicate(process_input) or
