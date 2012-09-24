@@ -181,18 +181,17 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             return []
 
     def _get_route_by_subnet(self, context, subnet_id):
-        try:
-            route_qry = context.session.query(models_v2.Route)
-            return route_qry.filter_by(subnet_id=subnet_id).all()
-        except exc.NoResultFound:
-            return []
+        route_qry = context.session.query(models_v2.Route)
+        return route_qry.filter_by(subnet_id=subnet_id).all()
 
     def _get_subnets_by_network(self, context, network_id):
-        try:
-            subnet_qry = context.session.query(models_v2.Subnet)
-            return subnet_qry.filter_by(network_id=network_id).all()
-        except exc.NoResultFound:
-            return []
+        subnet_qry = context.session.query(models_v2.Subnet)
+        return subnet_qry.filter_by(network_id=network_id).all()
+
+    def _get_all_subnets(self, context):
+        # NOTE(salvatore-orlando): This query might end up putting
+        # a lot of stress on the db. Consider adding a cache layer
+        return context.session.query(models_v2.Subnet).all()
 
     def _fields(self, resource, fields):
         if fields:
@@ -634,22 +633,27 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                 'subnet_id': result['subnet_id']})
         return ips
 
-    def _validate_subnet_cidr(self, network, new_subnet_cidr):
+    def _validate_subnet_cidr(self, context, network, new_subnet_cidr):
         """Validate the CIDR for a subnet.
 
         Verifies the specified CIDR does not overlap with the ones defined
-        for the other subnets specified for this network.
+        for the other subnets specified for this network, or with any other
+        CIDR if overlapping IPs are disabled.
 
         """
-        for subnet in network.subnets:
-            if (netaddr.IPSet([subnet.cidr]) &
-                    netaddr.IPSet([new_subnet_cidr])):
-                err_msg = ("Requested subnet with cidr: %s "
-                           "for network: %s "
-                           "overlaps with subnet: %s)" % (new_subnet_cidr,
-                                                          network.id,
-                                                          subnet.cidr))
-                LOG.error(err_msg)
+        new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
+        subnet_list = network.subnets
+        if not cfg.CONF.allow_overlapping_ips:
+            subnet_list = self._get_all_subnets(context)
+        for subnet in subnet_list:
+            if (netaddr.IPSet([subnet.cidr]) & new_subnet_ipset):
+                # don't give out details of the overlapping subnet
+                err_msg = _("Requested subnet with cidr: %s "
+                            "for network: %s overlaps with another subnet" %
+                            (new_subnet_cidr, network.id))
+                LOG.error("Validation for CIDR:%s failed - overlaps with "
+                          "subnet %s (CIDR:%s)",
+                          new_subnet_cidr, subnet.id, subnet.cidr)
                 raise q_exc.InvalidInput(error_message=err_msg)
 
     def _validate_allocation_pools(self, ip_pools, gateway_ip, subnet_cidr):
@@ -987,7 +991,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         tenant_id = self._get_tenant_id_for_create(context, s)
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, s["network_id"])
-            self._validate_subnet_cidr(network, s['cidr'])
+            self._validate_subnet_cidr(context, network, s['cidr'])
             # The 'shared' attribute for subnets is for internal plugin
             # use only. It is not exposed through the API
             subnet = models_v2.Subnet(tenant_id=tenant_id,
