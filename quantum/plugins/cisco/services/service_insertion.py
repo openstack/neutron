@@ -35,6 +35,7 @@ import subprocess
 import sys
 
 from quantum.common import constants
+from quantum.common import utils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco.db import l2network_db as l2db
@@ -91,7 +92,8 @@ def insert_inpath_service(tenant_id, service_image_id,
         create_vm_args.append(servconts.CREATE_VM_CMD)
         create_vm_args.append(service_image_id)
         print ("Creating VM with image: %s" % (service_image_id))
-        process = subprocess.Popen(create_vm_args, stdout=subprocess.PIPE)
+        process = utils.subprocess_popen(create_vm_args,
+                                         stdout=subprocess.PIPE)
         result = process.stdout.readlines()
         tokens = re.search("i-[a-f0-9]*", str(result[1]))
         service_vm_name = tokens.group(0)
@@ -208,7 +210,8 @@ def connect_vm(tenant_id, vm_image_id, service_instance_id, *args):
         create_vm_args.append(servconts.CREATE_VM_CMD)
         create_vm_args.append(vm_image_id)
         print ("Creating VM with image: %s" % (vm_image_id))
-        process = subprocess.Popen(create_vm_args, stdout=subprocess.PIPE)
+        process = utils.subprocess_popen(create_vm_args,
+                                         stdout=subprocess.PIPE)
         result = process.stdout.readlines()
         tokens = re.search("i-[a-f0-9]*", str(result[1]))
         vm_name = tokens.group(0)

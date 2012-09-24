@@ -24,6 +24,7 @@ import re
 import subprocess
 import time
 
+from quantum.common import utils
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import services_db as sdb
@@ -54,8 +55,8 @@ class ServicesLogistics():
             while not flag and counter <= 5:
                 counter = counter + 1
                 time.sleep(2.5)
-                process = subprocess.Popen(service_args,
-                                           stdout=subprocess.PIPE)
+                process = utils.subprocess_popen(service_args,
+                                                 stdout=subprocess.PIPE)
                 result = process.stdout.readlines()
                 if not result:
                     flag = True
@@ -75,8 +76,8 @@ class ServicesLogistics():
             while not flag and counter <= 10:
                 counter = counter + 1
                 time.sleep(2.5)
-                process = subprocess.Popen(service_args,
-                                           stdout=subprocess.PIPE)
+                process = utils.subprocess_popen(service_args,
+                                                 stdout=subprocess.PIPE)
                 result = process.stdout.readlines()
                 if result:
                     tokens = re.search("running", str(result[1]))
