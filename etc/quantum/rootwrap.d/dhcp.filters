@@ -9,7 +9,7 @@
 [Filters]
 
 # dhcp-agent
-ip_exec_dnsmasq: DnsmasqFilter, /sbin/ip, root
+ip_exec_dnsmasq: DnsmasqNetnsFilter, /sbin/ip, root
 dnsmasq: DnsmasqFilter, /sbin/dnsmasq, root
 dnsmasq_usr: DnsmasqFilter, /usr/sbin/dnsmasq, root
 # dhcp-agent uses kill as well, that's handled by the generic KillFilter
