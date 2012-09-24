@@ -227,6 +227,8 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         self.plugin.delete_network(self.context, network_ret3['id'])
 
     def test_create_delete_subnet(self):
+        # for this test we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
         network1 = self._fake_network('fake1')
         network_ret1 = self.plugin.create_network(self.context, network1)
         network2 = self._fake_network('fake2')

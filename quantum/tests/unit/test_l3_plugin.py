@@ -287,6 +287,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def setUp(self):
         test_config['plugin_name_v2'] = (
             'quantum.tests.unit.test_l3_plugin.TestL3NatPlugin')
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
         ext_mgr = L3TestExtensionManager()
         test_config['extension_manager'] = ext_mgr
         super(L3NatDBTestCase, self).setUp()
