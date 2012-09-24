@@ -65,6 +65,17 @@ class RootwrapTestCase(unittest.TestCase):
         self.assertEqual(env.get('QUANTUM_RELAY_SOCKET_PATH'), 'A')
         self.assertEqual(env.get('QUANTUM_NETWORK_ID'), 'foobar')
 
+    def test_DnsmasqNetnsFilter(self):
+        usercmd = ['QUANTUM_RELAY_SOCKET_PATH=A', 'QUANTUM_NETWORK_ID=foobar',
+                   'ip', 'netns', 'exec', 'foo', 'dnsmasq', 'foo']
+        f = filters.DnsmasqNetnsFilter("/sbin/ip", "root")
+        self.assertTrue(f.match(usercmd))
+        self.assertEqual(f.get_command(usercmd), ['/sbin/ip', 'netns', 'exec',
+                                                  'foo', 'dnsmasq', 'foo'])
+        env = f.get_environment(usercmd)
+        self.assertEqual(env.get('QUANTUM_RELAY_SOCKET_PATH'), 'A')
+        self.assertEqual(env.get('QUANTUM_NETWORK_ID'), 'foobar')
+
     def test_KillFilter(self):
         p = utils.subprocess_popen(["/bin/sleep", "5"])
         f = filters.KillFilter("root", "/bin/sleep", "-9", "-HUP")
