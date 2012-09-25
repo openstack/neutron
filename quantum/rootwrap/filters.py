@@ -81,23 +81,17 @@ class DnsmasqFilter(CommandFilter):
             return True
         return False
 
-    def is_ip_netns_cmd(self, argv):
-        if ((argv[0] == "ip") and
-            (argv[1] == "netns") and
-            (argv[2] == "exec")):
+    def is_dnsmasq_env_vars(self, argv):
+        if (argv[0].startswith("QUANTUM_RELAY_SOCKET_PATH=") and
+            argv[1].startswith("QUANTUM_NETWORK_ID=")):
             return True
         return False
 
     def match(self, userargs):
         """This matches the combination of the leading env
-        vars, plus either "dnsmasq" (for the case where we're
-        not using netns) or "ip" "netns" "exec" <foo> "dnsmasq"
-        (for the case where we are)"""
-        if ((userargs[0].startswith("QUANTUM_RELAY_SOCKET_PATH=") and
-             userargs[1].startswith("QUANTUM_NETWORK_ID=") and
-             (self.is_dnsmasq_cmd(userargs[2:]) or
-              (self.is_ip_netns_cmd(userargs[2:]) and
-               self.is_dnsmasq_cmd(userargs[6:]))))):
+        vars plus "dnsmasq" """
+        if (self.is_dnsmasq_env_vars(userargs) and
+            self.is_dnsmasq_cmd(userargs[2:])):
             return True
         return False
 
@@ -109,6 +103,26 @@ class DnsmasqFilter(CommandFilter):
         env['QUANTUM_RELAY_SOCKET_PATH'] = userargs[0].split('=')[-1]
         env['QUANTUM_NETWORK_ID'] = userargs[1].split('=')[-1]
         return env
+
+
+class DnsmasqNetnsFilter(DnsmasqFilter):
+    """Specific filter for the dnsmasq call (which includes env)"""
+
+    def is_ip_netns_cmd(self, argv):
+        if ((argv[0] == "ip") and
+            (argv[1] == "netns") and
+            (argv[2] == "exec")):
+            return True
+        return False
+
+    def match(self, userargs):
+        """This matches the combination of the leading env
+        vars plus "ip" "netns" "exec" <foo> "dnsmasq" """
+        if (self.is_dnsmasq_env_vars(userargs) and
+            self.is_ip_netns_cmd(userargs[2:]) and
+            self.is_dnsmasq_cmd(userargs[6:])):
+            return True
+        return False
 
 
 class KillFilter(CommandFilter):
