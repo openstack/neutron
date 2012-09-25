@@ -712,6 +712,8 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                 self._validate_behavior_on_bulk_failure(res, 'ports')
 
     def test_list_ports(self):
+        # for this test we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             req = self.new_list_request('ports', 'json')
             port_list = self.deserialize('json', req.get_response(self.api))
@@ -721,6 +723,8 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             self.assertTrue(port2['port']['id'] in ids)
 
     def test_list_ports_filtered_by_fixed_ip(self):
+        # for this test we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             fixed_ips = port1['port']['fixed_ips'][0]
             query_params = """
@@ -1748,6 +1752,26 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                      cidr=cidr_2):
                         pass
                 self.assertEquals(ctx_manager.exception.code, 400)
+
+    def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
+        cidr_1 = '10.0.0.0/23'
+        cidr_2 = '10.0.0.0/24'
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+
+        with contextlib.nested(self.subnet(cidr=cidr_1),
+                               self.subnet(cidr=cidr_2)):
+            pass
+
+    def test_create_2_subnets_overlapping_cidr_not_allowed_returns_400(self):
+        cidr_1 = '10.0.0.0/23'
+        cidr_2 = '10.0.0.0/24'
+        cfg.CONF.set_override('allow_overlapping_ips', False)
+        with self.assertRaises(
+            webob.exc.HTTPClientError) as ctx_manager:
+            with contextlib.nested(self.subnet(cidr=cidr_1),
+                                   self.subnet(cidr=cidr_2)):
+                pass
+            self.assertEquals(ctx_manager.exception.code, 400)
 
     def test_create_subnets_bulk_native(self):
         if self._skip_native_bulk:

@@ -50,6 +50,7 @@ core_opts = [
     cfg.IntOpt('max_subnet_host_routes', default=20),
     cfg.StrOpt('state_path', default='.'),
     cfg.IntOpt('dhcp_lease_duration', default=120),
+    cfg.BoolOpt('allow_overlapping_ips', default=False)
 ]
 
 # Register the configuration options
