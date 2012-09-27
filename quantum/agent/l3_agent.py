@@ -181,7 +181,7 @@ class L3NATAgent(object):
         params = {'router:external': True}
         ex_nets = self.qclient.list_networks(**params)['networks']
         if len(ex_nets) > 1:
-            raise Exception("must configure 'external_network_id' if "
+            raise Exception("must configure 'gateway_external_network_id' if "
                             "Quantum has more than one external network.")
         if len(ex_nets) == 0:
             return None
