@@ -21,10 +21,10 @@ except ImportError:
                     'revision_id': 'LOCALREVISION',
                     'revno': 0}
 
-QUANTUM_VERSION = ['2012', '2', None]
+QUANTUM_VERSION = ['2012', '2', '1']
 YEAR, COUNT, REVSISION = QUANTUM_VERSION
 
-FINAL = True   # This becomes true at Release Candidate time
+FINAL = False   # This becomes true at Release Candidate time
 
 
 def canonical_version_string():
