@@ -147,7 +147,7 @@ class ResourceExhausted(QuantumException):
 
 class NoNetworkAvailable(ResourceExhausted):
     message = _("Unable to create the network. "
-                "No virtual network is available.")
+                "No tenant network is available for allocation.")
 
 
 class AlreadyAttached(QuantumException):
