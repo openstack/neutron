@@ -48,7 +48,7 @@ def _get_port_no(dev):
     return int(out.strip())
 
 
-class LibvirtOpenVswitchOFPRyuDriver(libvirt_vif.LibvirtOpenVswitchDriver):
+class LibvirtOpenVswitchOFPRyuDriver(libvirt_vif.LibvirtHybridOVSBridgeDriver):
     def __init__(self, **kwargs):
         super(LibvirtOpenVswitchOFPRyuDriver, self).__init__()
         LOG.debug('ryu rest host %s', FLAGS.libvirt_ovs_bridge)
@@ -57,8 +57,8 @@ class LibvirtOpenVswitchOFPRyuDriver(libvirt_vif.LibvirtOpenVswitchDriver):
 
     def _get_port_no(self, mapping):
         iface_id = mapping['vif_uuid']
-        dev = self.get_dev_name(iface_id)
-        return _get_port_no(dev)
+        _v1_name, v2_name = self.get_veth_pair_names(iface_id)
+        return _get_port_no(v2_name)
 
     def plug(self, instance, vif):
         result = super(LibvirtOpenVswitchOFPRyuDriver, self).plug(
