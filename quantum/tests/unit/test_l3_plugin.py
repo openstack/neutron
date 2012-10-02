@@ -892,6 +892,12 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                   query_params="%s=False" % l3.EXTERNAL)
                 self.assertEquals(len(body['networks']), 1)
 
+    def test_get_network_succeeds_without_filter(self):
+        plugin = manager.QuantumManager.get_plugin()
+        ctx = context.Context(None, None, is_admin=True)
+        result = plugin.get_networks(ctx, filters=None)
+        self.assertEqual(result, [])
+
     def test_network_filter_hook_admin_context(self):
         plugin = manager.QuantumManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)

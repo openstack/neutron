@@ -709,7 +709,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 network_id=net_id).delete()
 
     def _filter_nets_l3(self, context, nets, filters):
-        vals = filters.get('router:external', [])
+        vals = filters and filters.get('router:external', [])
         if not vals:
             return nets
 
