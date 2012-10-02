@@ -29,11 +29,11 @@ import kombu.connection
 import kombu.entity
 import kombu.messaging
 
-from openstack.common import cfg
-from openstack.common.gettextutils import _
-from openstack.common.rpc import amqp as rpc_amqp
-from openstack.common.rpc import common as rpc_common
-from openstack.common import network_utils
+from quantum.openstack.common import cfg
+from quantum.openstack.common.gettextutils import _
+from quantum.openstack.common.rpc import amqp as rpc_amqp
+from quantum.openstack.common.rpc import common as rpc_common
+from quantum.openstack.common import network_utils
 
 kombu_opts = [
     cfg.StrOpt('kombu_ssl_version',
@@ -790,4 +790,3 @@ def notify(conf, context, topic, msg):
 
 def cleanup():
     return rpc_amqp.cleanup(Connection.pool)
-
