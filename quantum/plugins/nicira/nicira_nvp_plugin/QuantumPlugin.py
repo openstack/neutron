@@ -453,13 +453,15 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         if 'lswitch-display-name' not in result:
             raise exception.NetworkNotFound(net_id=id)
 
+        # Fetch network in quantum
+        quantum_db = super(NvpPluginV2, self).get_network(context, id, fields)
         d = {'id': id,
              'name': result['lswitch-display-name'],
              'tenant_id': network['tenant_id'],
              'admin_state_up': True,
              'status': constants.NET_STATUS_ACTIVE,
              'shared': network['shared'],
-             'subnets': []}
+             'subnets': quantum_db.get('subnets', [])}
 
         LOG.debug("get_network() completed for tenant %s: %s" % (
                   context.tenant_id, d))

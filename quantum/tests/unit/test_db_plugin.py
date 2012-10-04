@@ -1683,6 +1683,14 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             self.assertEquals(res['network']['name'],
                               net['network']['name'])
 
+    def test_show_network_with_subnet(self):
+        with self.network(name='net1') as net:
+            with self.subnet(net) as subnet:
+                req = self.new_show_request('networks', net['network']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEquals(res['network']['subnets'][0],
+                                  subnet['subnet']['id'])
+
     def test_invalid_admin_status(self):
         fmt = 'json'
         value = [[7, False, 400], [True, True, 201], ["True", True, 201],
