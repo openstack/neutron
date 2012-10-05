@@ -29,6 +29,7 @@ PLUGINS = {
     'cisco': 'quantum.plugins.cisco.network_plugin.PluginV2',
     'lbr': 'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
     'meta': 'quantum.plugins.metaplugin.meta_quantum_plugin.MetaPluginV2',
+    'ml2': 'quantum.plugins.ml2.ml2_plugin.Ml2Plugin',
     'nec': 'quantum.plugins.nec.nec_plugin.NECPluginV2',
     'nvp': 'quantum.plugins.nicira.QuantumPlugin.NvpPluginV2',
     'ovs': 'quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2',
@@ -38,6 +39,7 @@ PLUGINS = {
 L3_CAPABLE = [
     PLUGINS['lbr'],
     PLUGINS['meta'],
+    PLUGINS['ml2'],
     PLUGINS['nec'],
     PLUGINS['ovs'],
     PLUGINS['ryu'],
@@ -45,6 +47,7 @@ L3_CAPABLE = [
 
 FOLSOM_QUOTA = [
     PLUGINS['lbr'],
+    PLUGINS['ml2'],
     PLUGINS['nvp'],
     PLUGINS['ovs'],
 ]
