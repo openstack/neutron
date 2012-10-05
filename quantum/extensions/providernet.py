@@ -30,6 +30,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                        'enforce_policy': True,
                        'is_visible': True},
         PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
+                           'validate': {'type:string': None},
                            'default': attributes.ATTR_NOT_SPECIFIED,
                            'enforce_policy': True,
                            'is_visible': True},
