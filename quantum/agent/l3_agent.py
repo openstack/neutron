@@ -126,7 +126,8 @@ class L3NATAgent(object):
             auth_region=self.conf.auth_region
         )
 
-        self._destroy_all_router_namespaces()
+        if self.conf.use_namespaces:
+            self._destroy_all_router_namespaces()
 
     def _destroy_all_router_namespaces(self):
         """Destroy all router namespaces on the host to eliminate
