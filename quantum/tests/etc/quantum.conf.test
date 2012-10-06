@@ -21,4 +21,4 @@ api_paste_config = api-paste.ini.test
 rpc_backend = quantum.openstack.common.rpc.impl_fake
 
 [DATABASE]
-sql_connection = 'sqlite:///quantum.test.db'
+sql_connection = 'sqlite:///:memory:'
