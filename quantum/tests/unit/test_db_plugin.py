@@ -119,9 +119,6 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         cfg.CONF.reset()
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
-        # Remove test database
-        if os.path.exists(db_base_plugin_v2.TEST_DB):
-            os.remove('quantum.test.db')
 
     def _req(self, method, resource, data=None, fmt='json',
              id=None, params=None, action=None):
