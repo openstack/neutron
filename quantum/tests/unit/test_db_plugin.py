@@ -1196,6 +1196,19 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 for p in ports_to_delete:
                     self._delete('ports', p['port']['id'])
 
+    def test_duplicate_ips(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.5'},
+                                    {'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.5'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(fmt, res)
+            self.assertEquals(res.status_int, 500)
+
     def test_requested_ips_only(self):
         fmt = 'json'
         with self.subnet() as subnet:
