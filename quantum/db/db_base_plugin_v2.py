@@ -956,8 +956,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             s['gateway_ip'] != attributes.ATTR_NOT_SPECIFIED):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
 
-        if 'dns_nameservers' in s and \
-                s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED:
+        if ('dns_nameservers' in s and
+            s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
                 raise q_exc.DNSNameServersExhausted(
                     subnet_id=id,
@@ -970,8 +970,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         error_message=("error parsing dns address %s" % dns))
                 self._validate_ip_version(ip_ver, dns, 'dns_nameserver')
 
-        if 'host_routes' in s and \
-                s['host_routes'] != attributes.ATTR_NOT_SPECIFIED:
+        if ('host_routes' in s and
+            s['host_routes'] != attributes.ATTR_NOT_SPECIFIED):
             if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
                 raise q_exc.HostRoutesExhausted(
                     subnet_id=id,

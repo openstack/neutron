@@ -16,6 +16,7 @@
 import logging
 import socket
 
+import netaddr
 import webob.exc
 
 from quantum.api.v2 import attributes
@@ -44,7 +45,10 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.HostRoutesExhausted: webob.exc.HTTPBadRequest,
              exceptions.DNSNameServersExhausted: webob.exc.HTTPBadRequest,
              # Some plugins enforce policies as well
-             exceptions.PolicyNotAuthorized: webob.exc.HTTPForbidden
+             exceptions.PolicyNotAuthorized: webob.exc.HTTPForbidden,
+             netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
+             AttributeError: webob.exc.HTTPBadRequest,
+             ValueError: webob.exc.HTTPBadRequest,
              }
 
 QUOTAS = quota.QUOTAS

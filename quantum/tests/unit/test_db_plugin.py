@@ -354,12 +354,12 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
         """ Invoked by test cases for injecting failures in plugin """
         def second_call(*args, **kwargs):
-            raise Exception('boom')
+            raise AttributeError
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
     def _validate_behavior_on_bulk_failure(self, res, collection):
-        self.assertEqual(res.status_int, 500)
+        self.assertEqual(res.status_int, 400)
         req = self.new_list_request(collection)
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 200)
@@ -560,6 +560,14 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
                                           net['network']['id'])
             res = req.get_response(self.api)
             self.assertEquals(res.status_int, 200)
+
+    def test_update_invalid_json_400(self):
+        with self.network() as net:
+            req = self.new_update_request('networks',
+                                          '{{"name": "aaa"}}',
+                                          net['network']['id'])
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
 
     def test_bad_route_404(self):
         req = self.new_list_request('doohickeys')
@@ -810,6 +818,13 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res['port']['admin_state_up'],
                              data['port']['admin_state_up'])
 
+    def test_update_device_id_null(self):
+        with self.port() as port:
+            data = {'port': {'device_id': None}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
     def test_delete_network_if_port_exists(self):
         fmt = 'json'
         with self.port() as port:
@@ -1030,6 +1045,19 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 res = self._create_port(fmt, net_id=net_id, **kwargs)
                 self.assertEquals(res.status_int, 400)
 
+    def test_overlapping_subnets(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            tenant_id = subnet['subnet']['tenant_id']
+            net_id = subnet['subnet']['network_id']
+            res = self._create_subnet(fmt,
+                                      tenant_id=tenant_id,
+                                      net_id=net_id,
+                                      cidr='10.0.0.225/28',
+                                      ip_version=4,
+                                      gateway_ip=ATTR_NOT_SPECIFIED)
+            self.assertEquals(res.status_int, 400)
+
     def test_requested_subnet_id_v4_and_v6(self):
         fmt = 'json'
         with self.subnet() as subnet:
@@ -1160,6 +1188,17 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEquals(ips[0]['subnet_id'], subnet['subnet']['id'])
                 self._delete('ports', port2['port']['id'])
 
+    def test_invalid_ip(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '1011.0.0.5'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            port = self.deserialize(fmt, res)
+            self.assertEquals(res.status_int, 400)
+
     def test_requested_split(self):
         fmt = 'json'
         with self.subnet() as subnet:
@@ -1207,7 +1246,29 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             net_id = subnet['subnet']['network_id']
             res = self._create_port(fmt, net_id=net_id, **kwargs)
             port2 = self.deserialize(fmt, res)
-            self.assertEquals(res.status_int, 500)
+            self.assertEquals(res.status_int, 400)
+
+    def test_fixed_ip_invalid_subnet_id(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': 'i am invalid',
+                                     'ip_address': '10.0.0.5'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(fmt, res)
+            self.assertEquals(res.status_int, 400)
+
+    def test_fixed_ip_invalid_ip(self):
+        fmt = 'json'
+        with self.subnet() as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.55555'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(fmt, res)
+            self.assertEquals(res.status_int, 400)
 
     def test_requested_ips_only(self):
         fmt = 'json'
@@ -1952,6 +2013,119 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self.assertEquals(res.status_int, 403)
+
+    def test_create_subnet_bad_ip_version(self):
+        with self.network() as network:
+            # Check bad IP version
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 'abc',
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_ip_version_null(self):
+        with self.network() as network:
+            # Check bad IP version
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': None,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_uuid(self):
+        with self.network() as network:
+            # Check invalid UUID
+            data = {'subnet': {'network_id': None,
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_boolean(self):
+        with self.network() as network:
+            # Check invalid boolean
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': '4',
+                               'enable_dhcp': None,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': '10.0.2.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_pools(self):
+        with self.network() as network:
+            # Check allocation pools
+            allocation_pools = [[{'end': '10.0.0.254'}],
+                                [{'start': '10.0.0.254'}],
+                                [{'start': '1000.0.0.254'}],
+                                [{'start': '10.0.0.2', 'end': '10.0.0.254'},
+                                 {'end': '10.0.0.254'}],
+                                None,
+                                [{'start': '10.0.0.2', 'end': '10.0.0.3'},
+                                 {'start': '10.0.0.2', 'end': '10.0.0.3'}]]
+            tenant_id = network['network']['tenant_id']
+            for pool in allocation_pools:
+                data = {'subnet': {'network_id': network['network']['id'],
+                                   'cidr': '10.0.2.0/24',
+                                   'ip_version': '4',
+                                   'tenant_id': tenant_id,
+                                   'gateway_ip': '10.0.2.1',
+                                   'allocation_pools': pool}}
+                subnet_req = self.new_create_request('subnets', data)
+                res = subnet_req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_nameserver(self):
+        with self.network() as network:
+            # Check nameservers
+            nameserver_pools = [['1100.0.0.2'],
+                                ['1.1.1.2', '1.1000.1.3'],
+                                ['1.1.1.2', '1.1.1.2'],
+                                None]
+            tenant_id = network['network']['tenant_id']
+            for nameservers in nameserver_pools:
+                data = {'subnet': {'network_id': network['network']['id'],
+                                   'cidr': '10.0.2.0/24',
+                                   'ip_version': '4',
+                                   'tenant_id': tenant_id,
+                                   'gateway_ip': '10.0.2.1',
+                                   'dns_nameservers': nameservers}}
+                subnet_req = self.new_create_request('subnets', data)
+                res = subnet_req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_hostroutes(self):
+        with self.network() as network:
+            # Check hostroutes
+            hostroute_pools = [[{'destination': '100.0.0.0/24'}],
+                               [{'nexthop': '10.0.2.20'}],
+                               [{'nexthop': '10.0.2.20',
+                                 'destination': '100.0.0.0/8'},
+                                {'nexthop': '10.0.2.20',
+                                 'destination': '100.0.0.0/8'}],
+                               None]
+            tenant_id = network['network']['tenant_id']
+            for hostroutes in hostroute_pools:
+                data = {'subnet': {'network_id': network['network']['id'],
+                                   'cidr': '10.0.2.0/24',
+                                   'ip_version': '4',
+                                   'tenant_id': tenant_id,
+                                   'gateway_ip': '10.0.2.1',
+                                   'host_routes': hostroutes}}
+                subnet_req = self.new_create_request('subnets', data)
+                res = subnet_req.get_response(self.api)
+                self.assertEquals(res.status_int, 400)
 
     def test_create_subnet_defaults(self):
         gateway = '10.0.0.1'

@@ -18,6 +18,7 @@ Utility methods for working with WSGI servers redux
 """
 import logging
 
+import netaddr
 import webob
 import webob.dec
 import webob.exc
@@ -93,7 +94,9 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             method = getattr(controller, action)
 
             result = method(request=request, **args)
-        except exceptions.QuantumException as e:
+        except (ValueError, AttributeError,
+                exceptions.QuantumException,
+                netaddr.AddrFormatError) as e:
             LOG.exception('%s failed' % action)
             body = serializer({'QuantumError': str(e)})
             kwargs = {'body': body, 'content_type': content_type}
