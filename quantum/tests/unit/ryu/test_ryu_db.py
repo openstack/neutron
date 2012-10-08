@@ -21,6 +21,7 @@ import unittest2
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 from quantum.plugins.ryu.db import models_v2 as ryu_models_v2
 from quantum.plugins.ryu import ofp_service_type
