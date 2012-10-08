@@ -636,7 +636,8 @@ class LinuxBridgeQuantumAgentRPC:
             if devices:
                 mac = utils.get_interface_mac(devices[0].name)
             else:
-                LOG.error("Unable to obtain MAC of any device for agent_id")
+                LOG.error("Unable to obtain MAC address for unique ID. "
+                          "Agent terminated!")
                 exit(1)
         self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
         LOG.info("RPC agent_id: %s" % self.agent_id)
@@ -800,7 +801,8 @@ def main():
             LOG.debug("physical network %s mapped to physical interface %s" %
                       (physical_network, physical_interface))
         except ValueError as ex:
-            LOG.error("Invalid physical interface mapping: \'%s\' - %s" %
+            LOG.error("Invalid physical interface mapping: %s - %s. "
+                      "Agent terminated!" %
                       (mapping, ex))
             sys.exit(1)
 

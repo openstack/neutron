@@ -114,6 +114,7 @@ def setup_logging(conf):
 
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
+    LOG.info("Logging enabled!")
 
 
 def load_paste_app(app_name):
