@@ -64,12 +64,15 @@ class TestOvsQuantumAgent(unittest.TestCase):
     def setUp(self):
         self.addCleanup(cfg.CONF.reset)
         # Avoid rpc initialization for unit tests
-        cfg.CONF.set_override('rpc', False, group='AGENT')
+        cfg.CONF.set_override('rpc_backend',
+                              'quantum.openstack.common.rpc.impl_fake')
         kwargs = ovs_quantum_agent.create_agent_config_map(cfg.CONF)
         with mock.patch('quantum.plugins.openvswitch.agent.ovs_quantum_agent.'
                         'OVSQuantumAgent.setup_integration_br',
                         return_value=mock.Mock()):
-            self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
+            with mock.patch('quantum.agent.linux.utils.get_interface_mac',
+                            return_value='000000000001'):
+                self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
         self.agent.plugin_rpc = mock.Mock()
         self.agent.context = mock.Mock()
         self.agent.agent_id = mock.Mock()
@@ -79,11 +82,8 @@ class TestOvsQuantumAgent(unittest.TestCase):
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
         with mock.patch.object(self.agent.int_br,
-                               'set_db_attribute') as db_func:
-            with mock.patch.object(self.agent.int_br,
-                                   'delete_flows') as delete_flows_func:
-                self.agent.port_bound(port, net_uuid, 'local', None, None)
-        self.assertTrue(db_func.called)
+                               'delete_flows') as delete_flows_func:
+            self.agent.port_bound(port, net_uuid, 'local', None, None)
         self.assertEqual(delete_flows_func.called, ofport != -1)
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
@@ -94,11 +94,8 @@ class TestOvsQuantumAgent(unittest.TestCase):
 
     def test_port_dead(self):
         with mock.patch.object(self.agent.int_br,
-                               'set_db_attribute') as db_func:
-            with mock.patch.object(self.agent.int_br,
-                                   'add_flow') as add_flow_func:
-                self.agent.port_dead(mock.Mock())
-        self.assertTrue(db_func.called)
+                               'add_flow') as add_flow_func:
+            self.agent.port_dead(mock.Mock())
         self.assertTrue(add_flow_func.called)
 
     def mock_update_ports(self, vif_port_set=None, registered_ports=None):

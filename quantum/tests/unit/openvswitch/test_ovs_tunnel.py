@@ -21,6 +21,7 @@ import unittest
 import mox
 
 from quantum.agent.linux import ovs_lib
+from quantum.agent.linux import utils
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 
 # Useful global dummy variables.
@@ -74,6 +75,9 @@ class TunnelTest(unittest.TestCase):
         self.mock_tun_bridge.remove_all_flows()
         self.mock_tun_bridge.add_flow(priority=1, actions='drop')
 
+        self.mox.StubOutWithMock(utils, 'get_interface_mac')
+        utils.get_interface_mac(self.INT_BRIDGE).AndReturn('000000000001')
+
     def tearDown(self):
         self.mox.UnsetStubs()
 
@@ -83,7 +87,7 @@ class TunnelTest(unittest.TestCase):
         b = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):
@@ -100,7 +104,7 @@ class TunnelTest(unittest.TestCase):
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         a.available_local_vlans = set([LV_ID])
         a.provision_local_vlan(NET_UUID, 'gre', None, LS_ID)
         self.mox.VerifyAll()
@@ -114,7 +118,7 @@ class TunnelTest(unittest.TestCase):
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM
         a.reclaim_local_vlan(NET_UUID, LVM)
@@ -135,7 +139,7 @@ class TunnelTest(unittest.TestCase):
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         a.local_vlan_map[NET_UUID] = LVM
         a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID)
         self.mox.VerifyAll()
@@ -146,7 +150,7 @@ class TunnelTest(unittest.TestCase):
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
         a.port_unbound(VIF_ID, NET_UUID)
@@ -163,7 +167,7 @@ class TunnelTest(unittest.TestCase):
         a = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
                                               '10.0.0.1', {},
-                                              'sudo', 2, 2, False, True)
+                                              'sudo', 2, True)
         a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
         a.port_dead(VIF_PORT)

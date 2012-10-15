@@ -135,7 +135,7 @@ class OVSQuantumAgent(object):
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
-                 polling_interval, reconnect_interval, rpc, enable_tunneling):
+                 polling_interval, enable_tunneling):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -144,8 +144,6 @@ class OVSQuantumAgent(object):
         :param bridge_mappings: mappings from phyiscal interface to bridge.
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
-        :param reconnect_internal: retry interval (secs) on DB error.
-        :param rpc: if True use RPC interface to interface with plugin.
         :param enable_tunneling: if True enable GRE networks.
         '''
         self.root_helper = root_helper
@@ -157,7 +155,6 @@ class OVSQuantumAgent(object):
         self.local_vlan_map = {}
 
         self.polling_interval = polling_interval
-        self.reconnect_interval = reconnect_interval
 
         self.enable_tunneling = enable_tunneling
         self.local_ip = local_ip
@@ -165,9 +162,7 @@ class OVSQuantumAgent(object):
         if self.enable_tunneling:
             self.setup_tunnel_br(tun_br)
 
-        self.rpc = rpc
-        if rpc:
-            self.setup_rpc(integ_br)
+        self.setup_rpc(integ_br)
 
     def setup_rpc(self, integ_br):
         mac = utils.get_interface_mac(integ_br)
@@ -510,150 +505,6 @@ class OVSQuantumAgent(object):
             int_veth.link.set_up()
             phys_veth.link.set_up()
 
-    def manage_tunnels(self, tunnel_ips, old_tunnel_ips, db):
-        if self.local_ip in tunnel_ips:
-            tunnel_ips.remove(self.local_ip)
-        else:
-            db.ovs_tunnel_ips.insert(ip_address=self.local_ip)
-
-        new_tunnel_ips = tunnel_ips - old_tunnel_ips
-        if new_tunnel_ips:
-            LOG.info("Adding tunnels to: %s", new_tunnel_ips)
-            for ip in new_tunnel_ips:
-                tun_name = "gre-" + str(self.tunnel_count)
-                self.tun_br.add_tunnel_port(tun_name, ip)
-                self.tunnel_count += 1
-
-    def rollback_until_success(self, db):
-        while True:
-            time.sleep(self.reconnect_interval)
-            try:
-                db.rollback()
-                break
-            except:
-                LOG.exception("Problem connecting to database")
-
-    def db_loop(self, db_connection_url):
-        '''Main processing loop for Tunneling Agent.
-
-        :param options: database information - in the event need to reconnect
-        '''
-        old_local_bindings = {}
-        old_vif_ports = {}
-        old_tunnel_ips = set()
-
-        db = sqlsoup.SqlSoup(db_connection_url)
-        LOG.info("Connecting to database \"%s\" on %s",
-                 db.engine.url.database, db.engine.url.host)
-
-        while True:
-            try:
-                all_bindings = dict((p.id, Port(p))
-                                    for p in db.ports.all())
-                all_bindings_vif_port_ids = set(all_bindings)
-                net_bindings = dict((bind.network_id, bind)
-                                    for bind in
-                                    db.ovs_network_bindings.all())
-
-                if self.enable_tunneling:
-                    tunnel_ips = set(x.ip_address for x in
-                                     db.ovs_tunnel_ips.all())
-                    self.manage_tunnels(tunnel_ips, old_tunnel_ips, db)
-
-                # Get bindings from OVS bridge.
-                vif_ports = self.int_br.get_vif_ports()
-                new_vif_ports = dict([(p.vif_id, p) for p in vif_ports])
-                new_vif_ports_ids = set(new_vif_ports.keys())
-
-                old_vif_ports_ids = set(old_vif_ports.keys())
-                dead_vif_ports_ids = (new_vif_ports_ids -
-                                      all_bindings_vif_port_ids)
-                dead_vif_ports = [new_vif_ports[p] for p in dead_vif_ports_ids]
-                disappeared_vif_ports_ids = (old_vif_ports_ids -
-                                             new_vif_ports_ids)
-                new_local_bindings_ids = (all_bindings_vif_port_ids.
-                                          intersection(new_vif_ports_ids))
-                new_local_bindings = dict([(p, all_bindings.get(p))
-                                           for p in new_vif_ports_ids])
-                new_bindings = set(
-                    (p, old_local_bindings.get(p),
-                     new_local_bindings.get(p)) for p in new_vif_ports_ids)
-                changed_bindings = set([b for b in new_bindings
-                                        if b[2] != b[1]])
-
-                LOG.debug('all_bindings: %s', all_bindings)
-                LOG.debug('net_bindings: %s', net_bindings)
-                LOG.debug('new_vif_ports_ids: %s', new_vif_ports_ids)
-                LOG.debug('dead_vif_ports_ids: %s', dead_vif_ports_ids)
-                LOG.debug('old_vif_ports_ids: %s', old_vif_ports_ids)
-                LOG.debug('new_local_bindings_ids: %s',
-                          new_local_bindings_ids)
-                LOG.debug('new_local_bindings: %s', new_local_bindings)
-                LOG.debug('new_bindings: %s', new_bindings)
-                LOG.debug('changed_bindings: %s', changed_bindings)
-
-                # Take action.
-                for p in dead_vif_ports:
-                    LOG.info("No quantum binding for port " + str(p)
-                             + "putting on dead vlan")
-                    self.port_dead(p)
-
-                for b in changed_bindings:
-                    port_id, old_port, new_port = b
-                    p = new_vif_ports[port_id]
-                    if old_port:
-                        old_net_uuid = old_port.network_id
-                        LOG.info("Removing binding to net-id = " +
-                                 old_net_uuid + " for " + str(p)
-                                 + " added to dead vlan")
-                        self.port_unbound(p.vif_id, old_net_uuid)
-                        if p.vif_id in all_bindings:
-                            all_bindings[p.vif_id].status = (
-                                q_const.PORT_STATUS_DOWN)
-                        if not new_port:
-                            self.port_dead(p)
-
-                    if new_port:
-                        new_net_uuid = new_port.network_id
-                        if new_net_uuid not in net_bindings:
-                            LOG.warn("No network binding found for net-id"
-                                     " '%s'", new_net_uuid)
-                            continue
-
-                        bind = net_bindings[new_net_uuid]
-                        self.port_bound(p, new_net_uuid,
-                                        bind.network_type,
-                                        bind.physical_network,
-                                        bind.segmentation_id)
-                        all_bindings[p.vif_id].status = (
-                            q_const.PORT_STATUS_ACTIVE)
-                        LOG.info("Port %s on net-id = %s bound to %s ",
-                                 str(p), new_net_uuid,
-                                 str(self.local_vlan_map[new_net_uuid]))
-
-                for vif_id in disappeared_vif_ports_ids:
-                    LOG.info("Port Disappeared: " + vif_id)
-                    if vif_id in all_bindings:
-                        all_bindings[vif_id].status = (
-                            q_const.PORT_STATUS_DOWN)
-                    old_port = old_local_bindings.get(vif_id)
-                    if old_port:
-                        self.port_unbound(vif_id, old_port.network_id)
-                # commit any DB changes and expire
-                # data loaded from the database
-                db.commit()
-
-                # sleep and re-initialize state for next pass
-                time.sleep(self.polling_interval)
-                if self.enable_tunneling:
-                    old_tunnel_ips = tunnel_ips
-                old_vif_ports = new_vif_ports
-                old_local_bindings = new_local_bindings
-
-            except:
-                LOG.exception("Main-loop Exception:")
-                self.rollback_until_success(db)
-
     def update_ports(self, registered_ports):
         ports = self.int_br.get_vif_port_set()
         if ports == registered_ports:
@@ -786,11 +637,8 @@ class OVSQuantumAgent(object):
                 LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
                           self.polling_interval, elapsed)
 
-    def daemon_loop(self, db_connection_url):
-        if self.rpc:
-            self.rpc_loop()
-        else:
-            self.db_loop(db_connection_url)
+    def daemon_loop(self):
+        self.rpc_loop()
 
 
 def parse_bridge_mappings(bridge_mapping_list):
@@ -827,8 +675,6 @@ def create_agent_config_map(config):
         bridge_mappings=bridge_mappings,
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
-        reconnect_interval=config.DATABASE.reconnect_interval,
-        rpc=config.AGENT.rpc,
         enable_tunneling=config.OVS.enable_tunneling,
     )
 
@@ -856,8 +702,7 @@ def main():
 
     # Start everything.
     LOG.info("Agent initialized successfully, now running... ")
-    plugin.daemon_loop(cfg.CONF.DATABASE.sql_connection)
-
+    plugin.daemon_loop()
     sys.exit(0)
 
 

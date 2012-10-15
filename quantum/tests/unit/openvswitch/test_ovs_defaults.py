@@ -30,7 +30,6 @@ class ConfigurationTest(unittest.TestCase):
         self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
-        self.assertTrue(cfg.CONF.AGENT.rpc)
         self.assertEqual('local', cfg.CONF.OVS.tenant_network_type)
         self.assertEqual(0, len(cfg.CONF.OVS.bridge_mappings))
         self.assertEqual(0, len(cfg.CONF.OVS.network_vlan_ranges))
