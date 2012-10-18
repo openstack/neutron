@@ -85,6 +85,46 @@ class TestAttributes(unittest2.TestCase):
         error = '%s is not valid' % base_mac
         self.assertEquals(msg, error)
 
+    def test_cidr(self):
+        # Valid - IPv4
+        cidr = "10.0.2.0/24"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertEquals(msg, None)
+
+        # Valid - IPv6 without final octets
+        cidr = "fe80::/24"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertEquals(msg, None)
+
+        # Valid - IPv6 with final octets
+        cidr = "fe80::0/24"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertEquals(msg, None)
+
+        # Invalid - IPv4 missing mask
+        cidr = "10.0.2.0"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        error = "%s is not a valid IP subnet" % cidr
+        self.assertEquals(msg, error)
+
+        # Invalid - IPv6 without final octets, missing mask
+        cidr = "fe80::"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        error = "%s is not a valid IP subnet" % cidr
+        self.assertEquals(msg, error)
+
+        # Invalid - IPv6 with final octets, missing mask
+        cidr = "fe80::0"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        error = "%s is not a valid IP subnet" % cidr
+        self.assertEquals(msg, error)
+
 
 class TestConvertKvp(unittest2.TestCase):
 

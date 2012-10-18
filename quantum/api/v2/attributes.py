@@ -92,11 +92,14 @@ def _validate_ip_address_or_none(data, valid_values=None):
 def _validate_subnet(data, valid_values=None):
     try:
         netaddr.IPNetwork(data)
-        return
+        if len(data.split('/')) == 2:
+            return
     except Exception:
-        msg = _("%s is not a valid IP subnet") % data
-        LOG.debug("validate_subnet: %s", msg)
-        return msg
+        pass
+
+    msg = _("%s is not a valid IP subnet") % data
+    LOG.debug("validate_subnet: %s", msg)
+    return msg
 
 
 def _validate_regex(data, valid_values=None):
