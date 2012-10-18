@@ -1774,6 +1774,28 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                         pass
                 self.assertEquals(ctx_manager.exception.code, 400)
 
+    def test_create_subnet_bad_V4_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': '10.0.2.0',
+                    'ip_version': '4',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': '10.0.2.1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
+    def test_create_subnet_bad_V6_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                    'cidr': 'fe80::',
+                    'ip_version': '6',
+                    'tenant_id': network['network']['tenant_id'],
+                    'gateway_ip': 'fe80::1'}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEquals(res.status_int, 400)
+
     def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
         cidr_1 = '10.0.0.0/23'
         cidr_2 = '10.0.0.0/24'
