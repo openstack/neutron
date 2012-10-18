@@ -132,14 +132,6 @@ class FanoutBinding(Binding):
         return False
 
 
-class PublisherBinding(Binding):
-    """Match on publishers keys, where key starts with 'publishers.' string."""
-    def test(self, key):
-        if key.startswith('publishers~'):
-            return True
-        return False
-
-
 class StubExchange(Exchange):
     """Exchange that does nothing."""
     def run(self, key):
@@ -190,23 +182,6 @@ class RoundRobinRingExchange(RingExchange):
         return [(key + '.' + host, host)]
 
 
-class PublisherRingExchange(RingExchange):
-    """Fanout Exchange based on a hashmap."""
-    def __init__(self, ring=None):
-        super(PublisherRingExchange, self).__init__(ring)
-
-    def run(self, key):
-        # Assume starts with "publishers~", strip it for lookup.
-        nkey = key.split('publishers~')[1:][0]
-        if not self._ring_has(nkey):
-            LOG.warn(
-                _("No key defining hosts for topic '%s', "
-                  "see ringfile") % (nkey, )
-            )
-            return []
-        return map(lambda x: (key + '.' + x, x), self.ring[nkey])
-
-
 class FanoutRingExchange(RingExchange):
     """Fanout Exchange based on a hashmap."""
     def __init__(self, ring=None):
@@ -221,8 +196,7 @@ class FanoutRingExchange(RingExchange):
                   "see ringfile") % (nkey, )
             )
             return []
-        return map(lambda x: (key + '.' + x, x), self.ring[nkey] +
-                   ['localhost'])
+        return map(lambda x: (key + '.' + x, x), self.ring[nkey])
 
 
 class LocalhostExchange(Exchange):
@@ -253,7 +227,6 @@ class MatchMakerRing(MatchMakerBase):
     """
     def __init__(self, ring=None):
         super(MatchMakerRing, self).__init__()
-        self.add_binding(PublisherBinding(), PublisherRingExchange(ring))
         self.add_binding(FanoutBinding(), FanoutRingExchange(ring))
         self.add_binding(DirectBinding(), DirectExchange())
         self.add_binding(TopicBinding(), RoundRobinRingExchange(ring))
@@ -266,7 +239,6 @@ class MatchMakerLocalhost(MatchMakerBase):
     """
     def __init__(self):
         super(MatchMakerLocalhost, self).__init__()
-        self.add_binding(PublisherBinding(), LocalhostExchange())
         self.add_binding(FanoutBinding(), LocalhostExchange())
         self.add_binding(DirectBinding(), DirectExchange())
         self.add_binding(TopicBinding(), LocalhostExchange())
@@ -281,7 +253,6 @@ class MatchMakerStub(MatchMakerBase):
     def __init__(self):
         super(MatchMakerLocalhost, self).__init__()
 
-        self.add_binding(PublisherBinding(), StubExchange())
         self.add_binding(FanoutBinding(), StubExchange())
         self.add_binding(DirectBinding(), StubExchange())
         self.add_binding(TopicBinding(), StubExchange())

@@ -58,9 +58,6 @@ zmq_opts = [
     cfg.IntOpt('rpc_zmq_port', default=9501,
                help='ZeroMQ receiver listening port'),
 
-    cfg.IntOpt('rpc_zmq_port_pub', default=9502,
-               help='ZeroMQ fanout publisher port'),
-
     cfg.IntOpt('rpc_zmq_contexts', default=1,
                help='Number of ZeroMQ contexts, defaults to 1'),
 
@@ -209,7 +206,7 @@ class ZmqClient(object):
         self.outq = ZmqSocket(addr, socket_type, bind=bind)
 
     def cast(self, msg_id, topic, data):
-        self.outq.send([str(topic), str(msg_id), str('cast'),
+        self.outq.send([str(msg_id), str(topic), str('cast'),
                         _serialize(data)])
 
     def close(self):
@@ -301,9 +298,6 @@ class ConsumerBase(object):
             return replies
         else:
             return [result]
-
-    def consume(self, sock):
-        raise NotImplementedError()
 
     def process(self, style, target, proxy, ctx, data):
         # Method starting with - are
@@ -417,17 +411,12 @@ class ZmqProxy(ZmqBaseReactor):
                       zmq.PUB, bind=True)
         self.sockets.append(self.topic_proxy['zmq_replies'])
 
-        self.topic_proxy['fanout~'] = \
-            ZmqSocket("tcp://%s:%s" % (CONF.rpc_zmq_bind_address,
-                      CONF.rpc_zmq_port_pub), zmq.PUB, bind=True)
-        self.sockets.append(self.topic_proxy['fanout~'])
-
     def consume(self, sock):
         ipc_dir = CONF.rpc_zmq_ipc_dir
 
         #TODO(ewindisch): use zero-copy (i.e. references, not copying)
         data = sock.recv()
-        topic, msg_id, style, in_msg = data
+        msg_id, topic, style, in_msg = data
         topic = topic.split('.', 1)[0]
 
         LOG.debug(_("CONSUMER GOT %s"), ' '.join(map(pformat, data)))
@@ -435,11 +424,6 @@ class ZmqProxy(ZmqBaseReactor):
         # Handle zmq_replies magic
         if topic.startswith('fanout~'):
             sock_type = zmq.PUB
-
-            # This doesn't change what is in the message,
-            # it only specifies that these messages go to
-            # the generic fanout topic.
-            topic = 'fanout~'
         elif topic.startswith('zmq_replies'):
             sock_type = zmq.PUB
             inside = _deserialize(in_msg)
@@ -450,30 +434,21 @@ class ZmqProxy(ZmqBaseReactor):
         else:
             sock_type = zmq.PUSH
 
-            if not topic in self.topic_proxy:
-                outq = ZmqSocket("ipc://%s/zmq_topic_%s" % (ipc_dir, topic),
-                                 sock_type, bind=True)
-                self.topic_proxy[topic] = outq
-                self.sockets.append(outq)
-                LOG.info(_("Created topic proxy: %s"), topic)
+        if not topic in self.topic_proxy:
+            outq = ZmqSocket("ipc://%s/zmq_topic_%s" % (ipc_dir, topic),
+                             sock_type, bind=True)
+            self.topic_proxy[topic] = outq
+            self.sockets.append(outq)
+            LOG.info(_("Created topic proxy: %s"), topic)
+
+            # It takes some time for a pub socket to open,
+            # before we can have any faith in doing a send() to it.
+            if sock_type == zmq.PUB:
+                eventlet.sleep(.5)
 
         LOG.debug(_("ROUTER RELAY-OUT START %(data)s") % {'data': data})
         self.topic_proxy[topic].send(data)
         LOG.debug(_("ROUTER RELAY-OUT SUCCEEDED %(data)s") % {'data': data})
-
-
-class CallbackReactor(ZmqBaseReactor):
-    """
-    A consumer class passing messages to a callback
-    """
-
-    def __init__(self, conf, callback):
-        self._cb = callback
-        super(CallbackReactor, self).__init__(conf)
-
-    def consume(self, sock):
-        data = sock.recv()
-        self._cb(data[3])
 
 
 class ZmqReactor(ZmqBaseReactor):
@@ -496,7 +471,7 @@ class ZmqReactor(ZmqBaseReactor):
             self.mapping[sock].send(data)
             return
 
-        topic, msg_id, style, in_msg = data
+        msg_id, topic, style, in_msg = data
 
         ctx, request = _deserialize(in_msg)
         ctx = RpcContext.unmarshal(ctx)
@@ -513,26 +488,6 @@ class Connection(rpc_common.Connection):
     def __init__(self, conf):
         self.reactor = ZmqReactor(conf)
 
-    def _consume_fanout(self, reactor, topic, proxy, bind=False):
-        for topic, host in matchmaker.queues("publishers~%s" % (topic, )):
-            inaddr = "tcp://%s:%s" % (host, CONF.rpc_zmq_port)
-            reactor.register(proxy, inaddr, zmq.SUB, in_bind=bind)
-
-    def declare_topic_consumer(self, topic, callback=None,
-                               queue_name=None):
-        """declare_topic_consumer is a private method, but
-           it is being used by Quantum (Folsom).
-           This has been added compatibility.
-        """
-        # Only consume on the base topic name.
-        topic = topic.split('.', 1)[0]
-
-        if CONF.rpc_zmq_host in matchmaker.queues("fanout~%s" % (topic, )):
-            return
-
-        reactor = CallbackReactor(CONF, callback)
-        self._consume_fanout(reactor, topic, None, bind=False)
-
     def create_consumer(self, topic, proxy, fanout=False):
         # Only consume on the base topic name.
         topic = topic.split('.', 1)[0]
@@ -540,35 +495,22 @@ class Connection(rpc_common.Connection):
         LOG.info(_("Create Consumer for topic (%(topic)s)") %
                  {'topic': topic})
 
-        # Consume direct-push fanout messages (relay to local consumers)
+        # Subscription scenarios
         if fanout:
-            # If we're not in here, we can't receive direct fanout messages
-            if CONF.rpc_zmq_host in matchmaker.queues(topic):
-                # Consume from all remote publishers.
-                self._consume_fanout(self.reactor, topic, proxy)
-            else:
-                LOG.warn("This service cannot receive direct PUSH fanout "
-                         "messages without being known by the matchmaker.")
-                return
-
-            # Configure consumer for direct pushes.
-            subscribe = (topic, fanout)[type(fanout) == str]
+            subscribe = ('', fanout)[type(fanout) == str]
             sock_type = zmq.SUB
             topic = 'fanout~' + topic
-
-            inaddr = "tcp://127.0.0.1:%s" % (CONF.rpc_zmq_port_pub, )
         else:
             sock_type = zmq.PULL
             subscribe = None
 
-            # Receive messages from (local) proxy
-            inaddr = "ipc://%s/zmq_topic_%s" % \
-                (CONF.rpc_zmq_ipc_dir, topic)
+        # Receive messages from (local) proxy
+        inaddr = "ipc://%s/zmq_topic_%s" % \
+            (CONF.rpc_zmq_ipc_dir, topic)
 
         LOG.debug(_("Consumer is a zmq.%s"),
                   ['PULL', 'SUB'][sock_type == zmq.SUB])
 
-        # Consume messages from local rpc-zmq-receiver daemon.
         self.reactor.register(proxy, inaddr, sock_type,
                               subscribe=subscribe, in_bind=False)
 

@@ -20,6 +20,7 @@
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher as rpc_dispatcher
 from quantum.openstack.common import service
 
 
@@ -46,15 +47,15 @@ class Service(service.Service):
         LOG.debug(_("Creating Consumer connection for Service %s") %
                   self.topic)
 
-        rpc_dispatcher = rpc.dispatcher.RpcDispatcher([self.manager])
+        dispatcher = rpc_dispatcher.RpcDispatcher([self.manager])
 
         # Share this same connection for these Consumers
-        self.conn.create_consumer(self.topic, rpc_dispatcher, fanout=False)
+        self.conn.create_consumer(self.topic, dispatcher, fanout=False)
 
         node_topic = '%s.%s' % (self.topic, self.host)
-        self.conn.create_consumer(node_topic, rpc_dispatcher, fanout=False)
+        self.conn.create_consumer(node_topic, dispatcher, fanout=False)
 
-        self.conn.create_consumer(self.topic, rpc_dispatcher, fanout=True)
+        self.conn.create_consumer(self.topic, dispatcher, fanout=True)
 
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
