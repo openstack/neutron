@@ -114,6 +114,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         super(QuantumDbPluginV2TestCase, self).tearDown()
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
+        db.clear_db()
         db._ENGINE = None
         db._MAKER = None
         cfg.CONF.reset()

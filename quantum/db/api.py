@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 _ENGINE = None
 _MAKER = None
-BASE = model_base.BASE
+BASE = model_base.BASEV2
 
 
 class MySQLPingListener(object):
