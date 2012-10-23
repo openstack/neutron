@@ -1,0 +1,26 @@
+# Test config file for quantum-proxy-plugin.
+
+[DATABASE]
+# This line MUST be changed to actually run the plugin.
+# Example:
+# sql_connection = mysql://root:pass@127.0.0.1:3306/restproxy_quantum
+# Replace 127.0.0.1 above with the IP address of the database used by the
+# main quantum server. (Leave it as is if the database runs on this host.)
+sql_connection = sqlite://
+# Database reconnection retry times - in event connectivity is lost
+# set to -1 implies an infinite retry count
+# sql_max_retries = 10
+# Database reconnection interval in seconds - in event connectivity is lost
+reconnect_interval = 2
+
+[RESTPROXY]
+# All configuration for this plugin is in section '[restproxy]'
+#
+# The following parameters are supported:
+#   servers     :   <host:port>[,<host:port>]*  (Error if not set)
+#   serverauth  :   <username:password>         (default: no auth)
+#   serverssl   :   True | False                (default: False)
+#
+servers=localhost:8899
+serverssl=False
+#serverauth=username:password

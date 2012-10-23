@@ -1,0 +1,14 @@
+# Quantum REST Proxy Plug-in for Big Switch and FloodLight Controllers
+
+This module provides a generic quantum plugin 'QuantumRestProxy' that
+translates quantum function calls to authenticated REST requests (JSON supported)
+to a set of redundant external network controllers.
+
+It also keeps a local persistent store of quantum state that has been
+setup using that API.
+
+Currently the FloodLight Openflow Controller or the Big Switch Networks Controller
+can be configured as external network controllers for this plugin.
+
+For more details on this plugin, please refer to the following link:
+http://www.openflowhub.org/display/floodlightcontroller/Quantum+REST+Proxy+Plugin
