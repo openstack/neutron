@@ -2059,6 +2059,16 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         enable_dhcp = False
         self._test_create_subnet(enable_dhcp=enable_dhcp)
 
+    def test_create_subnet_default_gw_conflict_allocation_pool_returns_409(
+        self):
+        cidr = '10.0.0.0/24'
+        allocation_pools = [{'start': '10.0.0.1',
+                             'end': '10.0.0.5'}]
+        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(cidr=cidr,
+                                     allocation_pools=allocation_pools)
+        self.assertEquals(ctx_manager.exception.code, 409)
+
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         gateway_ip = '10.0.0.50'
         cidr = '10.0.0.0/24'
