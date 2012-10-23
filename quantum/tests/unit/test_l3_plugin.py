@@ -557,6 +557,21 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                  expected_code=exc.
                                                  HTTPBadRequest.code)
 
+    def test_create_router_with_gwinfo(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+            data = {'router': {'tenant_id': _uuid()}}
+            data['router']['name'] = 'router1'
+            data['router']['external_gateway_info'] = {
+                'network_id': s['subnet']['network_id']}
+            router_req = self.new_create_request('routers', data, 'json')
+            res = router_req.get_response(self.ext_api)
+            router = self.deserialize('json', res)
+            self.assertEquals(
+                s['subnet']['network_id'],
+                router['router']['external_gateway_info']['network_id'])
+            self._delete('routers', router['router']['id'])
+
     def test_router_add_gateway(self):
         with self.router() as r:
             with self.subnet() as s:
