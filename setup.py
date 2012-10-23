@@ -100,7 +100,7 @@ setuptools.setup(
     license=License,
     classifiers=[
         'Environment :: OpenStack',
-        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
         'Intended Audience :: Information Technology',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux',
