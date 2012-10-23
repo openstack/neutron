@@ -178,6 +178,10 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             root_veth, dhcp_veth = ip.add_veth(tap_name, device_name)
             root_veth.link.set_address(mac_address)
 
+            if self.conf.network_device_mtu:
+                root_veth.link.set_mtu(self.conf.network_device_mtu)
+                dhcp_veth.link.set_mtu(self.conf.network_device_mtu)
+
             if namespace:
                 namespace_obj = ip.ensure_namespace(namespace)
                 namespace_obj.add_device_to_namespace(dhcp_veth)
