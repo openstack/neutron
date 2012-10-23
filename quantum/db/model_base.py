@@ -60,5 +60,4 @@ class QuantumBaseV2(QuantumBase):
         return cls.__name__.lower() + 's'
 
 
-BASE = declarative.declarative_base(cls=QuantumBase)
 BASEV2 = declarative.declarative_base(cls=QuantumBaseV2)
