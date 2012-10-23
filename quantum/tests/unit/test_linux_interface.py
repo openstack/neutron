@@ -106,6 +106,11 @@ class TestABCDriver(TestBase):
 
 class TestOVSInterfaceDriver(TestBase):
 
+    def test_get_device_name(self):
+        br = interface.OVSInterfaceDriver(self.conf)
+        device_name = br.get_device_name(FakePort())
+        self.assertEqual('tapabcdef01-12', device_name)
+
     def test_plug_no_ns(self):
         self._test_plug()
 
@@ -171,10 +176,14 @@ class TestOVSInterfaceDriver(TestBase):
                                      mock.call().delete_port('tap0')])
 
 
-class TestOVSVethInterfaceDriver(TestOVSInterfaceDriver):
+class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
+
+    def setUp(self):
+        super(TestOVSInterfaceDriverWithVeth, self).setUp()
+        self.conf.set_override('ovs_use_veth', True)
 
     def test_get_device_name(self):
-        br = interface.OVSVethInterfaceDriver(self.conf)
+        br = interface.OVSInterfaceDriver(self.conf)
         device_name = br.get_device_name(FakePort())
         self.assertEqual('ns-abcdef01-12', device_name)
 
@@ -192,13 +201,16 @@ class TestOVSVethInterfaceDriver(TestOVSInterfaceDriver):
         def device_exists(dev, root_helper=None, namespace=None):
             return dev == bridge
 
-        ovs = interface.OVSVethInterfaceDriver(self.conf)
+        ovs = interface.OVSInterfaceDriver(self.conf)
         self.device_exists.side_effect = device_exists
 
-        root_veth = mock.Mock()
-        ns_veth = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_veth, ns_veth))
-        expected = [mock.call('sudo'), mock.call().add_veth('tap0', devname)]
+        root_dev = mock.Mock()
+        _ns_dev = mock.Mock()
+        ns_dev = mock.Mock()
+        self.ip().add_veth = mock.Mock(return_value=(root_dev, _ns_dev))
+        self.ip().device = mock.Mock(return_value=(ns_dev))
+        expected = [mock.call('sudo'), mock.call().add_veth('tap0', devname),
+                    mock.call().device(devname)]
 
         vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
                      bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
@@ -217,11 +229,11 @@ class TestOVSVethInterfaceDriver(TestOVSInterfaceDriver):
                      prefix=prefix)
             execute.assert_called_once_with(vsctl_cmd, 'sudo')
 
-        ns_veth.assert_has_calls(
+        ns_dev.assert_has_calls(
             [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
         if mtu:
-            ns_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
-            root_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
+            ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
+            root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
         if namespace:
             expected.extend(
                 [mock.call().ensure_namespace(namespace),
@@ -229,8 +241,8 @@ class TestOVSVethInterfaceDriver(TestOVSInterfaceDriver):
                      mock.ANY)])
 
         self.ip.assert_has_calls(expected)
-        root_veth.assert_has_calls([mock.call.link.set_up()])
-        ns_veth.assert_has_calls([mock.call.link.set_up()])
+        root_dev.assert_has_calls([mock.call.link.set_up()])
+        ns_dev.assert_has_calls([mock.call.link.set_up()])
 
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)
@@ -240,7 +252,7 @@ class TestOVSVethInterfaceDriver(TestOVSInterfaceDriver):
         if not bridge:
             bridge = 'br-int'
         with mock.patch('quantum.agent.linux.ovs_lib.OVSBridge') as ovs_br:
-            ovs = interface.OVSVethInterfaceDriver(self.conf)
+            ovs = interface.OVSInterfaceDriver(self.conf)
             ovs.unplug('ns-0', bridge=bridge)
             ovs_br.assert_has_calls([mock.call(bridge, 'sudo'),
                                      mock.call().delete_port('tap0')])

@@ -34,6 +34,9 @@ OPTS = [
     cfg.StrOpt('ovs_integration_bridge',
                default='br-int',
                help='Name of Open vSwitch bridge to use'),
+    cfg.BoolOpt('ovs_use_veth',
+                default=False,
+                help='Uses veth for an interface or not'),
     cfg.StrOpt('network_device_mtu',
                help='MTU setting for device.'),
     cfg.StrOpt('ryu_api_host',
@@ -108,6 +111,18 @@ class NullDriver(LinuxInterfaceDriver):
 class OVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an OVS bridge."""
 
+    DEV_NAME_PREFIX = 'tap'
+
+    def __init__(self, conf):
+        super(OVSInterfaceDriver, self).__init__(conf)
+        if self.conf.ovs_use_veth:
+            self.DEV_NAME_PREFIX = 'ns-'
+
+    def _get_tap_name(self, dev_name, prefix=None):
+        if self.conf.ovs_use_veth:
+            dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX, 'tap')
+        return dev_name
+
     def _ovs_add_port(self, bridge, device_name, port_id, mac_address,
                       internal=True):
         cmd = ['ovs-vsctl', '--', '--may-exist',
@@ -134,27 +149,53 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                                     self.conf.root_helper,
                                     namespace=namespace):
 
-            self._ovs_add_port(bridge, device_name, port_id, mac_address)
+            ip = ip_lib.IPWrapper(self.conf.root_helper)
+            tap_name = self._get_tap_name(device_name, prefix)
 
-        ip = ip_lib.IPWrapper(self.conf.root_helper)
-        device = ip.device(device_name)
-        device.link.set_address(mac_address)
-        if self.conf.network_device_mtu:
-            device.link.set_mtu(self.conf.network_device_mtu)
+            if self.conf.ovs_use_veth:
+                root_dev, ns_dev = ip.add_veth(tap_name, device_name)
 
-        if namespace:
-            namespace_obj = ip.ensure_namespace(namespace)
-            namespace_obj.add_device_to_namespace(device)
-        device.link.set_up()
+            internal = not self.conf.ovs_use_veth
+            self._ovs_add_port(bridge, tap_name, port_id, mac_address,
+                               internal=internal)
+
+            ns_dev = ip.device(device_name)
+            ns_dev.link.set_address(mac_address)
+
+            if self.conf.network_device_mtu:
+                ns_dev.link.set_mtu(self.conf.network_device_mtu)
+                if self.conf.ovs_use_veth:
+                    root_dev.link.set_mtu(self.conf.network_device_mtu)
+
+            if namespace:
+                namespace_obj = ip.ensure_namespace(namespace)
+                namespace_obj.add_device_to_namespace(ns_dev)
+
+            ns_dev.link.set_up()
+            if self.conf.ovs_use_veth:
+                root_dev.link.set_up()
+        else:
+            LOG.warn(_("Device %s already exists") % device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
 
+        tap_name = self._get_tap_name(device_name, prefix)
         self.check_bridge_exists(bridge)
-        bridge = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
-        bridge.delete_port(device_name)
+        ovs = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
+
+        try:
+            ovs.delete_port(tap_name)
+            if self.conf.ovs_use_veth:
+                device = ip_lib.IPDevice(device_name, self.conf.root_helper,
+                                         namespace)
+                device.link.delete()
+                LOG.debug(_("Unplugged interface '%s'") % device_name)
+        except RuntimeError:
+            LOG.error(_("Failed unplugging interface '%s'") %
+                      device_name)
 
 
 class BridgeInterfaceDriver(LinuxInterfaceDriver):
@@ -224,69 +265,6 @@ class RyuInterfaceDriver(OVSInterfaceDriver):
         datapath_id = ovs_br.get_datapath_id()
         port_no = ovs_br.get_port_ofport(device_name)
         self.ryu_client.create_port(network_id, datapath_id, port_no)
-
-
-class OVSVethInterfaceDriver(OVSInterfaceDriver):
-    """Driver for creating an OVS interface using veth."""
-
-    DEV_NAME_PREFIX = 'ns-'
-
-    def _get_tap_name(self, device_name, prefix=None):
-        if not prefix:
-            prefix = self.DEV_NAME_PREFIX
-        return device_name.replace(prefix, 'tap')
-
-    def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None, prefix=None):
-        """Plugin the interface."""
-        if not bridge:
-            bridge = self.conf.ovs_integration_bridge
-
-        self.check_bridge_exists(bridge)
-
-        if not ip_lib.device_exists(device_name,
-                                    self.conf.root_helper,
-                                    namespace=namespace):
-            ip = ip_lib.IPWrapper(self.conf.root_helper)
-
-            tap_name = self._get_tap_name(device_name, prefix)
-            root_veth, ns_veth = ip.add_veth(tap_name, device_name)
-
-            self._ovs_add_port(bridge, tap_name, port_id, mac_address,
-                               internal=False)
-
-            ns_veth.link.set_address(mac_address)
-            if self.conf.network_device_mtu:
-                ns_veth.link.set_mtu(self.conf.network_device_mtu)
-                root_veth.link.set_mtu(self.conf.network_device_mtu)
-
-            if namespace:
-                namespace_obj = ip.ensure_namespace(namespace)
-                namespace_obj.add_device_to_namespace(ns_veth)
-
-            root_veth.link.set_up()
-            ns_veth.link.set_up()
-        else:
-            LOG.warn(_("Device %s already exists") % device_name)
-
-    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        """Unplug the interface."""
-        if not bridge:
-            bridge = self.conf.ovs_integration_bridge
-
-        tap_name = self._get_tap_name(device_name, prefix)
-        self.check_bridge_exists(bridge)
-        ovs = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
-
-        try:
-            ovs.delete_port(tap_name)
-            device = ip_lib.IPDevice(device_name, self.conf.root_helper,
-                                     namespace)
-            device.link.delete()
-            LOG.debug(_("Unplugged interface '%s'") % device_name)
-        except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'") %
-                      device_name)
 
 
 class MetaInterfaceDriver(LinuxInterfaceDriver):
