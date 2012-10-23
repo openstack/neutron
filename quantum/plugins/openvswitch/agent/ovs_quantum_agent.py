@@ -152,7 +152,7 @@ class OVSQuantumAgent(object):
         self.available_local_vlans = set(
             xrange(OVSQuantumAgent.MIN_VLAN_TAG,
                    OVSQuantumAgent.MAX_VLAN_TAG))
-        self.setup_integration_br(integ_br)
+        self.int_br = self.setup_integration_br(integ_br)
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
 
@@ -424,17 +424,20 @@ class OVSQuantumAgent(object):
                                      DEAD_VLAN_TAG)
         self.int_br.add_flow(priority=2, in_port=port.ofport, actions="drop")
 
-    def setup_integration_br(self, integ_br):
+    def setup_integration_br(self, bridge_name):
         '''Setup the integration bridge.
 
         Create patch ports and remove all existing flows.
 
-        :param integ_br: the name of the integration bridge.'''
-        self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
-        self.int_br.delete_port("patch-tun")
-        self.int_br.remove_all_flows()
+        :param bridge_name: the name of the integration bridge.
+        :returns: the integration bridge
+        '''
+        int_br = ovs_lib.OVSBridge(bridge_name, self.root_helper)
+        int_br.delete_port("patch-tun")
+        int_br.remove_all_flows()
         # switch all traffic using L2 learning
-        self.int_br.add_flow(priority=1, actions="normal")
+        int_br.add_flow(priority=1, actions="normal")
+        return int_br
 
     def setup_tunnel_br(self, tun_br):
         '''Setup the tunnel bridge.
@@ -470,6 +473,8 @@ class OVSQuantumAgent(object):
         self.phys_ofports = {}
         ip_wrapper = ip_lib.IPWrapper(self.root_helper)
         for physical_network, bridge in bridge_mappings.iteritems():
+            LOG.info("Mapping physical network %s to bridge %s",
+                     physical_network, bridge)
             # setup physical bridge
             if not ip_lib.device_exists(bridge, self.root_helper):
                 LOG.error("Bridge %s for physical network %s does not exist. "
@@ -708,6 +713,7 @@ class OVSQuantumAgent(object):
             except Exception as e:
                 LOG.debug("port_removed failed for %s: %s", device, e)
                 resync = True
+                continue
             if details['exists']:
                 LOG.info("Port %s updated.", device)
                 # Nothing to do regarding local networking
@@ -787,6 +793,52 @@ class OVSQuantumAgent(object):
             self.db_loop(db_connection_url)
 
 
+def parse_bridge_mappings(bridge_mapping_list):
+    """Parse a list of physical network to bridge mappings.
+
+    :param bridge_mapping_list: a list of strings of the form
+                                '<physical network>:<bridge>'
+    :returns: a dict mapping physical networks to bridges
+    """
+    bridge_mappings = {}
+    for mapping in bridge_mapping_list:
+        mapping = mapping.strip()
+        if not mapping:
+            continue
+        split_result = [x.strip() for x in mapping.split(':', 1) if x.strip()]
+        if len(split_result) != 2:
+            raise ValueError('Invalid bridge mapping: %s.' % mapping)
+        physical_network, bridge = split_result
+        bridge_mappings[physical_network] = bridge
+    return bridge_mappings
+
+
+def create_agent_config_map(config):
+    """Create a map of agent config parameters.
+
+    :param config: an instance of cfg.CONF
+    :returns: a map of agent configuration parameters
+    """
+    bridge_mappings = parse_bridge_mappings(config.OVS.bridge_mappings)
+    kwargs = dict(
+        integ_br=config.OVS.integration_bridge,
+        tun_br=config.OVS.tunnel_bridge,
+        local_ip=config.OVS.local_ip,
+        bridge_mappings=bridge_mappings,
+        root_helper=config.AGENT.root_helper,
+        polling_interval=config.AGENT.polling_interval,
+        reconnect_interval=config.DATABASE.reconnect_interval,
+        rpc=config.AGENT.rpc,
+        enable_tunneling=config.OVS.enable_tunneling,
+    )
+
+    if kwargs['enable_tunneling'] and not kwargs['local_ip']:
+        msg = 'Tunnelling cannot be enabled without a valid local_ip.'
+        raise ValueError(msg)
+
+    return kwargs
+
+
 def main():
     eventlet.monkey_patch()
     cfg.CONF(args=sys.argv, project='quantum')
@@ -794,44 +846,20 @@ def main():
     # (TODO) gary - swap with common logging
     logging_config.setup_logging(cfg.CONF)
 
-    integ_br = cfg.CONF.OVS.integration_bridge
-    db_connection_url = cfg.CONF.DATABASE.sql_connection
-    polling_interval = cfg.CONF.AGENT.polling_interval
-    reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
-    root_helper = cfg.CONF.AGENT.root_helper
-    rpc = cfg.CONF.AGENT.rpc
-    tun_br = cfg.CONF.OVS.tunnel_bridge
-    local_ip = cfg.CONF.OVS.local_ip
-    enable_tunneling = cfg.CONF.OVS.enable_tunneling
-
-    if enable_tunneling and not local_ip:
-        LOG.error("Invalid local_ip. (%s). "
-                  "Agent terminated!" % repr(local_ip))
+    try:
+        agent_config = create_agent_config_map(cfg.CONF)
+    except ValueError as e:
+        LOG.error('%s Agent terminated!', e)
         sys.exit(1)
 
-    bridge_mappings = {}
-    for mapping in cfg.CONF.OVS.bridge_mappings:
-        mapping = mapping.strip()
-        if mapping != '':
-            try:
-                physical_network, bridge = mapping.split(':')
-                bridge_mappings[physical_network] = bridge
-                LOG.info("Physical network %s mapped to bridge %s",
-                         physical_network, bridge)
-            except ValueError as ex:
-                LOG.error("Invalid bridge mapping: %s - %s. "
-                          "Agent terminated!", mapping, ex)
-                sys.exit(1)
-
-    plugin = OVSQuantumAgent(integ_br, tun_br, local_ip, bridge_mappings,
-                             root_helper, polling_interval,
-                             reconnect_interval, rpc, enable_tunneling)
+    plugin = OVSQuantumAgent(**agent_config)
 
     # Start everything.
     LOG.info("Agent initialized successfully, now running... ")
-    plugin.daemon_loop(db_connection_url)
+    plugin.daemon_loop(cfg.CONF.DATABASE.sql_connection)
 
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
