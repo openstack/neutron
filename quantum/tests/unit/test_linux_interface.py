@@ -272,7 +272,7 @@ class TestBridgeInterfaceDriver(TestBase):
     def test_plug_with_ns(self):
         self._test_plug(namespace='01234567-1234-1234-99')
 
-    def _test_plug(self, namespace=None):
+    def _test_plug(self, namespace=None, mtu=None):
         def device_exists(device, root_helper=None, namespace=None):
             return device.startswith('brq')
 
@@ -301,6 +301,9 @@ class TestBridgeInterfaceDriver(TestBase):
                 mock.call().ensure_namespace('01234567-1234-1234-99'),
                 mock.call().ensure_namespace().add_device_to_namespace(
                     ns_veth)])
+        if mtu:
+            ns_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
+            root_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
 
         self.ip.assert_has_calls(ip_calls)
 
@@ -317,6 +320,11 @@ class TestBridgeInterfaceDriver(TestBase):
                     'aa:bb:cc:dd:ee:ff')
             self.ip_dev.assert_has_calls([])
             self.assertEquals(log.call_count, 1)
+
+    def test_plug_mtu(self):
+        self.device_exists.return_value = False
+        self.conf.set_override('network_device_mtu', 9000)
+        self._test_plug(mtu=9000)
 
     def test_unplug(self):
         self.device_exists.return_value = True
