@@ -269,7 +269,7 @@ class IptablesManager(object):
         rules. This happens atomically, thanks to iptables-restore.
 
         """
-        s = [('/sbin/iptables', self.ipv4)]
+        s = [('iptables', self.ipv4)]
         if self.use_ipv6:
             s += [('ip6tables', self.ipv6)]
 
