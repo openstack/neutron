@@ -186,7 +186,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # figure out if we need to delete existing port
         if gw_port and gw_port['network_id'] != network_id:
             with context.session.begin(subtransactions=True):
-                router.update({'gw_port_id': None})
+                router.gw_port = None
                 context.session.add(router)
             self.delete_port(context.elevated(), gw_port['id'],
                              l3_port_check=False)

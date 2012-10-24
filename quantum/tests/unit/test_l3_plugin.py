@@ -574,6 +574,30 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 gw_info = body['router']['external_gateway_info']
                 self.assertEquals(gw_info, None)
 
+    def test_router_update_gateway(self):
+        with self.router() as r:
+            with self.subnet() as s1:
+                with self.subnet() as s2:
+                    self._set_net_external(s1['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+                    body = self._show('routers', r['router']['id'])
+                    net_id = (body['router']
+                              ['external_gateway_info']['network_id'])
+                    self.assertEquals(net_id, s1['subnet']['network_id'])
+                    self._set_net_external(s2['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s2['subnet']['network_id'])
+                    body = self._show('routers', r['router']['id'])
+                    net_id = (body['router']
+                              ['external_gateway_info']['network_id'])
+                    self.assertEquals(net_id, s2['subnet']['network_id'])
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        s2['subnet']['network_id'])
+
     def test_router_add_gateway_invalid_network(self):
         with self.router() as r:
             self._add_external_gateway_to_router(
