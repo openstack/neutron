@@ -53,3 +53,15 @@ if __name__ == '__main__':
                             'port.exists',
                             notifier_api.INFO,
                             {'port': port})
+    for router in plugin.get_routers(context):
+        notifier_api.notify(context,
+                            notifier_api.publisher_id('network'),
+                            'router.exists',
+                            notifier_api.INFO,
+                            {'router': router})
+    for floatingip in plugin.get_floatingips(context):
+        notifier_api.notify(context,
+                            notifier_api.publisher_id('network'),
+                            'floatingip.exists',
+                            notifier_api.INFO,
+                            {'floatingip': floatingip})
