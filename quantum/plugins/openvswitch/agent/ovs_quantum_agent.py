@@ -28,7 +28,6 @@ from oslo.config import cfg
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
-from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
@@ -185,7 +184,7 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             'configurations': bridge_mappings,
             'agent_type': q_const.AGENT_TYPE_OVS,
             'start_flag': True}
-        self.setup_rpc(integ_br)
+        self.setup_rpc()
 
         # Security group agent supprot
         self.sg_agent = OVSSecurityGroupAgent(self.context,
@@ -204,8 +203,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         except Exception:
             LOG.exception(_("Failed reporting state!"))
 
-    def setup_rpc(self, integ_br):
-        mac = utils.get_interface_mac(integ_br)
+    def setup_rpc(self):
+        mac = self.int_br.get_local_port_mac()
         self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
@@ -762,6 +761,7 @@ def create_agent_config_map(config):
 def main():
     eventlet.monkey_patch()
     cfg.CONF(project='quantum')
+    cfg.CONF.register_opts(ip_lib.OPTS)
     logging_config.setup_logging(cfg.CONF)
 
     try:
@@ -769,6 +769,12 @@ def main():
     except ValueError as e:
         LOG.error(_('%s Agent terminated!'), e)
         sys.exit(1)
+
+    is_xen_compute_host = 'rootwrap-xen-dom0' in agent_config['root_helper']
+    if is_xen_compute_host:
+        # Force ip_lib to always use the root helper to ensure that ip
+        # commands target xen dom0 rather than domU.
+        cfg.CONF.set_default('ip_lib_force_root', True)
 
     plugin = OVSQuantumAgent(**agent_config)
 

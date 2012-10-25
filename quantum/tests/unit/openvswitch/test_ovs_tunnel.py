@@ -21,7 +21,6 @@ from oslo.config import cfg
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
-from quantum.agent.linux import utils
 from quantum.openstack.common import log
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.plugins.openvswitch.common import constants
@@ -123,9 +122,7 @@ class TunnelTest(base.BaseTestCase):
             'int-tunnel_bridge_mapping',
             'phy-tunnel_bridge_mapping').AndReturn([self.inta, self.intb])
 
-        self.mox.StubOutWithMock(utils, 'get_interface_mac')
-        utils.get_interface_mac(self.INT_BRIDGE).AndReturn(
-            '00:00:00:00:00:01')
+        self.mock_int_bridge.get_local_port_mac().AndReturn('000000000001')
 
     def testConstruct(self):
         self.mox.ReplayAll()

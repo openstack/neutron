@@ -15,9 +15,17 @@
 #    under the License.
 
 import netaddr
+from oslo.config import cfg
 
 from quantum.agent.linux import utils
 from quantum.common import exceptions
+
+
+OPTS = [
+    cfg.BoolOpt('ip_lib_force_root',
+                default=False,
+                help=_('Force ip_lib calls to use the root helper')),
+]
 
 
 LOOPBACK_DEVNAME = 'lo'
@@ -27,10 +35,20 @@ class SubProcessBase(object):
     def __init__(self, root_helper=None, namespace=None):
         self.root_helper = root_helper
         self.namespace = namespace
+        try:
+            self.force_root = cfg.CONF.ip_lib_force_root
+        except cfg.NoSuchOptError:
+            # Only callers that need to force use of the root helper
+            # need to register the option.
+            self.force_root = False
 
     def _run(self, options, command, args):
         if self.namespace:
             return self._as_root(options, command, args)
+        elif self.force_root:
+            # Force use of the root helper to ensure that commands
+            # will execute in dom0 when running under XenServer/XCP.
+            return self._execute(options, command, args, self.root_helper)
         else:
             return self._execute(options, command, args)
 
