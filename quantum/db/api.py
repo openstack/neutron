@@ -88,7 +88,10 @@ def clear_db(base=BASE):
     global _ENGINE
     assert _ENGINE
     for table in reversed(base.metadata.sorted_tables):
-        _ENGINE.execute(table.delete())
+        try:
+            _ENGINE.execute(table.delete())
+        except Exception as e:
+            LOG.info("Unable to delete table. %s.", e)
 
 
 def get_session(autocommit=True, expire_on_commit=False):
