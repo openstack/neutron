@@ -51,7 +51,6 @@ logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
 BRIDGE_NAME_PREFIX = "brq"
-GATEWAY_INTERFACE_PREFIX = "gw-"
 TAP_INTERFACE_PREFIX = "tap"
 BRIDGE_FS = "/sys/devices/virtual/net/"
 BRIDGE_NAME_PLACEHOLDER = "bridge_name"
@@ -146,12 +145,6 @@ class LinuxBridge:
             return self._get_prefixed_tap_devices(TAP_INTERFACE_PREFIX)
         except RuntimeError:
             return self._get_prefixed_ip_link_devices(TAP_INTERFACE_PREFIX)
-
-    def get_all_gateway_devices(self):
-        try:
-            return self._get_prefixed_tap_devices(GATEWAY_INTERFACE_PREFIX)
-        except RuntimeError:
-            return self._get_prefixed_ip_link_devices(GATEWAY_INTERFACE_PREFIX)
 
     def get_bridge_for_tap_device(self, tap_device_name):
         bridges = self.get_all_quantum_bridges()
@@ -281,72 +274,64 @@ class LinuxBridge:
                           bridge_name, e)
                 return
 
+    def ensure_physical_in_bridge(self, network_id,
+                                  physical_network,
+                                  vlan_id):
+        physical_interface = self.interface_mappings.get(physical_network)
+        if not physical_interface:
+            LOG.error("No mapping for physical network %s" %
+                      physical_network)
+            return False
+
+        if int(vlan_id) == lconst.FLAT_VLAN_ID:
+            self.ensure_flat_bridge(network_id, physical_interface)
+        else:
+            self.ensure_vlan_bridge(network_id, physical_interface,
+                                    vlan_id)
+        return True
+
     def add_tap_interface(self, network_id, physical_network, vlan_id,
                           tap_device_name):
         """
         If a VIF has been plugged into a network, this function will
         add the corresponding tap device to the relevant bridge
         """
-        if not tap_device_name:
-            return False
-
         if not self.device_exists(tap_device_name):
-            LOG.debug("Tap device: %s does not exist on this host, skipped" %
-                      tap_device_name)
+            LOG.debug(_("Tap device: %s does not exist on "
+                        "this host, skipped" % tap_device_name))
             return False
 
-        current_bridge_name = self.get_bridge_for_tap_device(tap_device_name)
         bridge_name = self.get_bridge_name(network_id)
-        if bridge_name == current_bridge_name:
-            return False
-        LOG.debug("Adding device %s to bridge %s" % (tap_device_name,
-                                                     bridge_name))
-        if current_bridge_name:
-            if utils.execute(['brctl', 'delif', current_bridge_name,
-                              tap_device_name], root_helper=self.root_helper):
-                return False
-
         if int(vlan_id) == lconst.LOCAL_VLAN_ID:
             self.ensure_local_bridge(network_id)
         else:
-            physical_interface = self.interface_mappings.get(physical_network)
-            if not physical_interface:
-                LOG.error("No mapping for physical network %s" %
-                          physical_network)
+            result = self.ensure_physical_in_bridge(network_id,
+                                                    physical_network,
+                                                    vlan_id)
+            if not result:
                 return False
 
-            if int(vlan_id) == lconst.FLAT_VLAN_ID:
-                self.ensure_flat_bridge(network_id, physical_interface)
-            else:
-                self.ensure_vlan_bridge(network_id, physical_interface,
-                                        vlan_id)
-
-        if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
-                         root_helper=self.root_helper):
-            return False
-
-        LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
-                                                          bridge_name))
+        # Check if device needs to be added to bridge
+        tap_device_in_bridge = self.get_bridge_for_tap_device(tap_device_name)
+        if not tap_device_in_bridge:
+            msg = _("Adding device %(tap_device_name)s to bridge "
+                    "%(bridge_name)s") % locals()
+            LOG.debug(msg)
+            if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
+                             root_helper=self.root_helper):
+                return False
+        else:
+            msg = _("%(tap_device_name)s already exists on bridge "
+                    "%(bridge_name)s") % locals()
+            LOG.debug(msg)
         return True
 
     def add_interface(self, network_id, physical_network, vlan_id,
-                      interface_id):
-        if not interface_id:
-            """
-            Since the VIF id is null, no VIF is plugged into this port
-            no more processing is required
-            """
-            return False
-
-        if interface_id.startswith(GATEWAY_INTERFACE_PREFIX):
-            return self.add_tap_interface(network_id,
-                                          physical_network, vlan_id,
-                                          interface_id)
-        else:
-            tap_device_name = self.get_tap_device_name(interface_id)
-            return self.add_tap_interface(network_id,
-                                          physical_network, vlan_id,
-                                          tap_device_name)
+                      port_id):
+        tap_device_name = self.get_tap_device_name(port_id)
+        return self.add_tap_interface(network_id,
+                                      physical_network, vlan_id,
+                                      tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
@@ -667,12 +652,6 @@ class LinuxBridgeQuantumAgentRPC:
     def setup_linux_bridge(self, interface_mappings):
         self.linux_br = LinuxBridge(interface_mappings, self.root_helper)
 
-    def process_port_binding(self, network_id, interface_id,
-                             physical_network, vlan_id):
-        return self.linux_br.add_interface(network_id,
-                                           physical_network, vlan_id,
-                                           interface_id)
-
     def remove_port_binding(self, network_id, interface_id):
         bridge_name = self.linux_br.get_bridge_name(network_id)
         tap_device_name = self.linux_br.get_tap_device_name(interface_id)
@@ -715,7 +694,7 @@ class LinuxBridgeQuantumAgentRPC:
     def treat_devices_added(self, devices):
         resync = False
         for device in devices:
-            LOG.info("Port %s added", device)
+            LOG.debug("Port %s added", device)
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
@@ -728,15 +707,15 @@ class LinuxBridgeQuantumAgentRPC:
                 LOG.info("Port %s updated. Details: %s", device, details)
                 if details['admin_state_up']:
                     # create the networking for the port
-                    self.process_port_binding(details['network_id'],
-                                              details['port_id'],
-                                              details['physical_network'],
-                                              details['vlan_id'])
+                    self.linux_br.add_interface(details['network_id'],
+                                                details['physical_network'],
+                                                details['vlan_id'],
+                                                details['port_id'])
                 else:
                     self.remove_port_binding(details['network_id'],
                                              details['port_id'])
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.info("Device %s not defined on plugin", device)
         return resync
 
     def treat_devices_removed(self, devices):
