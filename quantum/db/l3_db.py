@@ -536,27 +536,26 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # This external port is never exposed to the tenant.
         # it is used purely for internal system and admin use when
         # managing floating IPs.
-        external_port = self.create_port(context.elevated(), {
-            'port':
-            {'tenant_id': '',  # tenant intentionally not set
-             'network_id': f_net_id,
-             'mac_address': attributes.ATTR_NOT_SPECIFIED,
-             'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-             'admin_state_up': True,
-             'device_id': fip_id,
-             'device_owner': DEVICE_OWNER_FLOATINGIP,
-             'name': ''}})
-        # Ensure IP addresses are allocated on external port
-        if not external_port['fixed_ips']:
-            msg = "Unable to find any IP address on external network"
-            # remove the external port
-            self.delete_port(context.elevated(), external_port['id'],
-                             l3_port_check=False)
-            raise q_exc.BadRequest(resource='floatingip', msg=msg)
-
-        floating_ip_address = external_port['fixed_ips'][0]['ip_address']
         try:
             with context.session.begin(subtransactions=True):
+                external_port = self.create_port(context.elevated(), {
+                    'port':
+                    {'tenant_id': '',  # tenant intentionally not set
+                     'network_id': f_net_id,
+                     'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                     'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                     'admin_state_up': True,
+                     'device_id': fip_id,
+                     'device_owner': DEVICE_OWNER_FLOATINGIP,
+                     'name': ''}})
+                # Ensure IP addresses are allocated on external port
+                if not external_port['fixed_ips']:
+                    msg = "Unable to find any IP address on external network"
+                    # remove the external port
+                    raise q_exc.BadRequest(resource='floatingip', msg=msg)
+
+                floating_fixed_ip = external_port['fixed_ips'][0]
+                floating_ip_address = floating_fixed_ip['ip_address']
                 floatingip_db = FloatingIP(
                     id=fip_id,
                     tenant_id=tenant_id,
@@ -578,8 +577,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except Exception:
             LOG.exception("Floating IP association failed")
             # Remove the port created for internal purposes
-            self.delete_port(context.elevated(), external_port['id'],
-                             l3_port_check=False)
             raise
 
         return self._make_floatingip_dict(floatingip_db)
