@@ -213,7 +213,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise q_exc.BadRequest(resource='router', msg=msg)
 
             with context.session.begin(subtransactions=True):
-                router.update({'gw_port_id': gw_port['id']})
+                router.gw_port = self._get_port(context.elevated(),
+                                                gw_port['id'])
                 context.session.add(router)
 
     def delete_router(self, context, id):
