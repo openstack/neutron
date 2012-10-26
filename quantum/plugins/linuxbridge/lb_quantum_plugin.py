@@ -167,7 +167,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       "Service terminated!" %
                       self.tenant_network_type)
             sys.exit(1)
-        self.agent_rpc = cfg.CONF.AGENT.rpc
         self._setup_rpc()
         LOG.debug("Linux Bridge Plugin initialization complete")
 
@@ -378,8 +377,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    binding.vlan_id, self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
-        if self.agent_rpc:
-            self.notifier.network_delete(self.rpc_context, id)
+        self.notifier.network_delete(self.rpc_context, id)
 
     def get_network(self, context, id, fields=None):
         net = super(LinuxBridgePluginV2, self).get_network(context, id, None)
@@ -400,17 +398,15 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):
-        if self.agent_rpc:
-            original_port = super(LinuxBridgePluginV2, self).get_port(context,
-                                                                      id)
+        original_port = super(LinuxBridgePluginV2, self).get_port(context,
+                                                                  id)
         port = super(LinuxBridgePluginV2, self).update_port(context, id, port)
-        if self.agent_rpc:
-            if original_port['admin_state_up'] != port['admin_state_up']:
-                binding = db.get_network_binding(context.session,
-                                                 port['network_id'])
-                self.notifier.port_update(self.rpc_context, port,
-                                          binding.physical_network,
-                                          binding.vlan_id)
+        if original_port['admin_state_up'] != port['admin_state_up']:
+            binding = db.get_network_binding(context.session,
+                                             port['network_id'])
+            self.notifier.port_update(self.rpc_context, port,
+                                      binding.physical_network,
+                                      binding.vlan_id)
         return port
 
     def delete_port(self, context, id, l3_port_check=True):

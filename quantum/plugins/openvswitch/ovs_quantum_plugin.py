@@ -213,7 +213,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             LOG.error("Tunneling disabled but tenant_network_type is 'gre'. "
                       "Agent terminated!")
             sys.exit(1)
-        self.agent_rpc = cfg.CONF.AGENT.rpc
         self.setup_rpc()
 
     def setup_rpc(self):
@@ -461,8 +460,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                        self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
-        if self.agent_rpc:
-            self.notifier.network_delete(self.rpc_context, id)
+        self.notifier.network_delete(self.rpc_context, id)
 
     def get_network(self, context, id, fields=None):
         net = super(OVSQuantumPluginV2, self).get_network(context, id, None)
@@ -483,18 +481,16 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def update_port(self, context, id, port):
-        if self.agent_rpc:
-            original_port = super(OVSQuantumPluginV2, self).get_port(context,
-                                                                     id)
+        original_port = super(OVSQuantumPluginV2, self).get_port(context,
+                                                                 id)
         port = super(OVSQuantumPluginV2, self).update_port(context, id, port)
-        if self.agent_rpc:
-            if original_port['admin_state_up'] != port['admin_state_up']:
-                binding = ovs_db_v2.get_network_binding(None,
-                                                        port['network_id'])
-                self.notifier.port_update(self.rpc_context, port,
-                                          binding.network_type,
-                                          binding.segmentation_id,
-                                          binding.physical_network)
+        if original_port['admin_state_up'] != port['admin_state_up']:
+            binding = ovs_db_v2.get_network_binding(None,
+                                                    port['network_id'])
+            self.notifier.port_update(self.rpc_context, port,
+                                      binding.network_type,
+                                      binding.segmentation_id,
+                                      binding.physical_network)
         return port
 
     def delete_port(self, context, id, l3_port_check=True):
