@@ -12,5 +12,5 @@ lxml
 netaddr
 python-quantumclient>=2.0
 pyudev
-sqlalchemy>=0.7.8
+sqlalchemy==0.7.9
 webob==1.0.8
