@@ -111,7 +111,7 @@ class Controller(object):
         if member_actions is None:
             member_actions = []
         self._plugin = plugin
-        self._collection = collection
+        self._collection = collection.replace('-', '_')
         self._resource = resource
         self._attr_info = attr_info
         self._allow_bulk = allow_bulk
