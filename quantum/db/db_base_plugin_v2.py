@@ -1160,9 +1160,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                   device_owner=p['device_owner'])
             context.session.add(port)
 
-        # Update the allocated IP's
-        if ips:
-            with context.session.begin(subtransactions=True):
+            # Update the allocated IP's
+            if ips:
                 for ip in ips:
                     LOG.debug("Allocated IP %s (%s/%s/%s)", ip['ip_address'],
                               port['network_id'], ip['subnet_id'], port.id)
