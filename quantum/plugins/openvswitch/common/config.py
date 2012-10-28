@@ -31,7 +31,7 @@ ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int'),
     cfg.BoolOpt('enable_tunneling', default=False),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
-    cfg.StrOpt('local_ip', default='10.0.0.3'),
+    cfg.StrOpt('local_ip', default=''),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help="List of <physical_network>:<bridge>"),
