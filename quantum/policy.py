@@ -50,7 +50,7 @@ def init():
     # pass _set_brain to read_cached_file so that the policy brain
     # is reset only if the file has changed
     utils.read_cached_file(_POLICY_PATH, _POLICY_CACHE,
-                           reload_func=_set_brain)
+                           reload_func=_set_rules)
 
 
 def get_resource_and_action(action):
@@ -59,9 +59,9 @@ def get_resource_and_action(action):
     return ("%ss" % data[-1], data[0] != 'get')
 
 
-def _set_brain(data):
+def _set_rules(data):
     default_rule = 'default'
-    policy.set_brain(policy.Brain.load_json(data, default_rule))
+    policy.set_rules(policy.Rules.load_json(data, default_rule))
 
 
 def _is_attribute_explicitly_set(attribute_name, resource, target):
@@ -95,10 +95,10 @@ def _build_target(action, original_target, plugin, context):
     return target
 
 
-def _build_match_list(action, target):
-    """Create the list of rules to match for a given action.
+def _build_match_rule(action, target):
+    """Create the rule to match for a given action.
 
-    The list of policy rules to be matched is built in the following way:
+    The policy rule to be matched is built in the following way:
     1) add entries for matching permission on objects
     2) add an entry for the specific action (e.g.: create_network)
     3) add an entry for attributes of a resource for which the action
@@ -106,7 +106,7 @@ def _build_match_list(action, target):
 
     """
 
-    match_list = ('rule:%s' % action,)
+    match_rule = policy.RuleCheck('rule', action)
     resource, is_write = get_resource_and_action(action)
     if is_write:
         # assigning to variable with short name for improving readability
@@ -118,37 +118,42 @@ def _build_match_list(action, target):
                                                 target):
                     attribute = res_map[resource][attribute_name]
                     if 'enforce_policy' in attribute and is_write:
-                        match_list += ('rule:%s:%s' % (action,
-                                                       attribute_name),)
-    return [match_list]
+                        attr_rule = policy.RuleCheck('rule', '%s:%s' %
+                                                     (action, attribute_name))
+                        match_rule = policy.AndCheck([match_rule, attr_rule])
+
+    return match_rule
 
 
 @policy.register('field')
-def check_field(brain, match_kind, match, target_dict, cred_dict):
-    # If this method is invoked for the wrong kind of match
-    # which should never happen, just skip the check and don't
-    # fail the policy evaluation
-    if match_kind != 'field':
-        LOG.warning("Field check function invoked with wrong match_kind:%s",
-                    match_kind)
-        return True
-    resource, field_value = match.split(':', 1)
-    field, value = field_value.split('=', 1)
-    target_value = target_dict.get(field)
-    # target_value might be a boolean, explicitly compare with None
-    if target_value is None:
-        LOG.debug("Unable to find requested field: %s in target: %s",
-                  field, target_dict)
-        return False
-    # Value migth need conversion - we need help from the attribute map
-    conv_func = attributes.RESOURCE_ATTRIBUTE_MAP[resource][field].get(
-        'convert_to', lambda x: x)
-    if target_value != conv_func(value):
-        LOG.debug("%s does not match the value in the target object:%s",
-                  conv_func(value), target_value)
-        return False
-    # If we manage to get here, the policy check is successful
-    return True
+class FieldCheck(policy.Check):
+    def __init__(self, kind, match):
+        # Process the match
+        resource, field_value = match.split(':', 1)
+        field, value = field_value.split('=', 1)
+
+        super(FieldCheck, self).__init__(kind, '%s:%s:%s' %
+                                         (resource, field, value))
+
+        # Value might need conversion - we need help from the attribute map
+        try:
+            attr = attributes.RESOURCE_ATTRIBUTE_MAP[resource][field]
+            conv_func = attr['convert_to']
+        except KeyError:
+            conv_func = lambda x: x
+
+        self.field = field
+        self.value = conv_func(value)
+
+    def __call__(self, target_dict, cred_dict):
+        target_value = target_dict.get(self.field)
+        # target_value might be a boolean, explicitly compare with None
+        if target_value is None:
+            LOG.debug("Unable to find requested field: %s in target: %s",
+                      self.field, target_dict)
+            return False
+
+        return target_value == self.value
 
 
 def check(context, action, target, plugin=None):
@@ -167,9 +172,9 @@ def check(context, action, target, plugin=None):
     """
     init()
     real_target = _build_target(action, target, plugin, context)
-    match_list = _build_match_list(action, real_target)
+    match_rule = _build_match_rule(action, real_target)
     credentials = context.to_dict()
-    return policy.enforce(match_list, real_target, credentials)
+    return policy.check(match_rule, real_target, credentials)
 
 
 def enforce(context, action, target, plugin=None):
@@ -189,7 +194,7 @@ def enforce(context, action, target, plugin=None):
 
     init()
     real_target = _build_target(action, target, plugin, context)
-    match_list = _build_match_list(action, real_target)
+    match_rule = _build_match_rule(action, real_target)
     credentials = context.to_dict()
-    policy.enforce(match_list, real_target, credentials,
-                   exceptions.PolicyNotAuthorized, action=action)
+    return policy.check(match_rule, real_target, credentials,
+                        exceptions.PolicyNotAuthorized, action=action)
