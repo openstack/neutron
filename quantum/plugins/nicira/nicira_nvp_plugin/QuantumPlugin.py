@@ -811,6 +811,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         params["cluster"] = cluster
         params["port"] = port["port"]
+        params["port"]["id"] = quantum_db["id"]
+        params["port"]["tenant_id"] = quantum_db["tenant_id"]
         result = nvplib.update_port(quantum_db["network_id"],
                                     port_nvp["uuid"], **params)
         LOG.debug("update_port() completed for tenant: %s" % context.tenant_id)

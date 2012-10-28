@@ -373,10 +373,19 @@ def update_port(network, port_id, **params):
 
     admin_state_up = params['port'].get('admin_state_up')
     name = params["port"].get("name")
+    device_id = params["port"].get("device_id")
     if admin_state_up:
         lport_obj["admin_status_enabled"] = admin_state_up
     if name:
         lport_obj["display_name"] = name
+
+    if device_id:
+        # device_id can be longer than 40 so we rehash it
+        device_id = hashlib.sha1(device_id).hexdigest()
+        lport_obj["tags"] = (
+            [dict(scope='os_tid', tag=params["port"].get("tenant_id")),
+             dict(scope='q_port_id', tag=params["port"]["id"]),
+             dict(scope='vm_id', tag=device_id)])
 
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port_id
     try:
@@ -394,8 +403,6 @@ def update_port(network, port_id, **params):
 
 
 def create_port(tenant, **params):
-    print "create_port_nvplib"
-    print params
     clusters = params["clusters"]
     dest_cluster = clusters[0]  # primary cluster
 
