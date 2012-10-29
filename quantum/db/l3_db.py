@@ -262,7 +262,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                         msg = ("Router already has a port on subnet %s"
                                % subnet_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
-                    cidr = self._get_subnet(context, ip['subnet_id'])['cidr']
+                    cidr = self._get_subnet(context.elevated(),
+                                            ip['subnet_id'])['cidr']
                     ipnet = netaddr.IPNetwork(cidr)
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
                     match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
