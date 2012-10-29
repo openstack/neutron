@@ -25,7 +25,6 @@ import sys
 import time
 
 import eventlet
-from sqlalchemy.ext import sqlsoup
 
 from quantum.agent import rpc as agent_rpc
 from quantum.agent.linux import ip_lib

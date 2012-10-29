@@ -24,15 +24,11 @@
 
 import logging
 import os
-import shlex
-import signal
-import subprocess
 import sys
 import time
 
 import eventlet
 import pyudev
-from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
@@ -58,8 +54,6 @@ BRIDGE_NAME_PLACEHOLDER = "bridge_name"
 BRIDGE_INTERFACES_FS = BRIDGE_FS + BRIDGE_NAME_PLACEHOLDER + "/brif/"
 DEVICE_NAME_PLACEHOLDER = "device_name"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
-VLAN_BINDINGS = "vlan_bindings"
-PORT_BINDINGS = "port_bindings"
 
 
 class LinuxBridge:
