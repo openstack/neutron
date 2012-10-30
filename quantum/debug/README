@@ -1,7 +1,7 @@
 Debug Helper Script for Quantum
 
 - Configure
-export TEST_CONFIG_FILE=/etc/quantum/dhcp_agent.ini
+export TEST_CONFIG_FILE=/etc/quantum/debug.ini
 or
 export TEST_CONFIG_FILE=/etc/quantum/l3_agent.ini
 
@@ -10,13 +10,18 @@ you can also specify config file by --config-file option
 - Usage
 quantum-debug commands
 
-probe-create <net-id>  Create probe port - create port and interface, then plug it in.
+probe-create <net-id>
+  Create probe port - create port and interface, then plug it in.
   This commands returns a port id of a probe port. A probe port is a port which is used to test.
   The port id is probe id.
   We can have multiple probe probes in a network, in order to check connectivity between ports.
 
   quantum-debug probe-exec probe_id_1 'nc -l 192.168.100.3 22'
   quantum-debug probe-exec probe_id_2 'nc -vz 192.168.100.4 22'
+
+  Note: You should use a user and a tenant who has permission to
+   modify network and subnet if you want to probe. For example, you need to be admin user if you
+   want to probe external network.
 
 probe-delete <port-id>  Delete probe - delete port then uplug
 probe-exec <port-id> 'command'    Exec commands on the namespace of the probe

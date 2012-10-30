@@ -59,8 +59,7 @@ class QuantumDebugShell(QuantumShell):
             '--config-file',
             default=env('TEST_CONFIG_FILE'),
             help='Config file for interface driver '
-                 '(You may also use either the '
-                 'l3_agent.ini or the dhcp_agent.ini)')
+                 '(You may also use l3_agent.ini)')
         return parser
 
     def initialize_app(self, argv):

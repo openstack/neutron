@@ -52,7 +52,9 @@ class QuantumDebugAgent():
         cfg.StrOpt('auth_region'),
         cfg.BoolOpt('use_namespaces', default=True),
         cfg.StrOpt('interface_driver',
-                   help="The driver used to manage the virtual interface.")
+                   help="The driver used to manage the virtual interface."),
+        cfg.StrOpt('external_network_bridge', default='br-ex',
+                   help="Name of bridge used for external network traffic."),
     ]
 
     def __init__(self, conf, client, driver):
@@ -65,6 +67,10 @@ class QuantumDebugAgent():
 
     def create_probe(self, network_id):
         network = self._get_network(network_id)
+        bridge = None
+        if network.external:
+            bridge = self.conf.external_network_bridge
+
         port = self._create_port(network)
         port.network = network
         interface_name = self.driver.get_device_name(port)
@@ -80,6 +86,7 @@ class QuantumDebugAgent():
                              port.id,
                              interface_name,
                              port.mac_address,
+                             bridge=bridge,
                              namespace=namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
@@ -97,6 +104,7 @@ class QuantumDebugAgent():
     def _get_network(self, network_id):
         network_dict = self.client.show_network(network_id)['network']
         network = DictModel(network_dict)
+        network.external = network_dict.get('router:external')
         obj_subnet = [self._get_subnet(s_id) for s_id in network.subnets]
         network.subnets = obj_subnet
         return network
@@ -110,14 +118,23 @@ class QuantumDebugAgent():
 
     def delete_probe(self, port_id):
         port = DictModel(self.client.show_port(port_id)['port'])
+        network = self._get_network(port.network_id)
+        bridge = None
+        if network.external:
+            bridge = self.conf.external_network_bridge
         ip = ip_lib.IPWrapper(self.conf.root_helper)
         namespace = self._get_namespace(port)
         if self.conf.use_namespaces and ip.netns.exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
+                               bridge=bridge,
                                namespace=namespace)
-            ip.netns.delete(namespace)
+            try:
+                ip.netns.delete(namespace)
+            except:
+                LOG.warn(_('failed to delete namespace %s') % namespace)
         else:
-            self.driver.unplug(self.driver.get_device_name(port))
+            self.driver.unplug(self.driver.get_device_name(port),
+                               bridge=bridge)
         self.client.delete_port(port.id)
 
     def list_probes(self):
