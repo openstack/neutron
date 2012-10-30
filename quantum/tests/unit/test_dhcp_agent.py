@@ -92,15 +92,20 @@ class TestDhcpAgent(unittest.TestCase):
         self.driver_cls_p.stop()
 
     def test_dhcp_agent_main(self):
-        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
-            with mock.patch('quantum.agent.dhcp_agent.DhcpAgent') as dhcp:
-                with mock.patch('quantum.agent.dhcp_agent.sys') as mock_sys:
-                    mock_sys.argv = []
-                    dhcp_agent.main()
-                    dev_mgr.assert_called_once(mock.ANY, 'sudo')
-                    dhcp.assert_has_calls([
-                        mock.call(mock.ANY),
-                        mock.call().run()])
+        logging_str = 'quantum.agent.common.config.setup_logging'
+        manager_str = 'quantum.agent.dhcp_agent.DeviceManager'
+        agent_str = 'quantum.agent.dhcp_agent.DhcpAgent'
+        agent_sys_str = 'quantum.agent.dhcp_agent.sys'
+        with mock.patch(logging_str):
+            with mock.patch(manager_str) as dev_mgr:
+                with mock.patch(agent_str) as dhcp:
+                    with mock.patch(agent_sys_str) as mock_sys:
+                        mock_sys.argv = []
+                        dhcp_agent.main()
+                        dev_mgr.assert_called_once(mock.ANY, 'sudo')
+                        dhcp.assert_has_calls([
+                            mock.call(mock.ANY),
+                            mock.call().run()])
 
     def test_run_completes_single_pass(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
