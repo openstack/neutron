@@ -421,8 +421,10 @@ class LinuxBridgeRpcCallbacks():
         port = kwargs.get('port')
         if port['admin_state_up']:
             vlan_id = kwargs.get('vlan_id')
+            physical_network = kwargs.get('physical_network')
             # create the networking for the port
             self.linux_br.add_interface(port['network_id'],
+                                        physical_network,
                                         vlan_id,
                                         port['id'])
         else:
