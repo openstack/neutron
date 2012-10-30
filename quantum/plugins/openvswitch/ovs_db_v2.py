@@ -16,14 +16,13 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 # @author: Bob Kukura, Red Hat, Inc.
 
-import logging
-
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
 from quantum.db import models_v2
 import quantum.db.api as db
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.plugins.openvswitch.common import constants
 from quantum.plugins.openvswitch import ovs_models_v2
 

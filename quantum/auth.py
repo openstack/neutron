@@ -14,15 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
 import webob.dec
 import webob.exc
 
 from quantum import context
 from quantum import wsgi
 from quantum.openstack.common import cfg
-
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

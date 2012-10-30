@@ -21,7 +21,6 @@
 """Utilities and helper functions."""
 
 
-import logging
 import os
 import signal
 import uuid
@@ -29,8 +28,10 @@ import uuid
 from eventlet.green import subprocess
 
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+LOG = logging.getLogger(__name__)
 
 
 def boolize(subject):
@@ -60,7 +61,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
     """
     mtime = os.path.getmtime(filename)
     if not cache_info or mtime != cache_info.get('mtime'):
-        logging.debug(_("Reloading cached file %s") % filename)
+        LOG.debug(_("Reloading cached file %s") % filename)
         with open(filename) as fap:
             cache_info['data'] = fap.read()
         cache_info['mtime'] = mtime

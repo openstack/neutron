@@ -15,9 +15,8 @@
 #    under the License.
 #
 
-import logging
-
 from quantum.api.v2 import attributes
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

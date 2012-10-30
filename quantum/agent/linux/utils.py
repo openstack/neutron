@@ -18,7 +18,6 @@
 # @author: Juliano Martinez, Locaweb.
 
 import fcntl
-import logging
 import os
 import shlex
 import signal
@@ -28,7 +27,7 @@ import struct
 from eventlet.green import subprocess
 
 from quantum.common import utils
-
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

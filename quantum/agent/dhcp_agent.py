@@ -15,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import os
 import re
 import socket
@@ -37,6 +36,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
+from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import proxy
 
 LOG = logging.getLogger(__name__)

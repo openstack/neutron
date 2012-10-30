@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 
 from sqlalchemy.orm import exc
 
@@ -21,6 +20,7 @@ from quantum.common import exceptions as q_exc
 import quantum.db.api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import constants
 from quantum.plugins.linuxbridge.db import l2network_models_v2

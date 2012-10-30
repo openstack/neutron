@@ -16,7 +16,6 @@
 #    under the License.
 
 import abc
-import logging
 
 import netaddr
 
@@ -27,6 +26,7 @@ from quantum.common import exceptions
 from quantum.extensions.flavor import (FLAVOR_NETWORK)
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

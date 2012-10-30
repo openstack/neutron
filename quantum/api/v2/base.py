@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import socket
 
 import webob.exc
@@ -22,6 +21,7 @@ from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum import policy
 from quantum import quota

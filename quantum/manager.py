@@ -23,11 +23,10 @@ class.
 The caller should make sure that QuantumManager is a singleton.
 """
 
-import logging
-
 from quantum.common.exceptions import ClassNotFound
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

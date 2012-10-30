@@ -15,10 +15,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import webob.dec
 
 from quantum.api.views import versions as versions_view
+from quantum.openstack.common import log as logging
 from quantum import wsgi
 
 

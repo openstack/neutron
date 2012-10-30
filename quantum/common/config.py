@@ -19,9 +19,6 @@
 Routines for configuring Quantum
 """
 
-import logging
-import logging.config
-import logging.handlers
 import os
 import sys
 
@@ -29,8 +26,8 @@ from paste import deploy
 
 from quantum.api.v2 import attributes
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.version import version_string
-
 
 LOG = logging.getLogger(__name__)
 
@@ -79,45 +76,10 @@ def setup_logging(conf):
 
     :param conf: a cfg.ConfOpts object
     """
-
-    if conf.log_config:
-        # Use a logging configuration file for all settings...
-        if os.path.exists(conf.log_config):
-            logging.config.fileConfig(conf.log_config)
-            return
-        else:
-            raise RuntimeError("Unable to locate specified logging "
-                               "config file: %s" % conf.log_config)
-
-    root_logger = logging.root
-    if conf.debug:
-        root_logger.setLevel(logging.DEBUG)
-    elif conf.verbose:
-        root_logger.setLevel(logging.INFO)
-    else:
-        root_logger.setLevel(logging.WARNING)
-
-    formatter = logging.Formatter(conf.log_format, conf.log_date_format)
-
-    if conf.use_syslog:
-        try:
-            facility = getattr(logging.handlers.SysLogHandler,
-                               conf.syslog_log_facility)
-        except AttributeError:
-            raise ValueError(_("Invalid syslog facility"))
-
-        handler = logging.handlers.SysLogHandler(address='/dev/log',
-                                                 facility=facility)
-    elif conf.log_file:
-        logfile = conf.log_file
-        if conf.log_dir:
-            logfile = os.path.join(conf.log_dir, logfile)
-        handler = logging.handlers.WatchedFileHandler(logfile)
-    else:
-        handler = logging.StreamHandler(sys.stdout)
-
-    handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
+    product_name = "quantum"
+    logging.setup(product_name)
+    log_root = logging.getLogger(product_name).logger
+    log_root.propagate = 0
     LOG.info("Logging enabled!")
 
 

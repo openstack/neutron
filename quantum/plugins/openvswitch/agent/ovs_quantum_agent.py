@@ -20,7 +20,6 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 # @author: Aaron Rosen, Nicira Networks, Inc.
 
-import logging
 import sys
 import time
 
@@ -35,12 +34,13 @@ from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config
 from quantum.plugins.openvswitch.common import constants
 
-logging.basicConfig()
+
 LOG = logging.getLogger(__name__)
 
 # A placeholder for dead vlans.
@@ -687,8 +687,6 @@ def create_agent_config_map(config):
 def main():
     eventlet.monkey_patch()
     cfg.CONF(args=sys.argv, project='quantum')
-
-    # (TODO) gary - swap with common logging
     logging_config.setup_logging(cfg.CONF)
 
     try:

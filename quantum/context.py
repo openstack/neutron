@@ -18,12 +18,14 @@
 """Context: context for security/db session."""
 
 import copy
-import logging
 
 from datetime import datetime
 
 from quantum.db import api as db_api
 from quantum.openstack.common import context as common_context
+from quantum.openstack.common import log as logging
+
+
 LOG = logging.getLogger(__name__)
 
 

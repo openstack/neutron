@@ -18,10 +18,10 @@
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import logging
 import re
 
 from quantum.agent.linux import utils
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

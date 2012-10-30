@@ -1,4 +1,3 @@
-import logging
 import re
 import sys
 
@@ -13,6 +12,7 @@ from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 NS_MANGLING_PATTERN = ('(%s|%s)' % (dhcp_agent.NS_PREFIX, l3_agent.NS_PREFIX) +

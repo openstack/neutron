@@ -22,7 +22,6 @@
 # Quantum OpenVSwitch Plugin.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import logging
 import os
 import sys
 import time
@@ -38,12 +37,13 @@ from quantum.common import constants
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import constants as lconst
 
-logging.basicConfig()
+
 LOG = logging.getLogger(__name__)
 
 BRIDGE_NAME_PREFIX = "brq"
