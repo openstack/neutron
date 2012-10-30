@@ -426,6 +426,46 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                              s['subnet']['id'],
                                                              None)
 
+    def test_router_add_interface_subnet_with_port_from_other_tenant(self):
+        tenant_id = _uuid()
+        other_tenant_id = _uuid()
+        tenant_context = context.Context(user_id=None, tenant_id=tenant_id)
+        admin_context = context.get_admin_context()
+        with mock.patch('quantum.context.Context') as ctx:
+            ctx.return_value = admin_context
+            with contextlib.nested(
+                self.router(tenant_id=tenant_id),
+                self.network(tenant_id=tenant_id),
+                self.network(tenant_id=other_tenant_id)) as (r, n1, n2):
+                with contextlib.nested(
+                    self.subnet(network=n1, cidr='10.0.0.0/24'),
+                    self.subnet(network=n2, cidr='10.1.0.0/24')) as (s1, s2):
+                        ctx.return_value = admin_context
+                        body = self._router_interface_action(
+                            'add',
+                            r['router']['id'],
+                            s2['subnet']['id'],
+                            None)
+                        self.assertTrue('port_id' in body)
+                        ctx.return_value = tenant_context
+                        self._router_interface_action(
+                            'add',
+                            r['router']['id'],
+                            s1['subnet']['id'],
+                            None)
+                        self.assertTrue('port_id' in body)
+                        self._router_interface_action(
+                            'remove',
+                            r['router']['id'],
+                            s1['subnet']['id'],
+                            None)
+                        ctx.return_value = admin_context
+                        body = self._router_interface_action(
+                            'remove',
+                            r['router']['id'],
+                            s2['subnet']['id'],
+                            None)
+
     def test_router_add_interface_port(self):
         with self.router() as r:
             with self.port(no_delete=True) as p:
