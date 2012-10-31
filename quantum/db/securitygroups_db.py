@@ -17,19 +17,17 @@
 # @author: Aaron Rosen, Nicira, Inc
 #
 
-import re
-
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
-from quantum.api.v2 import attributes
 from quantum.common import utils
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import cfg
+from quantum.openstack.common import uuidutils
 
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -173,10 +171,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def _get_security_group(self, context, id):
         try:
             query = self._model_query(context, SecurityGroup)
-            if not re.match(attributes.UUID_PATTERN, str(id)):
-                sg = query.filter(SecurityGroup.external_id == id).one()
-            else:
+            if uuidutils.is_uuid_like(id):
                 sg = query.filter(SecurityGroup.id == id).one()
+            else:
+                sg = query.filter(SecurityGroup.external_id == id).one()
 
         except exc.NoResultFound:
             raise ext_sg.SecurityGroupNotFound(id=id)
@@ -392,12 +390,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _get_security_group_rule(self, context, id):
         try:
-            if not re.match(attributes.UUID_PATTERN, id):
-                query = self._model_query(context, SecurityGroupRule)
-                sgr = query.filter(SecurityGroupRule.external_id == id).one()
-            else:
+            if uuidutils.is_uuid_like(id):
                 query = self._model_query(context, SecurityGroupRule)
                 sgr = query.filter(SecurityGroupRule.id == id).one()
+            else:
+                query = self._model_query(context, SecurityGroupRule)
+                sgr = query.filter(SecurityGroupRule.external_id == id).one()
         except exc.NoResultFound:
             raise ext_sg.SecurityGroupRuleNotFound(id=id)
         return sgr
