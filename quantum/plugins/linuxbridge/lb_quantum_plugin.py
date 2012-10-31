@@ -163,7 +163,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if self.tenant_network_type not in [constants.TYPE_LOCAL,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_NONE]:
-            LOG.error("Invalid tenant_network_type: %s" %
+            LOG.error("Invalid tenant_network_type: %s. "
+                      "Service terminated!" %
                       self.tenant_network_type)
             sys.exit(1)
         self.agent_rpc = cfg.CONF.AGENT.rpc
@@ -194,7 +195,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                  int(vlan_min),
                                                  int(vlan_max))
                 except ValueError as ex:
-                    LOG.error("Invalid network VLAN range: \'%s\' - %s" %
+                    LOG.error("Invalid network VLAN range: '%s' - %s. "
+                              "Service terminated!" %
                               (entry, ex))
                     sys.exit(1)
             else:

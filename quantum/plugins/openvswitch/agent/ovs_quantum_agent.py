@@ -452,7 +452,8 @@ class OVSQuantumAgent(object):
         if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
             LOG.error("Failed to create OVS patch port. Cannot have tunneling "
                       "enabled on this agent, since this version of OVS does "
-                      "not support tunnels or patch ports.")
+                      "not support tunnels or patch ports. "
+                      "Agent terminated!")
             exit(1)
         self.tun_br.remove_all_flows()
         self.tun_br.add_flow(priority=1, actions="drop")
@@ -471,7 +472,8 @@ class OVSQuantumAgent(object):
         for physical_network, bridge in bridge_mappings.iteritems():
             # setup physical bridge
             if not ip_lib.device_exists(bridge, self.root_helper):
-                LOG.error("Bridge %s for physical network %s does not exist",
+                LOG.error("Bridge %s for physical network %s does not exist. "
+                          "Agent terminated!",
                           bridge, physical_network)
                 sys.exit(1)
             br = ovs_lib.OVSBridge(bridge, self.root_helper)
@@ -816,7 +818,8 @@ def main():
                 LOG.info("Physical network %s mapped to bridge %s",
                          physical_network, bridge)
             except ValueError as ex:
-                LOG.error("Invalid bridge mapping: \'%s\' - %s", mapping, ex)
+                LOG.error("Invalid bridge mapping: %s - %s. "
+                          "Agent terminated!", mapping, ex)
                 sys.exit(1)
 
     plugin = OVSQuantumAgent(integ_br, tun_br, local_ip, bridge_mappings,
@@ -824,6 +827,7 @@ def main():
                              reconnect_interval, rpc, enable_tunneling)
 
     # Start everything.
+    LOG.info("Agent initialized successfully, now running... ")
     plugin.daemon_loop(db_connection_url)
 
     sys.exit(0)
