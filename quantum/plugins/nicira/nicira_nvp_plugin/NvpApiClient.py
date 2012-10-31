@@ -36,8 +36,8 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
     '''
 
     def __init__(self, api_providers, user, password, request_timeout,
-                 http_timeout, retries, redirects, failover_time,
-                 concurrent_connections=3):
+                 http_timeout, retries, redirects,
+                 concurrent_connections=3, nvp_gen_timeout=-1):
         '''Constructor.
 
         :param api_providers: a list of tuples in the form:
@@ -53,12 +53,10 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
             controller in the cluster)
         :param retries: the number of concurrent connections.
         :param redirects: the number of concurrent connections.
-        :param failover_time: minimum time between controller failover and new
-            connections allowed.
         '''
         client_eventlet.NvpApiClientEventlet.__init__(
             self, api_providers, user, password, concurrent_connections,
-            failover_time=failover_time)
+            nvp_gen_timeout)
 
         self._request_timeout = request_timeout
         self._http_timeout = http_timeout
@@ -84,7 +82,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
         if password:
             self._password = password
 
-        return client_eventlet.NvpApiClientEventlet.login(self)
+        return client_eventlet.NvpApiClientEventlet._login(self)
 
     def request(self, method, url, body="", content_type="application/json"):
         '''Issues request to controller.'''
