@@ -16,6 +16,4 @@
 
 from quantum.openstack.common import version as common_version
 
-NEXT_VERSION = '2013.1'
-version_info = common_version.VersionInfo('quantum',
-                                          pre_version=NEXT_VERSION)
+version_info = common_version.VersionInfo('quantum')

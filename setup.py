@@ -16,7 +16,6 @@ import setuptools
 import sys
 
 from quantum.openstack.common import setup
-from quantum.version import version_info as version
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
@@ -28,7 +27,7 @@ if sys.platform == 'win32':
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
-Version = version.canonical_version_string(always=True)
+Version = setup.get_version(Name, '2013.1')
 License = 'Apache License 2.0'
 Author = 'Netstack'
 AuthorEmail = 'netstack@lists.launchpad.net'
