@@ -83,10 +83,10 @@ class L3NATAgent(object):
         cfg.IntOpt('metadata_port',
                    default=8775,
                    help="TCP Port used by Nova metadata server."),
-        #FIXME(danwent): not currently used
-        cfg.BoolOpt('send_arp_for_ha',
-                    default=True,
-                    help="Send gratuitious ARP when router IP is configured"),
+        cfg.IntOpt('send_arp_for_ha',
+                   default=3,
+                   help="Send this many gratuitous ARPs for HA setup, "
+                        "set it below or equal to 0 to disable this feature."),
         cfg.BoolOpt('use_namespaces', default=True,
                     help="Allow overlapping IP."),
         cfg.StrOpt('router_id', default='',
@@ -359,6 +359,23 @@ class L3NATAgent(object):
             LOG.error("Ignoring multiple gateway ports for router %s"
                       % ri.router_id)
 
+    def _send_gratuitous_arp_packet(self, ri, interface_name, ip_address):
+        if self.conf.send_arp_for_ha > 0:
+            arping_cmd = ['arping', '-A', '-U',
+                          '-I', interface_name,
+                          '-c', self.conf.send_arp_for_ha,
+                          ip_address]
+            try:
+                if self.conf.use_namespaces:
+                    ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                                  namespace=ri.ns_name())
+                    ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
+                else:
+                    utils.execute(arping_cmd, check_exit_code=True,
+                                  root_helper=self.conf.root_helper)
+            except Exception as e:
+                LOG.error(_("Failed sending gratuitous ARP: %s") % str(e))
+
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
@@ -380,6 +397,8 @@ class L3NATAgent(object):
                              prefix=EXTERNAL_DEV_PREFIX)
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
                             namespace=ri.ns_name())
+        ip_address = ex_gw_port['ip_cidr'].split('/')[0]
+        self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
 
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if ex_gw_port['subnet']['gateway_ip']:
@@ -454,6 +473,8 @@ class L3NATAgent(object):
 
         self.driver.init_l3(interface_name, [internal_cidr],
                             namespace=ri.ns_name())
+        ip_address = internal_cidr.split('/')[0]
+        self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
 
         if ex_gw_port:
             ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
@@ -494,6 +515,7 @@ class L3NATAgent(object):
         if not ip_cidr in [addr['cidr'] for addr in device.addr.list()]:
             net = netaddr.IPNetwork(ip_cidr)
             device.addr.add(net.version, ip_cidr, str(net.broadcast))
+            self._send_gratuitous_arp_packet(ri, interface_name, floating_ip)
 
         for chain, rule in self.floating_forward_rules(floating_ip, fixed_ip):
             ri.iptables_manager.ipv4['nat'].add_rule(chain, rule)

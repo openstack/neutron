@@ -8,6 +8,10 @@
 
 [Filters]
 
+# arping
+arping: CommandFilter, /usr/bin/arping, root
+arping_sbin: CommandFilter, /sbin/arping, root
+
 # l3_agent
 sysctl: CommandFilter, /sbin/sysctl, root
 route: CommandFilter, /sbin/route, root

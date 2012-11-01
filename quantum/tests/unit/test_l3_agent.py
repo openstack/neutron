@@ -125,13 +125,23 @@ class TestBasicRouterOperations(unittest.TestCase):
                       'network_id': _uuid(),
                       'mac_address': 'ca:fe:de:ad:be:ef',
                       'ip_cidr': '20.0.0.30/24'}
+        interface_name = agent.get_external_device_name(ex_gw_port['id'])
 
         if action == 'add':
             self.device_exists.return_value = False
             agent.external_gateway_added(ri, ex_gw_port, internal_cidrs)
             self.assertEquals(self.mock_driver.plug.call_count, 1)
             self.assertEquals(self.mock_driver.init_l3.call_count, 1)
-            self.assertEquals(self.mock_ip.netns.execute.call_count, 1)
+            arping_cmd = ['arping', '-A', '-U',
+                          '-I', interface_name,
+                          '-c', self.conf.send_arp_for_ha,
+                          '20.0.0.30']
+            if self.conf.use_namespaces:
+                self.mock_ip.netns.execute.assert_any_call(
+                    arping_cmd, check_exit_code=True)
+            else:
+                self.utils_exec.assert_any_call(
+                    check_exit_code=True, root_helper=self.conf.root_helper)
 
         elif action == 'remove':
             self.device_exists.return_value = True
@@ -159,10 +169,21 @@ class TestBasicRouterOperations(unittest.TestCase):
                       'id': _uuid(),
                       'mac_address': 'ca:fe:de:ad:be:ef',
                       'ip_cidr': '20.0.0.30/24'}
+        interface_name = agent.get_external_device_name(ex_gw_port['id'])
 
         if action == 'add':
             self.device_exists.return_value = False
             agent.floating_ip_added(ri, ex_gw_port, floating_ip, fixed_ip)
+            arping_cmd = ['arping', '-A', '-U',
+                          '-I', interface_name,
+                          '-c', self.conf.send_arp_for_ha,
+                          floating_ip]
+            if self.conf.use_namespaces:
+                self.mock_ip.netns.execute.assert_any_call(
+                    arping_cmd, check_exit_code=True)
+            else:
+                self.utils_exec.assert_any_call(
+                    check_exit_code=True, root_helper=self.conf.root_helper)
 
         elif action == 'remove':
             self.device_exists.return_value = True
