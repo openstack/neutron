@@ -153,7 +153,9 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         network[FLAVOR_NETWORK] = flavor
 
     def _is_l3_plugin(self, plugin):
-        return 'router' in plugin.supported_extension_aliases
+        if hasattr(plugin, 'supported_extension_aliases'):
+            return 'router' in plugin.supported_extension_aliases
+        return False
 
     def create_network(self, context, network):
         n = network['network']
@@ -204,7 +206,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_l3(context, net)
         if not fields or FLAVOR_NETWORK in fields:
             self._extend_network_dict(context, net)
-        if fields and not id in fields:
+        if fields and not 'id' in fields:
             del net['id']
         return net
 

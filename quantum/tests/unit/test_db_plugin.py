@@ -1666,6 +1666,17 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                 self.assertEquals(res['networks'][0]['name'],
                                   net2['network']['name'])
 
+    def test_list_networks_with_fields(self):
+        with self.network(name='net1') as net1:
+            req = self.new_list_request('networks',
+                                        params='fields=name')
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEquals(1, len(res['networks']))
+            self.assertEquals(res['networks'][0]['name'],
+                              net1['network']['name'])
+            self.assertEquals(None,
+                              res['networks'][0].get('id'))
+
     def test_list_networks_with_parameters_invalid_values(self):
         with self.network(name='net1', admin_status_up=False) as net1:
             with self.network(name='net2') as net2:
