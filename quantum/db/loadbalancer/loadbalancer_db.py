@@ -187,7 +187,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         return collection
 
     def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None):
+                        fields=None, sorts=None, limit=None, marker_obj=None,
+                        page_reverse=False):
         query = self._get_collection_query(context, model, filters)
         return [dict_func(c, fields) for c in query.all()]
 

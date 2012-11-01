@@ -69,7 +69,8 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_subnets(self, context, filters=None, fields=None):
+    def get_subnets(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None, page_reverse=False):
         """
         Retrieve a list of subnets.  The contents of the list depends on
         the identity of the user making the request (as indicated by the
@@ -156,7 +157,8 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_networks(self, context, filters=None, fields=None):
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None, page_reverse=False):
         """
         Retrieve a list of networks.  The contents of the list depends on
         the identity of the user making the request (as indicated by the
@@ -243,7 +245,8 @@ class QuantumPluginBaseV2(object):
         pass
 
     @abstractmethod
-    def get_ports(self, context, filters=None, fields=None):
+    def get_ports(self, context, filters=None, fields=None,
+                  sorts=None, limit=None, marker=None, page_reverse=False):
         """
         Retrieve a list of ports.  The contents of the list depends on
         the identity of the user making the request (as indicated by the

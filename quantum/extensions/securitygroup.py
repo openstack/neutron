@@ -186,7 +186,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'security_groups': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'name': {'allow_post': True, 'allow_put': False,
                  'is_visible': True, 'default': '',
                  'validate': {'type:name_not_default': None}},
@@ -204,7 +205,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'security_group_rules': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         # external_id can be used to be backwards compatible with nova
         'external_id': {'allow_post': True, 'allow_put': False,
                         'is_visible': True, 'default': None,
@@ -301,7 +303,9 @@ class Securitygroup(extensions.ExtensionDescriptor):
             quota.QUOTAS.register_resource_by_name(resource_name)
             controller = base.create_resource(collection_name,
                                               resource_name,
-                                              plugin, params, allow_bulk=True)
+                                              plugin, params, allow_bulk=True,
+                                              allow_pagination=True,
+                                              allow_sorting=True)
 
             ex = extensions.ResourceExtension(collection_name,
                                               controller,
@@ -329,7 +333,9 @@ class SecurityGroupPluginBase(object):
         pass
 
     @abstractmethod
-    def get_security_groups(self, context, filters=None, fields=None):
+    def get_security_groups(self, context, filters=None, fields=None,
+                            sorts=None, limit=None, marker=None,
+                            page_reverse=False):
         pass
 
     @abstractmethod
@@ -345,7 +351,9 @@ class SecurityGroupPluginBase(object):
         pass
 
     @abstractmethod
-    def get_security_group_rules(self, context, filters=None, fields=None):
+    def get_security_group_rules(self, context, filters=None, fields=None,
+                                 sorts=None, limit=None, marker=None,
+                                 page_reverse=False):
         pass
 
     @abstractmethod

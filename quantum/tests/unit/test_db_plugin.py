@@ -28,6 +28,7 @@ import unittest2
 import webob.exc
 
 import quantum
+from quantum.api import api_common
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2.attributes import ATTR_NOT_SPECIFIED
@@ -57,6 +58,14 @@ def dummy_context_func():
 
 def etcdir(*p):
     return os.path.join(ETCDIR, *p)
+
+
+def _fake_get_pagination_helper(self, request):
+    return api_common.PaginationEmulatedHelper(request, self._primary_key)
+
+
+def _fake_get_sorting_helper(self, request):
+    return api_common.SortingEmulatedHelper(request, self._attr_info)
 
 
 class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
@@ -97,6 +106,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
+        cfg.CONF.set_override('allow_pagination', True)
+        cfg.CONF.set_override('allow_sorting', True)
         self.api = APIRouter()
         # Set the defualt port status
         self.port_create_status = 'ACTIVE'
@@ -110,6 +121,26 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
 
         self._skip_native_bulk = not _is_native_bulk_supported()
 
+        def _is_native_pagination_support():
+            native_pagination_attr_name = (
+                "_%s__native_pagination_support" %
+                QuantumManager.get_plugin().__class__.__name__)
+            return (cfg.CONF.allow_pagination and
+                    getattr(QuantumManager.get_plugin(),
+                            native_pagination_attr_name, False))
+
+        self._skip_native_pagination = not _is_native_pagination_support()
+
+        def _is_native_sorting_support():
+            native_sorting_attr_name = (
+                "_%s__native_sorting_support" %
+                QuantumManager.get_plugin().__class__.__name__)
+            return (cfg.CONF.allow_sorting and
+                    getattr(QuantumManager.get_plugin(),
+                            native_sorting_attr_name, False))
+
+        self._skip_native_sorting = not _is_native_sorting_support()
+
         ext_mgr = test_config.get('extension_manager', None)
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -119,6 +150,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         self.api = None
         self._deserializers = None
         self._skip_native_bulk = None
+        self._skip_native_pagination = None
+        self._skip_native_sortin = None
         self.ext_api = None
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
@@ -436,6 +469,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         res = self._list('%ss' % resource,
                          quantum_context=quantum_context,
                          query_params=query_params)
+        resource = resource.replace('-', '_')
         self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
                               [i[resource]['id'] for i in items])
 
@@ -503,6 +537,89 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
             finally:
                 if not no_delete:
                     self._delete('ports', port['port']['id'])
+
+    def _test_list_with_sort(self, collection, items, sorts, query_params=''):
+        query_str = query_params
+        for key, direction in sorts:
+            query_str = query_str + "&sort_key=%s&sort_dir=%s" % (key,
+                                                                  direction)
+        req = self.new_list_request('%ss' % collection,
+                                    params=query_str)
+        api = self._api_for_resource('%ss' % collection)
+        res = self.deserialize(self.fmt, req.get_response(api))
+        collection = collection.replace('-', '_')
+        expected_res = [item[collection]['id'] for item in items]
+        self.assertListEqual([n['id'] for n in res["%ss" % collection]],
+                             expected_res)
+
+    def _test_list_with_pagination(self, collection, items, sort,
+                                   limit, expected_page_num, query_params='',
+                                   verify_key='id'):
+        if self.fmt == 'xml':
+            self.skipTest("Skip xml test for pagination")
+        query_str = query_params + '&' if query_params else ''
+        query_str = query_str + ("limit=%s&sort_key=%s&"
+                                 "sort_dir=%s") % (limit, sort[0], sort[1])
+        req = self.new_list_request("%ss" % collection, params=query_str)
+        items_res = []
+        page_num = 0
+        api = self._api_for_resource('%ss' % collection)
+        collection = collection.replace('-', '_')
+        while req:
+            page_num = page_num + 1
+            res = self.deserialize(self.fmt, req.get_response(api))
+            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            items_res = items_res + res["%ss" % collection]
+            req = None
+            if '%ss_links' % collection in res:
+                for link in res['%ss_links' % collection]:
+                    if link['rel'] == 'next':
+                        content_type = 'application/%s' % self.fmt
+                        req = testlib_api.create_request(link['href'],
+                                                         '', content_type)
+                        self.assertEqual(len(res["%ss" % collection]),
+                                         limit)
+        self.assertEqual(page_num, expected_page_num)
+        self.assertListEqual([n[verify_key] for n in items_res],
+                             [item[collection][verify_key] for item in items])
+
+    def _test_list_with_pagination_reverse(self, collection, items, sort,
+                                           limit, expected_page_num,
+                                           query_params=''):
+        if self.fmt == 'xml':
+            self.skipTest("Skip xml test for pagination")
+        resources = '%ss' % collection
+        collection = collection.replace('-', '_')
+        api = self._api_for_resource(resources)
+        marker = items[-1][collection]['id']
+        query_str = query_params + '&' if query_params else ''
+        query_str = query_str + ("limit=%s&page_reverse=True&"
+                                 "sort_key=%s&sort_dir=%s&"
+                                 "marker=%s") % (limit, sort[0], sort[1],
+                                                 marker)
+        req = self.new_list_request(resources, params=query_str)
+        item_res = [items[-1][collection]]
+        page_num = 0
+        while req:
+            page_num = page_num + 1
+            res = self.deserialize(self.fmt, req.get_response(api))
+            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            res["%ss" % collection].reverse()
+            item_res = item_res + res["%ss" % collection]
+            req = None
+            if '%ss_links' % collection in res:
+                for link in res['%ss_links' % collection]:
+                    if link['rel'] == 'previous':
+                        content_type = 'application/%s' % self.fmt
+                        req = testlib_api.create_request(link['href'],
+                                                         '', content_type)
+                        self.assertEqual(len(res["%ss" % collection]),
+                                         limit)
+        self.assertEqual(page_num, expected_page_num)
+        expected_res = [item[collection]['id'] for item in items]
+        expected_res.reverse()
+        self.assertListEqual([n['id'] for n in item_res],
+                             expected_res)
 
 
 class TestBasicGet(QuantumDbPluginV2TestCase):
@@ -798,6 +915,101 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     q_context = context.Context('', 'tenant_2')
                     self._test_list_resources('port', [port2],
                                               quantum_context=q_context)
+
+    def test_list_ports_with_sort_native(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(admin_state_up='True',
+                                         mac_address='00:00:00:00:00:01'),
+                               self.port(admin_state_up='False',
+                                         mac_address='00:00:00:00:00:02'),
+                               self.port(admin_state_up='False',
+                                         mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_sort('port', (port3, port2, port1),
+                                      [('admin_state_up', 'asc'),
+                                       ('mac_address', 'desc')])
+
+    def test_list_ports_with_sort_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_sorting_helper',
+            new=_fake_get_sorting_helper)
+        helper_patcher.start()
+        try:
+            cfg.CONF.set_default('allow_overlapping_ips', True)
+            with contextlib.nested(self.port(admin_state_up='True',
+                                             mac_address='00:00:00:00:00:01'),
+                                   self.port(admin_state_up='False',
+                                             mac_address='00:00:00:00:00:02'),
+                                   self.port(admin_state_up='False',
+                                             mac_address='00:00:00:00:00:03')
+                                   ) as (port1, port2, port3):
+                self._test_list_with_sort('port', (port3, port2, port1),
+                                          [('admin_state_up', 'asc'),
+                                           ('mac_address', 'desc')])
+        finally:
+            helper_patcher.stop()
+
+    def test_list_ports_with_pagination_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                               self.port(mac_address='00:00:00:00:00:02'),
+                               self.port(mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_pagination('port',
+                                            (port1, port2, port3),
+                                            ('mac_address', 'asc'), 2, 2)
+
+    def test_list_ports_with_pagination_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            cfg.CONF.set_default('allow_overlapping_ips', True)
+            with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                                   self.port(mac_address='00:00:00:00:00:02'),
+                                   self.port(mac_address='00:00:00:00:00:03')
+                                   ) as (port1, port2, port3):
+                self._test_list_with_pagination('port',
+                                                (port1, port2, port3),
+                                                ('mac_address', 'asc'), 2, 2)
+        finally:
+            helper_patcher.stop()
+
+    def test_list_ports_with_pagination_reverse_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                               self.port(mac_address='00:00:00:00:00:02'),
+                               self.port(mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_pagination_reverse('port',
+                                                    (port1, port2, port3),
+                                                    ('mac_address', 'asc'),
+                                                    2, 2)
+
+    def test_list_ports_with_pagination_reverse_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            cfg.CONF.set_default('allow_overlapping_ips', True)
+            with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                                   self.port(mac_address='00:00:00:00:00:02'),
+                                   self.port(mac_address='00:00:00:00:00:03')
+                                   ) as (port1, port2, port3):
+                self._test_list_with_pagination_reverse('port',
+                                                        (port1, port2, port3),
+                                                        ('mac_address', 'asc'),
+                                                        2, 2)
+        finally:
+            helper_patcher.stop()
 
     def test_show_port(self):
         with self.port() as port:
@@ -1769,6 +1981,158 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                self.network()) as networks:
             self._test_list_resources('network', networks)
 
+    def test_list_networks_with_sort_native(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.network(admin_status_up=True,
+                                            name='net1'),
+                               self.network(admin_status_up=False,
+                                            name='net2'),
+                               self.network(admin_status_up=False,
+                                            name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_sort('network', (net3, net2, net1),
+                                      [('admin_state_up', 'asc'),
+                                       ('name', 'desc')])
+
+    def test_list_networks_with_sort_extended_attr_native_returns_400(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.network(admin_status_up=True,
+                                            name='net1'),
+                               self.network(admin_status_up=False,
+                                            name='net2'),
+                               self.network(admin_status_up=False,
+                                            name='net3')
+                               ):
+            req = self.new_list_request(
+                'networks',
+                params='sort_key=provider:segmentation_id&sort_dir=asc')
+            res = req.get_response(self.api)
+            self.assertEqual(400, res.status_int)
+
+    def test_list_networks_with_sort_remote_key_native_returns_400(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.network(admin_status_up=True,
+                                            name='net1'),
+                               self.network(admin_status_up=False,
+                                            name='net2'),
+                               self.network(admin_status_up=False,
+                                            name='net3')
+                               ):
+            req = self.new_list_request(
+                'networks', params='sort_key=subnets&sort_dir=asc')
+            res = req.get_response(self.api)
+            self.assertEqual(400, res.status_int)
+
+    def test_list_networks_with_sort_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_sorting_helper',
+            new=_fake_get_sorting_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.network(admin_status_up=True,
+                                                name='net1'),
+                                   self.network(admin_status_up=False,
+                                                name='net2'),
+                                   self.network(admin_status_up=False,
+                                                name='net3')
+                                   ) as (net1, net2, net3):
+                self._test_list_with_sort('network', (net3, net2, net1),
+                                          [('admin_state_up', 'asc'),
+                                           ('name', 'desc')])
+        finally:
+            helper_patcher.stop()
+
+    def test_list_networks_with_pagination_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2'),
+                               self.network(name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination('network',
+                                            (net1, net2, net3),
+                                            ('name', 'asc'), 2, 2)
+
+    def test_list_networks_with_pagination_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.network(name='net1'),
+                                   self.network(name='net2'),
+                                   self.network(name='net3')
+                                   ) as (net1, net2, net3):
+                self._test_list_with_pagination('network',
+                                                (net1, net2, net3),
+                                                ('name', 'asc'), 2, 2)
+        finally:
+            helper_patcher.stop()
+
+    def test_list_networks_without_pk_in_fields_pagination_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.network(name='net1',
+                                                shared=True),
+                                   self.network(name='net2',
+                                                shared=False),
+                                   self.network(name='net3',
+                                                shared=True)
+                                   ) as (net1, net2, net3):
+                self._test_list_with_pagination('network',
+                                                (net1, net2, net3),
+                                                ('name', 'asc'), 2, 2,
+                                                query_params="fields=name",
+                                                verify_key='name')
+        finally:
+            helper_patcher.stop()
+
+    def test_list_networks_without_pk_in_fields_pagination_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2'),
+                               self.network(name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination('network',
+                                            (net1, net2, net3),
+                                            ('name', 'asc'), 2, 2,
+                                            query_params="fields=shared",
+                                            verify_key='shared')
+
+    def test_list_networks_with_pagination_reverse_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2'),
+                               self.network(name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination_reverse('network',
+                                                    (net1, net2, net3),
+                                                    ('name', 'asc'), 2, 2)
+
+    def test_list_networks_with_pagination_reverse_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.network(name='net1'),
+                                   self.network(name='net2'),
+                                   self.network(name='net3')
+                                   ) as (net1, net2, net3):
+                self._test_list_with_pagination_reverse('network',
+                                                        (net1, net2, net3),
+                                                        ('name', 'asc'), 2, 2)
+        finally:
+            helper_patcher.stop()
+
     def test_list_networks_with_parameters(self):
         with contextlib.nested(self.network(name='net1',
                                             admin_state_up=False),
@@ -2627,6 +2991,97 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                 query_params = 'ip_version=6'
                 self._test_list_resources('subnet', [],
                                           query_params=query_params)
+
+    def test_list_subnets_with_sort_native(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.subnet(enable_dhcp=True,
+                                           cidr='10.0.0.0/24'),
+                               self.subnet(enable_dhcp=False,
+                                           cidr='11.0.0.0/24'),
+                               self.subnet(enable_dhcp=False,
+                                           cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_sort('subnet', (subnet3, subnet2, subnet1),
+                                      [('enable_dhcp', 'asc'),
+                                       ('cidr', 'desc')])
+
+    def test_list_subnets_with_sort_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_sorting_helper',
+            new=_fake_get_sorting_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.subnet(enable_dhcp=True,
+                                               cidr='10.0.0.0/24'),
+                                   self.subnet(enable_dhcp=False,
+                                               cidr='11.0.0.0/24'),
+                                   self.subnet(enable_dhcp=False,
+                                               cidr='12.0.0.0/24')
+                                   ) as (subnet1, subnet2, subnet3):
+                self._test_list_with_sort('subnet', (subnet3,
+                                                     subnet2,
+                                                     subnet1),
+                                          [('enable_dhcp', 'asc'),
+                                           ('cidr', 'desc')])
+        finally:
+            helper_patcher.stop()
+
+    def test_list_subnets_with_pagination_native(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='11.0.0.0/24'),
+                               self.subnet(cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_pagination('subnet',
+                                            (subnet1, subnet2, subnet3),
+                                            ('cidr', 'asc'), 2, 2)
+
+    def test_list_subnets_with_pagination_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                                   self.subnet(cidr='11.0.0.0/24'),
+                                   self.subnet(cidr='12.0.0.0/24')
+                                   ) as (subnet1, subnet2, subnet3):
+                self._test_list_with_pagination('subnet',
+                                                (subnet1, subnet2, subnet3),
+                                                ('cidr', 'asc'), 2, 2)
+        finally:
+            helper_patcher.stop()
+
+    def test_list_subnets_with_pagination_reverse_native(self):
+        if self._skip_native_sorting:
+            self.skipTest("Skip test for not implemented sorting feature")
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='11.0.0.0/24'),
+                               self.subnet(cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_pagination_reverse('subnet',
+                                                    (subnet1, subnet2,
+                                                     subnet3),
+                                                    ('cidr', 'asc'), 2, 2)
+
+    def test_list_subnets_with_pagination_reverse_emulated(self):
+        helper_patcher = mock.patch(
+            'quantum.api.v2.base.Controller._get_pagination_helper',
+            new=_fake_get_pagination_helper)
+        helper_patcher.start()
+        try:
+            with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                                   self.subnet(cidr='11.0.0.0/24'),
+                                   self.subnet(cidr='12.0.0.0/24')
+                                   ) as (subnet1, subnet2, subnet3):
+                self._test_list_with_pagination_reverse('subnet',
+                                                        (subnet1, subnet2,
+                                                         subnet3),
+                                                        ('cidr', 'asc'), 2, 2)
+        finally:
+            helper_patcher.stop()
 
     def test_invalid_ip_version(self):
         with self.network() as network:

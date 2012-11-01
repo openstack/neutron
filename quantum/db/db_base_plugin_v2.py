@@ -28,6 +28,7 @@ from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
+from quantum.db import sqlalchemyutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
@@ -58,9 +59,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     """
 
     # This attribute specifies whether the plugin supports or not
-    # bulk operations. Name mangling is used in order to ensure it
-    # is qualified by class
+    # bulk/pagination/sorting operations. Name mangling is used in
+    # order to ensure it is qualified by class
     __native_bulk_support = True
+    __native_pagination_support = True
+    __native_sorting_support = True
     # Plugins, mixin classes implementing extension will register
     # hooks into the dict below for "augmenting" the "core way" of
     # building a query for retrieving objects from a model class.
@@ -207,15 +210,30 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     query = query.filter(column.in_(value))
         return query
 
-    def _get_collection_query(self, context, model, filters=None):
+    def _get_collection_query(self, context, model, filters=None,
+                              sorts=None, limit=None, marker_obj=None,
+                              page_reverse=False):
         collection = self._model_query(context, model)
         collection = self._apply_filters_to_query(collection, model, filters)
+        if limit and page_reverse and sorts:
+            sorts = [(s[0], not s[1]) for s in sorts]
+        collection = sqlalchemyutils.paginate_query(collection, model, limit,
+                                                    sorts,
+                                                    marker_obj=marker_obj)
         return collection
 
     def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None):
-        query = self._get_collection_query(context, model, filters)
-        return [dict_func(c, fields) for c in query.all()]
+                        fields=None, sorts=None, limit=None, marker_obj=None,
+                        page_reverse=False):
+        query = self._get_collection_query(context, model, filters=filters,
+                                           sorts=sorts,
+                                           limit=limit,
+                                           marker_obj=marker_obj,
+                                           page_reverse=page_reverse)
+        items = [dict_func(c, fields) for c in query.all()]
+        if limit and page_reverse:
+            items.reverse()
+        return items
 
     def _get_collection_count(self, context, model, filters=None):
         return self._get_collection_query(context, model, filters).count()
@@ -903,6 +921,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise e
         return objects
 
+    def _get_marker_obj(self, context, resource, limit, marker):
+        if limit and marker:
+            return getattr(self, '_get_%s' % resource)(context, marker)
+        return None
+
     def create_network_bulk(self, context, networks):
         return self._create_bulk('network', context, networks)
 
@@ -965,10 +988,17 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         network = self._get_network(context, id)
         return self._make_network_dict(network, fields)
 
-    def get_networks(self, context, filters=None, fields=None):
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None,
+                     page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'network', limit, marker)
         return self._get_collection(context, models_v2.Network,
                                     self._make_network_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_networks_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Network,
@@ -1192,10 +1222,17 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         subnet = self._get_subnet(context, id)
         return self._make_subnet_dict(subnet, fields)
 
-    def get_subnets(self, context, filters=None, fields=None):
+    def get_subnets(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None,
+                    page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'subnet', limit, marker)
         return self._get_collection(context, models_v2.Subnet,
                                     self._make_subnet_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_subnets_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Subnet,
@@ -1338,7 +1375,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         port = self._get_port(context, id)
         return self._make_port_dict(port, fields)
 
-    def _get_ports_query(self, context, filters=None):
+    def _get_ports_query(self, context, filters=None, sorts=None, limit=None,
+                         marker_obj=None, page_reverse=False):
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
@@ -1358,11 +1396,24 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
 
         query = self._apply_filters_to_query(query, Port, filters)
+        if limit and page_reverse and sorts:
+            sorts = [(s[0], not s[1]) for s in sorts]
+        query = sqlalchemyutils.paginate_query(query, Port, limit,
+                                               sorts, marker_obj)
         return query
 
-    def get_ports(self, context, filters=None, fields=None):
-        query = self._get_ports_query(context, filters)
-        return [self._make_port_dict(c, fields) for c in query.all()]
+    def get_ports(self, context, filters=None, fields=None,
+                  sorts=None, limit=None, marker=None,
+                  page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'port', limit, marker)
+        query = self._get_ports_query(context, filters=filters,
+                                      sorts=sorts, limit=limit,
+                                      marker_obj=marker_obj,
+                                      page_reverse=page_reverse)
+        items = [self._make_port_dict(c, fields) for c in query.all()]
+        if limit and page_reverse:
+            items.reverse()
+        return items
 
     def get_ports_count(self, context, filters=None):
         return self._get_ports_query(context, filters).count()

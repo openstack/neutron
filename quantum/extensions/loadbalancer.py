@@ -22,6 +22,7 @@ from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
 from quantum.common import exceptions as qexception
 from quantum import manager
+from quantum.openstack.common import cfg
 from quantum.plugins.common import constants
 from quantum.plugins.services.service_base import ServicePluginBase
 
@@ -59,7 +60,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'vips': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True,
@@ -113,7 +115,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'pools': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True,
@@ -152,7 +155,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'members': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True,
@@ -182,7 +186,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'health_monitors': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True,
@@ -279,10 +284,11 @@ class Loadbalancer(extensions.ExtensionDescriptor):
             if resource_name == 'pool':
                 member_actions = {'stats': 'GET'}
 
-            controller = base.create_resource(collection_name,
-                                              resource_name,
-                                              plugin, params,
-                                              member_actions=member_actions)
+            controller = base.create_resource(
+                collection_name, resource_name, plugin, params,
+                member_actions=member_actions,
+                allow_pagination=cfg.CONF.allow_pagination,
+                allow_sorting=cfg.CONF.allow_sorting)
 
             resource = extensions.ResourceExtension(
                 collection_name,

@@ -58,3 +58,8 @@ AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
 AGENT_TYPE_L3 = 'L3 agent'
 L2_AGENT_TOPIC = 'N/A'
+
+PAGINATION_INFINITE = 'infinite'
+
+SORT_DIRECTION_ASC = 'asc'
+SORT_DIRECTION_DESC = 'desc'

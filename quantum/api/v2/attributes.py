@@ -476,7 +476,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'networks': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'validate': {'type:string': None},
                  'default': '', 'is_visible': True},
@@ -504,7 +505,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'ports': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
                  'validate': {'type:string': None},
                  'is_visible': True},
@@ -545,7 +547,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'subnets': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
                  'validate': {'type:string': None},
                  'is_visible': True},

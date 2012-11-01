@@ -255,10 +255,17 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         router = self._get_router(context, id)
         return self._make_router_dict(router, fields)
 
-    def get_routers(self, context, filters=None, fields=None):
+    def get_routers(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None,
+                    page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'router', limit, marker)
         return self._get_collection(context, Router,
                                     self._make_router_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_routers_count(self, context, filters=None):
         return self._get_collection_count(context, Router,
@@ -683,10 +690,18 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         floatingip = self._get_floatingip(context, id)
         return self._make_floatingip_dict(floatingip, fields)
 
-    def get_floatingips(self, context, filters=None, fields=None):
+    def get_floatingips(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'floatingip', limit,
+                                          marker)
         return self._get_collection(context, FloatingIP,
                                     self._make_floatingip_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_floatingips_count(self, context, filters=None):
         return self._get_collection_count(context, FloatingIP,

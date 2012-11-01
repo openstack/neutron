@@ -16,6 +16,7 @@
 #    under the License.
 
 import os
+import urlparse
 
 import mock
 from oslo.config import cfg
@@ -25,6 +26,7 @@ from webob import exc
 import webtest
 
 from quantum.api.extensions import PluginAwareExtensionManager
+from quantum.api import api_common
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.api.v2 import router
@@ -102,10 +104,13 @@ class APIv2TestBase(unittest.TestCase):
         config.parse(args=args)
         # Update the plugin
         cfg.CONF.set_override('core_plugin', plugin)
-
+        cfg.CONF.set_override('allow_pagination', True)
+        cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
-
+        instance = self.plugin.return_value
+        instance._QuantumPluginBaseV2__native_pagination_support = True
+        instance._QuantumPluginBaseV2__native_sorting_support = True
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
         super(APIv2TestBase, self).setUp()
@@ -117,6 +122,21 @@ class APIv2TestBase(unittest.TestCase):
         cfg.CONF.reset()
 
 
+class _ArgMatcher(object):
+    """ An adapter to assist mock assertions, used to custom compare """
+
+    def __init__(self, cmp, obj):
+        self.cmp = cmp
+        self.obj = obj
+
+    def __eq__(self, other):
+        return self.cmp(self.obj, other)
+
+
+def _list_cmp(l1, l2):
+    return set(l1) == set(l2)
+
+
 class APIv2TestCase(APIv2TestBase):
     # NOTE(jkoelker) This potentially leaks the mock object if the setUp
     #                raises without being caught. Using unittest2
@@ -125,10 +145,19 @@ class APIv2TestCase(APIv2TestBase):
     def _do_field_list(self, resource, base_fields):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
         policy_attrs = [name for (name, info) in attr_info.items()
-                        if info.get('required_by_policy')]
+                        if info.get('required_by_policy') or
+                        info.get('primary_key')]
         fields = base_fields
         fields.extend(policy_attrs)
         return fields
+
+    def _get_collection_kwargs(self, skipargs=[], **kwargs):
+        args_list = ['filters', 'fields', 'sorts', 'limit', 'marker',
+                     'page_reverse']
+        args_dict = dict((arg, mock.ANY)
+                         for arg in set(args_list) - set(skipargs))
+        args_dict.update(kwargs)
+        return args_dict
 
     def test_fields(self):
         instance = self.plugin.return_value
@@ -136,9 +165,8 @@ class APIv2TestCase(APIv2TestBase):
 
         self.api.get(_get_path('networks'), {'fields': 'foo'})
         fields = self._do_field_list('networks', ['foo'])
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=fields)
+        kwargs = self._get_collection_kwargs(fields=fields)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_fields_multiple(self):
         instance = self.plugin.return_value
@@ -146,9 +174,8 @@ class APIv2TestCase(APIv2TestBase):
 
         fields = self._do_field_list('networks', ['foo', 'bar'])
         self.api.get(_get_path('networks'), {'fields': ['foo', 'bar']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=fields)
+        kwargs = self._get_collection_kwargs(fields=fields)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_fields_multiple_with_empty(self):
         instance = self.plugin.return_value
@@ -156,99 +183,89 @@ class APIv2TestCase(APIv2TestBase):
 
         fields = self._do_field_list('networks', ['foo'])
         self.api.get(_get_path('networks'), {'fields': ['foo', '']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=fields)
+        kwargs = self._get_collection_kwargs(fields=fields)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_fields_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
         self.api.get(_get_path('networks'), {'fields': ''})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=[])
+        kwargs = self._get_collection_kwargs(fields=[])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_fields_multiple_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
         self.api.get(_get_path('networks'), {'fields': ['', '']})
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=mock.ANY,
-                                                      fields=[])
+        kwargs = self._get_collection_kwargs(fields=[])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': 'bar'})
-        filters = {'foo': ['bar']}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        self.api.get(_get_path('networks'), {'name': 'bar'})
+        filters = {'name': ['bar']}
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': ''})
+        self.api.get(_get_path('networks'), {'name': ''})
         filters = {}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_multiple_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': ['', '']})
+        self.api.get(_get_path('networks'), {'name': ['', '']})
         filters = {}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_multiple_with_empty(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': ['bar', '']})
-        filters = {'foo': ['bar']}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        self.api.get(_get_path('networks'), {'name': ['bar', '']})
+        filters = {'name': ['bar']}
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_multiple_values(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': ['bar', 'bar2']})
-        filters = {'foo': ['bar', 'bar2']}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        self.api.get(_get_path('networks'), {'name': ['bar', 'bar2']})
+        filters = {'name': ['bar', 'bar2']}
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_multiple(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': 'bar',
-                                             'foo2': 'bar2'})
-        filters = {'foo': ['bar'], 'foo2': ['bar2']}
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=mock.ANY)
+        self.api.get(_get_path('networks'), {'name': 'bar',
+                                             'tenant_id': 'bar2'})
+        filters = {'name': ['bar'], 'tenant_id': ['bar2']}
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_with_fields(self):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        self.api.get(_get_path('networks'), {'foo': 'bar', 'fields': 'foo'})
-        filters = {'foo': ['bar']}
+        self.api.get(_get_path('networks'), {'name': 'bar', 'fields': 'foo'})
+        filters = {'name': ['bar']}
         fields = self._do_field_list('networks', ['foo'])
-        instance.get_networks.assert_called_once_with(mock.ANY,
-                                                      filters=filters,
-                                                      fields=fields)
+        kwargs = self._get_collection_kwargs(filters=filters, fields=fields)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_with_convert_to(self):
         instance = self.plugin.return_value
@@ -256,9 +273,8 @@ class APIv2TestCase(APIv2TestBase):
 
         self.api.get(_get_path('ports'), {'admin_state_up': 'true'})
         filters = {'admin_state_up': [True]}
-        instance.get_ports.assert_called_once_with(mock.ANY,
-                                                   filters=filters,
-                                                   fields=mock.ANY)
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_ports.assert_called_once_with(mock.ANY, **kwargs)
 
     def test_filters_with_convert_list_to(self):
         instance = self.plugin.return_value
@@ -267,9 +283,244 @@ class APIv2TestCase(APIv2TestBase):
         self.api.get(_get_path('ports'),
                      {'fixed_ips': ['ip_address=foo', 'subnet_id=bar']})
         filters = {'fixed_ips': {'ip_address': ['foo'], 'subnet_id': ['bar']}}
-        instance.get_ports.assert_called_once_with(mock.ANY,
-                                                   filters=filters,
-                                                   fields=mock.ANY)
+        kwargs = self._get_collection_kwargs(filters=filters)
+        instance.get_ports.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'),
+                     {'limit': '10'})
+        kwargs = self._get_collection_kwargs(limit=10)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_great_than_max_limit(self):
+        cfg.CONF.set_default('pagination_max_limit', '1000')
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'),
+                     {'limit': '1001'})
+        kwargs = self._get_collection_kwargs(limit=1000)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_zero(self):
+        cfg.CONF.set_default('pagination_max_limit', '1000')
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'), {'limit': '0'})
+        kwargs = self._get_collection_kwargs(limit=1000)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_unspecific(self):
+        cfg.CONF.set_default('pagination_max_limit', '1000')
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'))
+        kwargs = self._get_collection_kwargs(limit=1000)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_negative_value(self):
+        cfg.CONF.set_default('pagination_max_limit', '1000')
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        res = self.api.get(_get_path('networks'), {'limit': -1},
+                           expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_limit_with_non_integer(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        res = self.api.get(_get_path('networks'),
+                           {'limit': 'abc'}, expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_limit_with_infinite_pagination_max_limit(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        cfg.CONF.set_override('pagination_max_limit', 'Infinite')
+        self.api.get(_get_path('networks'))
+        kwargs = self._get_collection_kwargs(limit=None)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_negative_pagination_max_limit(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        cfg.CONF.set_default('pagination_max_limit', '-1')
+        self.api.get(_get_path('networks'))
+        kwargs = self._get_collection_kwargs(limit=None)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_limit_with_non_integer_pagination_max_limit(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        cfg.CONF.set_default('pagination_max_limit', 'abc')
+        self.api.get(_get_path('networks'))
+        kwargs = self._get_collection_kwargs(limit=None)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_marker(self):
+        cfg.CONF.set_override('pagination_max_limit', '1000')
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        marker = _uuid()
+        self.api.get(_get_path('networks'),
+                     {'marker': marker})
+        kwargs = self._get_collection_kwargs(limit=1000, marker=marker)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_page_reverse(self):
+        calls = []
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        self.api.get(_get_path('networks'),
+                     {'page_reverse': 'True'})
+        kwargs = self._get_collection_kwargs(page_reverse=True)
+        calls.append(mock.call.get_networks(mock.ANY, **kwargs))
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        self.api.get(_get_path('networks'),
+                     {'page_reverse': 'False'})
+        kwargs = self._get_collection_kwargs(page_reverse=False)
+        calls.append(mock.call.get_networks(mock.ANY, **kwargs))
+
+    def test_page_reverse_with_non_bool(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'),
+                     {'page_reverse': 'abc'})
+        kwargs = self._get_collection_kwargs(page_reverse=False)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_page_reverse_with_unspecific(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'))
+        kwargs = self._get_collection_kwargs(page_reverse=False)
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_sort(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'),
+                     {'sort_key': ['name', 'admin_state_up'],
+                      'sort_dir': ['desc', 'asc']})
+        kwargs = self._get_collection_kwargs(sorts=[('name', False),
+                                                    ('admin_state_up', True),
+                                                    ('id', True)])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_sort_with_primary_key(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        self.api.get(_get_path('networks'),
+                     {'sort_key': ['name', 'admin_state_up', 'id'],
+                      'sort_dir': ['desc', 'asc', 'desc']})
+        kwargs = self._get_collection_kwargs(sorts=[('name', False),
+                                                    ('admin_state_up', True),
+                                                    ('id', False)])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_sort_without_direction(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        res = self.api.get(_get_path('networks'), {'sort_key': ['name']},
+                           expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_sort_with_invalid_attribute(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        res = self.api.get(_get_path('networks'),
+                           {'sort_key': 'abc',
+                            'sort_dir': 'asc'},
+                           expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_sort_with_invalid_dirs(self):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+
+        res = self.api.get(_get_path('networks'),
+                           {'sort_key': 'name',
+                            'sort_dir': 'abc'},
+                           expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
+
+    def test_emulated_sort(self):
+        instance = self.plugin.return_value
+        instance._QuantumPluginBaseV2__native_pagination_support = False
+        instance._QuantumPluginBaseV2__native_sorting_support = False
+        instance.get_networks.return_value = []
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks'), {'sort_key': ['name', 'status'],
+                                        'sort_dir': ['desc', 'asc']})
+        kwargs = self._get_collection_kwargs(
+            skipargs=['sorts', 'limit', 'marker', 'page_reverse'])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_emulated_sort_without_sort_field(self):
+        instance = self.plugin.return_value
+        instance._QuantumPluginBaseV2__native_pagination_support = False
+        instance._QuantumPluginBaseV2__native_sorting_support = False
+        instance.get_networks.return_value = []
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks'), {'sort_key': ['name', 'status'],
+                                        'sort_dir': ['desc', 'asc'],
+                                        'fields': ['subnets']})
+        kwargs = self._get_collection_kwargs(
+            skipargs=['sorts', 'limit', 'marker', 'page_reverse'],
+            fields=_ArgMatcher(_list_cmp, ['name',
+                                           'status',
+                                           'id',
+                                           'subnets',
+                                           'shared',
+                                           'tenant_id']))
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_emulated_pagination(self):
+        instance = self.plugin.return_value
+        instance._QuantumPluginBaseV2__native_pagination_support = False
+        instance.get_networks.return_value = []
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks'), {'limit': 10,
+                                        'marker': 'foo',
+                                        'page_reverse': False})
+        kwargs = self._get_collection_kwargs(skipargs=['limit',
+                                                       'marker',
+                                                       'page_reverse'])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
+
+    def test_native_pagination_without_native_sorting(self):
+        instance = self.plugin.return_value
+        instance._QuantumPluginBaseV2__native_sorting_support = False
+        self.assertRaises(Exception, router.APIRouter)
+
+    def test_native_pagination_without_allow_sorting(self):
+        cfg.CONF.set_override('allow_sorting', False)
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = []
+        api = webtest.TestApp(router.APIRouter())
+        api.get(_get_path('networks'),
+                {'sort_key': ['name', 'admin_state_up'],
+                 'sort_dir': ['desc', 'asc']})
+        kwargs = self._get_collection_kwargs(sorts=[('name', False),
+                                                    ('admin_state_up', True),
+                                                    ('id', True)])
+        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
 
 # Note: since all resources use the same controller and validation
@@ -319,6 +570,184 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_list_keystone_bad(self):
         tenant_id = _uuid()
         self._test_list(tenant_id + "bad", tenant_id)
+
+    def test_list_pagination(self):
+        id1 = str(_uuid())
+        id2 = str(_uuid())
+        input_dict1 = {'id': id1,
+                       'name': 'net1',
+                       'admin_state_up': True,
+                       'status': "ACTIVE",
+                       'tenant_id': '',
+                       'shared': False,
+                       'subnets': []}
+        input_dict2 = {'id': id2,
+                       'name': 'net2',
+                       'admin_state_up': True,
+                       'status': "ACTIVE",
+                       'tenant_id': '',
+                       'shared': False,
+                       'subnets': []}
+        return_value = [input_dict1, input_dict2]
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_value
+        params = {'limit': ['2'],
+                  'marker': [str(_uuid())],
+                  'sort_key': ['name'],
+                  'sort_dir': ['asc']}
+        res = self.api.get(_get_path('networks'),
+                           params=params).json
+
+        self.assertEqual(len(res['networks']), 2)
+        self.assertItemsEqual([id1, id2],
+                              [res['networks'][0]['id'],
+                               res['networks'][1]['id']])
+
+        self.assertIn('networks_links', res)
+        next_links = []
+        previous_links = []
+        for r in res['networks_links']:
+            if r['rel'] == 'next':
+                next_links.append(r)
+            if r['rel'] == 'previous':
+                previous_links.append(r)
+        self.assertEqual(len(next_links), 1)
+        self.assertEqual(len(previous_links), 1)
+
+        url = urlparse.urlparse(next_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        params['marker'] = [id2]
+        self.assertEqual(urlparse.parse_qs(url.query), params)
+
+        url = urlparse.urlparse(previous_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        params['marker'] = [id1]
+        params['page_reverse'] = ['True']
+        self.assertEqual(urlparse.parse_qs(url.query), params)
+
+    def test_list_pagination_with_last_page(self):
+        id = str(_uuid())
+        input_dict = {'id': id,
+                      'name': 'net1',
+                      'admin_state_up': True,
+                      'status': "ACTIVE",
+                      'tenant_id': '',
+                      'shared': False,
+                      'subnets': []}
+        return_value = [input_dict]
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_value
+        params = {'limit': ['2'],
+                  'marker': str(_uuid())}
+        res = self.api.get(_get_path('networks'),
+                           params=params).json
+
+        self.assertEqual(len(res['networks']), 1)
+        self.assertEqual(id, res['networks'][0]['id'])
+
+        self.assertIn('networks_links', res)
+        previous_links = []
+        for r in res['networks_links']:
+            self.assertNotEqual(r['rel'], 'next')
+            if r['rel'] == 'previous':
+                previous_links.append(r)
+        self.assertEqual(len(previous_links), 1)
+
+        url = urlparse.urlparse(previous_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        expect_params = params.copy()
+        expect_params['marker'] = [id]
+        expect_params['page_reverse'] = ['True']
+        self.assertEqual(urlparse.parse_qs(url.query), expect_params)
+
+    def test_list_pagination_with_empty_page(self):
+        return_value = []
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_value
+        params = {'limit': ['2'],
+                  'marker': str(_uuid())}
+        res = self.api.get(_get_path('networks'),
+                           params=params).json
+
+        self.assertEqual(res['networks'], [])
+
+        previous_links = []
+        if 'networks_links' in res:
+            for r in res['networks_links']:
+                self.assertNotEqual(r['rel'], 'next')
+                if r['rel'] == 'previous':
+                    previous_links.append(r)
+        self.assertEqual(len(previous_links), 1)
+
+        url = urlparse.urlparse(previous_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        expect_params = params.copy()
+        del expect_params['marker']
+        expect_params['page_reverse'] = ['True']
+        self.assertEqual(urlparse.parse_qs(url.query), expect_params)
+
+    def test_list_pagination_reverse_with_last_page(self):
+        id = str(_uuid())
+        input_dict = {'id': id,
+                      'name': 'net1',
+                      'admin_state_up': True,
+                      'status': "ACTIVE",
+                      'tenant_id': '',
+                      'shared': False,
+                      'subnets': []}
+        return_value = [input_dict]
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_value
+        params = {'limit': ['2'],
+                  'marker': [str(_uuid())],
+                  'page_reverse': ['True']}
+        res = self.api.get(_get_path('networks'),
+                           params=params).json
+
+        self.assertEqual(len(res['networks']), 1)
+        self.assertEqual(id, res['networks'][0]['id'])
+
+        self.assertIn('networks_links', res)
+        next_links = []
+        for r in res['networks_links']:
+            self.assertNotEqual(r['rel'], 'previous')
+            if r['rel'] == 'next':
+                next_links.append(r)
+        self.assertEqual(len(next_links), 1)
+
+        url = urlparse.urlparse(next_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        expected_params = params.copy()
+        del expected_params['page_reverse']
+        expected_params['marker'] = [id]
+        self.assertEqual(urlparse.parse_qs(url.query),
+                         expected_params)
+
+    def test_list_pagination_reverse_with_empty_page(self):
+        return_value = []
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = return_value
+        params = {'limit': ['2'],
+                  'marker': [str(_uuid())],
+                  'page_reverse': ['True']}
+        res = self.api.get(_get_path('networks'),
+                           params=params).json
+        self.assertEqual(res['networks'], [])
+
+        next_links = []
+        if 'networks_links' in res:
+            for r in res['networks_links']:
+                self.assertNotEqual(r['rel'], 'previous')
+                if r['rel'] == 'next':
+                    next_links.append(r)
+        self.assertEqual(len(next_links), 1)
+
+        url = urlparse.urlparse(next_links[0]['href'])
+        self.assertEqual(url.path, _get_path('networks'))
+        expect_params = params.copy()
+        del expect_params['marker']
+        del expect_params['page_reverse']
+        self.assertEqual(urlparse.parse_qs(url.query), expect_params)
 
     def test_create(self):
         net_id = _uuid()
@@ -698,6 +1127,7 @@ class SubresourceTest(unittest.TestCase):
         self._plugin_patcher.stop()
         self.api = None
         self.plugin = None
+        router.SUB_RESOURCES = {}
         cfg.CONF.reset()
 
     def test_index_sub_resource(self):
@@ -970,45 +1400,46 @@ class TestSubresourcePlugin():
             return
 
 
-class FieldsTestCase(unittest.TestCase):
-    def test_with_fields(self):
+class ListArgsTestCase(unittest.TestCase):
+    def test_list_args(self):
         path = '/?fields=4&foo=3&fields=2&bar=1'
         request = webob.Request.blank(path)
         expect_val = ['2', '4']
-        actual_val = base._fields(request)
+        actual_val = api_common.list_args(request, 'fields')
         self.assertItemsEqual(actual_val, expect_val)
 
-    def test_without_fields(self):
+    def test_list_args_with_empty(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
-        self.assertListEqual([], base._fields(request))
+        self.assertEqual([], api_common.list_args(request, 'fields'))
 
 
 class FiltersTestCase(unittest.TestCase):
-    def test_all_fields(self):
+    def test_all_skip_args(self):
         path = '/?fields=4&fields=3&fields=2&fields=1'
         request = webob.Request.blank(path)
-        self.assertDictEqual({}, base._filters(request, None))
+        self.assertEqual({}, api_common.get_filters(request, None,
+                                                    ["fields"]))
 
     def test_blank_values(self):
         path = '/?foo=&bar=&baz=&qux='
         request = webob.Request.blank(path)
-        self.assertDictEqual({}, base._filters(request, {}))
+        self.assertEqual({}, api_common.get_filters(request, {}))
 
     def test_no_attr_info(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
         expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
-        actual_val = base._filters(request, {})
-        self.assertDictEqual(actual_val, expect_val)
+        actual_val = api_common.get_filters(request, {})
+        self.assertEqual(actual_val, expect_val)
 
     def test_attr_info_without_conversion(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
         attr_info = {'foo': {'key': 'val'}}
         expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
-        actual_val = base._filters(request, attr_info)
-        self.assertDictEqual(actual_val, expect_val)
+        actual_val = api_common.get_filters(request, attr_info)
+        self.assertEqual(actual_val, expect_val)
 
     def test_attr_info_with_convert_list_to(self):
         path = '/?foo=key=4&bar=3&foo=key=2&qux=1'
@@ -1019,16 +1450,16 @@ class FiltersTestCase(unittest.TestCase):
             }
         }
         expect_val = {'foo': {'key': ['2', '4']}, 'bar': ['3'], 'qux': ['1']}
-        actual_val = base._filters(request, attr_info)
-        self.assertDictEqual(actual_val, expect_val)
+        actual_val = api_common.get_filters(request, attr_info)
+        self.assertEqual(actual_val, expect_val)
 
     def test_attr_info_with_convert_to(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
         attr_info = {'foo': {'convert_to': attributes.convert_to_int}}
         expect_val = {'foo': [4], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
-        actual_val = base._filters(request, attr_info)
-        self.assertDictEqual(actual_val, expect_val)
+        actual_val = api_common.get_filters(request, attr_info)
+        self.assertEqual(actual_val, expect_val)
 
 
 class CreateResourceTestCase(unittest.TestCase):

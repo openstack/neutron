@@ -39,7 +39,7 @@ from quantum.db import l3_db
 from quantum.db import l3_rpc_agent_api
 from quantum.db import models_v2
 from quantum.extensions import l3
-from quantum import manager
+from quantum.manager import QuantumManager
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common.notifier import test_notifier
@@ -75,7 +75,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
 
         plugin = 'quantum.extensions.l3.RouterPluginBase'
         # Ensure 'stale' patched copies of the plugin are never returned
-        manager.QuantumManager._instance = None
+        QuantumManager._instance = None
 
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -91,13 +91,17 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
 
         # Update the plugin and extensions path
         cfg.CONF.set_override('core_plugin', plugin)
+        cfg.CONF.set_override('allow_pagination', True)
+        cfg.CONF.set_override('allow_sorting', True)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
+        instances = self.plugin.return_value
+        instances._RouterPluginBase__native_pagination_support = True
+        instances._RouterPluginBase__native_sorting_support = True
         # Instantiate mock plugin and enable the 'router' extension
-        manager.QuantumManager.get_plugin().supported_extension_aliases = (
+        QuantumManager.get_plugin().supported_extension_aliases = (
             ["router"])
-
         ext_mgr = L3TestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
@@ -147,7 +151,11 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
         res = self.api.get(_get_path('routers', fmt=self.fmt))
 
         instance.get_routers.assert_called_with(mock.ANY, fields=mock.ANY,
-                                                filters=mock.ANY)
+                                                filters=mock.ANY,
+                                                sorts=mock.ANY,
+                                                limit=mock.ANY,
+                                                marker=mock.ANY,
+                                                page_reverse=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
         self.assertTrue('routers' in res)
@@ -242,6 +250,10 @@ class L3NatExtensionTestCaseXML(L3NatExtensionTestCase):
 # This plugin class is just for testing
 class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                       l3_db.L3_NAT_db_mixin):
+
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     supported_extension_aliases = ["router"]
 
     def create_network(self, context, network):
@@ -273,9 +285,12 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
-    def get_networks(self, context, filters=None, fields=None):
-        nets = super(TestL3NatPlugin, self).get_networks(context, filters,
-                                                         None)
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=[], limit=None, marker=None,
+                     page_reverse=False):
+        nets = super(TestL3NatPlugin, self).get_networks(
+            context, filters=filters, fields=fields, sorts=sorts, limit=limit,
+            marker=marker, page_reverse=page_reverse)
         for net in nets:
             self._extend_network_dict_l3(context, net)
         nets = self._filter_nets_l3(context, nets, filters)
@@ -535,6 +550,33 @@ class L3NatDBTestCase(L3NatTestCaseBase):
             query_params = 'name=router3'
             self._test_list_resources('router', [],
                                       query_params=query_params)
+
+    def test_router_list_with_sort(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_sort('router', (router3, router2, router1),
+                                      [('name', 'desc')])
+
+    def test_router_list_with_pagination(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_pagination('router',
+                                            (router1, router2, router3),
+                                            ('name', 'asc'), 2, 2)
+
+    def test_router_list_with_pagination_reverse(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_pagination_reverse('router',
+                                                    (router1, router2,
+                                                     router3),
+                                                    ('name', 'asc'), 2, 2)
 
     def test_router_update(self):
         rname1 = "yourrouter"
@@ -1248,6 +1290,74 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                       uuidutils.generate_uuid(), 'iamnotnanip')
         self.assertEqual(res.status_int, 400)
 
+    def test_floatingip_list_with_sort(self):
+        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
+                               self.subnet(cidr="11.0.0.0/24"),
+                               self.subnet(cidr="12.0.0.0/24")
+                               ) as (s1, s2, s3):
+            network_id1 = s1['subnet']['network_id']
+            network_id2 = s2['subnet']['network_id']
+            network_id3 = s3['subnet']['network_id']
+            self._set_net_external(network_id1)
+            self._set_net_external(network_id2)
+            self._set_net_external(network_id3)
+            fp1 = self._make_floatingip(self.fmt, network_id1)
+            fp2 = self._make_floatingip(self.fmt, network_id2)
+            fp3 = self._make_floatingip(self.fmt, network_id3)
+            try:
+                self._test_list_with_sort('floatingip', (fp3, fp2, fp1),
+                                          [('floating_ip_address', 'desc')])
+            finally:
+                self._delete('floatingips', fp1['floatingip']['id'])
+                self._delete('floatingips', fp2['floatingip']['id'])
+                self._delete('floatingips', fp3['floatingip']['id'])
+
+    def test_floatingip_list_with_pagination(self):
+        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
+                               self.subnet(cidr="11.0.0.0/24"),
+                               self.subnet(cidr="12.0.0.0/24")
+                               ) as (s1, s2, s3):
+            network_id1 = s1['subnet']['network_id']
+            network_id2 = s2['subnet']['network_id']
+            network_id3 = s3['subnet']['network_id']
+            self._set_net_external(network_id1)
+            self._set_net_external(network_id2)
+            self._set_net_external(network_id3)
+            fp1 = self._make_floatingip(self.fmt, network_id1)
+            fp2 = self._make_floatingip(self.fmt, network_id2)
+            fp3 = self._make_floatingip(self.fmt, network_id3)
+            try:
+                self._test_list_with_pagination(
+                    'floatingip', (fp1, fp2, fp3),
+                    ('floating_ip_address', 'asc'), 2, 2)
+            finally:
+                self._delete('floatingips', fp1['floatingip']['id'])
+                self._delete('floatingips', fp2['floatingip']['id'])
+                self._delete('floatingips', fp3['floatingip']['id'])
+
+    def test_floatingip_list_with_pagination_reverse(self):
+        with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
+                               self.subnet(cidr="11.0.0.0/24"),
+                               self.subnet(cidr="12.0.0.0/24")
+                               ) as (s1, s2, s3):
+            network_id1 = s1['subnet']['network_id']
+            network_id2 = s2['subnet']['network_id']
+            network_id3 = s3['subnet']['network_id']
+            self._set_net_external(network_id1)
+            self._set_net_external(network_id2)
+            self._set_net_external(network_id3)
+            fp1 = self._make_floatingip(self.fmt, network_id1)
+            fp2 = self._make_floatingip(self.fmt, network_id2)
+            fp3 = self._make_floatingip(self.fmt, network_id3)
+            try:
+                self._test_list_with_pagination_reverse(
+                    'floatingip', (fp1, fp2, fp3),
+                    ('floating_ip_address', 'asc'), 2, 2)
+            finally:
+                self._delete('floatingips', fp1['floatingip']['id'])
+                self._delete('floatingips', fp2['floatingip']['id'])
+                self._delete('floatingips', fp3['floatingip']['id'])
+
     def test_floatingip_delete_router_intf_with_subnet_id_returns_409(self):
         found = False
         with self.floatingip_with_assoc():
@@ -1291,20 +1401,20 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 self.assertEqual(len(body['networks']), 1)
 
     def test_get_network_succeeds_without_filter(self):
-        plugin = manager.QuantumManager.get_plugin()
+        plugin = QuantumManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)
         result = plugin.get_networks(ctx, filters=None)
         self.assertEqual(result, [])
 
     def test_network_filter_hook_admin_context(self):
-        plugin = manager.QuantumManager.get_plugin()
+        plugin = QuantumManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)
         model = models_v2.Network
         conditions = plugin._network_filter_hook(ctx, model, [])
         self.assertEqual(conditions, [])
 
     def test_network_filter_hook_nonadmin_context(self):
-        plugin = manager.QuantumManager.get_plugin()
+        plugin = QuantumManager.get_plugin()
         ctx = context.Context('edinson', 'cavani')
         model = models_v2.Network
         txt = "externalnetworks.network_id IS NOT NULL"
