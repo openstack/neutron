@@ -15,17 +15,14 @@
 import setuptools
 
 from quantum.openstack.common import setup
-
-setup.write_vcsversion('quantum/vcsversion.py')
-
-from quantum import version
+from quantum.version import version_info as version
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
-Version = version.canonical_version_string()
+Version = version.canonical_version_string(always=True)
 License = 'Apache License 2.0'
 Author = 'Netstack'
 AuthorEmail = 'netstack@lists.launchpad.net'

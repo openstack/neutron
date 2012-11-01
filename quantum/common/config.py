@@ -27,7 +27,8 @@ from paste import deploy
 from quantum.api.v2 import attributes
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
-from quantum.version import version_string
+from quantum.version import version_info as quantum_version
+
 
 LOG = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ cfg.CONF.register_opts(core_opts)
 
 def parse(args):
     cfg.CONF(args=args, project='quantum',
-             version='%%prog %s' % version_string())
+             version='%%prog %s' % quantum_version.version_string_with_vcs())
 
     # Validate that the base_mac is of the correct format
     msg = attributes._validate_regex(cfg.CONF.base_mac,
