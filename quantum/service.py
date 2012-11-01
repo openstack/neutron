@@ -15,10 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
 from quantum.common import config
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum import wsgi
 
 

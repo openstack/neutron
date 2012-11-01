@@ -18,12 +18,12 @@
 """
 Policy engine for quantum.  Largely copied from nova.
 """
-import logging
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions
 from quantum.openstack.common import cfg
 import quantum.common.utils as utils
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import policy
 
 

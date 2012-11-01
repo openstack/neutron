@@ -22,10 +22,10 @@
 """Implements iptables rules using linux utilities."""
 
 import inspect
-import logging
 import os
 
 from quantum.agent.linux import utils
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 # NOTE(vish): Iptables supports chain names of up to 28 characters,  and we

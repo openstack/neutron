@@ -19,7 +19,6 @@
 
 from abc import ABCMeta
 import imp
-import logging
 import os
 
 import routes
@@ -31,6 +30,7 @@ import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 from quantum import wsgi
 
 

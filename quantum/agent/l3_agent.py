@@ -19,7 +19,6 @@
 #
 """
 
-import logging
 import sys
 import time
 
@@ -33,6 +32,7 @@ from quantum.agent.linux import utils
 from quantum.db import l3_db
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 from quantumclient.v2_0 import client
 
 LOG = logging.getLogger(__name__)

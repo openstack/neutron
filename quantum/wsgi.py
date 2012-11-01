@@ -18,8 +18,6 @@
 """
 Utility methods for working with WSGI servers
 """
-
-import logging
 import sys
 from xml.dom import minidom
 from xml.parsers import expat
@@ -34,20 +32,9 @@ import webob.exc
 from quantum.common import exceptions as exception
 from quantum import context
 from quantum.openstack.common import jsonutils
-
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
-
-
-class WritableLogger(object):
-    """A thin wrapper that responds to `write` and logs."""
-
-    def __init__(self, logger, level=logging.DEBUG):
-        self.logger = logger
-        self.level = level
-
-    def write(self, msg):
-        self.logger.log(self.level, msg.strip("\n"))
 
 
 def run_server(application, port):
@@ -79,7 +66,7 @@ class Server(object):
         """Start a WSGI server in a new green thread."""
         logger = logging.getLogger('eventlet.wsgi.server')
         eventlet.wsgi.server(socket, application, custom_pool=self.pool,
-                             log=WritableLogger(logger))
+                             log=logging.WritableLogger(logger))
 
 
 class Middleware(object):

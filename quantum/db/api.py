@@ -17,7 +17,6 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
-import logging
 import time
 
 import sqlalchemy as sql
@@ -26,6 +25,7 @@ from sqlalchemy.exc import DisconnectionError
 from sqlalchemy.orm import sessionmaker, exc
 
 from quantum.db import model_base
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

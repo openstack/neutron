@@ -20,7 +20,6 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 # @author: Bob Kukura, Red Hat, Inc.
 
-import logging
 import os
 import sys
 
@@ -34,6 +33,7 @@ from quantum.db import l3_db
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy

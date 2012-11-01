@@ -17,12 +17,11 @@ ATTR_NOT_SPECIFIED = object()
 # Defining a constant to avoid repeating string literal in several modules
 SHARED = 'shared'
 
-import logging
 import netaddr
 import re
 
 from quantum.common import exceptions as q_exc
-
+from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

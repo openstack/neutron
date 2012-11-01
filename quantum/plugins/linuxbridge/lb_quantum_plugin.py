@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import sys
 
 from quantum.api.v2 import attributes
@@ -28,6 +27,7 @@ from quantum.db import models_v2
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import context
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy

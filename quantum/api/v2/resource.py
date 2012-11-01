@@ -16,7 +16,6 @@
 """
 Utility methods for working with WSGI servers redux
 """
-import logging
 
 import webob
 import webob.dec
@@ -25,6 +24,7 @@ import webob.exc
 from quantum.common import exceptions
 from quantum import context
 from quantum.openstack.common import jsonutils as json
+from quantum.openstack.common import log as logging
 from quantum import wsgi
 
 

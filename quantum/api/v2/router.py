@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import urlparse
 
 import routes as routes_mapper
@@ -26,6 +25,7 @@ from quantum.api.v2 import base
 from quantum.extensions import extensions
 from quantum import manager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum import wsgi
 
 

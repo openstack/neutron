@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-
 from sqlalchemy.orm import exc
 
 from quantum import context as quantum_context
 from quantum import manager
 from quantum.api.v2 import attributes
 from quantum.openstack.common import context
+from quantum.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

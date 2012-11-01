@@ -19,8 +19,6 @@
 #
 """
 
-import logging
-
 import netaddr
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -36,6 +34,8 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
+
 from quantum import policy
 
 

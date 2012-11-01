@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import datetime
-import logging
 import random
 
 import netaddr
@@ -28,6 +27,7 @@ from quantum.common import utils
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils
 from quantum import quantum_plugin_base_v2
 
