@@ -1124,35 +1124,38 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_port(self, context, port):
         p = port['port']
+        port_id = p.get('id') or utils.str_uuid()
+        network_id = p['network_id']
+        mac_address = p['mac_address']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
 
         with context.session.begin(subtransactions=True):
-            self._recycle_expired_ip_allocations(context, p['network_id'])
-            network = self._get_network(context, p["network_id"])
+            self._recycle_expired_ip_allocations(context, network_id)
+            network = self._get_network(context, network_id)
 
             # Ensure that a MAC address is defined and it is unique on the
             # network
-            if p['mac_address'] == attributes.ATTR_NOT_SPECIFIED:
-                p['mac_address'] = QuantumDbPluginV2._generate_mac(
-                    context, p["network_id"])
+            if mac_address == attributes.ATTR_NOT_SPECIFIED:
+                mac_address = QuantumDbPluginV2._generate_mac(context,
+                                                              network_id)
             else:
                 # Ensure that the mac on the network is unique
                 if not QuantumDbPluginV2._check_unique_mac(context,
-                                                           p["network_id"],
-                                                           p['mac_address']):
-                    raise q_exc.MacAddressInUse(net_id=p["network_id"],
-                                                mac=p['mac_address'])
+                                                           network_id,
+                                                           mac_address):
+                    raise q_exc.MacAddressInUse(net_id=network_id,
+                                                mac=mac_address)
 
             # Returns the IP's for the port
             ips = self._allocate_ips_for_port(context, network, port)
 
             port = models_v2.Port(tenant_id=tenant_id,
                                   name=p['name'],
-                                  id=p.get('id') or utils.str_uuid(),
-                                  network_id=p['network_id'],
-                                  mac_address=p['mac_address'],
+                                  id=port_id,
+                                  network_id=network_id,
+                                  mac_address=mac_address,
                                   admin_state_up=p['admin_state_up'],
                                   status=constants.PORT_STATUS_ACTIVE,
                                   device_id=p['device_id'],
@@ -1162,13 +1165,15 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # Update the allocated IP's
             if ips:
                 for ip in ips:
-                    LOG.debug("Allocated IP %s (%s/%s/%s)", ip['ip_address'],
-                              port['network_id'], ip['subnet_id'], port.id)
+                    ip_address = ip['ip_address']
+                    subnet_id = ip['subnet_id']
+                    LOG.debug("Allocated IP %s (%s/%s/%s)", ip_address,
+                              network_id, subnet_id, port_id)
                     allocated = models_v2.IPAllocation(
-                        network_id=port['network_id'],
-                        port_id=port.id,
-                        ip_address=ip['ip_address'],
-                        subnet_id=ip['subnet_id'],
+                        network_id=network_id,
+                        port_id=port_id,
+                        ip_address=ip_address,
+                        subnet_id=subnet_id,
                         expiration=self._default_allocation_expiration()
                     )
                     context.session.add(allocated)
