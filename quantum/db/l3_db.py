@@ -536,11 +536,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             msg = "Network %s is not a valid external network" % f_net_id
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
-        # This external port is never exposed to the tenant.
-        # it is used purely for internal system and admin use when
-        # managing floating IPs.
         try:
             with context.session.begin(subtransactions=True):
+                # This external port is never exposed to the tenant.
+                # it is used purely for internal system and admin use when
+                # managing floating IPs.
                 external_port = self.create_port(context.elevated(), {
                     'port':
                     {'tenant_id': '',  # tenant intentionally not set
@@ -554,7 +554,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 # Ensure IP addresses are allocated on external port
                 if not external_port['fixed_ips']:
                     msg = "Unable to find any IP address on external network"
-                    # remove the external port
                     raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
                 floating_fixed_ip = external_port['fixed_ips'][0]
@@ -579,7 +578,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             raise
         except Exception:
             LOG.exception("Floating IP association failed")
-            # Remove the port created for internal purposes
             raise
 
         return self._make_floatingip_dict(floatingip_db)
