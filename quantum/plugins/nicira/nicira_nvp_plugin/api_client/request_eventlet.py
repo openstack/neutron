@@ -21,10 +21,10 @@ import eventlet
 import httplib
 import json
 import logging
-import urllib
-import urlparse
 import request
 import time
+import urllib
+import urlparse
 
 import client_eventlet
 from common import _conn_str

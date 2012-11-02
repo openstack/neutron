@@ -23,9 +23,9 @@ import optparse
 import os
 import sys
 
-from quantum import service
 from quantum.common import config
 from quantum.openstack.common import cfg
+from quantum import service
 from quantum.version import version_string
 
 

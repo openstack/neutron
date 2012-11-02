@@ -31,8 +31,8 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.extensions import providernet as provider
-from quantum.openstack.common import context
 from quantum.openstack.common import cfg
+from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher

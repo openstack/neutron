@@ -15,9 +15,9 @@
 
 from sqlalchemy.orm import exc
 
+from quantum.api.v2 import attributes
 from quantum import context as quantum_context
 from quantum import manager
-from quantum.api.v2 import attributes
 from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
 

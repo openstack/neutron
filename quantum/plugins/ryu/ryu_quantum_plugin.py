@@ -25,15 +25,15 @@ from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
+from quantum.db.dhcp_rpc_base import DhcpRpcCallbackMixin
 from quantum.db import l3_db
 from quantum.db import models_v2
-from quantum.db.dhcp_rpc_base import DhcpRpcCallbackMixin
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
-from quantum.plugins.ryu import ofp_service_type
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
+from quantum.plugins.ryu import ofp_service_type
 
 LOG = logging.getLogger(__name__)
 

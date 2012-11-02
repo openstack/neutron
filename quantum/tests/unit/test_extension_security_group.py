@@ -22,9 +22,9 @@ import webob.exc
 
 from quantum.api.v2 import attributes
 from quantum.api.v2.router import APIRouter
-from quantum import context
-from quantum.common.test_lib import test_config
 from quantum.common import config
+from quantum.common.test_lib import test_config
+from quantum import context
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import securitygroups_db

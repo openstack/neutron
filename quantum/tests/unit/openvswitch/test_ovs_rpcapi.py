@@ -25,8 +25,8 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
-from quantum.plugins.openvswitch import ovs_quantum_plugin as povs
 from quantum.plugins.openvswitch.common import constants
+from quantum.plugins.openvswitch import ovs_quantum_plugin as povs
 
 
 class rpcApiTestCase(unittest2.TestCase):

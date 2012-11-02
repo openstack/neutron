@@ -19,8 +19,8 @@ from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.extensions import extensions
 from quantum.manager import QuantumManager
-from quantum import quota
 from quantum.openstack.common import cfg
+from quantum import quota
 
 
 quota_packet_filter_opts = [

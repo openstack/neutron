@@ -17,17 +17,17 @@
 
 import logging
 
-from quantum import context
 from quantum.common import topics
+from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
-from quantum.plugins.nec import ofc_manager
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import nec_plugin_base
+from quantum.plugins.nec import ofc_manager
 
 LOG = logging.getLogger(__name__)
 

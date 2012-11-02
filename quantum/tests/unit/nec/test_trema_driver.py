@@ -19,9 +19,9 @@ import mox
 import unittest
 
 from quantum.common import utils
-from quantum.plugins.nec import drivers
-from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec.common import ofc_client
+from quantum.plugins.nec.db import models as nmodels
+from quantum.plugins.nec import drivers
 
 
 class TestConfig(object):

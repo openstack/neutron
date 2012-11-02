@@ -25,6 +25,7 @@ import unittest2 as unittest
 
 from quantum.common import config
 from quantum.common.exceptions import NotImplementedError
+from quantum import context
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
@@ -33,7 +34,6 @@ from quantum.openstack.common import cfg
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
 from quantum.plugins.metaplugin.proxy_quantum_plugin import ProxyPluginV2
 from quantum.tests.unit.metaplugin import fake_plugin
-from quantum import context
 
 CONF_FILE = ""
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))

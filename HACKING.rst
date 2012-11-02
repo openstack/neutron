@@ -30,6 +30,19 @@ Imports
 -------
 - Do not make relative imports
 - Order your imports by the full module path
+
+Example::
+
+  The following imports,
+
+  from quantum.api import networks
+  from quantum import wsgi
+
+  are considered equivalent for ordering purposes to
+
+  import quantum.api.networks
+  import quantum.wsgi
+
 - Organize your imports according to the following template
 
 Example::

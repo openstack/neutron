@@ -19,8 +19,8 @@
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
-from quantum.db import models_v2
 import quantum.db.api as db
+from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.plugins.openvswitch.common import constants

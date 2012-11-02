@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from quantum.common.test_lib import test_config
+from quantum.tests.unit.metaplugin.test_metaplugin import setup_metaplugin_conf
 from quantum.tests.unit import test_db_plugin as test_plugin
 from quantum.tests.unit import test_l3_plugin
-from quantum.tests.unit.metaplugin.test_metaplugin import setup_metaplugin_conf
 
 
 class MetaPluginV2DBTestCase(test_plugin.QuantumDbPluginV2TestCase):

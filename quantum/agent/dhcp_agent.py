@@ -24,11 +24,11 @@ import uuid
 import eventlet
 import netaddr
 
-from quantum.agent import rpc as agent_rpc
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
+from quantum.agent import rpc as agent_rpc
 from quantum.api.v2 import attributes
 from quantum.common import exceptions
 from quantum.common import topics

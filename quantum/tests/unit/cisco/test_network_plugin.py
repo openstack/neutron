@@ -25,11 +25,11 @@ from quantum.db import api as db
 from quantum.db import l3_db
 from quantum.extensions import _quotav2_model as quotav2_model
 from quantum.manager import QuantumManager
+from quantum.openstack.common import cfg
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import network_db_v2
 from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.openvswitch import ovs_models_v2
-from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
 from quantum.wsgi import JSONDeserializer
 

@@ -22,9 +22,9 @@
 # @author: Ryota MIBU
 
 import logging
+import socket
 import sys
 import time
-import socket
 
 from quantum.agent.linux import ovs_lib
 from quantum.common import config as logging_config

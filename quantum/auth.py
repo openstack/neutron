@@ -18,9 +18,9 @@ import webob.dec
 import webob.exc
 
 from quantum import context
-from quantum import wsgi
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
+from quantum import wsgi
 
 LOG = logging.getLogger(__name__)
 

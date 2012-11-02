@@ -20,10 +20,10 @@ import unittest
 import mock
 
 from quantum.agent.common import config
+from quantum.agent.dhcp_agent import DeviceManager
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
-from quantum.agent.dhcp_agent import DeviceManager
 from quantum.extensions.flavor import (FLAVOR_NETWORK)
 from quantum.openstack.common import cfg
 

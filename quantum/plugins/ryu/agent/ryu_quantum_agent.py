@@ -24,8 +24,8 @@ import logging as LOG
 import sys
 import time
 
-from ryu.app import rest_nw_id
 from ryu.app.client import OFPClient
+from ryu.app import rest_nw_id
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ovs_lib

@@ -15,11 +15,11 @@
 #    under the License.
 # @author: Ryota MIBU
 
-from quantum.plugins.nec import drivers
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
+from quantum.plugins.nec import drivers
 
 
 class OFCManager(object):

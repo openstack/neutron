@@ -26,8 +26,8 @@ import logging
 import unittest
 
 import mock
-import webtest
 from webob import exc
+import webtest
 
 from quantum.api.v2 import attributes
 from quantum.common import config
@@ -43,8 +43,8 @@ from quantum.extensions import l3
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_api_v2
-from quantum.tests.unit import test_extensions
 from quantum.tests.unit import test_db_plugin
+from quantum.tests.unit import test_extensions
 
 LOG = logging.getLogger(__name__)
 

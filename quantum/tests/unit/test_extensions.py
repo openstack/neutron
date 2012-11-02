@@ -25,6 +25,7 @@ from webtest import TestApp
 
 from quantum.common import config
 from quantum.common import exceptions
+from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
 from quantum.extensions import extensions
 from quantum.extensions.extensions import (
     ExtensionManager,
@@ -32,7 +33,6 @@ from quantum.extensions.extensions import (
     PluginAwareExtensionManager,
 )
 from quantum.openstack.common import jsonutils
-from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
 from quantum.tests.unit import BaseTest
 from quantum.tests.unit.extension_stubs import (
     ExtensionExpectingPluginInterface,

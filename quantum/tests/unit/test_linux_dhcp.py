@@ -22,8 +22,8 @@ import unittest2 as unittest
 
 import mock
 
-from quantum.agent.linux import dhcp
 from quantum.agent.common import config
+from quantum.agent.linux import dhcp
 from quantum.openstack.common import cfg
 from quantum.openstack.common import jsonutils
 

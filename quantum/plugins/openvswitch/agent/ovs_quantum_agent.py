@@ -25,12 +25,12 @@ import time
 
 import eventlet
 
-from quantum.agent import rpc as agent_rpc
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
-from quantum.common import constants as q_const
+from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
+from quantum.common import constants as q_const
 from quantum.common import topics
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context

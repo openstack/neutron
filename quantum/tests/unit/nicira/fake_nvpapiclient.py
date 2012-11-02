@@ -15,8 +15,8 @@
 
 import json
 import logging
-import uuid
 import urlparse
+import uuid
 
 LOG = logging.getLogger("fake_nvpapiclient")
 LOG.setLevel(logging.DEBUG)

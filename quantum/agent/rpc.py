@@ -18,10 +18,10 @@ import eventlet
 from quantum.common import topics
 
 from quantum.openstack.common import log as logging
-from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import proxy
 from quantum.openstack.common.notifier import api
 from quantum.openstack.common.notifier import rabbit_notifier
+from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import proxy
 
 
 LOG = logging.getLogger(__name__)

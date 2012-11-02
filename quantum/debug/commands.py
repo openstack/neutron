@@ -20,8 +20,8 @@ import logging
 from cliff import lister
 
 from quantumclient.common import utils
-from quantumclient.quantum.v2_0 import QuantumCommand
 from quantumclient.quantum.v2_0.port import _format_fixed_ips
+from quantumclient.quantum.v2_0 import QuantumCommand
 
 
 class ProbeCommand(QuantumCommand):

@@ -17,8 +17,8 @@
 #
 # @author: Juliano Martinez, Locaweb.
 
-import os
 import inspect
+import os
 import unittest
 
 import mox
