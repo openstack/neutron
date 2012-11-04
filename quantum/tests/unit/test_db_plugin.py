@@ -715,10 +715,8 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             req = self.new_list_request('ports', 'json')
             port_list = self.deserialize('json', req.get_response(self.api))
-            self.assertEqual(len(port_list['ports']), 2)
-            ids = [p['id'] for p in port_list['ports']]
-            self.assertTrue(port1['port']['id'] in ids)
-            self.assertTrue(port2['port']['id'] in ids)
+            self.assertItemsEqual([p['id'] for p in port_list['ports']],
+                                  [port1['port']['id'], port2['port']['id']])
 
     def test_list_ports_filtered_by_fixed_ip(self):
         # for this test we need to enable overlapping ips
@@ -752,16 +750,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
             def _list_and_test_ports(expected_len, ports, tenant_id=None):
                 set_context = tenant_id is not None
-                port_res = self._list_ports('json',
-                                            200,
-                                            network['network']['id'],
-                                            tenant_id=tenant_id,
-                                            set_context=set_context)
-                port_list = self.deserialize('json', port_res)
-                self.assertEqual(len(port_list['ports']), expected_len)
-                ids = [p['id'] for p in port_list['ports']]
-                for port in ports:
-                    self.assertIn(port['port']['id'], ids)
+                res = self._list_ports('json',
+                                       200,
+                                       network['network']['id'],
+                                       tenant_id=tenant_id,
+                                       set_context=set_context)
+                port_list = self.deserialize('json', res)
+                self.assertItemsEqual([p['id'] for p in port_list['ports']],
+                                      [p['port']['id'] for p in ports])
 
             # Admin request - must return both ports
             _list_and_test_ports(2, [port1, port2])
@@ -1640,15 +1636,13 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             self._validate_behavior_on_bulk_failure(res, 'networks')
 
     def test_list_networks(self):
-        with self.network(name='net1') as net1:
-            with self.network(name='net2') as net2:
+        with self.network() as net1:
+            with self.network() as net2:
                 req = self.new_list_request('networks')
                 res = self.deserialize('json', req.get_response(self.api))
-
-                self.assertEquals(res['networks'][0]['name'],
-                                  net1['network']['name'])
-                self.assertEquals(res['networks'][1]['name'],
-                                  net2['network']['name'])
+                self.assertItemsEqual([n['id'] for n in res['networks']],
+                                      [net1['network']['id'],
+                                       net2['network']['id']])
 
     def test_list_networks_with_parameters(self):
         with self.network(name='net1', admin_status_up=False) as net1:
@@ -2300,18 +2294,15 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         #                or just drop 2.6 support ;)
         with self.network() as network:
             with self.subnet(network=network, gateway_ip='10.0.0.1',
-                             cidr='10.0.0.0/24') as subnet:
+                             cidr='10.0.0.0/24') as subnet1:
                 with self.subnet(network=network, gateway_ip='10.0.1.1',
                                  cidr='10.0.1.0/24') as subnet2:
                     req = self.new_list_request('subnets')
                     res = self.deserialize('json',
                                            req.get_response(self.api))
-                    res1 = res['subnets'][0]
-                    res2 = res['subnets'][1]
-                    self.assertEquals(res1['cidr'],
-                                      subnet['subnet']['cidr'])
-                    self.assertEquals(res2['cidr'],
-                                      subnet2['subnet']['cidr'])
+                    self.assertItemsEqual([s['id'] for s in res['subnets']],
+                                          [subnet1['subnet']['id'],
+                                           subnet2['subnet']['id']])
 
     def test_list_subnets_shared(self):
         with self.network(shared=True) as network:
