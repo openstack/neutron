@@ -31,6 +31,7 @@ from webob import exc
 
 from quantum.api.v2 import attributes
 from quantum.common import config
+from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
 from quantum.common import utils
 from quantum import context
@@ -803,6 +804,44 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         self._show('floatingips', fip['floatingip']['id'],
                    expected_code=exc.HTTPNotFound.code)
+
+    def test_floatingip_with_assoc_fails(self):
+        fmt = 'json'
+        with self.subnet() as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.port() as private_port:
+                with self.router() as r:
+                    sid = private_port['port']['fixed_ips'][0]['subnet_id']
+                    private_sub = {'subnet': {'id': sid}}
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action('add', r['router']['id'],
+                                                  private_sub['subnet']['id'],
+                                                  None)
+                    PLUGIN_CLASS = 'quantum.db.l3_db.L3_NAT_db_mixin'
+                    METHOD = PLUGIN_CLASS + '._update_fip_assoc'
+                    with mock.patch(METHOD) as pl:
+                        pl.side_effect = q_exc.BadRequest(
+                            resource='floatingip',
+                            msg='fake_error')
+                        res = self._create_floatingip(
+                            fmt,
+                            public_sub['subnet']['network_id'],
+                            port_id=private_port['port']['id'])
+                        self.assertEqual(res.status_int, 400)
+
+                    for p in self._list('ports')['ports']:
+                        if p['device_owner'] == 'network:floatingip':
+                            self.fail('garbage port is not deleted')
+
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  private_sub['subnet']['id'],
+                                                  None)
 
     def test_floatingip_update(self):
         with self.port() as p:
