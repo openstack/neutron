@@ -517,7 +517,7 @@ class ExtensionManager(object):
             return
 
         alias = ext.get_alias()
-        LOG.warn(_('Loaded extension: %s'), alias)
+        LOG.info(_('Loaded extension: %s'), alias)
 
         if alias in self.extensions:
             raise exceptions.Error("Found duplicate extension: %s" %
