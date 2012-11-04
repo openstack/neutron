@@ -17,10 +17,11 @@
 #    under the License.
 
 import eventlet
+eventlet.monkey_patch(os=False)
+
 import os
 import sys
 sys.path.insert(0, os.getcwd())
 from quantum.server import main as server
 
-eventlet.monkey_patch()
 server()
