@@ -255,11 +255,12 @@ class OVSQuantumAgent(object):
                                      actions="set_tunnel:%s,normal" %
                                      segmentation_id)
                 # inbound bcast/mcast
-                self.tun_br.add_flow(priority=3, tun_id=segmentation_id,
-                                     dl_dst=
-                                     "01:00:00:00:00:00/01:00:00:00:00:00",
-                                     actions="mod_vlan_vid:%s,output:%s" %
-                                     (lvid, self.patch_int_ofport))
+                self.tun_br.add_flow(
+                    priority=3,
+                    tun_id=segmentation_id,
+                    dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
+                    actions="mod_vlan_vid:%s,output:%s" %
+                    (lvid, self.patch_int_ofport))
             else:
                 LOG.error("Cannot provision GRE network for net-id=%s "
                           "- tunneling disabled", net_uuid)
@@ -272,11 +273,11 @@ class OVSQuantumAgent(object):
                             dl_vlan=lvid,
                             actions="strip_vlan,normal")
                 # inbound
-                self.int_br.add_flow(priority=3,
-                                     in_port=
-                                     self.int_ofports[physical_network],
-                                     dl_vlan=0xffff,
-                                     actions="mod_vlan_vid:%s,normal" % lvid)
+                self.int_br.add_flow(
+                    priority=3,
+                    in_port=self.int_ofports[physical_network],
+                    dl_vlan=0xffff,
+                    actions="mod_vlan_vid:%s,normal" % lvid)
             else:
                 LOG.error("Cannot provision flat network for net-id=%s "
                           "- no bridge for physical_network %s", net_uuid,
