@@ -16,7 +16,6 @@
 #    under the License.
 
 import os
-import re
 import socket
 import sys
 import uuid
@@ -29,7 +28,6 @@ from quantum.agent.linux import dhcp
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent import rpc as agent_rpc
-from quantum.api.v2 import attributes
 from quantum.common import exceptions
 from quantum.common import topics
 from quantum.openstack.common import cfg
@@ -38,6 +36,7 @@ from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import proxy
+from quantum.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qdhcp-'
@@ -500,15 +499,6 @@ class DhcpLeaseRelay(object):
         else:
             os.makedirs(dirname, 0755)
 
-    def _validate_field(self, value, regex):
-        """Validate value against a regular expression and return if valid."""
-        match = re.match(regex, value)
-
-        if match:
-            return value
-        raise ValueError(_("Value %s does not match regex: %s") %
-                         (value, regex))
-
     def _handler(self, client_sock, client_addr):
         """Handle incoming lease relay stream connection.
 
@@ -521,8 +511,10 @@ class DhcpLeaseRelay(object):
             data = jsonutils.loads(msg)
             client_sock.close()
 
-            network_id = self._validate_field(data['network_id'],
-                                              attributes.UUID_PATTERN)
+            network_id = data['network_id']
+            if not uuidutils.is_uuid_like(network_id):
+                raise ValueError(_("Network ID %s is not a valid UUID") %
+                                 (network_id))
             ip_address = str(netaddr.IPAddress(data['ip_address']))
             lease_remaining = int(data['lease_remaining'])
             self.callback(network_id, ip_address, lease_remaining)
