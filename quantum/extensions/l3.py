@@ -67,7 +67,7 @@ class ExternalNetworkInUse(qexception.InUse):
 def _validate_uuid_or_none(data, valid_values=None):
     if data is None:
         return None
-    return attr._validate_regex(data, attr.UUID_PATTERN)
+    return attr._validate_uuid(data)
 
 attr.validators['type:uuid_or_none'] = _validate_uuid_or_none
 
@@ -75,7 +75,7 @@ attr.validators['type:uuid_or_none'] = _validate_uuid_or_none
 RESOURCE_ATTRIBUTE_MAP = {
     'routers': {
         'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:regex': attr.UUID_PATTERN},
+               'validate': {'type:uuid': None},
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'is_visible': True, 'default': ''},
@@ -98,7 +98,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'floating_ip_address': {'allow_post': False, 'allow_put': False,
                                 'is_visible': True},
         'floating_network_id': {'allow_post': True, 'allow_put': False,
-                                'validate': {'type:regex': attr.UUID_PATTERN},
+                                'validate': {'type:uuid': None},
                                 'is_visible': True},
         'router_id': {'allow_post': False, 'allow_put': False,
                       'is_visible': True, 'default': None},
