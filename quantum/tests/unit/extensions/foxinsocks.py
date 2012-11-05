@@ -17,7 +17,7 @@
 
 from abc import abstractmethod
 
-from quantum.extensions import extensions
+from quantum.api import extensions
 from quantum.openstack.common import jsonutils
 from quantum import wsgi
 

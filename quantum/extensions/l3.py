@@ -21,10 +21,10 @@
 
 from abc import abstractmethod
 
+from quantum.api import extensions
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
 from quantum.common import exceptions as qexception
-from quantum.extensions import extensions
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum import quota

@@ -27,18 +27,18 @@ import webob
 from webtest import TestApp
 
 from quantum import api as server
+from quantum.api import extensions
+from quantum.api.extensions import (
+    ExtensionMiddleware,
+    PluginAwareExtensionManager,
+)
 from quantum.common import config
 from quantum.extensions import (
     credential,
-    extensions,
     multiport,
     novatenant,
     portprofile,
     qos,
-)
-from quantum.extensions.extensions import (
-    ExtensionMiddleware,
-    PluginAwareExtensionManager,
 )
 from quantum.manager import QuantumManager
 from quantum.openstack.common import jsonutils

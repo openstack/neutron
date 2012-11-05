@@ -22,6 +22,7 @@ import webtest
 
 from webob import exc
 
+from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.api.v2 import resource as wsgi_resource
@@ -29,7 +30,6 @@ from quantum.api.v2 import router
 from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum import context
-from quantum.extensions.extensions import PluginAwareExtensionManager
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifer_api

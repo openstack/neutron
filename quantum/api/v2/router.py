@@ -20,9 +20,9 @@ import webob
 import webob.dec
 import webob.exc
 
+from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
-from quantum.extensions import extensions
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging

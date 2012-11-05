@@ -3,11 +3,11 @@ import webtest
 
 import mock
 
+from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum import context
 from quantum.db import api as db
-from quantum.extensions import extensions
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.db import l2network_db_v2

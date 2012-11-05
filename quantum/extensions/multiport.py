@@ -21,8 +21,8 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
+from quantum.api import extensions
 from quantum.api.views import ports as port_view
-from quantum.extensions import extensions
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_faults as faults
 from quantum import wsgi

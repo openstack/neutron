@@ -17,11 +17,11 @@
 
 import webob
 
+from quantum.api import extensions
 from quantum.api.v2 import base
 from quantum.common import exceptions
 from quantum.extensions import _quotav2_driver as quotav2_driver
 from quantum.extensions import _quotav2_model as quotav2_model
-from quantum.extensions import extensions
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum import quota
