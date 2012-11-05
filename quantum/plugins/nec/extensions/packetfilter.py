@@ -38,7 +38,7 @@ PACKET_FILTER_NUMBER_REGEX = "(?i)^(0x[0-9a-fA-F]+|[0-9]+)$"
 PACKET_FILTER_PROTOCOL_REGEX = "(?i)^(icmp|tcp|udp|arp|0x[0-9a-fA-F]+|[0-9]+)$"
 PACKET_FILTER_ATTR_MAP = {
     'id': {'allow_post': False, 'allow_put': False,
-           'validate': {'type:regex': attributes.UUID_PATTERN},
+           'validate': {'type:uuid': None},
            'is_visible': True},
     'name': {'allow_post': True, 'allow_put': True, 'default': '',
              'is_visible': True},
@@ -46,7 +46,7 @@ PACKET_FILTER_ATTR_MAP = {
                   'required_by_policy': True,
                   'is_visible': True},
     'network_id': {'allow_post': True, 'allow_put': False,
-                   'validate': {'type:regex': attributes.UUID_PATTERN},
+                   'validate': {'type:uuid': None},
                    'is_visible': True},
     'admin_state_up': {'allow_post': True, 'allow_put': True,
                        'default': True,
@@ -63,7 +63,7 @@ PACKET_FILTER_ATTR_MAP = {
                  'is_visible': True},
     'in_port': {'allow_post': True, 'allow_put': True,
                 'default': attributes.ATTR_NOT_SPECIFIED,
-                'validate': {'type:regex': attributes.UUID_PATTERN},
+                'validate': {'type:uuid': None},
                 'is_visible': True},
     'src_mac': {'allow_post': True, 'allow_put': True,
                 'default': attributes.ATTR_NOT_SPECIFIED,
