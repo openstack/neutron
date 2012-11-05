@@ -24,7 +24,6 @@ from xml.parsers import expat
 
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
-from lxml import etree
 import routes.middleware
 import webob.dec
 import webob.exc
@@ -309,11 +308,6 @@ class XMLDictSerializer(DictSerializer):
                 link_node.setAttribute('type', link['type'])
             link_nodes.append(link_node)
         return link_nodes
-
-    def _to_xml(self, root):
-        """Convert the xml object to an xml string."""
-        # we use lxml here instead of xml.minidom for performance reasons
-        return etree.tostring(root, encoding='UTF-8', xml_declaration=True)
 
 
 class ResponseHeaderSerializer(ActionDispatcher):
