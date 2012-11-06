@@ -19,7 +19,7 @@ from quantum.common import topics
 
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api
-from quantum.openstack.common.notifier import rabbit_notifier
+from quantum.openstack.common.notifier import rpc_notifier
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
 
@@ -84,7 +84,7 @@ class NotificationDispatcher(object):
         # being buffered in the process.
         self.queue = eventlet.queue.Queue(1)
         self.connection = rpc.create_connection(new=True)
-        topic = '%s.%s' % (rabbit_notifier.CONF.notification_topics[0],
+        topic = '%s.%s' % (rpc_notifier.CONF.notification_topics[0],
                            api.CONF.default_notification_level.lower())
         self.connection.declare_topic_consumer(topic=topic,
                                                callback=self._add_to_queue)

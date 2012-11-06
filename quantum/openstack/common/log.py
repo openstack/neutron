@@ -76,6 +76,9 @@ log_opts = [
     cfg.BoolOpt('publish_errors',
                 default=False,
                 help='publish error events'),
+    cfg.BoolOpt('fatal_deprecations',
+                default=False,
+                help='make deprecations fatal'),
 
     # NOTE(mikal): there are two options here because sometimes we are handed
     # a full instance (and could include more information), and other times we
@@ -170,6 +173,14 @@ class ContextAdapter(logging.LoggerAdapter):
     def audit(self, msg, *args, **kwargs):
         self.log(logging.AUDIT, msg, *args, **kwargs)
 
+    def deprecated(self, msg, *args, **kwargs):
+        stdmsg = _("Deprecated Config: %s") % msg
+        if CONF.fatal_deprecations:
+            self.critical(stdmsg, *args, **kwargs)
+            raise DeprecatedConfig(msg=stdmsg)
+        else:
+            self.warn(stdmsg, *args, **kwargs)
+
     def process(self, msg, kwargs):
         if 'extra' not in kwargs:
             kwargs['extra'] = {}
@@ -246,7 +257,7 @@ class JSONFormatter(logging.Formatter):
 
 class PublishErrorsHandler(logging.Handler):
     def emit(self, record):
-        if ('quantum.openstack.common.notifier.log_notifier' in
+        if ('openstack.common.notifier.log_notifier' in
             CONF.notification_driver):
             return
         notifier.api.notify(None, 'error.publisher',
@@ -450,3 +461,10 @@ class ColorHandler(logging.StreamHandler):
     def format(self, record):
         record.color = self.LEVEL_COLORS[record.levelno]
         return logging.StreamHandler.format(self, record)
+
+
+class DeprecatedConfig(Exception):
+    message = _("Fatal call to deprecated config: %(msg)s")
+
+    def __init__(self, msg):
+        super(Exception, self).__init__(self.message % dict(msg=msg))
