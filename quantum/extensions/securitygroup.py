@@ -158,7 +158,7 @@ attr.validators['type:external_id_and_mode'] = _validate_external_id_and_mode
 RESOURCE_ATTRIBUTE_MAP = {
     'security_groups': {
         'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:regex': attr.UUID_PATTERN},
+               'validate': {'type:uuid': None},
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': False,
                  'is_visible': True, 'default': '',
@@ -174,7 +174,7 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
     'security_group_rules': {
         'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:regex': attr.UUID_PATTERN},
+               'validate': {'type:uuid': None},
                'is_visible': True},
         # external_id can be used to be backwards compatible with nova
         'external_id': {'allow_post': True, 'allow_put': False,
