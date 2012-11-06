@@ -859,16 +859,6 @@ class TestDhcpLeaseRelay(unittest.TestCase):
                 exists.assert_called_once_with(
                     cfg.CONF.dhcp_lease_relay_socket)
 
-    def test_validate_field_valid(self):
-        relay = dhcp_agent.DhcpLeaseRelay(None)
-        retval = relay._validate_field('1b', '\d[a-f]')
-        self.assertEqual(retval, '1b')
-
-    def test_validate_field_invalid(self):
-        relay = dhcp_agent.DhcpLeaseRelay(None)
-        with self.assertRaises(ValueError):
-            retval = relay._validate_field('zz', '\d[a-f]')
-
     def test_handler_valid_data(self):
         network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         ip_address = '192.168.1.9'
@@ -903,8 +893,9 @@ class TestDhcpLeaseRelay(unittest.TestCase):
 
         relay = dhcp_agent.DhcpLeaseRelay(handler)
 
-        with mock.patch.object(relay, '_validate_field') as validate:
-            validate.side_effect = ValueError
+        with mock.patch('quantum.openstack.common.'
+                        'uuidutils.is_uuid_like') as validate:
+            validate.return_value = False
 
             with mock.patch.object(dhcp_agent.LOG, 'warn') as log:
 
