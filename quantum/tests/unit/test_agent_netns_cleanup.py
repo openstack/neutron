@@ -6,8 +6,9 @@ from quantum.agent import netns_cleanup_util as util
 
 class TestNetnsCleanup(unittest.TestCase):
     def test_setup_conf(self):
-        conf = util.setup_conf()
-        self.assertFalse(conf.force)
+        with mock.patch('quantum.common.config.setup_logging'):
+            conf = util.setup_conf()
+            self.assertFalse(conf.force)
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()

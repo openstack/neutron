@@ -305,9 +305,9 @@ class TestBasicRouterOperations(unittest.TestCase):
         agent_mock_p = mock.patch('quantum.agent.l3_agent.L3NATAgent')
         agent_mock = agent_mock_p.start()
         agent_mock.daemon_loop.return_value = None
-
-        with mock.patch('quantum.agent.l3_agent.sys') as mock_sys:
-            mock_sys.argv = []
-            l3_agent.main()
+        with mock.patch('quantum.agent.common.config.setup_logging'):
+            with mock.patch('quantum.agent.l3_agent.sys') as mock_sys:
+                mock_sys.argv = []
+                l3_agent.main()
 
         agent_mock_p.stop()
