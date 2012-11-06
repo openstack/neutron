@@ -128,8 +128,8 @@ def reserve_specific_network(session, physical_network, vlan_id):
                      one())
             if state.allocated:
                 if vlan_id == constants.FLAT_VLAN_ID:
-                    raise q_exc.FlatNetworkInUse(physical_network=
-                                                 physical_network)
+                    raise q_exc.FlatNetworkInUse(
+                        physical_network=physical_network)
                 else:
                     raise q_exc.VlanIdInUse(vlan_id=vlan_id,
                                             physical_network=physical_network)
