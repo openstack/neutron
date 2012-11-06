@@ -33,7 +33,7 @@ def is_attr_set(attribute):
 
 
 def _validate_boolean(data, valid_values=None):
-    if data in [True, False]:
+    if isinstance(data, bool):
         return
     else:
         msg = _("'%s' is not boolean") % data

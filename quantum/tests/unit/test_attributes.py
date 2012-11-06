@@ -23,6 +23,46 @@ from quantum.common import exceptions as q_exc
 
 class TestAttributes(unittest2.TestCase):
 
+    def test_booleans(self):
+        msg = attributes._validate_boolean(True)
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_boolean(False)
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_boolean('True')
+        self.assertEquals(msg, "'True' is not boolean")
+
+        msg = attributes._validate_boolean('true')
+        self.assertEquals(msg, "'true' is not boolean")
+
+        msg = attributes._validate_boolean('False')
+        self.assertEquals(msg, "'False' is not boolean")
+
+        msg = attributes._validate_boolean('false')
+        self.assertEquals(msg, "'false' is not boolean")
+
+        msg = attributes._validate_boolean('0')
+        self.assertEquals(msg, "'0' is not boolean")
+
+        msg = attributes._validate_boolean('1')
+        self.assertEquals(msg, "'1' is not boolean")
+
+        msg = attributes._validate_boolean('7')
+        self.assertEquals(msg, "'7' is not boolean")
+
+        msg = attributes._validate_boolean(0)
+        self.assertEquals(msg, "'0' is not boolean")
+
+        msg = attributes._validate_boolean(1)
+        self.assertEquals(msg, "'1' is not boolean")
+
+        msg = attributes._validate_boolean(7)
+        self.assertEquals(msg, "'7' is not boolean")
+
+        msg = attributes._validate_boolean(None)
+        self.assertEquals(msg, "'None' is not boolean")
+
     def test_strings(self):
         msg = attributes._validate_string(None, None)
         self.assertEquals(msg, "'None' is not a valid string")
