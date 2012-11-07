@@ -17,6 +17,7 @@
 import os
 import subprocess
 
+import mock
 import unittest2 as unittest
 
 from quantum.rootwrap import filters
@@ -33,6 +34,9 @@ class RootwrapTestCase(unittest.TestCase):
             filters.RegExpFilter("/bin/cat", "root", 'cat', '/[a-z]+'),
             filters.CommandFilter("/nonexistant/cat", "root"),
             filters.CommandFilter("/bin/cat", "root")]  # Keep this one last
+
+    def tearDown(self):
+        super(RootwrapTestCase, self).tearDown()
 
     def test_RegExpFilter_match(self):
         usercmd = ["ls", "/root"]
@@ -110,6 +114,16 @@ class RootwrapTestCase(unittest.TestCase):
         # Providing something that is not a pid should be False
         usercmd = ['kill', 'notapid']
         self.assertFalse(f.match(usercmd))
+
+    def test_KillFilter_deleted_exe(self):
+        """Makes sure deleted exe's are killed correctly"""
+        # See bug #1073768.
+        with mock.patch('os.readlink') as mock_readlink:
+            mock_readlink.return_value = '/bin/commandddddd (deleted)'
+            f = filters.KillFilter("root", "/bin/commandddddd")
+            usercmd = ['kill', 1234]
+            self.assertTrue(f.match(usercmd))
+            mock_readlink.assert_called_once_with("/proc/1234/exe")
 
     def test_ReadFileFilter(self):
         goodfn = '/good/file.name'
