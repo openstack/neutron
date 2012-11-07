@@ -486,6 +486,30 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             return True
         return False
 
+    @staticmethod
+    def _check_ip_in_allocation_pool(context, subnet_id, gateway_ip,
+                                     ip_address):
+        """Validate IP in allocation pool.
+
+        Validates that the IP address is either the default gateway or
+        in the allocation pools of the subnet.
+        """
+        # Check if the IP is the gateway
+        if ip_address == gateway_ip:
+            return True
+
+        # Check if the requested IP is in a defined allocation pool
+        pool_qry = context.session.query(models_v2.IPAllocationPool)
+        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id).all()
+        ip = netaddr.IPAddress(ip_address)
+        for allocation_pool in allocation_pools:
+            allocation_pool_range = netaddr.IPRange(
+                allocation_pool['first_ip'],
+                allocation_pool['last_ip'])
+            if ip in allocation_pool_range:
+                return True
+        return False
+
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips):
         """Test fixed IPs for port.
 
@@ -1215,27 +1239,31 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         allocated_qry = context.session.query(models_v2.IPAllocation)
         # recycle all of the IP's
-        # NOTE(garyk) this may be have to be addressed differently when
-        # working with a DHCP server.
         allocated = allocated_qry.filter_by(port_id=id).all()
         if allocated:
             for a in allocated:
                 subnet = self._get_subnet(context, a['subnet_id'])
-                if a['ip_address'] == subnet['gateway_ip']:
-                    # Gateway address will not be recycled, but we do
-                    # need to delete the allocation from the DB
+                # Check if IP was allocated from allocation pool
+                if QuantumDbPluginV2._check_ip_in_allocation_pool(
+                    context, a['subnet_id'], subnet['gateway_ip'],
+                    a['ip_address']):
+                    QuantumDbPluginV2._hold_ip(context,
+                                               a['network_id'],
+                                               a['subnet_id'],
+                                               id,
+                                               a['ip_address'])
+                else:
+                    # IPs out of allocation pool will not be recycled, but
+                    # we do need to delete the allocation from the DB
                     QuantumDbPluginV2._delete_ip_allocation(
                         context, a['network_id'],
                         a['subnet_id'], a['ip_address'])
-                    LOG.debug("Gateway address (%s/%s) is not recycled",
-                              a['ip_address'], a['subnet_id'])
-                    continue
+                    msg_dict = dict(address=a['ip_address'],
+                                    subnet_id=a['subnet_id'])
+                    msg = _("%(address)s (%(subnet_id)s) is not "
+                            "recycled") % msg_dict
+                    LOG.debug(msg)
 
-                QuantumDbPluginV2._hold_ip(context,
-                                           a['network_id'],
-                                           a['subnet_id'],
-                                           id,
-                                           a['ip_address'])
         context.session.delete(port)
 
     def get_port(self, context, id, fields=None):
