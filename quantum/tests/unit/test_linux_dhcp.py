@@ -230,6 +230,14 @@ class TestDhcpLocalProcess(TestBase):
             self.execute.assert_called_once_with(['cat', '/proc/4/cmdline'],
                                                  'sudo')
 
+    def test_active_none(self):
+        dummy_cmd_line = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.execute.return_value = (dummy_cmd_line, '')
+        with mock.patch.object(LocalChild, 'pid') as pid:
+            pid.__get__ = mock.Mock(return_value=None)
+            lp = LocalChild(self.conf, FakeV4Network())
+            self.assertFalse(lp.active)
+
     def test_active_cmd_mismatch(self):
         dummy_cmd_line = 'bbbbbbbb-bbbb-bbbb-aaaa-aaaaaaaaaaaa'
         self.execute.return_value = (dummy_cmd_line, '')

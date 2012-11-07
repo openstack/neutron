@@ -167,6 +167,9 @@ class DhcpLocalProcess(DhcpBase):
     @property
     def active(self):
         pid = self.pid
+        if pid is None:
+            return False
+
         cmd = ['cat', '/proc/%s/cmdline' % pid]
         try:
             return self.network.id in utils.execute(cmd, self.root_helper)
