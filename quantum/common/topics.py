@@ -16,6 +16,7 @@
 NETWORK = 'network'
 SUBNET = 'subnet'
 PORT = 'port'
+SECURITY_GROUP = 'security_group'
 
 CREATE = 'create'
 DELETE = 'delete'

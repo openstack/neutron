@@ -26,5 +26,10 @@ PORT_STATUS_ERROR = 'ERROR'
 DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
 DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
 DEVICE_OWNER_FLOATINGIP = "network:floatingip"
+DEVICE_OWNER_DHCP = "network:dhcp"
+
 FLOATINGIP_KEY = '_floatingips'
 INTERFACE_KEY = '_interfaces'
+
+IPv4 = 'IPv4'
+IPv6 = 'IPv6'

@@ -21,14 +21,15 @@ from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin as test_plugin
 
+PLUGIN_NAME = ('quantum.plugins.linuxbridge.'
+               'lb_quantum_plugin.LinuxBridgePluginV2')
+
 
 class LinuxBridgePluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
-
-    _plugin_name = ('quantum.plugins.linuxbridge.'
-                    'lb_quantum_plugin.LinuxBridgePluginV2')
+    _plugin_name = PLUGIN_NAME
 
     def setUp(self):
-        super(LinuxBridgePluginV2TestCase, self).setUp(self._plugin_name)
+        super(LinuxBridgePluginV2TestCase, self).setUp(PLUGIN_NAME)
 
 
 class TestLinuxBridgeBasicGet(test_plugin.TestBasicGet,

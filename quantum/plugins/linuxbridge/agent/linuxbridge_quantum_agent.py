@@ -32,6 +32,7 @@ import pyudev
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.common import utils as q_utils
@@ -388,14 +389,17 @@ class LinuxBridge:
             LOG.debug(_("Done deleting subinterface %s"), interface)
 
 
-class LinuxBridgeRpcCallbacks():
+class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    # history
+    #   1.1 Support Security Group RPC
+    RPC_API_VERSION = '1.1'
 
-    def __init__(self, context, linux_br):
+    def __init__(self, context, agent):
         self.context = context
-        self.linux_br = linux_br
+        self.agent = agent
+        self.linux_br = agent.linux_br
 
     def network_delete(self, context, **kwargs):
         LOG.debug(_("network_delete received"))
@@ -407,6 +411,9 @@ class LinuxBridgeRpcCallbacks():
     def port_update(self, context, **kwargs):
         LOG.debug(_("port_update received"))
         port = kwargs.get('port')
+        if 'security_groups' in port:
+            self.agent.refresh_firewall()
+
         if port['admin_state_up']:
             vlan_id = kwargs.get('vlan_id')
             physical_network = kwargs.get('physical_network')
@@ -429,7 +436,12 @@ class LinuxBridgeRpcCallbacks():
         return dispatcher.RpcDispatcher([self])
 
 
-class LinuxBridgeQuantumAgentRPC:
+class LinuxBridgePluginApi(agent_rpc.PluginApi,
+                           sg_rpc.SecurityGroupServerRpcApiMixin):
+    pass
+
+
+class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
     def __init__(self, interface_mappings, polling_interval,
                  root_helper):
@@ -437,6 +449,7 @@ class LinuxBridgeQuantumAgentRPC:
         self.root_helper = root_helper
         self.setup_linux_bridge(interface_mappings)
         self.setup_rpc(interface_mappings.values())
+        self.init_firewall()
 
     def setup_rpc(self, physical_interfaces):
         if physical_interfaces:
@@ -453,17 +466,18 @@ class LinuxBridgeQuantumAgentRPC:
         LOG.info(_("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
-        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.plugin_rpc = LinuxBridgePluginApi(topics.PLUGIN)
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Handle updates from service
         self.callbacks = LinuxBridgeRpcCallbacks(self.context,
-                                                 self.linux_br)
+                                                 self)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
-                     [topics.NETWORK, topics.DELETE]]
+                     [topics.NETWORK, topics.DELETE],
+                     [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
@@ -515,6 +529,7 @@ class LinuxBridgeQuantumAgentRPC:
 
     def treat_devices_added(self, devices):
         resync = False
+        self.prepare_devices_filter(devices)
         for device in devices:
             LOG.debug(_("Port %s added"), device)
             try:
@@ -544,6 +559,7 @@ class LinuxBridgeQuantumAgentRPC:
 
     def treat_devices_removed(self, devices):
         resync = False
+        self.remove_devices_filter(devices)
         for device in devices:
             LOG.info(_("Attachment %s removed"), device)
             try:
@@ -597,10 +613,7 @@ class LinuxBridgeQuantumAgentRPC:
 def main():
     eventlet.monkey_patch()
     cfg.CONF(args=sys.argv, project='quantum')
-
-    # (TODO) gary - swap with common logging
     logging_config.setup_logging(cfg.CONF)
-
     try:
         interface_mappings = q_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)

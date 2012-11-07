@@ -40,6 +40,10 @@ class SecurityGroupInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
 
+class SecurityGroupInvalidDeviceOwner(qexception.InvalidInput):
+    message = _("Security Group can't be applied to network ports.")
+
+
 class SecurityGroupInUse(qexception.InUse):
     message = _("Security Group %(id)s in use.")
 
@@ -208,7 +212,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {SECURITYGROUP: {'allow_post': True,
                               'allow_put': True,
                               'is_visible': True,
-                              'default': None}}}
+                              'default': attr.ATTR_NOT_SPECIFIED}}}
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
                default=10,

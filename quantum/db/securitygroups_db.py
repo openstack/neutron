@@ -22,6 +22,8 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
+from quantum.api.v2 import attributes as attr
+from quantum.common import utils
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
@@ -403,9 +405,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def _extend_port_dict_security_group(self, context, port):
         filters = {'port_id': [port['id']]}
         fields = {'security_group_id': None}
-        port[ext_sg.SECURITYGROUP] = []
         security_group_id = self._get_port_security_group_bindings(
             context, filters, fields)
+
+        port[ext_sg.SECURITYGROUP] = []
         for security_group_id in security_group_id:
             port[ext_sg.SECURITYGROUP].append(
                 security_group_id['security_group_id'])
@@ -413,7 +416,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _process_port_create_security_group(self, context, port_id,
                                             security_group_id):
-        if not security_group_id:
+        if not attr.is_attr_set(security_group_id):
             return
         for security_group_id in security_group_id:
             self._create_port_security_group_binding(context, port_id,
@@ -445,8 +448,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _validate_security_groups_on_port(self, context, port):
         p = port['port']
-        if not p.get(ext_sg.SECURITYGROUP):
+        if not attr.is_attr_set(p.get(ext_sg.SECURITYGROUP)):
             return
+        if p.get('device_owner') and p['device_owner'].startswith('network:'):
+            raise ext_sg.SecurityGroupInvalidDeviceOwner()
 
         valid_groups = self.get_security_groups(context, fields={'id': None})
         valid_groups_set = set([x['id'] for x in valid_groups])
@@ -455,3 +460,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if invalid_sg_set:
             msg = ' '.join(str(x) for x in invalid_sg_set)
             raise ext_sg.SecurityGroupNotFound(id=msg)
+
+    def _ensure_default_security_group_on_port(self, context, port):
+        # we don't apply security groups for dhcp, router
+        if (port['port'].get('device_owner') and
+                port['port']['device_owner'].startswith('network:')):
+            return
+        tenant_id = self._get_tenant_id_for_create(context,
+                                                   port['port'])
+        default_sg = self._ensure_default_security_group(context, tenant_id)
+        if attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUP)):
+            sgids = port['port'].get(ext_sg.SECURITYGROUP)
+        else:
+            sgids = [default_sg]
+        port['port'][ext_sg.SECURITYGROUP] = sgids

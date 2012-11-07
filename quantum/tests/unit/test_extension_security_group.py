@@ -77,6 +77,7 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         data = {'security_group_rule': {'security_group_id': security_group_id,
                                         'direction': direction,
                                         'protocol': protocol,
+                                        'ethertype': ethertype,
                                         'port_range_min': port_range_min,
                                         'port_range_max': port_range_max,
                                         'tenant_id': tenant_id,
@@ -181,12 +182,13 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def update_port(self, context, id, port):
         session = context.session
         with session.begin(subtransactions=True):
-            self._validate_security_groups_on_port(context, port)
-            # delete the port binding and read it with the new rules
-            self._delete_port_security_group_bindings(context, id)
-            self._process_port_create_security_group(context, id,
-                                                     port['port'].get(
-                                                     ext_sg.SECURITYGROUP))
+            if ext_sg.SECURITYGROUP in port['port']:
+                self._validate_security_groups_on_port(context, port)
+                # delete the port binding and read it with the new rules
+                self._delete_port_security_group_bindings(context, id)
+                self._process_port_create_security_group(context, id,
+                                                         port['port'].get(
+                                                         ext_sg.SECURITYGROUP))
             port = super(SecurityGroupTestPlugin, self).update_port(
                 context, id, port)
             self._extend_port_dict_security_group(context, port)
@@ -204,7 +206,7 @@ class SecurityGroupDBTestCase(SecurityGroupsTestCase):
         test_config['plugin_name_v2'] = DB_PLUGIN_KLASS
         ext_mgr = SecurityGroupTestExtensionManager()
         test_config['extension_manager'] = ext_mgr
-        super(SecurityGroupDBTestCase, self).setUp()
+        super(SecurityGroupDBTestCase, self).setUp(plugin)
 
 
 class TestSecurityGroups(SecurityGroupDBTestCase):
@@ -580,6 +582,17 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     res = self.deserialize('json', req.get_response(self.api))
                     self.assertEqual(res['port'][ext_sg.SECURITYGROUP][0],
                                      sg['security_group']['id'])
+
+                    # Test update port without security group
+                    data = {'port': {'fixed_ips': port['port']['fixed_ips'],
+                                     'name': port['port']['name']}}
+
+                    req = self.new_update_request('ports', data,
+                                                  port['port']['id'])
+                    res = self.deserialize('json', req.get_response(self.api))
+                    self.assertEqual(res['port'][ext_sg.SECURITYGROUP][0],
+                                     sg['security_group']['id'])
+
                     self._delete('ports', port['port']['id'])
 
     def test_update_port_with_multiple_security_groups(self):
@@ -606,12 +619,14 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     port = self.deserialize('json', res)
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
-                                     'name': port['port']['name']}}
+                                     'name': port['port']['name'],
+                                     'security_groups': []}}
 
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     res = self.deserialize('json', req.get_response(self.api))
-                    self.assertEqual(res['port'][ext_sg.SECURITYGROUP], [])
+                    self.assertEqual(res['port'].get(ext_sg.SECURITYGROUP),
+                                     [])
                     self._delete('ports', port['port']['id'])
 
     def test_create_port_with_bad_security_group(self):

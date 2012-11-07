@@ -15,19 +15,23 @@
 
 import sys
 
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum.common import utils
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
 from quantum.db import quota_db
+from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
@@ -41,11 +45,13 @@ LOG = logging.getLogger(__name__)
 
 
 class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                              l3_rpc_base.L3RpcCallbackMixin):
+                              l3_rpc_base.L3RpcCallbackMixin,
+                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
     # Device names start with "tap"
+    # history
+    #   1.1 Support Security Group RPC
     TAP_PREFIX_LEN = 3
 
     def create_rpc_dispatcher(self):
@@ -56,13 +62,20 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         '''
         return q_rpc.PluginRpcDispatcher([self])
 
+    @classmethod
+    def get_port_from_device(cls, device):
+        port = db.get_port_from_device(device[cls.TAP_PREFIX_LEN:])
+        if port:
+            port['device'] = device
+        return port
+
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details"""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
                   locals())
-        port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
+        port = self.get_port_from_device(device)
         if port:
             binding = db.get_network_binding(db_api.get_session(),
                                              port['network_id'])
@@ -86,7 +99,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
                   locals())
-        port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
+        port = self.get_port_from_device(device)
         if port:
             entry = {'device': device,
                      'exists': True}
@@ -99,7 +112,8 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return entry
 
 
-class AgentNotifierApi(proxy.RpcProxy):
+class AgentNotifierApi(proxy.RpcProxy,
+                       sg_rpc.SecurityGroupAgentRpcApiMixin):
     '''Agent side of the linux bridge rpc API.
 
     API version history:
@@ -112,6 +126,7 @@ class AgentNotifierApi(proxy.RpcProxy):
     def __init__(self, topic):
         super(AgentNotifierApi, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic = topic
         self.topic_network_delete = topics.get_topic_name(topic,
                                                           topics.NETWORK,
                                                           topics.DELETE)
@@ -135,7 +150,8 @@ class AgentNotifierApi(proxy.RpcProxy):
 
 
 class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
-                          l3_db.L3_NAT_db_mixin):
+                          l3_db.L3_NAT_db_mixin,
+                          sg_db_rpc.SecurityGroupServerRpcMixin):
     """Implement the Quantum abstractions using Linux bridging.
 
     A new VLAN is created for each network.  An agent is relied upon
@@ -157,7 +173,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # is qualified by class
     __native_bulk_support = True
 
-    supported_extension_aliases = ["provider", "router", "binding", "quotas"]
+    supported_extension_aliases = ["provider", "router", "binding", "quotas",
+                                   "security-group"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
@@ -333,6 +350,11 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
+            #set up default security groups
+            tenant_id = self._get_tenant_id_for_create(
+                context, network['network'])
+            self._ensure_default_security_group(context, tenant_id)
+
             if not network_type:
                 # tenant network
                 network_type = self.tenant_network_type
@@ -374,8 +396,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             binding = db.get_network_binding(session, id)
-            result = super(LinuxBridgePluginV2, self).delete_network(context,
-                                                                     id)
+            super(LinuxBridgePluginV2, self).delete_network(context, id)
             if binding.vlan_id != constants.LOCAL_VLAN_ID:
                 db.release_network(session, binding.physical_network,
                                    binding.vlan_id, self.network_vlan_ranges)
@@ -412,31 +433,70 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_BRIDGE
         return port
 
-    def create_port(self, context, port):
-        port = super(LinuxBridgePluginV2, self).create_port(context, port)
-        return self._extend_port_dict_binding(context, port)
-
     def get_port(self, context, id, fields=None):
         port = super(LinuxBridgePluginV2, self).get_port(context, id, fields)
-        return self._fields(self._extend_port_dict_binding(context, port),
-                            fields)
+        self._extend_port_dict_security_group(context, port)
+        self._extend_port_dict_binding(context, port),
+        return self._fields(port, fields)
 
     def get_ports(self, context, filters=None, fields=None):
         ports = super(LinuxBridgePluginV2, self).get_ports(context, filters,
                                                            fields)
+        #TODO(nati) filter by security group
+        for port in ports:
+            self._extend_port_dict_security_group(context, port)
         return [self._fields(self._extend_port_dict_binding(context, port),
                              fields) for port in ports]
 
+    def create_port(self, context, port):
+        session = context.session
+        with session.begin(subtransactions=True):
+            self._ensure_default_security_group_on_port(context, port)
+            self._validate_security_groups_on_port(context, port)
+            sgids = port['port'].get(ext_sg.SECURITYGROUP)
+            port = super(LinuxBridgePluginV2,
+                         self).create_port(context, port)
+            self._process_port_create_security_group(
+                context, port['id'], sgids)
+            self._extend_port_dict_security_group(context, port)
+        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+            self.notifier.security_groups_provider_updated(context)
+        else:
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUP))
+        return self._extend_port_dict_binding(context, port)
+
     def update_port(self, context, id, port):
-        original_port = super(LinuxBridgePluginV2, self).get_port(context,
-                                                                  id)
-        port = super(LinuxBridgePluginV2, self).update_port(context, id, port)
+        self._validate_security_groups_on_port(context, port)
+        original_port = self.get_port(context, id)
+        session = context.session
+        port_updated = False
+        with session.begin(subtransactions=True):
+            # delete the port binding and read it with the new rules
+            if ext_sg.SECURITYGROUP in port['port']:
+                self._delete_port_security_group_bindings(context, id)
+                self._process_port_create_security_group(
+                    context,
+                    id,
+                    port['port'][ext_sg.SECURITYGROUP])
+                port_updated = True
+
+            port = super(LinuxBridgePluginV2, self).update_port(
+                context, id, port)
+            self._extend_port_dict_security_group(context, port)
+
         if original_port['admin_state_up'] != port['admin_state_up']:
-            binding = db.get_network_binding(context.session,
-                                             port['network_id'])
-            self.notifier.port_update(context, port,
-                                      binding.physical_network,
-                                      binding.vlan_id)
+            port_updated = True
+
+        if (original_port['fixed_ips'] != port['fixed_ips'] or
+            not utils.compare_elements(
+                original_port.get(ext_sg.SECURITYGROUP),
+                port.get(ext_sg.SECURITYGROUP))):
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUP))
+
+        if port_updated:
+            self._notify_port_updated(context, port)
         return self._extend_port_dict_binding(context, port)
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -445,5 +505,19 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # and l3-router.  If so, we should prevent deletion.
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
-        return super(LinuxBridgePluginV2, self).delete_port(context, id)
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            self.disassociate_floatingips(context, id)
+            port = self.get_port(context, id)
+            self._delete_port_security_group_bindings(context, id)
+            super(LinuxBridgePluginV2, self).delete_port(context, id)
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUP))
+
+    def _notify_port_updated(self, context, port):
+        binding = db.get_network_binding(context.session,
+                                         port['network_id'])
+        self.notifier.port_update(context, port,
+                                  binding.physical_network,
+                                  binding.vlan_id)

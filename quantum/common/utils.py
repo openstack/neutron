@@ -150,3 +150,15 @@ def parse_mappings(mapping_list, unique_values=True):
 
 def get_hostname():
     return socket.getfqdn()
+
+
+def compare_elements(a, b):
+    """ compare elements if a and b have same elements
+
+    This method doesn't consider ordering
+    """
+    if a is None:
+        a = []
+    if b is None:
+        b = []
+    return set(a) == set(b)

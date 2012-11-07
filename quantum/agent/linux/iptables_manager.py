@@ -25,6 +25,7 @@ import inspect
 import os
 
 from quantum.agent.linux import utils
+from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -91,6 +92,24 @@ class IptablesTable(object):
         else:
             self.unwrapped_chains.add(name)
 
+    def _select_chain_set(self, wrap):
+        if wrap:
+            return self.chains
+        else:
+            return self.unwrapped_chains
+
+    def ensure_remove_chain(self, name, wrap=True):
+        """Ensure the chain is removed.
+
+        This removal "cascades". All rule in the chain are removed, as are
+        all rules in other chains that jump to it.
+        """
+        chain_set = self._select_chain_set(wrap)
+        if name not in chain_set:
+            return
+
+        self.remove_chain(name, wrap)
+
     def remove_chain(self, name, wrap=True):
         """Remove named chain.
 
@@ -100,10 +119,7 @@ class IptablesTable(object):
         If the chain is not found, this is merely logged.
 
         """
-        if wrap:
-            chain_set = self.chains
-        else:
-            chain_set = self.unwrapped_chains
+        chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
             LOG.warn(('Attempted to remove chain %s which does not exist'),
@@ -112,7 +128,6 @@ class IptablesTable(object):
 
         chain_set.remove(name)
         self.rules = filter(lambda r: r.chain != name, self.rules)
-
         if wrap:
             jump_snippet = '-j %s-%s' % (binary_name, name)
         else:
@@ -201,6 +216,7 @@ class IptablesManager(object):
         self.use_ipv6 = use_ipv6
         self.root_helper = root_helper
         self.namespace = namespace
+        self.iptables_apply_deferred = False
 
         self.ipv4 = {'filter': IptablesTable()}
         self.ipv6 = {'filter': IptablesTable()}
@@ -261,7 +277,21 @@ class IptablesManager(object):
             self.ipv4['nat'].add_chain('float-snat')
             self.ipv4['nat'].add_rule('snat', '-j $float-snat')
 
+    def defer_apply_on(self):
+        self.iptables_apply_deferred = True
+
+    def defer_apply_off(self):
+        self.iptables_apply_deferred = False
+        self._apply()
+
     def apply(self):
+        if self.iptables_apply_deferred:
+            return
+
+        self._apply()
+
+    @lockutils.synchronized('iptables', 'quantum-', external=True)
+    def _apply(self):
         """Apply the current in-memory set of iptables rules.
 
         This will blow away any rules left over from previous runs of the
