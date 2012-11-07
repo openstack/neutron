@@ -2196,6 +2196,40 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                  cidr=cidr,
                                  allocation_pools=allocation_pools)
 
+    def test_subnet_with_allocation_range(self):
+        fmt = 'json'
+        with self.network() as network:
+            net_id = network['network']['id']
+            data = {'subnet': {'network_id': net_id,
+                               'cidr': '10.0.0.0/24',
+                               'ip_version': 4,
+                               'gateway_ip': '10.0.0.1',
+                               'tenant_id': network['network']['tenant_id'],
+                               'allocation_pools': [{'start': '10.0.0.100',
+                                                    'end': '10.0.0.120'}]}}
+            subnet_req = self.new_create_request('subnets', data)
+            subnet = self.deserialize('json',
+                                      subnet_req.get_response(self.api))
+            # Check fixed IP not in allocation range
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.10'}]}
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            self.assertEquals(res.status_int, 201)
+            port = self.deserialize('json', res)
+            port_id = port['port']['id']
+            # delete the port
+            self._delete('ports', port['port']['id'])
+
+            # Check when fixed IP is gateway
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.1'}]}
+            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            self.assertEquals(res.status_int, 201)
+            port = self.deserialize('json', res)
+            port_id = port['port']['id']
+            # delete the port
+            self._delete('ports', port['port']['id'])
+
     def test_create_subnet_with_none_gateway_allocation_pool(self):
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
