@@ -47,7 +47,7 @@ class Thread(object):
         self.thread.link(_thread_done, group=group, thread=self)
 
     def stop(self):
-        self.thread.cancel()
+        self.thread.kill()
 
     def wait(self):
         return self.thread.wait()

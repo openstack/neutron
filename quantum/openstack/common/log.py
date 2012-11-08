@@ -257,7 +257,7 @@ class JSONFormatter(logging.Formatter):
 
 class PublishErrorsHandler(logging.Handler):
     def emit(self, record):
-        if ('openstack.common.notifier.log_notifier' in
+        if ('quantum.openstack.common.notifier.log_notifier' in
             CONF.notification_driver):
             return
         notifier.api.notify(None, 'error.publisher',
