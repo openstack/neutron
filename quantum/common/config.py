@@ -41,6 +41,8 @@ core_opts = [
     cfg.StrOpt('auth_strategy', default='keystone'),
     cfg.StrOpt('core_plugin',
                default='quantum.plugins.sample.SamplePlugin.FakePlugin'),
+    cfg.ListOpt('service_plugins',
+                default=[]),
     cfg.StrOpt('base_mac', default="fa:16:3e:00:00:00"),
     cfg.IntOpt('mac_generation_retries', default=16),
     cfg.BoolOpt('allow_bulk', default=True),

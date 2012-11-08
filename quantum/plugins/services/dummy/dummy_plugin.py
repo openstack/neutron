@@ -14,3 +14,19 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+from quantum.plugins.common import constants
+from quantum.plugins.services.service_base import ServicePluginBase
+
+
+class QuantumDummyPlugin(ServicePluginBase):
+    supported_extension_aliases = []
+
+    def __init__(self):
+        pass
+
+    def get_plugin_type(self):
+        return constants.DUMMY
+
+    def get_plugin_description(self):
+        return "Quantum Dummy Plugin"

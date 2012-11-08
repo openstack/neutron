@@ -14,3 +14,22 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+import abc
+
+
+class ServicePluginBase(object):
+    """ defines base interface for any Advanced Service plugin """
+    __metaclass__ = abc.ABCMeta
+    supported_extension_aliases = []
+
+    @abc.abstractmethod
+    def get_plugin_type(self):
+        """ returns one of predefine service types. see
+            quantum/plugins/common/constants.py """
+        pass
+
+    @abc.abstractmethod
+    def get_plugin_description(self):
+        """ returns string description of the plugin """
+        pass

@@ -267,26 +267,30 @@ class ExtensionMiddleware(wsgi.Middleware):
 
         # extended resources
         for resource in self.ext_mgr.get_resources():
+            path_prefix = resource.path_prefix
+            if resource.parent:
+                path_prefix = (resource.path_prefix +
+                               "/%s/{%s_id}" %
+                               (resource.parent["collection_name"],
+                                resource.parent["member_name"]))
+
             LOG.debug(_('Extended resource: %s'),
                       resource.collection)
             for action, method in resource.collection_actions.iteritems():
-                path_prefix = ""
-                parent = resource.parent
                 conditions = dict(method=[method])
                 path = "/%s/%s" % (resource.collection, action)
-                if parent:
-                    path_prefix = "/%s/{%s_id}" % (parent["collection_name"],
-                                                   parent["member_name"])
                 with mapper.submapper(controller=resource.controller,
                                       action=action,
                                       path_prefix=path_prefix,
                                       conditions=conditions) as submap:
                     submap.connect(path)
                     submap.connect("%s.:(format)" % path)
+
             mapper.resource(resource.collection, resource.collection,
                             controller=resource.controller,
                             member=resource.member_actions,
-                            parent_resource=resource.parent)
+                            parent_resource=resource.parent,
+                            path_prefix=path_prefix)
 
         # extended actions
         action_controllers = self._action_ext_controllers(application,
@@ -534,44 +538,44 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     _instance = None
 
-    def __init__(self, path, plugin):
-        self.plugin = plugin
+    def __init__(self, path, plugins):
+        self.plugins = plugins
         super(PluginAwareExtensionManager, self).__init__(path)
 
     def _check_extension(self, extension):
-        """Checks if plugin supports extension and implements the
+        """Checks if any of plugins supports extension and implements the
         extension contract."""
         extension_is_valid = super(PluginAwareExtensionManager,
                                    self)._check_extension(extension)
         return (extension_is_valid and
-                self._plugin_supports(extension) and
-                self._plugin_implements_interface(extension))
+                self._plugins_support(extension) and
+                self._plugins_implement_interface(extension))
 
-    def _plugin_supports(self, extension):
+    def _plugins_support(self, extension):
         alias = extension.get_alias()
-        supports_extension = (hasattr(self.plugin,
-                                      "supported_extension_aliases") and
-                              alias in self.plugin.supported_extension_aliases)
+        supports_extension = any((hasattr(plugin,
+                                          "supported_extension_aliases") and
+                                  alias in plugin.supported_extension_aliases)
+                                 for plugin in self.plugins.values())
         plugin_provider = cfg.CONF.core_plugin
         if not supports_extension and plugin_provider in ENABLED_EXTS:
             supports_extension = (alias in
                                   ENABLED_EXTS[plugin_provider]['ext_alias'])
         if not supports_extension:
-            LOG.warn("extension %s not supported by plugin %s",
-                     alias, self.plugin)
+            LOG.warn(_("extension %s not supported by any of loaded plugins" %
+                       alias))
         return supports_extension
 
-    def _plugin_implements_interface(self, extension):
+    def _plugins_implement_interface(self, extension):
         if(not hasattr(extension, "get_plugin_interface") or
            extension.get_plugin_interface() is None):
             return True
-        plugin_has_interface = isinstance(self.plugin,
-                                          extension.get_plugin_interface())
-        if not plugin_has_interface:
-            LOG.warn("plugin %s does not implement extension's"
-                     "plugin interface %s" % (self.plugin,
-                                              extension.get_alias()))
-        return plugin_has_interface
+        for plugin in self.plugins.values():
+            if isinstance(plugin, extension.get_plugin_interface()):
+                return True
+        LOG.warn(_("Loaded plugins do not implement extension %s interface"
+                   % extension.get_alias()))
+        return False
 
     @classmethod
     def get_instance(cls):
@@ -582,7 +586,7 @@ class PluginAwareExtensionManager(ExtensionManager):
                     LOG.debug('loading model %s', model)
                     model_class = importutils.import_class(model)
             cls._instance = cls(get_extensions_path(),
-                                QuantumManager.get_plugin())
+                                QuantumManager.get_service_plugins())
         return cls._instance
 
 
@@ -612,13 +616,14 @@ class ActionExtension(object):
 class ResourceExtension(object):
     """Add top level resources to the OpenStack API in Quantum."""
 
-    def __init__(self, collection, controller, parent=None,
+    def __init__(self, collection, controller, parent=None, path_prefix="",
                  collection_actions={}, member_actions={}):
         self.collection = collection
         self.controller = controller
         self.parent = parent
         self.collection_actions = collection_actions
         self.member_actions = member_actions
+        self.path_prefix = path_prefix
 
 
 # Returns the extention paths from a config entry and the __path__

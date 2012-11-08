@@ -27,6 +27,7 @@ from quantum.common.exceptions import ClassNotFound
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
+from quantum.plugins.common import constants
 
 
 LOG = logging.getLogger(__name__)
@@ -58,8 +59,52 @@ class QuantumManager(object):
                             "Example: pip install quantum-sample-plugin")
         self.plugin = plugin_klass()
 
+        # core plugin as a part of plugin collection simplifies
+        # checking extensions
+        # TODO (enikanorov): make core plugin the same as
+        # the rest of service plugins
+        self.service_plugins = {constants.CORE: self.plugin}
+        self._load_service_plugins()
+
+    def _load_service_plugins(self):
+        plugin_providers = cfg.CONF.service_plugins
+        LOG.debug(_("Loading service plugins: %s" % plugin_providers))
+        for provider in plugin_providers:
+            if provider == '':
+                continue
+            try:
+                LOG.info(_("Loading Plugin: %s" % provider))
+                plugin_class = importutils.import_class(provider)
+            except ClassNotFound:
+                LOG.exception(_("Error loading plugin"))
+                raise Exception(_("Plugin not found."))
+            plugin_inst = plugin_class()
+
+            # only one implementation of svc_type allowed
+            # specifying more than one plugin
+            # for the same type is a fatal exception
+            if plugin_inst.get_plugin_type() in self.service_plugins:
+                raise Exception(_("Multiple plugins for service "
+                                "%s were configured" %
+                                plugin_inst.get_plugin_type()))
+
+            self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
+
+            LOG.debug(_("Successfully loaded %(type)s plugin. "
+                        "Description: %(desc)s"),
+                      {"type": plugin_inst.get_plugin_type(),
+                       "desc": plugin_inst.get_plugin_description()})
+
     @classmethod
-    def get_plugin(cls):
+    def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
-        return cls._instance.plugin
+        return cls._instance
+
+    @classmethod
+    def get_plugin(cls):
+        return cls.get_instance().plugin
+
+    @classmethod
+    def get_service_plugins(cls):
+        return cls.get_instance().service_plugins
