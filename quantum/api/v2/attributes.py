@@ -258,20 +258,20 @@ def _validate_uuid(data, valid_values=None):
 
 
 def convert_to_boolean(data):
-    try:
-        i = int(data)
-        if i in [True, False]:
-            # Ensure that the value is True or False
-            if i:
-                return True
-            else:
-                return False
-    except (ValueError, TypeError):
-        if (data == "True" or data == "true"):
+    if isinstance(data, basestring):
+        val = data.lower()
+        if val == "true" or val == "1":
             return True
-        if (data == "False" or data == "false"):
+        if val == "false" or val == "0":
             return False
-    msg = _("'%s' is not boolean") % data
+    elif isinstance(data, bool):
+        return data
+    elif isinstance(data, int):
+        if data == 0:
+            return False
+        elif data == 1:
+            return True
+    msg = _("'%s' cannot be converted to boolean") % data
     raise q_exc.InvalidInput(error_message=msg)
 
 

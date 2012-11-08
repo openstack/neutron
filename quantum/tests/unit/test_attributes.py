@@ -243,6 +243,31 @@ class TestAttributes(unittest2.TestCase):
         self.assertEquals(msg, error)
 
 
+class TestConvertToBoolean(unittest2.TestCase):
+
+    def test_convert_to_boolean_bool(self):
+        self.assertIs(attributes.convert_to_boolean(True), True)
+        self.assertIs(attributes.convert_to_boolean(False), False)
+
+    def test_convert_to_boolean_int(self):
+        self.assertIs(attributes.convert_to_boolean(0), False)
+        self.assertIs(attributes.convert_to_boolean(1), True)
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes.convert_to_boolean,
+                          7)
+
+    def test_convert_to_boolean_str(self):
+        self.assertIs(attributes.convert_to_boolean('True'), True)
+        self.assertIs(attributes.convert_to_boolean('true'), True)
+        self.assertIs(attributes.convert_to_boolean('False'), False)
+        self.assertIs(attributes.convert_to_boolean('false'), False)
+        self.assertIs(attributes.convert_to_boolean('0'), False)
+        self.assertIs(attributes.convert_to_boolean('1'), True)
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes.convert_to_boolean,
+                          '7')
+
+
 class TestConvertKvp(unittest2.TestCase):
 
     def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):
