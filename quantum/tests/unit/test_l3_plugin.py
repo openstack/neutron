@@ -132,8 +132,8 @@ class L3NatExtensionTestCase(unittest.TestCase):
 
     def test_router_list(self):
         router_id = _uuid()
-        return_value = [{'router': {'name': 'router1', 'admin_state_up': True,
-                                    'tenant_id': _uuid(), 'id': router_id}}]
+        return_value = [{'name': 'router1', 'admin_state_up': True,
+                         'tenant_id': _uuid(), 'id': router_id}]
 
         instance = self.plugin.return_value
         instance.get_routers.return_value = return_value
