@@ -76,8 +76,8 @@ copyright = u'2011-present, OpenStack, LLC.'
 # built documents.
 #
 # Version info
-from quantum import version as quantum_version
-release = quantum_version.version_string()
+from quantum.version import version_info as quantum_version
+release = quantum_version.version_string_with_vcs()
 # The short X.Y version.
 version = quantum_version.canonical_version_string()
 

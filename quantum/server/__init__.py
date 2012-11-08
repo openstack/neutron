@@ -26,7 +26,6 @@ import sys
 from quantum.common import config
 from quantum.openstack.common import cfg
 from quantum import service
-from quantum.version import version_string
 
 
 def main():
