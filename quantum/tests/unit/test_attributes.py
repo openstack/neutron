@@ -80,14 +80,28 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_string(None, None)
         self.assertEquals(msg, "'None' is not a valid string")
 
-        msg = attributes._validate_string("OK", None)
-        self.assertEquals(msg, None)
+        # 0 == len(data) == max_len
+        msg = attributes._validate_string("", 0)
+        self.assertIsNone(msg)
 
+        # 0 == len(data) < max_len
+        msg = attributes._validate_string("", 9)
+        self.assertIsNone(msg)
+
+        # 0 < len(data) < max_len
+        msg = attributes._validate_string("123456789", 10)
+        self.assertIsNone(msg)
+
+        # 0 < len(data) == max_len
         msg = attributes._validate_string("123456789", 9)
         self.assertIsNone(msg)
 
+        # 0 < max_len < len(data)
         msg = attributes._validate_string("1234567890", 9)
-        self.assertIsNotNone(msg)
+        self.assertEquals(msg, "'1234567890' exceeds maximum length of 9")
+
+        msg = attributes._validate_string("123456789", None)
+        self.assertIsNone(msg)
 
     def test_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
