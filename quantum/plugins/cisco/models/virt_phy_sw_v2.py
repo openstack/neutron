@@ -289,6 +289,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
+    def get_networks_count(self, context, filters=None):
+        """For this model this method will be delegated to vswitch plugin"""
+        pass
+
     def create_port(self, context, port):
         """For this model this method will be delegated to vswitch plugin"""
         pass
@@ -298,6 +302,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def get_ports(self, context, filters=None, fields=None):
+        """For this model this method will be delegated to vswitch plugin"""
+        pass
+
+    def get_ports_count(self, context, filters=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
@@ -326,5 +334,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def get_subnets(self, context, filters=None, fields=None):
+        """For this model this method will be delegated to vswitch plugin"""
+        pass
+
+    def get_subnets_count(self, context, filters=None):
         """For this model this method will be delegated to vswitch plugin"""
         pass

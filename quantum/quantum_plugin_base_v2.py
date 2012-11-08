@@ -70,7 +70,7 @@ class QuantumPluginBaseV2(object):
     def get_subnets(self, context, filters=None, fields=None):
         """
         Retrieve a list of subnets.  The contents of the list depends on
-        the identify of the user making the request (as indicated by the
+        the identity of the user making the request (as indicated by the
         context) as well as any filters.
         : param context: quantum api request context
         : param filters: a dictionary with keys that are valid keys for
@@ -84,6 +84,23 @@ class QuantumPluginBaseV2(object):
             subnet dictionary as listed in the RESOURCE_ATTRIBUTE_MAP
             object in quantum/api/v2/attributes.py. Only these fields
             will be returned.
+        """
+        pass
+
+    @abstractmethod
+    def get_subnets_count(self, context, filters=None):
+        """
+        Return the number of subnets.  The result depends on the identity of
+        the user making the request (as indicated by the context) as well as
+        any filters.
+        : param context: quantum api request context
+        : param filters: a dictionary with keys that are valid keys for
+            a network as listed in the RESOURCE_ATTRIBUTE_MAP object
+            in quantum/api/v2/attributes.py.  Values in this dictiontary
+            are an iterable containing values that will be used for an exact
+            match comparison for that value.  Each result returned by this
+            function will have matched one of the values for each key in
+            filters.
         """
         pass
 
@@ -138,7 +155,7 @@ class QuantumPluginBaseV2(object):
     def get_networks(self, context, filters=None, fields=None):
         """
         Retrieve a list of networks.  The contents of the list depends on
-        the identify of the user making the request (as indicated by the
+        the identity of the user making the request (as indicated by the
         context) as well as any filters.
         : param context: quantum api request context
         : param filters: a dictionary with keys that are valid keys for
@@ -152,6 +169,23 @@ class QuantumPluginBaseV2(object):
             network dictionary as listed in the RESOURCE_ATTRIBUTE_MAP
             object in quantum/api/v2/attributes.py. Only these fields
             will be returned.
+        """
+        pass
+
+    @abstractmethod
+    def get_networks_count(self, context, filters=None):
+        """
+        Return the number of networks.  The result depends on the identity
+        of the user making the request (as indicated by the context) as well
+        as any filters.
+        : param context: quantum api request context
+        : param filters: a dictionary with keys that are valid keys for
+            a network as listed in the RESOURCE_ATTRIBUTE_MAP object
+            in quantum/api/v2/attributes.py.  Values in this dictiontary
+            are an iterable containing values that will be used for an exact
+            match comparison for that value.  Each result returned by this
+            function will have matched one of the values for each key in
+            filters.
         """
         pass
 
@@ -206,7 +240,7 @@ class QuantumPluginBaseV2(object):
     def get_ports(self, context, filters=None, fields=None):
         """
         Retrieve a list of ports.  The contents of the list depends on
-        the identify of the user making the request (as indicated by the
+        the identity of the user making the request (as indicated by the
         context) as well as any filters.
         : param context: quantum api request context
         : param filters: a dictionary with keys that are valid keys for
@@ -220,6 +254,23 @@ class QuantumPluginBaseV2(object):
             port dictionary as listed in the RESOURCE_ATTRIBUTE_MAP
             object in quantum/api/v2/attributes.py. Only these fields
             will be returned.
+        """
+        pass
+
+    @abstractmethod
+    def get_ports_count(self, context, filters=None):
+        """
+        Return the number of ports.  The result depends on the identity of
+        the user making the request (as indicated by the context) as well as
+        any filters.
+        : param context: quantum api request context
+        : param filters: a dictionary with keys that are valid keys for
+            a network as listed in the RESOURCE_ATTRIBUTE_MAP object
+            in quantum/api/v2/attributes.py.  Values in this dictiontary
+            are an iterable containing values that will be used for an exact
+            match comparison for that value.  Each result returned by this
+            function will have matched one of the values for each key in
+            filters.
         """
         pass
 

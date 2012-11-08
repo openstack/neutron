@@ -150,6 +150,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                     self._make_security_group_dict,
                                     filters=filters, fields=fields)
 
+    def get_security_groups_count(self, context, filters=None):
+        return self._get_collection_count(context, SecurityGroup,
+                                          filters=filters)
+
     def get_security_group(self, context, id, fields=None, tenant_id=None):
         """Tenant id is given to handle the case when we
         are creating a security group or security group rule on behalf of
@@ -383,6 +387,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return self._get_collection(context, SecurityGroupRule,
                                     self._make_security_group_rule_dict,
                                     filters=filters, fields=fields)
+
+    def get_security_group_rules_count(self, context, filters=None):
+        return self._get_collection_count(context, SecurityGroupRule,
+                                          filters=filters)
 
     def get_security_group_rule(self, context, id, fields=None):
         security_group_rule = self._get_security_group_rule(context, id)

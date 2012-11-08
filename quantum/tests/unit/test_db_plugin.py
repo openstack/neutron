@@ -376,6 +376,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def network(self, name='net1',
                 admin_status_up=True,
                 fmt='json',
+                do_delete=True,
                 **kwargs):
         res = self._create_network(fmt,
                                    name,
@@ -389,7 +390,13 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         yield network
-        self._delete('networks', network['network']['id'])
+
+        if do_delete:
+            # The do_delete parameter allows you to control whether the
+            # created network is immediately deleted again. Therefore, this
+            # function is also usable in tests, which require the creation
+            # of many networks.
+            self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
     def subnet(self, network=None,

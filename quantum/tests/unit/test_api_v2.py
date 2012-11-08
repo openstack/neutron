@@ -369,6 +369,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), data)
 
@@ -390,6 +391,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), initial_input)
 
@@ -423,6 +425,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), initial_input,
                                  extra_environ=env)
@@ -479,6 +482,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.create_network.side_effect = side_effect
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
@@ -525,6 +529,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.get_network.return_value = {'tenant_id': unicode(tenant_id)}
+        instance.get_ports_count.return_value = 1
         instance.create_port.return_value = return_value
         res = self.api.post_json(_get_path('ports'), initial_input)
 
@@ -545,6 +550,7 @@ class JSONV2TestCase(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), data)
 
@@ -699,6 +705,7 @@ class NotificationTest(APIv2TestBase):
         initial_input = {resource: {'name': 'myname'}}
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
+        instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
         with mock.patch.object(notifer_api, 'notify') as mynotifier:
             if opname == 'create':
@@ -742,37 +749,24 @@ class NotificationTest(APIv2TestBase):
 class QuotaTest(APIv2TestBase):
     def test_create_network_quota(self):
         cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
-        net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         full_input = {'network': {'admin_state_up': True, 'subnets': []}}
         full_input['network'].update(initial_input['network'])
 
-        return_value = {'id': net_id, 'status': "ACTIVE"}
-        return_value.update(full_input['network'])
-        return_networks = {'networks': [return_value]}
         instance = self.plugin.return_value
-        instance.get_networks.return_value = return_networks
+        instance.get_networks_count.return_value = 1
         res = self.api.post_json(
             _get_path('networks'), initial_input, expect_errors=True)
-        instance.get_networks.assert_called_with(mock.ANY,
-                                                 filters=mock.ANY)
+        instance.get_networks_count.assert_called_with(mock.ANY,
+                                                       filters=mock.ANY)
         self.assertTrue("Quota exceeded for resources" in
                         res.json['QuantumError'])
 
     def test_create_network_quota_without_limit(self):
         cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
-        net_id = _uuid()
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
-        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
-        full_input['network'].update(initial_input['network'])
-        return_networks = []
-        for i in xrange(0, 3):
-            return_value = {'id': net_id + str(i), 'status': "ACTIVE"}
-            return_value.update(full_input['network'])
-            return_networks.append(return_value)
-        self.assertEquals(3, len(return_networks))
         instance = self.plugin.return_value
-        instance.get_networks.return_value = return_networks
+        instance.get_networks_count.return_value = 3
         res = self.api.post_json(
             _get_path('networks'), initial_input)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
@@ -836,6 +830,7 @@ class ExtensionTestCase(unittest.TestCase):
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
+        instance.get_networks_count.return_value = 0
 
         res = self.api.post_json(_get_path('networks'), initial_input)
 

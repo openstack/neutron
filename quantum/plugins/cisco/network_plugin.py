@@ -92,6 +92,11 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         if hasattr(self._model, name):
             return getattr(self._model, name)
+        else:
+            # Must make sure we re-raise the error that led us here, since
+            # otherwise getattr() and even hasattr() doesn't work corretly.
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self._model, name))
 
     """
     Core API implementation
