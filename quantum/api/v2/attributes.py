@@ -64,12 +64,9 @@ def _validate_string(data, max_len=None):
 def _validate_range(data, valid_values=None):
     min_value = valid_values[0]
     max_value = valid_values[1]
-    if data >= min_value and data <= max_value:
-        return
-    else:
-        msg_dict = dict(data=data, min_value=min_value, max_value=max_value)
-        msg = _("%(data)s is not in range %(min_value)s through "
-                "%(max_value)s") % msg_dict
+    if not min_value <= data <= max_value:
+        msg = _("'%(data)s' is not in range %(min_value)s through "
+                "%(max_value)s") % locals()
         LOG.debug("validate_range: %s", msg)
         return msg
 
