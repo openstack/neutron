@@ -552,7 +552,3 @@ def main():
 
     mgr = L3NATAgent(conf)
     mgr.daemon_loop()
-
-
-if __name__ == '__main__':
-    main()

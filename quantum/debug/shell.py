@@ -79,6 +79,3 @@ class QuantumDebugShell(QuantumShell):
 
 def main(argv=None):
     return QuantumDebugShell(QUANTUM_API_VERSION).run(argv or sys.argv[1:])
-
-if __name__ == "__main__":
-    sys.exit(main())
