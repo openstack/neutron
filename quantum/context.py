@@ -29,7 +29,7 @@ from quantum.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class Context(common_context.RequestContext):
+class ContextBase(common_context.RequestContext):
     """Security context and request information.
 
     Represents the user taking a given action within the system.
@@ -46,10 +46,8 @@ class Context(common_context.RequestContext):
         if kwargs:
             LOG.warn(_('Arguments dropped when creating '
                        'context: %s') % str(kwargs))
-        super(Context, self).__init__(user=user_id, tenant=tenant_id,
-                                      is_admin=is_admin)
-        self.user_id = user_id
-        self.tenant_id = tenant_id
+        super(ContextBase, self).__init__(user=user_id, tenant=tenant_id,
+                                          is_admin=is_admin)
         self.roles = roles or []
         if self.is_admin is None:
             self.is_admin = 'admin' in [x.lower() for x in self.roles]
@@ -60,6 +58,26 @@ class Context(common_context.RequestContext):
             timestamp = datetime.utcnow()
         self.timestamp = timestamp
         self._session = None
+
+    @property
+    def project_id(self):
+        return self.tenant
+
+    @property
+    def tenant_id(self):
+        return self.tenant
+
+    @tenant_id.setter
+    def tenant_id(self, tenant_id):
+        self.tenant = tenant_id
+
+    @property
+    def user_id(self):
+        return self.user
+
+    @user_id.setter
+    def user_id(self, user_id):
+        self.user = user_id
 
     def _get_read_deleted(self):
         return self._read_deleted
@@ -76,15 +94,10 @@ class Context(common_context.RequestContext):
     read_deleted = property(_get_read_deleted, _set_read_deleted,
                             _del_read_deleted)
 
-    @property
-    def session(self):
-        if self._session is None:
-            self._session = db_api.get_session()
-        return self._session
-
     def to_dict(self):
         return {'user_id': self.user_id,
                 'tenant_id': self.tenant_id,
+                'project_id': self.project_id,
                 'is_admin': self.is_admin,
                 'read_deleted': self.read_deleted,
                 'roles': self.roles,
@@ -108,8 +121,23 @@ class Context(common_context.RequestContext):
         return context
 
 
+class Context(ContextBase):
+    @property
+    def session(self):
+        if self._session is None:
+            self._session = db_api.get_session()
+        return self._session
+
+
 def get_admin_context(read_deleted="no"):
     return Context(user_id=None,
                    tenant_id=None,
                    is_admin=True,
                    read_deleted=read_deleted)
+
+
+def get_admin_context_without_session(read_deleted="no"):
+    return ContextBase(user_id=None,
+                       tenant_id=None,
+                       is_admin=True,
+                       read_deleted=read_deleted)

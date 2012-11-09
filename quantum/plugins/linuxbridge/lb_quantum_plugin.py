@@ -18,18 +18,16 @@ import sys
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
+from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
-from quantum.db import models_v2
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
-from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy
 from quantum.plugins.linuxbridge.common import constants
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as db
@@ -46,16 +44,13 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
     # Device names start with "tap"
     TAP_PREFIX_LEN = 3
 
-    def __init__(self, rpc_context):
-        self.rpc_context = rpc_context
-
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
 
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return dispatcher.RpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self])
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details"""
@@ -173,10 +168,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.rpc_context = context.RequestContext('quantum', 'quantum',
-                                                  is_admin=False)
         self.conn = rpc.create_connection(new=True)
-        self.callbacks = LinuxBridgeRpcCallbacks(self.rpc_context)
+        self.callbacks = LinuxBridgeRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
@@ -377,7 +370,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    binding.vlan_id, self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
-        self.notifier.network_delete(self.rpc_context, id)
+        self.notifier.network_delete(context, id)
 
     def get_network(self, context, id, fields=None):
         net = super(LinuxBridgePluginV2, self).get_network(context, id, None)
@@ -404,7 +397,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if original_port['admin_state_up'] != port['admin_state_up']:
             binding = db.get_network_binding(context.session,
                                              port['network_id'])
-            self.notifier.port_update(self.rpc_context, port,
+            self.notifier.port_update(context, port,
                                       binding.physical_network,
                                       binding.vlan_id)
         return port

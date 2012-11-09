@@ -20,22 +20,20 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 # @author: Bob Kukura, Red Hat, Inc.
 
-import os
 import sys
 
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
+from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
-from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy
 from quantum.plugins.openvswitch.common import config
 from quantum.plugins.openvswitch.common import constants
@@ -51,8 +49,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
     # Set RPC API version to 1.0 by default.
     RPC_API_VERSION = '1.0'
 
-    def __init__(self, rpc_context, notifier):
-        self.rpc_context = rpc_context
+    def __init__(self, notifier):
         self.notifier = notifier
 
     def create_rpc_dispatcher(self):
@@ -61,7 +58,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return dispatcher.RpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self])
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details"""
@@ -116,7 +113,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         entry = dict()
         entry['tunnels'] = tunnels
         # Notify all other listening agents
-        self.notifier.tunnel_update(self.rpc_context, tunnel.ip_address,
+        self.notifier.tunnel_update(rpc_context, tunnel.ip_address,
                                     tunnel.id)
         # Return the list of tunnels IP's to the agent
         return entry
@@ -218,11 +215,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.rpc_context = context.RequestContext('quantum', 'quantum',
-                                                  is_admin=False)
         self.conn = rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
-        self.callbacks = OVSRpcCallbacks(self.rpc_context, self.notifier)
+        self.callbacks = OVSRpcCallbacks(self.notifier)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
@@ -460,7 +455,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                        self.network_vlan_ranges)
             # the network_binding record is deleted via cascade from
             # the network record, so explicit removal is not necessary
-        self.notifier.network_delete(self.rpc_context, id)
+        self.notifier.network_delete(context, id)
 
     def get_network(self, context, id, fields=None):
         net = super(OVSQuantumPluginV2, self).get_network(context, id, None)
@@ -487,7 +482,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if original_port['admin_state_up'] != port['admin_state_up']:
             binding = ovs_db_v2.get_network_binding(None,
                                                     port['network_id'])
-            self.notifier.port_update(self.rpc_context, port,
+            self.notifier.port_update(context, port,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)

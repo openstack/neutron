@@ -30,8 +30,8 @@ from quantum.agent.linux import ip_lib
 from quantum.agent import rpc as agent_rpc
 from quantum.common import exceptions
 from quantum.common import topics
+from quantum import context
 from quantum.openstack.common import cfg
-from quantum.openstack.common import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
@@ -59,7 +59,7 @@ class DhcpAgent(object):
         self.cache = NetworkCache()
 
         self.dhcp_driver_cls = importutils.import_class(conf.dhcp_driver)
-        ctx = context.RequestContext('quantum', 'quantum', is_admin=True)
+        ctx = context.get_admin_context_without_session()
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, ctx)
 
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)

@@ -20,24 +20,9 @@ import mock
 from quantum.db import dhcp_rpc_base
 
 
-class TestDhcpAugmentContext(unittest.TestCase):
-    def test_augment_context(self):
-        context = mock.Mock()
-        context.user = 'quantum'
-        context.tenant = None
-        context.is_admin = True
-
-        new_context = dhcp_rpc_base.augment_context(context)
-
-        self.assertEqual(new_context.user_id, context.user)
-        self.assertEqual(new_context.roles, ['admin'])
-
-
 class TestDhcpRpcCallackMixin(unittest.TestCase):
-    def setUp(self):
-        self.context_p = mock.patch('quantum.db.dhcp_rpc_base.augment_context')
-        self.context_p.start()
 
+    def setUp(self):
         self.plugin_p = mock.patch('quantum.manager.QuantumManager.get_plugin')
         get_plugin = self.plugin_p.start()
         self.plugin = mock.Mock()
@@ -49,7 +34,6 @@ class TestDhcpRpcCallackMixin(unittest.TestCase):
     def tearDown(self):
         self.log_p.stop()
         self.plugin_p.stop()
-        self.context_p.stop()
 
     def test_get_active_networks(self):
         plugin_retval = [dict(id='a'), dict(id='b')]

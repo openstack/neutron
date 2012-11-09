@@ -16,19 +16,11 @@
 from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
-from quantum import context as quantum_context
 from quantum import manager
-from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
-
-
-def augment_context(context):
-    """Augments RPC with additional attributes, so that plugin calls work."""
-    return quantum_context.Context(context.user, None, is_admin=True,
-                                   roles=['admin'])
 
 
 class DhcpRpcCallbackMixin(object):
@@ -39,7 +31,6 @@ class DhcpRpcCallbackMixin(object):
         host = kwargs.get('host')
         LOG.debug('Network list requested from %s', host)
         plugin = manager.QuantumManager.get_plugin()
-        context = augment_context(context)
         filters = dict(admin_state_up=[True])
 
         return [net['id'] for net in
@@ -48,7 +39,6 @@ class DhcpRpcCallbackMixin(object):
     def get_network_info(self, context, **kwargs):
         """Retrieve and return a extended information about a network."""
         network_id = kwargs.get('network_id')
-        context = augment_context(context)
         plugin = manager.QuantumManager.get_plugin()
         network = plugin.get_network(context, network_id)
 
@@ -68,12 +58,11 @@ class DhcpRpcCallbackMixin(object):
         host = kwargs.get('host')
         network_id = kwargs.get('network_id')
         device_id = kwargs.get('device_id')
-         # There could be more than one dhcp server per network, so create
-         # a device id that combines host and network ids
+        # There could be more than one dhcp server per network, so create
+        # a device id that combines host and network ids
 
         LOG.debug('Port %s for %s requested from %s', device_id, network_id,
                   host)
-        context = augment_context(context)
         plugin = manager.QuantumManager.get_plugin()
         retval = None
 
@@ -136,7 +125,6 @@ class DhcpRpcCallbackMixin(object):
 
         LOG.debug('DHCP port deletion for %s d request from %s', network_id,
                   host)
-        context = augment_context(context)
         plugin = manager.QuantumManager.get_plugin()
         filters = dict(network_id=[network_id], device_id=[device_id])
         ports = plugin.get_ports(context, filters=filters)
@@ -154,8 +142,6 @@ class DhcpRpcCallbackMixin(object):
         LOG.debug('DHCP port remove fixed_ip for %s d request from %s',
                   subnet_id,
                   host)
-
-        context = augment_context(context)
         plugin = manager.QuantumManager.get_plugin()
         filters = dict(network_id=[network_id], device_id=[device_id])
         ports = plugin.get_ports(context, filters=filters)
@@ -179,8 +165,6 @@ class DhcpRpcCallbackMixin(object):
 
         LOG.debug('Updating lease expiration for %s on network %s from %s.',
                   ip_address, network_id, host)
-
-        context = augment_context(context)
         plugin = manager.QuantumManager.get_plugin()
 
         plugin.update_fixed_ip_lease_expiration(context, network_id,

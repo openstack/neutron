@@ -33,13 +33,11 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
-from quantum.common import constants
 from quantum.common import topics
 from quantum.common import utils as q_utils
+from quantum import context
 from quantum.openstack.common import cfg
-from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
-from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import constants as lconst
@@ -454,8 +452,7 @@ class LinuxBridgeQuantumAgentRPC:
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
 
         # RPC network init
-        self.context = context.RequestContext('quantum', 'quantum',
-                                              is_admin=False)
+        self.context = context.get_admin_context_without_session()
         # Handle updates from service
         self.callbacks = LinuxBridgeRpcCallbacks(self.context,
                                                  self.linux_br)
