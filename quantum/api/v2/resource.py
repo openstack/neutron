@@ -89,7 +89,10 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
 
         try:
             if request.body:
-                args['body'] = deserializer(request.body)
+                if content_type == 'application/xml':
+                    args['body'] = deserializer(request.body)['body']
+                else:
+                    args['body'] = deserializer(request.body)
 
             method = getattr(controller, action)
 
