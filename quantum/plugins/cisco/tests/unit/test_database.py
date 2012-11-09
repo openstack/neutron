@@ -26,9 +26,9 @@ import unittest
 from quantum.plugins.cisco.common import cisco_constants as const
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
-import quantum.plugins.cisco.db.nexus_db as nexus_db
+import quantum.plugins.cisco.db.nexus_db_v2 as nexus_db
 import quantum.plugins.cisco.db.services_db as services_db
-import quantum.plugins.cisco.db.ucs_db as ucs_db
+import quantum.plugins.cisco.db.ucs_db_v2 as ucs_db
 
 
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
