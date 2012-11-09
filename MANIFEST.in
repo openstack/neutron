@@ -1,5 +1,6 @@
 include AUTHORS
 include ChangeLog
+include quantum/versioninfo
 
 exclude .gitignore
 exclude .gitreview
