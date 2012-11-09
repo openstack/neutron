@@ -63,6 +63,19 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_boolean(None)
         self.assertEquals(msg, "'None' is not boolean")
 
+    def test_values(self):
+        msg = attributes._validate_values(4, [4, 6])
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_values(4, (4, 6))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_values(7, [4, 6])
+        self.assertEquals(msg, "'7' is not in [4, 6]")
+
+        msg = attributes._validate_values(7, (4, 6))
+        self.assertEquals(msg, "'7' is not in (4, 6)")
+
     def test_strings(self):
         msg = attributes._validate_string(None, None)
         self.assertEquals(msg, "'None' is not a valid string")

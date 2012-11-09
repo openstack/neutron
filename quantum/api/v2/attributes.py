@@ -42,11 +42,8 @@ def _validate_boolean(data, valid_values=None):
 
 
 def _validate_values(data, valid_values=None):
-    if data in valid_values:
-        return
-    else:
-        msg_dict = dict(data=data, values=valid_values)
-        msg = _("%(data)s is not in %(values)s") % msg_dict
+    if data not in valid_values:
+        msg = _("'%(data)s' is not in %(valid_values)s") % locals()
         LOG.debug("validate_values: %s", msg)
         return msg
 
