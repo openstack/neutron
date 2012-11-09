@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging as std_logging
+
 from quantum.common import config
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
@@ -58,16 +60,8 @@ class QuantumApiService(WsgiService):
         # Log the options used when starting if we're in debug mode...
 
         config.setup_logging(cfg.CONF)
-        LOG.debug("*" * 80)
-        LOG.debug("Configuration options gathered from config file:")
-        LOG.debug("================================================")
-        items = dict([(k, v) for k, v in cfg.CONF.items()
-                      if k not in ('__file__', 'here')])
-        for key, value in sorted(items.items()):
-            LOG.debug("%(key)-30s %(value)s" % {'key': key,
-                                                'value': value,
-                                                })
-        LOG.debug("*" * 80)
+        # Dump the initial option values
+        cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
         service = cls(app_name)
         return service
 
@@ -76,7 +70,7 @@ def serve_wsgi(cls):
     try:
         service = cls.create()
     except Exception:
-        logging.exception('in WsgiService.create()')
+        LOG.exception('in WsgiService.create()')
         raise
 
     service.start()
@@ -91,4 +85,9 @@ def _run_wsgi(app_name):
         return
     server = wsgi.Server("Quantum")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host)
+    # Dump all option values here after all options are parsed
+    cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
+    LOG.info("Quantum service started, listening on %(host)s:%(port)s" %
+             {'host': cfg.CONF.bind_host,
+              'port': cfg.CONF.bind_port})
     return server
