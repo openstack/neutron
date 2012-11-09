@@ -1,9 +1,9 @@
 Debug Helper Script for Quantum
 
 - Configure
-export TEST_CONFIG_FILE=/etc/quantum/debug.ini
+export QUANTUM_TEST_CONFIG_FILE=/etc/quantum/debug.ini
 or
-export TEST_CONFIG_FILE=/etc/quantum/l3_agent.ini
+export QUANTUM_TEST_CONFIG_FILE=/etc/quantum/l3_agent.ini
 
 you can also specify config file by --config-file option
 
