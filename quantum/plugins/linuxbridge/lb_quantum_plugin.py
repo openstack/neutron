@@ -25,6 +25,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
+from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
@@ -143,6 +144,9 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     handled, by adding support for extended attributes to the
     QuantumDbPluginV2 base class. When that occurs, this class should
     be updated to take advantage of it.
+
+    The port binding extension enables an external application relay
+    information to and from the plugin.
     """
 
     # This attribute specifies whether the plugin supports or not
@@ -150,7 +154,12 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # is qualified by class
     __native_bulk_support = True
 
-    supported_extension_aliases = ["provider", "router"]
+    supported_extension_aliases = ["provider", "router", "binding"]
+
+    network_view = "extension:provider_network:view"
+    network_set = "extension:provider_network:set"
+    binding_view = "extension:port_binding:view"
+    binding_set = "extension:port_binding:set"
 
     def __init__(self):
         db.initialize()
@@ -197,6 +206,12 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._add_network(entry)
         LOG.debug("network VLAN ranges: %s" % self.network_vlan_ranges)
 
+    def _check_view_auth(self, context, resource, action):
+        return policy.check(context, action, resource)
+
+    def _enforce_set_auth(self, context, resource, action):
+        policy.enforce(context, action, resource)
+
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
         self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
@@ -208,18 +223,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # REVISIT(rkukura) Use core mechanism for attribute authorization
     # when available.
 
-    def _check_provider_view_auth(self, context, network):
-        return policy.check(context,
-                            "extension:provider_network:view",
-                            network)
-
-    def _enforce_provider_set_auth(self, context, network):
-        return policy.enforce(context,
-                              "extension:provider_network:set",
-                              network)
-
     def _extend_network_dict_provider(self, context, network):
-        if self._check_provider_view_auth(context, network):
+        if self._check_view_auth(context, network, self.network_view):
             binding = db.get_network_binding(context.session, network['id'])
             if binding.vlan_id == constants.FLAT_VLAN_ID:
                 network[provider.NETWORK_TYPE] = constants.TYPE_FLAT
@@ -248,7 +253,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             return (None, None, None)
 
         # Authorize before exposing plugin details to client
-        self._enforce_provider_set_auth(context, attrs)
+        self._enforce_set_auth(context, attrs, self.network_set)
 
         if not network_type_set:
             msg = _("provider:network_type required")
@@ -312,7 +317,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             return
 
         # Authorize before exposing plugin details to client
-        self._enforce_provider_set_auth(context, attrs)
+        self._enforce_set_auth(context, attrs, self.network_set)
 
         msg = _("plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)
@@ -392,6 +397,26 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
+    def _extend_port_dict_binding(self, context, port):
+        if self._check_view_auth(context, port, self.binding_view):
+            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_BRIDGE
+        return port
+
+    def create_port(self, context, port):
+        port = super(LinuxBridgePluginV2, self).create_port(context, port)
+        return self._extend_port_dict_binding(context, port)
+
+    def get_port(self, context, id, fields=None):
+        port = super(LinuxBridgePluginV2, self).get_port(context, id, fields)
+        return self._fields(self._extend_port_dict_binding(context, port),
+                            fields)
+
+    def get_ports(self, context, filters=None, fields=None):
+        ports = super(LinuxBridgePluginV2, self).get_ports(context, filters,
+                                                           fields)
+        return [self._fields(self._extend_port_dict_binding(context, port),
+                             fields) for port in ports]
+
     def update_port(self, context, id, port):
         original_port = super(LinuxBridgePluginV2, self).get_port(context,
                                                                   id)
@@ -402,7 +427,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self.notifier.port_update(context, port,
                                       binding.physical_network,
                                       binding.vlan_id)
-        return port
+        return self._extend_port_dict_binding(context, port)
 
     def delete_port(self, context, id, l3_port_check=True):
 

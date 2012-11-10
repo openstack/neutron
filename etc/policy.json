@@ -15,6 +15,9 @@
     "extension:router:add_router_interface": "rule:admin_or_owner",
     "extension:router:remove_router_interface": "rule:admin_or_owner",
 
+    "extension:port_binding:view": "rule:admin_only",
+    "extension:port_binding:set": "rule:admin_only",
+
     "subnets:private:read": "rule:admin_or_owner",
     "subnets:private:write": "rule:admin_or_owner",
     "subnets:shared:read": "rule:regular_user",
