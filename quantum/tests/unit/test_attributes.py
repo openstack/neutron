@@ -281,6 +281,26 @@ class TestConvertToBoolean(unittest2.TestCase):
                           '7')
 
 
+class TestConvertToInt(unittest2.TestCase):
+
+    def test_convert_to_int_int(self):
+        self.assertEquals(attributes.convert_to_int(-1), -1)
+        self.assertEquals(attributes.convert_to_int(0), 0)
+        self.assertEquals(attributes.convert_to_int(1), 1)
+
+    def test_convert_to_int_str(self):
+        self.assertEquals(attributes.convert_to_int('4'), 4)
+        self.assertEquals(attributes.convert_to_int('6'), 6)
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes.convert_to_int,
+                          'garbage')
+
+    def test_convert_to_int_none(self):
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes.convert_to_int,
+                          None)
+
+
 class TestConvertKvp(unittest2.TestCase):
 
     def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):
