@@ -302,6 +302,13 @@ class TestAttributes(unittest2.TestCase):
         error = "'%s' is not a valid IP subnet" % cidr
         self.assertEquals(msg, error)
 
+    def test_uuid(self):
+        msg = attributes._validate_uuid('true')
+        self.assertEquals(msg, "'true' is not a valid UUID")
+
+        msg = attributes._validate_uuid('00000000-ffff-ffff-ffff-000000000000')
+        self.assertIsNone(msg)
+
 
 class TestConvertToBoolean(unittest2.TestCase):
 
