@@ -23,6 +23,14 @@ from quantum.common import exceptions as q_exc
 
 class TestAttributes(unittest2.TestCase):
 
+    def test_is_attr_set(self):
+        mock_obj = attributes.ATTR_NOT_SPECIFIED
+        mock_none = None
+        mock_str = "I'm set"
+        self.assertIs(attributes.is_attr_set(mock_obj), False)
+        self.assertIs(attributes.is_attr_set(mock_none), False)
+        self.assertIs(attributes.is_attr_set(mock_str), True)
+
     def test_booleans(self):
         msg = attributes._validate_boolean(True)
         self.assertIsNone(msg)
