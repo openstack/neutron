@@ -445,7 +445,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fixed_ips=None, fmt='json', no_delete=False,
+    def port(self, subnet=None, fmt='json', no_delete=False,
              **kwargs):
         if not subnet:
             with self.subnet() as subnet:

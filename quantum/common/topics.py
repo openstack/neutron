@@ -25,6 +25,8 @@ AGENT = 'q-agent-notifier'
 PLUGIN = 'q-plugin'
 DHCP = 'q-dhcp-notifer'
 
+L3_AGENT = 'l3_agent'
+
 
 def get_topic_name(prefix, table, operation):
     """Create a topic name.

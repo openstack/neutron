@@ -30,6 +30,7 @@ from quantum.common import topics
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
+from quantum.db import l3_rpc_base
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
@@ -44,7 +45,8 @@ from quantum import policy
 LOG = logging.getLogger(__name__)
 
 
-class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+                      l3_rpc_base.L3RpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
     RPC_API_VERSION = '1.0'

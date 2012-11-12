@@ -16,25 +16,27 @@
 #    under the License.
 
 import copy
-import time
-import unittest
+import unittest2
 
 import mock
 
-from quantum.agent.common import config
 from quantum.agent import l3_agent
 from quantum.agent.linux import interface
-from quantum.db import l3_db
+from quantum.common import config as base_config
+from quantum.common import constants as l3_constants
+from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 
 
 _uuid = uuidutils.generate_uuid
+HOSTNAME = 'myhost'
 
 
-class TestBasicRouterOperations(unittest.TestCase):
+class TestBasicRouterOperations(unittest2.TestCase):
 
     def setUp(self):
-        self.conf = config.setup_conf()
+        self.conf = cfg.CommonConfigOpts()
+        self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
         self.conf.register_opts(interface.OPTS)
         self.conf.set_override('interface_driver',
@@ -65,14 +67,15 @@ class TestBasicRouterOperations(unittest.TestCase):
         self.mock_ip = mock.MagicMock()
         ip_cls.return_value = self.mock_ip
 
-        self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
-        client_cls = self.client_cls_p.start()
-        self.client_inst = mock.Mock()
-        client_cls.return_value = self.client_inst
+        self.l3pluginApi_cls_p = mock.patch(
+            'quantum.agent.l3_agent.L3PluginApi')
+        l3pluginApi_cls = self.l3pluginApi_cls_p.start()
+        self.plugin_api = mock.Mock()
+        l3pluginApi_cls.return_value = self.plugin_api
 
     def tearDown(self):
         self.device_exists_p.stop()
-        self.client_cls_p.stop()
+        self.l3pluginApi_cls_p.stop()
         self.ip_cls_p.stop()
         self.dvr_cls_p.stop()
         self.utils_exec_p.stop()
@@ -86,7 +89,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         self.assertTrue(ri.ns_name().endswith(id))
 
     def testAgentCreate(self):
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
     def _test_internal_network_action(self, action):
         port_id = _uuid()
@@ -94,7 +97,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         network_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces)
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         interface_name = agent.get_internal_device_name(port_id)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
@@ -123,7 +126,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces)
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         internal_cidrs = ['100.0.1.0/24', '200.74.0.0/16']
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
@@ -167,7 +170,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces)
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         floating_ip = '20.0.0.100'
         fixed_ip = '10.0.0.23'
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -206,100 +209,78 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def testProcessRouter(self):
 
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
-
-        # return data so that state is built up
         ex_gw_port = {'id': _uuid(),
                       'network_id': _uuid(),
                       'fixed_ips': [{'ip_address': '19.4.4.4',
-                                     'subnet_id': _uuid()}]}
+                                     'subnet_id': _uuid()}],
+                      'subnet': {'cidr': '19.4.4.0/24',
+                                 'gateway_ip': '19.4.4.1'}}
         internal_port = {'id': _uuid(),
                          'network_id': _uuid(),
                          'admin_state_up': True,
                          'fixed_ips': [{'ip_address': '35.4.4.4',
                                         'subnet_id': _uuid()}],
-                         'mac_address': 'ca:fe:de:ad:be:ef'}
-
-        def fake_list_ports1(**kwargs):
-            if kwargs['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_GW:
-                return {'ports': [ex_gw_port]}
-            elif kwargs['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_INTF:
-                return {'ports': [internal_port]}
-
-        fake_subnet = {'subnet': {'cidr': '19.4.4.0/24',
-                                  'gateway_ip': '19.4.4.1'}}
+                         'mac_address': 'ca:fe:de:ad:be:ef',
+                         'subnet': {'cidr': '35.4.4.0/24',
+                                    'gateway_ip': '35.4.4.1'}}
 
         fake_floatingips1 = {'floatingips': [
             {'id': _uuid(),
              'floating_ip_address': '8.8.8.8',
              'fixed_ip_address': '7.7.7.7',
              'port_id': _uuid()}]}
-
-        self.client_inst.list_ports.side_effect = fake_list_ports1
-        self.client_inst.show_subnet.return_value = fake_subnet
-        self.client_inst.list_floatingips.return_value = fake_floatingips1
+        router = {
+            'id': router_id,
+            l3_constants.FLOATINGIP_KEY: fake_floatingips1['floatingips'],
+            l3_constants.INTERFACE_KEY: [internal_port],
+            'gw_port': ex_gw_port}
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
         agent.process_router(ri)
 
         # remap floating IP to a new fixed ip
         fake_floatingips2 = copy.deepcopy(fake_floatingips1)
         fake_floatingips2['floatingips'][0]['fixed_ip_address'] = '7.7.7.8'
-        self.client_inst.list_floatingips.return_value = fake_floatingips2
+        router[l3_constants.FLOATINGIP_KEY] = fake_floatingips2['floatingips']
         agent.process_router(ri)
 
         # remove just the floating ips
-        self.client_inst.list_floatingips.return_value = {'floatingips': []}
+        del router[l3_constants.FLOATINGIP_KEY]
         agent.process_router(ri)
 
-        # now return no ports so state is torn down
-        self.client_inst.list_ports.return_value = {'ports': []}
+        # now no ports so state is torn down
+        del router[l3_constants.INTERFACE_KEY]
+        del router['gw_port']
         agent.process_router(ri)
+
+    def testRoutersWithAdminStateDown(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_external_network_id.return_value = None
+
+        routers = [
+            {'id': _uuid(),
+             'admin_state_up': False,
+             'external_gateway_info': {}}]
+        agent._process_routers(routers)
+        self.assertNotIn(routers[0]['id'], agent.router_info)
 
     def testSingleLoopRouterRemoval(self):
-        agent = l3_agent.L3NATAgent(self.conf)
-        router_id = _uuid()
-
-        self.client_inst.list_ports.return_value = {'ports': []}
-
-        self.client_inst.list_networks.return_value = {'networks': []}
-
-        self.client_inst.list_routers.return_value = {'routers': [
-            {'id': router_id,
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_external_network_id.return_value = None
+        routers = [
+            {'id': _uuid(),
              'admin_state_up': True,
-             'external_gateway_info': {}}]}
-        agent.do_single_loop()
+             'external_gateway_info': {}}]
+        agent._process_routers(routers)
 
-        self.client_inst.list_routers.return_value = {'routers': []}
-        agent.do_single_loop()
-        self.external_process.assert_has_calls(
-            [mock.call(agent.conf, router_id, 'sudo', 'qrouter-' + router_id),
-             mock.call().enable(mock.ANY),
-             mock.call(agent.conf, router_id, 'sudo', 'qrouter-' + router_id),
-             mock.call().disable()])
-
+        agent.router_deleted(None, routers[0]['id'])
         # verify that remove is called
         self.assertEquals(self.mock_ip.get_devices.call_count, 1)
 
         self.device_exists.assert_has_calls(
             [mock.call(self.conf.external_network_bridge)])
-
-    def testDaemonLoop(self):
-
-        # just take a pass through the loop, then raise on time.sleep()
-        time_sleep_p = mock.patch('time.sleep')
-        time_sleep = time_sleep_p.start()
-
-        class ExpectedException(Exception):
-            pass
-
-        time_sleep.side_effect = ExpectedException()
-
-        agent = l3_agent.L3NATAgent(self.conf)
-        self.assertRaises(ExpectedException, agent.daemon_loop)
-
-        time_sleep_p.stop()
 
     def testDestroyNamespace(self):
 
@@ -311,16 +292,5 @@ class TestBasicRouterOperations(unittest.TestCase):
         self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
                                                  FakeDev('qgw-aaaa')]
 
-        agent = l3_agent.L3NATAgent(self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._destroy_all_router_namespaces()
-
-    def testMain(self):
-        agent_mock_p = mock.patch('quantum.agent.l3_agent.L3NATAgent')
-        agent_mock = agent_mock_p.start()
-        agent_mock.daemon_loop.return_value = None
-        with mock.patch('quantum.agent.common.config.setup_logging'):
-            with mock.patch('quantum.agent.l3_agent.sys') as mock_sys:
-                mock_sys.argv = []
-                l3_agent.main()
-
-        agent_mock_p.stop()

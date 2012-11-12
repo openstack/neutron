@@ -22,3 +22,9 @@ PORT_STATUS_ACTIVE = 'ACTIVE'
 PORT_STATUS_BUILD = 'BUILD'
 PORT_STATUS_DOWN = 'DOWN'
 PORT_STATUS_ERROR = 'ERROR'
+
+DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
+DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
+DEVICE_OWNER_FLOATINGIP = "network:floatingip"
+FLOATINGIP_KEY = '_floatingips'
+INTERFACE_KEY = '_interfaces'

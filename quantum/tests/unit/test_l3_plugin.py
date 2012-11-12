@@ -30,11 +30,13 @@ import webtest
 from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.common import config
+from quantum.common import constants as l3_constants
 from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
+from quantum.db import l3_rpc_agent_api
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum import manager
@@ -68,7 +70,6 @@ class L3NatExtensionTestCase(unittest.TestCase):
     def setUp(self):
 
         plugin = 'quantum.extensions.l3.RouterPluginBase'
-
         # Ensure 'stale' patched copies of the plugin are never returned
         manager.QuantumManager._instance = None
 
@@ -89,7 +90,6 @@ class L3NatExtensionTestCase(unittest.TestCase):
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
-
         # Instantiate mock plugin and enable the 'router' extension
         manager.QuantumManager.get_plugin().supported_extension_aliases = (
             ["router"])
@@ -118,9 +118,7 @@ class L3NatExtensionTestCase(unittest.TestCase):
         instance = self.plugin.return_value
         instance.create_router.return_value = return_value
         instance.get_routers_count.return_value = 0
-
         res = self.api.post_json(_get_path('routers'), data)
-
         instance.create_router.assert_called_with(mock.ANY,
                                                   router=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
@@ -1194,3 +1192,146 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         with self.network(router__external=True) as ext_net:
             self.assertEqual(ext_net['network'][l3.EXTERNAL],
                              True)
+
+    def _test_notify_op_agent(self, target_func, *args):
+        l3_rpc_agent_api_str = (
+            'quantum.db.l3_rpc_agent_api.L3AgentNotifyAPI')
+        oldNotify = l3_rpc_agent_api.L3AgentNofity
+        try:
+            with mock.patch(l3_rpc_agent_api_str) as notifyApi:
+                l3_rpc_agent_api.L3AgentNofity = notifyApi
+                kargs = [item for item in args]
+                kargs.append(notifyApi)
+                target_func(*kargs)
+        except:
+            l3_rpc_agent_api.L3AgentNofity = oldNotify
+            raise
+        else:
+            l3_rpc_agent_api.L3AgentNofity = oldNotify
+
+    def _test_router_gateway_op_agent(self, notifyApi):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                self.assertEquals(
+                    2, notifyApi.routers_updated.call_count)
+
+    def test_router_gateway_op_agent(self):
+        self._test_notify_op_agent(self._test_router_gateway_op_agent)
+
+    def _test_interfaces_op_agent(self, r, notifyApi):
+        with self.port(no_delete=True) as p:
+            self._router_interface_action('add',
+                                          r['router']['id'],
+                                          None,
+                                          p['port']['id'])
+            # clean-up
+            self._router_interface_action('remove',
+                                          r['router']['id'],
+                                          None,
+                                          p['port']['id'])
+        self.assertEquals(2, notifyApi.routers_updated.call_count)
+
+    def test_interfaces_op_agent(self):
+        with self.router() as r:
+            self._test_notify_op_agent(
+                self._test_interfaces_op_agent, r)
+
+    def _test_floatingips_op_agent(self, notifyApi):
+        with self.floatingip_with_assoc() as fip:
+            pass
+        # add gateway, add interface, associate, deletion of floatingip,
+        # delete gateway, delete interface
+        self.assertEquals(6, notifyApi.routers_updated.call_count)
+
+    def test_floatingips_op_agent(self):
+        self._test_notify_op_agent(self._test_floatingips_op_agent)
+
+    def test_l3_agent_routers_query_interfaces(self):
+        with self.router() as r:
+            with self.port(no_delete=True) as p:
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'])
+
+                plugin = TestL3NatPlugin()
+                routers = plugin.get_sync_data(context.get_admin_context(),
+                                               None)
+                self.assertEqual(1, len(routers))
+                interfaces = routers[0][l3_constants.INTERFACE_KEY]
+                self.assertEqual(1, len(interfaces))
+                subnet_id = interfaces[0]['subnet']['id']
+                wanted_subnetid = p['port']['fixed_ips'][0]['subnet_id']
+                self.assertEqual(wanted_subnetid, subnet_id)
+                # clean-up
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'])
+
+    def test_l3_agent_routers_query_ignore_interfaces_with_moreThanOneIp(self):
+        with self.router() as r:
+            with self.subnet(cidr='9.0.1.0/24') as subnet:
+                with self.port(subnet=subnet,
+                               no_delete=True,
+                               fixed_ips=[{'ip_address': '9.0.1.3'}]) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                    port = {'port': {'fixed_ips':
+                                     [{'ip_address': '9.0.1.4',
+                                       'subnet_id': subnet['subnet']['id']},
+                                      {'ip_address': '9.0.1.5',
+                                       'subnet_id': subnet['subnet']['id']}]}}
+                    plugin = TestL3NatPlugin()
+                    ctx = context.get_admin_context()
+                    plugin.update_port(ctx, p['port']['id'], port)
+                    routers = plugin.get_sync_data(ctx, None)
+                    self.assertEqual(1, len(routers))
+                    interfaces = routers[0].get(l3_constants.INTERFACE_KEY, [])
+                    self.assertEqual(0, len(interfaces))
+                    # clean-up
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
+    def test_l3_agent_routers_query_gateway(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                plugin = TestL3NatPlugin()
+                routers = plugin.get_sync_data(context.get_admin_context(),
+                                               [r['router']['id']])
+                self.assertEqual(1, len(routers))
+                gw_port = routers[0]['gw_port']
+                self.assertEquals(s['subnet']['id'], gw_port['subnet']['id'])
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+
+    def test_l3_agent_routers_query_floatingips(self):
+        with self.floatingip_with_assoc() as fip:
+            plugin = TestL3NatPlugin()
+            routers = plugin.get_sync_data(context.get_admin_context(),
+                                           [fip['floatingip']['router_id']])
+            self.assertEqual(1, len(routers))
+            floatingips = routers[0][l3_constants.FLOATINGIP_KEY]
+            self.assertEqual(1, len(floatingips))
+            self.assertEquals(floatingips[0]['id'],
+                              fip['floatingip']['id'])
+            self.assertEquals(floatingips[0]['port_id'],
+                              fip['floatingip']['port_id'])
+            self.assertTrue(floatingips[0]['fixed_ip_address'] is not None)
+            self.assertTrue(floatingips[0]['router_id'] is not None)

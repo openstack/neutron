@@ -23,6 +23,7 @@
 
 import os
 import signal
+import socket
 
 from eventlet.green import subprocess
 
@@ -145,3 +146,7 @@ def parse_mappings(mapping_list, unique_values=True):
                              (value, mapping))
         mappings[key] = value
     return mappings
+
+
+def get_hostname():
+    return socket.getfqdn()

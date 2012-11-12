@@ -235,3 +235,7 @@ class InvalidSharedSetting(QuantumException):
 
 class InvalidExtenstionEnv(QuantumException):
     message = _("Invalid extension environment: %(reason)s")
+
+
+class TooManyExternalNetworks(QuantumException):
+    message = _("More than one external network exists")
