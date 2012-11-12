@@ -246,10 +246,8 @@ def _validate_regex(data, valid_values=None):
 
 
 def _validate_uuid(data, valid_values=None):
-    if uuidutils.is_uuid_like(data):
-        return
-    else:
-        msg = _("%s is not a valid UUID") % data
+    if not uuidutils.is_uuid_like(data):
+        msg = _("'%s' is not a valid UUID") % data
         LOG.debug("validate_uuid: %s", msg)
         return msg
 
