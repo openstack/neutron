@@ -111,6 +111,31 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_string("123456789", None)
         self.assertIsNone(msg)
 
+    def test_range(self):
+        msg = attributes._validate_range(1, [1, 9])
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(5, [1, 9])
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(9, [1, 9])
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(1, (1, 9))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(5, (1, 9))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(9, (1, 9))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(0, [1, 9])
+        self.assertEquals(msg, "'0' is not in range 1 through 9")
+
+        msg = attributes._validate_range(10, (1, 9))
+        self.assertEquals(msg, "'10' is not in range 1 through 9")
+
     def test_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
                  [{'start': '10.0.0.254'}],
