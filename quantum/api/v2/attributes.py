@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 def is_attr_set(attribute):
-    return attribute not in (None, ATTR_NOT_SPECIFIED)
+    return not (attribute is None or attribute is ATTR_NOT_SPECIFIED)
 
 
 def _validate_boolean(data, valid_values=None):
