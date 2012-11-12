@@ -53,12 +53,11 @@ def _validate_string(data, max_len=None):
         msg = _("'%s' is not a valid string") % data
         LOG.debug("validate_string: %s", msg)
         return msg
-    if max_len is not None:
-        if len(data) > max_len:
-            msg = _("'%(data)s' exceeds maximum length of "
-                    "%(max_len)s.") % locals()
-            LOG.debug("validate_string: %s", msg)
-            return msg
+
+    if max_len is not None and len(data) > max_len:
+        msg = _("'%(data)s' exceeds maximum length of %(max_len)s") % locals()
+        LOG.debug("validate_string: %s", msg)
+        return msg
 
 
 def _validate_range(data, valid_values=None):
