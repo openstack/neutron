@@ -22,30 +22,6 @@ from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.plugins.openvswitch.common import config
 
 
-class TestParseBridgeMappings(unittest.TestCase):
-
-    def parse(self, bridge_mapping_list):
-        return ovs_quantum_agent.parse_bridge_mappings(bridge_mapping_list)
-
-    def test_parse_bridge_mappings_fails_for_missing_separator(self):
-        with self.assertRaises(ValueError):
-            self.parse(['net'])
-
-    def test_parse_bridge_mappings_fails_for_missing_value(self):
-        with self.assertRaises(ValueError):
-            self.parse(['net:'])
-
-    def test_parse_bridge_mappings_succeeds_for_one_mapping(self):
-        self.assertEqual(self.parse(['net:br']), {'net': 'br'})
-
-    def test_parse_bridge_mappings_succeeds_for_n_mappings(self):
-        self.assertEqual(self.parse(['net:br', 'net1:br1']),
-                         {'net': 'br', 'net1': 'br1'})
-
-    def test_parse_bridge_mappings_succeeds_for_no_mappings(self):
-        self.assertEqual(self.parse(['']), {})
-
-
 class CreateAgentConfigMap(unittest.TestCase):
 
     def test_create_agent_config_map_succeeds(self):

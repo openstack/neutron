@@ -35,6 +35,7 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
 from quantum.common import constants
 from quantum.common import topics
+from quantum.common import utils as q_utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
@@ -594,27 +595,24 @@ def main():
     # (TODO) gary - swap with common logging
     logging_config.setup_logging(cfg.CONF)
 
-    interface_mappings = {}
-    for mapping in cfg.CONF.LINUX_BRIDGE.physical_interface_mappings:
-        try:
-            physical_network, physical_interface = mapping.split(':')
-            interface_mappings[physical_network] = physical_interface
-            LOG.debug("physical network %s mapped to physical interface %s" %
-                      (physical_network, physical_interface))
-        except ValueError as ex:
-            LOG.error("Invalid physical interface mapping: %s - %s. "
-                      "Agent terminated!" %
-                      (mapping, ex))
-            sys.exit(1)
+    try:
+        interface_mappings = q_utils.parse_mappings(
+            cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
+    except ValueError as e:
+        LOG.error(_("Parsing physical_interface_mappings failed: %s."
+                    " Agent terminated!"), e)
+        sys.exit(1)
+    LOG.info(_("Interface mappings: %s") % interface_mappings)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
     root_helper = cfg.CONF.AGENT.root_helper
     plugin = LinuxBridgeQuantumAgentRPC(interface_mappings,
                                         polling_interval,
                                         root_helper)
-    LOG.info("Agent initialized successfully, now running... ")
+    LOG.info(_("Agent initialized successfully, now running... "))
     plugin.daemon_loop()
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
