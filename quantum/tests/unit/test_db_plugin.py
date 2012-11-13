@@ -2197,6 +2197,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                  allocation_pools=allocation_pools)
 
     def test_subnet_with_allocation_range(self):
+        cfg.CONF.set_override('dhcp_lease_duration', 0)
         fmt = 'json'
         with self.network() as network:
             net_id = network['network']['id']
@@ -2229,6 +2230,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
+        cfg.CONF.set_override('dhcp_lease_duration', 120)
 
     def test_create_subnet_with_none_gateway_allocation_pool(self):
         cidr = '10.0.0.0/24'

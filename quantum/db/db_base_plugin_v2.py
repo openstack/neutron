@@ -495,7 +495,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """
         # Check if the IP is the gateway
         if ip_address == gateway_ip:
-            return True
+            # Gateway is not in allocation pool
+            return False
 
         # Check if the requested IP is in a defined allocation pool
         pool_qry = context.session.query(models_v2.IPAllocationPool)
