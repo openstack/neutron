@@ -20,7 +20,6 @@
 #    under the License.
 # @author: Isaku Yamahata
 
-import logging as LOG
 import sys
 import time
 
@@ -33,6 +32,7 @@ from quantum.agent.linux.ovs_lib import VifPort
 from quantum.common import config as logging_config
 from quantum.common import constants
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as LOG
 from quantum.plugins.ryu.common import config
 
 

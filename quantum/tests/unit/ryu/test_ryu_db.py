@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
+import operator
 import unittest2
 
 from quantum.db import api as db
@@ -52,3 +52,26 @@ class RyuDBTest(unittest2.TestCase):
         self.assertEqual(len(servers), 2)
         for s in servers:
             self.assertTrue((s.address, s.host_type) in self.hosts)
+
+    @staticmethod
+    def _tunnel_key_sort(key_list):
+        key_list.sort(key=operator.attrgetter('tunnel_key'))
+        return [(key.network_id, key.tunnel_key) for key in key_list]
+
+    def test_key_allocation(self):
+        tunnel_key = db_api_v2.TunnelKey()
+        session = db.get_session()
+        network_id0 = u'network-id-0'
+        key0 = tunnel_key.allocate(session, network_id0)
+        network_id1 = u'network-id-1'
+        key1 = tunnel_key.allocate(session, network_id1)
+        key_list = tunnel_key.all_list()
+        self.assertEqual(len(key_list), 2)
+
+        expected_list = [(network_id0, key0), (network_id1, key1)]
+        self.assertEqual(self._tunnel_key_sort(key_list), expected_list)
+
+        tunnel_key.delete(session, network_id0)
+        key_list = tunnel_key.all_list()
+        self.assertEqual(self._tunnel_key_sort(key_list),
+                         [(network_id1, key1)])
