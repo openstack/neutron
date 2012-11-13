@@ -281,21 +281,17 @@ class TestBridgeInterfaceDriver(TestBase):
 
         self.ip().add_veth = mock.Mock(return_value=(root_veth, ns_veth))
 
-        expected = [mock.call(c, 'sudo') for c in [
-            ['ip', 'tuntap', 'add', 'tap0', 'mode', 'tap'],
-            ['ip', 'link', 'set', 'tap0', 'address', 'aa:bb:cc:dd:ee:ff'],
-            ['ip', 'link', 'set', 'tap0', 'up']]
-        ]
-
         self.device_exists.side_effect = device_exists
         br = interface.BridgeInterfaceDriver(self.conf)
+        mac_address = 'aa:bb:cc:dd:ee:ff'
         br.plug('01234567-1234-1234-99',
                 'port-1234',
                 'ns-0',
-                'aa:bb:cc:dd:ee:ff',
+                mac_address,
                 namespace=namespace)
 
         ip_calls = [mock.call('sudo'), mock.call().add_veth('tap0', 'ns-0')]
+        ns_veth.assert_has_calls([mock.call.link.set_address(mac_address)])
         if namespace:
             ip_calls.extend([
                 mock.call().ensure_namespace('01234567-1234-1234-99'),

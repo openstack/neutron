@@ -216,19 +216,19 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
                 tap_name = device_name.replace(prefix, 'tap')
             else:
                 tap_name = device_name.replace(self.DEV_NAME_PREFIX, 'tap')
-            root_veth, dhcp_veth = ip.add_veth(tap_name, device_name)
-            root_veth.link.set_address(mac_address)
+            root_veth, ns_veth = ip.add_veth(tap_name, device_name)
+            ns_veth.link.set_address(mac_address)
 
             if self.conf.network_device_mtu:
                 root_veth.link.set_mtu(self.conf.network_device_mtu)
-                dhcp_veth.link.set_mtu(self.conf.network_device_mtu)
+                ns_veth.link.set_mtu(self.conf.network_device_mtu)
 
             if namespace:
                 namespace_obj = ip.ensure_namespace(namespace)
-                namespace_obj.add_device_to_namespace(dhcp_veth)
+                namespace_obj.add_device_to_namespace(ns_veth)
 
             root_veth.link.set_up()
-            dhcp_veth.link.set_up()
+            ns_veth.link.set_up()
 
         else:
             LOG.warn(_("Device %s already exists") % device_name)
