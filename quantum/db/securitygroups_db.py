@@ -127,20 +127,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             context.session.add(security_group_db)
             if s.get('name') == 'default':
                 for ethertype in self.sg_supported_ethertypes:
-                    # Allow all egress traffic
-                    db = SecurityGroupRule(
-                        id=utils.str_uuid(), tenant_id=tenant_id,
-                        security_group=security_group_db,
-                        direction='egress',
-                        ethertype=ethertype)
-                    context.session.add(db)
                     # Allow intercommunication
                     db = SecurityGroupRule(
                         id=utils.str_uuid(), tenant_id=tenant_id,
                         security_group=security_group_db,
                         direction='ingress',
-                        source_group=security_group_db,
-                        ethertype=ethertype)
+                        ethertype=ethertype,
+                        source_group=security_group_db)
                     context.session.add(db)
 
         return self._make_security_group_dict(security_group_db)

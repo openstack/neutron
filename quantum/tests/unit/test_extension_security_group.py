@@ -367,7 +367,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.assertEquals(len(groups['security_groups']), 1)
             res = self.new_list_request('security-group-rules')
             rules = self.deserialize('json', res.get_response(self.ext_api))
-            self.assertEquals(len(rules['security_group_rules']), 4)
+            self.assertEquals(len(rules['security_group_rules']), 2)
             # just generic rules to allow default egress and
             # intergroup communicartion
             for rule in rules['security_group_rules']:
