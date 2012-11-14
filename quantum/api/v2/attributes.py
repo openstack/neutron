@@ -46,13 +46,6 @@ def is_attr_set(attribute):
     return not (attribute is None or attribute is ATTR_NOT_SPECIFIED)
 
 
-def _validate_boolean(data, valid_values=None):
-    if not isinstance(data, bool):
-        msg = _("'%s' is not boolean") % data
-        LOG.debug("validate_boolean: %s", msg)
-        return msg
-
-
 def _validate_values(data, valid_values=None):
     if data not in valid_values:
         msg = _("'%(data)s' is not in %(valid_values)s") % locals()
@@ -308,8 +301,7 @@ UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
 MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
-validators = {'type:boolean': _validate_boolean,
-              'type:fixed_ips': _validate_fixed_ips,
+validators = {'type:fixed_ips': _validate_fixed_ips,
               'type:hostroutes': _validate_hostroutes,
               'type:ip_address': _validate_ip_address,
               'type:ip_address_or_none': _validate_ip_address_or_none,
@@ -360,7 +352,6 @@ RESOURCE_ATTRIBUTE_MAP = {
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
                            'convert_to': convert_to_boolean,
-                           'validate': {'type:boolean': None},
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
@@ -372,7 +363,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'allow_put': True,
                  'default': False,
                  'convert_to': convert_to_boolean,
-                 'validate': {'type:boolean': None},
                  'is_visible': True,
                  'required_by_policy': True,
                  'enforce_policy': True},
@@ -391,7 +381,6 @@ RESOURCE_ATTRIBUTE_MAP = {
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
                            'convert_to': convert_to_boolean,
-                           'validate': {'type:boolean': None},
                            'is_visible': True},
         'mac_address': {'allow_post': True, 'allow_put': False,
                         'default': ATTR_NOT_SPECIFIED,
@@ -461,13 +450,11 @@ RESOURCE_ATTRIBUTE_MAP = {
         'enable_dhcp': {'allow_post': True, 'allow_put': True,
                         'default': True,
                         'convert_to': convert_to_boolean,
-                        'validate': {'type:boolean': None},
                         'is_visible': True},
         SHARED: {'allow_post': False,
                  'allow_put': False,
                  'default': False,
                  'convert_to': convert_to_boolean,
-                 'validate': {'type:boolean': None},
                  'is_visible': False,
                  'required_by_policy': True,
                  'enforce_policy': True},

@@ -33,28 +33,6 @@ class TestAttributes(unittest2.TestCase):
         data = "I'm set"
         self.assertIs(attributes.is_attr_set(data), True)
 
-    def test_validate_boolean(self):
-        msg = attributes._validate_boolean(True)
-        self.assertIsNone(msg)
-
-        msg = attributes._validate_boolean(False)
-        self.assertIsNone(msg)
-
-        msg = attributes._validate_boolean('True')
-        self.assertEquals(msg, "'True' is not boolean")
-
-        msg = attributes._validate_boolean('False')
-        self.assertEquals(msg, "'False' is not boolean")
-
-        msg = attributes._validate_boolean(0)
-        self.assertEquals(msg, "'0' is not boolean")
-
-        msg = attributes._validate_boolean(1)
-        self.assertEquals(msg, "'1' is not boolean")
-
-        msg = attributes._validate_boolean(None)
-        self.assertEquals(msg, "'None' is not boolean")
-
     def test_validate_values(self):
         msg = attributes._validate_values(4, [4, 6])
         self.assertIsNone(msg)
