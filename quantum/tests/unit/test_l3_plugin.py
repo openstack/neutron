@@ -561,6 +561,40 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                       None,
                                                       p1['port']['id'])
 
+    def test_router_add_gateway_dup_subnet1(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    expected_code=exc.HTTPBadRequest.code)
+                body = self._router_interface_action('remove',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+
+    def test_router_add_gateway_dup_subnet2(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None,
+                                              expected_code=exc.
+                                              HTTPBadRequest.code)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+
     def test_router_add_interface_overlapped_cidr(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s1:
@@ -763,7 +797,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt='json'):
-        with self.subnet() as public_sub:
+        with self.subnet(cidr='11.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
@@ -794,7 +828,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt='json'):
-        with self.subnet() as public_sub:
+        with self.subnet(cidr='12.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.router() as r:
                 self._add_external_gateway_to_router(
@@ -831,7 +865,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def test_floatingip_with_assoc_fails(self):
         fmt = 'json'
-        with self.subnet() as public_sub:
+        with self.subnet(cidr='200.0.0.1/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
