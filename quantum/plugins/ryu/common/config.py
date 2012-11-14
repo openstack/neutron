@@ -28,7 +28,12 @@ ovs_opts = [
     cfg.StrOpt('openflow_controller', default='127.0.0.1:6633'),
     cfg.StrOpt('openflow_rest_api', default='127.0.0.1:8080'),
     cfg.IntOpt('tunnel_key_min', default=1),
-    cfg.IntOpt('tunnel_key_max', default=0xffffff)
+    cfg.IntOpt('tunnel_key_max', default=0xffffff),
+    cfg.StrOpt('tunnel_ip', default=None),
+    cfg.StrOpt('tunnel_interface', default=None),
+    cfg.IntOpt('ovsdb_port', default=6634),
+    cfg.StrOpt('ovsdb_ip', default=None),
+    cfg.StrOpt('ovsdb_interface', default=None),
 ]
 
 agent_opts = [
