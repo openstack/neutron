@@ -129,8 +129,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                'external_gateway_info': None}
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
-            res['external_gateway_info'] = {'network_id': nw_id,
-                                            'gw_port': router.gw_port}
+            res['external_gateway_info'] = {'network_id': nw_id}
         return self._fields(res, fields)
 
     def create_router(self, context, router):
