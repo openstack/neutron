@@ -656,10 +656,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 net_id = body['router']['external_gateway_info']['network_id']
-                gw_port = body['router']['external_gateway_info']['gw_port']
-                port_netid = gw_port['network_id']
                 self.assertEquals(net_id, s['subnet']['network_id'])
-                self.assertEquals(net_id, port_netid)
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
