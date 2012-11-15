@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,7 +18,7 @@
 import mox
 import unittest
 
-from quantum.common import utils
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import ofc_client as ofc
 from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import drivers
@@ -50,9 +50,9 @@ class PFCDriverTestBase(unittest.TestCase):
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
-        tenant_id = utils.str_uuid()
-        network_id = utils.str_uuid()
-        port_id = utils.str_uuid()
+        tenant_id = uuidutils.generate_uuid()
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         portinfo = nmodels.PortInfo(id=port_id, datapath_id="0x123456789",
                                     port_no=1234, vlan_id=321,
                                     mac="11:22:33:44:55:66")

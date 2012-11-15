@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -20,8 +20,8 @@ import logging
 from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
-from quantum.common import utils
 from quantum.db import db_base_plugin_v2
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as q_exc
 from quantum.plugins.nec.db import models as nmodels
 
@@ -84,7 +84,7 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
             super(NECPluginV2Base, self).get_port(context, pf['in_port'])
 
         params = {'tenant_id': tenant_id,
-                  'id': pf.get('id') or utils.str_uuid(),
+                  'id': pf.get('id') or uuidutils.generate_uuid(),
                   'network_id': pf['network_id'],
                   'priority': pf['priority'],
                   'action': pf['action'],

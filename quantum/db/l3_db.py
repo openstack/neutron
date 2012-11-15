@@ -1,6 +1,5 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 Nicira Networks, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,7 +16,6 @@
 #
 # @author: Dan Wendlandt, Nicira, Inc
 #
-"""
 
 import netaddr
 import sqlalchemy as sa
@@ -28,14 +26,13 @@ import webob.exc as w_exc
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
-from quantum.common import utils
 from quantum.db import db_base_plugin_v2
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
-
+from quantum.openstack.common import uuidutils
 from quantum import policy
 
 
@@ -143,7 +140,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
-            router_db = Router(id=utils.str_uuid(),
+            router_db = Router(id=uuidutils.generate_uuid(),
                                tenant_id=tenant_id,
                                name=r['name'],
                                admin_state_up=r['admin_state_up'],
@@ -553,7 +550,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def create_floatingip(self, context, floatingip):
         fip = floatingip['floatingip']
         tenant_id = self._get_tenant_id_for_create(context, fip)
-        fip_id = utils.str_uuid()
+        fip_id = uuidutils.generate_uuid()
 
         f_net_id = fip['floating_network_id']
         if not self._network_is_external(context, f_net_id):

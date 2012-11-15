@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 Nicira Networks, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -22,7 +22,6 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
-from quantum.common import utils
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
@@ -119,7 +118,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         with context.session.begin(subtransactions=True):
             security_group_db = SecurityGroup(id=s.get('id') or (
-                                              utils.str_uuid()),
+                                              uuidutils.generate_uuid()),
                                               description=s['description'],
                                               tenant_id=tenant_id,
                                               name=s['name'],
@@ -129,7 +128,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 for ethertype in self.sg_supported_ethertypes:
                     # Allow intercommunication
                     db = SecurityGroupRule(
-                        id=utils.str_uuid(), tenant_id=tenant_id,
+                        id=uuidutils.generate_uuid(), tenant_id=tenant_id,
                         security_group=security_group_db,
                         direction='ingress',
                         ethertype=ethertype,
@@ -249,7 +248,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 rule = rule_dict['security_group_rule']
                 tenant_id = self._get_tenant_id_for_create(context, rule)
                 db = SecurityGroupRule(
-                    id=utils.str_uuid(), tenant_id=tenant_id,
+                    id=uuidutils.generate_uuid(), tenant_id=tenant_id,
                     security_group_id=rule['security_group_id'],
                     direction=rule['direction'],
                     external_id=rule.get('external_id'),
