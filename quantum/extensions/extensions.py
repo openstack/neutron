@@ -50,6 +50,11 @@ ENABLED_EXTS = {
         'ext_alias': ["quotas"],
         'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
     },
+    'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2':
+    {
+        'ext_alias': ["quotas"],
+        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
+    },
 }
 
 
