@@ -85,13 +85,15 @@ def configure_db(options):
 
 
 def clear_db(base=BASE):
-    global _ENGINE
+    global _ENGINE, _MAKER
     assert _ENGINE
-    for table in reversed(base.metadata.sorted_tables):
-        try:
-            _ENGINE.execute(table.delete())
-        except Exception as e:
-            LOG.info("Unable to delete table. %s.", e)
+
+    unregister_models(base)
+    if _MAKER:
+        _MAKER.close_all()
+        _MAKER = None
+    _ENGINE.dispose()
+    _ENGINE = None
 
 
 def get_session(autocommit=True, expire_on_commit=False):
