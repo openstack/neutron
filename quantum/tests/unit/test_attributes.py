@@ -207,6 +207,9 @@ class TestAttributes(unittest2.TestCase):
     def test_validate_hostroutes(self):
         hostroute_pools = [[{'destination': '100.0.0.0/24'}],
                            [{'nexthop': '10.0.2.20'}],
+                           [{'nexthop': '10.0.2.20',
+                             'forza': 'juve',
+                             'destination': '100.0.0.0/8'}],
                            [{'nexthop': '1110.0.2.20',
                              'destination': '100.0.0.0/8'}],
                            [{'nexthop': '10.0.2.20',
@@ -215,6 +218,7 @@ class TestAttributes(unittest2.TestCase):
                              'destination': '100.0.0.0/8'},
                             {'nexthop': '10.0.2.20',
                              'destination': '100.0.0.0/8'}],
+                           [None],
                            None]
         for host_routes in hostroute_pools:
             msg = attributes._validate_hostroutes(host_routes, None)
@@ -368,11 +372,11 @@ class TestAttributes(unittest2.TestCase):
 
         data = None
         msg = attributes._validate_regex(data, pattern)
-        self.assertEquals(msg, "'%s' is not valid input" % data)
+        self.assertEquals(msg, "'%s' is not a valid input" % data)
 
         data = 'bat'
         msg = attributes._validate_regex(data, pattern)
-        self.assertEquals(msg, "'%s' is not valid input" % data)
+        self.assertEquals(msg, "'%s' is not a valid input" % data)
 
         data = 'hat'
         msg = attributes._validate_regex(data, pattern)
