@@ -227,9 +227,16 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         with context.session.begin(subtransactions=True):
             router = self._get_router(context, id)
 
+            # Ensure that the router is not used
+            fips = self.get_floatingips_count(context.elevated(),
+                                              filters={'router_id': [id]})
+            if fips:
+                raise l3.RouterInUse(router_id=id)
+
             device_filter = {'device_id': [id],
                              'device_owner': [DEVICE_OWNER_ROUTER_INTF]}
-            ports = self.get_ports(context, filters=device_filter)
+            ports = self.get_ports_count(context.elevated(),
+                                         filters=device_filter)
             if ports:
                 raise l3.RouterInUse(router_id=id)
 
