@@ -901,6 +901,38 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   private_sub['subnet']['id'],
                                                   None)
 
+    def test_router_delete_with_floatingip(self):
+        with self.port() as p:
+            private_sub = {'subnet': {'id':
+                                      p['port']['fixed_ips'][0]['subnet_id']}}
+            with self.subnet(cidr='12.0.0.0/24') as public_sub:
+                fmt = 'json'
+                self._set_net_external(public_sub['subnet']['network_id'])
+                res = self._create_router(fmt, _uuid())
+                r = self.deserialize(fmt, res)
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+                self._router_interface_action('add', r['router']['id'],
+                                              private_sub['subnet']['id'],
+                                              None)
+                res = self._create_floatingip(
+                    fmt, public_sub['subnet']['network_id'],
+                    port_id=p['port']['id'])
+                self.assertEqual(res.status_int, exc.HTTPCreated.code)
+                floatingip = self.deserialize(fmt, res)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+                self._delete('routers', r['router']['id'],
+                             expected_code=exc.HTTPConflict.code)
+                # Cleanup
+                self._delete('floatingips', floatingip['floatingip']['id'])
+                self._router_interface_action('remove', r['router']['id'],
+                                              private_sub['subnet']['id'],
+                                              None)
+                self._delete('routers', r['router']['id'])
+
     def test_floatingip_update(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
