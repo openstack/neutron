@@ -39,9 +39,6 @@ OPTS = [
                 help='Uses veth for an interface or not'),
     cfg.StrOpt('network_device_mtu',
                help='MTU setting for device.'),
-    cfg.StrOpt('ryu_api_host',
-               default='127.0.0.1:8080',
-               help='Openflow Ryu REST API host:port'),
     cfg.StrOpt('meta_flavor_driver_mappings',
                help='Mapping between flavor and LinuxInterfaceDriver')
 ]
@@ -242,33 +239,6 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_("Failed unplugging interface '%s'") %
                       device_name)
-
-
-class RyuInterfaceDriver(OVSInterfaceDriver):
-    """Driver for creating a Ryu OVS interface."""
-
-    def __init__(self, conf):
-        super(RyuInterfaceDriver, self).__init__(conf)
-
-        from ryu.app.client import OFPClient
-        LOG.debug('ryu rest host %s', self.conf.ryu_api_host)
-        self.ryu_client = OFPClient(self.conf.ryu_api_host)
-
-    def plug(self, network_id, port_id, device_name, mac_address,
-             bridge=None, namespace=None, prefix=None):
-        """Plug in the interface."""
-        super(RyuInterfaceDriver, self).plug(network_id, port_id, device_name,
-                                             mac_address, bridge=bridge,
-                                             namespace=namespace,
-                                             prefix=prefix)
-        if not bridge:
-            bridge = self.conf.ovs_integration_bridge
-
-        self.check_bridge_exists(bridge)
-        ovs_br = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
-        datapath_id = ovs_br.get_datapath_id()
-        port_no = ovs_br.get_port_ofport(device_name)
-        self.ryu_client.create_port(network_id, datapath_id, port_no)
 
 
 class MetaInterfaceDriver(LinuxInterfaceDriver):
