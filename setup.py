@@ -123,6 +123,10 @@ setuptools.setup(
             'quantum-l3-agent = quantum.agent.l3_agent:main',
             'quantum-linuxbridge-agent ='
             'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
+            'quantum-metadata-agent ='
+            'quantum.agent.metadata.agent:main',
+            'quantum-ns-metadata-proxy ='
+            'quantum.agent.metadata.namespace_proxy:main',
             'quantum-openvswitch-agent ='
             'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
             'quantum-ryu-agent = '

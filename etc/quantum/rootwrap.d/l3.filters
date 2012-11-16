@@ -16,6 +16,11 @@ arping_sbin: CommandFilter, /sbin/arping, root
 sysctl: CommandFilter, /sbin/sysctl, root
 route: CommandFilter, /sbin/route, root
 
+# metadata proxy
+metadata_proxy: CommandFilter, /usr/local/bin/quantum-ns-metadata-proxy, root
+kill_metadata7: KillFilter, root, /usr/bin/python2.7, -9
+kill_metadata6: KillFilter, root, /usr/bin/python2.6, -9
+
 # ip_lib
 ip: IpFilter, /sbin/ip, root
 ip_usr: IpFilter, /usr/sbin/ip, root

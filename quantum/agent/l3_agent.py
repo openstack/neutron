@@ -25,6 +25,7 @@ import time
 import netaddr
 
 from quantum.agent.common import config
+from quantum.agent.linux import external_process
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import iptables_manager
@@ -78,11 +79,9 @@ class L3NATAgent(object):
         cfg.IntOpt('polling_interval',
                    default=3,
                    help="The time in seconds between state poll requests."),
-        cfg.StrOpt('metadata_ip', default='',
-                   help="IP address used by Nova metadata server."),
         cfg.IntOpt('metadata_port',
-                   default=8775,
-                   help="TCP Port used by Nova metadata server."),
+                   default=9697,
+                   help="TCP Port used by Quantum metadata namespace proxy."),
         cfg.IntOpt('send_arp_for_ha',
                    default=3,
                    help="Send this many gratuitous ARPs for HA setup, "
@@ -244,6 +243,7 @@ class L3NATAgent(object):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].add_rule(c, r)
         ri.iptables_manager.apply()
+        self._spawn_metadata_agent(ri)
 
     def _router_removed(self, router_id):
         ri = self.router_info[router_id]
@@ -252,8 +252,31 @@ class L3NATAgent(object):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
+        self._destroy_metadata_agent(ri)
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name())
+
+    def _spawn_metadata_agent(self, router_info):
+        def callback(pid_file):
+            return ['quantum-ns-metadata-proxy',
+                    '--pid_file=%s' % pid_file,
+                    '--router_id=%s' % router_info.router_id,
+                    '--state_path=%s' % self.conf.state_path]
+
+        pm = external_process.ProcessManager(
+            self.conf,
+            router_info.router_id,
+            self.conf.root_helper,
+            router_info.ns_name())
+        pm.enable(callback)
+
+    def _destroy_metadata_agent(self, router_info):
+        pm = external_process.ProcessManager(
+            self.conf,
+            router_info.router_id,
+            self.conf.root_helper,
+            router_info.ns_name())
+        pm.disable()
 
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
@@ -437,20 +460,16 @@ class L3NATAgent(object):
 
     def metadata_filter_rules(self):
         rules = []
-        if self.conf.metadata_ip:
-            rules.append(('INPUT', '-s 0.0.0.0/0 -d %s '
-                          '-p tcp -m tcp --dport %s '
-                          '-j ACCEPT' %
-                         (self.conf.metadata_ip, self.conf.metadata_port)))
+        rules.append(('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
+                      '-p tcp -m tcp --dport %s '
+                      '-j ACCEPT' % self.conf.metadata_port))
         return rules
 
     def metadata_nat_rules(self):
         rules = []
-        if self.conf.metadata_ip:
-            rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
-                         '-p tcp -m tcp --dport 80 -j DNAT '
-                         '--to-destination %s:%s' %
-                         (self.conf.metadata_ip, self.conf.metadata_port)))
+        rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+                     '-p tcp -m tcp --dport 80 -j REDIRECT '
+                     '--to-port %s' % self.conf.metadata_port))
         return rules
 
     def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
@@ -502,9 +521,6 @@ class L3NATAgent(object):
     def internal_network_nat_rules(self, ex_gw_ip, internal_cidr):
         rules = [('snat', '-s %s -j SNAT --to-source %s' %
                  (internal_cidr, ex_gw_ip))]
-        if self.conf.metadata_ip:
-            rules.append(('POSTROUTING', '-s %s -d %s/32 -j ACCEPT' %
-                          (internal_cidr, self.conf.metadata_ip)))
         return rules
 
     def floating_ip_added(self, ri, ex_gw_port, floating_ip, fixed_ip):
@@ -548,6 +564,7 @@ def main():
     conf = config.setup_conf()
     conf.register_opts(L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
+    conf.register_opts(external_process.OPTS)
     conf(sys.argv)
     config.setup_logging(conf)
 

@@ -49,6 +49,10 @@ class TestBasicRouterOperations(unittest.TestCase):
             'quantum.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
 
+        self.external_process_p = mock.patch(
+            'quantum.agent.linux.external_process.ProcessManager')
+        self.external_process = self.external_process_p.start()
+
         self.dvr_cls_p = mock.patch('quantum.agent.linux.interface.NullDriver')
         driver_cls = self.dvr_cls_p.start()
         self.mock_driver = mock.MagicMock()
@@ -72,6 +76,7 @@ class TestBasicRouterOperations(unittest.TestCase):
         self.ip_cls_p.stop()
         self.dvr_cls_p.stop()
         self.utils_exec_p.stop()
+        self.external_process_p.stop()
 
     def testRouterInfoCreate(self):
         id = _uuid()
@@ -254,19 +259,25 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def testSingleLoopRouterRemoval(self):
         agent = l3_agent.L3NATAgent(self.conf)
+        router_id = _uuid()
 
         self.client_inst.list_ports.return_value = {'ports': []}
 
         self.client_inst.list_networks.return_value = {'networks': []}
 
         self.client_inst.list_routers.return_value = {'routers': [
-            {'id': _uuid(),
+            {'id': router_id,
              'admin_state_up': True,
              'external_gateway_info': {}}]}
         agent.do_single_loop()
 
         self.client_inst.list_routers.return_value = {'routers': []}
         agent.do_single_loop()
+        self.external_process.assert_has_calls(
+            [mock.call(agent.conf, router_id, 'sudo', 'qrouter-' + router_id),
+             mock.call().enable(mock.ANY),
+             mock.call(agent.conf, router_id, 'sudo', 'qrouter-' + router_id),
+             mock.call().disable()])
 
         # verify that remove is called
         self.assertEquals(self.mock_ip.get_devices.call_count, 1)
