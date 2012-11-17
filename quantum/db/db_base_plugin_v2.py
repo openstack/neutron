@@ -380,7 +380,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def update_fixed_ip_lease_expiration(self, context, network_id,
                                          ip_address, lease_remaining):
 
-        expiration = timeutils.utcnow() + datetime.timedelta(lease_remaining)
+        expiration = (timeutils.utcnow() +
+                      datetime.timedelta(seconds=lease_remaining))
 
         query = context.session.query(models_v2.IPAllocation)
         query = query.filter_by(network_id=network_id, ip_address=ip_address)
