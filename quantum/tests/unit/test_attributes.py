@@ -24,14 +24,16 @@ from quantum.common import exceptions as q_exc
 class TestAttributes(unittest2.TestCase):
 
     def test_is_attr_set(self):
-        mock_obj = attributes.ATTR_NOT_SPECIFIED
-        mock_none = None
-        mock_str = "I'm set"
-        self.assertIs(attributes.is_attr_set(mock_obj), False)
-        self.assertIs(attributes.is_attr_set(mock_none), False)
-        self.assertIs(attributes.is_attr_set(mock_str), True)
+        data = attributes.ATTR_NOT_SPECIFIED
+        self.assertIs(attributes.is_attr_set(data), False)
 
-    def test_booleans(self):
+        data = None
+        self.assertIs(attributes.is_attr_set(data), False)
+
+        data = "I'm set"
+        self.assertIs(attributes.is_attr_set(data), True)
+
+    def test_validate_boolean(self):
         msg = attributes._validate_boolean(True)
         self.assertIsNone(msg)
 
@@ -41,23 +43,8 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_boolean('True')
         self.assertEquals(msg, "'True' is not boolean")
 
-        msg = attributes._validate_boolean('true')
-        self.assertEquals(msg, "'true' is not boolean")
-
         msg = attributes._validate_boolean('False')
         self.assertEquals(msg, "'False' is not boolean")
-
-        msg = attributes._validate_boolean('false')
-        self.assertEquals(msg, "'false' is not boolean")
-
-        msg = attributes._validate_boolean('0')
-        self.assertEquals(msg, "'0' is not boolean")
-
-        msg = attributes._validate_boolean('1')
-        self.assertEquals(msg, "'1' is not boolean")
-
-        msg = attributes._validate_boolean('7')
-        self.assertEquals(msg, "'7' is not boolean")
 
         msg = attributes._validate_boolean(0)
         self.assertEquals(msg, "'0' is not boolean")
@@ -65,13 +52,10 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_boolean(1)
         self.assertEquals(msg, "'1' is not boolean")
 
-        msg = attributes._validate_boolean(7)
-        self.assertEquals(msg, "'7' is not boolean")
-
         msg = attributes._validate_boolean(None)
         self.assertEquals(msg, "'None' is not boolean")
 
-    def test_values(self):
+    def test_validate_values(self):
         msg = attributes._validate_values(4, [4, 6])
         self.assertIsNone(msg)
 
@@ -84,7 +68,7 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_values(7, (4, 6))
         self.assertEquals(msg, "'7' is not in (4, 6)")
 
-    def test_strings(self):
+    def test_validate_string(self):
         msg = attributes._validate_string(None, None)
         self.assertEquals(msg, "'None' is not a valid string")
 
@@ -111,7 +95,7 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_string("123456789", None)
         self.assertIsNone(msg)
 
-    def test_range(self):
+    def test_validate_range(self):
         msg = attributes._validate_range(1, [1, 9])
         self.assertIsNone(msg)
 
@@ -136,7 +120,25 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_range(10, (1, 9))
         self.assertEquals(msg, "'10' is not in range 1 through 9")
 
-    def test_ip_pools(self):
+    def test_validate_mac_address(self):
+        mac_addr = "ff:16:3e:4f:00:00"
+        msg = attributes._validate_mac_address(mac_addr)
+        self.assertIsNone(msg)
+
+        mac_addr = "ffa:16:3e:4f:00:00"
+        msg = attributes._validate_mac_address(mac_addr)
+        self.assertEquals(msg, "'%s' is not a valid MAC address" % mac_addr)
+
+    def test_validate_ip_address(self):
+        ip_addr = '1.1.1.1'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertIsNone(msg)
+
+        ip_addr = '1111.1.1.1'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEquals(msg, "'%s' is not a valid IP address" % ip_addr)
+
+    def test_validate_ip_pools(self):
         pools = [[{'end': '10.0.0.254'}],
                  [{'start': '10.0.0.254'}],
                  [{'start': '1000.0.0.254',
@@ -145,19 +147,20 @@ class TestAttributes(unittest2.TestCase):
                    'forza': 'juve'}],
                  [{'start': '10.0.0.2', 'end': '10.0.0.254'},
                   {'end': '10.0.0.254'}],
+                 [None],
                  None]
         for pool in pools:
-            msg = attributes._validate_ip_pools(pool, None)
+            msg = attributes._validate_ip_pools(pool)
             self.assertIsNotNone(msg)
 
         pools = [[{'end': '10.0.0.254', 'start': '10.0.0.2'},
                   {'start': '11.0.0.2', 'end': '11.1.1.1'}],
                  [{'start': '11.0.0.2', 'end': '11.0.0.100'}]]
         for pool in pools:
-            msg = attributes._validate_ip_pools(pool, None)
+            msg = attributes._validate_ip_pools(pool)
             self.assertIsNone(msg)
 
-    def test_fixed_ips(self):
+    def test_validate_fixed_ips(self):
         fixed_ips = [[{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
                        'ip_address': '1111.1.1.1'}],
                      [{'subnet_id': 'invalid'}],
@@ -165,16 +168,22 @@ class TestAttributes(unittest2.TestCase):
                      [{'subnet_id': '00000000-0fff-ffff-ffff-000000000000',
                        'ip_address': '1.1.1.1'},
                       {'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
-                       'ip_address': '1.1.1.1'}],
-                     [{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
-                       'ip_address': '1.1.1.1'},
-                      {'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
                        'ip_address': '1.1.1.1'}]]
         for fixed in fixed_ips:
-            msg = attributes._validate_fixed_ips(fixed, None)
+            msg = attributes._validate_fixed_ips(fixed)
             self.assertIsNotNone(msg)
 
-    def test_nameservers(self):
+        fixed_ips = [[{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
+                       'ip_address': '1.1.1.1'}],
+                     [{'subnet_id': '00000000-0fff-ffff-ffff-000000000000',
+                       'ip_address': '1.1.1.1'},
+                      {'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
+                       'ip_address': '1.1.1.2'}]]
+        for fixed in fixed_ips:
+            msg = attributes._validate_fixed_ips(fixed)
+            self.assertIsNone(msg)
+
+    def test_validate_nameservers(self):
         ns_pools = [['1.1.1.2', '1.1.1.2'],
                     ['www.hostname.com', 'www.hostname.com'],
                     ['77.hostname.com'],
@@ -195,9 +204,13 @@ class TestAttributes(unittest2.TestCase):
             msg = attributes._validate_nameservers(ns, None)
             self.assertIsNone(msg)
 
-    def test_hostroutes(self):
+    def test_validate_hostroutes(self):
         hostroute_pools = [[{'destination': '100.0.0.0/24'}],
                            [{'nexthop': '10.0.2.20'}],
+                           [{'nexthop': '1110.0.2.20',
+                             'destination': '100.0.0.0/8'}],
+                           [{'nexthop': '10.0.2.20',
+                             'destination': '100.0.0.0'}],
                            [{'nexthop': '10.0.2.20',
                              'destination': '100.0.0.0/8'},
                             {'nexthop': '10.0.2.20',
@@ -207,18 +220,59 @@ class TestAttributes(unittest2.TestCase):
             msg = attributes._validate_hostroutes(host_routes, None)
             self.assertIsNotNone(msg)
 
-    def test_mac_addresses(self):
+        hostroute_pools = [[{'destination': '100.0.0.0/24',
+                             'nexthop': '10.0.2.20'}],
+                           [{'nexthop': '10.0.2.20',
+                             'destination': '100.0.0.0/8'},
+                            {'nexthop': '10.0.2.20',
+                             'destination': '100.0.0.1/8'}]]
+        for host_routes in hostroute_pools:
+            msg = attributes._validate_hostroutes(host_routes, None)
+            self.assertIsNone(msg)
+
+    def test_validate_ip_address_or_none(self):
+        ip_addr = None
+        msg = attributes._validate_ip_address_or_none(ip_addr)
+        self.assertIsNone(msg)
+
+        ip_addr = '1.1.1.1'
+        msg = attributes._validate_ip_address_or_none(ip_addr)
+        self.assertIsNone(msg)
+
+        ip_addr = '1111.1.1.1'
+        msg = attributes._validate_ip_address_or_none(ip_addr)
+        self.assertEquals(msg, "'%s' is not a valid IP address" % ip_addr)
+
+    def test_hostname_pattern(self):
+        data = '@openstack'
+        msg = attributes._validate_regex(data, attributes.HOSTNAME_PATTERN)
+        self.assertIsNotNone(msg)
+
+        data = 'www.openstack.org'
+        msg = attributes._validate_regex(data, attributes.HOSTNAME_PATTERN)
+        self.assertIsNone(msg)
+
+    def test_uuid_pattern(self):
+        data = 'garbage'
+        msg = attributes._validate_regex(data, attributes.UUID_PATTERN)
+        self.assertIsNotNone(msg)
+
+        data = '00000000-ffff-ffff-ffff-000000000000'
+        msg = attributes._validate_regex(data, attributes.UUID_PATTERN)
+        self.assertIsNone(msg)
+
+    def test_mac_pattern(self):
         # Valid - 3 octets
         base_mac = "fa:16:3e:00:00:00"
         msg = attributes._validate_regex(base_mac,
                                          attributes.MAC_PATTERN)
-        self.assertEquals(msg, None)
+        self.assertIsNone(msg)
 
         # Valid - 4 octets
         base_mac = "fa:16:3e:4f:00:00"
         msg = attributes._validate_regex(base_mac,
                                          attributes.MAC_PATTERN)
-        self.assertEquals(msg, None)
+        self.assertIsNone(msg)
 
         # Invalid - not unicast
         base_mac = "01:16:3e:4f:00:00"
@@ -262,24 +316,24 @@ class TestAttributes(unittest2.TestCase):
                                          attributes.MAC_PATTERN)
         self.assertIsNotNone(msg)
 
-    def test_cidr(self):
+    def test_validate_subnet(self):
         # Valid - IPv4
         cidr = "10.0.2.0/24"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        self.assertEquals(msg, None)
+        self.assertIsNone(msg)
 
         # Valid - IPv6 without final octets
         cidr = "fe80::/24"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        self.assertEquals(msg, None)
+        self.assertIsNone(msg)
 
         # Valid - IPv6 with final octets
         cidr = "fe80::0/24"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        self.assertEquals(msg, None)
+        self.assertIsNone(msg)
 
         # Invalid - IPv4 missing mask
         cidr = "10.0.2.0"
@@ -302,9 +356,35 @@ class TestAttributes(unittest2.TestCase):
         error = "'%s' is not a valid IP subnet" % cidr
         self.assertEquals(msg, error)
 
-    def test_uuid(self):
-        msg = attributes._validate_uuid('true')
-        self.assertEquals(msg, "'true' is not a valid UUID")
+        # Invalid - Address format error
+        cidr = 'invalid'
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        error = "'%s' is not a valid IP subnet" % cidr
+        self.assertEquals(msg, error)
+
+    def test_validate_regex(self):
+        pattern = '[hc]at'
+
+        data = None
+        msg = attributes._validate_regex(data, pattern)
+        self.assertEquals(msg, "'%s' is not valid input" % data)
+
+        data = 'bat'
+        msg = attributes._validate_regex(data, pattern)
+        self.assertEquals(msg, "'%s' is not valid input" % data)
+
+        data = 'hat'
+        msg = attributes._validate_regex(data, pattern)
+        self.assertIsNone(msg)
+
+        data = 'cat'
+        msg = attributes._validate_regex(data, pattern)
+        self.assertIsNone(msg)
+
+    def test_validate_uuid(self):
+        msg = attributes._validate_uuid('garbage')
+        self.assertEquals(msg, "'garbage' is not a valid UUID")
 
         msg = attributes._validate_uuid('00000000-ffff-ffff-ffff-000000000000')
         self.assertIsNone(msg)
