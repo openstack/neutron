@@ -347,8 +347,11 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         self.assertEqual(res.status_int, expected_code)
         return self.deserialize('json', res)
 
-    def _list(self, resource, fmt='json', query_params=None):
+    def _list(self, resource, fmt='json', quantum_context=None,
+              query_params=None):
         req = self.new_list_request(resource, fmt, query_params)
+        if quantum_context:
+            req.environ['quantum.context'] = quantum_context
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         return self.deserialize('json', res)
@@ -375,6 +378,14 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['name'], 'test_0')
         self.assertEqual(items[1]['name'], 'test_1')
+
+    def _test_list_resources(self, resource, items, quantum_context=None,
+                             query_params=None):
+        res = self._list('%ss' % resource,
+                         quantum_context=quantum_context,
+                         query_params=query_params)
+        self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
+                              [i[resource]['id'] for i in items])
 
     @contextlib.contextmanager
     def network(self, name='net1',
@@ -731,11 +742,10 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_list_ports(self):
         # for this test we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        with contextlib.nested(self.port(), self.port()) as (port1, port2):
-            req = self.new_list_request('ports', 'json')
-            port_list = self.deserialize('json', req.get_response(self.api))
-            self.assertItemsEqual([p['id'] for p in port_list['ports']],
-                                  [port1['port']['id'], port2['port']['id']])
+        with contextlib.nested(self.port(),
+                               self.port(),
+                               self.port()) as ports:
+            self._test_list_resources('port', ports)
 
     def test_list_ports_filtered_by_fixed_ip(self):
         # for this test we need to enable overlapping ips
@@ -747,45 +757,25 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 """.strip() % (fixed_ips['ip_address'],
                '192.168.126.5',
                fixed_ips['subnet_id'])
-            req = self.new_list_request('ports', 'json', query_params)
-            port_list = self.deserialize('json', req.get_response(self.api))
-            self.assertEqual(len(port_list['ports']), 1)
-            self.assertEqual(port_list['ports'][0]['id'], port1['port']['id'])
+            self._test_list_resources('port', [port1],
+                                      query_params=query_params)
 
     def test_list_ports_public_network(self):
         with self.network(shared=True) as network:
-            portres_1 = self._create_port('json',
-                                          network['network']['id'],
-                                          201,
-                                          tenant_id='tenant_1',
-                                          set_context=True)
-            portres_2 = self._create_port('json',
-                                          network['network']['id'],
-                                          201,
-                                          tenant_id='tenant_2',
-                                          set_context=True)
-            port1 = self.deserialize('json', portres_1)
-            port2 = self.deserialize('json', portres_2)
-
-            def _list_and_test_ports(expected_len, ports, tenant_id=None):
-                set_context = tenant_id is not None
-                res = self._list_ports('json',
-                                       200,
-                                       network['network']['id'],
-                                       tenant_id=tenant_id,
-                                       set_context=set_context)
-                port_list = self.deserialize('json', res)
-                self.assertItemsEqual([p['id'] for p in port_list['ports']],
-                                      [p['port']['id'] for p in ports])
-
-            # Admin request - must return both ports
-            _list_and_test_ports(2, [port1, port2])
-            # Tenant_1 request - must return single port
-            _list_and_test_ports(1, [port1], tenant_id='tenant_1')
-            # Tenant_2 request - must return single port
-            _list_and_test_ports(1, [port2], tenant_id='tenant_2')
-            self._delete('ports', port1['port']['id'])
-            self._delete('ports', port2['port']['id'])
+            with self.subnet(network) as subnet:
+                with contextlib.nested(self.port(subnet, tenant_id='tenant_1'),
+                                       self.port(subnet, tenant_id='tenant_2')
+                                       ) as (port1, port2):
+                    # Admin request - must return both ports
+                    self._test_list_resources('port', [port1, port2])
+                    # Tenant_1 request - must return single port
+                    q_context = context.Context('', 'tenant_1')
+                    self._test_list_resources('port', [port1],
+                                              quantum_context=q_context)
+                    # Tenant_2 request - must return single port
+                    q_context = context.Context('', 'tenant_2')
+                    self._test_list_resources('port', [port2],
+                                              quantum_context=q_context)
 
     def test_show_port(self):
         with self.port() as port:
@@ -1708,29 +1698,21 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             self._validate_behavior_on_bulk_failure(res, 'networks')
 
     def test_list_networks(self):
-        with self.network() as net1:
-            with self.network() as net2:
-                req = self.new_list_request('networks')
-                res = self.deserialize('json', req.get_response(self.api))
-                self.assertItemsEqual([n['id'] for n in res['networks']],
-                                      [net1['network']['id'],
-                                       net2['network']['id']])
+        with contextlib.nested(self.network(),
+                               self.network(),
+                               self.network()) as networks:
+            self._test_list_resources('network', networks)
 
     def test_list_networks_with_parameters(self):
-        with self.network(name='net1', admin_status_up=False) as net1:
-            with self.network(name='net2') as net2:
-                req = self.new_list_request('networks',
-                                            params='admin_state_up=False')
-                res = self.deserialize('json', req.get_response(self.api))
-                self.assertEquals(1, len(res['networks']))
-                self.assertEquals(res['networks'][0]['name'],
-                                  net1['network']['name'])
-                req = self.new_list_request('networks',
-                                            params='admin_state_up=true')
-                res = self.deserialize('json', req.get_response(self.api))
-                self.assertEquals(1, len(res['networks']))
-                self.assertEquals(res['networks'][0]['name'],
-                                  net2['network']['name'])
+        with contextlib.nested(self.network(name='net1',
+                                            admin_status_up=False),
+                               self.network(name='net2')) as (net1, net2):
+            query_params = 'admin_state_up=False'
+            self._test_list_resources('network', [net1],
+                                      query_params=query_params)
+            query_params = 'admin_state_up=True'
+            self._test_list_resources('network', [net2],
+                                      query_params=query_params)
 
     def test_list_networks_with_fields(self):
         with self.network(name='net1') as net1:
@@ -1744,12 +1726,13 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                               res['networks'][0].get('id'))
 
     def test_list_networks_with_parameters_invalid_values(self):
-        with self.network(name='net1', admin_status_up=False) as net1:
-            with self.network(name='net2') as net2:
-                req = self.new_list_request('networks',
-                                            params='admin_state_up=fake')
-                res = req.get_response(self.api)
-                self.assertEquals(400, res.status_int)
+        with contextlib.nested(self.network(name='net1',
+                                            admin_status_up=False),
+                               self.network(name='net2')) as (net1, net2):
+            req = self.new_list_request('networks',
+                                        params='admin_state_up=fake')
+            res = req.get_response(self.api)
+            self.assertEquals(400, res.status_int)
 
     def test_show_network(self):
         with self.network(name='net1') as net:
@@ -2511,19 +2494,17 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                   network['network']['id'])
 
     def test_list_subnets(self):
-        # NOTE(jkoelker) This would be a good place to use contextlib.nested
-        #                or just drop 2.6 support ;)
         with self.network() as network:
-            with self.subnet(network=network, gateway_ip='10.0.0.1',
-                             cidr='10.0.0.0/24') as subnet1:
-                with self.subnet(network=network, gateway_ip='10.0.1.1',
-                                 cidr='10.0.1.0/24') as subnet2:
-                    req = self.new_list_request('subnets')
-                    res = self.deserialize('json',
-                                           req.get_response(self.api))
-                    self.assertItemsEqual([s['id'] for s in res['subnets']],
-                                          [subnet1['subnet']['id'],
-                                           subnet2['subnet']['id']])
+            with contextlib.nested(self.subnet(network=network,
+                                               gateway_ip='10.0.0.1',
+                                               cidr='10.0.0.0/24'),
+                                   self.subnet(network=network,
+                                               gateway_ip='10.0.1.1',
+                                               cidr='10.0.1.0/24'),
+                                   self.subnet(network=network,
+                                               gateway_ip='10.0.2.1',
+                                               cidr='10.0.2.0/24')) as subnets:
+                self._test_list_resources('subnet', subnets)
 
     def test_list_subnets_shared(self):
         with self.network(shared=True) as network:
@@ -2548,24 +2529,20 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     self.assertIn(priv_subnet['subnet']['cidr'], cidrs)
 
     def test_list_subnets_with_parameter(self):
-        # NOTE(jkoelker) This would be a good place to use contextlib.nested
-        #                or just drop 2.6 support ;)
         with self.network() as network:
-            with self.subnet(network=network, gateway_ip='10.0.0.1',
-                             cidr='10.0.0.0/24') as subnet:
-                with self.subnet(network=network, gateway_ip='10.0.1.1',
-                                 cidr='10.0.1.0/24') as subnet2:
-                    req = self.new_list_request(
-                        'subnets',
-                        params='ip_version=4&ip_version=6')
-                    res = self.deserialize('json',
-                                           req.get_response(self.api))
-                    self.assertEquals(2, len(res['subnets']))
-                    req = self.new_list_request('subnets',
-                                                params='ip_version=6')
-                    res = self.deserialize('json',
-                                           req.get_response(self.api))
-                    self.assertEquals(0, len(res['subnets']))
+            with contextlib.nested(self.subnet(network=network,
+                                               gateway_ip='10.0.0.1',
+                                               cidr='10.0.0.0/24'),
+                                   self.subnet(network=network,
+                                               gateway_ip='10.0.1.1',
+                                               cidr='10.0.1.0/24')
+                                   ) as subnets:
+                query_params = 'ip_version=4&ip_version=6'
+                self._test_list_resources('subnet', subnets,
+                                          query_params=query_params)
+                query_params = 'ip_version=6'
+                self._test_list_resources('subnet', [],
+                                          query_params=query_params)
 
     def test_invalid_ip_version(self):
         with self.network() as network:
