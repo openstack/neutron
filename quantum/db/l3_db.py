@@ -606,9 +606,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         floatingip = self._get_floatingip(context, id)
         with context.session.begin(subtransactions=True):
             context.session.delete(floatingip)
-        self.delete_port(context.elevated(),
-                         floatingip['floating_port_id'],
-                         l3_port_check=False)
+            self.delete_port(context.elevated(),
+                             floatingip['floating_port_id'],
+                             l3_port_check=False)
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
