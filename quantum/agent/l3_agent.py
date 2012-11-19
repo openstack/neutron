@@ -123,7 +123,7 @@ class L3NATAgent(object):
             tenant_name=self.conf.admin_tenant_name,
             auth_url=self.conf.auth_url,
             auth_strategy=self.conf.auth_strategy,
-            auth_region=self.conf.auth_region
+            region_name=self.conf.auth_region
         )
 
         if self.conf.use_namespaces:
