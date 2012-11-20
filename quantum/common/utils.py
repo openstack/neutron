@@ -134,3 +134,34 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
     return subprocess.Popen(args, shell=shell, stdin=stdin, stdout=stdout,
                             stderr=stderr, preexec_fn=_subprocess_setup,
                             env=env)
+
+
+def parse_mappings(mapping_list, unique_values=True):
+    """Parse a list of of mapping strings into a dictionary.
+
+    :param mapping_list: a list of strings of the form '<key>:<value>'
+    :param unique_values: values must be unique if True
+    :returns: a dict mapping keys to values
+    """
+    mappings = {}
+    for mapping in mapping_list:
+        mapping = mapping.strip()
+        if not mapping:
+            continue
+        split_result = mapping.split(':')
+        if len(split_result) != 2:
+            raise ValueError(_("Invalid mapping: '%s'") % mapping)
+        key = split_result[0].strip()
+        if not key:
+            raise ValueError(_("Missing key in mapping: '%s'") % mapping)
+        value = split_result[1].strip()
+        if not value:
+            raise ValueError(_("Missing value in mapping: '%s'") % mapping)
+        if key in mappings:
+            raise ValueError(_("Key %s in mapping: '%s' not unique") %
+                             (key, mapping))
+        if unique_values and value in mappings.itervalues():
+            raise ValueError(_("Value %s in mapping: '%s' not unique") %
+                             (value, mapping))
+        mappings[key] = value
+    return mappings

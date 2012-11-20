@@ -32,6 +32,7 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
 from quantum.common import constants as q_const
 from quantum.common import topics
+from quantum.common import utils as q_utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import log as logging
@@ -140,7 +141,7 @@ class OVSQuantumAgent(object):
         :param integ_br: name of the integration bridge.
         :param tun_br: name of the tunnel bridge.
         :param local_ip: local IP address of this hypervisor.
-        :param bridge_mappings: mappings from phyiscal interface to bridge.
+        :param bridge_mappings: mappings from physical network name to bridge.
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
         :param enable_tunneling: if True enable GRE networks.
@@ -459,7 +460,7 @@ class OVSQuantumAgent(object):
     def setup_physical_bridges(self, bridge_mappings):
         '''Setup the physical network bridges.
 
-        Creates phyiscal network bridges and links them to the
+        Creates physical network bridges and links them to the
         integration bridge using veths.
 
         :param bridge_mappings: map physical network names to bridge names.'''
@@ -641,33 +642,17 @@ class OVSQuantumAgent(object):
         self.rpc_loop()
 
 
-def parse_bridge_mappings(bridge_mapping_list):
-    """Parse a list of physical network to bridge mappings.
-
-    :param bridge_mapping_list: a list of strings of the form
-                                '<physical network>:<bridge>'
-    :returns: a dict mapping physical networks to bridges
-    """
-    bridge_mappings = {}
-    for mapping in bridge_mapping_list:
-        mapping = mapping.strip()
-        if not mapping:
-            continue
-        split_result = [x.strip() for x in mapping.split(':', 1) if x.strip()]
-        if len(split_result) != 2:
-            raise ValueError('Invalid bridge mapping: %s.' % mapping)
-        physical_network, bridge = split_result
-        bridge_mappings[physical_network] = bridge
-    return bridge_mappings
-
-
 def create_agent_config_map(config):
     """Create a map of agent config parameters.
 
     :param config: an instance of cfg.CONF
     :returns: a map of agent configuration parameters
     """
-    bridge_mappings = parse_bridge_mappings(config.OVS.bridge_mappings)
+    try:
+        bridge_mappings = q_utils.parse_mappings(config.OVS.bridge_mappings)
+    except ValueError as e:
+        raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
+
     kwargs = dict(
         integ_br=config.OVS.integration_bridge,
         tun_br=config.OVS.tunnel_bridge,
