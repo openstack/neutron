@@ -36,8 +36,11 @@ from quantum.common import config as logging_config
 from quantum.openstack.common import cfg
 from quantum.openstack.common.cfg import NoSuchGroupError
 from quantum.openstack.common.cfg import NoSuchOptError
-from quantum.openstack.common import log as LOG
+from quantum.openstack.common import log
 from quantum.plugins.ryu.common import config
+
+
+LOG = log.getLogger(__name__)
 
 
 # This is copied of nova.flags._get_my_ip()
