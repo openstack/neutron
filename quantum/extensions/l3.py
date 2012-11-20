@@ -44,14 +44,16 @@ class FloatingIPNotFound(qexception.NotFound):
 
 
 class ExternalGatewayForFloatingIPNotFound(qexception.NotFound):
-    message = _("Could not find an external network gateway reachable "
+    message = _("External network %(external_network_id)s is not reachable "
                 "from subnet %(subnet_id)s.  Therefore, cannot associate "
                 "Port %(port_id)s with a Floating IP.")
 
 
 class FloatingIPPortAlreadyAssociated(qexception.InUse):
-    message = _("Port %(port_id)s already has a floating IP"
-                " associated with it")
+    message = _("Cannot associate floating IP %(floating_ip_address)s "
+                "(%(fip_id)s) with port %(port_id)s "
+                "using fixed IP %(fixed_ip)s, as that fixed IP already "
+                "has a floating IP on external network %(net_id)s.")
 
 
 class L3PortInUse(qexception.InUse):
