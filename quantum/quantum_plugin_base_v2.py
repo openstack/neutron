@@ -23,6 +23,8 @@ methods that needs to be implemented by a v2 Quantum Plug-in.
 
 from abc import ABCMeta, abstractmethod
 
+from quantum.common import exceptions
+
 
 class QuantumPluginBaseV2(object):
 
@@ -87,7 +89,6 @@ class QuantumPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
     def get_subnets_count(self, context, filters=None):
         """
         Return the number of subnets.  The result depends on the identity of
@@ -101,8 +102,11 @@ class QuantumPluginBaseV2(object):
             match comparison for that value.  Each result returned by this
             function will have matched one of the values for each key in
             filters.
+
+        NOTE: this method is optional, as it was not part of the originally
+              defined plugin API.
         """
-        pass
+        raise exceptions.NotImplementedError()
 
     @abstractmethod
     def delete_subnet(self, context, id):
@@ -172,7 +176,6 @@ class QuantumPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
     def get_networks_count(self, context, filters=None):
         """
         Return the number of networks.  The result depends on the identity
@@ -186,8 +189,11 @@ class QuantumPluginBaseV2(object):
             match comparison for that value.  Each result returned by this
             function will have matched one of the values for each key in
             filters.
+
+        NOTE: this method is optional, as it was not part of the originally
+              defined plugin API.
         """
-        pass
+        raise exceptions.NotImplementedError()
 
     @abstractmethod
     def delete_network(self, context, id):
@@ -257,7 +263,6 @@ class QuantumPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
     def get_ports_count(self, context, filters=None):
         """
         Return the number of ports.  The result depends on the identity of
@@ -271,8 +276,11 @@ class QuantumPluginBaseV2(object):
             match comparison for that value.  Each result returned by this
             function will have matched one of the values for each key in
             filters.
+
+        NOTE: this method is optional, as it was not part of the originally
+              defined plugin API.
         """
-        pass
+        raise exceptions.NotImplementedError()
 
     @abstractmethod
     def delete_port(self, context, id):

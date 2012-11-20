@@ -762,6 +762,23 @@ class QuotaTest(APIv2TestBase):
         self.assertTrue("Quota exceeded for resources" in
                         res.json['QuantumError'])
 
+    def test_create_network_quota_no_counts(self):
+        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
+        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
+        full_input['network'].update(initial_input['network'])
+
+        instance = self.plugin.return_value
+        instance.get_networks_count.side_effect = (
+            q_exc.NotImplementedError())
+        instance.get_networks.return_value = ["foo"]
+        res = self.api.post_json(
+            _get_path('networks'), initial_input, expect_errors=True)
+        instance.get_networks_count.assert_called_with(mock.ANY,
+                                                       filters=mock.ANY)
+        self.assertTrue("Quota exceeded for resources" in
+                        res.json['QuantumError'])
+
     def test_create_network_quota_without_limit(self):
         cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
