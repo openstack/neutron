@@ -978,16 +978,13 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 self.assertEquals(body['floatingip']['fixed_ip_address'], None)
                 self.assertEquals(body['floatingip']['router_id'], None)
 
-    def test_double_floating_assoc(self):
+    def test_two_fips_one_port_invalid_return_409(self):
         with self.floatingip_with_assoc() as fip1:
-            with self.subnet() as s:
-                with self.floatingip_no_assoc(s) as fip2:
-                    port_id = fip1['floatingip']['port_id']
-                    body = self._update('floatingips',
-                                        fip2['floatingip']['id'],
-                                        {'floatingip':
-                                         {'port_id': port_id}},
-                                        expected_code=exc.HTTPConflict.code)
+            res = self._create_floatingip(
+                'json',
+                fip1['floatingip']['floating_network_id'],
+                fip1['floatingip']['port_id'])
+            self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
     def test_floating_ip_direct_port_delete_returns_409(self):
         found = False
