@@ -112,6 +112,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
 
     def tearDown(self):
         super(QuantumDbPluginV2TestCase, self).tearDown()
+        self.api = None
+        self._deserializers = None
+        self._skip_native_bulk = None
+        self.ext_api = None
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
         db.clear_db()
