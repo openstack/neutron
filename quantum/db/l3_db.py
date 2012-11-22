@@ -415,34 +415,35 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                'fixed_ip_address': floatingip['fixed_ip_address']}
         return self._fields(res, fields)
 
-    def _get_router_for_internal_subnet(self, context, internal_port,
-                                        internal_subnet_id):
+    def _get_router_for_floatingip(self, context, internal_port,
+                                   internal_subnet_id,
+                                   external_network_id):
         subnet_db = self._get_subnet(context, internal_subnet_id)
         if not subnet_db['gateway_ip']:
             msg = ('Cannot add floating IP to port on subnet %s '
                    'which has no gateway_ip' % internal_subnet_id)
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
-        #FIXME(danwent): can do join, but cannot use standard F-K syntax?
-        # just do it inefficiently for now
-        port_qry = context.session.query(models_v2.Port)
-        ports = port_qry.filter_by(network_id=internal_port['network_id'])
-        for p in ports:
-            ips = [ip['ip_address'] for ip in p['fixed_ips']]
-            if len(ips) != 1:
-                continue
-            fixed = p['fixed_ips'][0]
-            if (fixed['ip_address'] == subnet_db['gateway_ip'] and
-                    fixed['subnet_id'] == internal_subnet_id):
-                router_qry = context.session.query(Router)
-                try:
-                    router = router_qry.filter_by(id=p['device_id']).one()
-                    return router['id']
-                except exc.NoResultFound:
-                    pass
+        # find router interface ports on this network
+        router_intf_qry = context.session.query(models_v2.Port)
+        router_intf_ports = router_intf_qry.filter_by(
+            network_id=internal_port['network_id'],
+            device_owner=DEVICE_OWNER_ROUTER_INTF)
+
+        for intf_p in router_intf_ports:
+            if intf_p['fixed_ips'][0]['subnet_id'] == internal_subnet_id:
+                router_id = intf_p['device_id']
+                router_gw_qry = context.session.query(models_v2.Port)
+                has_gw_port = router_gw_qry.filter_by(
+                    network_id=external_network_id,
+                    device_id=router_id,
+                    device_owner=DEVICE_OWNER_ROUTER_GW).count()
+                if has_gw_port:
+                    return router_id
 
         raise l3.ExternalGatewayForFloatingIPNotFound(
             subnet_id=internal_subnet_id,
+            external_network_id=external_network_id,
             port_id=internal_port['id'])
 
     def get_assoc_data(self, context, fip, floating_network_id):
@@ -490,9 +491,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             internal_ip_address = internal_port['fixed_ips'][0]['ip_address']
             internal_subnet_id = internal_port['fixed_ips'][0]['subnet_id']
 
-        router_id = self._get_router_for_internal_subnet(context,
-                                                         internal_port,
-                                                         internal_subnet_id)
+        router_id = self._get_router_for_floatingip(context,
+                                                    internal_port,
+                                                    internal_subnet_id,
+                                                    floating_network_id)
         # confirm that this router has a floating
         # ip enabled gateway with support for this floating IP network
         try:
@@ -515,17 +517,24 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             msg = "fixed_ip_address cannot be specified without a port_id"
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
         if 'port_id' in fip and fip['port_id']:
-            port_qry = context.session.query(FloatingIP)
-            try:
-                port_qry.filter_by(fixed_port_id=fip['port_id']).one()
-                raise l3.FloatingIPPortAlreadyAssociated(
-                    port_id=fip['port_id'])
-            except exc.NoResultFound:
-                pass
             port_id, internal_ip_address, router_id = self.get_assoc_data(
                 context,
                 fip,
                 floatingip_db['floating_network_id'])
+            fip_qry = context.session.query(FloatingIP)
+            try:
+                fip_qry.filter_by(
+                    fixed_port_id=fip['port_id'],
+                    floating_network_id=floatingip_db['floating_network_id'],
+                    fixed_ip_address=internal_ip_address).one()
+                raise l3.FloatingIPPortAlreadyAssociated(
+                    port_id=fip['port_id'],
+                    fip_id=floatingip_db['id'],
+                    floating_ip_address=floatingip_db['floating_ip_address'],
+                    fixed_ip=internal_ip_address,
+                    net_id=floatingip_db['floating_network_id'])
+            except exc.NoResultFound:
+                pass
         floatingip_db.update({'fixed_ip_address': internal_ip_address,
                               'fixed_port_id': port_id,
                               'router_id': router_id})
