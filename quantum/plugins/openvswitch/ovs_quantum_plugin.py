@@ -64,7 +64,8 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         """Agent requests device details"""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug("Device %s details requested from %s", device, agent_id)
+        LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
+                  locals())
         port = ovs_db_v2.get_port(device)
         if port:
             binding = ovs_db_v2.get_network_binding(None, port['network_id'])
@@ -79,7 +80,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
             ovs_db_v2.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
         else:
             entry = {'device': device}
-            LOG.debug("%s can not be found in database", device)
+            LOG.debug(_("%s can not be found in database"), device)
         return entry
 
     def update_device_down(self, rpc_context, **kwargs):
@@ -87,7 +88,8 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         # (TODO) garyk - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug("Device %s no longer exists on %s", device, agent_id)
+        LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
+                  locals())
         port = ovs_db_v2.get_port(device)
         if port:
             entry = {'device': device,
@@ -97,7 +99,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         else:
             entry = {'device': device,
                      'exists': False}
-            LOG.debug("%s can not be found in database", device)
+            LOG.debug(_("%s can not be found in database"), device)
         return entry
 
     def tunnel_sync(self, rpc_context, **kwargs):
@@ -197,8 +199,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_GRE,
                                             constants.TYPE_NONE]:
-            LOG.error("Invalid tenant_network_type: %s. "
-                      "Agent terminated!",
+            LOG.error(_("Invalid tenant_network_type: %s. "
+                      "Agent terminated!"),
                       self.tenant_network_type)
             sys.exit(1)
         self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
@@ -207,8 +209,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._parse_tunnel_id_ranges()
             ovs_db_v2.sync_tunnel_allocations(self.tunnel_id_ranges)
         elif self.tenant_network_type == constants.TYPE_GRE:
-            LOG.error("Tunneling disabled but tenant_network_type is 'gre'. "
-                      "Agent terminated!")
+            LOG.error(_("Tunneling disabled but tenant_network_type is 'gre'. "
+                      "Agent terminated!"))
             sys.exit(1)
         self.setup_rpc()
 
@@ -235,13 +237,13 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                  int(vlan_min),
                                                  int(vlan_max))
                 except ValueError as ex:
-                    LOG.error("Invalid network VLAN range: '%s' - %s. "
-                              "Agent terminated!",
-                              entry, ex)
+                    LOG.error(_("Invalid network VLAN range: "
+                                "'%(range)s' - %(e)s. Agent terminated!"),
+                              {'range': entry, 'e': ex})
                     sys.exit(1)
             else:
                 self._add_network(entry)
-        LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
+        LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
@@ -258,10 +260,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 tun_min, tun_max = entry.split(':')
                 self.tunnel_id_ranges.append((int(tun_min), int(tun_max)))
             except ValueError as ex:
-                LOG.error("Invalid tunnel ID range: '%s' - %s. "
-                          "Agent terminated!", entry, ex)
+                LOG.error(_("Invalid tunnel ID range: "
+                            "'%(range)s' - %(e)s. Agent terminated!"),
+                          {'range': entry, 'e': ex})
                 sys.exit(1)
-        LOG.info("Tunnel ID ranges: %s", self.tunnel_id_ranges)
+        LOG.info(_("Tunnel ID ranges: %s"), self.tunnel_id_ranges)
 
     # TODO(rkukura) Use core mechanism for attribute authorization
     # when available.
@@ -354,14 +357,14 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             else:
                 segmentation_id = None
         else:
-            msg = _("provider:network_type %s not supported" % network_type)
+            msg = _("provider:network_type %s not supported") % network_type
             raise q_exc.InvalidInput(error_message=msg)
 
         if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
-                    msg = _("unknown provider:physical_network %s" %
-                            physical_network)
+                    msg = _("Unknown provider:physical_network "
+                            "%s") % physical_network
                     raise q_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
@@ -425,7 +428,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_provider(context, net)
             self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
-        LOG.debug("Created network: %s", net['id'])
+        LOG.debug(_("Created network: %s"), net['id'])
         return net
 
     def update_network(self, context, id, network):

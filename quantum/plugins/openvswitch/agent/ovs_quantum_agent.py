@@ -186,18 +186,18 @@ class OVSQuantumAgent(object):
                 return network_id
 
     def network_delete(self, context, **kwargs):
-        LOG.debug("network_delete received")
+        LOG.debug(_("network_delete received"))
         network_id = kwargs.get('network_id')
-        LOG.debug("Delete %s", network_id)
+        LOG.debug(_("Delete %s"), network_id)
         # The network may not be defined on this agent
         lvm = self.local_vlan_map.get(network_id)
         if lvm:
             self.reclaim_local_vlan(network_id, lvm)
         else:
-            LOG.debug("Network %s not used on agent.", network_id)
+            LOG.debug(_("Network %s not used on agent."), network_id)
 
     def port_update(self, context, **kwargs):
-        LOG.debug("port_update received")
+        LOG.debug(_("port_update received"))
         port = kwargs.get('port')
         network_type = kwargs.get('network_type')
         segmentation_id = kwargs.get('segmentation_id')
@@ -208,7 +208,7 @@ class OVSQuantumAgent(object):
                             segmentation_id, port['admin_state_up'])
 
     def tunnel_update(self, context, **kwargs):
-        LOG.debug("tunnel_update received")
+        LOG.debug(_("tunnel_update received"))
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
@@ -237,10 +237,12 @@ class OVSQuantumAgent(object):
         '''
 
         if not self.available_local_vlans:
-            LOG.error("No local VLAN available for net-id=%s", net_uuid)
+            LOG.error(_("No local VLAN available for net-id=%s"), net_uuid)
             return
         lvid = self.available_local_vlans.pop()
-        LOG.info("Assigning %s as local vlan for net-id=%s", lvid, net_uuid)
+        LOG.info(_("Assigning %(vlan_id)s as local vlan for "
+                   "net-id=%(net_uuid)s"),
+                 {'vlan_id': lvid, 'net_uuid': net_uuid})
         self.local_vlan_map[net_uuid] = LocalVLANMapping(lvid, network_type,
                                                          physical_network,
                                                          segmentation_id)
@@ -260,8 +262,8 @@ class OVSQuantumAgent(object):
                     actions="mod_vlan_vid:%s,output:%s" %
                     (lvid, self.patch_int_ofport))
             else:
-                LOG.error("Cannot provision GRE network for net-id=%s "
-                          "- tunneling disabled", net_uuid)
+                LOG.error(_("Cannot provision GRE network for net-id=%s "
+                          "- tunneling disabled"), net_uuid)
         elif network_type == constants.TYPE_FLAT:
             if physical_network in self.phys_brs:
                 # outbound
@@ -277,9 +279,10 @@ class OVSQuantumAgent(object):
                     dl_vlan=0xffff,
                     actions="mod_vlan_vid:%s,normal" % lvid)
             else:
-                LOG.error("Cannot provision flat network for net-id=%s "
-                          "- no bridge for physical_network %s", net_uuid,
-                          physical_network)
+                LOG.error(_("Cannot provision flat network for "
+                            "net-id=%(net_uuid)s - no bridge for "
+                            "physical_network %(physical_network)s"),
+                          locals())
         elif network_type == constants.TYPE_VLAN:
             if physical_network in self.phys_brs:
                 # outbound
@@ -295,15 +298,17 @@ class OVSQuantumAgent(object):
                                      dl_vlan=segmentation_id,
                                      actions="mod_vlan_vid:%s,normal" % lvid)
             else:
-                LOG.error("Cannot provision VLAN network for net-id=%s "
-                          "- no bridge for physical_network %s", net_uuid,
-                          physical_network)
+                LOG.error(_("Cannot provision VLAN network for "
+                            "net-id=%(net_uuid)s - no bridge for "
+                            "physical_network %(physical_network)s"),
+                          locals())
         elif network_type == constants.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
-            LOG.error("Cannot provision unknown network type %s for "
-                      "net-id=%s", network_type, net_uuid)
+            LOG.error(_("Cannot provision unknown network type "
+                        "%(network_type)s for net-id=%(net_uuid)s"),
+                      locals())
 
     def reclaim_local_vlan(self, net_uuid, lvm):
         '''Reclaim a local VLAN.
@@ -311,7 +316,9 @@ class OVSQuantumAgent(object):
         :param net_uuid: the network uuid associated with this vlan.
         :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
             vif_ids) mapping.'''
-        LOG.info("Reclaiming vlan = %s from net-id = %s", lvm.vlan, net_uuid)
+        LOG.info(_("Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"),
+                 {'vlan_id': lvm.vlan,
+                  'net_uuid': net_uuid})
 
         if lvm.network_type == constants.TYPE_GRE:
             if self.enable_tunneling:
@@ -343,8 +350,10 @@ class OVSQuantumAgent(object):
             # no flows needed for local networks
             pass
         else:
-            LOG.error("Cannot reclaim unknown network type %s for net-id=%s",
-                      lvm.network_type, net_uuid)
+            LOG.error(_("Cannot reclaim unknown network type "
+                        "%(network_type)s for net-id=%(net_uuid)s"),
+                      {'network_type': lvm.network_type,
+                       'net_uuid': net_uuid})
 
         del self.local_vlan_map[net_uuid]
         self.available_local_vlans.add(lvm.vlan)
@@ -446,10 +455,10 @@ class OVSQuantumAgent(object):
         self.patch_int_ofport = self.tun_br.add_patch_port("patch-int",
                                                            "patch-tun")
         if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
-            LOG.error("Failed to create OVS patch port. Cannot have tunneling "
-                      "enabled on this agent, since this version of OVS does "
-                      "not support tunnels or patch ports. "
-                      "Agent terminated!")
+            LOG.error(_("Failed to create OVS patch port. Cannot have "
+                        "tunneling enabled on this agent, since this version "
+                        "of OVS does not support tunnels or patch ports. "
+                        "Agent terminated!"))
             exit(1)
         self.tun_br.remove_all_flows()
         self.tun_br.add_flow(priority=1, actions="drop")
@@ -466,13 +475,15 @@ class OVSQuantumAgent(object):
         self.phys_ofports = {}
         ip_wrapper = ip_lib.IPWrapper(self.root_helper)
         for physical_network, bridge in bridge_mappings.iteritems():
-            LOG.info("Mapping physical network %s to bridge %s",
-                     physical_network, bridge)
+            LOG.info(_("Mapping physical network %(physical_network)s to "
+                       "bridge %(bridge)s"),
+                     locals())
             # setup physical bridge
             if not ip_lib.device_exists(bridge, self.root_helper):
-                LOG.error("Bridge %s for physical network %s does not exist. "
-                          "Agent terminated!",
-                          bridge, physical_network)
+                LOG.error(_("Bridge %(bridge)s for physical network "
+                            "%(physical_network)s does not exist. Agent "
+                            "terminated!"),
+                          locals())
                 sys.exit(1)
             br = ovs_lib.OVSBridge(bridge, self.root_helper)
             br.remove_all_flows()
@@ -522,23 +533,25 @@ class OVSQuantumAgent(object):
             else:
                 self.port_dead(vif_port)
         else:
-            LOG.debug("No VIF port for port %s defined on agent.", port_id)
+            LOG.debug(_("No VIF port for port %s defined on agent."), port_id)
 
     def treat_devices_added(self, devices):
         resync = False
         for device in devices:
-            LOG.info("Port %s added", device)
+            LOG.info(_("Port %s added"), device)
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
                                                              self.agent_id)
             except Exception as e:
-                LOG.debug("Unable to get port details for %s: %s", device, e)
+                LOG.debug(_("Unable to get port details for "
+                            "%(device)s: %(e)s"), locals())
                 resync = True
                 continue
             port = self.int_br.get_vif_port_by_id(details['device'])
             if 'port_id' in details:
-                LOG.info("Port %s updated. Details: %s", device, details)
+                LOG.info(_("Port %(device)s updated. Details: %(details)s"),
+                         locals())
                 self.treat_vif_port(port, details['port_id'],
                                     details['network_id'],
                                     details['network_type'],
@@ -546,7 +559,7 @@ class OVSQuantumAgent(object):
                                     details['segmentation_id'],
                                     details['admin_state_up'])
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.debug(_("Device %s not defined on plugin"), device)
                 if (port and int(port.ofport) != -1):
                     self.port_dead(port)
         return resync
@@ -554,20 +567,21 @@ class OVSQuantumAgent(object):
     def treat_devices_removed(self, devices):
         resync = False
         for device in devices:
-            LOG.info("Attachment %s removed", device)
+            LOG.info(_("Attachment %s removed"), device)
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
                                                              self.agent_id)
             except Exception as e:
-                LOG.debug("port_removed failed for %s: %s", device, e)
+                LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
+                          locals())
                 resync = True
                 continue
             if details['exists']:
-                LOG.info("Port %s updated.", device)
+                LOG.info(_("Port %s updated."), device)
                 # Nothing to do regarding local networking
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.debug(_("Device %s not defined on plugin"), device)
                 self.port_unbound(device)
         return resync
 
@@ -591,7 +605,8 @@ class OVSQuantumAgent(object):
                     tun_name = 'gre-%s' % tunnel['id']
                     self.tun_br.add_tunnel_port(tun_name, tunnel['ip_address'])
         except Exception as e:
-            LOG.debug("Unable to sync tunnel IP %s: %s", self.local_ip, e)
+            LOG.debug(_("Unable to sync tunnel IP %(local_ip)s: %(e)s"),
+                      {'local_ip': self.local_ip, 'e': e})
             resync = True
         return resync
 
@@ -604,26 +619,26 @@ class OVSQuantumAgent(object):
             try:
                 start = time.time()
                 if sync:
-                    LOG.info("Agent out of sync with plugin!")
+                    LOG.info(_("Agent out of sync with plugin!"))
                     ports.clear()
                     sync = False
 
                 # Notify the plugin of tunnel IP
                 if self.enable_tunneling and tunnel_sync:
-                    LOG.info("Agent tunnel out of sync with plugin!")
+                    LOG.info(_("Agent tunnel out of sync with plugin!"))
                     tunnel_sync = self.tunnel_sync()
 
                 port_info = self.update_ports(ports)
 
                 # notify plugin about port deltas
                 if port_info:
-                    LOG.debug("Agent loop has new devices!")
+                    LOG.debug(_("Agent loop has new devices!"))
                     # If treat devices fails - must resync with plugin
                     sync = self.process_network_ports(port_info)
                     ports = port_info['current']
 
             except:
-                LOG.exception("Error in agent event loop")
+                LOG.exception(_("Error in agent event loop"))
                 sync = True
                 tunnel_sync = True
 
@@ -632,8 +647,10 @@ class OVSQuantumAgent(object):
             if (elapsed < self.polling_interval):
                 time.sleep(self.polling_interval - elapsed)
             else:
-                LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
-                          self.polling_interval, elapsed)
+                LOG.debug(_("Loop iteration exceeded interval "
+                            "(%(polling_interval)s vs. %(elapsed)s)!"),
+                          {'polling_interval': self.polling_interval,
+                           'elapsed': elapsed})
 
     def daemon_loop(self):
         self.rpc_loop()
@@ -675,13 +692,13 @@ def main():
     try:
         agent_config = create_agent_config_map(cfg.CONF)
     except ValueError as e:
-        LOG.error('%s Agent terminated!', e)
+        LOG.error(_('%s Agent terminated!'), e)
         sys.exit(1)
 
     plugin = OVSQuantumAgent(**agent_config)
 
     # Start everything.
-    LOG.info("Agent initialized successfully, now running... ")
+    LOG.info(_("Agent initialized successfully, now running... "))
     plugin.daemon_loop()
     sys.exit(0)
 

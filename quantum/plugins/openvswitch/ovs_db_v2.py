@@ -90,9 +90,11 @@ def sync_vlan_allocations(network_vlan_ranges):
                         # it's not allocatable, so check if its allocated
                         if not alloc.allocated:
                             # it's not, so remove it from table
-                            LOG.debug("removing vlan %s on physical network "
-                                      "%s from pool" %
-                                      (alloc.vlan_id, physical_network))
+                            LOG.debug(_("Removing vlan %(vlan_id)s on "
+                                        "physical network "
+                                        "%(physical_network)s from pool"),
+                                      {'vlan_id': alloc.vlan_id,
+                                       'physical_network': physical_network})
                             session.delete(alloc)
                 del allocations[physical_network]
 
@@ -106,9 +108,10 @@ def sync_vlan_allocations(network_vlan_ranges):
         for allocs in allocations.itervalues():
             for alloc in allocs:
                 if not alloc.allocated:
-                    LOG.debug("removing vlan %s on physical network %s"
-                              " from pool" %
-                              (alloc.vlan_id, physical_network))
+                    LOG.debug(_("Removing vlan %(vlan_id)s on physical "
+                                "network %(physical_network)s from pool"),
+                              {'vlan_id': alloc.vlan_id,
+                               'physical_network': physical_network})
                     session.delete(alloc)
 
 
@@ -130,8 +133,10 @@ def reserve_vlan(session):
                  filter_by(allocated=False).
                  first())
         if alloc:
-            LOG.debug("reserving vlan %s on physical network %s from pool" %
-                      (alloc.vlan_id, alloc.physical_network))
+            LOG.debug(_("Reserving vlan %(vlan_id)s on physical network "
+                        "%(physical_network)s from pool"),
+                      {'vlan_id': alloc.vlan_id,
+                       'physical_network': alloc.physical_network})
             alloc.allocated = True
             return (alloc.physical_network, alloc.vlan_id)
     raise q_exc.NoNetworkAvailable()
@@ -151,12 +156,13 @@ def reserve_specific_vlan(session, physical_network, vlan_id):
                 else:
                     raise q_exc.VlanIdInUse(vlan_id=vlan_id,
                                             physical_network=physical_network)
-            LOG.debug("reserving specific vlan %s on physical network %s "
-                      "from pool" % (vlan_id, physical_network))
+            LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
+                        "network %(physical_network)s from pool"), locals())
             alloc.allocated = True
         except exc.NoResultFound:
-            LOG.debug("reserving specific vlan %s on physical network %s "
-                      "outside pool" % (vlan_id, physical_network))
+            LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
+                        "network %(physical_network)s outside pool"),
+                      locals())
             alloc = ovs_models_v2.VlanAllocation(physical_network, vlan_id)
             alloc.allocated = True
             session.add(alloc)
@@ -177,12 +183,17 @@ def release_vlan(session, physical_network, vlan_id, network_vlan_ranges):
                     break
             if not inside:
                 session.delete(alloc)
-            LOG.debug("releasing vlan %s on physical network %s %s pool" %
-                      (vlan_id, physical_network,
-                       inside and "to" or "outside"))
+                LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
+                            "%(physical_network)s outside pool"),
+                          locals())
+            else:
+                LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
+                            "%(physical_network)s to pool"),
+                          locals())
         except exc.NoResultFound:
-            LOG.warning("vlan_id %s on physical network %s not found" %
-                        (vlan_id, physical_network))
+            LOG.warning(_("vlan_id %(vlan_id)s on physical network "
+                          "%(physical_network)s not found"),
+                        locals())
 
 
 def sync_tunnel_allocations(tunnel_id_ranges):
@@ -193,8 +204,9 @@ def sync_tunnel_allocations(tunnel_id_ranges):
     for tunnel_id_range in tunnel_id_ranges:
         tun_min, tun_max = tunnel_id_range
         if tun_max + 1 - tun_min > 1000000:
-            LOG.error("Skipping unreasonable tunnel ID range %s:%s" %
-                      tunnel_id_range)
+            LOG.error(_("Skipping unreasonable tunnel ID range "
+                        "%(tun_min)s:%(tun_max)s"),
+                      locals())
         else:
             tunnel_ids |= set(xrange(tun_min, tun_max + 1))
 
@@ -211,7 +223,7 @@ def sync_tunnel_allocations(tunnel_id_ranges):
                 # it's not allocatable, so check if its allocated
                 if not alloc.allocated:
                     # it's not, so remove it from table
-                    LOG.debug("removing tunnel %s from pool" %
+                    LOG.debug(_("Removing tunnel %s from pool"),
                               alloc.tunnel_id)
                     session.delete(alloc)
 
@@ -238,7 +250,7 @@ def reserve_tunnel(session):
                  filter_by(allocated=False).
                  first())
         if alloc:
-            LOG.debug("reserving tunnel %s from pool" % alloc.tunnel_id)
+            LOG.debug(_("Reserving tunnel %s from pool"), alloc.tunnel_id)
             alloc.allocated = True
             return alloc.tunnel_id
     raise q_exc.NoNetworkAvailable()
@@ -252,10 +264,11 @@ def reserve_specific_tunnel(session, tunnel_id):
                      one())
             if alloc.allocated:
                 raise q_exc.TunnelIdInUse(tunnel_id=tunnel_id)
-            LOG.debug("reserving specific tunnel %s from pool" % tunnel_id)
+            LOG.debug(_("Reserving specific tunnel %s from pool"), tunnel_id)
             alloc.allocated = True
         except exc.NoResultFound:
-            LOG.debug("reserving specific tunnel %s outside pool" % tunnel_id)
+            LOG.debug(_("Reserving specific tunnel %s outside pool"),
+                      tunnel_id)
             alloc = ovs_models_v2.TunnelAllocation(tunnel_id)
             alloc.allocated = True
             session.add(alloc)
@@ -276,10 +289,11 @@ def release_tunnel(session, tunnel_id, tunnel_id_ranges):
                     break
             if not inside:
                 session.delete(alloc)
-            LOG.debug("releasing tunnel %s %s pool" %
-                      (tunnel_id, inside and "to" or "outside"))
+                LOG.debug(_("Releasing tunnel %s outside pool"), tunnel_id)
+            else:
+                LOG.debug(_("Releasing tunnel %s to pool"), tunnel_id)
         except exc.NoResultFound:
-            LOG.warning("tunnel_id %s not found" % tunnel_id)
+            LOG.warning(_("tunnel_id %s not found"), tunnel_id)
 
 
 def get_port(port_id):
