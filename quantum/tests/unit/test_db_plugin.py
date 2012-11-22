@@ -302,6 +302,16 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                               'tenant_id': self._tenant_id}}
         return self._create_bulk(fmt, number, 'port', base_data, **kwargs)
 
+    def _make_network(self, fmt, name, admin_status_up, **kwargs):
+        res = self._create_network(fmt, name, admin_status_up, **kwargs)
+        # TODO(salvatore-orlando): do exception handling in this test module
+        # in a uniform way (we do it differently for ports, subnets, and nets
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
                      dns_nameservers=None, host_routes=None, shared=None):
@@ -316,6 +326,14 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                   dns_nameservers=dns_nameservers,
                                   host_routes=host_routes,
                                   shared=shared)
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
+    def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
+        res = self._create_port(fmt, net_id, expected_res_status, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= 400:
@@ -393,25 +411,16 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                 fmt='json',
                 do_delete=True,
                 **kwargs):
-        res = self._create_network(fmt,
-                                   name,
-                                   admin_status_up,
-                                   **kwargs)
-        network = self.deserialize(fmt, res)
-        # TODO(salvatore-orlando): do exception handling in this test module
-        # in a uniform way (we do it differently for ports, subnets, and nets
-        # Things can go wrong - raise HTTP exc with res code only
-        # so it can be caught by unit tests
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        yield network
-
-        if do_delete:
-            # The do_delete parameter allows you to control whether the
-            # created network is immediately deleted again. Therefore, this
-            # function is also usable in tests, which require the creation
-            # of many networks.
-            self._delete('networks', network['network']['id'])
+        network = self._make_network(fmt, name, admin_status_up, **kwargs)
+        try:
+            yield network
+        finally:
+            if do_delete:
+                # The do_delete parameter allows you to control whether the
+                # created network is immediately deleted again. Therefore, this
+                # function is also usable in tests, which require the creation
+                # of many networks.
+                self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
     def subnet(self, network=None,
@@ -439,8 +448,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                            dns_nameservers,
                                            host_routes,
                                            shared=shared)
-                yield subnet
-                self._delete('subnets', subnet['subnet']['id'])
+                try:
+                    yield subnet
+                finally:
+                    self._delete('subnets', subnet['subnet']['id'])
         else:
             subnet = self._make_subnet(fmt,
                                        network,
@@ -452,8 +463,10 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                        dns_nameservers,
                                        host_routes,
                                        shared=shared)
-            yield subnet
-            self._delete('subnets', subnet['subnet']['id'])
+            try:
+                yield subnet
+            finally:
+                self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
     def port(self, subnet=None, fmt='json', no_delete=False,
@@ -461,27 +474,20 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         if not subnet:
             with self.subnet() as subnet:
                 net_id = subnet['subnet']['network_id']
-                res = self._create_port(fmt, net_id, **kwargs)
-                port = self.deserialize(fmt, res)
-                # Things can go wrong - raise HTTP exc with res code only
-                # so it can be caught by unit tests
-                if res.status_int >= 400:
-                    raise webob.exc.HTTPClientError(code=res.status_int)
-
-                yield port
-                if not no_delete:
-                    self._delete('ports', port['port']['id'])
+                port = self._make_port(fmt, net_id, **kwargs)
+                try:
+                    yield port
+                finally:
+                    if not no_delete:
+                        self._delete('ports', port['port']['id'])
         else:
             net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id, **kwargs)
-            port = self.deserialize(fmt, res)
-            # Things can go wrong - raise HTTP exc with res code only
-            # so it can be caught by unit tests
-            if res.status_int >= 400:
-                raise webob.exc.HTTPClientError(code=res.status_int)
-            yield port
-            if not no_delete:
-                self._delete('ports', port['port']['id'])
+            port = self._make_port(fmt, net_id, **kwargs)
+            try:
+                yield port
+            finally:
+                if not no_delete:
+                    self._delete('ports', port['port']['id'])
 
 
 class TestBasicGet(QuantumDbPluginV2TestCase):
