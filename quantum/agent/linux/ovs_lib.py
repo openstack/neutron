@@ -62,7 +62,8 @@ class OVSBridge:
         try:
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception, e:
-            LOG.error("Unable to execute %s. Exception: %s", full_args, e)
+            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
+                      {'cmd': full_args, 'exception': e})
 
     def reset_bridge(self):
         self.run_vsctl(["--", "--if-exists", "del-br", self.br_name])
@@ -90,7 +91,8 @@ class OVSBridge:
         try:
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception, e:
-            LOG.error("Unable to execute %s. Exception: %s", full_args, e)
+            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
+                      {'cmd': full_args, 'exception': e})
 
     def count_flows(self):
         flow_list = self.run_ofctl("dump-flows", []).split("\n")[1:]
@@ -116,7 +118,7 @@ class OVSBridge:
                       kwargs.get('priority', '1')))
             flow_expr_arr.append(prefix)
         elif 'priority' in kwargs:
-            raise Exception("Cannot match priority on flow deletion")
+            raise Exception(_("Cannot match priority on flow deletion"))
 
         in_port = ('in_port' in kwargs and ",in_port=%s" %
                    kwargs['in_port'] or '')
@@ -140,7 +142,7 @@ class OVSBridge:
 
     def add_flow(self, **kwargs):
         if "actions" not in kwargs:
-            raise Exception("must specify one or more actions")
+            raise Exception(_("Must specify one or more actions"))
         if "priority" not in kwargs:
             kwargs["priority"] = "0"
 
@@ -211,7 +213,8 @@ class OVSBridge:
         try:
             return utils.execute(args, root_helper=self.root_helper).strip()
         except Exception, e:
-            LOG.error("Unable to execute %s. Exception: %s", args, e)
+            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
+                      {'cmd': args, 'exception': e})
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
@@ -265,7 +268,7 @@ class OVSBridge:
             ofport = int(match.group('ofport'))
             return VifPort(port_name, ofport, vif_id, vif_mac, self)
         except Exception, e:
-            LOG.info("Unable to parse regex results. Exception: %s", e)
+            LOG.info(_("Unable to parse regex results. Exception: %s"), e)
             return
 
 

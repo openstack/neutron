@@ -83,7 +83,7 @@ def setup_logging(conf):
     logging.setup(product_name)
     log_root = logging.getLogger(product_name).logger
     log_root.propagate = 0
-    LOG.info("Logging enabled!")
+    LOG.info(_("Logging enabled!"))
 
 
 def load_paste_app(app_name):
@@ -97,7 +97,7 @@ def load_paste_app(app_name):
 
     config_path = os.path.abspath(cfg.CONF.find_file(
         cfg.CONF.api_paste_config))
-    LOG.info("Config paste file: %s", config_path)
+    LOG.info(_("Config paste file: %s"), config_path)
 
     try:
         app = deploy.loadapp("config:%s" % config_path, name=app_name)

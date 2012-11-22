@@ -754,19 +754,19 @@ class Resource(Application):
     def __call__(self, request):
         """WSGI method that controls (de)serialization and method dispatch."""
 
-        LOG.info("%(method)s %(url)s" % {"method": request.method,
-                                         "url": request.url})
+        LOG.info(_("%(method)s %(url)s"), {"method": request.method,
+                                           "url": request.url})
 
         try:
             action, args, accept = self.deserializer.deserialize(request)
         except exception.InvalidContentType:
             msg = _("Unsupported Content-Type")
-            LOG.exception("InvalidContentType:%s", msg)
+            LOG.exception(_("InvalidContentType: %s"), msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg),
                          self._xmlns)
         except exception.MalformedRequestBody:
             msg = _("Malformed request body")
-            LOG.exception("MalformedRequestBody:%s", msg)
+            LOG.exception(_("MalformedRequestBody: %s"), msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg),
                          self._xmlns)
 
@@ -778,7 +778,7 @@ class Resource(Application):
                                   self._xmlns,
                                   self._fault_body_function)
         except Exception:
-            LOG.exception("Internal error")
+            LOG.exception(_("Internal error"))
             # Do not include the traceback to avoid returning it to clients.
             action_result = Fault(webob.exc.HTTPServerError(),
                                   self._xmlns,
@@ -795,8 +795,8 @@ class Resource(Application):
             msg_dict = dict(url=request.url, status=response.status_int)
             msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
         except AttributeError, e:
-            msg_dict = dict(url=request.url, e=e)
-            msg = _("%(url)s returned a fault: %(e)s" % msg_dict)
+            msg_dict = dict(url=request.url, exception=e)
+            msg = _("%(url)s returned a fault: %(exception)s") % msg_dict
 
         LOG.info(msg)
 

@@ -111,8 +111,8 @@ class L3NATAgent(object):
             self.driver = importutils.import_object(conf.interface_driver,
                                                     conf)
         except:
-            LOG.exception(_("Error importing interface driver '%s'"
-                            % conf.interface_driver))
+            LOG.exception(_("Error importing interface driver '%s'"),
+                          conf.interface_driver)
             sys.exit(1)
 
         self.polling_interval = conf.polling_interval
@@ -139,7 +139,7 @@ class L3NATAgent(object):
                 try:
                     self._destroy_router_namespace(ns)
                 except:
-                    LOG.exception("couldn't delete namespace '%s'" % ns)
+                    LOG.exception(_("Couldn't delete namespace '%s'"), ns)
 
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
@@ -170,7 +170,7 @@ class L3NATAgent(object):
             try:
                 self.do_single_loop()
             except:
-                LOG.exception("Error running l3_nat daemon_loop")
+                LOG.exception(_("Error running l3_nat daemon_loop"))
 
             time.sleep(self.polling_interval)
 
@@ -182,8 +182,9 @@ class L3NATAgent(object):
         params = {'router:external': True}
         ex_nets = self.qclient.list_networks(**params)['networks']
         if len(ex_nets) > 1:
-            raise Exception("must configure 'gateway_external_network_id' if "
-                            "Quantum has more than one external network.")
+            raise Exception(_("Must configure 'gateway_external_network_id' "
+                              "if Quantum has more than one external "
+                              "network."))
         if len(ex_nets) == 0:
             return None
         return ex_nets[0]['id']
@@ -192,8 +193,8 @@ class L3NATAgent(object):
 
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
-            LOG.error("external network bridge '%s' does not exist"
-                      % self.conf.external_network_bridge)
+            LOG.error(_("External network bridge '%s' does not exist"),
+                      self.conf.external_network_bridge)
             return
 
         prev_router_ids = set(self.router_info)
@@ -257,9 +258,9 @@ class L3NATAgent(object):
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
         if not ips:
-            raise Exception("Router port %s has no IP address" % port['id'])
+            raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.error("Ignoring multiple IPs on router port %s" % port['id'])
+            LOG.error(_("Ignoring multiple IPs on router port %s"), port['id'])
         port['subnet'] = self.qclient.show_subnet(
             ips[0]['subnet_id'])['subnet']
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
@@ -356,8 +357,8 @@ class L3NATAgent(object):
         elif len(ports) == 1:
             return ports[0]
         else:
-            LOG.error("Ignoring multiple gateway ports for router %s"
-                      % ri.router_id)
+            LOG.error(_("Ignoring multiple gateway ports for router %s"),
+                      ri.router_id)
 
     def _send_gratuitous_arp_packet(self, ri, interface_name, ip_address):
         if self.conf.send_arp_for_ha > 0:

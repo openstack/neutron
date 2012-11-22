@@ -38,7 +38,7 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         cmd = shlex.split(root_helper) + cmd
     cmd = map(str, cmd)
 
-    LOG.debug("Running command: " + " ".join(cmd))
+    LOG.debug(_("Running command: %s"), cmd)
     env = os.environ.copy()
     if addl_env:
         env.update(addl_env)
@@ -52,8 +52,9 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
                         obj.communicate(process_input) or
                         obj.communicate())
     obj.stdin.close()
-    m = ("\nCommand: %s\nExit code: %s\nStdout: %r\nStderr: %r" %
-        (cmd, obj.returncode, _stdout, _stderr))
+    m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
+          "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
+                                   'stdout': _stdout, 'stderr': _stderr}
     LOG.debug(m)
     if obj.returncode and check_exit_code:
         raise RuntimeError(m)
