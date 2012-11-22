@@ -355,6 +355,21 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         body = self._show('routers', r['router']['id'],
                           expected_code=exc.HTTPNotFound.code)
 
+    def test_create_router_with_gwinfo(self):
+        with self.subnet() as s:
+            self._set_net_external(s['subnet']['network_id'])
+            data = {'router': {'tenant_id': _uuid()}}
+            data['router']['name'] = 'router1'
+            data['router']['external_gateway_info'] = {
+                'network_id': s['subnet']['network_id']}
+            router_req = self.new_create_request('routers', data, 'json')
+            res = router_req.get_response(self.ext_api)
+            router = self.deserialize('json', res)
+            self.assertEquals(
+                s['subnet']['network_id'],
+                router['router']['external_gateway_info']['network_id'])
+            self._delete('routers', router['router']['id'])
+
     def test_router_update(self):
         rname1 = "yourrouter"
         rname2 = "nachorouter"
@@ -367,6 +382,45 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
             body = self._show('routers', r['router']['id'])
             self.assertEquals(body['router']['name'], rname2)
+
+    def test_router_update_gateway(self):
+        with self.router() as r:
+            with self.subnet() as s1:
+                with self.subnet() as s2:
+                    self._set_net_external(s1['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+                    body = self._show('routers', r['router']['id'])
+                    net_id = (body['router']
+                              ['external_gateway_info']['network_id'])
+                    self.assertEquals(net_id, s1['subnet']['network_id'])
+                    self._set_net_external(s2['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s2['subnet']['network_id'])
+                    body = self._show('routers', r['router']['id'])
+                    net_id = (body['router']
+                              ['external_gateway_info']['network_id'])
+                    self.assertEquals(net_id, s2['subnet']['network_id'])
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        s2['subnet']['network_id'])
+
+    def test_router_update_gateway_with_existed_floatingip(self):
+        with self.subnet() as subnet:
+            self._set_net_external(subnet['subnet']['network_id'])
+            with self.floatingip_with_assoc() as fip:
+                self._add_external_gateway_to_router(
+                    fip['floatingip']['router_id'],
+                    subnet['subnet']['network_id'],
+                    expected_code=exc.HTTPConflict.code)
+
+    def test_router_update_gateway_to_empty_with_existed_floatingip(self):
+        with self.floatingip_with_assoc() as fip:
+            self._remove_external_gateway_from_router(
+                fip['floatingip']['router_id'], None,
+                expected_code=exc.HTTPConflict.code)
 
     def test_router_add_interface_subnet(self):
         with self.router() as r:
@@ -559,40 +613,6 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                       None,
                                                       p1['port']['id'])
 
-    def test_router_add_gateway_dup_subnet1(self):
-        with self.router() as r:
-            with self.subnet() as s:
-                body = self._router_interface_action('add',
-                                                     r['router']['id'],
-                                                     s['subnet']['id'],
-                                                     None)
-                self._set_net_external(s['subnet']['network_id'])
-                self._add_external_gateway_to_router(
-                    r['router']['id'],
-                    s['subnet']['network_id'],
-                    expected_code=exc.HTTPBadRequest.code)
-                body = self._router_interface_action('remove',
-                                                     r['router']['id'],
-                                                     s['subnet']['id'],
-                                                     None)
-
-    def test_router_add_gateway_dup_subnet2(self):
-        with self.router() as r:
-            with self.subnet() as s:
-                self._set_net_external(s['subnet']['network_id'])
-                self._add_external_gateway_to_router(
-                    r['router']['id'],
-                    s['subnet']['network_id'])
-                self._router_interface_action('add',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None,
-                                              expected_code=exc.
-                                              HTTPBadRequest.code)
-                self._remove_external_gateway_from_router(
-                    r['router']['id'],
-                    s['subnet']['network_id'])
-
     def test_router_add_interface_overlapped_cidr(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s1:
@@ -630,49 +650,39 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                  expected_code=exc.
                                                  HTTPBadRequest.code)
 
-    def test_network_update_external_failure(self):
+    def test_router_add_gateway_dup_subnet1(self):
         with self.router() as r:
-            with self.subnet() as s1:
-                self._set_net_external(s1['subnet']['network_id'])
+            with self.subnet() as s:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+                self._set_net_external(s['subnet']['network_id'])
                 self._add_external_gateway_to_router(
                     r['router']['id'],
-                    s1['subnet']['network_id'])
-                self._update('networks', s1['subnet']['network_id'],
-                             {'network': {'router:external': False}},
-                             expected_code=exc.HTTPConflict.code)
+                    s['subnet']['network_id'],
+                    expected_code=exc.HTTPBadRequest.code)
+                body = self._router_interface_action('remove',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+
+    def test_router_add_gateway_dup_subnet2(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None,
+                                              expected_code=exc.
+                                              HTTPBadRequest.code)
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
-                    s1['subnet']['network_id'])
-
-    def test_network_update_external(self):
-        with self.router() as r:
-            with self.network('test_net') as testnet:
-                self._set_net_external(testnet['network']['id'])
-                with self.subnet() as s1:
-                    self._set_net_external(s1['subnet']['network_id'])
-                    self._add_external_gateway_to_router(
-                        r['router']['id'],
-                        s1['subnet']['network_id'])
-                    self._update('networks', testnet['network']['id'],
-                                 {'network': {'router:external': False}})
-                    self._remove_external_gateway_from_router(
-                        r['router']['id'],
-                        s1['subnet']['network_id'])
-
-    def test_create_router_with_gwinfo(self):
-        with self.subnet() as s:
-            self._set_net_external(s['subnet']['network_id'])
-            data = {'router': {'tenant_id': _uuid()}}
-            data['router']['name'] = 'router1'
-            data['router']['external_gateway_info'] = {
-                'network_id': s['subnet']['network_id']}
-            router_req = self.new_create_request('routers', data, 'json')
-            res = router_req.get_response(self.ext_api)
-            router = self.deserialize('json', res)
-            self.assertEquals(
-                s['subnet']['network_id'],
-                router['router']['external_gateway_info']['network_id'])
-            self._delete('routers', router['router']['id'])
+                    s['subnet']['network_id'])
 
     def test_router_add_gateway(self):
         with self.router() as r:
@@ -690,45 +700,6 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
                 self.assertEquals(gw_info, None)
-
-    def test_router_update_gateway(self):
-        with self.router() as r:
-            with self.subnet() as s1:
-                with self.subnet() as s2:
-                    self._set_net_external(s1['subnet']['network_id'])
-                    self._add_external_gateway_to_router(
-                        r['router']['id'],
-                        s1['subnet']['network_id'])
-                    body = self._show('routers', r['router']['id'])
-                    net_id = (body['router']
-                              ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s1['subnet']['network_id'])
-                    self._set_net_external(s2['subnet']['network_id'])
-                    self._add_external_gateway_to_router(
-                        r['router']['id'],
-                        s2['subnet']['network_id'])
-                    body = self._show('routers', r['router']['id'])
-                    net_id = (body['router']
-                              ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s2['subnet']['network_id'])
-                    self._remove_external_gateway_from_router(
-                        r['router']['id'],
-                        s2['subnet']['network_id'])
-
-    def test_router_update_gateway_with_existed_floatingip(self):
-        with self.subnet() as subnet:
-            self._set_net_external(subnet['subnet']['network_id'])
-            with self.floatingip_with_assoc() as fip:
-                self._add_external_gateway_to_router(
-                    fip['floatingip']['router_id'],
-                    subnet['subnet']['network_id'],
-                    expected_code=exc.HTTPConflict.code)
-
-    def test_router_update_gateway_to_empty_with_existed_floatingip(self):
-        with self.floatingip_with_assoc() as fip:
-            self._remove_external_gateway_from_router(
-                fip['floatingip']['router_id'], None,
-                expected_code=exc.HTTPConflict.code)
 
     def test_router_add_gateway_invalid_network(self):
         with self.router() as r:
@@ -811,6 +782,35 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   p['port']['id'])
                     # remove extra port created
                     self._delete('ports', p2['port']['id'])
+
+    def test_network_update_external_failure(self):
+        with self.router() as r:
+            with self.subnet() as s1:
+                self._set_net_external(s1['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
+                self._update('networks', s1['subnet']['network_id'],
+                             {'network': {'router:external': False}},
+                             expected_code=exc.HTTPConflict.code)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
+
+    def test_network_update_external(self):
+        with self.router() as r:
+            with self.network('test_net') as testnet:
+                self._set_net_external(testnet['network']['id'])
+                with self.subnet() as s1:
+                    self._set_net_external(s1['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+                    self._update('networks', testnet['network']['id'],
+                                 {'network': {'router:external': False}})
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
