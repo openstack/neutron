@@ -14,6 +14,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import copy
 import time
 import unittest
@@ -24,9 +25,10 @@ from quantum.agent.common import config
 from quantum.agent import l3_agent
 from quantum.agent.linux import interface
 from quantum.db import l3_db
-from quantum.tests.unit import test_api_v2
+from quantum.openstack.common import uuidutils
 
-_uuid = test_api_v2._uuid
+
+_uuid = uuidutils.generate_uuid
 
 
 class TestBasicRouterOperations(unittest.TestCase):
