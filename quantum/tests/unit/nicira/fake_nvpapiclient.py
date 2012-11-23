@@ -1,3 +1,5 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2012 Nicira Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -11,12 +13,13 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
 
 import json
 import logging
 import urlparse
-import uuid
+
+from quantum.openstack.common import uuidutils
+
 
 LOG = logging.getLogger("fake_nvpapiclient")
 LOG.setLevel(logging.DEBUG)
@@ -67,7 +70,7 @@ class FakeClient:
 
     def _add_lswitch(self, body):
         fake_lswitch = json.loads(body)
-        fake_lswitch['uuid'] = str(uuid.uuid4())
+        fake_lswitch['uuid'] = uuidutils.generate_uuid()
         self._fake_lswitch_dict[fake_lswitch['uuid']] = fake_lswitch
         # put the tenant_id and the zone_uuid in the main dict
         # for simplyfying templating
@@ -78,7 +81,7 @@ class FakeClient:
 
     def _add_lport(self, body, ls_uuid):
         fake_lport = json.loads(body)
-        fake_lport['uuid'] = str(uuid.uuid4())
+        fake_lport['uuid'] = uuidutils.generate_uuid()
         # put the tenant_id and the ls_uuid in the main dict
         # for simplyfying templating
         fake_lport['ls_uuid'] = ls_uuid

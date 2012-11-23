@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -19,9 +19,9 @@
 
 import logging
 import unittest
-import uuid
 
 from quantum.common import exceptions as exc
+from quantum.openstack.common import uuidutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as creds
 from quantum.plugins.cisco.db import network_db_v2 as cdb
@@ -71,7 +71,7 @@ class TestUCSInventory(unittest.TestCase):
     def _test_with_port_creation(self, cmd, params=None):
         """Tests commands that requires a port to exist"""
         LOG.debug("test_%s - START", cmd)
-        net_uuid = str(uuid.uuid4())
+        net_uuid = uuidutils.generate_uuid()
         device_params = self._ucs_inventory.create_port(tenant, net_uuid,
                                                         port_state,
                                                         state=port_state)

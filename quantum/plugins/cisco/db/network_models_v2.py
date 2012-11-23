@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012, Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,13 +16,12 @@
 #
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import uuid
-
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relation, object_mapper
 
 from quantum.db import model_base
 from quantum.db import models_v2 as models
+from quantum.openstack.common import uuidutils
 
 
 class L2NetworkBase(object):
@@ -111,10 +110,10 @@ class PortProfile(model_base.BASEV2, L2NetworkBase):
     qos = Column(String(255))
 
     def __init__(self, name, vlan_id, qos=None):
-            self.uuid = uuid.uuid4()
-            self.name = name
-            self.vlan_id = vlan_id
-            self.qos = qos
+        self.uuid = uuidutils.generate_uuid()
+        self.name = name
+        self.vlan_id = vlan_id
+        self.qos = qos
 
     def __repr__(self):
         return "<PortProfile(%s,%s,%d,%s)>" % (self.uuid,
@@ -160,7 +159,7 @@ class QoS(model_base.BASEV2, L2NetworkBase):
     qos_desc = Column(String(255))
 
     def __init__(self, tenant_id, qos_name, qos_desc):
-        self.qos_id = str(uuid.uuid4())
+        self.qos_id = uuidutils.generate_uuid()
         self.tenant_id = tenant_id
         self.qos_name = qos_name
         self.qos_desc = qos_desc
@@ -181,7 +180,7 @@ class Credential(model_base.BASEV2, L2NetworkBase):
     password = Column(String(255))
 
     def __init__(self, tenant_id, credential_name, user_name, password):
-        self.credential_id = str(uuid.uuid4())
+        self.credential_id = uuidutils.generate_uuid()
         self.tenant_id = tenant_id
         self.credential_name = credential_name
         self.user_name = user_name

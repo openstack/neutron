@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012, Nachi Ueno, NTT MCL, Inc.
 # All Rights Reserved.
 #
@@ -16,7 +16,6 @@
 #    under the License.
 
 import os
-import uuid
 
 import mock
 import mox
@@ -31,6 +30,7 @@ from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.extensions import l3
 from quantum.openstack.common import cfg
+from quantum.openstack.common import uuidutils
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
 from quantum.plugins.metaplugin.proxy_quantum_plugin import ProxyPluginV2
 from quantum.tests.unit.metaplugin import fake_plugin
@@ -76,7 +76,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         super(MetaQuantumPluginV2Test, self).setUp()
         db._ENGINE = None
         db._MAKER = None
-        self.fake_tenant_id = str(uuid.uuid4())
+        self.fake_tenant_id = uuidutils.generate_uuid()
         self.context = context.get_admin_context()
 
         sql_connection = 'sqlite:///:memory:'

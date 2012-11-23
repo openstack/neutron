@@ -1,4 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2011 Nicira Networks, Inc.
 # All Rights Reserved.
 #
@@ -17,11 +18,12 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
-import uuid
-
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, object_mapper
+
+from quantum.openstack.common import uuidutils
+
 
 BASE = declarative_base()
 
@@ -74,7 +76,7 @@ class Port(BASE, QuantumBase):
     state = Column(String(8))
 
     def __init__(self, network_id):
-        self.uuid = str(uuid.uuid4())
+        self.uuid = uuidutils.generate_uuid()
         self.network_id = network_id
         self.state = "DOWN"
 
@@ -93,7 +95,7 @@ class Network(BASE, QuantumBase):
     ports = relation(Port, order_by=Port.uuid, backref="network")
 
     def __init__(self, tenant_id, name):
-        self.uuid = str(uuid.uuid4())
+        self.uuid = uuidutils.generate_uuid()
         self.tenant_id = tenant_id
         self.name = name
 
