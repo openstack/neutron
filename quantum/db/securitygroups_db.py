@@ -372,8 +372,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
             # Check in database if rule exists
             filters = self._make_security_group_rule_filter_dict(i)
-            if self.get_security_group_rules(context, filters):
-                raise ext_sg.SecurityGroupRuleExists(rule=i)
+            rules = self.get_security_group_rules(context, filters)
+            if rules:
+                raise ext_sg.SecurityGroupRuleExists(id=str(rules[0]['id']))
 
     def get_security_group_rules(self, context, filters=None, fields=None):
         return self._get_collection(context, SecurityGroupRule,

@@ -101,7 +101,7 @@ class DuplicateSecurityGroupRuleInPost(qexception.InUse):
 
 
 class SecurityGroupRuleExists(qexception.InUse):
-    message = _("Security group rule exists %(rule)s")
+    message = _("Security group rule already exists. Group id is %(id)s.")
 
 
 class SecurityGroupProxyMode(qexception.InUse):
