@@ -70,7 +70,7 @@ def serve_wsgi(cls):
     try:
         service = cls.create()
     except Exception:
-        LOG.exception('in WsgiService.create()')
+        LOG.exception(_('In WsgiService.create()'))
         raise
 
     service.start()
@@ -87,7 +87,7 @@ def _run_wsgi(app_name):
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host)
     # Dump all option values here after all options are parsed
     cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
-    LOG.info("Quantum service started, listening on %(host)s:%(port)s" %
+    LOG.info(_("Quantum service started, listening on %(host)s:%(port)s"),
              {'host': cfg.CONF.bind_host,
               'port': cfg.CONF.bind_port})
     return server

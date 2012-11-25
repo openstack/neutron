@@ -288,6 +288,6 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         return driver.unplug(device_name, bridge, namespace, prefix)
 
     def _load_driver(self, driver_provider):
-        LOG.debug("Driver location:%s", driver_provider)
+        LOG.debug(_("Driver location: %s"), driver_provider)
         plugin_klass = importutils.import_class(driver_provider)
         return plugin_klass(self.conf)

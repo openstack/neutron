@@ -47,16 +47,16 @@ class QuantumManager(object):
         #                intentianally to allow v2 plugins to be monitored
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
-        LOG.debug("Plugin location:%s", plugin_provider)
+        LOG.debug(_("Plugin location: %s"), plugin_provider)
         # If the plugin can't be found let them know gracefully
         try:
-            LOG.info("Loading Plugin: %s" % plugin_provider)
+            LOG.info(_("Loading Plugin: %s"), plugin_provider)
             plugin_klass = importutils.import_class(plugin_provider)
         except ClassNotFound:
-            LOG.exception("Error loading plugin")
-            raise Exception("Plugin not found.  You can install a "
+            LOG.exception(_("Error loading plugin"))
+            raise Exception(_("Plugin not found.  You can install a "
                             "plugin with: pip install <plugin-name>\n"
-                            "Example: pip install quantum-sample-plugin")
+                            "Example: pip install quantum-sample-plugin"))
         self.plugin = plugin_klass()
 
         # core plugin as a part of plugin collection simplifies
@@ -68,12 +68,12 @@ class QuantumManager(object):
 
     def _load_service_plugins(self):
         plugin_providers = cfg.CONF.service_plugins
-        LOG.debug(_("Loading service plugins: %s" % plugin_providers))
+        LOG.debug(_("Loading service plugins: %s"), plugin_providers)
         for provider in plugin_providers:
             if provider == '':
                 continue
             try:
-                LOG.info(_("Loading Plugin: %s" % provider))
+                LOG.info(_("Loading Plugin: %s"), provider)
                 plugin_class = importutils.import_class(provider)
             except ClassNotFound:
                 LOG.exception(_("Error loading plugin"))
@@ -85,8 +85,8 @@ class QuantumManager(object):
             # for the same type is a fatal exception
             if plugin_inst.get_plugin_type() in self.service_plugins:
                 raise Exception(_("Multiple plugins for service "
-                                "%s were configured" %
-                                plugin_inst.get_plugin_type()))
+                                "%s were configured"),
+                                plugin_inst.get_plugin_type())
 
             self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
 
