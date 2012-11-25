@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,7 +18,7 @@
 import random
 import unittest
 
-from quantum.common import utils
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
@@ -37,9 +37,9 @@ class NECPluginV2DBTest(unittest.TestCase):
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
-        ofc_id = utils.str_uuid()
-        quantum_id = utils.str_uuid()
-        none = utils.str_uuid()
+        ofc_id = uuidutils.generate_uuid()
+        quantum_id = uuidutils.generate_uuid()
+        none = uuidutils.generate_uuid()
         return ofc_id, quantum_id, none
 
     def testa_add_ofc_item(self):
@@ -91,12 +91,12 @@ class NECPluginV2DBTest(unittest.TestCase):
 
     def get_portinfo_random_params(self):
         """create random parameters for portinfo test"""
-        port_id = utils.str_uuid()
+        port_id = uuidutils.generate_uuid()
         datapath_id = hex(random.randint(0, 0xffffffff))
         port_no = random.randint(1, 100)
         vlan_id = random.randint(0, 4095)
         mac = ':'.join(["%02x" % random.randint(0, 0xff) for x in range(6)])
-        none = utils.str_uuid()
+        none = uuidutils.generate_uuid()
         return port_id, datapath_id, port_no, vlan_id, mac, none
 
     def testd_add_portinfo(self):

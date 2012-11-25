@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,7 +17,7 @@
 
 import unittest
 
-from quantum.common import utils
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
@@ -38,11 +38,11 @@ class OFCManagerTest(unittest.TestCase):
 
     def get_random_params(self):
         """create random parameters for portinfo test"""
-        tenant = utils.str_uuid()
-        network = utils.str_uuid()
-        port = utils.str_uuid()
-        _filter = utils.str_uuid()
-        none = utils.str_uuid()
+        tenant = uuidutils.generate_uuid()
+        network = uuidutils.generate_uuid()
+        port = uuidutils.generate_uuid()
+        _filter = uuidutils.generate_uuid()
+        none = uuidutils.generate_uuid()
         return tenant, network, port, _filter, none
 
     def testa_create_ofc_tenant(self):

@@ -20,15 +20,14 @@
 
 """Utilities and helper functions."""
 
-
 import os
 import signal
-import uuid
 
 from eventlet.green import subprocess
 
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
+
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
@@ -116,11 +115,6 @@ def find_config_file(options, config_file):
         cfg_file = os.path.join(cfg_dir, config_file)
         if os.path.exists(cfg_file):
             return cfg_file
-
-
-def str_uuid():
-    """Return a uuid as a string"""
-    return str(uuid.uuid4())
 
 
 def _subprocess_setup():

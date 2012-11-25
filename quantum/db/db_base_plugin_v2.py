@@ -1,17 +1,19 @@
-# Copyright (c) 2012 OpenStack, LLC.
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+# Copyright (c) 2012 OpenStack LLC.
+# All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
 import datetime
 import random
@@ -23,12 +25,12 @@ from sqlalchemy.orm import exc
 from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum.common import exceptions as q_exc
-from quantum.common import utils
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils
+from quantum.openstack.common import uuidutils
 from quantum import quantum_plugin_base_v2
 
 
@@ -906,12 +908,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, n)
         with context.session.begin(subtransactions=True):
-            network = models_v2.Network(tenant_id=tenant_id,
-                                        id=n.get('id') or utils.str_uuid(),
-                                        name=n['name'],
-                                        admin_state_up=n['admin_state_up'],
-                                        shared=n['shared'],
-                                        status=constants.NET_STATUS_ACTIVE)
+            args = {'tenant_id': tenant_id,
+                    'id': n.get('id') or uuidutils.generate_uuid(),
+                    'name': n['name'],
+                    'admin_state_up': n['admin_state_up'],
+                    'shared': n['shared'],
+                    'status': constants.NET_STATUS_ACTIVE}
+            network = models_v2.Network(**args)
             context.session.add(network)
         return self._make_network_dict(network)
 
@@ -1030,15 +1033,16 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             self._validate_subnet_cidr(context, network, s['cidr'])
             # The 'shared' attribute for subnets is for internal plugin
             # use only. It is not exposed through the API
-            subnet = models_v2.Subnet(tenant_id=tenant_id,
-                                      id=s.get('id') or utils.str_uuid(),
-                                      name=s['name'],
-                                      network_id=s['network_id'],
-                                      ip_version=s['ip_version'],
-                                      cidr=s['cidr'],
-                                      enable_dhcp=s['enable_dhcp'],
-                                      gateway_ip=s['gateway_ip'],
-                                      shared=network.shared)
+            args = {'tenant_id': tenant_id,
+                    'id': s.get('id') or uuidutils.generate_uuid(),
+                    'name': s['name'],
+                    'network_id': s['network_id'],
+                    'ip_version': s['ip_version'],
+                    'cidr': s['cidr'],
+                    'enable_dhcp': s['enable_dhcp'],
+                    'gateway_ip': s['gateway_ip'],
+                    'shared': network.shared}
+            subnet = models_v2.Subnet(**args)
 
             # perform allocate pools first, since it might raise an error
             pools = self._allocate_pools_for_subnet(context, s)
@@ -1165,7 +1169,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def create_port(self, context, port):
         p = port['port']
-        port_id = p.get('id') or utils.str_uuid()
+        port_id = p.get('id') or uuidutils.generate_uuid()
         network_id = p['network_id']
         mac_address = p['mac_address']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid

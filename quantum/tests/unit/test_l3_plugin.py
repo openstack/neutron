@@ -1,6 +1,5 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 Nicira Networks, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,7 +16,6 @@
 #
 # @author: Dan Wendlandt, Nicira, Inc
 #
-"""
 
 import contextlib
 import copy
@@ -34,7 +32,6 @@ from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
-from quantum.common import utils
 from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
@@ -42,9 +39,11 @@ from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum import manager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
 from quantum.tests.unit import test_extensions
+
 
 LOG = logging.getLogger(__name__)
 
@@ -1043,19 +1042,19 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def test_create_floatingip_invalid_floating_network_id_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
         res = self._create_floatingip('json', 'iamnotanuuid',
-                                      utils.str_uuid(), '192.168.0.1')
+                                      uuidutils.generate_uuid(), '192.168.0.1')
         self.assertEqual(res.status_int, 400)
 
     def test_create_floatingip_invalid_floating_port_id_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
-        res = self._create_floatingip('json', utils.str_uuid(),
+        res = self._create_floatingip('json', uuidutils.generate_uuid(),
                                       'iamnotanuuid', '192.168.0.1')
         self.assertEqual(res.status_int, 400)
 
     def test_create_floatingip_invalid_fixed_ip_address_returns_400(self):
         # API-level test - no need to create all objects for l3 plugin
-        res = self._create_floatingip('json', utils.str_uuid(),
-                                      utils.str_uuid(), 'iamnotnanip')
+        res = self._create_floatingip('json', uuidutils.generate_uuid(),
+                                      uuidutils.generate_uuid(), 'iamnotnanip')
         self.assertEqual(res.status_int, 400)
 
     def test_list_nets_external(self):
