@@ -17,7 +17,6 @@ import contextlib
 import os
 
 import mock
-import unittest2
 import webob.exc
 
 from quantum.api.extensions import PluginAwareExtensionManager
@@ -58,65 +57,7 @@ class SecurityGroupTestExtensionManager(object):
         return []
 
 
-class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase,
-                             unittest2.TestCase):
-    def setUp(self, plugin=None):
-        super(SecurityGroupsTestCase, self).setUp()
-        db._ENGINE = None
-        db._MAKER = None
-        # Make sure at each test a new instance of the plugin is returned
-        QuantumManager._instance = None
-        # Make sure at each test according extensions for the plugin is loaded
-        PluginAwareExtensionManager._instance = None
-        # Save the attributes map in case the plugin will alter it
-        # loading extensions
-        # Note(salvatore-orlando): shallow copy is not good enough in
-        # this case, but copy.deepcopy does not seem to work, since it
-        # causes test failures
-        self._attribute_map_bk = {}
-        for item in attributes.RESOURCE_ATTRIBUTE_MAP:
-            self._attribute_map_bk[item] = (attributes.
-                                            RESOURCE_ATTRIBUTE_MAP[item].
-                                            copy())
-        json_deserializer = JSONDeserializer()
-        self._deserializers = {
-            'application/json': json_deserializer,
-        }
-
-        if not plugin:
-            plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
-
-        # Create the default configurations
-        args = ['--config-file', etcdir('quantum.conf.test')]
-        # If test_config specifies some config-file, use it, as well
-        for config_file in test_config.get('config_files', []):
-            args.extend(['--config-file', config_file])
-        config.parse(args=args)
-        # Update the plugin
-        cfg.CONF.set_override('core_plugin', plugin)
-        self.api = APIRouter()
-
-        def _is_native_bulk_supported():
-            plugin_obj = QuantumManager.get_plugin()
-            native_bulk_attr_name = ("_%s__native_bulk_support"
-                                     % plugin_obj.__class__.__name__)
-            return getattr(plugin_obj, native_bulk_attr_name, False)
-
-        self._skip_native_bulk = not _is_native_bulk_supported()
-
-        QuantumManager.get_plugin().supported_extension_aliases = (
-            ["security-groups"])
-        ext_mgr = SecurityGroupTestExtensionManager()
-        if ext_mgr:
-            self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
-
-    def tearDown(self):
-        super(SecurityGroupsTestCase, self).tearDown()
-        db._ENGINE = None
-        db._MAKER = None
-        cfg.CONF.reset()
-        # Restore the original attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
+class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def _create_security_group(self, fmt, name, description, external_id=None,
                                **kwargs):
