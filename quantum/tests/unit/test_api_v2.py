@@ -1,3 +1,5 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2012 OpenStack LLC.
 # All Rights Reserved.
 #
@@ -15,12 +17,10 @@
 import logging
 import os
 import unittest
-import uuid
 
 import mock
-import webtest
-
 from webob import exc
+import webtest
 
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
@@ -33,13 +33,14 @@ from quantum import context
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifer_api
+from quantum.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
 
 
 def _uuid():
-    return str(uuid.uuid4())
+    return uuidutils.generate_uuid()
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
@@ -323,7 +324,7 @@ class JSONV2TestCase(APIv2TestBase):
         env = {}
         if req_tenant_id:
             env = {'quantum.context': context.Context('', req_tenant_id)}
-        input_dict = {'id': str(uuid.uuid4()),
+        input_dict = {'id': uuidutils.generate_uuid(),
                       'name': 'net1',
                       'admin_state_up': True,
                       'status': "ACTIVE",
@@ -568,7 +569,7 @@ class JSONV2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance.get_network.return_value = return_value
 
-        self.api.get(_get_path('networks', id=str(uuid.uuid4())))
+        self.api.get(_get_path('networks', id=uuidutils.generate_uuid()))
 
     def _test_delete(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):
@@ -580,8 +581,10 @@ class JSONV2TestCase(APIv2TestBase):
                                              'shared': False}
         instance.delete_network.return_value = None
 
-        res = self.api.delete(_get_path('networks', id=str(uuid.uuid4())),
-                              extra_environ=env, expect_errors=expect_errors)
+        res = self.api.delete(_get_path('networks',
+                                        id=uuidutils.generate_uuid()),
+                              extra_environ=env,
+                              expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
 
     def test_delete_noauth(self):
@@ -611,7 +614,7 @@ class JSONV2TestCase(APIv2TestBase):
         instance.get_network.return_value = data
 
         res = self.api.get(_get_path('networks',
-                           id=str(uuid.uuid4())),
+                                     id=uuidutils.generate_uuid()),
                            extra_environ=env,
                            expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
@@ -648,7 +651,7 @@ class JSONV2TestCase(APIv2TestBase):
         instance.update_network.return_value = return_value
 
         res = self.api.put_json(_get_path('networks',
-                                id=str(uuid.uuid4())),
+                                          id=uuidutils.generate_uuid()),
                                 data,
                                 extra_environ=env,
                                 expect_errors=expect_errors)

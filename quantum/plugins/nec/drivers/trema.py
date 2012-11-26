@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,8 +15,7 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import uuid
-
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import ofc_client
 from quantum.plugins.nec import ofc_driver_base
 
@@ -32,7 +31,7 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
                                            port=conf_ofc.port)
 
     def create_tenant(self, description, tenant_id=None):
-        return tenant_id or str(uuid.uuid4())
+        return tenant_id or uuidutils.generate_uuid()
 
     def update_tenant(self, ofc_tenant_id, description):
         pass
@@ -41,7 +40,7 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
         pass
 
     def create_network(self, ofc_tenant_id, description, network_id=None):
-        ofc_network_id = network_id or str(uuid.uuid4())
+        ofc_network_id = network_id or uuidutils.generate_uuid()
         body = {'id': ofc_network_id, 'description': description}
         self.client.post(self.networks_path, body=body)
         return ofc_network_id
@@ -142,7 +141,7 @@ class TremaFilterDriver(object):
         else:
             ofp_wildcards.append("tp_dst")
 
-        ofc_filter_id = filter_id or str(uuid.uuid4())
+        ofc_filter_id = filter_id or uuidutils.generate_uuid()
         body['id'] = ofc_filter_id
 
         body['ofp_wildcards'] = ','.join(ofp_wildcards)
@@ -166,7 +165,7 @@ class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
 
     def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
                     port_id=None):
-        ofc_port_id = port_id or str(uuid.uuid4())
+        ofc_port_id = port_id or uuidutils.generate_uuid()
         path = self.ports_path % ofc_network_id
         body = {'id': ofc_port_id,
                 'datapath_id': portinfo.datapath_id,
@@ -196,7 +195,7 @@ class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
         #NOTE: This Driver create slices with Port-MAC Based bindings on Trema
         #      Sliceable.  It's REST API requires Port Based binding before you
         #      define Port-MAC Based binding.
-        ofc_port_id = port_id or str(uuid.uuid4())
+        ofc_port_id = port_id or uuidutils.generate_uuid()
         dummy_port_id = "dummy-%s" % ofc_port_id
 
         path = self.ports_path % ofc_network_id
@@ -237,7 +236,7 @@ class TremaMACBaseDriver(TremaDriverBase):
 
     def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
                     port_id=None):
-        ofc_port_id = port_id or str(uuid.uuid4())
+        ofc_port_id = port_id or uuidutils.generate_uuid()
         path = self.attachments_path % ofc_network_id
         body = {'id': ofc_port_id, 'mac': portinfo.mac}
         self.client.post(path, body=body)

@@ -15,12 +15,11 @@
 #    under the License.
 # @author: Dan Wendlandt, Nicira, Inc.
 
-import uuid
-
 import mox
 import unittest2 as unittest
 
 from quantum.agent.linux import ovs_lib, utils
+from quantum.openstack.common import uuidutils
 
 
 class OVS_Lib_Test(unittest.TestCase):
@@ -48,7 +47,7 @@ class OVS_Lib_Test(unittest.TestCase):
 
         pname = "vif1.0"
         ofport = 5
-        vif_id = str(uuid.uuid4())
+        vif_id = uuidutils.generate_uuid()
         mac = "ca:fe:de:ad:be:ef"
 
         # test __init__
@@ -230,7 +229,7 @@ class OVS_Lib_Test(unittest.TestCase):
     def _test_get_vif_ports(self, is_xen=False):
         pname = "tap99"
         ofport = "6"
-        vif_id = str(uuid.uuid4())
+        vif_id = uuidutils.generate_uuid()
         mac = "ca:fe:de:ad:be:ef"
 
         utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
