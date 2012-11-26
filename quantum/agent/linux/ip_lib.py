@@ -327,6 +327,46 @@ class IpRouteCommand(IpDeviceCommandBase):
 
         return retval
 
+    def pullup_route(self, interface_name):
+        """
+        Ensures that the route entry for the interface is before all
+        others on the same subnet.
+        """
+        device_list = []
+        device_route_list_lines = self._run('list', 'proto', 'kernel',
+                                            'dev', interface_name).split('\n')
+        for device_route_line in device_route_list_lines:
+            try:
+                subnet = device_route_line.split()[0]
+            except:
+                continue
+            subnet_route_list_lines = self._run('list', 'proto', 'kernel',
+                                                'match', subnet).split('\n')
+            for subnet_route_line in subnet_route_list_lines:
+                i = iter(subnet_route_line.split())
+                while(i.next() != 'dev'):
+                    pass
+                device = i.next()
+                try:
+                    while(i.next() != 'src'):
+                        pass
+                    src = i.next()
+                except:
+                    src = ''
+                if device != interface_name:
+                    device_list.append((device, src))
+                else:
+                    break
+
+            for (device, src) in device_list:
+                self._as_root('del', subnet, 'dev', device)
+                if (src != ''):
+                    self._as_root('append', subnet, 'proto', 'kernel',
+                                  'src', src, 'dev', device)
+                else:
+                    self._as_root('append', subnet, 'proto', 'kernel',
+                                  'dev', device)
+
 
 class IpNetnsCommand(IpCommandBase):
     COMMAND = 'netns'
