@@ -26,7 +26,7 @@ function process_option {
     -V|--virtual-env) let always_venv=1; let never_venv=0;;
     -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
     -f|--force) let force=1;;
-    -p|--pep8) let just_pep8=1;let never_venv=1; let always_venv=0;;
+    -p|--pep8) let just_pep8=1;;
     -P|--no-pep8) no_pep8=1;;
     -l|--pylint) let just_pylint=1; let never_venv=1; let always_venv=0;;
     -c|--coverage) coverage=1;;
