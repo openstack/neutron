@@ -185,6 +185,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         # figure out if we need to delete existing port
         if gw_port and gw_port['network_id'] != network_id:
+            fip_count = self.get_floatingips_count(context.elevated(),
+                                                   {'router_id': [router_id]})
+            if fip_count:
+                raise l3.RouterExternalGatewayInUseByFloatingIp(
+                    router_id=router_id, net_id=gw_port['network_id'])
             with context.session.begin(subtransactions=True):
                 router.gw_port = None
                 context.session.add(router)

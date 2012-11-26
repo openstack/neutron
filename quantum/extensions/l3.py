@@ -72,6 +72,12 @@ class ExternalNetworkInUse(qexception.InUse):
                 "non-external, since it has existing gateway ports")
 
 
+class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
+    message = _("Gateway cannot be updated for router %(router_id)s, since a "
+                "gateway to external network %(net_id)s is required by one or "
+                "more floating IPs.")
+
+
 def _validate_uuid_or_none(data, valid_values=None):
     if data is None:
         return None
