@@ -72,6 +72,13 @@ GATEWAY_SAMPLE4 = ("""
 default via 10.35.19.254
 """)
 
+DEVICE_ROUTE_SAMPLE = ("10.0.0.0/24  scope link  src 10.0.0.2")
+
+SUBNET_SAMPLE1 = ("10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1\n"
+                  "10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2")
+SUBNET_SAMPLE2 = ("10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2\n"
+                  "10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1")
+
 
 class TestSubProcessBase(unittest.TestCase):
     def setUp(self):
@@ -542,6 +549,34 @@ class TestIpRouteCommand(TestIPCmdBase):
             self.parent._run = mock.Mock(return_value=test_case['sample'])
             self.assertEquals(self.route_cmd.get_gateway(),
                               test_case['expected'])
+
+    def test_pullup_route(self):
+        # interface is not the first in the list - requires
+        # deleting and creating existing entries
+        output = [DEVICE_ROUTE_SAMPLE, SUBNET_SAMPLE1]
+
+        def pullup_side_effect(self, *args):
+            result = output.pop(0)
+            return result
+
+        self.parent._run = mock.Mock(side_effect=pullup_side_effect)
+        self.route_cmd.pullup_route('tap1d7888a7-10')
+        self._assert_sudo([], ('del', '10.0.0.0/24', 'dev', 'qr-23380d11-d2'))
+        self._assert_sudo([], ('append', '10.0.0.0/24', 'proto', 'kernel',
+                               'src', '10.0.0.1', 'dev', 'qr-23380d11-d2'))
+
+    def test_pullup_route_first(self):
+        # interface is first in the list - no changes
+        output = [DEVICE_ROUTE_SAMPLE, SUBNET_SAMPLE2]
+
+        def pullup_side_effect(self, *args):
+            result = output.pop(0)
+            return result
+
+        self.parent._run = mock.Mock(side_effect=pullup_side_effect)
+        self.route_cmd.pullup_route('tap1d7888a7-10')
+        # Check two calls - device get and subnet get
+        self.assertEqual(len(self.parent._run.mock_calls), 2)
 
 
 class TestIpNetnsCommand(TestIPCmdBase):
