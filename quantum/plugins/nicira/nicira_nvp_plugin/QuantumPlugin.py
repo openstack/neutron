@@ -30,6 +30,7 @@ import webob.exc
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
 from quantum.common import constants
+from quantum import context as q_context
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
@@ -55,15 +56,20 @@ from quantum import policy
 from quantum.plugins.nicira.nicira_nvp_plugin.common import config
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
                                                              as nvp_exc)
+from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_networkgw
+                                                                 as networkgw)
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
 from quantum.plugins.nicira.nicira_nvp_plugin import nicira_db
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin import (nicira_networkgw_db
+                                                      as networkgw_db)
+from quantum.plugins.nicira.nicira_nvp_plugin import nicira_qos_db as qos_db
 from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
 from quantum.plugins.nicira.nicira_nvp_plugin.nvp_plugin_version import (
     PLUGIN_VERSION)
-from quantum.plugins.nicira.nicira_nvp_plugin import nicira_qos_db as qos_db
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+
 LOG = logging.getLogger("QuantumPlugin")
 NVP_FLOATINGIP_NAT_RULES_ORDER = 200
 NVP_EXTGW_NAT_RULES_ORDER = 255
@@ -108,9 +114,72 @@ def parse_config():
              'nvp_controller_connection':
              nvp_conf[cluster_name].nvp_controller_connection,
              'default_l3_gw_service_uuid':
-             nvp_conf[cluster_name].default_l3_gw_service_uuid})
+             nvp_conf[cluster_name].default_l3_gw_service_uuid,
+             'default_l2_gw_service_uuid':
+             nvp_conf[cluster_name].default_l2_gw_service_uuid,
+             'default_interface_name':
+             nvp_conf[cluster_name].default_interface_name})
     LOG.debug(_("Cluster options:%s"), clusters_options)
     return cfg.CONF.NVP, clusters_options
+
+
+def parse_clusters_opts(clusters_opts, concurrent_connections,
+                        nvp_gen_timeout, default_cluster_name):
+    # Will store the first cluster in case is needed for default
+    # cluster assignment
+    clusters = {}
+    first_cluster = None
+    for c_opts in clusters_opts:
+        # Password is guaranteed to be the same across all controllers
+        # in the same NVP cluster.
+        cluster = nvp_cluster.NVPCluster(c_opts['name'])
+        try:
+            for ctrl_conn in c_opts['nvp_controller_connection']:
+                args = ctrl_conn.split(':')
+                try:
+                    args.extend([c_opts['default_tz_uuid'],
+                                 c_opts['nvp_cluster_uuid'],
+                                 c_opts['nova_zone_id'],
+                                 c_opts['default_l3_gw_service_uuid'],
+                                 c_opts['default_l2_gw_service_uuid'],
+                                 c_opts['default_interface_name']])
+                    cluster.add_controller(*args)
+                except Exception:
+                    LOG.exception(_("Invalid connection parameters for "
+                                    "controller %(ctrl)s in "
+                                    "cluster %(cluster)s"),
+                                  {'ctrl': ctrl_conn,
+                                   'cluster': c_opts['name']})
+                    raise nvp_exc.NvpInvalidConnection(
+                        conn_params=ctrl_conn)
+        except TypeError:
+            msg = _("No controller connection specified in cluster "
+                    "configuration. Please ensure at least a value for "
+                    "'nvp_controller_connection' is specified in the "
+                    "[CLUSTER:%s] section") % c_opts['name']
+            LOG.exception(msg)
+            raise nvp_exc.NvpPluginException(err_desc=msg)
+
+        api_providers = [(x['ip'], x['port'], True)
+                         for x in cluster.controllers]
+        cluster.api_client = NvpApiClient.NVPApiHelper(
+            api_providers, cluster.user, cluster.password,
+            request_timeout=cluster.request_timeout,
+            http_timeout=cluster.http_timeout,
+            retries=cluster.retries,
+            redirects=cluster.redirects,
+            concurrent_connections=concurrent_connections,
+            nvp_gen_timeout=nvp_gen_timeout)
+
+        if not clusters:
+            first_cluster = cluster
+        clusters[c_opts['name']] = cluster
+
+    if default_cluster_name and default_cluster_name in clusters:
+        default_cluster = clusters[default_cluster_name]
+    else:
+        default_cluster = first_cluster
+    return (clusters, default_cluster)
 
 
 class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -131,8 +200,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   l3_db.L3_NAT_db_mixin,
                   portsecurity_db.PortSecurityDbMixin,
                   securitygroups_db.SecurityGroupDbMixin,
-                  nvp_sec.NVPSecurityGroups,
+                  networkgw_db.NetworkGatewayMixin,
                   qos_db.NVPQoSDbMixin,
+                  nvp_sec.NVPSecurityGroups,
                   nvp_meta.NvpMetadataAccess):
     """
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
@@ -140,10 +210,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     """
 
     supported_extension_aliases = ["provider", "quotas", "port-security",
-                                   "router", "security-group", "nvp-qos"]
+                                   "router", "security-group", "nvp-qos",
+                                   "network-gateway"]
+
     __native_bulk_support = True
 
-    # Default controller cluster
     # Map nova zones to cluster for easy retrieval
     novazone_cluster_map = {}
     # Default controller cluster (to be used when nova zone id is unspecified)
@@ -168,6 +239,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                        self._nvp_create_port,
                        l3_db.DEVICE_OWNER_FLOATINGIP:
                        self._nvp_create_fip_port,
+                       l3_db.DEVICE_OWNER_ROUTER_INTF:
+                       self._nvp_create_router_port,
+                       networkgw_db.DEVICE_OWNER_NET_GW_INTF:
+                       self._nvp_create_l2_gw_port,
                        'default': self._nvp_create_port},
             'delete': {l3_db.DEVICE_OWNER_ROUTER_GW:
                        self._nvp_delete_ext_gw_port,
@@ -175,66 +250,61 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                        self._nvp_delete_router_port,
                        l3_db.DEVICE_OWNER_FLOATINGIP:
                        self._nvp_delete_fip_port,
+                       l3_db.DEVICE_OWNER_ROUTER_INTF:
+                       self._nvp_delete_port,
+                       networkgw_db.DEVICE_OWNER_NET_GW_INTF:
+                       self._nvp_delete_port,
                        'default': self._nvp_delete_port}
         }
 
         self.nvp_opts, self.clusters_opts = parse_config()
-        self.clusters = {}
-        for c_opts in self.clusters_opts:
-            # Password is guaranteed to be the same across all controllers
-            # in the same NVP cluster.
-            cluster = nvp_cluster.NVPCluster(c_opts['name'])
-            for controller_connection in c_opts['nvp_controller_connection']:
-                args = controller_connection.split(':')
-                try:
-                    args.extend([c_opts['default_tz_uuid'],
-                                 c_opts['nvp_cluster_uuid'],
-                                 c_opts['nova_zone_id'],
-                                 c_opts['default_l3_gw_service_uuid']])
-                    cluster.add_controller(*args)
-                except Exception:
-                    LOG.exception(_("Invalid connection parameters for "
-                                    "controller %(conn)s in cluster %(name)s"),
-                                  {'conn': controller_connection,
-                                   'name': c_opts['name']})
-                    raise nvp_exc.NvpInvalidConnection(
-                        conn_params=controller_connection)
+        if not self.clusters_opts:
+            msg = _("No cluster specified in NVP plugin configuration. "
+                    "Unable to start. Please ensure at least a "
+                    "[CLUSTER:<cluster_name>] section is specified in "
+                    "the NVP Plugin configuration file.")
+            LOG.error(msg)
+            raise nvp_exc.NvpPluginException(err_desc=msg)
 
-            api_providers = [(x['ip'], x['port'], True)
-                             for x in cluster.controllers]
-            cluster.api_client = NvpApiClient.NVPApiHelper(
-                api_providers, cluster.user, cluster.password,
-                request_timeout=cluster.request_timeout,
-                http_timeout=cluster.http_timeout,
-                retries=cluster.retries,
-                redirects=cluster.redirects,
-                concurrent_connections=self.nvp_opts['concurrent_connections'],
-                nvp_gen_timeout=self.nvp_opts['nvp_gen_timeout'])
-
-            if len(self.clusters) == 0:
-                first_cluster = cluster
-            self.clusters[c_opts['name']] = cluster
-
-        def_cluster_name = self.nvp_opts.default_cluster_name
-        if def_cluster_name and def_cluster_name in self.clusters:
-            self.default_cluster = self.clusters[def_cluster_name]
-        else:
-            first_cluster_name = self.clusters.keys()[0]
-            if not def_cluster_name:
-                LOG.info(_("Default cluster name not specified. "
-                           "Using first cluster:%s"), first_cluster_name)
-            elif def_cluster_name not in self.clusters:
-                LOG.warning(_("Default cluster name %(def_cluster_name)s. "
-                              "Using first cluster:%(first_cluster_name)s"),
-                            locals())
-            # otherwise set 1st cluster as default
-            self.default_cluster = self.clusters[first_cluster_name]
+        self.clusters, self.default_cluster = parse_clusters_opts(
+            self.clusters_opts, self.nvp_opts.concurrent_connections,
+            self.nvp_opts.nvp_gen_timeout, self.nvp_opts.default_cluster_name)
 
         db.configure_db()
         # Extend the fault map
         self._extend_fault_map()
         # Set up RPC interface for DHCP agent
         self.setup_rpc()
+        # TODO(salvatore-orlando): Handle default gateways in multiple clusters
+        self._ensure_default_network_gateway()
+
+    def _ensure_default_network_gateway(self):
+        # Add the gw in the db as default, and unset any previous default
+        def_l2_gw_uuid = self.default_cluster.default_l2_gw_service_uuid
+        try:
+            ctx = q_context.get_admin_context()
+            self._unset_default_network_gateways(ctx)
+            if not def_l2_gw_uuid:
+                return
+            try:
+                def_network_gw = self._get_network_gateway(ctx,
+                                                           def_l2_gw_uuid)
+            except sa_exc.NoResultFound:
+                # Create in DB only - don't go on NVP
+                def_gw_data = {'id': def_l2_gw_uuid,
+                               'name': 'default L2 gateway service',
+                               'devices': []}
+                gw_res_name = networkgw.RESOURCE_NAME.replace('-', '_')
+                def_network_gw = super(
+                    NvpPluginV2, self).create_network_gateway(
+                        ctx, {gw_res_name: def_gw_data})
+            # In any case set is as default
+            self._set_default_network_gateway(ctx, def_network_gw['id'])
+        except Exception:
+            # This is fatal - abort startup
+            LOG.exception(_("Unable to process default l2 gw service:%s"),
+                          def_l2_gw_uuid)
+            raise
 
     def _build_ip_address_list(self, context, fixed_ips, subnet_ids=None):
         """  Build ip_addresses data structure for logical router port
@@ -326,6 +396,40 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                               ip.subnet_id).cidr)
         return cidrs
 
+    def _nvp_find_lswitch_for_port(self, context, port_data):
+        network = self._get_network(context, port_data['network_id'])
+        network_binding = nicira_db.get_network_binding(
+            context.session, port_data['network_id'])
+        max_ports = self.nvp_opts.max_lp_per_overlay_ls
+        allow_extra_lswitches = False
+        if (network_binding and
+            network_binding.binding_type in (NetworkTypes.FLAT,
+                                             NetworkTypes.VLAN)):
+            max_ports = self.nvp_opts.max_lp_per_bridged_ls
+            allow_extra_lswitches = True
+        try:
+            cluster = self._find_target_cluster(port_data)
+            return self._handle_lswitch_selection(
+                cluster, network, network_binding, max_ports,
+                allow_extra_lswitches)
+        except NvpApiClient.NvpApiException:
+            err_desc = _(("An exception occured while selecting logical "
+                          "switch for the port"))
+            LOG.exception(err_desc)
+            raise nvp_exc.NvpPluginException(err_desc=err_desc)
+
+    def _nvp_create_port_helper(self, cluster, ls_uuid, port_data,
+                                do_port_security=True):
+        return nvplib.create_lport(cluster, ls_uuid, port_data['tenant_id'],
+                                   port_data['id'], port_data['name'],
+                                   port_data['device_id'],
+                                   port_data['admin_state_up'],
+                                   port_data['mac_address'],
+                                   port_data['fixed_ips'],
+                                   port_data[psec.PORTSECURITY],
+                                   port_data[ext_sg.SECURITYGROUPS],
+                                   port_data[ext_qos.QUEUE])
+
     def _nvp_create_port(self, context, port_data):
         """ Driver for creating a logical switch port on NVP platform """
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
@@ -339,54 +443,30 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       port_data['network_id'])
             # No need to actually update the DB state - the default is down
             return port_data
-        network = self._get_network(context, port_data['network_id'])
-        network_binding = nicira_db.get_network_binding(
-            context.session, port_data['network_id'])
-        max_ports = self.nvp_opts.max_lp_per_overlay_ls
-        allow_extra_lswitches = False
-        if (network_binding and
-            network_binding.binding_type in (NetworkTypes.FLAT,
-                                             NetworkTypes.VLAN)):
-            max_ports = self.nvp_opts.max_lp_per_bridged_ls
-            allow_extra_lswitches = True
         try:
             cluster = self._find_target_cluster(port_data)
-            selected_lswitch = self._handle_lswitch_selection(
-                cluster, network, network_binding, max_ports,
-                allow_extra_lswitches)
-            lswitch_uuid = selected_lswitch['uuid']
-            lport = nvplib.create_lport(cluster,
-                                        lswitch_uuid,
-                                        port_data['tenant_id'],
-                                        port_data['id'],
-                                        port_data['name'],
-                                        port_data['device_id'],
-                                        port_data['admin_state_up'],
-                                        port_data['mac_address'],
-                                        port_data['fixed_ips'],
-                                        port_data[psec.PORTSECURITY],
-                                        port_data[ext_sg.SECURITYGROUPS],
-                                        port_data[ext_qos.QUEUE])
+            selected_lswitch = self._nvp_find_lswitch_for_port(context,
+                                                               port_data)
+            lport = self._nvp_create_port_helper(cluster,
+                                                 selected_lswitch['uuid'],
+                                                 port_data,
+                                                 True)
             nicira_db.add_quantum_nvp_port_mapping(
                 context.session, port_data['id'], lport['uuid'])
-            d_owner = port_data['device_owner']
-            if (not d_owner in (l3_db.DEVICE_OWNER_ROUTER_GW,
-                                l3_db.DEVICE_OWNER_ROUTER_INTF)):
-                nvplib.plug_interface(cluster, lswitch_uuid,
+            if (not port_data['device_owner'] in
+                (l3_db.DEVICE_OWNER_ROUTER_GW,
+                 l3_db.DEVICE_OWNER_ROUTER_INTF)):
+                nvplib.plug_interface(cluster, selected_lswitch['uuid'],
                                       lport['uuid'], "VifAttachment",
                                       port_data['id'])
-            LOG.debug(_("_nvp_create_port completed for port %(port_name)s "
-                        "on network %(net_id)s. The new port id is "
-                        "%(port_id)s. NVP port id is %(nvp_port_id)s"),
-                      {'port_name': port_data['name'],
-                       'net_id': port_data['network_id'],
-                       'port_id': port_data['id'],
-                       'nvp_port_id': lport['uuid']})
-        except Exception:
-            # failed to create port in NVP delete port from quantum_db
-            LOG.exception(_("An exception occured while plugging "
-                            "the interface"))
-            raise
+            LOG.debug(_("_nvp_create_port completed for port %(name)s "
+                        "on network %(network_id)s. The new port id is "
+                        "%(id)s."), port_data)
+        except NvpApiClient.NvpApiException:
+            msg = (_("An exception occured while plugging the interface "
+                     "into network:%s") % port_data['network_id'])
+            LOG.exception(msg)
+            raise q_exc.QuantumException(message=msg)
 
     def _nvp_delete_port(self, context, port_data):
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
@@ -440,6 +520,35 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # Delete logical switch port
         self._nvp_delete_port(context, port_data)
+
+    def _nvp_create_router_port(self, context, port_data):
+        """ Driver for creating a switch port to be connected to a router """
+        # No router ports on external networks!
+        if self._network_is_external(context, port_data['network_id']):
+            raise nvp_exc.NvpPluginException(
+                err_msg=(_("It is not allowed to create router interface "
+                           "ports on external networks as '%s'") %
+                         port_data['network_id']))
+        try:
+            selected_lswitch = self._nvp_find_lswitch_for_port(context,
+                                                               port_data)
+            cluster = self._find_target_cluster(port_data)
+            # Do not apply port security here!
+            lport = self._nvp_create_port_helper(cluster,
+                                                 selected_lswitch['uuid'],
+                                                 port_data,
+                                                 False)
+            nicira_db.add_quantum_nvp_port_mapping(
+                context.session, port_data['id'], lport['uuid'])
+            LOG.debug(_("_nvp_create_port completed for port %(name)s on "
+                        "network %(network_id)s. The new port id is %(id)s."),
+                      port_data)
+        except Exception:
+            # failed to create port in NVP delete port from quantum_db
+            LOG.exception(_("An exception occured while plugging "
+                            "the interface"))
+            super(NvpPluginV2, self).delete_port(context, port_data["id"])
+            raise
 
     def _find_router_gw_port(self, context, port_data):
         router_id = port_data['device_id']
@@ -533,6 +642,46 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     "%(ext_net_id)s, attached to router:%(router_id)s"),
                   {'ext_net_id': port_data['network_id'],
                    'router_id': router_id})
+
+    def _nvp_create_l2_gw_port(self, context, port_data):
+        """ Create a switch port, and attach it to a L2 gateway attachment """
+        # FIXME(salvatore-orlando): On the NVP platform we do not really have
+        # external networks. So if as user tries and create a "regular" VIF
+        # port on an external network we are unable to actually create.
+        # However, in order to not break unit tests, we need to still create
+        # the DB object and return success
+        if self._network_is_external(context, port_data['network_id']):
+            LOG.error(_("NVP plugin does not support regular VIF ports on "
+                        "external networks. Port %s will be down."),
+                      port_data['network_id'])
+            # No need to actually update the DB state - the default is down
+            return port_data
+        try:
+            cluster = self._find_target_cluster(port_data)
+            selected_lswitch = self._nvp_find_lswitch_for_port(context,
+                                                               port_data)
+            lport = self._nvp_create_port_helper(cluster,
+                                                 selected_lswitch['uuid'],
+                                                 port_data,
+                                                 True)
+            nicira_db.add_quantum_nvp_port_mapping(
+                context.session, port_data['id'], lport['uuid'])
+            nvplib.plug_l2_gw_service(
+                cluster,
+                port_data['network_id'],
+                lport['uuid'],
+                port_data['device_id'],
+                int(port_data.get('gw:segmentation_id') or 0))
+            LOG.debug(_("_nvp_create_port completed for port %(name)s "
+                        "on network %(network_id)s. The new port id "
+                        "is %(id)s."), port_data)
+        except NvpApiClient.NvpApiException:
+            # failed to create port in NVP delete port from quantum_db
+            msg = (_("An exception occured while plugging the gateway "
+                     "interface into network:%s") % port_data['network_id'])
+            LOG.exception(msg)
+            super(NvpPluginV2, self).delete_port(context, port_data["id"])
+            raise q_exc.QuantumException(message=msg)
 
     def _nvp_create_fip_port(self, context, port_data):
         # As we do not create ports for floating IPs in NVP,
@@ -1222,12 +1371,28 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             LOG.warn(_("Unable to retrieve port status for:%s."), nvp_port_id)
         return ret_port
 
-    def delete_port(self, context, id, l3_port_check=True):
+    def delete_port(self, context, id, l3_port_check=True,
+                    nw_gw_port_check=True):
+        """
+        Deletes a port on a specified Virtual Network,
+        if the port contains a remote interface attachment,
+        the remote interface is first un-plugged and then the port
+        is deleted.
+
+        :returns: None
+        :raises: exception.PortInUse
+        :raises: exception.PortNotFound
+        :raises: exception.NetworkNotFound
+        """
         # if needed, check to see if this is a port owned by
         # a l3 router.  If so, we should prevent deletion here
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
         quantum_db_port = self._get_port(context, id)
+        # Perform the same check for ports owned by layer-2 gateways
+        if nw_gw_port_check:
+            self.prevent_network_gateway_port_deletion(context,
+                                                       quantum_db_port)
         port_delete_func = self._port_drivers['delete'].get(
             quantum_db_port.device_owner,
             self._port_drivers['delete']['default'])
@@ -1758,6 +1923,72 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             LOG.debug(_("The port '%s' is not associated with floating IPs"),
                       port_id)
         super(NvpPluginV2, self).disassociate_floatingips(context, port_id)
+
+    def create_network_gateway(self, context, network_gateway):
+        """ Create a layer-2 network gateway
+
+        Create the gateway service on NVP platform and corresponding data
+        structures in Quantum datase
+        """
+        # Need to re-do authZ checks here in order to avoid creation on NVP
+        gw_data = network_gateway[networkgw.RESOURCE_NAME.replace('-', '_')]
+        tenant_id = self._get_tenant_id_for_create(context, gw_data)
+        cluster = self._find_target_cluster(gw_data)
+        devices = gw_data['devices']
+        # Populate default physical network where not specified
+        for device in devices:
+            if not device.get('interface_name'):
+                device['interface_name'] = cluster.default_interface_name
+        try:
+            nvp_res = nvplib.create_l2_gw_service(cluster, tenant_id,
+                                                  gw_data['name'],
+                                                  devices)
+            nvp_uuid = nvp_res.get('uuid')
+        except Exception:
+            raise nvp_exc.NvpPluginException(_("Create_l2_gw_service did not "
+                                               "return an uuid for the newly "
+                                               "created resource:%s") %
+                                             nvp_res)
+        gw_data['id'] = nvp_uuid
+        return super(NvpPluginV2, self).create_network_gateway(context,
+                                                               network_gateway)
+
+    def delete_network_gateway(self, context, id):
+        """ Remove a layer-2 network gateway
+
+        Remove the gateway service from NVP platform and corresponding data
+        structures in Quantum datase
+        """
+        with context.session.begin(subtransactions=True):
+            try:
+                super(NvpPluginV2, self).delete_network_gateway(context, id)
+                nvplib.delete_l2_gw_service(self.default_cluster, id)
+            except NvpApiClient.ResourceNotFound:
+                # Do not cause a 500 to be returned to the user if
+                # the corresponding NVP resource does not exist
+                LOG.exception(_("Unable to remove gateway service from "
+                                "NVP plaform - the resource was not found"))
+
+    def _ensure_tenant_on_net_gateway(self, context, net_gateway):
+        if not net_gateway['tenant_id']:
+            net_gateway['tenant_id'] = context.tenant_id
+        return net_gateway
+
+    def get_network_gateway(self, context, id, fields=None):
+        # Ensure the tenant_id attribute is populated on the returned gateway
+        #return self._ensure_tenant_on_net_gateway(
+        #    context, super(NvpPluginV2, self).get_network_gateway(
+        #        context, id, fields))
+        return super(NvpPluginV2, self).get_network_gateway(context,
+                                                            id, fields)
+
+    def get_network_gateways(self, context, filters=None, fields=None):
+        # Ensure the tenant_id attribute is populated on returned gateways
+        net_gateways = super(NvpPluginV2,
+                             self).get_network_gateways(context,
+                                                        filters,
+                                                        fields)
+        return net_gateways
 
     def get_plugin_version(self):
         return PLUGIN_VERSION

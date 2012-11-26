@@ -28,10 +28,13 @@ from quantum import context
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
+import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
+from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
+import quantum.tests.unit.nicira.test_networkgw as test_l2_gw
 from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_db_plugin as test_plugin
 import quantum.tests.unit.test_extension_portsecurity as psec
@@ -39,7 +42,7 @@ import quantum.tests.unit.test_extension_security_group as ext_sg
 import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
 LOG = logging.getLogger(__name__)
-NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
+NICIRA_PKG_PATH = nvp_plugin.__name__
 NICIRA_EXT_PATH = "../../plugins/nicira/nicira_nvp_plugin/extensions"
 
 
@@ -705,3 +708,32 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         router = self.deserialize('json', req.get_response(self.ext_api))
         self.assertEquals(router['router']['status'],
                           constants.NET_STATUS_ERROR)
+
+
+class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
+                               NiciraPluginV2TestCase):
+
+    def setUp(self):
+        ext_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                NICIRA_EXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', ext_path)
+        super(TestNiciraNetworkGateway, self).setUp()
+
+    def test_list_network_gateways(self):
+        with self._network_gateway(name='test-gw-1') as gw1:
+            with self._network_gateway(name='test_gw_2') as gw2:
+                req = self.new_list_request(nvp_networkgw.COLLECTION_NAME)
+                res = self.deserialize('json', req.get_response(self.ext_api))
+                # We expect the default gateway too
+                key = self.resource + 's'
+                self.assertEquals(len(res[key]), 3)
+                self.assertEquals(res[key][0]['default'],
+                                  True)
+                self.assertEquals(res[key][1]['name'],
+                                  gw1[self.resource]['name'])
+                self.assertEquals(res[key][2]['name'],
+                                  gw2[self.resource]['name'])
+
+    def test_delete_network_gateway(self):
+        # The default gateway must still be there
+        self._test_delete_network_gateway(1)

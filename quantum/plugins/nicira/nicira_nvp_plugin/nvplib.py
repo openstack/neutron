@@ -46,14 +46,14 @@ DEF_TRANSPORT_TYPE = "stt"
 URI_PREFIX = "/ws.v1"
 # Resources exposed by NVP API
 LSWITCH_RESOURCE = "lswitch"
-LSWITCHPORT_RESOURCE = "lport-%s" % LSWITCH_RESOURCE
+LSWITCHPORT_RESOURCE = "lport/%s" % LSWITCH_RESOURCE
 LROUTER_RESOURCE = "lrouter"
-LROUTERPORT_RESOURCE = "lport-%s" % LROUTER_RESOURCE
-LROUTERNAT_RESOURCE = "nat-lrouter"
-LQUEUE_RESOURCE = "lqueue"
 # Current quantum version
+LROUTERPORT_RESOURCE = "lport/%s" % LROUTER_RESOURCE
+LROUTERNAT_RESOURCE = "nat/lrouter"
+LQUEUE_RESOURCE = "lqueue"
+GWSERVICE_RESOURCE = "gateway-service"
 QUANTUM_VERSION = "2013.1"
-
 # Constants for NAT rules
 MATCH_KEYS = ["destination_ip_addresses", "destination_port_max",
               "destination_port_min", "source_ip_addresses",
@@ -114,8 +114,11 @@ def _build_uri_path(resource,
                     resource_id=None,
                     parent_resource_id=None,
                     fields=None,
-                    relations=None, filters=None, is_attachment=False):
-    resources = resource.split('-')
+                    relations=None,
+                    filters=None,
+                    types=None,
+                    is_attachment=False):
+    resources = resource.split('/')
     res_path = resources[0] + (resource_id and "/%s" % resource_id or '')
     if len(resources) > 1:
         # There is also a parent resource to account for in the uri
@@ -127,6 +130,7 @@ def _build_uri_path(resource,
     params = []
     params.append(fields and "fields=%s" % fields)
     params.append(relations and "relations=%s" % relations)
+    params.append(types and "types=%s" % types)
     if filters:
         params.extend(['%s=%s' % (k, v) for (k, v) in filters.iteritems()])
     uri_path = "%s/%s" % (URI_PREFIX, res_path)
@@ -326,6 +330,42 @@ def update_lswitch(cluster, lswitch_id, display_name,
     return obj
 
 
+def create_l2_gw_service(cluster, tenant_id, display_name, devices):
+    """ Create a NVP Layer-2 Network Gateway Service.
+
+        :param cluster: The target NVP cluster
+        :param tenant_id: Identifier of the Openstack tenant for which
+        the gateway service.
+        :param display_name: Descriptive name of this gateway service
+        :param devices: List of transport node uuids (and network
+        interfaces on them) to use for the network gateway service
+        :raise NvpApiException: if there is a problem while communicating
+        with the NVP controller
+    """
+    tags = [{"tag": tenant_id, "scope": "os_tid"}]
+    # NOTE(salvatore-orlando): This is a little confusing, but device_id in
+    # NVP is actually the identifier a physical interface on the gateway
+    # device, which in the Quantum API is referred as interface_name
+    gateways = [{"transport_node_uuid": device['id'],
+                 "device_id": device['interface_name'],
+                 "type": "L2Gateway"} for device in devices]
+    gwservice_obj = {
+        "display_name": display_name,
+        "tags": tags,
+        "gateways": gateways,
+        "type": "L2GatewayServiceConfig"
+    }
+    try:
+        return json.loads(do_single_request(
+            "POST", _build_uri_path(GWSERVICE_RESOURCE),
+            json.dumps(gwservice_obj), cluster=cluster))
+    except NvpApiClient.NvpApiException:
+        # just log and re-raise - let the caller handle it
+        LOG.exception(_("An exception occured while communicating with "
+                        "the NVP controller for cluster:%s"), cluster.name)
+        raise
+
+
 def create_lrouter(cluster, tenant_id, display_name, nexthop):
     """ Create a NVP logical router on the specified cluster.
 
@@ -375,12 +415,38 @@ def delete_lrouter(cluster, lrouter_id):
         raise
 
 
+def delete_l2_gw_service(cluster, gateway_id):
+    try:
+        do_single_request("DELETE",
+                          _build_uri_path(GWSERVICE_RESOURCE,
+                                          resource_id=gateway_id),
+                          cluster=cluster)
+    except NvpApiClient.NvpApiException:
+        # just log and re-raise - let the caller handle it
+        LOG.exception(_("An exception occured while communicating with "
+                        "the NVP controller for cluster:%s"), cluster.name)
+        raise
+
+
 def get_lrouter(cluster, lrouter_id):
     try:
         return json.loads(do_single_request(HTTP_GET,
                           _build_uri_path(LROUTER_RESOURCE,
                                           resource_id=lrouter_id,
                                           relations='LogicalRouterStatus'),
+                          cluster=cluster))
+    except NvpApiClient.NvpApiException:
+        # just log and re-raise - let the caller handle it
+        LOG.exception(_("An exception occured while communicating with "
+                        "the NVP controller for cluster:%s"), cluster.name)
+        raise
+
+
+def get_l2_gw_service(cluster, gateway_id):
+    try:
+        return json.loads(do_single_request("GET",
+                          _build_uri_path(GWSERVICE_RESOURCE,
+                                          resource_id=gateway_id),
                           cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
@@ -403,6 +469,38 @@ def get_lrouters(cluster, tenant_id, fields=None, filters=None):
                         relations='LogicalRouterStatus',
                         filters=actual_filters),
         cluster)
+
+
+def get_l2_gw_services(cluster, tenant_id=None,
+                       fields=None, filters=None):
+    actual_filters = dict(filters or {})
+    if tenant_id:
+        actual_filters['tag'] = tenant_id
+        actual_filters['tag_scope'] = 'os_tid'
+    return get_all_query_pages(
+        _build_uri_path(GWSERVICE_RESOURCE,
+                        filters=actual_filters),
+        cluster)
+
+
+def update_l2_gw_service(cluster, gateway_id, display_name):
+    # TODO(salvatore-orlando): Allow updates for gateways too
+    gwservice_obj = get_l2_gw_service(cluster, gateway_id)
+    if not display_name:
+        # Nothing to update
+        return gwservice_obj
+    gwservice_obj["display_name"] = display_name
+    try:
+        return json.loads(do_single_request("PUT",
+                          _build_uri_path(GWSERVICE_RESOURCE,
+                                          resource_id=gateway_id),
+                          json.dumps(gwservice_obj),
+                          cluster=cluster))
+    except NvpApiClient.NvpApiException:
+        # just log and re-raise - let the caller handle it
+        LOG.exception(_("An exception occured while communicating with "
+                        "the NVP controller for cluster:%s"), cluster.name)
+        raise
 
 
 def update_lrouter(cluster, lrouter_id, display_name, nexthop):
@@ -829,31 +927,42 @@ def get_port_status(cluster, lswitch_id, port_id):
         return constants.PORT_STATUS_DOWN
 
 
+def _plug_interface(cluster, lswitch_id, lport_id, att_obj):
+    uri = _build_uri_path(LSWITCHPORT_RESOURCE, lport_id, lswitch_id,
+                          is_attachment=True)
+    try:
+        resp_obj = do_single_request(HTTP_PUT, uri, json.dumps(att_obj),
+                                     cluster=cluster)
+    except NvpApiClient.NvpApiException:
+        LOG.exception(_("Exception while plugging an attachment:%(att)s "
+                        "into NVP port:%(port)s for NVP logical switch "
+                        "%(net)s"), {'net': lswitch_id,
+                                     'port': lport_id,
+                                     'att': att_obj})
+        raise
+
+    result = json.dumps(resp_obj)
+    return result
+
+
+def plug_l2_gw_service(cluster, lswitch_id, lport_id,
+                       gateway_id, vlan_id=None):
+    """ Plug a Layer-2 Gateway Attachment object in a logical port """
+    att_obj = {'type': 'L2GatewayAttachment',
+               'l2_gateway_service_uuid': gateway_id}
+    if vlan_id:
+        att_obj['vlan_id'] = vlan_id
+    return _plug_interface(cluster, lswitch_id, lport_id, att_obj)
+
+
 def plug_interface(cluster, lswitch_id, port, type, attachment=None):
-    uri = "/ws.v1/lswitch/" + lswitch_id + "/lport/" + port + "/attachment"
+    """ Plug a VIF Attachment object in a logical port """
     lport_obj = {}
     if attachment:
         lport_obj["vif_uuid"] = attachment
 
     lport_obj["type"] = type
-    try:
-        resp_obj = do_single_request(HTTP_PUT, uri, json.dumps(lport_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port, net_id=lswitch_id)
-    except NvpApiClient.Conflict as e:
-        LOG.error(_("Conflict while making attachment to port, "
-                    "Error: %s"), str(e))
-        raise exception.AlreadyAttached(att_id=attachment,
-                                        port_id=port,
-                                        net_id=lswitch_id,
-                                        att_port_id="UNKNOWN")
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
-
-    result = json.dumps(resp_obj)
-    return result
+    return _plug_interface(cluster, lswitch_id, port, lport_obj)
 
 #------------------------------------------------------------------------------
 # Security Profile convenience functions.

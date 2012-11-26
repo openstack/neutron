@@ -61,7 +61,14 @@ cluster_opts = [
     cfg.StrOpt('default_l3_gw_service_uuid',
                help=_("Unique identifier of the NVP L3 Gateway service "
                       "which will be used for implementing routers and "
-                      "floating IPs"))
+                      "floating IPs")),
+    cfg.StrOpt('default_l2_gw_service_uuid',
+               help=_("Unique identifier of the NVP L2 Gateway service "
+                      "which will be used by default for network gateways")),
+    cfg.StrOpt('default_interface_name', default='breth0',
+               help=_("Name of the interface on a L2 Gateway transport node"
+                      "which should be used by default when setting up a "
+                      "network connection")),
 ]
 
 # Register the configuration options

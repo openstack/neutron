@@ -56,8 +56,9 @@ class NVPCluster(object):
 
     def add_controller(self, ip, port, user, password, request_timeout,
                        http_timeout, retries, redirects, default_tz_uuid,
-                       uuid=None, zone=None,
-                       default_l3_gw_service_uuid=None):
+                       uuid=None, zone=None, default_l3_gw_service_uuid=None,
+                       default_l2_gw_service_uuid=None,
+                       default_interface_name=None):
         """Add a new set of controller parameters.
 
         :param ip: IP address of controller.
@@ -70,13 +71,16 @@ class NVPCluster(object):
         :param redirects: maximum number of server redirect responses to
             follow.
         :param default_tz_uuid: default transport zone uuid.
-        :param default_next_hop: default next hop for routers in this cluster.
         :param uuid: UUID of this cluster (used in MDI configs).
         :param zone: Zone of this cluster (used in MDI configs).
+        :param default_l3_gw_service_uuid: Default l3 gateway service
+        :param default_l2_gw_service_uuid: Default l2 gateway service
+        :param default_interface_name: Default interface name for l2 gateways
         """
 
         keys = ['ip', 'user', 'password', 'default_tz_uuid',
-                'default_l3_gw_service_uuid', 'uuid', 'zone']
+                'default_l3_gw_service_uuid', 'default_l2_gw_service_uuid',
+                'default_interface_name', 'uuid', 'zone']
         controller_dict = dict([(k, locals()[k]) for k in keys])
         default_tz_uuid = controller_dict.get('default_tz_uuid')
         if not re.match(attributes.UUID_PATTERN, default_tz_uuid):
@@ -97,6 +101,17 @@ class NVPCluster(object):
                           "might not work properly in this cluster"),
                         {'l3_gw_service_uuid': l3_gw_service_uuid,
                          'cluster_name': self.name})
+        # default_l2_gw_node_uuid is an optional parameter
+        # validate only if specified
+        l2_gw_service_uuid = controller_dict.get('default_l2_gw_node_uuid')
+        if l2_gw_service_uuid and not re.match(attributes.UUID_PATTERN,
+                                               l2_gw_service_uuid):
+            LOG.warning(_("default_l2_gw_node_uuid:%(l2_gw_service_uuid)s "
+                          "is not a valid UUID in the cluster "
+                          "%(cluster_name)s."),
+                        {'l2_gw_service_uuid': l2_gw_service_uuid,
+                         'cluster_name': self.name})
+
         int_keys = [
             'port', 'request_timeout', 'http_timeout', 'retries', 'redirects']
         for k in int_keys:
@@ -154,6 +169,14 @@ class NVPCluster(object):
     @property
     def default_l3_gw_service_uuid(self):
         return self.controllers[0]['default_l3_gw_service_uuid']
+
+    @property
+    def default_l2_gw_service_uuid(self):
+        return self.controllers[0]['default_l2_gw_service_uuid']
+
+    @property
+    def default_interface_name(self):
+        return self.controllers[0]['default_interface_name']
 
     @property
     def zone(self):

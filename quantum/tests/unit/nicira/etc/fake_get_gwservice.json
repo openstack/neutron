@@ -1,0 +1,15 @@
+{
+  "display_name": "%(display_name)s",
+  "_href": "/ws.v1/gateway-service/%(uuid)s",
+  "tags": %(tags_json)s,
+  "_schema": "/ws.v1/schema/L2GatewayServiceConfig",
+  "gateways": [
+    {
+      "transport_node_uuid": "%(transport_node_uuid)s",
+      "type": "L2Gateway",
+      "device_id": "%(device_id)s"
+    }
+  ],
+  "type": "L2GatewayServiceConfig",
+  "uuid": "%(uuid)s"
+}

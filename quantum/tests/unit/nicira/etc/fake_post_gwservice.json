@@ -1,0 +1,13 @@
+{
+  "display_name": "%(display_name)s",
+  "tags": [{"scope": "os_tid", "tag": "%(tenant_id)s"}],
+  "gateways": [
+    {
+      "transport_node_uuid": "%(transport_node_uuid)s",
+      "device_id": "%(device_id)s",
+      "type": "L2Gateway"
+    }
+  ],
+  "type": "L2GatewayServiceConfig",
+  "uuid": "%(uuid)s"
+}
