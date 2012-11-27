@@ -249,3 +249,9 @@ class RouterPluginBase(object):
     @abstractmethod
     def get_floatingips(self, context, filters=None, fields=None):
         pass
+
+    def get_routers_count(self, context, filters=None):
+        raise qexception.NotImplementedError()
+
+    def get_floatingips_count(self, context, filters=None):
+        raise qexception.NotImplementedError()
