@@ -192,8 +192,8 @@ def create_lswitch(cluster, lswitch_obj):
     return d
 
 
-def update_network(cluster, switch, **params):
-    uri = "/ws.v1/lswitch/" + switch
+def update_network(cluster, lswitch_id, **params):
+    uri = "/ws.v1/lswitch/" + lswitch_id
     lswitch_obj = {}
     if params["network"]["name"]:
         lswitch_obj["display_name"] = params["network"]["name"]
@@ -202,7 +202,7 @@ def update_network(cluster, switch, **params):
                                      cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error("Network not found, Error: %s" % str(e))
-        raise exception.NetworkNotFound(net_id=network)
+        raise exception.NetworkNotFound(net_id=lswitch_id)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
 
