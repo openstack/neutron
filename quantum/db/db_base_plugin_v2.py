@@ -207,11 +207,18 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     query = query.filter(column.in_(value))
         return query
 
-    def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None):
+    def _get_collection_query(self, context, model, filters=None):
         collection = self._model_query(context, model)
         collection = self._apply_filters_to_query(collection, model, filters)
-        return [dict_func(c, fields) for c in collection.all()]
+        return collection
+
+    def _get_collection(self, context, model, dict_func, filters=None,
+                        fields=None):
+        query = self._get_collection_query(context, model, filters)
+        return [dict_func(c, fields) for c in query.all()]
+
+    def _get_collection_count(self, context, model, filters=None):
+        return self._get_collection_query(context, model, filters).count()
 
     @staticmethod
     def _generate_mac(context, network_id):
@@ -955,6 +962,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     self._make_network_dict,
                                     filters=filters, fields=fields)
 
+    def get_networks_count(self, context, filters=None):
+        return self._get_collection_count(context, models_v2.Network,
+                                          filters=filters)
+
     def create_subnet_bulk(self, context, subnets):
         return self._create_bulk('subnet', context, subnets)
 
@@ -1146,6 +1157,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     self._make_subnet_dict,
                                     filters=filters, fields=fields)
 
+    def get_subnets_count(self, context, filters=None):
+        return self._get_collection_count(context, models_v2.Subnet,
+                                          filters=filters)
+
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
@@ -1272,7 +1287,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         port = self._get_port(context, id)
         return self._make_port_dict(port, fields)
 
-    def get_ports(self, context, filters=None, fields=None):
+    def _get_ports_query(self, context, filters=None):
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
@@ -1292,4 +1307,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
 
         query = self._apply_filters_to_query(query, Port, filters)
+        return query
+
+    def get_ports(self, context, filters=None, fields=None):
+        query = self._get_ports_query(context, filters)
         return [self._make_port_dict(c, fields) for c in query.all()]
+
+    def get_ports_count(self, context, filters=None):
+        return self._get_ports_query(context, filters).count()

@@ -267,9 +267,19 @@ QUOTAS = QuotaEngine()
 
 
 def _count_resource(context, plugin, resources, tenant_id):
-    obj_getter = getattr(plugin, "get_%s" % resources)
-    obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
-    return len(obj_list) if obj_list else 0
+    count_getter_name = "get_%s_count" % resources
+
+    # Some plugins support a count method for particular resources,
+    # using a DB's optimized counting features. We try to use that one
+    # if present. Otherwise just use regular getter to retrieve all objects
+    # and count in python, allowing older plugins to still be supported
+    try:
+        obj_count_getter = getattr(plugin, count_getter_name)
+        return obj_count_getter(context, filters={'tenant_id': [tenant_id]})
+    except (exceptions.NotImplementedError, AttributeError):
+        obj_getter = getattr(plugin, "get_%s" % resources)
+        obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
+        return len(obj_list) if obj_list else 0
 
 
 resources = []

@@ -118,6 +118,7 @@ class L3NatExtensionTestCase(unittest.TestCase):
 
         instance = self.plugin.return_value
         instance.create_router.return_value = return_value
+        instance.get_routers_count.return_value = 0
 
         res = self.api.post_json(_get_path('routers'), data)
 

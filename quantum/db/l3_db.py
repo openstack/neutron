@@ -251,6 +251,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                     self._make_router_dict,
                                     filters=filters, fields=fields)
 
+    def get_routers_count(self, context, filters=None):
+        return self._get_collection_count(context, Router,
+                                          filters=filters)
+
     def _check_for_dup_router_subnet(self, context, router_id,
                                      network_id, subnet_id):
         try:
@@ -625,6 +629,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         return self._get_collection(context, FloatingIP,
                                     self._make_floatingip_dict,
                                     filters=filters, fields=fields)
+
+    def get_floatingips_count(self, context, filters=None):
+        return self._get_collection_count(context, FloatingIP,
+                                          filters=filters)
 
     def prevent_l3_port_deletion(self, context, port_id):
         """ Checks to make sure a port is allowed to be deleted, raising
