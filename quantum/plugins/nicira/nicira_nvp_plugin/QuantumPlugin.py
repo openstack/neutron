@@ -844,7 +844,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         nvplib.delete_port(cluster, port)
 
         LOG.debug("delete_port() completed for tenant: %s" % context.tenant_id)
-        return  super(NvpPluginV2, self).delete_port(context, id)
+        return super(NvpPluginV2, self).delete_port(context, id)
 
     def get_port(self, context, id, fields=None):
         """
