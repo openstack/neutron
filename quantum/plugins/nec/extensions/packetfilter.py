@@ -51,7 +51,6 @@ PACKET_FILTER_ATTR_MAP = {
     'admin_state_up': {'allow_post': True, 'allow_put': True,
                        'default': True,
                        'convert_to': attributes.convert_to_boolean,
-                       'validate': {'type:boolean': None},
                        'is_visible': True},
     'status': {'allow_post': False, 'allow_put': False,
                'is_visible': True},

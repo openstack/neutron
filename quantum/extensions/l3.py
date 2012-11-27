@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2012 Nicira Networks, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Dan Wendlandt, Nicira, Inc
 #
-"""
 
 from abc import abstractmethod
 
@@ -85,7 +83,6 @@ RESOURCE_ATTRIBUTE_MAP = {
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
                            'convert_to': attr.convert_to_boolean,
-                           'validate': {'type:boolean': None},
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
@@ -129,7 +126,6 @@ EXTENDED_ATTRIBUTES_2_0 = {
                             'default': attr.ATTR_NOT_SPECIFIED,
                             'is_visible': True,
                             'convert_to': attr.convert_to_boolean,
-                            'validate': {'type:boolean': None},
                             'enforce_policy': True,
                             'required_by_policy': True}}}
 
