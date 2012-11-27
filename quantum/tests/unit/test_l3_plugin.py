@@ -47,7 +47,7 @@ from quantum.tests.unit import test_extensions
 
 LOG = logging.getLogger(__name__)
 
-_uuid = test_api_v2._uuid
+_uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
 
 

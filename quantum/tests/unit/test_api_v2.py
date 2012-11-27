@@ -38,13 +38,11 @@ from quantum.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 
-
-def _uuid():
-    return uuidutils.generate_uuid()
-
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 EXTDIR = os.path.join(ROOTDIR, 'unit/extensions')
+
+_uuid = uuidutils.generate_uuid
 
 
 def etcdir(*p):
