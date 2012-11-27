@@ -710,13 +710,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
-            try:
-                context.session.query(models_v2.Port).filter_by(
-                    device_owner=DEVICE_OWNER_ROUTER_GW,
-                    network_id=net_id).first()
+            port = context.session.query(models_v2.Port).filter_by(
+                device_owner=DEVICE_OWNER_ROUTER_GW,
+                network_id=net_id).first()
+            if port:
                 raise l3.ExternalNetworkInUse(net_id=net_id)
-            except exc.NoResultFound:
-                pass  # expected
 
             context.session.query(ExternalNetwork).filter_by(
                 network_id=net_id).delete()

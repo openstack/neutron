@@ -632,6 +632,35 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                  expected_code=exc.
                                                  HTTPBadRequest.code)
 
+    def test_network_update_external_failure(self):
+        with self.router() as r:
+            with self.subnet() as s1:
+                self._set_net_external(s1['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
+                self._update('networks', s1['subnet']['network_id'],
+                             {'network': {'router:external': False}},
+                             expected_code=exc.HTTPConflict.code)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
+
+    def test_network_update_external(self):
+        with self.router() as r:
+            with self.network('test_net') as testnet:
+                self._set_net_external(testnet['network']['id'])
+                with self.subnet() as s1:
+                    self._set_net_external(s1['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+                    self._update('networks', testnet['network']['id'],
+                                 {'network': {'router:external': False}})
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+
     def test_create_router_with_gwinfo(self):
         with self.subnet() as s:
             self._set_net_external(s['subnet']['network_id'])
