@@ -15,12 +15,11 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import logging
-
 from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
 from quantum.db import db_base_plugin_v2
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as q_exc
 from quantum.plugins.nec.db import models as nmodels

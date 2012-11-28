@@ -17,9 +17,9 @@
 
 import httplib
 import json
-import logging
 import socket
 
+from quantum.openstack.common import log as logging
 from quantum.plugins.nec.common import exceptions as nexc
 
 

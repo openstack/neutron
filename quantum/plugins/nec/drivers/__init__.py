@@ -15,9 +15,8 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import logging
-
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
