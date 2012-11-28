@@ -15,12 +15,11 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import logging
-
 from quantum.common import topics
 from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.nec.common import config

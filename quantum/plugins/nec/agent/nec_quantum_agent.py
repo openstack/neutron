@@ -21,7 +21,6 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import logging
 import socket
 import sys
 import time
@@ -30,11 +29,11 @@ from quantum.agent.linux import ovs_lib
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.openstack.common import context
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.nec.common import config
 
 
-logging.basicConfig()
 LOG = logging.getLogger(__name__)
 
 
