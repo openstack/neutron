@@ -237,8 +237,10 @@ class Controller(object):
                     obj_deleter(request.context, obj['id'])
                 except Exception:
                     # broad catch as our only purpose is to log the exception
-                    LOG.exception("Unable to undo add for %s %s",
-                                  self._resource, obj['id'])
+                    LOG.exception(_("Unable to undo add for "
+                                    "%(resource)s %(id)s"),
+                                  {'resource': self._resource,
+                                   'id': obj['id']})
             # TODO(salvatore-orlando): The object being processed when the
             # plugin raised might have been created or not in the db.
             # We need a way for ensuring that if it has been created,
@@ -307,7 +309,7 @@ class Controller(object):
                                        body[self._resource]['tenant_id'],
                                        **kwargs)
         except exceptions.PolicyNotAuthorized:
-            LOG.exception("Create operation not authorized")
+            LOG.exception(_("Create operation not authorized"))
             raise webob.exc.HTTPForbidden()
 
         def notify(create_result):
@@ -474,7 +476,7 @@ class Controller(object):
                     raise webob.exc.HTTPBadRequest(msg)
 
                 if not attr_vals['allow_post'] and attr in res_dict:
-                    msg = _("Attribute '%s' not allowed in POST" % attr)
+                    msg = _("Attribute '%s' not allowed in POST") % attr
                     raise webob.exc.HTTPBadRequest(msg)
 
                 if attr_vals['allow_post']:

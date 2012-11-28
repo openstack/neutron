@@ -458,8 +458,8 @@ class ExtensionManager(object):
                     else:
                         attr_map[resource] = resource_attrs
             except AttributeError:
-                LOG.exception("Error fetching extended attributes for "
-                              "extension '%s'" % ext.get_name())
+                LOG.exception(_("Error fetching extended attributes for "
+                                "extension '%s'"), ext.get_name())
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""
@@ -496,7 +496,7 @@ class ExtensionManager(object):
             if os.path.exists(path):
                 self._load_all_extensions_from_path(path)
             else:
-                LOG.error("Extension path \"%s\" doesn't exist!" % path)
+                LOG.error(_("Extension path '%s' doesn't exist!"), path)
 
     def _load_all_extensions_from_path(self, path):
         for f in os.listdir(path):
@@ -517,8 +517,9 @@ class ExtensionManager(object):
                     new_ext = new_ext_class()
                     self.add_extension(new_ext)
             except Exception as exception:
-                LOG.warn("extension file %s wasnt loaded due to %s",
-                         f, exception)
+                LOG.warn(_("extension file %(file)s wasn't loaded due to "
+                           "%(e)s"),
+                         {'file': f, 'e': exception})
 
     def add_extension(self, ext):
         # Do nothing if the extension doesn't check out
@@ -529,7 +530,7 @@ class ExtensionManager(object):
         LOG.info(_('Loaded extension: %s'), alias)
 
         if alias in self.extensions:
-            raise exceptions.Error("Found duplicate extension: %s" %
+            raise exceptions.Error(_("Found duplicate extension: %s") %
                                    alias)
         self.extensions[alias] = ext
 
@@ -562,8 +563,8 @@ class PluginAwareExtensionManager(ExtensionManager):
             supports_extension = (alias in
                                   ENABLED_EXTS[plugin_provider]['ext_alias'])
         if not supports_extension:
-            LOG.warn(_("extension %s not supported by any of loaded plugins" %
-                       alias))
+            LOG.warn(_("extension %s not supported by any of loaded plugins"),
+                     alias)
         return supports_extension
 
     def _plugins_implement_interface(self, extension):
@@ -573,8 +574,8 @@ class PluginAwareExtensionManager(ExtensionManager):
         for plugin in self.plugins.values():
             if isinstance(plugin, extension.get_plugin_interface()):
                 return True
-        LOG.warn(_("Loaded plugins do not implement extension %s interface"
-                   % extension.get_alias()))
+        LOG.warn(_("Loaded plugins do not implement extension %s interface"),
+                 extension.get_alias())
         return False
 
     @classmethod
