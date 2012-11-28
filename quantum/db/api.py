@@ -50,8 +50,8 @@ class MySQLPingListener(object):
             dbapi_con.cursor().execute('select 1')
         except dbapi_con.OperationalError, ex:
             if ex.args[0] in (2006, 2013, 2014, 2045, 2055):
-                LOG.warn('Got mysql server has gone away: %s', ex)
-                raise DisconnectionError("Database server went away")
+                LOG.warn(_('Got mysql server has gone away: %s'), ex)
+                raise DisconnectionError(_("Database server went away"))
             else:
                 raise
 
@@ -113,11 +113,12 @@ def retry_registration(remaining, reconnect_interval, base=BASE):
     while True:
         if remaining != 'infinite':
             if remaining == 0:
-                LOG.error("Database connection lost, exit...")
+                LOG.error(_("Database connection lost, exit..."))
                 break
             remaining -= 1
-        LOG.info("Unable to connect to database, %s attempts left. "
-                 "Retrying in %s seconds" % (remaining, reconnect_interval))
+        LOG.info(_("Unable to connect to database, %(remaining)s attempts "
+                   "left. Retrying in %(reconnect_interval)s seconds"),
+                 locals())
         time.sleep(reconnect_interval)
         if register_models(base):
             break
@@ -130,7 +131,7 @@ def register_models(base=BASE):
     try:
         base.metadata.create_all(_ENGINE)
     except sql.exc.OperationalError as e:
-        LOG.info("Database registration exception: %s" % e)
+        LOG.info(_("Database registration exception: %s"), e)
         return False
     return True
 

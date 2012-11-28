@@ -599,11 +599,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # TODO(salvatore-orlando): Avoid broad catch
         # Maybe by introducing base class for L3 exceptions
         except q_exc.BadRequest:
-            LOG.exception("Unable to create Floating ip due to a "
-                          "malformed request")
+            LOG.exception(_("Unable to create Floating ip due to a "
+                          "malformed request"))
             raise
         except Exception:
-            LOG.exception("Floating IP association failed")
+            LOG.exception(_("Floating IP association failed"))
             raise
 
         return self._make_floatingip_dict(floatingip_db)
