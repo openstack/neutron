@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 OpenStack LLC
+# Copyright (c) 2012 OpenStack LLC.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -21,6 +21,31 @@ import mock
 
 from quantum.agent import rpc
 from quantum.openstack.common import cfg
+from quantum.openstack.common import context
+
+
+class AgentRPCPluginApi(unittest.TestCase):
+    def _test_rpc_call(self, method):
+        agent = rpc.PluginApi('fake_topic')
+        ctxt = context.RequestContext('fake_user', 'fake_project')
+        expect_val = 'foo'
+        with mock.patch('quantum.openstack.common.rpc.call') as rpc_call:
+            rpc_call.return_value = expect_val
+            func_obj = getattr(agent, method)
+            if method == 'tunnel_sync':
+                actual_val = func_obj(ctxt, 'fake_tunnel_ip')
+            else:
+                actual_val = func_obj(ctxt, 'fake_device', 'fake_agent_id')
+        self.assertEqual(actual_val, expect_val)
+
+    def test_get_device_details(self):
+        self._test_rpc_call('get_device_details')
+
+    def test_update_device_down(self):
+        self._test_rpc_call('update_device_down')
+
+    def test_tunnel_sync(self):
+        self._test_rpc_call('tunnel_sync')
 
 
 class AgentRPCMethods(unittest.TestCase):
