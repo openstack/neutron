@@ -24,6 +24,7 @@ from quantum.openstack.common.notifier import api
 from quantum.openstack.common.notifier import rpc_notifier
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
+from quantum.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
@@ -88,7 +89,9 @@ class NotificationDispatcher(object):
         self.connection = rpc.create_connection(new=True)
         topic = '%s.%s' % (rpc_notifier.CONF.notification_topics[0],
                            api.CONF.default_notification_level.lower())
+        queue_name = 'notification_listener_%s' % uuidutils.generate_uuid()
         self.connection.declare_topic_consumer(topic=topic,
+                                               queue_name=queue_name,
                                                callback=self._add_to_queue)
         self.connection.consume_in_thread()
 

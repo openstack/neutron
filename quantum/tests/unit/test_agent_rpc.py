@@ -82,6 +82,7 @@ class AgentRPCNotificationDispatcher(unittest.TestCase):
         expected = [
             mock.call(new=True),
             mock.call().declare_topic_consumer(topic='notifications.info',
+                                               queue_name=mock.ANY,
                                                callback=nd._add_to_queue),
             mock.call().consume_in_thread()
         ]
