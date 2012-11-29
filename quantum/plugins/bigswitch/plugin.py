@@ -50,6 +50,7 @@ import json
 import socket
 
 from quantum.common import exceptions
+from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum import context as qcontext
 from quantum.db import api as db
@@ -57,10 +58,8 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
-from quantum.openstack.common import context as glbcontext
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.bigswitch.version import version_string_with_vcs
 
 
@@ -238,11 +237,8 @@ class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.0'
 
-    def __init__(self, rpc_context):
-        self.rpc_context = rpc_context
-
     def create_rpc_dispatcher(self):
-        return dispatcher.RpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self])
 
 
 class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
@@ -279,10 +275,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         # init dhcp support
         self.topic = topics.PLUGIN
-        self.rpc_context = glbcontext.RequestContext(
-            'quantum', 'quantum', is_admin=False)
         self.conn = rpc.create_connection(new=True)
-        self.callbacks = RpcProxy(self.rpc_context)
+        self.callbacks = RpcProxy()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
