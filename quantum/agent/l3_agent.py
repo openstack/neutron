@@ -315,7 +315,7 @@ class L3NATAgent(object):
         existing_floating_ip_ids = set([fip['id'] for fip in ri.floating_ips])
         cur_floating_ip_ids = set([fip['id'] for fip in floating_ips])
 
-        id_to_fixed_map = {}
+        id_to_fip_map = {}
 
         for fip in floating_ips:
             if fip['port_id']:
@@ -326,7 +326,7 @@ class L3NATAgent(object):
                                            fip['fixed_ip_address'])
 
                 # store to see if floatingip was remapped
-                id_to_fixed_map[fip['id']] = fip['fixed_ip_address']
+                id_to_fip_map[fip['id']] = fip
 
         floating_ip_ids_to_remove = (existing_floating_ip_ids -
                                      cur_floating_ip_ids)
@@ -338,15 +338,18 @@ class L3NATAgent(object):
                                          fip['fixed_ip_address'])
             else:
                 # handle remapping of a floating IP
-                cur_fixed_ip = id_to_fixed_map[fip['id']]
+                new_fip = id_to_fip_map[fip['id']]
+                new_fixed_ip = new_fip['fixed_ip_address']
                 existing_fixed_ip = fip['fixed_ip_address']
-                if (cur_fixed_ip and existing_fixed_ip and
-                        cur_fixed_ip != existing_fixed_ip):
+                if (new_fixed_ip and existing_fixed_ip and
+                        new_fixed_ip != existing_fixed_ip):
                     floating_ip = fip['floating_ip_address']
                     self.floating_ip_removed(ri, ri.ex_gw_port,
                                              floating_ip, existing_fixed_ip)
                     self.floating_ip_added(ri, ri.ex_gw_port,
-                                           floating_ip, cur_fixed_ip)
+                                           floating_ip, new_fixed_ip)
+                    ri.floating_ips.remove(fip)
+                    ri.floating_ips.append(new_fip)
 
     def _get_ex_gw_port(self, ri):
         ports = self.qclient.list_ports(
