@@ -1,7 +1,30 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+# Copyright (c) 2012 OpenStack LLC.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 import mock
 import unittest2 as unittest
 
 from quantum.agent import netns_cleanup_util as util
+
+
+class TestNullDelegate(unittest.TestCase):
+    def test_getattribute(self):
+        null_delegate = util.NullDelegate()
+        self.assertIsNone(null_delegate.test())
 
 
 class TestNetnsCleanup(unittest.TestCase):
@@ -159,14 +182,22 @@ class TestNetnsCleanup(unittest.TestCase):
                     expected.append(mock.call().garbage_collect_namespace())
                     ip_wrap.assert_has_calls(expected)
 
-    def test_destory_namespace_empty(self):
+    def test_destroy_namespace_empty(self):
         self._test_destroy_namespace_helper(False, 0)
 
-    def test_destory_namespace_not_empty(self):
+    def test_destroy_namespace_not_empty(self):
         self._test_destroy_namespace_helper(False, 1)
 
-    def test_destory_namespace_not_empty_forced(self):
+    def test_destroy_namespace_not_empty_forced(self):
         self._test_destroy_namespace_helper(True, 2)
+
+    def test_destroy_namespace_exception(self):
+        ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
+        conf = mock.Mock()
+        conf.root_helper = 'sudo'
+        with mock.patch('quantum.agent.linux.ip_lib.IPWrapper') as ip_wrap:
+            ip_wrap.side_effect = Exception()
+            util.destroy_namespace(conf, ns)
 
     def test_main(self):
         namespaces = ['ns1', 'ns2']
