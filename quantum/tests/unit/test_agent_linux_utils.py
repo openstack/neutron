@@ -54,3 +54,19 @@ class AgentUtilsExecuteTest(unittest.TestCase):
         result = utils.execute(["cat"], process_input="%s\n" %
                                self.test_file[:-1])
         self.assertEqual(result, "%s\n" % self.test_file[:-1])
+
+    def test_with_addl_env(self):
+        result = utils.execute(["ls", self.test_file],
+                               addl_env={'foo': 'bar'})
+        self.assertEqual(result, "%s\n" % self.test_file)
+
+
+class AgentUtilsGetInterfaceMAC(unittest.TestCase):
+    def test_get_interface_mac(self):
+        expect_val = '01:02:03:04:05:06'
+        with mock.patch('fcntl.ioctl') as ioctl:
+            ioctl.return_value = ''.join(['\x00' * 18,
+                                          '\x01\x02\x03\x04\x05\x06',
+                                          '\x00' * 232])
+            actual_val = utils.get_interface_mac('eth0')
+        self.assertEquals(actual_val, expect_val)
