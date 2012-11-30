@@ -50,6 +50,11 @@ ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 
+@contextlib.contextmanager
+def dummy_context_func():
+    yield None
+
+
 def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
@@ -433,28 +438,12 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                dns_nameservers=None,
                host_routes=None,
                shared=None):
-        # TODO(anyone) DRY this
-        # NOTE(salvatore-orlando): we can pass the network object
-        # to gen function anyway, and then avoid the repetition
-        if not network:
-            with self.network() as network:
-                subnet = self._make_subnet(fmt,
-                                           network,
-                                           gateway_ip,
-                                           cidr,
-                                           allocation_pools,
-                                           ip_version,
-                                           enable_dhcp,
-                                           dns_nameservers,
-                                           host_routes,
-                                           shared=shared)
-                try:
-                    yield subnet
-                finally:
-                    self._delete('subnets', subnet['subnet']['id'])
-        else:
+        with (self.network() if not network
+              else dummy_context_func()) as network_to_use:
+            if network:
+                network_to_use = network
             subnet = self._make_subnet(fmt,
-                                       network,
+                                       network_to_use,
                                        gateway_ip,
                                        cidr,
                                        allocation_pools,
@@ -471,17 +460,11 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     @contextlib.contextmanager
     def port(self, subnet=None, fmt='json', no_delete=False,
              **kwargs):
-        if not subnet:
-            with self.subnet() as subnet:
-                net_id = subnet['subnet']['network_id']
-                port = self._make_port(fmt, net_id, **kwargs)
-                try:
-                    yield port
-                finally:
-                    if not no_delete:
-                        self._delete('ports', port['port']['id'])
-        else:
-            net_id = subnet['subnet']['network_id']
+        with (self.subnet() if not subnet
+              else dummy_context_func()) as subnet_to_use:
+            if subnet:
+                subnet_to_use = subnet
+            net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(fmt, net_id, **kwargs)
             try:
                 yield port
