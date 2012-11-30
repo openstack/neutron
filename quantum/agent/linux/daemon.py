@@ -1,0 +1,148 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# Copyright 2012 New Dream Network, LLC (DreamHost)
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+# @author: Mark McClain, DreamHost
+
+import atexit
+import fcntl
+import os
+from signal import SIGTERM
+import sys
+import time
+
+from quantum.agent.linux import utils
+from quantum.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
+
+
+class Pidfile(object):
+    def __init__(self, pidfile, procname, root_helper='sudo'):
+        try:
+            self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
+        except IOError, e:
+            LOG.exception(_("Failed to open pidfile: %s") % pidfile)
+            sys.exit(1)
+        self.pidfile = pidfile
+        self.procname = procname
+        self.root_helper = root_helper
+        if not not fcntl.flock(self.fd, fcntl.LOCK_EX):
+            raise IOError(_('Unable to lock pid file'))
+
+    def __str__(self):
+        return self.pidfile
+
+    def unlock(self):
+        if not not fcntl.flock(self.fd, fcntl.LOCK_UN):
+            raise IOError(_('Unable to unlock pid file'))
+
+    def write(self, pid):
+        os.ftruncate(self.fd, 0)
+        os.write(self.fd, "%d" % pid)
+        os.fsync(self.fd)
+
+    def read(self):
+        try:
+            pid = int(os.read(self.fd, 128))
+            os.lseek(self.fd, 0, os.SEEK_SET)
+            return pid
+        except ValueError:
+            return
+
+    def is_running(self):
+        pid = self.read()
+        if not pid:
+            return False
+
+        cmd = ['cat', '/proc/%s/cmdline' % pid]
+        try:
+            return self.procname in utils.execute(cmd, self.root_helper)
+        except RuntimeError, e:
+            return False
+
+
+class Daemon(object):
+    """
+    A generic daemon class.
+
+    Usage: subclass the Daemon class and override the run() method
+    """
+    def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
+                 stderr='/dev/null', procname='python', root_helper='sudo'):
+        self.stdin = stdin
+        self.stdout = stdout
+        self.stderr = stderr
+        self.procname = procname
+        self.pidfile = Pidfile(pidfile, procname, root_helper)
+
+    def _fork(self):
+        try:
+            pid = os.fork()
+            if pid > 0:
+                sys.exit(0)
+        except OSError, e:
+            LOG.exception(_('Fork failed'))
+            sys.exit(1)
+
+    def daemonize(self):
+        """Daemonize process by doing Stevens double fork."""
+        # fork first time
+        self._fork()
+
+        # decouple from parent environment
+        os.chdir("/")
+        os.setsid()
+        os.umask(0)
+
+        # fork second time
+        self._fork()
+
+        # redirect standard file descriptors
+        sys.stdout.flush()
+        sys.stderr.flush()
+        stdin = open(self.stdin, 'r')
+        stdout = open(self.stdout, 'a+')
+        stderr = open(self.stderr, 'a+', 0)
+        os.dup2(stdin.fileno(), sys.stdin.fileno())
+        os.dup2(stdout.fileno(), sys.stdout.fileno())
+        os.dup2(stderr.fileno(), sys.stderr.fileno())
+
+        # write pidfile
+        atexit.register(self.delete_pid)
+        self.pidfile.write(os.getpid())
+
+    def delete_pid(self):
+        os.remove(str(self.pidfile))
+
+    def start(self):
+        """ Start the daemon """
+
+        if self.pidfile.is_running():
+            self.pidfile.unlock()
+            message = _('pidfile %s already exist. Daemon already running?\n')
+            LOG.error(message % self.pidfile)
+            sys.exit(1)
+
+        # Start the daemon
+        self.daemonize()
+        self.run()
+
+    def run(self):
+        """Override this method when subclassing Daemon.
+
+        start() will call this method after the process has daemonized.
+        """
+        pass
