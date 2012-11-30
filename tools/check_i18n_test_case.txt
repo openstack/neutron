@@ -1,0 +1,67 @@
+# test-case for check_i18n.py
+# python check_i18n.py check_i18n.txt -d
+
+# message format checking
+#  capital checking
+msg = _("hello world, error")
+msg = _("hello world_var, error")
+msg = _('file_list xyz, pass')
+msg = _("Hello world, pass")
+
+#  format specifier checking
+msg = _("Hello %s world %d, error")
+msg = _("Hello %s world, pass")
+msg = _("Hello %(var1)s world %(var2)s, pass")
+
+# message has been localized
+#  is_localized
+msg = _("Hello world, pass")
+msg = _("Hello world, pass") % var
+LOG.debug(_('Hello world, pass'))
+LOG.info(_('Hello world, pass'))
+raise x.y.Exception(_('Hello world, pass'))
+raise Exception(_('Hello world, pass'))
+
+# message need be localized
+#  is_log_callfunc
+LOG.debug('hello world, error')
+LOG.debug('hello world, error' % xyz)
+sys.append('hello world, warn')
+
+# is_log_i18n_msg_with_mod
+LOG.debug(_('Hello world, error') % xyz)
+
+# default warn
+msg = 'hello world, warn'
+msg = 'hello world, warn' % var
+
+# message needn't be localized
+#  skip only one word
+msg = ''
+msg = "hello,pass"
+
+#  skip dict
+msg = {'hello world, pass': 1}
+
+#  skip list
+msg = ["hello world, pass"]
+
+#  skip subscript
+msg['hello world, pass']
+
+#  skip xml marker
+msg = "<test><t></t></test>, pass"
+
+#  skip sql statement
+msg = "SELECT * FROM xyz WHERE hello=1, pass"
+msg = "select * from xyz, pass"
+
+#  skip add statement
+msg = 'hello world' + e + 'world hello, pass'
+
+#  skip doc string
+"""
+Hello world, pass
+"""
+class Msg:
+    pass
