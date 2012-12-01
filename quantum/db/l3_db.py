@@ -351,6 +351,16 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         return {'port_id': port['id'],
                 'subnet_id': port['fixed_ips'][0]['subnet_id']}
 
+    def _confirm_router_interface_not_in_use(self, context, router_id,
+                                             subnet_id):
+        subnet_db = self._get_subnet(context, subnet_id)
+        subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
+        fip_qry = context.session.query(FloatingIP)
+        for fip_db in fip_qry.filter_by(router_id=router_id):
+            if netaddr.IPAddress(fip_db['fixed_ip_address']) in subnet_cidr:
+                raise l3.RouterInterfaceInUseByFloatingIP(
+                    router_id=router_id, subnet_id=subnet_id)
+
     def remove_router_interface(self, context, router_id, interface_info):
         # make sure router exists
         router = self._get_router(context, router_id)
@@ -382,9 +392,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if port_db['device_id'] != router_id:
                 raise w_exc.HTTPConflict("port_id %s not used by router" %
                                          port_db['id'])
+            self._confirm_router_interface_not_in_use(
+                context, router_id,
+                port_db['fixed_ips'][0]['subnet_id'])
             self.delete_port(context, port_db['id'], l3_port_check=False)
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
+            self._confirm_router_interface_not_in_use(context, router_id,
+                                                      subnet_id)
+
             subnet = self._get_subnet(context, subnet_id)
             found = False
 

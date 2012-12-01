@@ -37,6 +37,12 @@ class RouterInUse(qexception.InUse):
     message = _("Router %(router_id)s still has active ports")
 
 
+class RouterInterfaceInUseByFloatingIP(qexception.InUse):
+    message = _("Router interface for subnet %(subnet_id)s on router "
+                "%(router_id)s cannot be deleted, as it is required "
+                "by one or more floating IPs.")
+
+
 class FloatingIPNotFound(qexception.NotFound):
     message = _("Floating IP %(floatingip_id)s could not be found")
 

@@ -1099,6 +1099,33 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                       uuidutils.generate_uuid(), 'iamnotnanip')
         self.assertEqual(res.status_int, 400)
 
+    def test_floatingip_delete_router_intf_with_subnet_id_returns_409(self):
+        found = False
+        with self.floatingip_with_assoc() as fip:
+            for p in self._list('ports')['ports']:
+                if p['device_owner'] == 'network:router_interface':
+                    subnet_id = p['fixed_ips'][0]['subnet_id']
+                    router_id = p['device_id']
+                    self._router_interface_action(
+                        'remove', router_id, subnet_id, None,
+                        expected_code=exc.HTTPConflict.code)
+                    found = True
+                    break
+        self.assertTrue(found)
+
+    def test_floatingip_delete_router_intf_with_port_id_returns_409(self):
+        found = False
+        with self.floatingip_with_assoc() as fip:
+            for p in self._list('ports')['ports']:
+                if p['device_owner'] == 'network:router_interface':
+                    router_id = p['device_id']
+                    self._router_interface_action(
+                        'remove', router_id, None, p['id'],
+                        expected_code=exc.HTTPConflict.code)
+                    found = True
+                    break
+        self.assertTrue(found)
+
     def test_list_nets_external(self):
         with self.network() as n1:
             self._set_net_external(n1['network']['id'])
