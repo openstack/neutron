@@ -48,7 +48,7 @@ core_opts = [
     cfg.BoolOpt('allow_bulk', default=True),
     cfg.IntOpt('max_dns_nameservers', default=5),
     cfg.IntOpt('max_subnet_host_routes', default=20),
-    cfg.StrOpt('state_path', default='.'),
+    cfg.StrOpt('state_path', default='/var/lib/quantum'),
     cfg.IntOpt('dhcp_lease_duration', default=120),
     cfg.BoolOpt('allow_overlapping_ips', default=False),
     cfg.StrOpt('control_exchange',
