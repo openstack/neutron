@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2011, Nicira Networks, Inc.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -31,21 +32,6 @@ from quantum.openstack.common import log as logging
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
-
-
-def boolize(subject):
-    """
-    Quak like a boolean
-    """
-    if isinstance(subject, bool):
-        return subject
-    elif isinstance(subject, basestring):
-        sub = subject.strip().lower()
-        if sub == 'true':
-            return True
-        elif sub == 'false':
-            return False
-    return subject
 
 
 def read_cached_file(filename, cache_info, reload_func=None):
