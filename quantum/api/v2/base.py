@@ -47,6 +47,7 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
              AttributeError: webob.exc.HTTPBadRequest,
              ValueError: webob.exc.HTTPBadRequest,
+             exceptions.IpAddressGenerationFailure: webob.exc.HTTPConflict,
              }
 
 QUOTAS = quota.QUOTAS
