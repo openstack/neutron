@@ -187,46 +187,6 @@ class TunnelKey(object):
         return session.query(ryu_models_v2.TunnelKey).all()
 
 
-def port_binding_create(port_id, net_id, dpid, port_no):
-    session = db.get_session()
-    session.query(models_v2.Port).filter(
-        models_v2.Port.network_id == net_id).filter(
-            models_v2.Port.id == port_id).one()  # confirm port exists
-    with session.begin():
-        port_binding = ryu_models_v2.PortBinding(net_id, port_id,
-                                                 dpid, port_no)
-        session.add(port_binding)
-        session.flush()
-        return port_binding
-
-
-def port_binding_get(port_id, net_id):
-    session = db.get_session()
-    session.query(models_v2.Port).filter(
-        models_v2.Port.network_id == net_id).filter(
-            models_v2.Port.id == port_id).one()  # confirm port exists
-    return session.query(ryu_models_v2.PortBinding).filter_by(
-        network_id=net_id).filter_by(port_id=port_id).one()
-
-
-def port_binding_destroy(session, port_id, net_id):
-    try:
-        session.query(models_v2.Port).filter(
-            models_v2.Port.network_id == net_id).filter(
-                models_v2.Port.id == port_id).one()  # confirm port exists
-        port_binding = session.query(ryu_models_v2.PortBinding).filter_by(
-            network_id=net_id).filter_by(port_id=port_id).one()
-        session.delete(port_binding)
-        session.flush()
-        return port_binding
-    except orm_exc.NoResultFound:
-        raise q_exc.PortNotFound(port_id=port_id, net_id=net_id)
-
-
-def port_binding_all_list(session):
-    return session.query(ryu_models_v2.PortBinding).all()
-
-
 def set_port_status(session, port_id, status):
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()
