@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import socket
-
 import netaddr
 import webob.exc
 
@@ -52,14 +50,6 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              }
 
 QUOTAS = quota.QUOTAS
-
-
-def _get_hostname():
-    return socket.gethostname()
-
-
-# Register the configuration options
-cfg.CONF.register_opt(cfg.StrOpt('host', default=_get_hostname()))
 
 
 def _fields(request):

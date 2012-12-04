@@ -25,6 +25,7 @@ import sys
 from paste import deploy
 
 from quantum.api.v2 import attributes
+from quantum.common import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.version import version_info as quantum_version
@@ -53,7 +54,8 @@ core_opts = [
     cfg.BoolOpt('allow_overlapping_ips', default=False),
     cfg.StrOpt('control_exchange',
                default='quantum',
-               help='AMQP exchange to connect to if using RabbitMQ or Qpid')
+               help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
+    cfg.StrOpt('host', default=utils.get_hostname()),
 
 ]
 

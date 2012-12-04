@@ -25,12 +25,13 @@ from sqlalchemy.sql import expression as expr
 import webob.exc as w_exc
 
 from quantum.api.v2 import attributes
+from quantum.common import constants as l3_constants
 from quantum.common import exceptions as q_exc
 from quantum.db import db_base_plugin_v2
+from quantum.db import l3_rpc_agent_api
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import l3
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum import policy
@@ -38,17 +39,10 @@ from quantum import policy
 
 LOG = logging.getLogger(__name__)
 
-l3_opts = [
-    cfg.StrOpt('metadata_ip_address', default='127.0.0.1'),
-    cfg.IntOpt('metadata_port', default=8775)
-]
 
-# Register the configuration options
-cfg.CONF.register_opts(l3_opts)
-
-DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
-DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
-DEVICE_OWNER_FLOATINGIP = "network:floatingip"
+DEVICE_OWNER_ROUTER_INTF = l3_constants.DEVICE_OWNER_ROUTER_INTF
+DEVICE_OWNER_ROUTER_GW = l3_constants.DEVICE_OWNER_ROUTER_GW
+DEVICE_OWNER_FLOATINGIP = l3_constants.DEVICE_OWNER_FLOATINGIP
 
 
 class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -164,6 +158,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             # Ensure we actually have something to update
             if r.keys():
                 router_db.update(r)
+        routers = self.get_sync_data(context.elevated(),
+                                     [router_db['id']])
+        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
         return self._make_router_dict(router_db)
 
     def _update_router_gw_info(self, context, router_id, info):
@@ -250,6 +247,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 self._delete_port(context.elevated(), ports[0]['id'])
 
             context.session.delete(router)
+        l3_rpc_agent_api.L3AgentNofity.router_deleted(context, id)
 
     def get_router(self, context, id, fields=None):
         router = self._get_router(context, id)
@@ -324,9 +322,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self._check_for_dup_router_subnet(context, router_id,
                                               port['network_id'],
                                               fixed_ips[0]['subnet_id'])
-            with context.session.begin(subtransactions=True):
-                port.update({'device_id': router_id,
-                             'device_owner': DEVICE_OWNER_ROUTER_INTF})
+            port.update({'device_id': router_id,
+                         'device_owner': DEVICE_OWNER_ROUTER_INTF})
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
             subnet = self._get_subnet(context, subnet_id)
@@ -348,6 +345,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                  'device_id': router_id,
                  'device_owner': DEVICE_OWNER_ROUTER_INTF,
                  'name': ''}})
+
+        routers = self.get_sync_data(context.elevated(), [router_id])
+        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
         return {'port_id': port['id'],
                 'subnet_id': port['fixed_ips'][0]['subnet_id']}
 
@@ -423,6 +423,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise w_exc.HTTPNotFound("Router %(router_id)s has no "
                                          "interface on subnet %(subnet_id)s"
                                          % locals())
+        routers = self.get_sync_data(context.elevated(), [router_id])
+        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
 
     def _get_floatingip(self, context, id):
         try:
@@ -621,7 +623,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except Exception:
             LOG.exception(_("Floating IP association failed"))
             raise
-
+        router_id = floatingip_db['router_id']
+        if router_id:
+            routers = self.get_sync_data(context.elevated(), [router_id])
+            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
         return self._make_floatingip_dict(floatingip_db)
 
     def update_floatingip(self, context, id, floatingip):
@@ -631,18 +636,32 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             fip['tenant_id'] = floatingip_db['tenant_id']
             fip['id'] = id
             fip_port_id = floatingip_db['floating_port_id']
+            before_router_id = floatingip_db['router_id']
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self.get_port(context.elevated(),
                                                  fip_port_id))
+        router_ids = []
+        if before_router_id:
+            router_ids.append(before_router_id)
+        router_id = floatingip_db['router_id']
+        if router_id and router_id != before_router_id:
+            router_ids.append(router_id)
+        if router_ids:
+            routers = self.get_sync_data(context.elevated(), router_ids)
+            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
         return self._make_floatingip_dict(floatingip_db)
 
     def delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
+        router_id = floatingip['router_id']
         with context.session.begin(subtransactions=True):
             context.session.delete(floatingip)
             self.delete_port(context.elevated(),
                              floatingip['floating_port_id'],
                              l3_port_check=False)
+        if router_id:
+            routers = self.get_sync_data(context.elevated(), [router_id])
+            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
@@ -677,6 +696,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             try:
                 fip_qry = context.session.query(FloatingIP)
                 floating_ip = fip_qry.filter_by(fixed_port_id=port_id).one()
+                router_id = floating_ip['router_id']
                 floating_ip.update({'fixed_port_id': None,
                                     'fixed_ip_address': None,
                                     'router_id': None})
@@ -686,6 +706,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 # should never happen
                 raise Exception('Multiple floating IPs found for port %s'
                                 % port_id)
+        if router_id:
+            routers = self.get_sync_data(context.elevated(), [router_id])
+            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
 
     def _check_l3_view_auth(self, context, network):
         return policy.check(context,
@@ -761,3 +784,137 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             return [n for n in nets if n['id'] in ext_nets]
         else:
             return [n for n in nets if n['id'] not in ext_nets]
+
+    def _get_sync_routers(self, context, router_ids=None):
+        """Query routers and their gw ports for l3 agent.
+
+        Query routers with the router_ids. The gateway ports, if any,
+        will be queried too.
+        l3 agent has an option to deal with only one router id. In addition,
+        when we need to notify the agent the data about only one router
+        (when modification of router, its interfaces, gw_port and floatingips),
+        we will have router_ids.
+        @param router_ids: the list of router ids which we want to query.
+                           if it is None, all of routers will be queried.
+        @return: a list of dicted routers with dicted gw_port populated if any
+        """
+        router_query = context.session.query(Router)
+        if router_ids:
+            router_query = router_query.filter(Router.id.in_(router_ids))
+        routers = router_query.all()
+        gw_port_ids = []
+        if not routers:
+            return []
+        for router in routers:
+            gw_port_id = router.gw_port_id
+            if gw_port_id:
+                gw_port_ids.append(gw_port_id)
+        gw_ports = []
+        if gw_port_ids:
+            gw_ports = self._get_sync_gw_ports(context, gw_port_ids)
+        gw_port_id_gw_port_dict = {}
+        for gw_port in gw_ports:
+            gw_port_id_gw_port_dict[gw_port['id']] = gw_port
+        router_id_gw_port_id_dict = {}
+        for router in routers:
+            router_id_gw_port_id_dict[router.id] = router.gw_port_id
+        routers_list = [self._make_router_dict(c, None) for c in routers]
+        for router in routers_list:
+            gw_port_id = router_id_gw_port_id_dict[router['id']]
+            if gw_port_id:
+                router['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
+        return routers_list
+
+    def _get_sync_floating_ips(self, context, router_ids):
+        """Query floating_ips that relate to list of router_ids."""
+        if not router_ids:
+            return []
+        return self.get_floatingips(context, {'router_id': router_ids})
+
+    def _get_sync_gw_ports(self, context, gw_port_ids):
+        if not gw_port_ids:
+            return []
+        filters = {'id': gw_port_ids}
+        gw_ports = self.get_ports(context, filters)
+        if gw_ports:
+            self._populate_subnet_for_ports(context, gw_ports)
+        return gw_ports
+
+    def _get_sync_interfaces(self, context, router_ids):
+        """Query router interfaces that relate to list of router_ids."""
+        if not router_ids:
+            return []
+        filters = {'device_id': router_ids,
+                   'device_owner': [DEVICE_OWNER_ROUTER_INTF]}
+        interfaces = self.get_ports(context, filters)
+        if interfaces:
+            self._populate_subnet_for_ports(context, interfaces)
+        return interfaces
+
+    def _populate_subnet_for_ports(self, context, ports):
+        """Populate ports with subnet.
+
+        These ports already have fixed_ips populated.
+        """
+        if not ports:
+            return
+        subnet_id_ports_dict = {}
+        for port in ports:
+            fixed_ips = port.get('fixed_ips', [])
+            if len(fixed_ips) > 1:
+                LOG.error(_("Ignoring multiple IPs on router port %s") %
+                          port['id'])
+                ports.remove(port)
+                continue
+            # Empty fixed_ips should not happen
+            fixed_ip = fixed_ips[0]
+            my_ports = subnet_id_ports_dict.get(fixed_ip['subnet_id'], [])
+            my_ports.append(port)
+            subnet_id_ports_dict[fixed_ip['subnet_id']] = my_ports
+        filters = {'id': subnet_id_ports_dict.keys()}
+        fields = ['id', 'cidr', 'gateway_ip']
+        subnet_dicts = self.get_subnets(context, filters, fields)
+        for subnet_dict in subnet_dicts:
+            ports = subnet_id_ports_dict.get(subnet_dict['id'], [])
+            for port in ports:
+                # TODO(gongysh) stash the subnet into fixed_ips
+                # to make the payload smaller.
+                port['subnet'] = {'id': subnet_dict['id'],
+                                  'cidr': subnet_dict['cidr'],
+                                  'gateway_ip': subnet_dict['gateway_ip']}
+
+    def _process_sync_data(self, routers, interfaces, floating_ips):
+        routers_dict = {}
+        for router in routers:
+            routers_dict[router['id']] = router
+        for floating_ip in floating_ips:
+            router = routers_dict.get(floating_ip['router_id'])
+            if router:
+                router_floatingips = router.get(l3_constants.FLOATINGIP_KEY,
+                                                [])
+                router_floatingips.append(floating_ip)
+                router[l3_constants.FLOATINGIP_KEY] = router_floatingips
+        for interface in interfaces:
+            router = routers_dict.get(interface['device_id'])
+            if router:
+                router_interfaces = router.get(l3_constants.INTERFACE_KEY, [])
+                router_interfaces.append(interface)
+                router[l3_constants.INTERFACE_KEY] = router_interfaces
+        return routers_dict.values()
+
+    def get_sync_data(self, context, router_ids=None):
+        """Query routers and their related floating_ips, interfaces."""
+        with context.session.begin(subtransactions=True):
+            routers = self._get_sync_routers(context,
+                                             router_ids)
+            router_ids = [router['id'] for router in routers]
+            floating_ips = self._get_sync_floating_ips(context, router_ids)
+            interfaces = self._get_sync_interfaces(context, router_ids)
+        return self._process_sync_data(routers, interfaces, floating_ips)
+
+    def get_external_network_id(self, context):
+        nets = self.get_networks(context, {'router:external': [True]})
+        if len(nets) > 1:
+            raise q_exc.TooManyExternalNetworks()
+        else:
+            return nets[0]['id'] if nets else None

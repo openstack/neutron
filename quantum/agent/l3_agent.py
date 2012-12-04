@@ -20,8 +20,9 @@
 """
 
 import sys
-import time
 
+import eventlet
+from eventlet import semaphore
 import netaddr
 
 from quantum.agent.common import config
@@ -30,11 +31,19 @@ from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import iptables_manager
 from quantum.agent.linux import utils
-from quantum.db import l3_db
+from quantum.common import constants as l3_constants
+from quantum.common import topics
+from quantum import context
+from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
-from quantumclient.v2_0 import client
+from quantum.openstack.common import periodic_task
+from quantum.openstack.common.rpc import common as rpc_common
+from quantum.openstack.common.rpc import proxy
+from quantum.openstack.common import service
+from quantum import service as quantum_service
+
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
@@ -42,16 +51,53 @@ INTERNAL_DEV_PREFIX = 'qr-'
 EXTERNAL_DEV_PREFIX = 'qg-'
 
 
+class L3PluginApi(proxy.RpcProxy):
+    """Agent side of the l3 agent RPC API.
+
+    API version history:
+        1.0 - Initial version.
+
+    """
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic, host):
+        super(L3PluginApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.host = host
+
+    def get_routers(self, context, fullsync=True, router_id=None):
+        """Make a remote process call to retrieve the sync data for routers."""
+        router_ids = [router_id] if router_id else None
+        return self.call(context,
+                         self.make_msg('sync_routers', host=self.host,
+                                       fullsync=fullsync,
+                                       router_ids=router_ids),
+                         topic=self.topic)
+
+    def get_external_network_id(self, context):
+        """Make a remote process call to retrieve the external network id.
+
+        @raise common.RemoteError: with TooManyExternalNetworks
+                                   as exc_type if there are
+                                   more than one external network
+        """
+        return self.call(context,
+                         self.make_msg('get_external_network_id',
+                                       host=self.host),
+                         topic=self.topic)
+
+
 class RouterInfo(object):
 
-    def __init__(self, router_id, root_helper, use_namespaces):
+    def __init__(self, router_id, root_helper, use_namespaces, router=None):
         self.router_id = router_id
         self.ex_gw_port = None
         self.internal_ports = []
         self.floating_ips = []
         self.root_helper = root_helper
         self.use_namespaces = use_namespaces
-
+        self.router = router
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
             #FIXME(danwent): use_ipv6=True,
@@ -62,23 +108,14 @@ class RouterInfo(object):
             return NS_PREFIX + self.router_id
 
 
-class L3NATAgent(object):
+class L3NATAgent(manager.Manager):
 
     OPTS = [
-        cfg.StrOpt('admin_user'),
-        cfg.StrOpt('admin_password'),
-        cfg.StrOpt('admin_tenant_name'),
-        cfg.StrOpt('auth_url'),
-        cfg.StrOpt('auth_strategy', default='keystone'),
-        cfg.StrOpt('auth_region'),
         cfg.StrOpt('root_helper', default='sudo'),
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help="Name of bridge used for external network traffic."),
         cfg.StrOpt('interface_driver',
                    help="The driver used to manage the virtual interface."),
-        cfg.IntOpt('polling_interval',
-                   default=3,
-                   help="The time in seconds between state poll requests."),
         cfg.IntOpt('metadata_port',
                    default=9697,
                    help="TCP Port used by Quantum metadata namespace proxy."),
@@ -97,36 +134,33 @@ class L3NATAgent(object):
         cfg.StrOpt('gateway_external_network_id', default='',
                    help="UUID of external network for routers implemented "
                         "by the agents."),
+        cfg.StrOpt('l3_agent_manager',
+                   default='quantum.agent.l3_agent.L3NATAgent'),
     ]
 
-    def __init__(self, conf):
-        self.conf = conf
+    def __init__(self, host, conf=None):
+        if conf:
+            self.conf = conf
+        else:
+            self.conf = cfg.CONF
         self.router_info = {}
 
-        if not conf.interface_driver:
-            LOG.error(_('You must specify an interface driver'))
+        if not self.conf.interface_driver:
+            LOG.error(_('An interface driver must be specified'))
             sys.exit(1)
         try:
-            self.driver = importutils.import_object(conf.interface_driver,
-                                                    conf)
+            self.driver = importutils.import_object(self.conf.interface_driver,
+                                                    self.conf)
         except:
-            LOG.exception(_("Error importing interface driver '%s'"),
-                          conf.interface_driver)
+            LOG.exception(_("Error importing interface driver '%s'"
+                            % self.conf.interface_driver))
             sys.exit(1)
-
-        self.polling_interval = conf.polling_interval
-
-        self.qclient = client.Client(
-            username=self.conf.admin_user,
-            password=self.conf.admin_password,
-            tenant_name=self.conf.admin_tenant_name,
-            auth_url=self.conf.auth_url,
-            auth_strategy=self.conf.auth_strategy,
-            region_name=self.conf.auth_region
-        )
-
+        self.plugin_rpc = L3PluginApi(topics.PLUGIN, host)
+        self.fullsync = True
+        self.sync_sem = semaphore.Semaphore(1)
         if self.conf.use_namespaces:
             self._destroy_all_router_namespaces()
+        super(L3NATAgent, self).__init__(host=self.conf.host)
 
     def _destroy_all_router_namespaces(self):
         """Destroy all router namespaces on the host to eliminate
@@ -138,7 +172,7 @@ class L3NATAgent(object):
                 try:
                     self._destroy_router_namespace(ns)
                 except:
-                    LOG.exception(_("Couldn't delete namespace '%s'"), ns)
+                    LOG.exception(_("Failed deleting namespace '%s'") % ns)
 
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
@@ -160,81 +194,25 @@ class L3NATAgent(object):
             ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
-    def daemon_loop(self):
-        #TODO(danwent): this simple diff logic does not handle if
-        # details of a router port (e.g., IP, mac) are changed behind
-        # our back.  Will fix this properly with update notifications.
-
-        while True:
-            try:
-                self.do_single_loop()
-            except:
-                LOG.exception(_("Error running l3_nat daemon_loop"))
-
-            time.sleep(self.polling_interval)
-
     def _fetch_external_net_id(self):
         """Find UUID of single external network for this agent"""
         if self.conf.gateway_external_network_id:
             return self.conf.gateway_external_network_id
-
-        params = {'router:external': True}
-        ex_nets = self.qclient.list_networks(**params)['networks']
-        if len(ex_nets) > 1:
-            raise Exception(_("Must configure 'gateway_external_network_id' "
-                              "if Quantum has more than one external "
-                              "network."))
-        if len(ex_nets) == 0:
-            return None
-        return ex_nets[0]['id']
-
-    def do_single_loop(self):
-
-        if (self.conf.external_network_bridge and
-            not ip_lib.device_exists(self.conf.external_network_bridge)):
-            LOG.error(_("External network bridge '%s' does not exist"),
-                      self.conf.external_network_bridge)
-            return
-
-        prev_router_ids = set(self.router_info)
-        cur_router_ids = set()
-
-        target_ex_net_id = self._fetch_external_net_id()
-
-        # identify and update new or modified routers
-        for r in self.qclient.list_routers()['routers']:
-            if not r['admin_state_up']:
-                continue
-
-            ex_net_id = (r['external_gateway_info'] and
-                         r['external_gateway_info'].get('network_id'))
-            if not ex_net_id and not self.conf.handle_internal_only_routers:
-                continue
-
-            if ex_net_id and ex_net_id != target_ex_net_id:
-                continue
-
-            # If namespaces are disabled, only process the router associated
-            # with the configured agent id.
-            if (self.conf.use_namespaces or
-                r['id'] == self.conf.router_id):
-                cur_router_ids.add(r['id'])
+        try:
+            return self.plugin_rpc.get_external_network_id(
+                context.get_admin_context())
+        except rpc_common.RemoteError as e:
+            if e.exc_type == 'TooManyExternalNetworks':
+                msg = _(
+                    "The 'gateway_external_network_id' must be configured"
+                    " if Quantum has more than one external network.")
+                raise Exception(msg)
             else:
-                continue
-            if r['id'] not in self.router_info:
-                self._router_added(r['id'])
+                raise
 
-            ri = self.router_info[r['id']]
-            self.process_router(ri)
-
-        # identify and remove routers that no longer exist
-        for router_id in prev_router_ids - cur_router_ids:
-            self._router_removed(router_id)
-        prev_router_ids = cur_router_ids
-
-    def _router_added(self, router_id):
+    def _router_added(self, router_id, router=None):
         ri = RouterInfo(router_id, self.conf.root_helper,
-                        self.conf.use_namespaces)
+                        self.conf.use_namespaces, router)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
             self._create_router_namespace(ri)
@@ -283,20 +261,15 @@ class L3NATAgent(object):
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.error(_("Ignoring multiple IPs on router port %s"), port['id'])
-        port['subnet'] = self.qclient.show_subnet(
-            ips[0]['subnet_id'])['subnet']
+            LOG.error(_("Ignoring multiple IPs on router port %s") %
+                      port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def process_router(self, ri):
 
         ex_gw_port = self._get_ex_gw_port(ri)
-
-        internal_ports = self.qclient.list_ports(
-            device_id=ri.router_id,
-            device_owner=l3_db.DEVICE_OWNER_ROUTER_INTF)['ports']
-
+        internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
         existing_port_ids = set([p['id'] for p in ri.internal_ports])
         current_port_ids = set([p['id'] for p in internal_ports
                                 if p['admin_state_up']])
@@ -333,8 +306,7 @@ class L3NATAgent(object):
         ri.ex_gw_port = ex_gw_port
 
     def process_router_floating_ips(self, ri, ex_gw_port):
-        floating_ips = self.qclient.list_floatingips(
-            router_id=ri.router_id)['floatingips']
+        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
         existing_floating_ip_ids = set([fip['id'] for fip in ri.floating_ips])
         cur_floating_ip_ids = set([fip['id'] for fip in floating_ips])
 
@@ -375,16 +347,7 @@ class L3NATAgent(object):
                     ri.floating_ips.append(new_fip)
 
     def _get_ex_gw_port(self, ri):
-        ports = self.qclient.list_ports(
-            device_id=ri.router_id,
-            device_owner=l3_db.DEVICE_OWNER_ROUTER_GW)['ports']
-        if not ports:
-            return None
-        elif len(ports) == 1:
-            return ports[0]
-        else:
-            LOG.error(_("Ignoring multiple gateway ports for router %s"),
-                      ri.router_id)
+        return ri.router.get('gw_port')
 
     def _send_gratuitous_arp_packet(self, ri, interface_name, ip_address):
         if self.conf.send_arp_for_ha > 0:
@@ -562,14 +525,94 @@ class L3NATAgent(object):
                 ('float-snat', '-s %s -j SNAT --to %s' %
                  (fixed_ip, floating_ip))]
 
+    def router_deleted(self, context, router_id):
+        """Deal with router deletion RPC message."""
+        with self.sync_sem:
+            if router_id in self.router_info:
+                try:
+                    self._router_removed(router_id)
+                except Exception:
+                    msg = _("Failed dealing with router "
+                            "'%s' deletion RPC message")
+                    LOG.debug(msg, router_id)
+                    self.fullsync = True
+
+    def routers_updated(self, context, routers):
+        """Deal with routers modification and creation RPC message."""
+        if not routers:
+            return
+        with self.sync_sem:
+            try:
+                self._process_routers(routers)
+            except Exception:
+                msg = _("Failed dealing with routers update RPC message")
+                LOG.debug(msg)
+                self.fullsync = True
+
+    def _process_routers(self, routers):
+        if (self.conf.external_network_bridge and
+            not ip_lib.device_exists(self.conf.external_network_bridge)):
+            LOG.error(_("The external network bridge '%s' does not exist")
+                      % self.conf.external_network_bridge)
+            return
+
+        target_ex_net_id = self._fetch_external_net_id()
+
+        for r in routers:
+            if not r['admin_state_up']:
+                continue
+
+            # If namespaces are disabled, only process the router associated
+            # with the configured agent id.
+            if (not self.conf.use_namespaces and
+                r['id'] != self.conf.router_id):
+                continue
+
+            ex_net_id = (r['external_gateway_info'] or {}).get('network_id')
+            if not ex_net_id and not self.conf.handle_internal_only_routers:
+                continue
+
+            if ex_net_id and ex_net_id != target_ex_net_id:
+                continue
+
+            if r['id'] not in self.router_info:
+                self._router_added(r['id'])
+
+            ri = self.router_info[r['id']]
+            ri.router = r
+            self.process_router(ri)
+
+    @periodic_task.periodic_task
+    def _sync_routers_task(self, context):
+        # we need to sync with router deletion RPC message
+        with self.sync_sem:
+            if self.fullsync:
+                try:
+                    if not self.conf.use_namespaces:
+                        router_id = self.conf.router_id
+                    else:
+                        router_id = None
+                    routers = self.plugin_rpc.get_routers(
+                        context, router_id)
+                    self.router_info = {}
+                    self._process_routers(routers)
+                    self.fullsync = False
+                except Exception:
+                    LOG.exception(_("Failed synchronizing routers"))
+                    self.fullsync = True
+
+    def after_start(self):
+        LOG.info(_("L3 agent started"))
+
 
 def main():
-    conf = config.setup_conf()
+    eventlet.monkey_patch()
+    conf = cfg.CONF
     conf.register_opts(L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
     conf(sys.argv)
     config.setup_logging(conf)
-
-    mgr = L3NATAgent(conf)
-    mgr.daemon_loop()
+    server = quantum_service.Service.create(binary='quantum-l3-agent',
+                                            topic=topics.L3_AGENT)
+    service.launch(server).wait()

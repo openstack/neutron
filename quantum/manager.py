@@ -16,25 +16,54 @@
 #    under the License.
 # @author: Somik Behera, Nicira Networks, Inc.
 
-"""
-Quantum's Manager class is responsible for parsing a config file and
-instantiating the correct plugin that concretely implement quantum_plugin_base
-class.
-The caller should make sure that QuantumManager is a singleton.
-"""
-
 from quantum.common.exceptions import ClassNotFound
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import periodic_task
 from quantum.plugins.common import constants
 
 
 LOG = logging.getLogger(__name__)
 
 
-class QuantumManager(object):
+class Manager(periodic_task.PeriodicTasks):
 
+    # Set RPC API version to 1.0 by default.
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self, host=None):
+        if not host:
+            host = cfg.CONF.host
+        self.host = host
+        super(Manager, self).__init__()
+
+    def periodic_tasks(self, context, raise_on_error=False):
+        self.run_periodic_tasks(context, raise_on_error=raise_on_error)
+
+    def init_host(self):
+        """Handle initialization if this is a standalone service.
+
+        Child classes should override this method.
+
+        """
+        pass
+
+    def after_start(self):
+        """Handler post initialization stuff.
+
+        Child classes can override this method.
+        """
+        pass
+
+
+class QuantumManager(object):
+    """
+    Quantum's Manager class is responsible for parsing a config file and
+    instantiating the correct plugin that concretely implement
+    quantum_plugin_base class.
+    The caller should make sure that QuantumManager is a singleton.
+    """
     _instance = None
 
     def __init__(self, options=None, config_file=None):
