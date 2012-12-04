@@ -289,6 +289,11 @@ def convert_kvp_list_to_dict(kvp_list):
         kvp_map[key].add(value)
     return dict((x, list(y)) for x, y in kvp_map.iteritems())
 
+
+def convert_none_to_empty_list(value):
+    return [] if value is None else value
+
+
 HOSTNAME_PATTERN = ("(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]"
                     "{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)")
 
@@ -436,10 +441,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'validate': {'type:ip_pools': None},
                              'is_visible': True},
         'dns_nameservers': {'allow_post': True, 'allow_put': True,
+                            'convert_to': convert_none_to_empty_list,
                             'default': ATTR_NOT_SPECIFIED,
                             'validate': {'type:nameservers': None},
                             'is_visible': True},
         'host_routes': {'allow_post': True, 'allow_put': True,
+                        'convert_to': convert_none_to_empty_list,
                         'default': ATTR_NOT_SPECIFIED,
                         'validate': {'type:hostroutes': None},
                         'is_visible': True},

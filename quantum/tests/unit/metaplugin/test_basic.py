@@ -57,6 +57,12 @@ class TestMetaSubnetsV2(test_plugin.TestSubnetsV2,
     def test_update_subnet_route(self):
         pass
 
+    def test_update_subnet_dns_to_None(self):
+        pass
+
+    def test_update_subnet_route_to_None(self):
+        pass
+
     def test_update_subnet_dns(self):
         pass
 
