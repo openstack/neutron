@@ -109,18 +109,31 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 context.Context('', kwargs['tenant_id']))
         return security_group_rule_req.get_response(self.ext_api)
 
+    def _make_security_group(self, fmt, name, description, external_id=None,
+                             **kwargs):
+        res = self._create_security_group(fmt, name, description,
+                                          external_id, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
+    def _make_security_group_rule(self, fmt, rules, **kwargs):
+        res = self._create_security_group_rule('json', rules)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
     @contextlib.contextmanager
     def security_group(self, name='webservers', description='webservers',
                        external_id=None, fmt='json', no_delete=False):
-        res = self._create_security_group(fmt, name, description,
-                                          external_id)
-        security_group = self.deserialize(fmt, res)
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        yield security_group
-        if not no_delete:
-            self._delete('security-groups',
-                         security_group['security_group']['id'])
+        security_group = self._make_security_group(fmt, name, description,
+                                                   external_id)
+        try:
+            yield security_group
+        finally:
+            if not no_delete:
+                self._delete('security-groups',
+                             security_group['security_group']['id'])
 
     @contextlib.contextmanager
     def security_group_rule(self, security_group_id='4cd70774-cc67-4a87-9b39-7'
@@ -129,20 +142,20 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                             port_range_min='22', port_range_max='22',
                             source_ip_prefix=None, source_group_id=None,
                             external_id=None, fmt='json', no_delete=False):
-
-        rule = self._build_security_group_rule(security_group_id, direction,
+        rule = self._build_security_group_rule(security_group_id,
+                                               direction,
                                                protocol, port_range_min,
                                                port_range_max,
                                                source_ip_prefix,
-                                               source_group_id, external_id)
-        res = self._create_security_group_rule('json', rule)
-        security_group_rule = self.deserialize(fmt, res)
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        yield security_group_rule
-        if not no_delete:
-            self._delete('security-group-rules',
-                         security_group_rule['security_group_rule']['id'])
+                                               source_group_id,
+                                               external_id)
+        security_group_rule = self._make_security_group_rule('json', rule)
+        try:
+            yield security_group_rule
+        finally:
+            if not no_delete:
+                self._delete('security-group-rules',
+                             security_group_rule['security_group_rule']['id'])
 
 
 class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
