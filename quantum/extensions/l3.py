@@ -37,6 +37,16 @@ class RouterInUse(qexception.InUse):
     message = _("Router %(router_id)s still has active ports")
 
 
+class RouterInterfaceNotFound(qexception.NotFound):
+    message = _("Router %(router_id)s does not have "
+                "an interface with id %(port_id)s")
+
+
+class RouterInterfaceNotFoundForSubnet(qexception.NotFound):
+    message = _("Router %(router_id)s has no interface "
+                "on subnet %(subnet_id)s")
+
+
 class RouterInterfaceInUseByFloatingIP(qexception.InUse):
     message = _("Router interface for subnet %(subnet_id)s on router "
                 "%(router_id)s cannot be deleted, as it is required "

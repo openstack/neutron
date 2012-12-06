@@ -22,7 +22,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
-import webob.exc as w_exc
 
 from quantum.api.v2 import attributes
 from quantum.common import constants as l3_constants
@@ -379,19 +378,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port_db = self._get_port(context, port_id)
             if not (port_db['device_owner'] == DEVICE_OWNER_ROUTER_INTF and
                     port_db['device_id'] == router_id):
-                raise w_exc.HTTPNotFound("Router %(router_id)s does not have "
-                                         " an interface with id %(port_id)s"
-                                         % locals())
+                raise l3.RouterInterfaceNotFound(router_id=router_id,
+                                                 port_id=port_id)
             if 'subnet_id' in interface_info:
                 port_subnet_id = port_db['fixed_ips'][0]['subnet_id']
                 if port_subnet_id != interface_info['subnet_id']:
-                    raise w_exc.HTTPConflict("subnet_id %s on port does not "
-                                             "match requested one (%s)"
-                                             % (port_subnet_id,
-                                                interface_info['subnet_id']))
-            if port_db['device_id'] != router_id:
-                raise w_exc.HTTPConflict("port_id %s not used by router" %
-                                         port_db['id'])
+                    raise q_exc.SubnetMismatchForPort(
+                        port_id=port_id,
+                        subnet_id=interface_info['subnet_id'])
             self._confirm_router_interface_not_in_use(
                 context, router_id,
                 port_db['fixed_ips'][0]['subnet_id'])
@@ -420,9 +414,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 pass
 
             if not found:
-                raise w_exc.HTTPNotFound("Router %(router_id)s has no "
-                                         "interface on subnet %(subnet_id)s"
-                                         % locals())
+                raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
+                                                          subnet_id=subnet_id)
         routers = self.get_sync_data(context.elevated(), [router_id])
         l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
 

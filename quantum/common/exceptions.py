@@ -42,6 +42,10 @@ class NotFound(QuantumException):
     pass
 
 
+class Conflict(QuantumException):
+    pass
+
+
 class NotAuthorized(QuantumException):
     message = _("Not authorized.")
 
@@ -154,6 +158,11 @@ class AlreadyAttached(QuantumException):
     message = _("Unable to plug the attachment %(att_id)s into port "
                 "%(port_id)s for network %(net_id)s. The attachment is "
                 "already plugged into port %(att_port_id)s")
+
+
+class SubnetMismatchForPort(Conflict):
+    message = _("Subnet on port %(port_id)s does not match "
+                "the requested subnet %(subnet_id)s")
 
 
 class MalformedRequestBody(QuantumException):
