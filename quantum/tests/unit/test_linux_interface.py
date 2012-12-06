@@ -380,15 +380,35 @@ class TestMetaInterfaceDriver(TestBase):
             driver,
             interface.OVSInterfaceDriver))
 
-    def test_get_driver_by_device_name(self):
-        device_address_p = mock.patch(
-            'quantum.agent.linux.ip_lib.IpLinkCommand.address')
-        device_address = device_address_p.start()
-        device_address.return_value = 'aa:bb:cc:dd:ee:ffa'
-
+    def test_set_device_plugin_tag(self):
         meta_interface = interface.MetaInterfaceDriver(self.conf)
-        driver = meta_interface._get_driver_by_device_name('test')
-        self.assertTrue(isinstance(
-            driver,
-            interface.OVSInterfaceDriver))
-        device_address_p.stop()
+        driver = meta_interface._get_driver_by_network_id('test')
+        meta_interface._set_device_plugin_tag(driver,
+                                              'tap0',
+                                              namespace=None)
+        expected = [mock.call('tap0', 'sudo', None),
+                    mock.call().link.set_alias('fake1')]
+        self.ip_dev.assert_has_calls(expected)
+        namespace = '01234567-1234-1234-99'
+        meta_interface._set_device_plugin_tag(driver,
+                                              'tap1',
+                                              namespace=namespace)
+        expected = [mock.call('tap1', 'sudo', '01234567-1234-1234-99'),
+                    mock.call().link.set_alias('fake1')]
+        self.ip_dev.assert_has_calls(expected)
+
+    def test_get_device_plugin_tag(self):
+        meta_interface = interface.MetaInterfaceDriver(self.conf)
+        self.ip_dev().link.alias = 'fake1'
+        plugin_tag0 = meta_interface._get_device_plugin_tag('tap0',
+                                                            namespace=None)
+        expected = [mock.call('tap0', 'sudo', None)]
+        self.ip_dev.assert_has_calls(expected)
+        self.assertEquals('fake1', plugin_tag0)
+        namespace = '01234567-1234-1234-99'
+        expected = [mock.call('tap1', 'sudo', '01234567-1234-1234-99')]
+        plugin_tag1 = meta_interface._get_device_plugin_tag(
+            'tap1',
+            namespace=namespace)
+        self.ip_dev.assert_has_calls(expected)
+        self.assertEquals('fake1', plugin_tag1)

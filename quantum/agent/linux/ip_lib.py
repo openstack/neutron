@@ -189,6 +189,9 @@ class IpLinkCommand(IpDeviceCommandBase):
         self._as_root('set', self.name, 'name', name)
         self._parent.name = name
 
+    def set_alias(self, alias_name):
+        self._as_root('set', self.name, 'alias', alias_name)
+
     def delete(self):
         self._as_root('delete', self.name)
 
@@ -211,6 +214,10 @@ class IpLinkCommand(IpDeviceCommandBase):
     @property
     def qlen(self):
         return self.attributes.get('qlen')
+
+    @property
+    def alias(self):
+        return self.attributes.get('alias')
 
     @property
     def attributes(self):

@@ -258,7 +258,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
             self.disassociate_floatingips(context, id)
-        return plugin.delete_port(context, id)
+        return plugin.delete_port(context, id, l3_port_check)
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
