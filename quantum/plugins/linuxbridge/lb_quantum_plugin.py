@@ -59,7 +59,8 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         """Agent requests device details"""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug("Device %s details requested from %s", device, agent_id)
+        LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
+                  locals())
         port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
         if port:
             binding = db.get_network_binding(db_api.get_session(),
@@ -74,7 +75,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
             db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
         else:
             entry = {'device': device}
-            LOG.debug("%s can not be found in database", device)
+            LOG.debug(_("%s can not be found in database"), device)
         return entry
 
     def update_device_down(self, rpc_context, **kwargs):
@@ -82,7 +83,8 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         # (TODO) garyk - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug("Device %s no longer exists on %s", device, agent_id)
+        LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
+                  locals())
         port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
         if port:
             entry = {'device': device,
@@ -92,7 +94,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         else:
             entry = {'device': device,
                      'exists': False}
-            LOG.debug("%s can not be found in database", device)
+            LOG.debug(_("%s can not be found in database"), device)
         return entry
 
 
@@ -169,12 +171,12 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if self.tenant_network_type not in [constants.TYPE_LOCAL,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_NONE]:
-            LOG.error("Invalid tenant_network_type: %s. "
-                      "Service terminated!" %
+            LOG.error(_("Invalid tenant_network_type: %s. "
+                        "Service terminated!"),
                       self.tenant_network_type)
             sys.exit(1)
         self._setup_rpc()
-        LOG.debug("Linux Bridge Plugin initialization complete")
+        LOG.debug(_("Linux Bridge Plugin initialization complete"))
 
     def _setup_rpc(self):
         # RPC support
@@ -198,13 +200,14 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                  int(vlan_min),
                                                  int(vlan_max))
                 except ValueError as ex:
-                    LOG.error("Invalid network VLAN range: '%s' - %s. "
-                              "Service terminated!" %
-                              (entry, ex))
+                    LOG.error(_("Invalid network VLAN range: "
+                                "'%(entry)s' - %(ex)s. "
+                                "Service terminated!"),
+                              locals())
                     sys.exit(1)
             else:
                 self._add_network(entry)
-        LOG.debug("network VLAN ranges: %s" % self.network_vlan_ranges)
+        LOG.debug(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
@@ -286,14 +289,14 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             else:
                 segmentation_id = constants.LOCAL_VLAN_ID
         else:
-            msg = _("provider:network_type %s not supported" % network_type)
+            msg = _("provider:network_type %s not supported") % network_type
             raise q_exc.InvalidInput(error_message=msg)
 
         if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
-                    msg = _("unknown provider:physical_network %s" %
-                            physical_network)
+                    msg = (_("Unknown provider:physical_network %s") %
+                           physical_network)
                     raise q_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
@@ -319,7 +322,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # Authorize before exposing plugin details to client
         self._enforce_set_auth(context, attrs, self.network_set)
 
-        msg = _("plugin does not support updating provider attributes")
+        msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)
 
     def create_network(self, context, network):

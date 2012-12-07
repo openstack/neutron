@@ -69,9 +69,11 @@ def sync_network_states(network_vlan_ranges):
                         # it's not allocatable, so check if its allocated
                         if not state.allocated:
                             # it's not, so remove it from table
-                            LOG.debug("removing vlan %s on physical network "
-                                      "%s from pool" %
-                                      (state.vlan_id, physical_network))
+                            LOG.debug(_("Removing vlan %(vlan_id)s on "
+                                        "physical network %(physical_network)s"
+                                        " from pool"),
+                                      {'vlan_id': state.vlan_id,
+                                       'physical_network': physical_network})
                             session.delete(state)
                 del allocations[physical_network]
 
@@ -86,9 +88,11 @@ def sync_network_states(network_vlan_ranges):
         for states in allocations.itervalues():
             for state in states:
                 if not state.allocated:
-                    LOG.debug("removing vlan %s on physical network %s"
-                              " from pool" %
-                              (state.vlan_id, physical_network))
+                    LOG.debug(_("Removing vlan %(vlan_id)s on physical "
+                                "network %(physical_network)s"
+                                " from pool"),
+                              {'vlan_id': state.vlan_id,
+                               'physical_network': physical_network})
                     session.delete(state)
 
 
@@ -113,8 +117,10 @@ def reserve_network(session):
                  first())
         if not state:
             raise q_exc.NoNetworkAvailable()
-        LOG.debug("reserving vlan %s on physical network %s from pool" %
-                  (state.vlan_id, state.physical_network))
+        LOG.debug(_("Reserving vlan %(vlan_id)s on physical network "
+                    "%(physical_network)s from pool"),
+                  {'vlan_id': state.vlan_id,
+                   'physical_network': state.physical_network})
         state.allocated = True
     return (state.physical_network, state.vlan_id)
 
@@ -133,12 +139,12 @@ def reserve_specific_network(session, physical_network, vlan_id):
                 else:
                     raise q_exc.VlanIdInUse(vlan_id=vlan_id,
                                             physical_network=physical_network)
-            LOG.debug("reserving specific vlan %s on physical network %s "
-                      "from pool" % (vlan_id, physical_network))
+            LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
+                        "network %(physical_network)s from pool"), locals())
             state.allocated = True
         except exc.NoResultFound:
-            LOG.debug("reserving specific vlan %s on physical network %s "
-                      "outside pool" % (vlan_id, physical_network))
+            LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
+                        "network %(physical_network)s outside pool"), locals())
             state = l2network_models_v2.NetworkState(physical_network, vlan_id)
             state.allocated = True
             session.add(state)
@@ -158,15 +164,16 @@ def release_network(session, physical_network, vlan_id, network_vlan_ranges):
                     inside = True
                     break
             if inside:
-                LOG.debug("releasing vlan %s on physical network %s to pool" %
-                          (vlan_id, physical_network))
+                LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
+                            "%(physical_network)s to pool"),
+                          locals())
             else:
-                LOG.debug("releasing vlan %s on physical network %s outside "
-                          "pool" % (vlan_id, physical_network))
+                LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
+                          "%(physical_network)s outside pool"), locals())
                 session.delete(state)
         except exc.NoResultFound:
-            LOG.warning("vlan_id %s on physical network %s not found" %
-                        (vlan_id, physical_network))
+            LOG.warning(_("vlan_id %(vlan_id)s on physical network "
+                          "%(physical_network)s not found"), locals())
 
 
 def add_network_binding(session, network_id, physical_network, vlan_id):
@@ -188,7 +195,7 @@ def get_network_binding(session, network_id):
 
 def get_port_from_device(device):
     """Get port from database"""
-    LOG.debug("get_port_from_device() called")
+    LOG.debug(_("get_port_from_device() called"))
     session = db.get_session()
     ports = session.query(models_v2.Port).all()
     if not ports:
@@ -201,7 +208,7 @@ def get_port_from_device(device):
 
 def set_port_status(port_id, status):
     """Set the port status"""
-    LOG.debug("set_port_status as %s called", status)
+    LOG.debug(_("set_port_status as %s called"), status)
     session = db.get_session()
     try:
         port = session.query(models_v2.Port).filter_by(id=port_id).one()

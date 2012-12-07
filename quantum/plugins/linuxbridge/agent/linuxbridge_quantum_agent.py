@@ -78,22 +78,22 @@ class LinuxBridge:
 
     def get_bridge_name(self, network_id):
         if not network_id:
-            LOG.warning("Invalid Network ID, will lead to incorrect bridge"
-                        "name")
+            LOG.warning(_("Invalid Network ID, will lead to incorrect bridge"
+                          "name"))
         bridge_name = BRIDGE_NAME_PREFIX + network_id[0:11]
         return bridge_name
 
     def get_subinterface_name(self, physical_interface, vlan_id):
         if not vlan_id:
-            LOG.warning("Invalid VLAN ID, will lead to incorrect "
-                        "subinterface name")
+            LOG.warning(_("Invalid VLAN ID, will lead to incorrect "
+                          "subinterface name"))
         subinterface_name = '%s.%s' % (physical_interface, vlan_id)
         return subinterface_name
 
     def get_tap_device_name(self, interface_id):
         if not interface_id:
-            LOG.warning("Invalid Interface ID, will lead to incorrect "
-                        "tap device name")
+            LOG.warning(_("Invalid Interface ID, will lead to incorrect "
+                          "tap device name"))
         tap_device_name = TAP_INTERFACE_PREFIX + interface_id[0:11]
         return tap_device_name
 
@@ -187,8 +187,10 @@ class LinuxBridge:
         """Create a vlan unless it already exists."""
         interface = self.get_subinterface_name(physical_interface, vlan_id)
         if not self.device_exists(interface):
-            LOG.debug("Creating subinterface %s for VLAN %s on interface %s" %
-                      (interface, vlan_id, physical_interface))
+            LOG.debug(_("Creating subinterface %(interface)s for "
+                        "VLAN %(vlan_id)s on interface "
+                        "%(physical_interface)s"),
+                      locals())
             if utils.execute(['ip', 'link', 'add', 'link',
                               physical_interface,
                               'name', interface, 'type', 'vlan', 'id',
@@ -197,7 +199,7 @@ class LinuxBridge:
             if utils.execute(['ip', 'link', 'set',
                               interface, 'up'], root_helper=self.root_helper):
                 return
-            LOG.debug("Done creating subinterface %s" % interface)
+            LOG.debug(_("Done creating subinterface %s"), interface)
         return interface
 
     def update_interface_ip_details(self, destination, source, ips,
@@ -234,8 +236,8 @@ class LinuxBridge:
         Create a bridge unless it already exists.
         """
         if not self.device_exists(bridge_name):
-            LOG.debug("Starting bridge %s for subinterface %s" % (bridge_name,
-                                                                  interface))
+            LOG.debug(_("Starting bridge %(bridge_name)s for subinterface "
+                        "%(interface)s"), locals())
             if utils.execute(['brctl', 'addbr', bridge_name],
                              root_helper=self.root_helper):
                 return
@@ -248,8 +250,9 @@ class LinuxBridge:
             if utils.execute(['ip', 'link', 'set', bridge_name,
                               'up'], root_helper=self.root_helper):
                 return
-            LOG.debug("Done starting bridge %s for subinterface %s" %
-                      (bridge_name, interface))
+            LOG.debug(_("Done starting bridge %(bridge_name)s for "
+                        "subinterface %(interface)s"),
+                      locals())
 
         if not interface:
             return
@@ -263,8 +266,8 @@ class LinuxBridge:
                 utils.execute(['brctl', 'addif', bridge_name, interface],
                               root_helper=self.root_helper)
             except Exception as e:
-                LOG.error("Unable to add %s to %s! Exception: %s", interface,
-                          bridge_name, e)
+                LOG.error(_("Unable to add %(interface)s to %(bridge_name)s! "
+                            "Exception: %(e)s"), locals())
                 return
 
     def ensure_physical_in_bridge(self, network_id,
@@ -272,7 +275,7 @@ class LinuxBridge:
                                   vlan_id):
         physical_interface = self.interface_mappings.get(physical_network)
         if not physical_interface:
-            LOG.error("No mapping for physical network %s" %
+            LOG.error(_("No mapping for physical network %s"),
                       physical_network)
             return False
 
@@ -291,7 +294,7 @@ class LinuxBridge:
         """
         if not self.device_exists(tap_device_name):
             LOG.debug(_("Tap device: %s does not exist on "
-                        "this host, skipped" % tap_device_name))
+                        "this host, skipped"), tap_device_name)
             return False
 
         bridge_name = self.get_bridge_name(network_id)
@@ -343,45 +346,46 @@ class LinuxBridge:
                         if interface.startswith(physical_interface):
                             self.delete_vlan(interface)
 
-            LOG.debug("Deleting bridge %s" % bridge_name)
+            LOG.debug(_("Deleting bridge %s"), bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
                              root_helper=self.root_helper):
                 return
             if utils.execute(['brctl', 'delbr', bridge_name],
                              root_helper=self.root_helper):
                 return
-            LOG.debug("Done deleting bridge %s" % bridge_name)
+            LOG.debug(_("Done deleting bridge %s"), bridge_name)
 
         else:
-            LOG.error("Cannot delete bridge %s, does not exist" % bridge_name)
+            LOG.error(_("Cannot delete bridge %s, does not exist"),
+                      bridge_name)
 
     def remove_interface(self, bridge_name, interface_name):
         if self.device_exists(bridge_name):
             if not self.is_device_on_bridge(interface_name):
                 return True
-            LOG.debug("Removing device %s from bridge %s" %
-                      (interface_name, bridge_name))
+            LOG.debug(_("Removing device %(interface_name)s from bridge "
+                        "%(bridge_name)s"), locals())
             if utils.execute(['brctl', 'delif', bridge_name, interface_name],
                              root_helper=self.root_helper):
                 return False
-            LOG.debug("Done removing device %s from bridge %s" %
-                      (interface_name, bridge_name))
+            LOG.debug(_("Done removing device %(interface_name)s from bridge "
+                        "%(bridge_name)s"), locals())
             return True
         else:
-            LOG.debug("Cannot remove device %s, bridge %s does not exist" %
-                      (interface_name, bridge_name))
+            LOG.debug(_("Cannot remove device %(interface_name)s bridge "
+                        "%(bridge_name)s does not exist"), locals())
             return False
 
     def delete_vlan(self, interface):
         if self.device_exists(interface):
-            LOG.debug("Deleting subinterface %s for vlan" % interface)
+            LOG.debug(_("Deleting subinterface %s for vlan"), interface)
             if utils.execute(['ip', 'link', 'set', interface, 'down'],
                              root_helper=self.root_helper):
                 return
             if utils.execute(['ip', 'link', 'delete', interface],
                              root_helper=self.root_helper):
                 return
-            LOG.debug("Done deleting subinterface %s" % interface)
+            LOG.debug(_("Done deleting subinterface %s"), interface)
 
 
 class LinuxBridgeRpcCallbacks():
@@ -394,14 +398,14 @@ class LinuxBridgeRpcCallbacks():
         self.linux_br = linux_br
 
     def network_delete(self, context, **kwargs):
-        LOG.debug("network_delete received")
+        LOG.debug(_("network_delete received"))
         network_id = kwargs.get('network_id')
         bridge_name = self.linux_br.get_bridge_name(network_id)
-        LOG.debug("Delete %s", bridge_name)
+        LOG.debug(_("Delete %s"), bridge_name)
         self.linux_br.delete_vlan_bridge(bridge_name)
 
     def port_update(self, context, **kwargs):
-        LOG.debug("port_update received")
+        LOG.debug(_("port_update received"))
         port = kwargs.get('port')
         if port['admin_state_up']:
             vlan_id = kwargs.get('vlan_id')
@@ -442,11 +446,11 @@ class LinuxBridgeQuantumAgentRPC:
             if devices:
                 mac = utils.get_interface_mac(devices[0].name)
             else:
-                LOG.error("Unable to obtain MAC address for unique ID. "
-                          "Agent terminated!")
+                LOG.error(_("Unable to obtain MAC address for unique ID. "
+                          "Agent terminated!"))
                 exit(1)
         self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
-        LOG.info("RPC agent_id: %s" % self.agent_id)
+        LOG.info(_("RPC agent_id: %s"), self.agent_id)
 
         self.topic = topics.AGENT
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
@@ -512,17 +516,19 @@ class LinuxBridgeQuantumAgentRPC:
     def treat_devices_added(self, devices):
         resync = False
         for device in devices:
-            LOG.debug("Port %s added", device)
+            LOG.debug(_("Port %s added"), device)
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
                                                              self.agent_id)
             except Exception as e:
-                LOG.debug("Unable to get port details for %s: %s", device, e)
+                LOG.debug(_("Unable to get port details for "
+                            "%(device)s: %(e)s"), locals())
                 resync = True
                 continue
             if 'port_id' in details:
-                LOG.info("Port %s updated. Details: %s", device, details)
+                LOG.info(_("Port %(device)s updated. Details: %(details)s"),
+                         locals())
                 if details['admin_state_up']:
                     # create the networking for the port
                     self.linux_br.add_interface(details['network_id'],
@@ -533,37 +539,38 @@ class LinuxBridgeQuantumAgentRPC:
                     self.remove_port_binding(details['network_id'],
                                              details['port_id'])
             else:
-                LOG.info("Device %s not defined on plugin", device)
+                LOG.info(_("Device %s not defined on plugin"), device)
         return resync
 
     def treat_devices_removed(self, devices):
         resync = False
         for device in devices:
-            LOG.info("Attachment %s removed", device)
+            LOG.info(_("Attachment %s removed"), device)
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
                                                              self.agent_id)
             except Exception as e:
-                LOG.debug("port_removed failed for %s: %s", device, e)
+                LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
+                          locals())
                 resync = True
             if details['exists']:
-                LOG.info("Port %s updated.", device)
+                LOG.info(_("Port %s updated."), device)
                 # Nothing to do regarding local networking
             else:
-                LOG.debug("Device %s not defined on plugin", device)
+                LOG.debug(_("Device %s not defined on plugin"), device)
         return resync
 
     def daemon_loop(self):
         sync = True
         devices = set()
 
-        LOG.info("LinuxBridge Agent RPC Daemon Started!")
+        LOG.info(_("LinuxBridge Agent RPC Daemon Started!"))
 
         while True:
             start = time.time()
             if sync:
-                LOG.info("Agent out of sync with plugin!")
+                LOG.info(_("Agent out of sync with plugin!"))
                 devices.clear()
                 sync = False
 
@@ -571,7 +578,7 @@ class LinuxBridgeQuantumAgentRPC:
 
             # notify plugin about device deltas
             if device_info:
-                LOG.debug("Agent loop has new devices!")
+                LOG.debug(_("Agent loop has new devices!"))
                 # If treat devices fails - indicates must resync with plugin
                 sync = self.process_network_devices(device_info)
                 devices = device_info['current']
@@ -581,8 +588,10 @@ class LinuxBridgeQuantumAgentRPC:
             if (elapsed < self.polling_interval):
                 time.sleep(self.polling_interval - elapsed)
             else:
-                LOG.debug("Loop iteration exceeded interval (%s vs. %s)!",
-                          self.polling_interval, elapsed)
+                LOG.debug(_("Loop iteration exceeded interval "
+                            "(%(polling_interval)s vs. %(elapsed)s)!"),
+                          {'polling_interval': self.polling_interval,
+                           'elapsed': elapsed})
 
 
 def main():
