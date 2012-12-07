@@ -22,3 +22,8 @@ rpc_backend = quantum.openstack.common.rpc.impl_fake
 
 [DATABASE]
 sql_connection = 'sqlite:///:memory:'
+
+[DEFAULT_SERVICETYPE]
+description = "default service type"
+service_definition=dummy:quantum.tests.unit.dummy_plugin.QuantumDummyPlugin
+

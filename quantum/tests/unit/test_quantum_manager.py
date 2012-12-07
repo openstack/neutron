@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import types
 import unittest2
 
@@ -24,16 +25,26 @@ from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
-from quantum.plugins.services.dummy.dummy_plugin import QuantumDummyPlugin
+from quantum.tests.unit import dummy_plugin
 
 
 LOG = logging.getLogger(__name__)
 DB_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 class QuantumManagerTestCase(unittest2.TestCase):
+
     def setUp(self):
         super(QuantumManagerTestCase, self).setUp()
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        # If test_config specifies some config-file, use it, as well
+        config.parse(args=args)
 
     def tearDown(self):
         unittest2.TestCase.tearDown(self)
@@ -45,23 +56,23 @@ class QuantumManagerTestCase(unittest2.TestCase):
                               test_config.get('plugin_name_v2',
                                               DB_PLUGIN_KLASS))
         cfg.CONF.set_override("service_plugins",
-                              ["quantum.plugins.services."
-                               "dummy.dummy_plugin.QuantumDummyPlugin"])
+                              ["quantum.tests.unit.dummy_plugin."
+                               "DummyServicePlugin"])
         QuantumManager._instance = None
         mgr = QuantumManager.get_instance()
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
         self.assertTrue(
             isinstance(plugin,
-                       (QuantumDummyPlugin, types.ClassType)),
+                       (dummy_plugin.DummyServicePlugin, types.ClassType)),
             "loaded plugin should be of type QuantumDummyPlugin")
 
     def test_multiple_plugins_specified_for_service_type(self):
         cfg.CONF.set_override("service_plugins",
-                              ["quantum.plugins.services."
-                               "dummy.dummy_plugin.QuantumDummyPlugin",
-                               "quantum.plugins.services."
-                               "dummy.dummy_plugin.QuantumDummyPlugin"])
+                              ["quantum.tests.unit.dummy_plugin."
+                               "QuantumDummyPlugin",
+                               "quantum.tests.unit.dummy_plugin."
+                               "QuantumDummyPlugin"])
         QuantumManager._instance = None
 
         try:

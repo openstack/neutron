@@ -100,8 +100,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         # Update the plugin
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
-        cfg.CONF.max_dns_nameservers = 2
-        cfg.CONF.max_subnet_host_routes = 2
+        cfg.CONF.set_override('max_dns_nameservers', 2)
+        cfg.CONF.set_override('max_subnet_host_routes', 2)
         self.api = APIRouter()
 
         def _is_native_bulk_supported():

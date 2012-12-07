@@ -32,6 +32,15 @@ class ServicePluginBase(extensions.PluginInterface):
         pass
 
     @abc.abstractmethod
+    def get_plugin_name(self):
+        """ return a symbolic name for the plugin.
+
+        Each service plugin should have a symbolic name. This name
+        will be used, for instance, by service definitions in service types
+        """
+        pass
+
+    @abc.abstractmethod
     def get_plugin_description(self):
         """ returns string description of the plugin """
         pass

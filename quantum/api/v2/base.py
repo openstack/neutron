@@ -99,7 +99,7 @@ class Controller(object):
             member_actions = []
         self._plugin = plugin
         self._collection = collection.replace('-', '_')
-        self._resource = resource
+        self._resource = resource.replace('-', '_')
         self._attr_info = attr_info
         self._allow_bulk = allow_bulk
         self._native_bulk = self._is_native_bulk_supported()

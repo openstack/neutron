@@ -67,7 +67,7 @@ def setup_metaplugin_conf():
     cfg.CONF.set_override('default_l3_flavor', 'fake1', 'META')
     cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
     #TODO(nati) remove this after subnet quota change is merged
-    cfg.CONF.max_dns_nameservers = 10
+    cfg.CONF.set_override('max_dns_nameservers', 10)
 
 
 class MetaQuantumPluginV2Test(unittest.TestCase):
