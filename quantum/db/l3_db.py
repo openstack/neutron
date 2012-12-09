@@ -864,6 +864,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             my_ports = subnet_id_ports_dict.get(fixed_ip['subnet_id'], [])
             my_ports.append(port)
             subnet_id_ports_dict[fixed_ip['subnet_id']] = my_ports
+        if not subnet_id_ports_dict:
+            return
         filters = {'id': subnet_id_ports_dict.keys()}
         fields = ['id', 'cidr', 'gateway_ip']
         subnet_dicts = self.get_subnets(context, filters, fields)
