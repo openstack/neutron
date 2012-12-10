@@ -857,7 +857,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if len(fixed_ips) > 1:
                 LOG.error(_("Ignoring multiple IPs on router port %s") %
                           port['id'])
-                ports.remove(port)
                 continue
             # Empty fixed_ips should not happen
             fixed_ip = fixed_ips[0]

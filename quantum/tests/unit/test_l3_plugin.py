@@ -1363,7 +1363,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     routers = plugin.get_sync_data(ctx, None)
                     self.assertEqual(1, len(routers))
                     interfaces = routers[0].get(l3_constants.INTERFACE_KEY, [])
-                    self.assertEqual(0, len(interfaces))
+                    self.assertEqual(1, len(interfaces))
                     # clean-up
                     self._router_interface_action('remove',
                                                   r['router']['id'],
