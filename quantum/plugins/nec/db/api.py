@@ -33,7 +33,11 @@ def initialize():
     options = {"sql_connection": "%s" % config.DATABASE.sql_connection,
                "sql_max_retries": config.DATABASE.sql_max_retries,
                "reconnect_interval": config.DATABASE.reconnect_interval,
-               "base": model_base.BASEV2}
+               "base": model_base.BASEV2,
+               "sql_min_pool_size": config.CONF.DATABASE.sql_min_pool_size,
+               "sql_max_pool_size": config.CONF.DATABASE.sql_max_pool_size,
+               "sql_idle_timeout": config.CONF.DATABASE.sql_idle_timeout,
+               "sql_dbpool_enable": config.CONF.DATABASE.sql_dbpool_enable}
     db.configure_db(options)
 
 
@@ -67,7 +71,7 @@ def add_ofc_item(model, id, quantum_id):
         item = model(id=id, quantum_id=quantum_id)
         session.add(item)
         session.flush()
-    except sa.exc.IntegrityError as exc:
+    except Exception as exc:
         LOG.exception(exc)
         raise nexc.NECDBException
     return item
@@ -103,7 +107,7 @@ def add_portinfo(id, datapath_id='', port_no=0, vlan_id=OFP_VLAN_NONE, mac=''):
                                     port_no=port_no, vlan_id=vlan_id, mac=mac)
         session.add(portinfo)
         session.flush()
-    except sa.exc.IntegrityError as exc:
+    except Exception as exc:
         LOG.exception(exc)
         raise nexc.NECDBException
     return portinfo

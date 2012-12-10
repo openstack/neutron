@@ -19,6 +19,12 @@
 
 import time
 
+from eventlet import db_pool
+from eventlet import greenthread
+try:
+    import MySQLdb
+except ImportError:
+    MySQLdb = None
 import sqlalchemy as sql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
@@ -87,10 +93,31 @@ def configure_db(options):
 
         if 'mysql' in connection_dict.drivername:
             engine_args['listeners'] = [MySQLPingListener()]
+            if (MySQLdb is not None and
+                options['sql_dbpool_enable']):
+                pool_args = {
+                    'db': connection_dict.database,
+                    'passwd': connection_dict.password or '',
+                    'host': connection_dict.host,
+                    'user': connection_dict.username,
+                    'min_size': options['sql_min_pool_size'],
+                    'max_size': options['sql_max_pool_size'],
+                    'max_idle': options['sql_idle_timeout']
+                }
+                creator = db_pool.ConnectionPool(MySQLdb, **pool_args)
+                engine_args['creator'] = creator.create
+            if (MySQLdb is None and options['sql_dbpool_enable']):
+                LOG.warn(_("Eventlet connection pooling will not work without "
+                           "python-mysqldb!"))
         if 'sqlite' in connection_dict.drivername:
             engine_args['listeners'] = [SqliteForeignKeysListener()]
+            if options['sql_connection'] == "sqlite://":
+                engine_args["connect_args"] = {'check_same_thread': False}
 
         _ENGINE = create_engine(options['sql_connection'], **engine_args)
+
+        sql.event.listen(_ENGINE, 'checkin', greenthread_yield)
+
         base = options.get('base', BASE)
         if not register_models(base):
             if 'reconnect_interval' in options:
@@ -156,3 +183,13 @@ def unregister_models(base=BASE):
     global _ENGINE
     assert _ENGINE
     base.metadata.drop_all(_ENGINE)
+
+
+def greenthread_yield(dbapi_con, con_record):
+    """
+    Ensure other greenthreads get a chance to execute by forcing a context
+    switch. With common database backends (eg MySQLdb and sqlite), there is
+    no implicit yield caused by network I/O since they are implemented by
+    C libraries that eventlet cannot monkey patch.
+    """
+    greenthread.sleep(0)
