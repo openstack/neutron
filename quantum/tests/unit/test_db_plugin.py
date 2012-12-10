@@ -2094,8 +2094,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             # Check nameservers
             nameserver_pools = [['1100.0.0.2'],
                                 ['1.1.1.2', '1.1000.1.3'],
-                                ['1.1.1.2', '1.1.1.2'],
-                                None]
+                                ['1.1.1.2', '1.1.1.2']]
             tenant_id = network['network']['tenant_id']
             for nameservers in nameserver_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
@@ -2116,8 +2115,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                [{'nexthop': '10.0.2.20',
                                  'destination': '100.0.0.0/8'},
                                 {'nexthop': '10.0.2.20',
-                                 'destination': '100.0.0.0/8'}],
-                               None]
+                                 'destination': '100.0.0.0/8'}]]
             tenant_id = network['network']['tenant_id']
             for hostroutes in hostroute_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
@@ -2690,6 +2688,20 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             self.assertEqual(res['subnet']['dns_nameservers'],
                              data['subnet']['dns_nameservers'])
 
+    def test_update_subnet_dns_to_None(self):
+        with self.subnet(dns_nameservers=['11.0.0.1']) as subnet:
+            data = {'subnet': {'dns_nameservers': None}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual([], res['subnet']['dns_nameservers'])
+            data = {'subnet': {'dns_nameservers': ['11.0.0.3']}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(data['subnet']['dns_nameservers'],
+                             res['subnet']['dns_nameservers'])
+
     def test_update_subnet_dns_with_too_many_entries(self):
         with self.subnet() as subnet:
             dns_list = ['1.1.1.1', '2.2.2.2', '3.3.3.3']
@@ -2708,6 +2720,22 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             res = self.deserialize('json', req.get_response(self.api))
             self.assertEqual(res['subnet']['host_routes'],
                              data['subnet']['host_routes'])
+
+    def test_update_subnet_route_to_None(self):
+        with self.subnet(host_routes=[{'destination': '12.0.0.0/8',
+                                       'nexthop': '1.2.3.4'}]) as subnet:
+            data = {'subnet': {'host_routes': None}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual([], res['subnet']['host_routes'])
+            data = {'subnet': {'host_routes': [{'destination': '12.0.0.0/8',
+                                                'nexthop': '1.2.3.4'}]}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize('json', req.get_response(self.api))
+            self.assertEqual(data['subnet']['host_routes'],
+                             res['subnet']['host_routes'])
 
     def test_update_subnet_route_with_too_many_entries(self):
         with self.subnet() as subnet:
