@@ -79,8 +79,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     """Mixin class to add security group to db_plugin_base_v2."""
 
     __native_bulk_support = True
-    sg_supported_protocols = ['tcp', 'udp', 'icmp']
-    sg_supported_ethertypes = ['IPv4', 'IPv6']
 
     def create_security_group_bulk(self, context, security_group_rule):
         return self._create_bulk('security_group', context,
@@ -125,7 +123,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                               external_id=s.get('external_id'))
             context.session.add(security_group_db)
             if s.get('name') == 'default':
-                for ethertype in self.sg_supported_ethertypes:
+                for ethertype in ext_sg.sg_supported_ethertypes:
                     # Allow intercommunication
                     db = SecurityGroupRule(
                         id=uuidutils.generate_uuid(), tenant_id=tenant_id,
@@ -289,13 +287,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 rule.get('external_id')):
                 raise ext_sg.SecurityGroupNotProxyMode()
 
-            # Check that protocol/ethertype are valid
             protocol = rule.get('protocol')
-            if protocol and protocol not in self.sg_supported_protocols:
-                raise ext_sg.SecurityGroupInvalidProtocolType(value=protocol)
             ethertype = rule.get('ethertype')
-            if ethertype and ethertype not in self.sg_supported_ethertypes:
-                raise ext_sg.SecurityGroupInvalidEtherType(value=ethertype)
 
             # Check that port_range's are valid
             if (rule['port_range_min'] is None and

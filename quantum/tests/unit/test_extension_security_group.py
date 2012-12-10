@@ -79,14 +79,16 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def _build_security_group_rule(self, security_group_id, direction,
                                    protocol, port_range_min, port_range_max,
                                    source_ip_prefix=None, source_group_id=None,
-                                   external_id=None, tenant_id='test_tenant'):
+                                   external_id=None, tenant_id='test_tenant',
+                                   ethertype='IPv4'):
 
         data = {'security_group_rule': {'security_group_id': security_group_id,
                                         'direction': direction,
                                         'protocol': protocol,
                                         'port_range_min': port_range_min,
                                         'port_range_max': port_range_max,
-                                        'tenant_id': tenant_id}}
+                                        'tenant_id': tenant_id,
+                                        'ethertype': ethertype}}
         if external_id:
             data['security_group_rule']['external_id'] = external_id
 
@@ -141,14 +143,16 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                             direction='ingress', protocol='tcp',
                             port_range_min='22', port_range_max='22',
                             source_ip_prefix=None, source_group_id=None,
-                            external_id=None, fmt='json', no_delete=False):
+                            external_id=None, fmt='json', no_delete=False,
+                            ethertype='IPv4'):
         rule = self._build_security_group_rule(security_group_id,
                                                direction,
                                                protocol, port_range_min,
                                                port_range_max,
                                                source_ip_prefix,
                                                source_group_id,
-                                               external_id)
+                                               external_id,
+                                               ethertype=ethertype)
         security_group_rule = self._make_security_group_rule('json', rule)
         try:
             yield security_group_rule
@@ -781,3 +785,38 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 res = self._create_security_group_rule('json', rules)
                 self.deserialize('json', res)
                 self.assertEquals(res.status_int, 400)
+
+    def test_create_security_group_rule_with_invalid_ethertype(self):
+        security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
+        direction = "ingress"
+        source_ip_prefix = "10.0.0.0/24"
+        protocol = 'tcp'
+        port_range_min = 22
+        port_range_max = 22
+        source_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        rule = self._build_security_group_rule(security_group_id, direction,
+                                               protocol, port_range_min,
+                                               port_range_max,
+                                               source_ip_prefix,
+                                               source_group_id,
+                                               ethertype='IPv5')
+        res = self._create_security_group_rule('json', rule)
+        self.deserialize('json', res)
+        self.assertEquals(res.status_int, 400)
+
+    def test_create_security_group_rule_with_invalid_protocol(self):
+        security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
+        direction = "ingress"
+        source_ip_prefix = "10.0.0.0/24"
+        protocol = 'tcp/ip'
+        port_range_min = 22
+        port_range_max = 22
+        source_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        rule = self._build_security_group_rule(security_group_id, direction,
+                                               protocol, port_range_min,
+                                               port_range_max,
+                                               source_ip_prefix,
+                                               source_group_id)
+        res = self._create_security_group_rule('json', rule)
+        self.deserialize('json', res)
+        self.assertEquals(res.status_int, 400)
