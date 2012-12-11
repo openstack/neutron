@@ -203,8 +203,8 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def delete_port(self, context, id):
         session = context.session
         with session.begin(subtransactions=True):
-            super(SecurityGroupTestPlugin, self).delete_port(context, id)
             self._delete_port_security_group_bindings(context, id)
+            super(SecurityGroupTestPlugin, self).delete_port(context, id)
 
     def create_network(self, context, network):
         tenant_id = self._get_tenant_id_for_create(context, network['network'])

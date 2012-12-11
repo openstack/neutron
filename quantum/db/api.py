@@ -22,6 +22,7 @@ import time
 import sqlalchemy as sql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
+from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.orm import sessionmaker, exc
 
 from quantum.db import model_base
@@ -56,6 +57,18 @@ class MySQLPingListener(object):
                 raise
 
 
+class SqliteForeignKeysListener(PoolListener):
+    """
+    Ensures that the foreign key constraints are enforced in SQLite.
+
+    The foreign key constraints are disabled by default in SQLite,
+    so the foreign key constraints will be enabled here for every
+    database connection
+    """
+    def connect(self, dbapi_con, con_record):
+        dbapi_con.execute('pragma foreign_keys=ON')
+
+
 def configure_db(options):
     """
     Establish the database, create an engine if needed, and
@@ -74,6 +87,8 @@ def configure_db(options):
 
         if 'mysql' in connection_dict.drivername:
             engine_args['listeners'] = [MySQLPingListener()]
+        if 'sqlite' in connection_dict.drivername:
+            engine_args['listeners'] = [SqliteForeignKeysListener()]
 
         _ENGINE = create_engine(options['sql_connection'], **engine_args)
         base = options.get('base', BASE)
