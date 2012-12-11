@@ -18,9 +18,11 @@
 # service type constants:
 CORE = "CORE"
 DUMMY = "DUMMY"
+LOADBALANCER = "LOADBALANCER"
 
 
 COMMON_PREFIXES = {
     CORE: "",
     DUMMY: "/dummy_svc",
+    LOADBALANCER: "/lb",
 }

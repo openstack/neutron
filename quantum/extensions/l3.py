@@ -86,13 +86,6 @@ class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
                 "more floating IPs.")
 
 
-def _validate_uuid_or_none(data, valid_values=None):
-    if data is None:
-        return None
-    return attr._validate_uuid(data)
-
-attr.validators['type:uuid_or_none'] = _validate_uuid_or_none
-
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
     'routers': {

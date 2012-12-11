@@ -165,8 +165,14 @@ class Controller(object):
 
     def __getattr__(self, name):
         if name in self._member_actions:
-            def _handle_action(request, id, body=None):
-                return getattr(self._plugin, name)(request.context, id, body)
+            def _handle_action(request, id, **kwargs):
+                if 'body' in kwargs:
+                    body = kwargs.pop('body')
+                    return getattr(self._plugin, name)(request.context, id,
+                                                       body, **kwargs)
+                else:
+                    return getattr(self._plugin, name)(request.context, id,
+                                                       **kwargs)
             return _handle_action
         else:
             raise AttributeError

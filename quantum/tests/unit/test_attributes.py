@@ -371,6 +371,69 @@ class TestAttributes(unittest2.TestCase):
         msg = attributes._validate_uuid('00000000-ffff-ffff-ffff-000000000000')
         self.assertIsNone(msg)
 
+    def test_validate_uuid_list(self):
+        # check not a list
+        uuids = [None,
+                 123,
+                 'e5069610-744b-42a7-8bd8-ceac1a229cd4',
+                 '12345678123456781234567812345678',
+                 {'uuid': 'e5069610-744b-42a7-8bd8-ceac1a229cd4'}]
+        for uuid in uuids:
+            msg = attributes._validate_uuid_list(uuid)
+            error = "'%s' is not a list" % uuid
+            self.assertEquals(msg, error)
+
+        # check invalid uuid in a list
+        invalid_uuid_lists = [[None],
+                              [123],
+                              [123, 'e5069610-744b-42a7-8bd8-ceac1a229cd4'],
+                              ['123', '12345678123456781234567812345678'],
+                              ['t5069610-744b-42a7-8bd8-ceac1a229cd4'],
+                              ['e5069610-744b-42a7-8bd8-ceac1a229cd44'],
+                              ['e50696100-744b-42a7-8bd8-ceac1a229cd4'],
+                              ['e5069610-744bb-42a7-8bd8-ceac1a229cd4']]
+        for uuid_list in invalid_uuid_lists:
+            msg = attributes._validate_uuid_list(uuid_list)
+            error = "'%s' is not a valid UUID" % uuid_list[0]
+            self.assertEquals(msg, error)
+
+        # check duplicate items in a list
+        duplicate_uuids = ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
+                           'f3eeab00-8367-4524-b662-55e64d4cacb5',
+                           'e5069610-744b-42a7-8bd8-ceac1a229cd4']
+        msg = attributes._validate_uuid_list(duplicate_uuids)
+        error = "Duplicate items in the list: %s" % ', '.join(duplicate_uuids)
+        self.assertEquals(msg, error)
+
+        # check valid uuid lists
+        valid_uuid_lists = [['e5069610-744b-42a7-8bd8-ceac1a229cd4'],
+                            ['f3eeab00-8367-4524-b662-55e64d4cacb5'],
+                            ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
+                             'f3eeab00-8367-4524-b662-55e64d4cacb5']]
+        for uuid_list in valid_uuid_lists:
+            msg = attributes._validate_uuid_list(uuid_list)
+            self.assertEquals(msg, None)
+
+    def test_validate_dict(self):
+        for value in (None, True, '1', []):
+            self.assertEquals(attributes._validate_dict(value),
+                              "'%s' is not a dictionary" % value)
+
+        msg = attributes._validate_dict({})
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_dict({'key': 'value'})
+        self.assertIsNone(msg)
+
+    def test_validate_non_negative(self):
+        for value in (-1, '-2'):
+            self.assertEquals(attributes._validate_non_negative(value),
+                              "'%s' should be non-negative" % value)
+
+        for value in (0, 1, '2', True, False):
+            msg = attributes._validate_non_negative(value)
+            self.assertIsNone(msg)
+
 
 class TestConvertToBoolean(unittest2.TestCase):
 
@@ -457,3 +520,22 @@ class TestConvertKvp(unittest2.TestCase):
     def test_convert_kvp_str_to_list_succeeds_for_two_equals(self):
         result = attributes.convert_kvp_str_to_list('a=a=a')
         self.assertEqual(['a', 'a=a'], result)
+
+
+class TestConvertToList(unittest2.TestCase):
+
+    def test_convert_to_empty_list(self):
+        for item in (None, [], (), {}):
+            self.assertEquals(attributes.convert_to_list(item), [])
+
+    def test_convert_to_list_string(self):
+        for item in ('', 'foo'):
+            self.assertEquals(attributes.convert_to_list(item), [item])
+
+    def test_convert_to_list_iterable(self):
+        for item in ([None], [1, 2, 3], (1, 2, 3), set([1, 2, 3]), ['foo']):
+            self.assertEquals(attributes.convert_to_list(item), list(item))
+
+    def test_convert_to_list_non_iterable(self):
+        for item in (True, False, 1, 1.2, object()):
+            self.assertEquals(attributes.convert_to_list(item), [item])

@@ -233,6 +233,50 @@ def _validate_uuid(data, valid_values=None):
         return msg
 
 
+def _validate_uuid_or_none(data, valid_values=None):
+    if data is not None:
+        return _validate_uuid(data)
+
+
+def _validate_uuid_list(data, valid_values=None):
+    if not isinstance(data, list):
+        msg = _("'%s' is not a list") % data
+        LOG.debug("validate_uuid_list: %s", msg)
+        return msg
+
+    for item in data:
+        msg = _validate_uuid(item)
+        if msg:
+            LOG.debug("validate_uuid_list: %s", msg)
+            return msg
+
+    if len(set(data)) != len(data):
+        msg = _("Duplicate items in the list: %s") % ', '.join(data)
+        LOG.debug("validate_uuid_list: %s", msg)
+        return msg
+
+
+def _validate_dict(data, valid_values=None):
+    if not isinstance(data, dict):
+        msg = _("'%s' is not a dictionary") % data
+        LOG.debug("validate_dict: %s", msg)
+        return msg
+
+
+def _validate_non_negative(data, valid_values=None):
+    try:
+        data = int(data)
+    except (ValueError, TypeError):
+        msg = _("'%s' is not an integer") % data
+        LOG.debug("validate_non_negative: %s", msg)
+        return msg
+
+    if data < 0:
+        msg = _("'%s' should be non-negative") % data
+        LOG.debug("validate_non_negative: %s", msg)
+        return msg
+
+
 def convert_to_boolean(data):
     if isinstance(data, basestring):
         val = data.lower()
@@ -294,6 +338,15 @@ def convert_none_to_empty_list(value):
     return [] if value is None else value
 
 
+def convert_to_list(data):
+    if data is None:
+        return []
+    elif hasattr(data, '__iter__'):
+        return list(data)
+    else:
+        return [data]
+
+
 HOSTNAME_PATTERN = ("(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]"
                     "{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)")
 
@@ -306,18 +359,22 @@ UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
 MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
-validators = {'type:fixed_ips': _validate_fixed_ips,
+validators = {'type:dict': _validate_dict,
+              'type:fixed_ips': _validate_fixed_ips,
               'type:hostroutes': _validate_hostroutes,
               'type:ip_address': _validate_ip_address,
               'type:ip_address_or_none': _validate_ip_address_or_none,
               'type:ip_pools': _validate_ip_pools,
               'type:mac_address': _validate_mac_address,
               'type:nameservers': _validate_nameservers,
+              'type:non_negative': _validate_non_negative,
               'type:range': _validate_range,
               'type:regex': _validate_regex,
               'type:string': _validate_string,
               'type:subnet': _validate_subnet,
               'type:uuid': _validate_uuid,
+              'type:uuid_or_none': _validate_uuid_or_none,
+              'type:uuid_list': _validate_uuid_list,
               'type:values': _validate_values}
 
 # Note: a default of ATTR_NOT_SPECIFIED indicates that an

@@ -17,8 +17,10 @@
 
 import abc
 
+from quantum.api import extensions
 
-class ServicePluginBase(object):
+
+class ServicePluginBase(extensions.PluginInterface):
     """ defines base interface for any Advanced Service plugin """
     __metaclass__ = abc.ABCMeta
     supported_extension_aliases = []
