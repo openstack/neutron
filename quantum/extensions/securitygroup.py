@@ -31,14 +31,6 @@ class SecurityGroupAlreadyExists(qexception.InUse):
     message = _("Security group %(name)s id %(external_id)s already exists")
 
 
-class SecurityGroupInvalidProtocolType(qexception.InvalidInput):
-    message = _("Invalid protocol type %(value)s")
-
-
-class SecurityGroupInvalidEtherType(qexception.InvalidInput):
-    message = _("Invalid/Unsupported ethertype %(value)s")
-
-
 class SecurityGroupInvalidPortRange(qexception.InvalidInput):
     message = _("For TCP/UDP protocols, port_range_min must be "
                 "<= port_range_max")
@@ -154,6 +146,9 @@ def _validate_external_id_and_mode(external_id, valid_values=None):
 attr.validators['type:name_not_default'] = _validate_name_not_default
 attr.validators['type:external_id_and_mode'] = _validate_external_id_and_mode
 
+sg_supported_protocols = [None, 'tcp', 'udp', 'icmp']
+sg_supported_ethertypes = ['IPv4', 'IPv6']
+
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
     'security_groups': {
@@ -188,7 +183,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True,
                       'validate': {'type:values': ['ingress', 'egress']}},
         'protocol': {'allow_post': True, 'allow_put': False,
-                     'is_visible': True, 'default': None},
+                     'is_visible': True, 'default': None,
+                     'validate': {'type:values': sg_supported_protocols}},
         'port_range_min': {'allow_post': True, 'allow_put': False,
                            'convert_to': convert_validate_port_value,
                            'default': None, 'is_visible': True},
@@ -196,7 +192,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': convert_validate_port_value,
                            'default': None, 'is_visible': True},
         'ethertype': {'allow_post': True, 'allow_put': False,
-                      'is_visible': True, 'default': 'IPv4'},
+                      'is_visible': True, 'default': 'IPv4',
+                      'validate': {'type:values': sg_supported_ethertypes}},
         'source_ip_prefix': {'allow_post': True, 'allow_put': False,
                              'default': None, 'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
