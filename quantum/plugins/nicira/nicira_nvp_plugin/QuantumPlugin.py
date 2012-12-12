@@ -358,12 +358,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           "network %s"), net_data.get('name', '<unknown>'))
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         target_cluster = self._find_target_cluster(net_data)
-        lswitch = nvplib.create_lswitch(target_cluster,
-                                        tenant_id,
-                                        net_data.get('name'),
-                                        net_data.get(pnet.NETWORK_TYPE),
-                                        net_data.get(pnet.PHYSICAL_NETWORK),
-                                        net_data.get(pnet.SEGMENTATION_ID))
+        nvp_binding_type = net_data.get(pnet.NETWORK_TYPE)
+        if nvp_binding_type in ('flat', 'vlan'):
+            nvp_binding_type = 'bridge'
+        lswitch = nvplib.create_lswitch(
+            target_cluster, tenant_id, net_data.get('name'),
+            nvp_binding_type,
+            net_data.get(pnet.PHYSICAL_NETWORK),
+            net_data.get(pnet.SEGMENTATION_ID))
         network['network']['id'] = lswitch['uuid']
 
         with context.session.begin(subtransactions=True):
