@@ -27,6 +27,7 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
+from quantum.db import l3_rpc_base
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
@@ -39,7 +40,8 @@ from quantum.plugins.ryu import ofp_service_type
 LOG = logging.getLogger(__name__)
 
 
-class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+                      l3_rpc_base.L3RpcCallbackMixin):
 
     RPC_API_VERSION = '1.0'
 
