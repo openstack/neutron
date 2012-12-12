@@ -21,22 +21,30 @@ from ryu.app import rest_nw_id
 
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
+from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
-from quantum.db.dhcp_rpc_base import DhcpRpcCallbackMixin
+from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 from quantum.plugins.ryu import ofp_service_type
 
 
 LOG = logging.getLogger(__name__)
+
+
+class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+
+    RPC_API_VERSION = '1.0'
+
+    def create_rpc_dispatcher(self):
+        return q_rpc.PluginRpcDispatcher([self])
 
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
@@ -76,8 +84,8 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _setup_rpc(self):
         self.conn = rpc.create_connection(new=True)
-        self.callback = DhcpRpcCallbackMixin()
-        self.dispatcher = dispatcher.RpcDispatcher([self.callback])
+        self.callbacks = RyuRpcCallbacks()
+        self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(topics.PLUGIN, self.dispatcher, fanout=False)
         self.conn.consume_in_thread()
 
