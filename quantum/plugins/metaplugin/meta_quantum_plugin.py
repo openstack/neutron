@@ -49,7 +49,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                    l3_db.L3_NAT_db_mixin):
 
     def __init__(self, configfile=None):
-        LOG.debug("Start initializing metaplugin")
+        LOG.debug(_("Start initializing metaplugin"))
         options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
         options.update({'base': models_v2.model_base.BASEV2})
         sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
@@ -96,12 +96,12 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         self.default_flavor = cfg.CONF.META.default_flavor
         if not self.default_flavor in self.plugins:
-            raise exc.Invalid('default_flavor %s is not plugin list' %
+            raise exc.Invalid(_('default_flavor %s is not plugin list') %
                               self.default_flavor)
 
         self.default_l3_flavor = cfg.CONF.META.default_l3_flavor
         if not self.default_l3_flavor in self.l3_plugins:
-            raise exc.Invalid('default_l3_flavor %s is not plugin list' %
+            raise exc.Invalid(_('default_l3_flavor %s is not plugin list') %
                               self.default_l3_flavor)
 
         db.configure_db(options)
@@ -117,7 +117,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.default_flavor = cfg.CONF.META.default_flavor
 
     def _load_plugin(self, plugin_provider):
-        LOG.debug("Plugin location:%s", plugin_provider)
+        LOG.debug(_("Plugin location: %s"), plugin_provider)
         plugin_klass = importutils.import_class(plugin_provider)
         return plugin_klass()
 
@@ -168,17 +168,17 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if not self._is_l3_plugin(plugin):
                 self._process_l3_create(context, network['network'], net['id'])
                 self._extend_network_dict_l3(context, net)
-            LOG.debug("Created network: %s with flavor %s " % (net['id'],
-                                                               flavor))
+            LOG.debug(_("Created network: %(net_id)s with flavor "
+                        "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
             try:
                 meta_db_v2.add_network_flavor_binding(context.session,
                                                       flavor, str(net['id']))
             except:
-                LOG.exception('failed to add flavor bindings')
+                LOG.exception(_('Failed to add flavor bindings'))
                 plugin.delete_network(context, net['id'])
                 raise FaildToAddFlavorBinding()
 
-        LOG.debug("Created network: %s" % net['id'])
+        LOG.debug(_("Created network: %s"), net['id'])
         self._extend_network_dict(context, net)
         return net
 
@@ -298,12 +298,13 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         plugin = self._get_l3_plugin(flavor)
         with context.session.begin(subtransactions=True):
             r_in_db = plugin.create_router(context, router)
-            LOG.debug("Created router: %s with flavor %s " % (r_in_db['id'],
-                                                              flavor))
+            LOG.debug(_("Created router: %(router_id)s with flavor "
+                        "%(flavor)s"),
+                      {'router_id': r_in_db['id'], 'flavor': flavor})
             meta_db_v2.add_router_flavor_binding(context.session,
                                                  flavor, str(r_in_db['id']))
 
-        LOG.debug("Created router: %s" % r_in_db['id'])
+        LOG.debug(_("Created router: %s"), r_in_db['id'])
         self._extend_router_dict(context, r_in_db)
         return r_in_db
 
