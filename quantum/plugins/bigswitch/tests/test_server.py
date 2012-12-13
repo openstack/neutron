@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2012, Big Switch Networks, Inc.
 # All Rights Reserved.
 #
@@ -15,6 +17,7 @@
 #    under the License.
 #
 # @author: Mandeep Dhami, Big Switch Networks, Inc.
+
 """
 Test server mocking a REST based network ctrl. Used for QuantumRestProxy tests
 """
