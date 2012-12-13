@@ -20,9 +20,39 @@ import abc
 from quantum.api import extensions
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
+from quantum.common import exceptions as qexception
 from quantum import manager
 from quantum.plugins.common import constants
 from quantum.plugins.services.service_base import ServicePluginBase
+
+
+# Loadbalancer Exceptions
+class VipNotFound(qexception.NotFound):
+    message = _("Vip %(vip_id)s could not be found")
+
+
+class PoolNotFound(qexception.NotFound):
+    message = _("Pool %(pool_id)s could not be found")
+
+
+class MemberNotFound(qexception.NotFound):
+    message = _("Member %(member_id)s could not be found")
+
+
+class HealthMonitorNotFound(qexception.NotFound):
+    message = _("Health_monitor %(monitor_id)s could not be found")
+
+
+class StateInvalid(qexception.QuantumException):
+    message = _("Invalid state %(state)s of Loadbalancer resource %(id)s")
+
+
+class PoolInUse(qexception.InUse):
+    message = _("Pool %(pool_id)s is still in use")
+
+
+class PoolStatsNotFound(qexception.NotFound):
+    message = _("Statistics of Pool %(pool_id)s could not be found")
 
 
 RESOURCE_ATTRIBUTE_MAP = {
@@ -279,6 +309,9 @@ class Loadbalancer(extensions.ExtensionDescriptor):
 
 class LoadBalancerPluginBase(ServicePluginBase):
     __metaclass__ = abc.ABCMeta
+
+    def get_plugin_name(self):
+        return constants.LOADBALANCER
 
     def get_plugin_type(self):
         return constants.LOADBALANCER
