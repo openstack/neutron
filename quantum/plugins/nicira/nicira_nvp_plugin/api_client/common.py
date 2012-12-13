@@ -28,6 +28,7 @@ def _conn_str(conn):
     elif isinstance(conn, mock.Mock):
         proto = "http://"
     else:
-        raise TypeError('_conn_str() invalid connection type: %s' % type(conn))
+        raise TypeError(_('_conn_str() invalid connection type: %s') %
+                        type(conn))
 
     return "%s%s:%s" % (proto, conn.host, conn.port)
