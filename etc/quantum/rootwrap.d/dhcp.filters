@@ -20,6 +20,10 @@ kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP
 
 # dhcp-agent uses cat
 cat: RegExpFilter, /bin/cat, root, cat, /proc/\d+/cmdline
+ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
+ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
+ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
+ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
 
 # ip_lib
 ip: IpFilter, /sbin/ip, root
