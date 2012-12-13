@@ -71,14 +71,14 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             self._get_client().update_subnet(id, subnet)
         except Exception as e:
-            LOG.error("update subnet failed: %e" % e)
+            LOG.error(_("Update subnet failed: %s"), e)
         return subnet_in_db
 
     def delete_subnet(self, context, id):
         try:
             self._get_client().delete_subnet(id)
         except exceptions.NotFound:
-            LOG.warn("subnet in remote have already deleted")
+            LOG.warn(_("Subnet in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_subnet(context, id)
 
     def create_network(self, context, network):
@@ -99,14 +99,14 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             self._get_client().update_network(id, network)
         except Exception as e:
-            LOG.error("update network failed: %e" % e)
+            LOG.error(_("Update network failed: %s"), e)
         return network_in_db
 
     def delete_network(self, context, id):
         try:
             self._get_client().delete_network(id)
         except exceptions.NetworkNotFoundClient:
-            LOG.warn("network in remote have already deleted")
+            LOG.warn(_("Network in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_network(context, id)
 
     def create_port(self, context, port):
@@ -127,7 +127,7 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             self._get_client().update_port(id, port)
         except Exception as e:
-            LOG.error("update port failed: %e" % e)
+            LOG.error(_("Update port failed: %s"), e)
         return port_in_db
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -138,5 +138,5 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             self._get_client().delete_port(id)
         except exceptions.PortNotFoundClient:
-            LOG.warn("port in remote have already deleted")
+            LOG.warn(_("Port in remote have already deleted"))
         return super(ProxyPluginV2, self).delete_port(context, id)
