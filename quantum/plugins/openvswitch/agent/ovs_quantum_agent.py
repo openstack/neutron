@@ -435,7 +435,7 @@ class OVSQuantumAgent(object):
         :returns: the integration bridge
         '''
         int_br = ovs_lib.OVSBridge(bridge_name, self.root_helper)
-        int_br.delete_port("patch-tun")
+        int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
         int_br.remove_all_flows()
         # switch all traffic using L2 learning
         int_br.add_flow(priority=1, actions="normal")
@@ -450,10 +450,10 @@ class OVSQuantumAgent(object):
         :param tun_br: the name of the tunnel bridge.'''
         self.tun_br = ovs_lib.OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
-        self.patch_tun_ofport = self.int_br.add_patch_port("patch-tun",
-                                                           "patch-int")
-        self.patch_int_ofport = self.tun_br.add_patch_port("patch-int",
-                                                           "patch-tun")
+        self.patch_tun_ofport = self.int_br.add_patch_port(
+            cfg.CONF.OVS.int_peer_patch_port, cfg.CONF.OVS.tun_peer_patch_port)
+        self.patch_int_ofport = self.tun_br.add_patch_port(
+            cfg.CONF.OVS.tun_peer_patch_port, cfg.CONF.OVS.int_peer_patch_port)
         if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
             LOG.error(_("Failed to create OVS patch port. Cannot have "
                         "tunneling enabled on this agent, since this version "
