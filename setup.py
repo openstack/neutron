@@ -43,6 +43,7 @@ config_path = 'etc/quantum/'
 init_path = 'etc/init.d'
 rootwrap_path = 'etc/quantum/rootwrap.d'
 ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
+bigswitch_plugin_config_path = 'etc/quantum/plugins/bigswitch'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
@@ -77,6 +78,8 @@ DataFiles = [
          'etc/quantum/plugins/cisco/ucs.ini',
          'etc/quantum/plugins/cisco/cisco_plugins.ini',
          'etc/quantum/plugins/cisco/db_conn.ini']),
+    (bigswitch_plugin_config_path,
+        ['etc/quantum/plugins/bigswitch/restproxy.ini']),
     (linuxbridge_plugin_config_path,
         ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
     (nvp_plugin_config_path,
