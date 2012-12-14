@@ -31,6 +31,7 @@ from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.extensions import l3
 from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
+from quantum.plugins.metaplugin.meta_quantum_plugin import FlavorNotFound
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
 from quantum.plugins.metaplugin.proxy_quantum_plugin import ProxyPluginV2
 from quantum.tests.unit.metaplugin import fake_plugin
@@ -294,7 +295,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
 
         self.plugin.delete_router(self.context, router_ret1['id'])
         self.plugin.delete_router(self.context, router_ret2['id'])
-        with self.assertRaises(l3.RouterNotFound):
+        with self.assertRaises(FlavorNotFound):
             self.plugin.get_router(self.context, router_ret1['id'])
 
     def test_extension_method(self):

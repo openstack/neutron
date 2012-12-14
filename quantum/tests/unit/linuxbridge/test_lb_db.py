@@ -18,6 +18,7 @@ import unittest2
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as lb_db
+from quantum.tests.unit import test_db_plugin as test_plugin
 
 PHYS_NET = 'physnet1'
 PHYS_NET_2 = 'physnet2'
@@ -26,7 +27,6 @@ VLAN_MAX = 19
 VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
 UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
                        PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
-TEST_NETWORK_ID = 'abcdefghijklmnopqrstuvwxyz'
 
 
 class NetworkStatesTest(unittest2.TestCase):
@@ -144,21 +144,21 @@ class NetworkStatesTest(unittest2.TestCase):
         self.assertIsNone(lb_db.get_network_state(PHYS_NET, vlan_id))
 
 
-class NetworkBindingsTest(unittest2.TestCase):
+class NetworkBindingsTest(test_plugin.QuantumDbPluginV2TestCase):
     def setUp(self):
+        super(NetworkBindingsTest, self).setUp()
         lb_db.initialize()
         self.session = db.get_session()
 
-    def tearDown(self):
-        db.clear_db()
-
     def test_add_network_binding(self):
-        self.assertIsNone(lb_db.get_network_binding(self.session,
-                                                    TEST_NETWORK_ID))
-        lb_db.add_network_binding(self.session, TEST_NETWORK_ID, PHYS_NET,
-                                  1234)
-        binding = lb_db.get_network_binding(self.session, TEST_NETWORK_ID)
-        self.assertIsNotNone(binding)
-        self.assertEqual(binding.network_id, TEST_NETWORK_ID)
-        self.assertEqual(binding.physical_network, PHYS_NET)
-        self.assertEqual(binding.vlan_id, 1234)
+        with self.network() as network:
+            TEST_NETWORK_ID = network['network']['id']
+            self.assertIsNone(lb_db.get_network_binding(self.session,
+                                                        TEST_NETWORK_ID))
+            lb_db.add_network_binding(self.session, TEST_NETWORK_ID, PHYS_NET,
+                                      1234)
+            binding = lb_db.get_network_binding(self.session, TEST_NETWORK_ID)
+            self.assertIsNotNone(binding)
+            self.assertEqual(binding.network_id, TEST_NETWORK_ID)
+            self.assertEqual(binding.physical_network, PHYS_NET)
+            self.assertEqual(binding.vlan_id, 1234)
