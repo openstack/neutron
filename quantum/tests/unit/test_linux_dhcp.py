@@ -176,7 +176,7 @@ class TestDhcpBase(unittest.TestCase):
 
         c = SubClass()
         c.restart()
-        self.assertEquals(c.called, ['disable True', 'enable'])
+        self.assertEqual(c.called, ['disable True', 'enable'])
 
 
 class LocalChild(dhcp.DhcpLocalProcess):

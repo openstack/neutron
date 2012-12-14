@@ -109,4 +109,4 @@ class TestBigSwitchProxySync(BigSwitchProxyPluginV2TestCase):
     def test_send_data(self):
         plugin_obj = QuantumManager.get_plugin()
         result = plugin_obj._send_all_data()
-        self.assertEquals(result[0], 200)
+        self.assertEqual(result[0], 200)

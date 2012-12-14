@@ -141,7 +141,7 @@ class TestNetnsCleanup(unittest.TestCase):
 
                     mock_get_bridge_for_iface.assert_called_once_with(
                         conf.root_helper, 'tap1')
-                    self.assertEquals(ovs_br_cls.mock_calls, [])
+                    self.assertEqual(ovs_br_cls.mock_calls, [])
                     self.assertTrue(debug.called)
 
     def _test_destroy_namespace_helper(self, force, num_devices):

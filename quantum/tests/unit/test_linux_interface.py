@@ -315,7 +315,7 @@ class TestBridgeInterfaceDriver(TestBase):
                     'tap0',
                     'aa:bb:cc:dd:ee:ff')
             self.ip_dev.assert_has_calls([])
-            self.assertEquals(log.call_count, 1)
+            self.assertEqual(log.call_count, 1)
 
     def test_plug_mtu(self):
         self.device_exists.return_value = False

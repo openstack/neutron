@@ -363,7 +363,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             router_req = self.new_create_request('routers', data, 'json')
             res = router_req.get_response(self.ext_api)
             router = self.deserialize('json', res)
-            self.assertEquals(
+            self.assertEqual(
                 s['subnet']['network_id'],
                 router['router']['external_gateway_info']['network_id'])
             self._delete('routers', router['router']['id'])
@@ -394,13 +394,13 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         rname2 = "nachorouter"
         with self.router(name=rname1) as r:
             body = self._show('routers', r['router']['id'])
-            self.assertEquals(body['router']['name'], rname1)
+            self.assertEqual(body['router']['name'], rname1)
 
             body = self._update('routers', r['router']['id'],
                                 {'router': {'name': rname2}})
 
             body = self._show('routers', r['router']['id'])
-            self.assertEquals(body['router']['name'], rname2)
+            self.assertEqual(body['router']['name'], rname2)
 
     def test_router_update_gateway(self):
         with self.router() as r:
@@ -413,7 +413,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     body = self._show('routers', r['router']['id'])
                     net_id = (body['router']
                               ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s1['subnet']['network_id'])
+                    self.assertEqual(net_id, s1['subnet']['network_id'])
                     self._set_net_external(s2['subnet']['network_id'])
                     self._add_external_gateway_to_router(
                         r['router']['id'],
@@ -421,7 +421,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     body = self._show('routers', r['router']['id'])
                     net_id = (body['router']
                               ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s2['subnet']['network_id'])
+                    self.assertEqual(net_id, s2['subnet']['network_id'])
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
                         s2['subnet']['network_id'])
@@ -453,7 +453,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 # fetch port and confirm device_id
                 r_port_id = body['port_id']
                 body = self._show('ports', r_port_id)
-                self.assertEquals(body['port']['device_id'], r['router']['id'])
+                self.assertEqual(body['port']['device_id'], r['router']['id'])
 
                 body = self._router_interface_action('remove',
                                                      r['router']['id'],
@@ -545,11 +545,11 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                      None,
                                                      p['port']['id'])
                 self.assertTrue('port_id' in body)
-                self.assertEquals(body['port_id'], p['port']['id'])
+                self.assertEqual(body['port_id'], p['port']['id'])
 
                 # fetch port and confirm device_id
                 body = self._show('ports', p['port']['id'])
-                self.assertEquals(body['port']['device_id'], r['router']['id'])
+                self.assertEqual(body['port']['device_id'], r['router']['id'])
 
                 # clean-up
                 self._router_interface_action('remove',
@@ -712,13 +712,13 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 net_id = body['router']['external_gateway_info']['network_id']
-                self.assertEquals(net_id, s['subnet']['network_id'])
+                self.assertEqual(net_id, s['subnet']['network_id'])
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
-                self.assertEquals(gw_info, None)
+                self.assertEqual(gw_info, None)
 
     def test_router_add_gateway_invalid_network_returns_404(self):
         with self.router() as r:
@@ -919,13 +919,13 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def _validate_floating_ip(self, fip):
         body = self._list('floatingips')
-        self.assertEquals(len(body['floatingips']), 1)
-        self.assertEquals(body['floatingips'][0]['id'],
-                          fip['floatingip']['id'])
+        self.assertEqual(len(body['floatingips']), 1)
+        self.assertEqual(body['floatingips'][0]['id'],
+                         fip['floatingip']['id'])
 
         body = self._show('floatingips', fip['floatingip']['id'])
-        self.assertEquals(body['floatingip']['id'],
-                          fip['floatingip']['id'])
+        self.assertEqual(body['floatingip']['id'],
+                         fip['floatingip']['id'])
 
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt='json'):
@@ -995,7 +995,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         # post-delete, check that it is really gone
         body = self._list('floatingips')
-        self.assertEquals(len(body['floatingips']), 0)
+        self.assertEqual(len(body['floatingips']), 0)
 
         self._show('floatingips', fip['floatingip']['id'],
                    expected_code=exc.HTTPNotFound.code)
@@ -1044,25 +1044,25 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                       p['port']['fixed_ips'][0]['subnet_id']}}
             with self.floatingip_no_assoc(private_sub) as fip:
                 body = self._show('floatingips', fip['floatingip']['id'])
-                self.assertEquals(body['floatingip']['port_id'], None)
-                self.assertEquals(body['floatingip']['fixed_ip_address'], None)
+                self.assertEqual(body['floatingip']['port_id'], None)
+                self.assertEqual(body['floatingip']['fixed_ip_address'], None)
 
                 port_id = p['port']['id']
                 ip_address = p['port']['fixed_ips'][0]['ip_address']
                 fixed_ip = p['port']['fixed_ips'][0]['ip_address']
                 body = self._update('floatingips', fip['floatingip']['id'],
                                     {'floatingip': {'port_id': port_id}})
-                self.assertEquals(body['floatingip']['port_id'], port_id)
-                self.assertEquals(body['floatingip']['fixed_ip_address'],
-                                  ip_address)
+                self.assertEqual(body['floatingip']['port_id'], port_id)
+                self.assertEqual(body['floatingip']['fixed_ip_address'],
+                                 ip_address)
 
     def test_floatingip_with_assoc(self):
         with self.floatingip_with_assoc() as fip:
             body = self._show('floatingips', fip['floatingip']['id'])
-            self.assertEquals(body['floatingip']['id'],
-                              fip['floatingip']['id'])
-            self.assertEquals(body['floatingip']['port_id'],
-                              fip['floatingip']['port_id'])
+            self.assertEqual(body['floatingip']['id'],
+                             fip['floatingip']['id'])
+            self.assertEqual(body['floatingip']['port_id'],
+                             fip['floatingip']['port_id'])
             self.assertTrue(body['floatingip']['fixed_ip_address'] is not None)
             self.assertTrue(body['floatingip']['router_id'] is not None)
 
@@ -1077,11 +1077,11 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 # deleted, which is what we want to test. We want to confirm
                 # that the fields are set back to None
                 body = self._show('floatingips', fip['floatingip']['id'])
-                self.assertEquals(body['floatingip']['id'],
-                                  fip['floatingip']['id'])
-                self.assertEquals(body['floatingip']['port_id'], None)
-                self.assertEquals(body['floatingip']['fixed_ip_address'], None)
-                self.assertEquals(body['floatingip']['router_id'], None)
+                self.assertEqual(body['floatingip']['id'],
+                                 fip['floatingip']['id'])
+                self.assertEqual(body['floatingip']['port_id'], None)
+                self.assertEqual(body['floatingip']['fixed_ip_address'], None)
+                self.assertEqual(body['floatingip']['router_id'], None)
 
     def test_two_fips_one_port_invalid_return_409(self):
         with self.floatingip_with_assoc() as fip1:
@@ -1195,15 +1195,15 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             self._set_net_external(n1['network']['id'])
             with self.network() as n2:
                 body = self._list('networks')
-                self.assertEquals(len(body['networks']), 2)
+                self.assertEqual(len(body['networks']), 2)
 
                 body = self._list('networks',
                                   query_params="%s=True" % l3.EXTERNAL)
-                self.assertEquals(len(body['networks']), 1)
+                self.assertEqual(len(body['networks']), 1)
 
                 body = self._list('networks',
                                   query_params="%s=False" % l3.EXTERNAL)
-                self.assertEquals(len(body['networks']), 1)
+                self.assertEqual(len(body['networks']), 1)
 
     def test_get_network_succeeds_without_filter(self):
         plugin = manager.QuantumManager.get_plugin()
@@ -1237,7 +1237,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                    set_context='True',
                                    tenant_id='noadmin'):
                         pass
-                    self.assertEquals(ctx_manager.exception.code, 403)
+                    self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_create_port_external_network_admin_suceeds(self):
         with self.network(router__external=True) as ext_net:
@@ -1252,7 +1252,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                               set_context='True',
                               tenant_id='noadmin'):
                 pass
-            self.assertEquals(ctx_manager.exception.code, 403)
+            self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_create_external_network_admin_suceeds(self):
         with self.network(router__external=True) as ext_net:
@@ -1285,7 +1285,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
-                self.assertEquals(
+                self.assertEqual(
                     2, notifyApi.routers_updated.call_count)
 
     def test_router_gateway_op_agent(self):
@@ -1302,7 +1302,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                           r['router']['id'],
                                           None,
                                           p['port']['id'])
-        self.assertEquals(2, notifyApi.routers_updated.call_count)
+        self.assertEqual(2, notifyApi.routers_updated.call_count)
 
     def test_interfaces_op_agent(self):
         with self.router() as r:
@@ -1314,7 +1314,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             pass
         # add gateway, add interface, associate, deletion of floatingip,
         # delete gateway, delete interface
-        self.assertEquals(6, notifyApi.routers_updated.call_count)
+        self.assertEqual(6, notifyApi.routers_updated.call_count)
 
     def test_floatingips_op_agent(self):
         self._test_notify_op_agent(self._test_floatingips_op_agent)
@@ -1382,7 +1382,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                [r['router']['id']])
                 self.assertEqual(1, len(routers))
                 gw_port = routers[0]['gw_port']
-                self.assertEquals(s['subnet']['id'], gw_port['subnet']['id'])
+                self.assertEqual(s['subnet']['id'], gw_port['subnet']['id'])
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
@@ -1395,9 +1395,9 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             self.assertEqual(1, len(routers))
             floatingips = routers[0][l3_constants.FLOATINGIP_KEY]
             self.assertEqual(1, len(floatingips))
-            self.assertEquals(floatingips[0]['id'],
-                              fip['floatingip']['id'])
-            self.assertEquals(floatingips[0]['port_id'],
-                              fip['floatingip']['port_id'])
+            self.assertEqual(floatingips[0]['id'],
+                             fip['floatingip']['id'])
+            self.assertEqual(floatingips[0]['port_id'],
+                             fip['floatingip']['port_id'])
             self.assertTrue(floatingips[0]['fixed_ip_address'] is not None)
             self.assertTrue(floatingips[0]['router_id'] is not None)

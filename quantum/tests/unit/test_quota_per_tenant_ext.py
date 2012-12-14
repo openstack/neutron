@@ -112,17 +112,17 @@ class QuotaExtensionTestCase(unittest.TestCase):
 
     def test_quotas_loaded_right(self):
         res = self.api.get(_get_path('quotas'))
-        self.assertEquals(200, res.status_int)
+        self.assertEqual(200, res.status_int)
 
     def test_quotas_defaul_values(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id)}
         res = self.api.get(_get_path('quotas', id=tenant_id),
                            extra_environ=env)
-        self.assertEquals(10, res.json['quota']['network'])
-        self.assertEquals(10, res.json['quota']['subnet'])
-        self.assertEquals(50, res.json['quota']['port'])
-        self.assertEquals(-1, res.json['quota']['extra1'])
+        self.assertEqual(10, res.json['quota']['network'])
+        self.assertEqual(10, res.json['quota']['subnet'])
+        self.assertEqual(50, res.json['quota']['port'])
+        self.assertEqual(-1, res.json['quota']['extra1'])
 
     def test_show_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
@@ -130,7 +130,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
                                                   is_admin=True)}
         res = self.api.get(_get_path('quotas', id=tenant_id),
                            extra_environ=env)
-        self.assertEquals(200, res.status_int)
+        self.assertEqual(200, res.status_int)
 
     def test_show_quotas_without_admin_forbidden(self):
         tenant_id = 'tenant_id1'
@@ -138,7 +138,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
                                                   is_admin=False)}
         res = self.api.get(_get_path('quotas', id=tenant_id),
                            extra_environ=env, expect_errors=True)
-        self.assertEquals(403, res.status_int)
+        self.assertEqual(403, res.status_int)
 
     def test_update_quotas_without_admin_forbidden(self):
         tenant_id = 'tenant_id1'
@@ -149,7 +149,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
                                           fmt='json'),
                                 quotas, extra_environ=env,
                                 expect_errors=True)
-        self.assertEquals(403, res.status_int)
+        self.assertEqual(403, res.status_int)
 
     def test_update_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
@@ -158,11 +158,11 @@ class QuotaExtensionTestCase(unittest.TestCase):
         quotas = {'quota': {'network': 100}}
         res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
                                 quotas, extra_environ=env)
-        self.assertEquals(200, res.status_int)
+        self.assertEqual(200, res.status_int)
         env2 = {'quantum.context': context.Context('', tenant_id)}
         res = self.api.get(_get_path('quotas', id=tenant_id),
                            extra_environ=env2).json
-        self.assertEquals(100, res['quota']['network'])
+        self.assertEqual(100, res['quota']['network'])
 
     def test_delete_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
@@ -170,7 +170,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
                                                   is_admin=True)}
         res = self.api.delete(_get_path('quotas', id=tenant_id, fmt='json'),
                               extra_environ=env)
-        self.assertEquals(204, res.status_int)
+        self.assertEqual(204, res.status_int)
 
     def test_delete_quotas_without_admin_forbidden(self):
         tenant_id = 'tenant_id1'
@@ -178,13 +178,13 @@ class QuotaExtensionTestCase(unittest.TestCase):
                                                   is_admin=False)}
         res = self.api.delete(_get_path('quotas', id=tenant_id, fmt='json'),
                               extra_environ=env, expect_errors=True)
-        self.assertEquals(403, res.status_int)
+        self.assertEqual(403, res.status_int)
 
     def test_quotas_loaded_bad(self):
         self.testflag = 2
         try:
             res = self.api.get(_get_path('quotas'), expect_errors=True)
-            self.assertEquals(404, res.status_int)
+            self.assertEqual(404, res.status_int)
         except Exception:
             pass
         self.testflag = 1

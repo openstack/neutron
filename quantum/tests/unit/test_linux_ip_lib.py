@@ -144,11 +144,11 @@ class TestIpWrapper(unittest.TestCase):
     def test_get_devices(self):
         self.execute.return_value = '\n'.join(LINK_SAMPLE)
         retval = ip_lib.IPWrapper('sudo').get_devices()
-        self.assertEquals(retval,
-                          [ip_lib.IPDevice('lo'),
-                           ip_lib.IPDevice('eth0'),
-                           ip_lib.IPDevice('br-int'),
-                           ip_lib.IPDevice('gw-ddc717df-49')])
+        self.assertEqual(retval,
+                         [ip_lib.IPDevice('lo'),
+                          ip_lib.IPDevice('eth0'),
+                          ip_lib.IPDevice('br-int'),
+                          ip_lib.IPDevice('gw-ddc717df-49')])
 
         self.execute.assert_called_once_with('o', 'link', ('list',),
                                              'sudo', None)
@@ -156,11 +156,11 @@ class TestIpWrapper(unittest.TestCase):
     def test_get_devices_malformed_line(self):
         self.execute.return_value = '\n'.join(LINK_SAMPLE + ['gibberish'])
         retval = ip_lib.IPWrapper('sudo').get_devices()
-        self.assertEquals(retval,
-                          [ip_lib.IPDevice('lo'),
-                           ip_lib.IPDevice('eth0'),
-                           ip_lib.IPDevice('br-int'),
-                           ip_lib.IPDevice('gw-ddc717df-49')])
+        self.assertEqual(retval,
+                         [ip_lib.IPDevice('lo'),
+                          ip_lib.IPDevice('eth0'),
+                          ip_lib.IPDevice('br-int'),
+                          ip_lib.IPDevice('gw-ddc717df-49')])
 
         self.execute.assert_called_once_with('o', 'link', ('list',),
                                              'sudo', None)
@@ -168,10 +168,10 @@ class TestIpWrapper(unittest.TestCase):
     def test_get_namespaces(self):
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
         retval = ip_lib.IPWrapper.get_namespaces('sudo')
-        self.assertEquals(retval,
-                          ['12345678-1234-5678-abcd-1234567890ab',
-                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
+        self.assertEqual(retval,
+                         ['12345678-1234-5678-abcd-1234567890ab',
+                          'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+                          'cccccccc-cccc-cccc-cccc-cccccccccccc'])
 
         self.execute.assert_called_once_with('', 'netns', ('list',),
                                              root_helper='sudo')
@@ -440,7 +440,7 @@ class TestIpLinkCommand(TestIPCmdBase):
                     'brd': 'ff:ff:ff:ff:ff:ff',
                     'link/ether': 'cc:dd:ee:ff:ab:cd'}
         self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEquals(self.link_cmd.attributes, expected)
+        self.assertEqual(self.link_cmd.attributes, expected)
         self._assert_call('o', ('show', 'eth0'))
 
 
@@ -495,7 +495,7 @@ class TestIpAddrCommand(TestIPCmdBase):
                  broadcast='::')]
 
         self.parent._run = mock.Mock(return_value=ADDR_SAMPLE)
-        self.assertEquals(self.addr_cmd.list(), expected)
+        self.assertEqual(self.addr_cmd.list(), expected)
         self._assert_call([], ('show', 'tap0'))
 
     def test_list_filtered(self):
@@ -506,8 +506,8 @@ class TestIpAddrCommand(TestIPCmdBase):
 
         output = '\n'.join(ADDR_SAMPLE.split('\n')[0:4])
         self.parent._run.return_value = output
-        self.assertEquals(self.addr_cmd.list('global', filters=['permanent']),
-                          expected)
+        self.assertEqual(self.addr_cmd.list('global', filters=['permanent']),
+                         expected)
         self._assert_call([], ('show', 'tap0', 'permanent', 'scope', 'global'))
 
 
@@ -547,8 +547,8 @@ class TestIpRouteCommand(TestIPCmdBase):
                        'expected': {'gateway': '10.35.19.254'}}]
         for test_case in test_cases:
             self.parent._run = mock.Mock(return_value=test_case['sample'])
-            self.assertEquals(self.route_cmd.get_gateway(),
-                              test_case['expected'])
+            self.assertEqual(self.route_cmd.get_gateway(),
+                             test_case['expected'])
 
     def test_pullup_route(self):
         # interface is not the first in the list - requires

@@ -34,14 +34,14 @@ class TestQuantumContext(unittest.TestCase):
 
     def testQuantumContextCreate(self):
         cxt = context.Context('user_id', 'tenant_id')
-        self.assertEquals('user_id', cxt.user_id)
-        self.assertEquals('tenant_id', cxt.project_id)
+        self.assertEqual('user_id', cxt.user_id)
+        self.assertEqual('tenant_id', cxt.project_id)
 
     def testQuantumContextToDict(self):
         cxt = context.Context('user_id', 'tenant_id')
         cxt_dict = cxt.to_dict()
-        self.assertEquals('user_id', cxt_dict['user_id'])
-        self.assertEquals('tenant_id', cxt_dict['project_id'])
+        self.assertEqual('user_id', cxt_dict['user_id'])
+        self.assertEqual('tenant_id', cxt_dict['project_id'])
 
     def testQuantumContextAdminToDict(self):
         self.db_api_session.return_value = 'fakesession'

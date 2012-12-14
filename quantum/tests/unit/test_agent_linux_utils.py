@@ -69,4 +69,4 @@ class AgentUtilsGetInterfaceMAC(unittest.TestCase):
                                           '\x01\x02\x03\x04\x05\x06',
                                           '\x00' * 232])
             actual_val = utils.get_interface_mac('eth0')
-        self.assertEquals(actual_val, expect_val)
+        self.assertEqual(actual_val, expect_val)

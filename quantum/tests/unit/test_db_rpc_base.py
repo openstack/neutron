@@ -59,7 +59,7 @@ class TestDhcpRpcCallackMixin(unittest.TestCase):
         self.plugin.get_ports.return_value = port_retval
 
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
-        self.assertEquals(retval, network_retval)
+        self.assertEqual(retval, network_retval)
         self.assertEqual(retval['subnets'], subnet_retval)
         self.assertEqual(retval['ports'], port_retval)
 

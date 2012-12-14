@@ -107,12 +107,12 @@ class TestBasicRouterOperations(unittest2.TestCase):
             self.device_exists.return_value = False
             agent.internal_network_added(ri, ex_gw_port, network_id,
                                          port_id, cidr, mac)
-            self.assertEquals(self.mock_driver.plug.call_count, 1)
-            self.assertEquals(self.mock_driver.init_l3.call_count, 1)
+            self.assertEqual(self.mock_driver.plug.call_count, 1)
+            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.internal_network_removed(ri, ex_gw_port, port_id, cidr)
-            self.assertEquals(self.mock_driver.unplug.call_count, 1)
+            self.assertEqual(self.mock_driver.unplug.call_count, 1)
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -140,8 +140,8 @@ class TestBasicRouterOperations(unittest2.TestCase):
         if action == 'add':
             self.device_exists.return_value = False
             agent.external_gateway_added(ri, ex_gw_port, internal_cidrs)
-            self.assertEquals(self.mock_driver.plug.call_count, 1)
-            self.assertEquals(self.mock_driver.init_l3.call_count, 1)
+            self.assertEqual(self.mock_driver.plug.call_count, 1)
+            self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             arping_cmd = ['arping', '-A', '-U',
                           '-I', interface_name,
                           '-c', self.conf.send_arp_for_ha,
@@ -156,7 +156,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.external_gateway_removed(ri, ex_gw_port, internal_cidrs)
-            self.assertEquals(self.mock_driver.unplug.call_count, 1)
+            self.assertEqual(self.mock_driver.unplug.call_count, 1)
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -277,7 +277,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
 
         agent.router_deleted(None, routers[0]['id'])
         # verify that remove is called
-        self.assertEquals(self.mock_ip.get_devices.call_count, 1)
+        self.assertEqual(self.mock_ip.get_devices.call_count, 1)
 
         self.device_exists.assert_has_calls(
             [mock.call(self.conf.external_network_bridge)])
