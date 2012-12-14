@@ -25,7 +25,6 @@ import webtest
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
-from quantum.api.v2 import resource as wsgi_resource
 from quantum.api.v2 import router
 from quantum.common import config
 from quantum.common import exceptions as q_exc
@@ -62,50 +61,6 @@ def _get_path(resource, id=None, action=None, fmt=None):
         path = path + '.%s' % fmt
 
     return path
-
-
-class V2WsgiResourceTestCase(unittest.TestCase):
-    def test_unmapped_quantum_error(self):
-        controller = mock.MagicMock()
-        controller.test.side_effect = q_exc.QuantumException()
-
-        resource = webtest.TestApp(wsgi_resource.Resource(controller))
-
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
-        res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
-
-    def test_mapped_quantum_error(self):
-        controller = mock.MagicMock()
-        controller.test.side_effect = q_exc.QuantumException()
-
-        faults = {q_exc.QuantumException: exc.HTTPGatewayTimeout}
-        resource = webtest.TestApp(wsgi_resource.Resource(controller,
-                                                          faults=faults))
-
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
-        res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
-
-    def test_http_error(self):
-        controller = mock.MagicMock()
-        controller.test.side_effect = exc.HTTPGatewayTimeout()
-
-        resource = webtest.TestApp(wsgi_resource.Resource(controller))
-
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
-        res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
-
-    def test_unhandled_error(self):
-        controller = mock.MagicMock()
-        controller.test.side_effect = Exception()
-
-        resource = webtest.TestApp(wsgi_resource.Resource(controller))
-
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
-        res = resource.get('', extra_environ=environ, expect_errors=True)
-        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
 
 
 class ResourceIndexTestCase(unittest.TestCase):
