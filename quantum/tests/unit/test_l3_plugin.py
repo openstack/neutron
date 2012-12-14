@@ -21,7 +21,7 @@ import contextlib
 import copy
 import itertools
 import logging
-import unittest
+import unittest2 as unittest
 
 import mock
 from webob import exc
@@ -141,6 +141,9 @@ class L3NatExtensionTestCase(unittest.TestCase):
         instance.get_routers.assert_called_with(mock.ANY, fields=mock.ANY,
                                                 filters=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
+        self.assertTrue('routers' in res.json)
+        self.assertEqual(1, len(res.json['routers']))
+        self.assertEqual(router_id, res.json['routers'][0]['id'])
 
     def test_router_update(self):
         router_id = _uuid()
