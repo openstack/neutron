@@ -139,7 +139,7 @@ class NvpApiRequestEventlet:
         '''Wait for instance green thread to complete.'''
         if self._green_thread is not None:
             return self._green_thread.wait()
-        return Exception('Joining an invalid green thread')
+        return Exception(_('Joining an invalid green thread'))
 
     def start(self):
         '''Start request processing.'''
@@ -164,8 +164,8 @@ class NvpApiRequestEventlet:
             with timeout.Timeout(self._request_timeout, False):
                 return self._handle_request()
 
-            lg.info('[%d] Request timeout.' % self._rid())
-            self._request_error = Exception('Request timeout')
+            lg.info(_('[%d] Request timeout.'), self._rid())
+            self._request_error = Exception(_('Request timeout'))
             return None
         else:
             return self._handle_request()
@@ -178,7 +178,7 @@ class NvpApiRequestEventlet:
         '''Issue a request to a provider.'''
         conn = self._api_client.acquire_connection(rid=self._rid())
         if conn is None:
-            error = Exception("No API connections available")
+            error = Exception(_("No API connections available"))
             self._request_error = error
             return error
 
@@ -187,9 +187,9 @@ class NvpApiRequestEventlet:
         acquired_conn = conn
 
         url = self._url
-        lg.debug("[%d] Issuing - request '%s'" %
-                 (self._rid(),
-                 self._request_str(conn, url)))
+        lg.debug(_("[%(rid)d] Issuing - request '%(req)s'"),
+                 {'rid': self._rid(),
+                  'req': self._request_str(conn, url)})
         issued_time = time.time()
         is_conn_error = False
         try:
@@ -208,26 +208,31 @@ class NvpApiRequestEventlet:
                 gen = self._api_client.nvp_config_gen
                 if gen:
                     headers["X-Nvp-Wait-For-Config-Generation"] = gen
-                    lg.debug("Setting %s request header: %s" %
-                             ('X-Nvp-Wait-For-Config-Generation', gen))
+                    lg.debug(_("Setting %(header)s request header: %(gen)s"),
+                             {'header': 'X-Nvp-Wait-For-Config-Generation',
+                              'gen': gen})
                 try:
                     conn.request(self._method, url, self._body, headers)
                 except Exception as e:
-                    lg.warn('[%d] Exception issuing request: %s' %
-                            (self._rid(), e))
+                    lg.warn(_('[%(rid)d] Exception issuing request: %(e)s'),
+                            {'rid': self._rid(), 'e': e})
                     raise e
 
                 response = conn.getresponse()
                 response.body = response.read()
                 response.headers = response.getheaders()
-                lg.debug("[%d] Completed request '%s': %s (%0.2f seconds)"
-                         % (self._rid(), self._request_str(conn, url),
-                            response.status, time.time() - issued_time))
+                lg.debug(_("[%(rid)d] Completed request '%(req)s': %(status)s "
+                           "(%(time)0.2f seconds)"),
+                         {'rid': self._rid(),
+                          'req': self._request_str(conn, url),
+                          'status': response.status,
+                          'time': time.time() - issued_time})
 
                 new_gen = response.getheader('X-Nvp-Config-Generation', None)
                 if new_gen:
-                    lg.debug("Reading %s response header: %s" %
-                             ('X-Nvp-config-Generation', new_gen))
+                    lg.debug(_("Reading %(header)s response header: %(gen)s"),
+                             {'header': 'X-Nvp-config-Generation',
+                              'gen': new_gen})
                     if (self._api_client.nvp_config_gen is None or
                             self._api_client.nvp_config_gen < int(new_gen)):
                         self._api_client.nvp_config_gen = int(new_gen)
@@ -236,8 +241,8 @@ class NvpApiRequestEventlet:
                                            httplib.TEMPORARY_REDIRECT]:
                     break
                 elif redirects >= self._redirects:
-                    lg.info("[%d] Maximum redirects exceeded, aborting request"
-                            % self._rid())
+                    lg.info(_("[%d] Maximum redirects exceeded, aborting "
+                              "request"), self._rid())
                     break
                 redirects += 1
 
@@ -247,8 +252,9 @@ class NvpApiRequestEventlet:
                 if url is None:
                     response.status = httplib.INTERNAL_SERVER_ERROR
                     break
-                lg.info("[%d] Redirecting request to: %s" %
-                        (self._rid(), self._request_str(conn, url)))
+                lg.info(_("[%(rid)d] Redirecting request to: %(req)s"),
+                        {'rid': self._rid(),
+                         'req': self._request_str(conn, url)})
 
             # FIX for #9415. If we receive any of these responses, then
             # our server did not process our request and may be in an
@@ -257,20 +263,24 @@ class NvpApiRequestEventlet:
             # which puts the conn on the back of the client's priority
             # queue.
             if response.status >= 500:
-                lg.warn("[%d] Request '%s %s' received: %s"
-                        % (self._rid(), self._method, self._url,
-                           response.status))
-                raise Exception('Server error return: %s' %
+                lg.warn(_("[%(rid)d] Request '%(method)s %(url)s' "
+                          "received: %(status)s"),
+                        {'rid': self._rid(), 'method': self._method,
+                         'url': self._url,
+                         'status': response.status})
+                raise Exception(_('Server error return: %s') %
                                 response.status)
             return response
         except Exception as e:
             if isinstance(e, httplib.BadStatusLine):
-                msg = "Invalid server response"
+                msg = _("Invalid server response")
             else:
                 msg = unicode(e)
-            lg.warn("[%d] Failed request '%s': %s (%0.2f seconds)"
-                    % (self._rid(), self._request_str(conn, url), msg,
-                       time.time() - issued_time))
+            lg.warn(_("[%(rid)d] Failed request '%(req)s': %(msg)s "
+                      "(%(time)0.2f seconds)"),
+                    {'rid': self._rid(), 'req': self._request_str(conn, url),
+                     'msg': msg,
+                     'time': time.time() - issued_time})
             self._request_error = e
             is_conn_error = True
             return e
@@ -288,8 +298,8 @@ class NvpApiRequestEventlet:
                 url = value
                 break
         if not url:
-            lg.warn("[%d] Received redirect status without location header"
-                    " field" % self._rid())
+            lg.warn(_("[%d] Received redirect status without location header "
+                      "field"), self._rid())
             return (conn, None)
         # Accept location with the following format:
         # 1. /path, redirect to same node
@@ -305,12 +315,14 @@ class NvpApiRequestEventlet:
                     url = result.path
                 return (conn, url)      # case 1
             else:
-                lg.warn("[%d] Received invalid redirect location: %s" %
-                        (self._rid(), url))
+                lg.warn(_("[%(rid)d] Received invalid redirect location: "
+                          "%(url)s"),
+                        {'rid': self._rid(), 'url': url})
                 return (conn, None)     # case 3
         elif result.scheme not in ["http", "https"] or not result.hostname:
-            lg.warn("[%d] Received malformed redirect location: %s" %
-                    (self._rid(), url))
+            lg.warn(_("[%(rid)d] Received malformed redirect location: "
+                      "%(url)s"),
+                    {'rid': self._rid(), 'url': url})
             return (conn, None)         # case 3
         # case 2, redirect location includes a scheme
         # so setup a new connection and authenticate
@@ -354,13 +366,15 @@ class NvpApiRequestEventlet:
                         continue
                     # else fall through to return the error code
 
-                lg.debug("[%d] Completed request '%s %s': %s"
-                         % (self._rid(), self._method, self._url, req.status))
+                lg.debug(_("[%(rid)d] Completed request '%(method)s %(url)s'"
+                           ": %(status)s"),
+                         {'rid': self._rid(), 'method': self._method,
+                          'url': self._url, 'status': req.status})
                 self._request_error = None
                 response = req
             else:
-                lg.info('[%d] Error while handling request: %s' % (self._rid(),
-                                                                   req))
+                lg.info(_('[%(rid)d] Error while handling request: %(req)s'),
+                        {'rid': self._rid(), 'req': req})
                 self._request_error = req
                 response = None
 
@@ -413,7 +427,8 @@ class NvpGetApiProvidersRequestEventlet(NvpApiRequestEventlet):
                                 ret.append(_provider_from_listen_addr(addr))
                 return ret
         except Exception as e:
-            lg.warn("[%d] Failed to parse API provider: %s" % (self._rid(), e))
+            lg.warn(_("[%(rid)d] Failed to parse API provider: %(e)s"),
+                    {'rid': self._rid(), 'e': e})
             # intentionally fall through
         return None
 

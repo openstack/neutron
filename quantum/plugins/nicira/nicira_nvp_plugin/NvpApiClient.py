@@ -96,7 +96,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
             retries=self._retries, redirects=self._redirects)
         g.start()
         response = g.join()
-        LOG.debug('NVPApiHelper.request() returns "%s"' % response)
+        LOG.debug(_('NVPApiHelper.request() returns "%s"'), response)
 
         # response is a modified HTTPResponse object or None.
         # response.read() will not work on response as the underlying library
@@ -109,7 +109,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
 
         if response is None:
             # Timeout.
-            LOG.error('Request timed out: %s to %s' % (method, url))
+            LOG.error(_('Request timed out: %(method)s to %(url)s'), locals())
             raise RequestTimeout()
 
         status = response.status
@@ -119,15 +119,17 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
         # Fail-fast: Check for exception conditions and raise the
         # appropriate exceptions for known error codes.
         if status in self.error_codes:
-            LOG.error("Received error code: %s" % status)
-            LOG.error("Server Error Message: %s" % response.body)
+            LOG.error(_("Received error code: %s"), status)
+            LOG.error(_("Server Error Message: %s"), response.body)
             self.error_codes[status](self)
 
         # Continue processing for non-error condition.
         if (status != httplib.OK and status != httplib.CREATED
                 and status != httplib.NO_CONTENT):
-            LOG.error("%s to %s, unexpected response code: %d (content = '%s')"
-                      % (method, url, response.status, response.body))
+            LOG.error(_("%(method)s to %(url)s, unexpected response code: "
+                        "%(status)d (content = '%(body)s')"),
+                      {'method': method, 'url': url,
+                       'status': response.status, 'body': response.body})
             return None
 
         return response.body

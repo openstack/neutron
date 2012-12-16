@@ -94,7 +94,7 @@ def parse_config():
              nvp_conf[cluster_name].nova_zone_id,
              'nvp_controller_connection':
              nvp_conf[cluster_name].nvp_controller_connection, })
-    LOG.debug("cluster options:%s", clusters_options)
+    LOG.debug(_("Cluster options: %s"), clusters_options)
     return db_options, nvp_options, clusters_options
 
 
@@ -251,10 +251,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                  c_opts['nova_zone_id']])
                     cluster.add_controller(*args)
                 except Exception:
-                    LOG.exception("Invalid connection parameters for "
-                                  "controller %s in cluster %s",
-                                  controller_connection,
-                                  c_opts['name'])
+                    LOG.exception(_("Invalid connection parameters for "
+                                    "controller %(conn)s in cluster %(name)s"),
+                                  {'conn': controller_connection,
+                                   'name': c_opts['name']})
                     raise
 
             api_providers = [(x['ip'], x['port'], True)
@@ -311,8 +311,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         networks = []
         for c in self.clusters:
             networks.extend(nvplib.get_all_networks(c, tenant_id, networks))
-        LOG.debug("get_all_networks() completed for tenant %s: %s" % (
-            tenant_id, networks))
+        LOG.debug(_("get_all_networks() completed for tenant "
+                    "%(tenant_id)s: %(networks)s"), locals())
         return networks
 
     def create_network(self, context, network):
@@ -335,9 +335,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         # FIXME(arosen) implement admin_state_up = False in NVP
         if network['network']['admin_state_up'] is False:
-            LOG.warning("Network with admin_state_up=False are not yet "
-                        "supported by this plugin. Ignoring setting for "
-                        "network %s",
+            LOG.warning(_("Network with admin_state_up=False are not yet "
+                          "supported by this plugin. Ignoring setting for "
+                          "network %s"),
                         network['network'].get('name', '<unknown>'))
 
         tenant_id = self._get_tenant_id_for_create(context, network)
@@ -367,7 +367,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         for (cluster, switches) in pairs:
             nvplib.delete_networks(cluster, id, switches)
 
-        LOG.debug("delete_network() completed for tenant: %s" %
+        LOG.debug(_("delete_network() completed for tenant: %s"),
                   context.tenant_id)
 
     def _get_lswitch_cluster_pairs(self, netw_id, tenant_id):
@@ -384,7 +384,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             pairs.append((c, lswitches))
         if len(pairs) == 0:
             raise exception.NetworkNotFound(net_id=netw_id)
-        LOG.debug("Returning pairs for network: %s" % (pairs))
+        LOG.debug(_("Returning pairs for network: %s"), pairs)
         return pairs
 
     def get_network(self, context, id, fields=None):
@@ -440,7 +440,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                         lswitch_results[0]['display_name'])
                     break
         except Exception:
-            LOG.error("Unable to get switches: %s" % traceback.format_exc())
+            LOG.error(_("Unable to get switches: %s"), traceback.format_exc())
             raise exception.QuantumException()
 
         if 'lswitch-display-name' not in result:
@@ -456,8 +456,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
              'shared': network['shared'],
              'subnets': quantum_db.get('subnets', [])}
 
-        LOG.debug("get_network() completed for tenant %s: %s" % (
-                  context.tenant_id, d))
+        LOG.debug(_("get_network() completed for tenant %(tenant_id)s: %(d)s"),
+                  {'tenant_id': context.tenant_id, 'd': d})
         return d
 
     def get_networks(self, context, filters=None, fields=None):
@@ -508,7 +508,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
                 nvp_lswitches.extend(res)
         except Exception:
-            LOG.error("Unable to get switches: %s" % traceback.format_exc())
+            LOG.error(_("Unable to get switches: %s"), traceback.format_exc())
             raise exception.QuantumException()
 
         # TODO (Aaron) This can be optimized
@@ -535,15 +535,17 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                     break
 
             if not Found:
-                raise Exception("Quantum and NVP Databases are out of Sync!")
+                raise Exception(_("Quantum and NVP Databases are out of "
+                                  "Sync!"))
         # do not make the case in which switches are found in NVP
         # but not in Quantum catastrophic.
         if len(nvp_lswitches):
-            LOG.warning("Found %s logical switches not bound "
+            LOG.warning(_("Found %s logical switches not bound "
                         "to Quantum networks. Quantum and NVP are "
-                        "potentially out of sync", len(nvp_lswitches))
+                        "potentially out of sync"), len(nvp_lswitches))
 
-        LOG.debug("get_networks() completed for tenant %s" % context.tenant_id)
+        LOG.debug(_("get_networks() completed for tenant %s"),
+                  context.tenant_id)
 
         if fields:
             ret_fields = []
@@ -594,7 +596,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 for switch in switches:
                     result = nvplib.update_network(cluster, switch, **params)
 
-        LOG.debug("update_network() completed for tenant: %s" %
+        LOG.debug(_("update_network() completed for tenant: %s"),
                   context.tenant_id)
         return super(NvpPluginV2, self).update_network(context, id, network)
 
@@ -661,7 +663,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                 nvp_lports[tag["tag"]] = port
 
         except Exception:
-            LOG.error("Unable to get ports: %s" % traceback.format_exc())
+            LOG.error(_("Unable to get ports: %s"), traceback.format_exc())
             raise exception.QuantumException()
 
         lports = []
@@ -684,13 +686,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 del nvp_lports[quantum_lport["id"]]
                 lports.append(quantum_lport)
             except KeyError:
-                raise Exception("Quantum and NVP Databases are out of Sync!")
+                raise Exception(_("Quantum and NVP Databases are out of "
+                                  "Sync!"))
         # do not make the case in which ports are found in NVP
         # but not in Quantum catastrophic.
         if len(nvp_lports):
-            LOG.warning("Found %s logical ports not bound "
-                        "to Quantum ports. Quantum and NVP are "
-                        "potentially out of sync", len(nvp_lports))
+            LOG.warning(_("Found %s logical ports not bound "
+                          "to Quantum ports. Quantum and NVP are "
+                          "potentially out of sync"), len(nvp_lports))
 
         if fields:
             ret_fields = []
@@ -761,8 +764,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         d = {"port-id": port["port"]["id"],
              "port-op-status": port["port"]["status"]}
 
-        LOG.debug("create_port() completed for tenant %s: %s" %
-                  (tenant_id, d))
+        LOG.debug(_("create_port() completed for tenant %(tenant_id)s: %(d)s"),
+                  locals())
 
         # update port with admin_state_up True
         port_update = {"port": {"admin_state_up": True}}
@@ -802,7 +805,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             nvplib.get_port_by_quantum_tag(self.clusters,
                                            quantum_db["network_id"], id))
 
-        LOG.debug("Update port request: %s" % (params))
+        LOG.debug(_("Update port request: %s"), params)
 
         params["cluster"] = cluster
         params["port"] = port["port"]
@@ -810,7 +813,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         params["port"]["tenant_id"] = quantum_db["tenant_id"]
         result = nvplib.update_port(quantum_db["network_id"],
                                     port_nvp["uuid"], **params)
-        LOG.debug("update_port() completed for tenant: %s" % context.tenant_id)
+        LOG.debug(_("update_port() completed for tenant: %s"),
+                  context.tenant_id)
 
         return super(NvpPluginV2, self).update_port(context, id, port)
 
@@ -836,7 +840,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         # the lswitch.
         nvplib.delete_port(cluster, port)
 
-        LOG.debug("delete_port() completed for tenant: %s" % context.tenant_id)
+        LOG.debug(_("delete_port() completed for tenant: %s"),
+                  context.tenant_id)
         return super(NvpPluginV2, self).delete_port(context, id)
 
     def get_port(self, context, id, fields=None):
@@ -868,8 +873,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         else:
             quantum_db["status"] = constants.PORT_STATUS_DOWN
 
-        LOG.debug("Port details for tenant %s: %s" %
-                  (context.tenant_id, quantum_db))
+        LOG.debug(_("Port details for tenant %(tenant_id)s: %(quantum_db)s"),
+                  {'tenant_id': context.tenant_id, 'quantum_db': quantum_db})
         return quantum_db
 
     def get_plugin_version(self):

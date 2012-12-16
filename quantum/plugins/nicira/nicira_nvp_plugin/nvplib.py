@@ -85,7 +85,7 @@ def get_cluster_version(cluster):
         raise exception.QuantumException()
     version_parts = res["version"].split(".")
     version = "%s.%s" % tuple(version_parts[:2])
-    LOG.info("NVP controller cluster version: %s" % version)
+    LOG.info(_("NVP controller cluster version: %s"), version)
     return version
 
 
@@ -120,7 +120,7 @@ def do_multi_request(*args, **kwargs):
     results = []
     clusters = kwargs["clusters"]
     for x in clusters:
-        LOG.debug("Issuing request to cluster: %s" % x.name)
+        LOG.debug(_("Issuing request to cluster: %s"), x.name)
         rv = x.api_client.request(*args)
         results.append(rv)
     return results
@@ -134,12 +134,12 @@ def find_port_and_cluster(clusters, port_id):
     """
     for c in clusters:
         query = "/ws.v1/lswitch/*/lport?uuid=%s&fields=*" % port_id
-        LOG.debug("Looking for lswitch with port id \"%s\" on: %s"
-                  % (port_id, c))
+        LOG.debug(_("Looking for lswitch with port id "
+                    "'%(port_id)s' on: %(c)s"), locals())
         try:
             res = do_single_request('GET', query, cluster=c)
         except Exception as e:
-            LOG.error("get_port_cluster_and_url, exception: %s" % str(e))
+            LOG.error(_("get_port_cluster_and_url, exception: %s"), str(e))
             continue
         res = json.loads(res)
         if len(res["results"]) == 1:
@@ -160,22 +160,22 @@ def get_network(cluster, net_id):
     try:
         resp_obj = do_single_request("GET", path, cluster=cluster)
         network = json.loads(resp_obj)
-        LOG.warning("### nw:%s", network)
+        LOG.warning(_("### nw:%s"), network)
     except NvpApiClient.ResourceNotFound:
         raise exception.NetworkNotFound(net_id=net_id)
     except NvpApiClient.NvpApiException:
         raise exception.QuantumException()
-    LOG.debug("Got network \"%s\": %s" % (net_id, network))
+    LOG.debug(_("Got network '%(net_id)s': %(network)s"), locals())
     return network
 
 
 def create_lswitch(cluster, lswitch_obj):
-    LOG.info("Creating lswitch: %s" % lswitch_obj)
+    LOG.info(_("Creating lswitch: %s"), lswitch_obj)
     # Warn if no tenant is specified
     found = "os_tid" in [x["scope"] for x in lswitch_obj["tags"]]
     if not found:
-        LOG.warn("No tenant-id tag specified in logical switch: %s" % (
-            lswitch_obj))
+        LOG.warn(_("No tenant-id tag specified in logical switch: %s"),
+                 lswitch_obj)
     uri = "/ws.v1/lswitch"
     try:
         resp_obj = do_single_request("POST", uri,
@@ -188,7 +188,7 @@ def create_lswitch(cluster, lswitch_obj):
     d = {}
     d["net-id"] = r['uuid']
     d["net-name"] = r['display_name']
-    LOG.debug("Created logical switch: %s" % d["net-id"])
+    LOG.debug(_("Created logical switch: %s"), d["net-id"])
     return d
 
 
@@ -201,7 +201,7 @@ def update_network(cluster, lswitch_id, **params):
         resp_obj = do_single_request("PUT", uri, json.dumps(lswitch_obj),
                                      cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Network not found, Error: %s" % str(e))
+        LOG.error(_("Network not found, Error: %s"), str(e))
         raise exception.NetworkNotFound(net_id=lswitch_id)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -256,7 +256,7 @@ def delete_networks(cluster, net_id, lswitch_ids):
         try:
             do_single_request("DELETE", path, cluster=cluster)
         except NvpApiClient.ResourceNotFound as e:
-            LOG.error("Network not found, Error: %s" % str(e))
+            LOG.error(_("Network not found, Error: %s"), str(e))
             raise exception.NetworkNotFound(net_id=ls_id)
         except NvpApiClient.NvpApiException as e:
             raise exception.QuantumException()
@@ -292,7 +292,7 @@ def query_ports(cluster, network, relations=None, fields="*", filters=None):
     try:
         resp_obj = do_single_request("GET", uri, cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Network not found, Error: %s" % str(e))
+        LOG.error(_("Network not found, Error: %s"), str(e))
         raise exception.NetworkNotFound(net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -303,7 +303,7 @@ def delete_port(cluster, port):
     try:
         do_single_request("DELETE", port['_href'], cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Port or Network not found, Error: %s" % str(e))
+        LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port['uuid'])
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -316,8 +316,9 @@ def get_port_by_quantum_tag(clusters, lswitch, quantum_tag):
              "fabric_status_up,uuid&tag=%s&tag_scope=q_port_id"
              "&relations=LogicalPortStatus" % (lswitch, quantum_tag))
 
-    LOG.debug("Looking for port with q_tag \"%s\" on: %s"
-              % (quantum_tag, lswitch))
+    LOG.debug(_("Looking for port with q_tag '%(quantum_tag)s' "
+                "on: %(lswitch)s"),
+              locals())
     for c in clusters:
         try:
             res_obj = do_single_request('GET', query, cluster=c)
@@ -327,7 +328,7 @@ def get_port_by_quantum_tag(clusters, lswitch, quantum_tag):
         if len(res["results"]) == 1:
             return (res["results"][0], c)
 
-    LOG.error("Port or Network not found, Error: %s" % str(e))
+    LOG.error(_("Port or Network not found, Error: %s"), str(e))
     raise exception.PortNotFound(port_id=quantum_tag, net_id=lswitch)
 
 
@@ -336,8 +337,8 @@ def get_port_by_display_name(clusters, lswitch, display_name):
     """
     query = ("/ws.v1/lswitch/%s/lport?display_name=%s&fields=*" %
              (lswitch, display_name))
-    LOG.debug("Looking for port with display_name \"%s\" on: %s"
-              % (display_name, lswitch))
+    LOG.debug(_("Looking for port with display_name "
+                "'%(display_name)s' on: %(lswitch)s"), locals())
     for c in clusters:
         try:
             res_obj = do_single_request('GET', query, cluster=c)
@@ -347,12 +348,12 @@ def get_port_by_display_name(clusters, lswitch, display_name):
         if len(res["results"]) == 1:
             return (res["results"][0], c)
 
-    LOG.error("Port or Network not found, Error: %s" % str(e))
+    LOG.error(_("Port or Network not found, Error: %s"), str(e))
     raise exception.PortNotFound(port_id=display_name, net_id=lswitch)
 
 
 def get_port(cluster, network, port, relations=None):
-    LOG.info("get_port() %s %s" % (network, port))
+    LOG.info(_("get_port() %(network)s %(port)s"), locals())
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port + "?"
     if relations:
         uri += "relations=%s" % relations
@@ -360,7 +361,7 @@ def get_port(cluster, network, port, relations=None):
         resp_obj = do_single_request("GET", uri, cluster=cluster)
         port = json.loads(resp_obj)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Port or Network not found, Error: %s" % str(e))
+        LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -392,7 +393,7 @@ def update_port(network, port_id, **params):
         resp_obj = do_single_request("PUT", uri, json.dumps(lport_obj),
                                      cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Port or Network not found, Error: %s" % str(e))
+        LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=network)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -444,7 +445,7 @@ def get_port_status(cluster, lswitch_id, port_id):
                               (lswitch_id, port_id), cluster=cluster)
         r = json.loads(r)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Port not found, Error: %s" % str(e))
+        LOG.error(_("Port not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=lswitch_id)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
@@ -467,11 +468,11 @@ def plug_interface(clusters, lswitch_id, port, type, attachment=None):
         resp_obj = do_single_request("PUT", uri, json.dumps(lport_obj),
                                      cluster=dest_cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Port or Network not found, Error: %s" % str(e))
+        LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port, net_id=lswitch_id)
     except NvpApiClient.Conflict as e:
-        LOG.error("Conflict while making attachment to port, "
-                  "Error: %s" % str(e))
+        LOG.error(_("Conflict while making attachment to port, "
+                    "Error: %s"), str(e))
         raise exception.AlreadyAttached(att_id=attachment,
                                         port_id=port,
                                         net_id=lswitch_id,
