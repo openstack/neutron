@@ -16,6 +16,7 @@
 import logging
 
 import eventlet
+import uuid
 
 from quantum.common import topics
 
@@ -87,7 +88,9 @@ class NotificationDispatcher(object):
         self.connection = rpc.create_connection(new=True)
         topic = '%s.%s' % (rabbit_notifier.CONF.notification_topics[0],
                            api.CONF.default_notification_level.lower())
+        queue_name = 'notification_listener_%s' % str(uuid.uuid4())
         self.connection.declare_topic_consumer(topic=topic,
+                                               queue_name=queue_name,
                                                callback=self._add_to_queue)
         self.connection.consume_in_thread()
 
