@@ -133,23 +133,27 @@ class ServerProxy(object):
         if self.auth:
             headers['Authorization'] = self.auth
 
-        LOG.debug('ServerProxy: server=%s, port=%d, ssl=%r, action=%s' %
-                  (self.server, self.port, self.ssl, action))
-        LOG.debug('ServerProxy: resource=%s, data=%r, headers=%r' %
-                  (resource, data, headers))
+        LOG.debug(_("ServerProxy: server=%(server)s, port=%(port)d, "
+                    "ssl=%(ssl)r, action=%(action)s"),
+                  {'server': self.server, 'port': self.port, 'ssl': self.ssl,
+                   'action': action})
+        LOG.debug(_("ServerProxy: resource=%(resource)s, data=%(data)r, "
+                    "headers=%(headers)r"), locals())
 
         conn = None
         if self.ssl:
             conn = httplib.HTTPSConnection(
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
-                LOG.error('ServerProxy: Could not establish HTTPS connection')
+                LOG.error(_('ServerProxy: Could not establish HTTPS '
+                            'connection'))
                 return 0, None, None, None
         else:
             conn = httplib.HTTPConnection(
                 self.server, self.port, timeout=self.timeout)
             if conn is None:
-                LOG.error('ServerProxy: Could not establish HTTP connection')
+                LOG.error(_('ServerProxy: Could not establish HTTP '
+                            'connection'))
                 return 0, None, None, None
 
         try:
@@ -165,10 +169,14 @@ class ServerProxy(object):
                     pass
             ret = (response.status, response.reason, respstr, respdata)
         except (socket.timeout, socket.error) as e:
-            LOG.error('ServerProxy: %s failure, %r' % (action, e))
+            LOG.error(_('ServerProxy: %(action)s failure, %(e)r'), locals())
             ret = 0, None, None, None
         conn.close()
-        LOG.debug('ServerProxy: status=%d, reason=%r, ret=%s, data=%r' % ret)
+        LOG.debug(_("ServerProxy: status=%(status)d, reason=%(reason)r, "
+                    "ret=%(ret)s, data=%(data)r"), {'status': ret[0],
+                                                    'reason': ret[1],
+                                                    'ret': ret[2],
+                                                    'data': ret[3]})
         return ret
 
 
@@ -210,13 +218,19 @@ class ServerPool(object):
                 self.servers.extend(failed_servers)
                 return ret
             else:
-                LOG.error('ServerProxy: %s failure for servers: %r' % (
-                    action, (active_server.server, active_server.port)))
+                LOG.error(_('ServerProxy: %(action)s failure for servers: '
+                            '%(server)r'),
+                          {'action': action,
+                           'server': (active_server.server,
+                                      active_server.port)})
                 failed_servers.append(self.servers.pop(0))
 
         # All servers failed, reset server list and try again next time
-        LOG.error('ServerProxy: %s failure for all servers: %r' % (
-            action, tuple((s.server, s.port) for s in failed_servers)))
+        LOG.error(_('ServerProxy: %(action)s failure for all servers: '
+                    '%(server)r'),
+                  {'action': action,
+                   'server': tuple((s.server,
+                                    s.port) for s in failed_servers)})
         self.servers.extend(failed_servers)
         return (0, None, None, None)
 
@@ -244,7 +258,7 @@ class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def __init__(self):
-        LOG.info('QuantumRestProxy: Starting plugin. Version=%s' %
+        LOG.info(_('QuantumRestProxy: Starting plugin. Version=%s'),
                  version_string_with_vcs())
 
         # init DB, proxy's persistent store defaults to in-memory sql-lite DB
@@ -285,7 +299,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         if syncdata:
             self._send_all_data()
 
-        LOG.debug("QuantumRestProxyV2: initialization done")
+        LOG.debug(_("QuantumRestProxyV2: initialization done"))
 
     def create_network(self, context, network):
         """Create a network, which represents an L2 network segment which
@@ -309,15 +323,15 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: RemoteRestError
         """
 
-        LOG.debug("QuantumRestProxyV2: create_network() called")
+        LOG.debug(_("QuantumRestProxyV2: create_network() called"))
 
         # Validate args
         tenant_id = self._get_tenant_id_for_create(context, network["network"])
         net_name = network["network"]["name"]
         if network["network"]["admin_state_up"] is False:
-            LOG.warning("Network with admin_state_up=False are not yet "
+            LOG.warning(_("Network with admin_state_up=False are not yet "
                         "supported by this plugin. Ignoring setting for "
-                        "network %s", net_name)
+                        "network %s"), net_name)
 
         # create in DB
         new_net = super(QuantumRestProxyV2, self).create_network(context,
@@ -336,8 +350,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
             if not self.servers.action_success(ret):
                 raise RemoteRestError(ret[2])
         except RemoteRestError as e:
-            LOG.error("QuantumRestProxyV2:Unable to create remote network:%s" %
-                      e.message)
+            LOG.error(_("QuantumRestProxyV2:Unable to create remote "
+                        "network: %s"), e.message)
             super(QuantumRestProxyV2, self).delete_network(context,
                                                            new_net['id'])
             raise
@@ -368,14 +382,14 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: RemoteRestError
         """
 
-        LOG.debug("QuantumRestProxyV2.update_network() called")
+        LOG.debug(_("QuantumRestProxyV2.update_network() called"))
 
         # Validate Args
         if network["network"].get("admin_state_up"):
             if network["network"]["admin_state_up"] is False:
-                LOG.warning("Network with admin_state_up=False are not yet "
-                            "supported by this plugin. Ignoring setting for "
-                            "network %s", net_name)
+                LOG.warning(_("Network with admin_state_up=False are not yet "
+                              "supported by this plugin. Ignoring setting for "
+                              "network %s", net_name))
 
         # update DB
         orig_net = super(QuantumRestProxyV2, self).get_network(context, net_id)
@@ -394,9 +408,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                 if not self.servers.action_success(ret):
                     raise RemoteRestError(ret[2])
             except RemoteRestError as e:
-                LOG.error(
-                    "QuantumRestProxyV2: Unable to update remote network: %s" %
-                    e.message)
+                LOG.error(_("QuantumRestProxyV2: Unable to update remote "
+                            "network: %s"), e.message)
                 # reset network to original state
                 super(QuantumRestProxyV2, self).update_network(
                     context, id, orig_net)
@@ -416,7 +429,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: exceptions.NetworkNotFound
         :raises: RemoteRestError
         """
-        LOG.debug("QuantumRestProxyV2: delete_network() called")
+        LOG.debug(_("QuantumRestProxyV2: delete_network() called"))
 
         # Validate args
         orig_net = super(QuantumRestProxyV2, self).get_network(context, net_id)
@@ -432,9 +445,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                      net_id)
             return ret_val
         except RemoteRestError as e:
-            LOG.error(
-                "QuantumRestProxyV2: Unable to update remote network: %s" %
-                e.message)
+            LOG.error(_("QuantumRestProxyV2: Unable to update remote "
+                        "network: %s"), e.message)
 
     def create_port(self, context, port):
         """Create a port, which is a connection point of a device
@@ -462,7 +474,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: exceptions.StateInvalid
         :raises: RemoteRestError
         """
-        LOG.debug("QuantumRestProxyV2: create_port() called")
+        LOG.debug(_("QuantumRestProxyV2: create_port() called"))
 
         # Update DB
         port["port"]["admin_state_up"] = False
@@ -489,8 +501,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                                      net["tenant_id"], net["id"],
                                      new_port["id"], new_port["id"] + "00")
         except RemoteRestError as e:
-            LOG.error("QuantumRestProxyV2: Unable to create remote port: %s" %
-                      e.message)
+            LOG.error(_("QuantumRestProxyV2: Unable to create remote port: "
+                        "%s"), e.message)
             super(QuantumRestProxyV2, self).delete_port(context,
                                                         new_port["id"])
             raise
@@ -527,7 +539,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: exceptions.PortNotFound
         :raises: RemoteRestError
         """
-        LOG.debug("QuantumRestProxyV2: update_port() called")
+        LOG.debug(_("QuantumRestProxyV2: update_port() called"))
 
         # Validate Args
         orig_port = super(QuantumRestProxyV2, self).get_port(context, port_id)
@@ -556,9 +568,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                                          new_port["id"], new_port["id"] + "00")
 
         except RemoteRestError as e:
-            LOG.error(
-                "QuantumRestProxyV2: Unable to create remote port: %s" %
-                e.message)
+            LOG.error(_("QuantumRestProxyV2: Unable to create remote port: "
+                        "%s"), e.message)
             # reset port to original state
             super(QuantumRestProxyV2, self).update_port(context, port_id,
                                                         orig_port)
@@ -578,7 +589,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: RemoteRestError
         """
 
-        LOG.debug("QuantumRestProxyV2: delete_port() called")
+        LOG.debug(_("QuantumRestProxyV2: delete_port() called"))
 
         # Delete from DB
         port = super(QuantumRestProxyV2, self).get_port(context, port_id)
@@ -598,9 +609,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                   port_id)
             return ret_val
         except RemoteRestError as e:
-            LOG.error(
-                "QuantumRestProxyV2: Unable to update remote port: %s" %
-                e.message)
+            LOG.error(_("QuantumRestProxyV2: Unable to update remote port: "
+                        "%s"), e.message)
 
     def _plug_interface(self, context, tenant_id, net_id, port_id,
                         remote_interface_id):
@@ -613,7 +623,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
         :raises: exceptions.PortNotFound
         :raises: RemoteRestError
         """
-        LOG.debug("QuantumRestProxyV2: _plug_interface() called")
+        LOG.debug(_("QuantumRestProxyV2: _plug_interface() called"))
 
         # update attachment on network controller
         try:
@@ -647,8 +657,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                 if not self.servers.action_success(ret):
                     raise RemoteRestError(ret[2])
         except RemoteRestError as e:
-            LOG.error("QuantumRestProxyV2:Unable to update remote network:%s" %
-                      e.message)
+            LOG.error(_("QuantumRestProxyV2:Unable to update remote network: "
+                        "%s"), e.message)
             raise
 
     def _unplug_interface(self, context, tenant_id, net_id, port_id):
@@ -659,7 +669,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         :raises: RemoteRestError
         """
-        LOG.debug("QuantumRestProxyV2: _unplug_interface() called")
+        LOG.debug(_("QuantumRestProxyV2: _unplug_interface() called"))
 
         # delete from network ctrl. Remote error on delete is ignored
         try:
@@ -668,9 +678,8 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
             if not self.servers.action_success(ret):
                 raise RemoteRestError(ret[2])
         except RemoteRestError as e:
-            LOG.error(
-                "QuantumRestProxyV2: Unable to update remote port: %s" %
-                e.message)
+            LOG.error(_("QuantumRestProxyV2: Unable to update remote port: "
+                        "%s"), e.message)
 
     def _send_all_data(self):
         """Pushes all data to network ctrl (networks/ports, ports/attachments)
@@ -726,7 +735,6 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                 raise RemoteRestError(ret[2])
             return ret
         except RemoteRestError as e:
-            LOG.error(
-                'QuantumRestProxy: Unable to update remote network: %s' %
-                e.message)
+            LOG.error(_('QuantumRestProxy: Unable to update remote network: '
+                        '%s'), e.message)
             raise
