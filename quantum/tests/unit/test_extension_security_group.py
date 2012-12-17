@@ -19,21 +19,13 @@ import os
 import mock
 import webob.exc
 
-from quantum.api.extensions import PluginAwareExtensionManager
-from quantum.api.v2 import attributes
-from quantum.api.v2.router import APIRouter
-from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum import context
-from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import securitygroups_db
 from quantum.extensions import securitygroup as ext_sg
-from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
-from quantum.tests.unit import test_extensions
-from quantum.wsgi import JSONDeserializer
 
 DB_PLUGIN_KLASS = ('quantum.tests.unit.test_extension_security_group.'
                    'SecurityGroupTestPlugin')
@@ -199,12 +191,6 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, port)
             self._extend_port_dict_security_group(context, port)
         return port
-
-    def delete_port(self, context, id):
-        session = context.session
-        with session.begin(subtransactions=True):
-            self._delete_port_security_group_bindings(context, id)
-            super(SecurityGroupTestPlugin, self).delete_port(context, id)
 
     def create_network(self, context, network):
         tenant_id = self._get_tenant_id_for_create(context, network['network'])

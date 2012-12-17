@@ -38,7 +38,9 @@ class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class SecurityGroupPortBinding(model_base.BASEV2):
     """Represents binding between quantum ports and security profiles"""
-    port_id = sa.Column(sa.String(36), sa.ForeignKey("ports.id"),
+    port_id = sa.Column(sa.String(36),
+                        sa.ForeignKey("ports.id",
+                                      ondelete='CASCADE'),
                         primary_key=True)
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id"),
@@ -286,9 +288,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             if (not cfg.CONF.SECURITYGROUP.proxy_mode and
                 rule.get('external_id')):
                 raise ext_sg.SecurityGroupNotProxyMode()
-
-            protocol = rule.get('protocol')
-            ethertype = rule.get('ethertype')
 
             # Check that port_range's are valid
             if (rule['port_range_min'] is None and
