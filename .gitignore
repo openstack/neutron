@@ -13,3 +13,5 @@ quantum/vcsversion.py
 requirements.txt
 ChangeLog
 .tox/
+quantum/versioninfo
+setuptools*.egg/
