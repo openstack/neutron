@@ -77,6 +77,7 @@ class FakeClient:
         zone_uuid = fake_lswitch['transport_zones'][0]['zone_uuid']
         fake_lswitch['zone_uuid'] = zone_uuid
         fake_lswitch['tenant_id'] = self._get_tag(fake_lswitch, 'os_tid')
+        fake_lswitch['lport_count'] = 0
         return fake_lswitch
 
     def _add_lport(self, body, ls_uuid):
@@ -92,6 +93,7 @@ class FakeClient:
         self._fake_lport_dict[fake_lport['uuid']] = fake_lport
 
         fake_lswitch = self._fake_lswitch_dict[ls_uuid]
+        fake_lswitch['lport_count'] += 1
         fake_lport_status = fake_lport.copy()
         fake_lport_status['ls_tenant_id'] = fake_lswitch['tenant_id']
         fake_lport_status['ls_uuid'] = fake_lswitch['uuid']
@@ -115,7 +117,6 @@ class FakeClient:
     def _list(self, resource_type, response_file,
               switch_uuid=None, query=None):
         (tag_filter, attr_filter) = self._get_filters(query)
-
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
@@ -143,7 +144,9 @@ class FakeClient:
                         res_dict[res_uuid].get('ls_uuid') == switch_uuid):
                     return True
                 return False
-
+            for item in res_dict.itervalues():
+                if 'tags' in item:
+                    item['tags_json'] = json.dumps(item['tags'])
             items = [json.loads(response_template % res_dict[res_uuid])
                      for res_uuid in res_dict
                      if (_lswitch_match(res_uuid) and
@@ -159,6 +162,10 @@ class FakeClient:
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
+            for item in res_dict.itervalues():
+                if 'tags' in item:
+                    item['tags_json'] = json.dumps(item['tags'])
+
             items = [json.loads(response_template % res_dict[res_uuid])
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:

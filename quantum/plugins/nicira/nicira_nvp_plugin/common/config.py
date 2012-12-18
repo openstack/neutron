@@ -40,8 +40,10 @@ database_opts = [
 
 nvp_opts = [
     cfg.IntOpt('max_lp_per_bridged_ls', default=64),
+    cfg.IntOpt('max_lp_per_overlay_ls', default=256),
     cfg.IntOpt('concurrent_connections', default=5),
-    cfg.IntOpt('failover_time', default=240)
+    cfg.IntOpt('failover_time', default=240),
+    cfg.StrOpt('default_cluster_name')
 ]
 
 cluster_opts = [
