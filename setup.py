@@ -139,6 +139,7 @@ setuptools.setup(
             'quantum.plugins.nec.agent.nec_quantum_agent:main',
             'quantum-server = quantum.server:main',
             'quantum-debug = quantum.debug.shell:main',
+            'quantum-ovs-cleanup = quantum.agent.ovs_cleanup_util:main',
         ]
     },
 )

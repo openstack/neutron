@@ -271,6 +271,15 @@ class OVSBridge:
             LOG.info(_("Unable to parse regex results. Exception: %s"), e)
             return
 
+    def delete_ports(self, all_ports=False):
+        if all_ports:
+            port_names = self.get_port_name_list()
+        else:
+            port_names = (port.port_name for port in self.get_vif_ports())
+
+        for port_name in port_names:
+            self.delete_port(port_name)
+
 
 def get_bridge_for_iface(root_helper, iface):
     args = ["ovs-vsctl", "--timeout=2", "iface-to-br", iface]
@@ -279,3 +288,12 @@ def get_bridge_for_iface(root_helper, iface):
     except Exception, e:
         LOG.error(_("iface %s not found. Exception: %s"), iface, e)
         return None
+
+
+def get_bridges(root_helper):
+    args = ["ovs-vsctl", "--timeout=2", "list-br"]
+    try:
+        return utils.execute(args, root_helper=root_helper).strip().split("\n")
+    except Exception, e:
+        LOG.error(_("Unable to retrieve bridges. Exception: %s"), e)
+        return []
