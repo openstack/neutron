@@ -101,9 +101,14 @@ def _filters(request, attr_info):
 
 
 class Controller(object):
+    LIST = 'list'
+    SHOW = 'show'
+    CREATE = 'create'
+    UPDATE = 'update'
+    DELETE = 'delete'
 
     def __init__(self, plugin, collection, resource, attr_info,
-                 allow_bulk=False, member_actions=None):
+                 allow_bulk=False, member_actions=None, parent=None):
         if member_actions is None:
             member_actions = []
         self._plugin = plugin
@@ -116,6 +121,20 @@ class Controller(object):
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
         self._member_actions = member_actions
+
+        if parent:
+            self._parent_id_name = '%s_id' % parent['member_name']
+            parent_part = '_%s' % parent['member_name']
+        else:
+            self._parent_id_name = None
+            parent_part = ''
+        self._plugin_handlers = {
+            self.LIST: 'get%s_%s' % (parent_part, self._collection),
+            self.SHOW: 'get%s_%s' % (parent_part, self._resource)
+        }
+        for action in [self.CREATE, self.UPDATE, self.DELETE]:
+            self._plugin_handlers[action] = '%s%s_%s' % (action, parent_part,
+                                                         self._resource)
 
     def _is_native_bulk_supported(self):
         native_bulk_attr_name = ("_%s__native_bulk_support"
@@ -152,7 +171,7 @@ class Controller(object):
         else:
             raise AttributeError
 
-    def _items(self, request, do_authz=False):
+    def _items(self, request, do_authz=False, parent_id=None):
         """Retrieves and formats a list of elements of the requested entity"""
         # NOTE(salvatore-orlando): The following ensures that fields which
         # are needed for authZ policy validation are not stripped away by the
@@ -160,7 +179,9 @@ class Controller(object):
         original_fields, fields_to_add = self._do_field_list(_fields(request))
         kwargs = {'filters': _filters(request, self._attr_info),
                   'fields': original_fields}
-        obj_getter = getattr(self._plugin, "get_%s" % self._collection)
+        if parent_id:
+            kwargs[self._parent_id_name] = parent_id
+        obj_getter = getattr(self._plugin, self._plugin_handlers[self.LIST])
         obj_list = obj_getter(request.context, **kwargs)
         # Check authz
         if do_authz:
@@ -169,17 +190,20 @@ class Controller(object):
             # Omit items from list that should not be visible
             obj_list = [obj for obj in obj_list
                         if policy.check(request.context,
-                                        "get_%s" % self._resource,
+                                        self._plugin_handlers[self.SHOW],
                                         obj,
                                         plugin=self._plugin)]
         return {self._collection: [self._view(obj,
                                               fields_to_strip=fields_to_add)
                                    for obj in obj_list]}
 
-    def _item(self, request, id, do_authz=False, field_list=None):
+    def _item(self, request, id, do_authz=False, field_list=None,
+              parent_id=None):
         """Retrieves and formats a single element of the requested entity"""
         kwargs = {'fields': field_list}
-        action = "get_%s" % self._resource
+        action = self._plugin_handlers[self.SHOW]
+        if parent_id:
+            kwargs[self._parent_id_name] = parent_id
         obj_getter = getattr(self._plugin, action)
         obj = obj_getter(request.context, id, **kwargs)
         # Check authz
@@ -189,33 +213,38 @@ class Controller(object):
             policy.enforce(request.context, action, obj, plugin=self._plugin)
         return obj
 
-    def index(self, request):
+    def index(self, request, **kwargs):
         """Returns a list of the requested entity"""
-        return self._items(request, True)
+        parent_id = kwargs.get(self._parent_id_name)
+        return self._items(request, True, parent_id)
 
-    def show(self, request, id):
+    def show(self, request, id, **kwargs):
         """Returns detailed information about the requested entity"""
         try:
             # NOTE(salvatore-orlando): The following ensures that fields
             # which are needed for authZ policy validation are not stripped
             # away by the plugin before returning.
             field_list, added_fields = self._do_field_list(_fields(request))
+            parent_id = kwargs.get(self._parent_id_name)
             return {self._resource:
                     self._view(self._item(request,
                                           id,
                                           do_authz=True,
-                                          field_list=field_list),
+                                          field_list=field_list,
+                                          parent_id=parent_id),
                                fields_to_strip=added_fields)}
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
             raise webob.exc.HTTPNotFound()
 
-    def _emulate_bulk_create(self, obj_creator, request, body):
+    def _emulate_bulk_create(self, obj_creator, request, body, parent_id=None):
         objs = []
         try:
             for item in body[self._collection]:
                 kwargs = {self._resource: item}
+                if parent_id:
+                    kwargs[self._parent_id_name] = parent_id
                 objs.append(self._view(obj_creator(request.context,
                                                    **kwargs)))
             return objs
@@ -223,10 +252,12 @@ class Controller(object):
         # could raise any kind of exception
         except Exception as ex:
             for obj in objs:
-                delete_action = "delete_%s" % self._resource
-                obj_deleter = getattr(self._plugin, delete_action)
+                obj_deleter = getattr(self._plugin,
+                                      self._plugin_handlers[self.DELETE])
                 try:
-                    obj_deleter(request.context, obj['id'])
+                    kwargs = ({self._parent_id_name: parent_id} if parent_id
+                              else {})
+                    obj_deleter(request.context, obj['id'], **kwargs)
                 except Exception:
                     # broad catch as our only purpose is to log the exception
                     LOG.exception(_("Unable to undo add for "
@@ -239,8 +270,9 @@ class Controller(object):
             # it is then deleted
             raise
 
-    def create(self, request, body=None):
+    def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity"""
+        parent_id = kwargs.get(self._parent_id_name)
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.create.start',
@@ -249,7 +281,7 @@ class Controller(object):
         body = Controller.prepare_request_body(request.context, body, True,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
-        action = "create_%s" % self._resource
+        action = self._plugin_handlers[self.CREATE]
         # Check authz
         try:
             if self._collection in body:
@@ -312,34 +344,37 @@ class Controller(object):
                                 create_result)
             return create_result
 
+        kwargs = {self._parent_id_name: parent_id} if parent_id else {}
         if self._collection in body and self._native_bulk:
             # plugin does atomic bulk create operations
             obj_creator = getattr(self._plugin, "%s_bulk" % action)
-            objs = obj_creator(request.context, body)
+            objs = obj_creator(request.context, body, **kwargs)
             return notify({self._collection: [self._view(obj)
                                               for obj in objs]})
         else:
             obj_creator = getattr(self._plugin, action)
             if self._collection in body:
                 # Emulate atomic bulk behavior
-                objs = self._emulate_bulk_create(obj_creator, request, body)
+                objs = self._emulate_bulk_create(obj_creator, request,
+                                                 body, parent_id)
                 return notify({self._collection: objs})
             else:
-                kwargs = {self._resource: body}
+                kwargs.update({self._resource: body})
                 obj = obj_creator(request.context, **kwargs)
                 return notify({self._resource: self._view(obj)})
 
-    def delete(self, request, id):
+    def delete(self, request, id, **kwargs):
         """Deletes the specified entity"""
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.delete.start',
                             notifier_api.INFO,
                             {self._resource + '_id': id})
-        action = "delete_%s" % self._resource
+        action = self._plugin_handlers[self.DELETE]
 
         # Check authz
-        obj = self._item(request, id)
+        parent_id = kwargs.get(self._parent_id_name)
+        obj = self._item(request, id, parent_id=parent_id)
         try:
             policy.enforce(request.context,
                            action,
@@ -351,15 +386,16 @@ class Controller(object):
             raise webob.exc.HTTPNotFound()
 
         obj_deleter = getattr(self._plugin, action)
-        obj_deleter(request.context, id)
+        obj_deleter(request.context, id, **kwargs)
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.delete.end',
                             notifier_api.INFO,
                             {self._resource + '_id': id})
 
-    def update(self, request, id, body=None):
+    def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes"""
+        parent_id = kwargs.get(self._parent_id_name)
         payload = body.copy()
         payload['id'] = id
         notifier_api.notify(request.context,
@@ -370,7 +406,7 @@ class Controller(object):
         body = Controller.prepare_request_body(request.context, body, False,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
-        action = "update_%s" % self._resource
+        action = self._plugin_handlers[self.UPDATE]
         # Load object to check authz
         # but pass only attributes in the original body and required
         # by the policy engine to the policy 'brain'
@@ -378,7 +414,8 @@ class Controller(object):
                       if ('required_by_policy' in value and
                           value['required_by_policy'] or
                           not 'default' in value)]
-        orig_obj = self._item(request, id, field_list=field_list)
+        orig_obj = self._item(request, id, field_list=field_list,
+                              parent_id=parent_id)
         orig_obj.update(body[self._resource])
         try:
             policy.enforce(request.context,
@@ -392,6 +429,8 @@ class Controller(object):
 
         obj_updater = getattr(self._plugin, action)
         kwargs = {self._resource: body}
+        if parent_id:
+            kwargs[self._parent_id_name] = parent_id
         obj = obj_updater(request.context, id, **kwargs)
         result = {self._resource: self._view(obj)}
         notifier_api.notify(request.context,
@@ -526,9 +565,9 @@ class Controller(object):
 
 
 def create_resource(collection, resource, plugin, params, allow_bulk=False,
-                    member_actions=None):
+                    member_actions=None, parent=None):
     controller = Controller(plugin, collection, resource, params, allow_bulk,
-                            member_actions=member_actions)
+                            member_actions=member_actions, parent=parent)
 
     # NOTE(jkoelker) To anyone wishing to add "proper" xml support
     #                this is where you do it

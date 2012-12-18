@@ -629,6 +629,83 @@ class JSONV2TestCase(APIv2TestBase):
         self.assertEqual(res.status_int, 400)
 
 
+class SubresourceTest(unittest.TestCase):
+    def setUp(self):
+        plugin = 'quantum.tests.unit.test_api_v2.TestSubresourcePlugin'
+        QuantumManager._instance = None
+        PluginAwareExtensionManager._instance = None
+        args = ['--config-file', etcdir('quantum.conf.test')]
+        config.parse(args=args)
+        cfg.CONF.set_override('core_plugin', plugin)
+
+        self._plugin_patcher = mock.patch(plugin, autospec=True)
+        self.plugin = self._plugin_patcher.start()
+
+        router.SUB_RESOURCES['dummy'] = {
+            'collection_name': 'dummies',
+            'parent': {'collection_name': 'networks',
+                       'member_name': 'network'}
+        }
+
+        api = router.APIRouter()
+        self.api = webtest.TestApp(api)
+
+    def tearDown(self):
+        self._plugin_patcher.stop()
+        self.api = None
+        self.plugin = None
+        cfg.CONF.reset()
+
+    def test_index_sub_resource(self):
+        instance = self.plugin.return_value
+
+        self.api.get('/networks/id1/dummies')
+        instance.get_network_dummies.assert_called_once_with(mock.ANY,
+                                                             filters=mock.ANY,
+                                                             fields=mock.ANY,
+                                                             network_id='id1')
+
+    def test_show_sub_resource(self):
+        instance = self.plugin.return_value
+
+        dummy_id = _uuid()
+        self.api.get('/networks/id1' + _get_path('dummies', id=dummy_id))
+        instance.get_network_dummy.assert_called_once_with(mock.ANY,
+                                                           dummy_id,
+                                                           network_id='id1',
+                                                           fields=mock.ANY)
+
+    def test_create_sub_resource(self):
+        instance = self.plugin.return_value
+
+        body = {'dummy': {'foo': 'bar', 'tenant_id': _uuid()}}
+        self.api.post_json('/networks/id1/dummies', body)
+        instance.create_network_dummy.assert_called_once_with(mock.ANY,
+                                                              network_id='id1',
+                                                              dummy=body)
+
+    def test_update_sub_resource(self):
+        instance = self.plugin.return_value
+
+        dummy_id = _uuid()
+        body = {'dummy': {'foo': 'bar', 'tenant_id': _uuid()}}
+        self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
+                          body)
+        instance.update_network_dummy.assert_called_once_with(mock.ANY,
+                                                              dummy_id,
+                                                              network_id='id1',
+                                                              dummy=body)
+
+    def test_delete_sub_resource(self):
+        instance = self.plugin.return_value
+
+        dummy_id = _uuid()
+        self.api.delete('/networks/id1' + _get_path('dummies', id=dummy_id))
+        instance.delete_network_dummy.assert_called_once_with(mock.ANY,
+                                                              dummy_id,
+                                                              network_id='id1')
+
+
 class V2Views(unittest.TestCase):
     def _view(self, keys, collection, resource):
         data = dict((key, 'value') for key in keys)
@@ -816,3 +893,22 @@ class ExtensionTestCase(unittest.TestCase):
         self.assertEqual(net['status'], "ACTIVE")
         self.assertEqual(net['v2attrs:something'], "123")
         self.assertFalse('v2attrs:something_else' in net)
+
+
+class TestSubresourcePlugin():
+        def get_network_dummies(self, context, network_id,
+                                filters=None, fields=None):
+            return []
+
+        def get_network_dummy(self, context, id, network_id,
+                              fields=None):
+            return {}
+
+        def create_network_dummy(self, context, network_id, dummy):
+            return {}
+
+        def update_network_dummy(self, context, id, network_id, dummy):
+            return {}
+
+        def delete_network_dummy(self, context, id, network_id):
+            return

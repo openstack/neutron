@@ -30,6 +30,11 @@ from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)
+
+RESOURCES = {'network': 'networks',
+             'subnet': 'subnets',
+             'port': 'ports'}
+SUB_RESOURCES = {}
 COLLECTION_ACTIONS = ['index', 'create']
 MEMBER_ACTIONS = ['show', 'update', 'delete']
 REQUIREMENTS = {'id': attributes.UUID_PATTERN, 'format': 'xml|json'}
@@ -75,25 +80,35 @@ class APIRouter(wsgi.Router):
         col_kwargs = dict(collection_actions=COLLECTION_ACTIONS,
                           member_actions=MEMBER_ACTIONS)
 
-        resources = {'network': 'networks',
-                     'subnet': 'subnets',
-                     'port': 'ports'}
-
-        def _map_resource(collection, resource, params):
+        def _map_resource(collection, resource, params, parent=None):
             allow_bulk = cfg.CONF.allow_bulk
             controller = base.create_resource(collection, resource,
                                               plugin, params,
-                                              allow_bulk=allow_bulk)
+                                              allow_bulk=allow_bulk,
+                                              parent=parent)
+            path_prefix = None
+            if parent:
+                path_prefix = "/%s/{%s_id}/%s" % (parent['collection_name'],
+                                                  parent['member_name'],
+                                                  collection)
             mapper_kwargs = dict(controller=controller,
                                  requirements=REQUIREMENTS,
+                                 path_prefix=path_prefix,
                                  **col_kwargs)
             return mapper.collection(collection, resource,
                                      **mapper_kwargs)
 
-        mapper.connect('index', '/', controller=Index(resources))
-        for resource in resources:
-            _map_resource(resources[resource], resource,
+        mapper.connect('index', '/', controller=Index(RESOURCES))
+        for resource in RESOURCES:
+            _map_resource(RESOURCES[resource], resource,
                           attributes.RESOURCE_ATTRIBUTE_MAP.get(
-                              resources[resource], dict()))
+                              RESOURCES[resource], dict()))
+
+        for resource in SUB_RESOURCES:
+            _map_resource(SUB_RESOURCES[resource]['collection_name'], resource,
+                          attributes.RESOURCE_ATTRIBUTE_MAP.get(
+                              SUB_RESOURCES[resource]['collection_name'],
+                              dict()),
+                          SUB_RESOURCES[resource]['parent'])
 
         super(APIRouter, self).__init__(mapper)
