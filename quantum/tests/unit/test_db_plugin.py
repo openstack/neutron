@@ -23,6 +23,7 @@ import random
 
 import mock
 import unittest2
+import sqlalchemy as sa
 import webob.exc
 
 import quantum
