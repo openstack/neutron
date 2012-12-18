@@ -164,6 +164,19 @@ class VlanAllocationsTest(unittest2.TestCase):
         ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
         self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET, vlan_id))
 
+    def test_sync_with_allocated_false(self):
+        vlan_ids = set()
+        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+            physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
+            self.assertEqual(physical_network, PHYS_NET)
+            self.assertGreaterEqual(vlan_id, VLAN_MIN)
+            self.assertLessEqual(vlan_id, VLAN_MAX)
+            vlan_ids.add(vlan_id)
+
+        ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop(),
+                               VLAN_RANGES)
+        ovs_db_v2.sync_vlan_allocations({})
+
 
 class TunnelAllocationsTest(unittest2.TestCase):
     def setUp(self):
