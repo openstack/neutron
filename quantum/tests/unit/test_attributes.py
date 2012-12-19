@@ -421,7 +421,7 @@ class TestConvertToInt(unittest2.TestCase):
             [], attributes.convert_none_to_empty_list(None))
 
     def test_convert_none_to_empty_list_value(self):
-        values = ['1', 3, [], [1], {}, {'a':3}]
+        values = ['1', 3, [], [1], {}, {'a': 3}]
         for value in values:
             self.assertEqual(
                 value, attributes.convert_none_to_empty_list(value))

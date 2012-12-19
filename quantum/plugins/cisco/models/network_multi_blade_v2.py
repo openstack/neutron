@@ -180,8 +180,8 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
             n = kwargs[const.NETWORK]
             tenant_id = n['tenant_id']
-            args = [tenant_id, id, {const.CONTEXT:context},
-                    {const.BASE_PLUGIN_REF:base_plugin_ref}]
+            args = [tenant_id, id, {const.CONTEXT: context},
+                    {const.BASE_PLUGIN_REF: base_plugin_ref}]
             # TODO (Sumit): Might first need to check here if there are active
             # ports
             output = []

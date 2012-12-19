@@ -200,7 +200,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             vlanids = self._get_all_segmentation_ids()
             args = [ovs_output[0]['tenant_id'], ovs_output[0]['name'],
                     ovs_output[0]['id'], vlan_name, vlan_id,
-                    {'vlan_ids':vlanids}]
+                    {'vlan_ids': vlanids}]
             nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
                                                           self._func_name(),
                                                           args)
@@ -227,7 +227,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
                 args = [ovs_network['tenant_id'], ovs_network['name'],
                         ovs_network['id'], vlan_name, vlan_id,
-                        {'vlan_ids':vlanids}]
+                        {'vlan_ids': vlanids}]
                 nexus_output = self._invoke_plugin_per_device(
                     const.NEXUS_PLUGIN, "create_network", args)
             return ovs_output
@@ -271,9 +271,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
-            args = [tenant_id, id, {const.VLANID:vlan_id},
-                    {const.CONTEXT:context},
-                    {const.BASE_PLUGIN_REF:base_plugin_ref}]
+            args = [tenant_id, id, {const.VLANID: vlan_id},
+                    {const.CONTEXT: context},
+                    {const.BASE_PLUGIN_REF: base_plugin_ref}]
             if self._validate_vlan_id(vlan_id):
                 self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
                                                self._func_name(), args)

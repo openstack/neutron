@@ -77,7 +77,7 @@ class TestDebugCommands(unittest.TestCase):
                      'mac_address': 'aa:bb:cc:dd:ee:ffa',
                      'network_id': 'fake_net',
                      'fixed_ips':
-                     [{'subnet_id': 'fake_subnet', 'ip_address':'10.0.0.3'}]
+                     [{'subnet_id': 'fake_subnet', 'ip_address': '10.0.0.3'}]
                      }}
         fake_ports = {'ports': [fake_port['port']]}
         self.fake_ports = fake_ports

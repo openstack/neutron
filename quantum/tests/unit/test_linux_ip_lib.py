@@ -536,10 +536,10 @@ class TestIpRouteCommand(TestIPCmdBase):
 
     def test_get_gateway(self):
         test_cases = [{'sample': GATEWAY_SAMPLE1,
-                       'expected': {'gateway':'10.35.19.254',
+                       'expected': {'gateway': '10.35.19.254',
                                     'metric': 100}},
                       {'sample': GATEWAY_SAMPLE2,
-                       'expected': {'gateway':'10.35.19.254',
+                       'expected': {'gateway': '10.35.19.254',
                                     'metric': 100}},
                       {'sample': GATEWAY_SAMPLE3,
                        'expected': None},
