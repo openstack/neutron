@@ -15,10 +15,11 @@
 #  License for the spec
 
 import copy
+
 import mock
+import unittest2
 from webob import exc
 import webtest
-import unittest2
 
 from quantum.api import extensions
 from quantum.common import config
