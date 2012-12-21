@@ -63,28 +63,17 @@ def _filters(request, attr_info):
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
     res = {}
-    for key in set(request.GET):
+    for key, values in request.GET.dict_of_lists().iteritems():
         if key == 'fields':
             continue
-        values = [v for v in request.GET.getall(key) if v]
-        if not values:
-            continue
-        key_attr_info = attr_info.get(key)
-        if not key_attr_info:
-            res[key] = values
-            continue
-        convert_list_to = key_attr_info.get('convert_list_to')
-        if not convert_list_to:
-            convert_to = key_attr_info.get('convert_to')
-            if convert_to:
-                convert_list_to = lambda values_: [convert_to(x)
-                                                   for x in values_]
-            else:
-                convert_list_to = lambda values_: None
-        result_values = convert_list_to(values)
-        if result_values:
-            res[key] = result_values
-        else:
+        values = [v for v in values if v]
+        key_attr_info = attr_info.get(key, {})
+        if 'convert_list_to' in key_attr_info:
+            values = key_attr_info['convert_list_to'](values)
+        elif 'convert_to' in key_attr_info:
+            convert_to = key_attr_info['convert_to']
+            values = [convert_to(v) for v in values]
+        if values:
             res[key] = values
     return res
 
