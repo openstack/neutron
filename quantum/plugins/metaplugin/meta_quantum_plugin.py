@@ -50,12 +50,16 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def __init__(self, configfile=None):
         LOG.debug(_("Start initializing metaplugin"))
-        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
-        options.update({'base': models_v2.model_base.BASEV2})
-        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
-        options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
-        options.update({"reconnect_interval": reconnect_interval})
+        options = {
+            "sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection,
+            "sql_max_retries": cfg.CONF.DATABASE.sql_max_retries,
+            "reconnect_interval": cfg.CONF.DATABASE.reconnect_interval,
+            "base": models_v2.model_base.BASEV2,
+            "sql_min_pool_size": cfg.CONF.DATABASE.sql_min_pool_size,
+            "sql_max_pool_size": cfg.CONF.DATABASE.sql_max_pool_size,
+            "sql_idle_timeout": cfg.CONF.DATABASE.sql_idle_timeout,
+            "sql_dbpool_enable": cfg.CONF.DATABASE.sql_dbpool_enable
+        }
         self.supported_extension_aliases = \
             cfg.CONF.META.supported_extension_aliases.split(',')
         self.supported_extension_aliases += ['flavor', 'router']

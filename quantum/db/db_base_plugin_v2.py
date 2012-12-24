@@ -910,11 +910,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 obj_creator = getattr(self, 'create_%s' % resource)
                 objects.append(obj_creator(context, item))
             context.session.commit()
-        except Exception:
+        except Exception as e:
             LOG.exception(_("An exception occured while creating "
                             "the %(resource)s:%(item)s"), locals())
             context.session.rollback()
-            raise
+            raise e
         return objects
 
     def create_network_bulk(self, context, networks):

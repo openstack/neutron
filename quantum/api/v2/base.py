@@ -274,7 +274,7 @@ class Controller(object):
             # plugin raised might have been created or not in the db.
             # We need a way for ensuring that if it has been created,
             # it is then deleted
-            raise
+            raise ex
 
     def create(self, request, body=None, **kwargs):
         """Creates a new instance of the requested entity"""

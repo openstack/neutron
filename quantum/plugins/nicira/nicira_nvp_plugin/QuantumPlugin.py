@@ -67,12 +67,16 @@ def parse_config():
         NVPCluster objects, 'plugin_config' is a dictionary with plugin
         parameters (currently only 'max_lp_per_bridged_ls').
     """
-    db_options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
-    db_options.update({'base': models_v2.model_base.BASEV2})
-    sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
-    db_options.update({"sql_max_retries": sql_max_retries})
-    reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
-    db_options.update({"reconnect_interval": reconnect_interval})
+    db_options = {
+        "sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection,
+        "sql_max_retries": cfg.CONF.DATABASE.sql_max_retries,
+        "reconnect_interval": cfg.CONF.DATABASE.reconnect_interval,
+        "base": models_v2.model_base.BASEV2,
+        "sql_min_pool_size": cfg.CONF.DATABASE.sql_min_pool_size,
+        "sql_max_pool_size": cfg.CONF.DATABASE.sql_max_pool_size,
+        "sql_idle_timeout": cfg.CONF.DATABASE.sql_idle_timeout,
+        "sql_dbpool_enable": cfg.CONF.DATABASE.sql_dbpool_enable
+    }
     nvp_options = {'max_lp_per_bridged_ls': cfg.CONF.NVP.max_lp_per_bridged_ls}
     nvp_options.update({'failover_time': cfg.CONF.NVP.failover_time})
     nvp_options.update({'concurrent_connections':
