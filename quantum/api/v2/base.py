@@ -292,42 +292,20 @@ class Controller(object):
         try:
             if self._collection in body:
                 # Have to account for bulk create
-                for item in body[self._collection]:
-                    self._validate_network_tenant_ownership(
-                        request,
-                        item[self._resource],
-                    )
-                    policy.enforce(request.context,
-                                   action,
-                                   item[self._resource],
-                                   plugin=self._plugin)
-                    try:
-                        count = QUOTAS.count(request.context, self._resource,
-                                             self._plugin, self._collection,
-                                             item[self._resource]['tenant_id'])
-                        kwargs = {self._resource: count + 1}
-                    except exceptions.QuotaResourceUnknown as e:
-                        # We don't want to quota this resource
-                        LOG.debug(e)
-                    except Exception:
-                        raise
-                    else:
-                        QUOTAS.limit_check(request.context,
-                                           item[self._resource]['tenant_id'],
-                                           **kwargs)
+                items = body[self._collection]
             else:
-                self._validate_network_tenant_ownership(
-                    request,
-                    body[self._resource]
-                )
+                items = [body]
+            for item in items:
+                self._validate_network_tenant_ownership(request,
+                                                        item[self._resource])
                 policy.enforce(request.context,
                                action,
-                               body[self._resource],
+                               item[self._resource],
                                plugin=self._plugin)
                 try:
                     count = QUOTAS.count(request.context, self._resource,
                                          self._plugin, self._collection,
-                                         body[self._resource]['tenant_id'])
+                                         item[self._resource]['tenant_id'])
                     kwargs = {self._resource: count + 1}
                 except exceptions.QuotaResourceUnknown as e:
                     # We don't want to quota this resource
@@ -336,7 +314,7 @@ class Controller(object):
                     raise
                 else:
                     QUOTAS.limit_check(request.context,
-                                       body[self._resource]['tenant_id'],
+                                       item[self._resource]['tenant_id'],
                                        **kwargs)
         except exceptions.PolicyNotAuthorized:
             LOG.exception(_("Create operation not authorized"))
