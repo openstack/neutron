@@ -383,20 +383,26 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.notifier.network_delete(context, id)
 
     def get_network(self, context, id, fields=None):
-        net = super(LinuxBridgePluginV2, self).get_network(context, id, None)
-        self._extend_network_dict_provider(context, net)
-        self._extend_network_dict_l3(context, net)
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(LinuxBridgePluginV2, self).get_network(context,
+                                                               id, None)
+            self._extend_network_dict_provider(context, net)
+            self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None):
-        nets = super(LinuxBridgePluginV2, self).get_networks(context, filters,
-                                                             None)
-        for net in nets:
-            self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
+        session = context.session
+        with session.begin(subtransactions=True):
+            nets = super(LinuxBridgePluginV2, self).get_networks(context,
+                                                                 filters,
+                                                                 None)
+            for net in nets:
+                self._extend_network_dict_provider(context, net)
+                self._extend_network_dict_l3(context, net)
 
-        # TODO(rkukura): Filter on extended provider attributes.
-        nets = self._filter_nets_l3(context, nets, filters)
+            # TODO(rkukura): Filter on extended provider attributes.
+            nets = self._filter_nets_l3(context, nets, filters)
 
         return [self._fields(net, fields) for net in nets]
 
