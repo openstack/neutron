@@ -1140,7 +1140,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                 a.ports.device_owner in AUTO_DELETE_PORT_OWNERS
                                 for a in allocated)
             if not only_auto_del:
-                raise q_exc.NetworkInUse(subnet_id=id)
+                raise q_exc.SubnetInUse(subnet_id=id)
 
             # remove network owned ports
             for allocation in allocated:
