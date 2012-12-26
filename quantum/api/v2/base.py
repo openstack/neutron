@@ -49,6 +49,7 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              AttributeError: webob.exc.HTTPBadRequest,
              ValueError: webob.exc.HTTPBadRequest,
              exceptions.IpAddressGenerationFailure: webob.exc.HTTPConflict,
+             exceptions.OverQuota: webob.exc.HTTPConflict,
              }
 
 QUOTAS = quota.QUOTAS
@@ -293,8 +294,11 @@ class Controller(object):
             if self._collection in body:
                 # Have to account for bulk create
                 items = body[self._collection]
+                deltas = {}
+                bulk = True
             else:
                 items = [body]
+                bulk = False
             for item in items:
                 self._validate_network_tenant_ownership(request,
                                                         item[self._resource])
@@ -303,10 +307,16 @@ class Controller(object):
                                item[self._resource],
                                plugin=self._plugin)
                 try:
+                    tenant_id = item[self._resource]['tenant_id']
                     count = QUOTAS.count(request.context, self._resource,
                                          self._plugin, self._collection,
-                                         item[self._resource]['tenant_id'])
-                    kwargs = {self._resource: count + 1}
+                                         tenant_id)
+                    if bulk:
+                        delta = deltas.get(tenant_id, 0) + 1
+                        deltas[tenant_id] = delta
+                    else:
+                        delta = 1
+                    kwargs = {self._resource: count + delta}
                 except exceptions.QuotaResourceUnknown as e:
                     # We don't want to quota this resource
                     LOG.debug(e)

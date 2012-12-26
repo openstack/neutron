@@ -172,6 +172,21 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         data = self._deserializers[ctype].deserialize(response.body)['body']
         return data
 
+    def _create_bulk_from_list(self, fmt, resource, objects, **kwargs):
+        """ Creates a bulk request from a list of objects """
+        collection = "%ss" % resource
+        req_data = {collection: objects}
+        req = self.new_create_request(collection, req_data, fmt)
+        if ('set_context' in kwargs and
+                kwargs['set_context'] is True and
+                'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            req.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+        elif 'context' in kwargs:
+            req.environ['quantum.context'] = kwargs['context']
+        return req.get_response(self.api)
+
     def _create_bulk(self, fmt, number, resource, data, name='test', **kwargs):
         """ Creates a bulk request for any kind of resource """
         objects = []
@@ -386,8 +401,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
-    def _validate_behavior_on_bulk_failure(self, res, collection):
-        self.assertEqual(res.status_int, 400)
+    def _validate_behavior_on_bulk_failure(self, res, collection, errcode=400):
+        self.assertEqual(res.status_int, errcode)
         req = self.new_list_request(collection)
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 200)
@@ -1620,6 +1635,50 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         res = self._create_network_bulk('json', 2, 'test', True)
         self._validate_behavior_on_bulk_success(res, 'networks')
+
+    def test_create_networks_bulk_native_quotas(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk network create")
+        quota = 4
+        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        res = self._create_network_bulk('json', quota + 1, 'test', True)
+        self._validate_behavior_on_bulk_failure(res, 'networks', errcode=409)
+
+    def test_create_networks_bulk_tenants_and_quotas(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk network create")
+        quota = 2
+        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        networks = [{'network': {'name': 'n1',
+                                 'tenant_id': self._tenant_id}},
+                    {'network': {'name': 'n2',
+                                 'tenant_id': self._tenant_id}},
+                    {'network': {'name': 'n1',
+                                 'tenant_id': 't1'}},
+                    {'network': {'name': 'n2',
+                                 'tenant_id': 't1'}}]
+
+        res = self._create_bulk_from_list('json', 'network', networks)
+        self.assertEqual(res.status_int, 201)
+
+    def test_create_networks_bulk_tenants_and_quotas_fail(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk network create")
+        quota = 2
+        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        networks = [{'network': {'name': 'n1',
+                                 'tenant_id': self._tenant_id}},
+                    {'network': {'name': 'n2',
+                                 'tenant_id': self._tenant_id}},
+                    {'network': {'name': 'n1',
+                                 'tenant_id': 't1'}},
+                    {'network': {'name': 'n3',
+                                 'tenant_id': self._tenant_id}},
+                    {'network': {'name': 'n2',
+                                 'tenant_id': 't1'}}]
+
+        res = self._create_bulk_from_list('json', 'network', networks)
+        self.assertEqual(res.status_int, 409)
 
     def test_create_networks_bulk_emulated(self):
         real_has_attr = hasattr
