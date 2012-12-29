@@ -17,6 +17,7 @@
 
 from quantum.agent import l3_agent
 from quantum.agent.linux import interface
+from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.common import config
 from quantum.openstack.common import cfg
@@ -54,6 +55,27 @@ def setup_conf():
     return conf
 
 
+def collect_quantum_ports(bridges, root_helper):
+    """Collect ports created by Quantum from OVS"""
+    ports = []
+    for bridge in bridges:
+        ovs = ovs_lib.OVSBridge(bridge, root_helper)
+        ports += [port.port_name for port in ovs.get_vif_ports()]
+    return ports
+
+
+def delete_quantum_ports(ports, root_helper):
+    """Delete non-internal ports created by Quantum
+
+    Non-internal OVS ports need to be removed manually.
+    """
+    for port in ports:
+        if ip_lib.device_exists(port):
+            device = ip_lib.IPDevice(port, root_helper)
+            device.link.delete()
+            LOG.info(_("Delete %s"), port)
+
+
 def main():
     """Main method for cleaning up OVS bridges.
 
@@ -66,15 +88,25 @@ def main():
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])
     ovs_bridges = set(ovs_lib.get_bridges(conf.AGENT.root_helper))
+    available_configuration_bridges = configuration_bridges & ovs_bridges
 
     if conf.ovs_all_ports:
         bridges = ovs_bridges
     else:
-        bridges = configuration_bridges & ovs_bridges
+        bridges = available_configuration_bridges
+
+    # Collect existing ports created by Quantum on configuration bridges.
+    # After deleting ports from OVS bridges, we cannot determine which
+    # ports were created by Quantum, so port information is collected now.
+    ports = collect_quantum_ports(available_configuration_bridges,
+                                  conf.AGENT.root_helper)
 
     for bridge in bridges:
         LOG.info(_("Cleaning %s"), bridge)
         ovs = ovs_lib.OVSBridge(bridge, conf.AGENT.root_helper)
         ovs.delete_ports(all_ports=conf.ovs_all_ports)
+
+    # Remove remaining ports created by Quantum (usually veth pair)
+    delete_quantum_ports(ports, conf.AGENT.root_helper)
 
     LOG.info(_("OVS cleanup completed successfully"))
