@@ -19,9 +19,7 @@
 import atexit
 import fcntl
 import os
-from signal import SIGTERM
 import sys
-import time
 
 from quantum.agent.linux import utils
 from quantum.openstack.common import log as logging
