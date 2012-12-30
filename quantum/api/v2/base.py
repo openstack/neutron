@@ -90,10 +90,7 @@ def _filters(request, attr_info):
                 convert_list_to = lambda values_: [convert_to(x)
                                                    for x in values_]
         if convert_list_to:
-            try:
-                result_values = convert_list_to(values)
-            except exceptions.InvalidInput as e:
-                raise webob.exc.HTTPBadRequest(str(e))
+            result_values = convert_list_to(values)
         else:
             result_values = values
         if result_values:
