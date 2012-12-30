@@ -20,6 +20,7 @@ from quantum.common import rpc as q_rpc
 from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
+from quantum.db import l3_rpc_base
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.nec.common import config
@@ -489,7 +490,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         super(NECPluginV2, self).delete_packet_filter(context, id)
 
 
-class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+                              l3_rpc_base.L3RpcCallbackMixin):
 
     RPC_API_VERSION = '1.0'
 
