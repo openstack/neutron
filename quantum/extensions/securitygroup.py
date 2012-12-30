@@ -104,7 +104,7 @@ class SecurityGroupNotProxyMode(qexception.InUse):
     message = _("Recieve external id and not in proxy mode")
 
 
-class SecurityGroupProxyModeNotAdmin(qexception.InvalidExtenstionEnv):
+class SecurityGroupProxyModeNotAdmin(qexception.NotAuthorized):
     message = _("In Proxy Mode and not from admin")
 
 

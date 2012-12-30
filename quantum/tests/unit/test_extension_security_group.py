@@ -240,7 +240,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                           tenant_id='bad_tenant',
                                           set_context=True)
         self.deserialize('json', res)
-        self.assertEqual(res.status_int, 500)
+        self.assertEqual(res.status_int, 403)
 
     def test_create_security_group_no_external_id_proxy_mode(self):
         cfg.CONF.SECURITYGROUP.proxy_mode = True
@@ -463,7 +463,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize('json', res)
-            self.assertEqual(res.status_int, 500)
+            self.assertEqual(res.status_int, 403)
 
     def test_create_security_group_rule_bad_tenant_source_group_id(self):
         with self.security_group() as sg:

@@ -29,27 +29,14 @@ LOG = logging.getLogger(__name__)
 XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
 
 FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
-             exceptions.InUse: webob.exc.HTTPConflict,
              exceptions.Conflict: webob.exc.HTTPConflict,
+             exceptions.InUse: webob.exc.HTTPConflict,
              exceptions.BadRequest: webob.exc.HTTPBadRequest,
-             exceptions.ResourceExhausted: webob.exc.HTTPServiceUnavailable,
-             exceptions.MacAddressGenerationFailure:
-             webob.exc.HTTPServiceUnavailable,
-             exceptions.StateInvalid: webob.exc.HTTPBadRequest,
-             exceptions.InvalidInput: webob.exc.HTTPBadRequest,
-             exceptions.OverlappingAllocationPools: webob.exc.HTTPConflict,
-             exceptions.OutOfBoundsAllocationPool: webob.exc.HTTPBadRequest,
-             exceptions.InvalidAllocationPool: webob.exc.HTTPBadRequest,
-             exceptions.InvalidSharedSetting: webob.exc.HTTPConflict,
-             exceptions.HostRoutesExhausted: webob.exc.HTTPBadRequest,
-             exceptions.DNSNameServersExhausted: webob.exc.HTTPBadRequest,
-             # Some plugins enforce policies as well
-             exceptions.PolicyNotAuthorized: webob.exc.HTTPForbidden,
+             exceptions.ServiceUnavailable: webob.exc.HTTPServiceUnavailable,
+             exceptions.NotAuthorized: webob.exc.HTTPForbidden,
              netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
              AttributeError: webob.exc.HTTPBadRequest,
              ValueError: webob.exc.HTTPBadRequest,
-             exceptions.IpAddressGenerationFailure: webob.exc.HTTPConflict,
-             exceptions.OverQuota: webob.exc.HTTPConflict,
              }
 
 QUOTAS = quota.QUOTAS
