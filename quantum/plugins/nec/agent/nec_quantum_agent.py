@@ -28,7 +28,7 @@ import time
 from quantum.agent.linux import ovs_lib
 from quantum.common import config as logging_config
 from quantum.common import topics
-from quantum.openstack.common import context
+from quantum import context
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.nec.common import config
@@ -54,8 +54,7 @@ class NECQuantumAgent(object):
         self.datapath_id = "0x%s" % self.int_br.get_datapath_id()
 
         # RPC network init
-        self.context = context.RequestContext('quantum', 'quantum',
-                                              is_admin=False)
+        self.context = context.get_admin_context_without_session()
         self.conn = rpc.create_connection(new=True)
 
     def update_ports(self, port_added=[], port_removed=[]):
