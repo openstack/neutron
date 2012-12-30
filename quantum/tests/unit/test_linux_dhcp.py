@@ -434,7 +434,7 @@ class TestDnsmasq(TestBase):
              'dnsmasq-lease-update'),
             '--leasefile-ro',
             '--dhcp-range=set:tag0,192.168.0.0,static,120s',
-            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s'
+            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s',
         ]
         expected.extend(extra_options)
 
@@ -466,7 +466,7 @@ class TestDnsmasq(TestBase):
                                                      check_exit_code=True)
 
     def test_spawn(self):
-        self._test_spawn([])
+        self._test_spawn(['--conf-file='])
 
     def test_spawn_cfg_config_file(self):
         self.conf.set_override('dnsmasq_config_file', '/foo')
@@ -474,7 +474,7 @@ class TestDnsmasq(TestBase):
 
     def test_spawn_cfg_dns_server(self):
         self.conf.set_override('dnsmasq_dns_server', '8.8.8.8')
-        self._test_spawn(['--server=8.8.8.8'])
+        self._test_spawn(['--conf-file=', '--server=8.8.8.8'])
 
     def test_output_opts_file(self):
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
