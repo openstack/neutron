@@ -284,7 +284,7 @@ def run_tests(c=None):
 # and override the values in it if needed (e.g., run_tests.py in
 # quantum/plugins/openvswitch/ )
 test_config = {
-    "plugin_name": "quantum.plugins.sample.SamplePlugin.FakePlugin",
+    "plugin_name": "",
     "default_net_op_status": constants.NET_STATUS_ACTIVE,
     "default_port_op_status": constants.PORT_STATUS_ACTIVE,
 }
