@@ -109,7 +109,7 @@ def sync_vlan_allocations(network_vlan_ranges):
                 if not alloc.allocated:
                     LOG.debug("removing vlan %s on physical network %s"
                               " from pool" %
-                              (alloc.vlan_id, physical_network))
+                              (alloc.vlan_id, alloc.physical_network))
                     session.delete(alloc)
 
 
