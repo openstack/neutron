@@ -15,12 +15,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
 import sys
 
 from quantum.agent.common import config
 from quantum.agent.linux import interface
-import quantum.debug.commands
 from quantum.debug.debug_agent import QuantumDebugAgent
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils

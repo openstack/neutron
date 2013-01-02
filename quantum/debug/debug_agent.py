@@ -15,24 +15,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
-import errno
-import os
 import shlex
 import socket
-import sys
 
 import netaddr
 
-from quantum.agent.common import config
 from quantum.agent.dhcp_agent import DictModel
-from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
-from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
-from quantumclient.v2_0 import client
 
 
 LOG = logging.getLogger(__name__)
