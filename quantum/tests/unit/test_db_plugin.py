@@ -2841,3 +2841,19 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
+
+
+class DbModelTestCase(unittest2.TestCase):
+    """ DB model tests """
+    def test_repr(self):
+        """ testing the string representation of 'model' classes """
+        network = models_v2.Network(name="net_net", status="OK",
+                                    admin_state_up=True)
+        actual_repr_output = repr(network)
+        exp_start_with = "<quantum.db.models_v2.Network"
+        exp_middle = "[object at %x]" % id(network)
+        exp_end_with = (" {tenant_id=None, id=None, "
+                        "name='net_net', status='OK', "
+                        "admin_state_up=True, shared=None}>")
+        final_exp = exp_start_with + exp_middle + exp_end_with
+        self.assertEqual(actual_repr_output, final_exp)

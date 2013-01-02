@@ -51,6 +51,14 @@ class QuantumBase(object):
         local.update(joined)
         return local.iteritems()
 
+    def __repr__(self):
+        """sqlalchemy based automatic __repr__ method"""
+        items = ['%s=%r' % (col.name, getattr(self, col.name))
+                 for col in self.__table__.columns]
+        return "<%s.%s[object at %x] {%s}>" % (self.__class__.__module__,
+                                               self.__class__.__name__,
+                                               id(self), ', '.join(items))
+
 
 class QuantumBaseV2(QuantumBase):
 
