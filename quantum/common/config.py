@@ -20,7 +20,6 @@ Routines for configuring Quantum
 """
 
 import os
-import sys
 
 from paste import deploy
 
