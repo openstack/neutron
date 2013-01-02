@@ -17,7 +17,6 @@
 # @author: Mark McClain, DreamHost
 
 import httplib
-import os
 import socket
 import sys
 import urlparse

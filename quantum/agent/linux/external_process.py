@@ -17,7 +17,6 @@
 # @author: Mark McClain, DreamHost
 
 import os
-import tempfile
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
