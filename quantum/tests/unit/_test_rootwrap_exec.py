@@ -18,8 +18,6 @@
 import os
 import unittest
 
-import mock
-
 from quantum.agent.linux import utils
 from quantum.openstack.common import log as logging
 

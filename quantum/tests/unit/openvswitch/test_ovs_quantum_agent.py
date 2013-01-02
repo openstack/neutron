@@ -19,7 +19,6 @@ import unittest2 as unittest
 
 from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
-from quantum.plugins.openvswitch.common import config
 
 
 class CreateAgentConfigMap(unittest.TestCase):

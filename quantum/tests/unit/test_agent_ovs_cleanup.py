@@ -18,9 +18,7 @@
 import mock
 import unittest2 as unittest
 
-from quantum.agent.linux import ovs_lib
 from quantum.agent import ovs_cleanup_util as util
-from quantum.openstack.common import uuidutils
 
 
 class TestOVSCleanup(unittest.TestCase):

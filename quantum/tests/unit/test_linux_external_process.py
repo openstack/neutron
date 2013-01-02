@@ -16,8 +16,6 @@
 #
 # @author: Mark McClain, DreamHost
 
-import os
-
 import mock
 import unittest2 as unittest
 

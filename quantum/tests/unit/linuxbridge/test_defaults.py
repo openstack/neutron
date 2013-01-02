@@ -16,6 +16,7 @@
 import unittest2 as unittest
 
 from quantum.openstack.common import cfg
+#NOTE this import loads tests required options
 from quantum.plugins.linuxbridge.common import config
 
 

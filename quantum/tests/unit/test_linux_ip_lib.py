@@ -19,7 +19,6 @@ import mock
 import unittest2 as unittest
 
 from quantum.agent.linux import ip_lib
-from quantum.agent.linux import utils
 from quantum.common import exceptions
 
 NETNS_SAMPLE = [

@@ -15,7 +15,6 @@
 #    under the License.
 
 import os
-import subprocess
 
 import mock
 import unittest2 as unittest

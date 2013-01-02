@@ -27,9 +27,7 @@ import mock
 
 import quantum
 from quantum.common import exceptions
-from quantum.common import utils
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import policy as common_policy
 from quantum import policy

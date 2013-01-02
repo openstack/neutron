@@ -30,7 +30,6 @@ from quantum.api.extensions import (
     PluginAwareExtensionManager,
 )
 from quantum.common import config
-from quantum.common import exceptions
 from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging

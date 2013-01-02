@@ -13,25 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import inspect
 import logging
 import mock
 
-from quantum.api.v2.router import APIRouter
-from quantum.common import config
-from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
-from quantum.db import l3_db
-from quantum.db import quota_db
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import network_db_v2
 from quantum.plugins.cisco.db import network_models_v2
-from quantum.plugins.openvswitch import ovs_models_v2
 from quantum.tests.unit import test_db_plugin
-from quantum.wsgi import JSONDeserializer
 
 LOG = logging.getLogger(__name__)
 

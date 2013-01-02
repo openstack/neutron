@@ -14,7 +14,6 @@
 #    under the License.
 
 from quantum import wsgi
-from quantum.wsgi import Serializer
 
 
 def create_request(path, body, content_type, method='GET',

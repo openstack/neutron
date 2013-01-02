@@ -16,16 +16,11 @@
 #    under the License.
 
 import socket
-import sys
-import uuid
 
 import mock
 import unittest2 as unittest
 
-from quantum.agent.common import config
 from quantum.agent.linux import interface
-from quantum.agent.linux import utils
-from quantum.common import exceptions
 from quantum.debug import commands
 from quantum.debug.debug_agent import DEVICE_OWNER_PROBE, QuantumDebugAgent
 from quantum.openstack.common import cfg
