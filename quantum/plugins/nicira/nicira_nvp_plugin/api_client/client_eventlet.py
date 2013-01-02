@@ -28,7 +28,7 @@ from common import _conn_str
 eventlet.monkey_patch()
 
 logging.basicConfig(level=logging.INFO)
-lg = logging.getLogger('nvp_api_client')
+LOG = logging.getLogger(__name__)
 
 # Default parameters.
 DEFAULT_FAILOVER_TIME = 5
@@ -156,19 +156,19 @@ class NvpApiClientEventlet(object):
                  api_providers are configured.
         '''
         if not self._api_providers:
-            lg.warn(_("[%d] no API providers currently available."), rid)
+            LOG.warn(_("[%d] no API providers currently available."), rid)
             return None
 
         # The sleep time is to give controllers time to become consistent after
         # there has been a change in the controller used as the api_provider.
         now = time.time()
         if now < getattr(self, '_issue_conn_barrier', now):
-            lg.warn(_("[%d] Waiting for failover timer to expire."), rid)
+            LOG.warn(_("[%d] Waiting for failover timer to expire."), rid)
             time.sleep(self._issue_conn_barrier - now)
 
         # Print out a warning if all connections are in use.
         if self._conn_pool[self._active_conn_pool_idx].empty():
-            lg.debug(_("[%d] Waiting to acquire client connection."), rid)
+            LOG.debug(_("[%d] Waiting to acquire client connection."), rid)
 
         # Try to acquire a connection (block in get() until connection
         # available or timeout occurs).
@@ -178,19 +178,19 @@ class NvpApiClientEventlet(object):
         if active_conn_pool_idx != self._active_conn_pool_idx:
             # active_conn_pool became inactive while we were waiting.
             # Put connection back on old pool and try again.
-            lg.warn(_("[%(rid)d] Active pool expired while waiting for "
-                      "connection: %(conn)s"),
-                    {'rid': rid, 'conn': _conn_str(conn)})
+            LOG.warn(_("[%(rid)d] Active pool expired while waiting for "
+                       "connection: %(conn)s"),
+                     {'rid': rid, 'conn': _conn_str(conn)})
             self._conn_pool[active_conn_pool_idx].put(conn)
             return self.acquire_connection(rid=rid)
 
         # Check if the connection has been idle too long.
         now = time.time()
         if getattr(conn, 'last_used', now) < now - self.CONN_IDLE_TIMEOUT:
-            lg.info(_("[%(rid)d] Connection %(conn)s idle for %(sec)0.2f "
-                      "seconds; reconnecting."),
-                    {'rid': rid, 'conn': _conn_str(conn),
-                     'sec': now - conn.last_used})
+            LOG.info(_("[%(rid)d] Connection %(conn)s idle for %(sec)0.2f "
+                       "seconds; reconnecting."),
+                     {'rid': rid, 'conn': _conn_str(conn),
+                      'sec': now - conn.last_used})
             conn = self._create_connection(*self._conn_params(conn))
 
             # Stash conn pool so conn knows where to go when it releases.
@@ -198,9 +198,9 @@ class NvpApiClientEventlet(object):
 
         conn.last_used = now
         qsize = self._conn_pool[self._active_conn_pool_idx].qsize()
-        lg.debug(_("[%(rid)d] Acquired connection %(conn)s. %(qsize)d "
-                   "connection(s) available."),
-                 {'rid': rid, 'conn': _conn_str(conn), 'qsize': qsize})
+        LOG.debug(_("[%(rid)d] Acquired connection %(conn)s. %(qsize)d "
+                    "connection(s) available."),
+                  {'rid': rid, 'conn': _conn_str(conn), 'qsize': qsize})
         return conn
 
     def release_connection(self, http_conn, bad_state=False, rid=-1):
@@ -213,9 +213,9 @@ class NvpApiClientEventlet(object):
         :param rid: request id passed in from request eventlet.
         '''
         if self._conn_params(http_conn) not in self._api_providers:
-            lg.warn(_("[%(rid)d] Released connection '%(conn)s' is not an "
-                      "API provider for the cluster"),
-                    {'rid': rid, 'conn': _conn_str(http_conn)})
+            LOG.warn(_("[%(rid)d] Released connection '%(conn)s' is not an "
+                       "API provider for the cluster"),
+                     {'rid': rid, 'conn': _conn_str(http_conn)})
             return
 
         # Retrieve "home" connection pool.
@@ -223,9 +223,9 @@ class NvpApiClientEventlet(object):
         conn_pool = self._conn_pool[conn_pool_idx]
         if bad_state:
             # Reconnect to provider.
-            lg.warn(_("[%(rid)d] Connection returned in bad state, "
-                      "reconnecting to %(conn)s"),
-                    {'rid': rid, 'conn': _conn_str(http_conn)})
+            LOG.warn(_("[%(rid)d] Connection returned in bad state, "
+                       "reconnecting to %(conn)s"),
+                     {'rid': rid, 'conn': _conn_str(http_conn)})
             http_conn = self._create_connection(*self._conn_params(http_conn))
             http_conn.idx = conn_pool_idx
 
@@ -233,20 +233,20 @@ class NvpApiClientEventlet(object):
                 # This pool is no longer in a good state. Switch to next pool.
                 self._active_conn_pool_idx += 1
                 self._active_conn_pool_idx %= len(self._conn_pool)
-                lg.warn(_("[%(rid)d] Switched active_conn_pool from "
-                          "%(idx)d to %(pool_idx)d."),
-                        {'rid': rid, 'idx': http_conn.idx,
-                         'pool_idx': self._active_conn_pool_idx})
+                LOG.warn(_("[%(rid)d] Switched active_conn_pool from "
+                           "%(idx)d to %(pool_idx)d."),
+                         {'rid': rid, 'idx': http_conn.idx,
+                          'pool_idx': self._active_conn_pool_idx})
 
                 # No connections to the new provider allowed until after this
                 # timer has expired (allow time for synchronization).
                 self._issue_conn_barrier = time.time() + self._failover_time
 
         conn_pool.put(http_conn)
-        lg.debug(_("[%(rid)d] Released connection %(conn)s. "
-                   "%(qsize)d connection(s) available."),
-                 {'rid': rid, 'conn': _conn_str(http_conn),
-                  'qsize': conn_pool.qsize()})
+        LOG.debug(_("[%(rid)d] Released connection %(conn)s. "
+                    "%(qsize)d connection(s) available."),
+                  {'rid': rid, 'conn': _conn_str(http_conn),
+                   'qsize': conn_pool.qsize()})
 
     @property
     def need_login(self):
@@ -263,7 +263,7 @@ class NvpApiClientEventlet(object):
                 self.login()
                 self._doing_login_sem.release()
             else:
-                lg.debug(_("Waiting for auth to complete"))
+                LOG.debug(_("Waiting for auth to complete"))
                 self._doing_login_sem.acquire()
                 self._doing_login_sem.release()
         return self._cookie
@@ -277,13 +277,13 @@ class NvpApiClientEventlet(object):
 
         if ret:
             if isinstance(ret, Exception):
-                lg.error(_('NvpApiClient: login error "%s"'), ret)
+                LOG.error(_('NvpApiClient: login error "%s"'), ret)
                 raise ret
 
             self._cookie = None
             cookie = ret.getheader("Set-Cookie")
             if cookie:
-                lg.debug(_("Saving new authentication cookie '%s'"), cookie)
+                LOG.debug(_("Saving new authentication cookie '%s'"), cookie)
                 self._cookie = cookie
                 self._need_login = False
 
