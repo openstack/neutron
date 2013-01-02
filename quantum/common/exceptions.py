@@ -50,6 +50,10 @@ class NotAuthorized(QuantumException):
     message = _("Not authorized.")
 
 
+class ServiceUnavailable(QuantumException):
+    message = _("The service is unailable")
+
+
 class AdminRequired(NotAuthorized):
     message = _("User does not have admin privileges: %(reason)s")
 
@@ -79,7 +83,7 @@ class PolicyNotFound(NotFound):
     message = _("Policy configuration policy.json could not be found")
 
 
-class StateInvalid(QuantumException):
+class StateInvalid(BadRequest):
     message = _("Unsupported port state: %(port_state)s")
 
 
@@ -108,13 +112,13 @@ class MacAddressInUse(InUse):
                 "The mac address %(mac)s is in use.")
 
 
-class HostRoutesExhausted(QuantumException):
+class HostRoutesExhausted(BadRequest):
     # NOTE(xchenum): probably make sense to use quota exceeded exception?
     message = _("Unable to complete operation for %(subnet_id)s. "
                 "The number of host routes exceeds the limit %(quota)s.")
 
 
-class DNSNameServersExhausted(QuantumException):
+class DNSNameServersExhausted(BadRequest):
     # NOTE(xchenum): probably make sense to use quota exceeded exception?
     message = _("Unable to complete operation for %(subnet_id)s. "
                 "The number of DNS nameservers exceeds the limit %(quota)s.")
@@ -141,11 +145,11 @@ class TunnelIdInUse(InUse):
                 "The tunnel ID %(tunnel_id)s is in use.")
 
 
-class TenantNetworksDisabled(QuantumException):
+class TenantNetworksDisabled(ServiceUnavailable):
     message = _("Tenant network creation is not enabled.")
 
 
-class ResourceExhausted(QuantumException):
+class ResourceExhausted(ServiceUnavailable):
     pass
 
 
@@ -154,7 +158,7 @@ class NoNetworkAvailable(ResourceExhausted):
                 "No tenant network is available for allocation.")
 
 
-class AlreadyAttached(QuantumException):
+class AlreadyAttached(Conflict):
     message = _("Unable to plug the attachment %(att_id)s into port "
                 "%(port_id)s for network %(net_id)s. The attachment is "
                 "already plugged into port %(att_port_id)s")
@@ -165,7 +169,7 @@ class SubnetMismatchForPort(Conflict):
                 "the requested subnet %(subnet_id)s")
 
 
-class MalformedRequestBody(QuantumException):
+class MalformedRequestBody(BadRequest):
     message = _("Malformed request body: %(reason)s")
 
 
@@ -173,7 +177,7 @@ class Invalid(Error):
     pass
 
 
-class InvalidInput(QuantumException):
+class InvalidInput(BadRequest):
     message = _("Invalid input for operation: %(error_message)s.")
 
 
@@ -181,16 +185,16 @@ class InvalidContentType(Invalid):
     message = _("Invalid content type %(content_type)s.")
 
 
-class InvalidAllocationPool(QuantumException):
+class InvalidAllocationPool(BadRequest):
     message = _("The allocation pool %(pool)s is not valid.")
 
 
-class OverlappingAllocationPools(QuantumException):
+class OverlappingAllocationPools(Conflict):
     message = _("Found overlapping allocation pools:"
                 "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
 
 
-class OutOfBoundsAllocationPool(QuantumException):
+class OutOfBoundsAllocationPool(BadRequest):
     message = _("The allocation pool %(pool)s spans "
                 "beyond the subnet cidr %(subnet_cidr)s.")
 
@@ -199,16 +203,11 @@ class NotImplementedError(Error):
     pass
 
 
-class FixedIPNotAvailable(QuantumException):
-    message = _("Fixed IP (%(ip)s) unavailable for network "
-                "%(network_uuid)s")
-
-
-class MacAddressGenerationFailure(QuantumException):
+class MacAddressGenerationFailure(ServiceUnavailable):
     message = _("Unable to generate unique mac on network %(net_id)s.")
 
 
-class IpAddressGenerationFailure(QuantumException):
+class IpAddressGenerationFailure(Conflict):
     message = _("No more IP addresses available on network %(net_id)s.")
 
 
@@ -224,25 +223,25 @@ class SudoRequired(QuantumException):
     message = _("Sudo priviledge is required to run this command.")
 
 
-class QuotaResourceUnknown(QuantumException):
+class QuotaResourceUnknown(NotFound):
     message = _("Unknown quota resources %(unknown)s.")
 
 
-class OverQuota(QuantumException):
+class OverQuota(Conflict):
     message = _("Quota exceeded for resources: %(overs)s")
 
 
-class InvalidQuotaValue(QuantumException):
+class InvalidQuotaValue(Conflict):
     message = _("Change would make usage less than 0 for the following "
                 "resources: %(unders)s")
 
 
-class InvalidSharedSetting(QuantumException):
+class InvalidSharedSetting(Conflict):
     message = _("Unable to reconfigure sharing settings for network "
                 "%(network)s. Multiple tenants are using it")
 
 
-class InvalidExtenstionEnv(QuantumException):
+class InvalidExtenstionEnv(BadRequest):
     message = _("Invalid extension environment: %(reason)s")
 
 

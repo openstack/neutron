@@ -171,8 +171,8 @@ class TunnelKey(object):
             count += 1
             if count > self._TRANSACTION_RETRY_MAX:
                 # if this happens too often, increase _TRANSACTION_RETRY_MAX
-                LOG.warn(_("Transaction retry reaches to %d. "
-                           "abandan to allocate tunnel key."), count)
+                LOG.warn(_("Transaction retry exhausted (%d). "
+                           "Abandoned tunnel key allocation."), count)
                 raise q_exc.ResourceExhausted()
 
         return new_key
