@@ -81,8 +81,8 @@ class ExternalNetworkInUse(qexception.InUse):
 
 
 class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
-    message = _("Gateway cannot be updated for router %(router_id), since a "
-                "gateway to external network %(net_id) is required by one or "
+    message = _("Gateway cannot be updated for router %(router_id)s, since a "
+                "gateway to external network %(net_id)s is required by one or "
                 "more floating IPs.")
 
 
