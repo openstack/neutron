@@ -71,6 +71,11 @@ class QuantumManager(object):
         if not options:
             options = {}
 
+        if cfg.CONF.core_plugin is None:
+            msg = _('Quantum core_plugin not configured!')
+            LOG.critical(msg)
+            raise Exception(msg)
+
         # NOTE(jkoelker) Testing for the subclass with the __subclasshook__
         #                breaks tach monitoring. It has been removed
         #                intentianally to allow v2 plugins to be monitored
