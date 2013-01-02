@@ -69,7 +69,8 @@ class IPAllocationPool(model_base.BASEV2, HasId):
     last_ip = sa.Column(sa.String(64), nullable=False)
     available_ranges = orm.relationship(IPAvailabilityRange,
                                         backref='ipallocationpool',
-                                        lazy="dynamic")
+                                        lazy="dynamic",
+                                        cascade='delete')
 
     def __repr__(self):
         return "%s - %s" % (self.first_ip, self.last_ip)
@@ -136,7 +137,8 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     gateway_ip = sa.Column(sa.String(64))
     allocation_pools = orm.relationship(IPAllocationPool,
                                         backref='subnet',
-                                        lazy="dynamic")
+                                        lazy="dynamic",
+                                        cascade='delete')
     enable_dhcp = sa.Column(sa.Boolean())
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
