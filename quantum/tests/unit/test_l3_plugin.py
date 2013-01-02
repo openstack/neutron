@@ -296,25 +296,35 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         test_config['extension_manager'] = ext_mgr
         super(L3NatDBTestCase, self).setUp()
 
-    def _create_router(self, fmt, tenant_id, name=None, admin_state_up=None):
+    def _create_router(self, fmt, tenant_id, name=None,
+                       admin_state_up=None, set_context=False):
         data = {'router': {'tenant_id': tenant_id}}
         if name:
             data['router']['name'] = name
         if admin_state_up:
             data['router']['admin_state_up'] = admin_state_up
         router_req = self.new_create_request('routers', data, fmt)
+        if set_context and tenant_id:
+            # create a specific auth context for this request
+            router_req.environ['quantum.context'] = context.Context(
+                '', tenant_id)
+
         return router_req.get_response(self.ext_api)
 
-    def _make_router(self, fmt, tenant_id, name=None, admin_state_up=None):
-        res = self._create_router(fmt, tenant_id, name, admin_state_up)
+    def _make_router(self, fmt, tenant_id, name=None,
+                     admin_state_up=None, set_context=False):
+        res = self._create_router(fmt, tenant_id, name,
+                                  admin_state_up, set_context)
         return self.deserialize(fmt, res)
 
     def _add_external_gateway_to_router(self, router_id, network_id,
-                                        expected_code=exc.HTTPOk.code):
+                                        expected_code=exc.HTTPOk.code,
+                                        quantum_context=None):
         return self._update('routers', router_id,
                             {'router': {'external_gateway_info':
                                         {'network_id': network_id}}},
-                            expected_code=expected_code)
+                            expected_code=expected_code,
+                            quantum_context=quantum_context)
 
     def _remove_external_gateway_from_router(self, router_id, network_id,
                                              expected_code=exc.HTTPOk.code):
@@ -339,8 +349,9 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     @contextlib.contextmanager
     def router(self, name='router1', admin_status_up=True,
-               fmt='json', tenant_id=_uuid()):
-        router = self._make_router(fmt, tenant_id, name, admin_status_up)
+               fmt='json', tenant_id=_uuid(), set_context=False):
+        router = self._make_router(fmt, tenant_id, name,
+                                   admin_status_up, set_context)
         try:
             yield router
         finally:
@@ -724,6 +735,26 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 gw_info = body['router']['external_gateway_info']
                 self.assertEqual(gw_info, None)
 
+    def test_router_add_gateway_tenant_ctx(self):
+        with self.router(tenant_id='noadmin',
+                         set_context=True) as r:
+            with self.subnet() as s:
+                self._set_net_external(s['subnet']['network_id'])
+                ctx = context.Context('', 'noadmin')
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'],
+                    quantum_context=ctx)
+                body = self._show('routers', r['router']['id'])
+                net_id = body['router']['external_gateway_info']['network_id']
+                self.assertEqual(net_id, s['subnet']['network_id'])
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s['subnet']['network_id'])
+                body = self._show('routers', r['router']['id'])
+                gw_info = body['router']['external_gateway_info']
+                self.assertEqual(gw_info, None)
+
     def test_router_add_gateway_invalid_network_returns_404(self):
         with self.router() as r:
             self._add_external_gateway_to_router(
@@ -905,7 +936,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                      {'network': {l3.EXTERNAL: True}})
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
-                           fixed_ip=None):
+                           fixed_ip=None, set_context=False):
         data = {'floatingip': {'floating_network_id': network_id,
                                'tenant_id': self._tenant_id}}
         if port_id:
@@ -913,11 +944,16 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             if fixed_ip:
                 data['floatingip']['fixed_ip_address'] = fixed_ip
         floatingip_req = self.new_create_request('floatingips', data, fmt)
+        if set_context and self._tenant_id:
+            # create a specific auth context for this request
+            floatingip_req.environ['quantum.context'] = context.Context(
+                '', self._tenant_id)
         return floatingip_req.get_response(self.ext_api)
 
     def _make_floatingip(self, fmt, network_id, port_id=None,
-                         fixed_ip=None):
-        res = self._create_floatingip(fmt, network_id, port_id, fixed_ip)
+                         fixed_ip=None, set_context=False):
+        res = self._create_floatingip(fmt, network_id, port_id,
+                                      fixed_ip, set_context)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         return self.deserialize(fmt, res)
 
@@ -932,7 +968,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                          fip['floatingip']['id'])
 
     @contextlib.contextmanager
-    def floatingip_with_assoc(self, port_id=None, fmt='json'):
+    def floatingip_with_assoc(self, port_id=None, fmt='json',
+                              set_context=False):
         with self.subnet(cidr='11.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
@@ -951,7 +988,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                         floatingip = self._make_floatingip(
                             fmt,
                             public_sub['subnet']['network_id'],
-                            port_id=private_port['port']['id'])
+                            port_id=private_port['port']['id'],
+                            set_context=False)
                         yield floatingip
                     finally:
                         if floatingip:
@@ -965,7 +1003,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                             public_sub['subnet']['network_id'])
 
     @contextlib.contextmanager
-    def floatingip_no_assoc(self, private_sub, fmt='json'):
+    def floatingip_no_assoc(self, private_sub, fmt='json', set_context=False):
         with self.subnet(cidr='12.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.router() as r:
@@ -980,7 +1018,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
                     floatingip = self._make_floatingip(
                         fmt,
-                        public_sub['subnet']['network_id'])
+                        public_sub['subnet']['network_id'],
+                        set_context=set_context)
                     yield floatingip
                 finally:
                     if floatingip:
