@@ -78,7 +78,7 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
 
         # validate network ownership
         super(NECPluginV2Base, self).get_network(context, pf['network_id'])
-        if pf.get('in_port') != attributes.ATTR_NOT_SPECIFIED:
+        if pf.get('in_port') is not attributes.ATTR_NOT_SPECIFIED:
             # validate port ownership
             super(NECPluginV2Base, self).get_port(context, pf['in_port'])
 
@@ -99,7 +99,7 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
                       'dst_port': 0,
                       'protocol': ''}
         for key, default in conditions.items():
-            if pf.get(key) == attributes.ATTR_NOT_SPECIFIED:
+            if pf.get(key) is attributes.ATTR_NOT_SPECIFIED:
                 params.update({key: default})
             else:
                 params.update({key: pf.get(key)})

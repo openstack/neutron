@@ -362,7 +362,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         self._handle_provider_create(context, net_data)
         # Replace ATTR_NOT_SPECIFIED with None before sending to NVP
         for attr, value in network['network'].iteritems():
-            if value == attributes.ATTR_NOT_SPECIFIED:
+            if value is attributes.ATTR_NOT_SPECIFIED:
                 net_data[attr] = None
         # FIXME(arosen) implement admin_state_up = False in NVP
         if net_data['admin_state_up'] is False:

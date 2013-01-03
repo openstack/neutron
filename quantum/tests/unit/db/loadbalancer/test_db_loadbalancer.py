@@ -24,7 +24,6 @@ from quantum import context
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.extensions import ExtensionMiddleware
 from quantum.api.v2 import attributes
-from quantum.api.v2.attributes import ATTR_NOT_SPECIFIED
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.common import exceptions as q_exc

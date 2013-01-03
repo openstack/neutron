@@ -288,7 +288,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
-            if v['address'] == attributes.ATTR_NOT_SPECIFIED:
+            if v['address'] is attributes.ATTR_NOT_SPECIFIED:
                 address = None
             else:
                 address = v['address']
