@@ -873,6 +873,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(res['port']['fixed_ips'],
                                  data['port']['fixed_ips'])
 
+    def test_no_more_port_exception(self):
+        fmt = 'json'
+        with self.subnet(cidr='10.0.0.0/32') as subnet:
+            id = subnet['subnet']['network_id']
+            res = self._create_port(fmt, id)
+            data = self.deserialize(fmt, res)
+            msg = str(q_exc.IpAddressGenerationFailure(net_id=id))
+            self.assertEqual(data['QuantumError'], msg)
+            self.assertEqual(res.status_int, 409)
+
     def test_update_port_update_ip(self):
         """Test update of port IP.
 
