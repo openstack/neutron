@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012,  Nachi Ueno,  NTT MCL,  Inc.
 # All Rights Reserved.
 #
@@ -15,13 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
 from cliff import lister
-
 from quantumclient.common import utils
 from quantumclient.quantum.v2_0.port import _format_fixed_ips
 from quantumclient.quantum.v2_0 import QuantumCommand
+
+from quantum.openstack.common import log as logging
 
 
 class ProbeCommand(QuantumCommand):

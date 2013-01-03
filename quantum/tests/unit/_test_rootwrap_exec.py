@@ -1,4 +1,6 @@
-# Copyright 2012 OpenStack LLC
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+# Copyright (c) 2012 OpenStack, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,15 +15,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
-import unittest
-import mock
-from quantum.agent.linux import utils
 import os
-import logging
+import unittest
+
+import mock
+
+from quantum.agent.linux import utils
+import quantum.openstack.common import log as logging
 
 
-LOG = logging.getLogger('quantum.tests.database_stubs')
+LOG = logging.getLogger(__name__)
 
 
 class RootwrapTestExec(unittest.TestCase):

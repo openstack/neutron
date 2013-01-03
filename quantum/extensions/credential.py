@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2011 Cisco Systems, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -16,8 +17,6 @@
 #
 # @author: Ying Liu, Cisco Systems, Inc.
 
-import logging
-
 from webob import exc
 
 from quantum.api import api_common as common
@@ -27,9 +26,6 @@ from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_exceptions as exception
 from quantum.plugins.cisco.common import cisco_faults as faults
 from quantum import wsgi
-
-
-LOG = logging.getLogger('quantum.api.credentials')
 
 
 class Credential(object):

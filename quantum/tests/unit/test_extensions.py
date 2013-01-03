@@ -1,5 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-# Copyright 2011 OpenStack LLC.
+
+# Copyright (c) 2011 OpenStack, LLC.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 import os
 import unittest
 
@@ -33,6 +33,7 @@ from quantum.common import config
 from quantum.common import exceptions
 from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
 from quantum.openstack.common import jsonutils
+from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
 from quantum.tests.unit import BaseTest
 from quantum.tests.unit.extension_stubs import (
@@ -45,7 +46,7 @@ import quantum.tests.unit.extensions
 from quantum import wsgi
 
 
-LOG = logging.getLogger('quantum.tests.test_extensions')
+LOG = logging.getLogger(__name__)
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')

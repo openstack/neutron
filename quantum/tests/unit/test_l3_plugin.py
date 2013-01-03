@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2012 Nicira Networks, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -20,7 +21,6 @@
 import contextlib
 import copy
 import itertools
-import logging
 import unittest2 as unittest
 
 import mock
@@ -41,6 +41,7 @@ from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum import manager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin

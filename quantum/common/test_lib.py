@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2010 OpenStack, LLC
+# Copyright (c) 2010 OpenStack, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@
 #    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 #    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import logging
 import sys
 import unittest
 
@@ -259,13 +258,6 @@ class QuantumTestRunner(core.TextTestRunner):
 
 
 def run_tests(c=None):
-    logger = logging.getLogger()
-    hdlr = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-    logger.setLevel(logging.DEBUG)
-
     # NOTE(bgh): I'm not entirely sure why but nose gets confused here when
     # calling run_tests from a plugin directory run_tests.py (instead of the
     # main run_tests.py).  It will call run_tests with no arguments and the

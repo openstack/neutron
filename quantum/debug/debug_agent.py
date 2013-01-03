@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012,  Nachi Ueno,  NTT MCL,  Inc.
 # All Rights Reserved.
 #
@@ -17,7 +17,6 @@
 
 import datetime
 import errno
-import logging
 import os
 import shlex
 import socket
@@ -32,9 +31,11 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 from quantumclient.v2_0 import client
 
-LOG = logging.getLogger('test-agent')
+
+LOG = logging.getLogger(__name__)
 
 DEVICE_OWNER_PROBE = 'network:probe'
 

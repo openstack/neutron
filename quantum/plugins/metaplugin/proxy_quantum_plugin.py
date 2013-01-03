@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012, Nachi Ueno, NTT MCL, Inc.
 # All Rights Reserved.
 #
@@ -15,13 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
 from quantumclient.common import exceptions
 from quantumclient.v2_0 import client
 

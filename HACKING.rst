@@ -63,7 +63,6 @@ Human Alphabetical Order Examples
 Example::
 
   import httplib
-  import logging
   import random
   import StringIO
   import time
@@ -76,6 +75,7 @@ Example::
   from quantum.api import ports
   from quantum.db import models
   from quantum.extensions import multiport
+  from quantum.openstack.common import log as logging
   import quantum.manager
   from quantum import service
 

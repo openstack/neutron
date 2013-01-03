@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
+
 # Copyright 2012, Nachi Ueno, NTT MCL, Inc.
 # All Rights Reserved.
 #
@@ -15,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as exc
 from quantum.common.utils import find_config_file
@@ -27,13 +25,15 @@ from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
+from quantum.openstack.common import log as logging
 from quantum.plugins.metaplugin.common import config
 from quantum.plugins.metaplugin import meta_db_v2
 from quantum.plugins.metaplugin.meta_models_v2 import (NetworkFlavor,
                                                        RouterFlavor)
 from quantum import policy
 
-LOG = logging.getLogger("metaplugin")
+
+LOG = logging.getLogger(__name__)
 
 
 # Metaplugin  Exceptions

@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2011, Cisco Systems, Inc.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,18 +14,16 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-"""
-stubs.py provides interface methods for
-the database test cases
-"""
-import logging
+""" stubs.py provides interface methods for the database test cases """
 
 from quantum.db import api as db
+from quantum.openstack.common import log as logging
 
 
-LOG = logging.getLogger('quantum.tests.database_stubs')
+LOG = logging.getLogger(__name__)
 
 
 class QuantumDB(object):
