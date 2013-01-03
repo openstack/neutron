@@ -19,7 +19,6 @@
 import ConfigParser
 import os
 import string
-import sys
 
 # this import has the effect of defining global var "filters",
 # referenced by build_filter(), below.  It gets set up by
