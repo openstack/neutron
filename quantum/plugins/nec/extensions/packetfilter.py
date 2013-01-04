@@ -26,8 +26,8 @@ from quantum import quota
 quota_packet_filter_opts = [
     cfg.IntOpt('quota_packet_filter',
                default=100,
-               help="number of packet_filters allowed per tenant, "
-                    "-1 for unlimited")
+               help=_("Number of packet_filters allowed per tenant, "
+                      "-1 for unlimited"))
 ]
 # Register the configuration options
 cfg.CONF.register_opts(quota_packet_filter_opts, 'QUOTAS')

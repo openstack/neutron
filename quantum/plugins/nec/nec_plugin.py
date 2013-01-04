@@ -101,16 +101,16 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
         port_status = OperationalStatus.ACTIVE
         if not port['admin_state_up']:
-            LOG.debug("activate_port_if_ready(): skip, "
-                      "port.admin_state_up is False.")
+            LOG.debug(_("activate_port_if_ready(): skip, "
+                        "port.admin_state_up is False."))
             port_status = OperationalStatus.DOWN
         elif not network['admin_state_up']:
-            LOG.debug("activate_port_if_ready(): skip, "
-                      "network.admin_state_up is False.")
+            LOG.debug(_("activate_port_if_ready(): skip, "
+                        "network.admin_state_up is False."))
             port_status = OperationalStatus.DOWN
         elif not ndb.get_portinfo(port['id']):
-            LOG.debug("activate_port_if_ready(): skip, "
-                      "no portinfo for this port.")
+            LOG.debug(_("activate_port_if_ready(): skip, "
+                        "no portinfo for this port."))
             port_status = OperationalStatus.DOWN
 
         # activate packet_filters before creating port on OFC.
@@ -128,15 +128,15 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
         if port_status in [OperationalStatus.ACTIVE]:
             if self.ofc.exists_ofc_port(port['id']):
-                LOG.debug("activate_port_if_ready(): skip, "
-                          "ofc_port already exists.")
+                LOG.debug(_("activate_port_if_ready(): skip, "
+                            "ofc_port already exists."))
             else:
                 try:
                     self.ofc.create_ofc_port(port['tenant_id'],
                                              port['network_id'],
                                              port['id'])
                 except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                    reason = "create_ofc_port() failed due to %s" % exc
+                    reason = _("create_ofc_port() failed due to %s") % exc
                     LOG.error(reason)
                     port_status = OperationalStatus.ERROR
 
@@ -156,12 +156,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
                                          port['network_id'],
                                          port['id'])
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = "delete_ofc_port() failed due to %s" % exc
+                reason = _("delete_ofc_port() failed due to %s") % exc
                 LOG.error(reason)
                 port_status = OperationalStatus.ERROR
         else:
-            LOG.debug("deactivate_port(): skip, ofc_port does not "
-                      "exist.")
+            LOG.debug(_("deactivate_port(): skip, ofc_port does not "
+                        "exist."))
 
         if port_status is not port['status']:
             self._update_resource_status(context, "port", port['id'],
@@ -180,8 +180,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     def create_network(self, context, network):
         """Create a new network entry on DB, and create it on OFC."""
-        LOG.debug("NECPluginV2.create_network() called, "
-                  "network=%s ." % network)
+        LOG.debug(_("NECPluginV2.create_network() called, "
+                    "network=%s ."), network)
         session = context.session
         with session.begin(subtransactions=True):
             new_net = super(NECPluginV2, self).create_network(context, network)
@@ -196,7 +196,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
             self.ofc.create_ofc_network(new_net['tenant_id'], new_net['id'],
                                         new_net['name'])
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-            reason = "create_network() failed due to %s" % exc
+            reason = _("create_network() failed due to %s") % exc
             LOG.error(reason)
             self._update_resource_status(context, "network", new_net['id'],
                                          OperationalStatus.ERROR)
@@ -212,8 +212,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         Update network entry on DB. If 'admin_state_up' was changed, activate
         or deactivate ports and packetfilters associated with the network.
         """
-        LOG.debug("NECPluginV2.update_network() called, "
-                  "id=%s network=%s ." % (id, network))
+        LOG.debug(_("NECPluginV2.update_network() called, "
+                    "id=%(id)s network=%(network)s ."), locals())
         session = context.session
         with session.begin(subtransactions=True):
             old_net = super(NECPluginV2, self).get_network(context, id)
@@ -262,7 +262,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         associated with the network. If the network is the last resource
         of the tenant, delete unnessary ofc_tenant.
         """
-        LOG.debug("NECPluginV2.delete_network() called, id=%s .", id)
+        LOG.debug(_("NECPluginV2.delete_network() called, id=%s ."), id)
         net = super(NECPluginV2, self).get_network(context, id)
         tenant_id = net['tenant_id']
 
@@ -276,7 +276,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         try:
             self.ofc.delete_ofc_network(tenant_id, id)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-            reason = "delete_network() failed due to %s" % exc
+            reason = _("delete_network() failed due to %s") % exc
             # NOTE: The OFC configuration of this network could be remained
             #       as an orphan resource. But, it does NOT harm any other
             #       resources, so this plugin just warns.
@@ -294,7 +294,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
             try:
                 self.ofc.delete_ofc_tenant(tenant_id)
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = "delete_ofc_tenant() failed due to %s" % exc
+                reason = _("delete_ofc_tenant() failed due to %s") % exc
                 LOG.warn(reason)
 
     def get_network(self, context, id, fields=None):
@@ -311,7 +311,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
-        LOG.debug("NECPluginV2.create_port() called, port=%s ." % port)
+        LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
         new_port = super(NECPluginV2, self).create_port(context, port)
         self._update_resource_status(context, "port", new_port['id'],
                                      OperationalStatus.BUILD)
@@ -326,8 +326,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         Update network entry on DB. If admin_state_up was changed, activate
         or deactivate the port and packetfilters associated with it.
         """
-        LOG.debug("NECPluginV2.update_port() called, "
-                  "id=%s port=%s ." % (id, port))
+        LOG.debug(_("NECPluginV2.update_port() called, "
+                    "id=%(id)s port=%(port)s ."), locals())
         old_port = super(NECPluginV2, self).get_port(context, id)
         new_port = super(NECPluginV2, self).update_port(context, id, port)
 
@@ -343,7 +343,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     def delete_port(self, context, id, l3_port_check=True):
         """Delete port and packet_filters associated with the port."""
-        LOG.debug("NECPluginV2.delete_port() called, id=%s ." % id)
+        LOG.debug(_("NECPluginV2.delete_port() called, id=%s ."), id)
         port = super(NECPluginV2, self).get_port(context, id)
 
         self.deactivate_port(context, port)
@@ -383,26 +383,26 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
         pf_status = OperationalStatus.ACTIVE
         if not packet_filter['admin_state_up']:
-            LOG.debug("_activate_packet_filter_if_ready(): skip, "
-                      "packet_filter.admin_state_up is False.")
+            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
+                        "packet_filter.admin_state_up is False."))
             pf_status = OperationalStatus.DOWN
         elif not network['admin_state_up']:
-            LOG.debug("_activate_packet_filter_if_ready(): skip, "
-                      "network.admin_state_up is False.")
+            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
+                        "network.admin_state_up is False."))
             pf_status = OperationalStatus.DOWN
         elif in_port_id and in_port_id is in_port.get('id'):
-            LOG.debug("_activate_packet_filter_if_ready(): skip, "
-                      "invalid in_port_id.")
+            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
+                        "invalid in_port_id."))
             pf_status = OperationalStatus.DOWN
         elif in_port_id and not ndb.get_portinfo(in_port_id):
-            LOG.debug("_activate_packet_filter_if_ready(): skip, "
-                      "no portinfo for in_port.")
+            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
+                        "no portinfo for in_port."))
             pf_status = OperationalStatus.DOWN
 
         if pf_status in [OperationalStatus.ACTIVE]:
             if self.ofc.exists_ofc_packet_filter(packet_filter['id']):
-                LOG.debug("_activate_packet_filter_if_ready(): skip, "
-                          "ofc_packet_filter already exists.")
+                LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
+                            "ofc_packet_filter already exists."))
             else:
                 try:
                     (self.ofc.
@@ -411,8 +411,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
                                               packet_filter['id'],
                                               packet_filter))
                 except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                    reason = ("create_ofc_packet_filter() failed due to "
-                              "%s" % exc)
+                    reason = _("create_ofc_packet_filter() failed due to "
+                               "%s") % exc
                     LOG.error(reason)
                     pf_status = OperationalStatus.ERROR
 
@@ -424,16 +424,16 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         """Deactivate packet_filter by deleting filter from OFC if exixts."""
         pf_status = OperationalStatus.DOWN
         if not self.ofc.exists_ofc_packet_filter(packet_filter['id']):
-            LOG.debug("_deactivate_packet_filter(): skip, "
-                      "ofc_packet_filter does not exist.")
+            LOG.debug(_("_deactivate_packet_filter(): skip, "
+                        "ofc_packet_filter does not exist."))
         else:
             try:
                 self.ofc.delete_ofc_packet_filter(packet_filter['tenant_id'],
                                                   packet_filter['network_id'],
                                                   packet_filter['id'])
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = ("delete_ofc_packet_filter() failed due to "
-                          "%s" % exc)
+                reason = _("delete_ofc_packet_filter() failed due to "
+                           "%s") % exc
                 LOG.error(reason)
                 pf_status = OperationalStatus.ERROR
 
@@ -443,8 +443,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     def create_packet_filter(self, context, packet_filter):
         """Create a new packet_filter entry on DB, then try to activate it."""
-        LOG.debug("NECPluginV2.create_packet_filter() called, "
-                  "packet_filter=%s ." % packet_filter)
+        LOG.debug(_("NECPluginV2.create_packet_filter() called, "
+                    "packet_filter=%s ."), packet_filter)
         new_pf = super(NECPluginV2, self).create_packet_filter(context,
                                                                packet_filter)
         self._update_resource_status(context, "packet_filter", new_pf['id'],
@@ -459,8 +459,9 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
         If any rule of the packet_filter was changed, recreate it on OFC.
         """
-        LOG.debug("NECPluginV2.update_packet_filter() called, "
-                  "id=%s packet_filter=%s ." % (id, packet_filter))
+        LOG.debug(_("NECPluginV2.update_packet_filter() called, "
+                    "id=%(id)s packet_filter=%(packet_filter)s ."),
+                  locals())
         old_pf = super(NECPluginV2, self).get_packet_filter(context, id)
         new_pf = super(NECPluginV2, self).update_packet_filter(context, id,
                                                                packet_filter)
@@ -481,7 +482,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     def delete_packet_filter(self, context, id):
         """Deactivate and delete packet_filter."""
-        LOG.debug("NECPluginV2.delete_packet_filter() called, id=%s ." % id)
+        LOG.debug(_("NECPluginV2.delete_packet_filter() called, id=%s ."), id)
         pf = super(NECPluginV2, self).get_packet_filter(context, id)
         self._deactivate_packet_filter(context, pf)
 
@@ -514,8 +515,8 @@ class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
              'port_added': [<new PortInfo>,...],
              'port_removed': [<removed Port ID>,...]}
         """
-        LOG.debug("NECPluginV2RPCCallbacks.update_ports() called, "
-                  "kwargs=%s ." % kwargs)
+        LOG.debug(_("NECPluginV2RPCCallbacks.update_ports() called, "
+                    "kwargs=%s ."), kwargs)
         topic = kwargs['topic']
         datapath_id = kwargs['datapath_id']
         for p in kwargs.get('port_added', []):

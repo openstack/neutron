@@ -57,7 +57,7 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
         except exc.NoResultFound:
             raise q_exc.PacketFilterNotFound(id=id)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple packet_filters match for %s' % id)
+            LOG.error(_('Multiple packet_filters match for %s'), id)
             raise q_exc.PacketFilterNotFound(id=id)
         return packet_filter
 

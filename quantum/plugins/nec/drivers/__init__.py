@@ -30,6 +30,6 @@ DRIVER_LIST = {
 
 
 def get_driver(driver_name):
-    LOG.info("Loading OFC driver: %s" % driver_name)
+    LOG.info(_("Loading OFC driver: %s"), driver_name)
     driver_klass = DRIVER_LIST.get(driver_name) or driver_name
     return importutils.import_class(driver_klass)

@@ -60,8 +60,9 @@ class NECQuantumAgent(object):
 
     def update_ports(self, port_added=[], port_removed=[]):
         """RPC to update information of ports on Quantum Server"""
-        LOG.info("update ports: added=%s, removed=%s" %
-                 (port_added, port_removed))
+        LOG.info(_("Update ports: added=%(port_added)s, "
+                   "removed=%(port_removed)s"),
+                 locals())
         try:
             rpc.call(self.context,
                      topics.PLUGIN,
@@ -72,7 +73,7 @@ class NECQuantumAgent(object):
                                'port_added': port_added,
                                'port_removed': port_removed}})
         except Exception as e:
-            LOG.warn("update_ports() failed.")
+            LOG.warn(_("update_ports() failed."))
             return
 
     def _vif_port_to_port_info(self, vif_port):
@@ -101,7 +102,7 @@ class NECQuantumAgent(object):
             if port_added or port_removed:
                 self.update_ports(port_added, port_removed)
             else:
-                LOG.debug("No port changed.")
+                LOG.debug(_("No port changed."))
 
             old_ports = new_ports
             time.sleep(self.polling_interval)

@@ -86,8 +86,8 @@ def del_ofc_item(model, id):
         session.delete(item)
         session.flush()
     except sa.orm.exc.NoResultFound:
-        LOG.warning("_del_ofc_item(): NotFound item "
-                    "(model=%s, id=%s) " % (model, id))
+        LOG.warning(_("_del_ofc_item(): NotFound item "
+                      "(model=%(model)s, id=%(id)s) "), locals())
 
 
 def get_portinfo(id):
@@ -122,5 +122,5 @@ def del_portinfo(id):
         session.delete(portinfo)
         session.flush()
     except sa.orm.exc.NoResultFound:
-        LOG.warning("del_portinfo(): NotFound portinfo for "
-                    "port_id: %s" % id)
+        LOG.warning(_("del_portinfo(): NotFound portinfo for "
+                      "port_id: %s"), id)
