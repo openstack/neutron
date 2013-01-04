@@ -1,3 +1,5 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2012 Nicira, Inc.
 # All Rights Reserved
 #
@@ -13,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Aaron Rosen, Nicira Networks, Inc.
@@ -24,13 +24,6 @@ import hashlib
 import logging
 
 import webob.exc
-
-# FIXME(salvatore-orlando): get rid of relative imports
-from common import config
-from nvp_plugin_version import PLUGIN_VERSION
-
-from quantum.plugins.nicira.nicira_nvp_plugin import nicira_models
-
 
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
@@ -47,14 +40,15 @@ from quantum.extensions import providernet as pnet
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
 from quantum import policy
+from quantum.plugins.nicira.nicira_nvp_plugin.common import config
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
                                                              as nvp_exc)
 from quantum.plugins.nicira.nicira_nvp_plugin import nicira_db
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
-
-import NvpApiClient
-import nvplib
-
+from quantum.plugins.nicira.nicira_nvp_plugin.nvp_plugin_version import (
+    PLUGIN_VERSION)
 
 LOG = logging.getLogger("QuantumPlugin")
 

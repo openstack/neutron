@@ -1,3 +1,5 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2012 Nicira Networks, Inc.
 # All Rights Reserved
 #
@@ -13,34 +15,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dave Lapsley, Nicira Networks, Inc.
 # @author: Aaron Rosen, Nicira Networks, Inc.
 
 
-# TODO(bgh): We should break this into separate files.  It will just keep
-# growing as we add more features :)
-
 from copy import copy
-import functools
+import hashlib
 import itertools
 import json
-import hashlib
 import logging
-import random
-import re
-import uuid
-
-from eventlet import semaphore
-
-import NvpApiClient
 
 #FIXME(danwent): I'd like this file to get to the point where it has
 # no quantum-specific logic in it
 from quantum.common import constants
 from quantum.common import exceptions as exception
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+
 
 # HTTP METHODS CONSTANTS
 HTTP_GET = "GET"
