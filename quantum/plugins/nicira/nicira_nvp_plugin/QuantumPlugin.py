@@ -174,13 +174,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             cluster.api_client.login()
             self.clusters[c_opts['name']] = cluster
 
-        # Connect and configure nvp_quantum db
-        options = {
-            'sql_connection': self.db_opts['sql_connection'],
-            'sql_max_retries': self.db_opts['sql_max_retries'],
-            'reconnect_interval': self.db_opts['reconnect_interval'],
-            'base': models_v2.model_base.BASEV2,
-        }
         def_cluster_name = self.nvp_opts.default_cluster_name
         if def_cluster_name and def_cluster_name in self.clusters:
             self.default_cluster = self.clusters[def_cluster_name]
@@ -196,7 +189,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             # otherwise set 1st cluster as default
             self.default_cluster = self.clusters[first_cluster_name]
 
-        db.configure_db(options)
+        db.configure_db(self.db_opts)
         # Extend the fault map
         self._extend_fault_map()
         # Set up RPC interface for DHCP agent
