@@ -167,8 +167,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                            "Using first cluster:%s"), first_cluster_name)
             elif not def_cluster_name in self.clusters:
                 LOG.warning(_("Default cluster name %(def_cluster_name)s. "
-                              "Using first cluster:%(first_cluster_name)s")
-                            % locals())
+                              "Using first cluster:%(first_cluster_name)s"),
+                            locals())
             # otherwise set 1st cluster as default
             self.default_cluster = self.clusters[first_cluster_name]
 
@@ -192,14 +192,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def _novazone_to_cluster(self, novazone_id):
         if novazone_id in self.novazone_cluster_map:
             return self.novazone_cluster_map[novazone_id]
-        LOG.debug(_("Looking for nova zone: %s") % novazone_id)
+        LOG.debug(_("Looking for nova zone: %s"), novazone_id)
         for x in self.clusters:
             LOG.debug(_("Looking for nova zone %(novazone_id)s in "
-                        "cluster: %(x)s") % locals())
+                        "cluster: %(x)s"), locals())
             if x.zone == str(novazone_id):
                 self.novazone_cluster_map[x.zone] = x
                 return x
-        LOG.error(_("Unable to find cluster config entry for nova zone: %s") %
+        LOG.error(_("Unable to find cluster config entry for nova zone: %s"),
                   novazone_id)
         raise nvp_exc.NvpInvalidNovaZone(nova_zone=novazone_id)
 
@@ -296,7 +296,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                         ['lport_count'] < max_ports)].pop(0)
         except IndexError:
             # Too bad, no switch available
-            LOG.debug(_("No switch has available ports (%d checked)") %
+            LOG.debug(_("No switch has available ports (%d checked)"),
                       len(lswitches))
         if allow_extra_lswitches:
             main_ls = [ls for ls in lswitches if ls['uuid'] == network.id]
@@ -318,7 +318,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             return selected_lswitch
         else:
             LOG.error(_("Maximum number of logical ports reached for "
-                        "logical network %s") % network.id)
+                        "logical network %s"), network.id)
             raise nvp_exc.NvpNoMorePortsException(network=network.id)
 
     def setup_rpc(self):
@@ -368,7 +368,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         if net_data['admin_state_up'] is False:
             LOG.warning(_("Network with admin_state_up=False are not yet "
                           "supported by this plugin. Ignoring setting for "
-                          "network %s") % net_data.get('name', '<unknown>'))
+                          "network %s"), net_data.get('name', '<unknown>'))
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         target_cluster = self._find_target_cluster(net_data)
         lswitch = nvplib.create_lswitch(target_cluster,
@@ -473,8 +473,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                     net_op_status = constants.NET_STATUS_DOWN
                     break
             LOG.debug(_("Current network status:%(net_op_status)s; "
-                        "Status in Quantum DB:%(quantum_status)s")
-                      % locals())
+                        "Status in Quantum DB:%(quantum_status)s"),
+                      locals())
             if net_op_status != network.status:
                 # update the network status
                 with context.session.begin(subtransactions=True):
@@ -822,7 +822,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise nvp_exc.NvpPluginException(err_desc=err_msg)
 
         LOG.debug(_("create_port completed on NVP for tenant %(tenant_id)s: "
-                    "(%(id)s)") % port_data)
+                    "(%(id)s)"), port_data)
 
         # update port on Quantum DB with admin_state_up True
         port_update = {"port": {"admin_state_up": True}}
