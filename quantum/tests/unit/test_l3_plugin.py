@@ -42,6 +42,8 @@ from quantum.extensions import l3
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
+from quantum.openstack.common.notifier import test_notifier
+from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
@@ -296,6 +298,14 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         test_config['extension_manager'] = ext_mgr
         super(L3NatDBTestCase, self).setUp()
 
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+    def tearDown(self):
+        test_notifier.NOTIFICATIONS = []
+        super(L3NatDBTestCase, self).tearDown()
+
     def _create_router(self, fmt, tenant_id, name=None,
                        admin_state_up=None, set_context=False):
         data = {'router': {'tenant_id': tenant_id}}
@@ -476,6 +486,18 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                      None)
                 body = self._show('ports', r_port_id,
                                   expected_code=exc.HTTPNotFound.code)
+
+                self.assertEqual(len(test_notifier.NOTIFICATIONS), 8)
+                self.assertEqual(
+                    set(n['event_type'] for n in test_notifier.NOTIFICATIONS),
+                    set(['router.create.start',
+                         'router.create.end',
+                         'network.create.start',
+                         'network.create.end',
+                         'subnet.create.start',
+                         'subnet.create.end',
+                         'router.interface.create',
+                         'router.interface.delete']))
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
         with mock.patch('quantum.context.Context.to_dict') as tdict:

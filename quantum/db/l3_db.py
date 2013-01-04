@@ -32,6 +32,7 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum.openstack.common import log as logging
+from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common import uuidutils
 from quantum import policy
 
@@ -352,8 +353,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         routers = self.get_sync_data(context.elevated(), [router_id])
         l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
-        return {'port_id': port['id'],
+        info = {'port_id': port['id'],
                 'subnet_id': port['fixed_ips'][0]['subnet_id']}
+        notifier_api.notify(context,
+                            notifier_api.publisher_id('network'),
+                            'router.interface.create',
+                            notifier_api.CONF.default_notification_level,
+                            {'router.interface': info})
+        return info
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -391,9 +398,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                     raise q_exc.SubnetMismatchForPort(
                         port_id=port_id,
                         subnet_id=interface_info['subnet_id'])
+            subnet_id = port_db['fixed_ips'][0]['subnet_id']
             self._confirm_router_interface_not_in_use(
-                context, router_id,
-                port_db['fixed_ips'][0]['subnet_id'])
+                context, router_id, subnet_id)
             self.delete_port(context, port_db['id'], l3_port_check=False)
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
@@ -412,6 +419,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
                 for p in ports:
                     if p['fixed_ips'][0]['subnet_id'] == subnet_id:
+                        port_id = p['id']
                         self.delete_port(context, p['id'], l3_port_check=False)
                         found = True
                         break
@@ -423,6 +431,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                                           subnet_id=subnet_id)
         routers = self.get_sync_data(context.elevated(), [router_id])
         l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+        notifier_api.notify(context,
+                            notifier_api.publisher_id('network'),
+                            'router.interface.delete',
+                            notifier_api.CONF.default_notification_level,
+                            {'router.interface':
+                             {'port_id': port_id,
+                              'subnet_id': subnet_id}})
 
     def _get_floatingip(self, context, id):
         try:
