@@ -73,7 +73,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         ofp_api_host = cfg.CONF.OVS.openflow_rest_api
 
         if ofp_con_host is None or ofp_api_host is None:
-            raise q_exc.Invalid(_('invalid configuration. check ryu.ini'))
+            raise q_exc.Invalid(_('Invalid configuration. check ryu.ini'))
 
         hosts = [(ofp_con_host, ofp_service_type.CONTROLLER),
                  (ofp_api_host, ofp_service_type.REST_API)]

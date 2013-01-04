@@ -142,7 +142,7 @@ class VifPortSet(object):
 
     def setup(self):
         for port in self.int_br.get_external_ports():
-            LOG.debug(_('external port %s'), port)
+            LOG.debug(_('External port %s'), port)
             self.api.update_port(rest_nw_id.NW_ID_EXTERNAL,
                                  port.switch.datapath_id, port.ofport)
 
@@ -180,7 +180,7 @@ class OVSQuantumOFPRyuAgent(object):
 
 
 def check_ofp_rest_api_addr(db):
-    LOG.debug("checking db")
+    LOG.debug(_("Checking db"))
 
     servers = db.ofp_server.all()
 
@@ -192,15 +192,15 @@ def check_ofp_rest_api_addr(db):
         elif serv.host_type == "controller":
             ofp_controller_addr = serv.address
         else:
-            LOG.warn(_("ignoring unknown server type %s"), serv)
+            LOG.warn(_("Ignoring unknown server type %s"), serv)
 
-    LOG.debug("api %s", ofp_rest_api_addr)
+    LOG.debug(_("API %s"), ofp_rest_api_addr)
     if ofp_controller_addr:
         LOG.warn(_('OF controller parameter is stale %s'), ofp_controller_addr)
     if not ofp_rest_api_addr:
         raise RuntimeError(_("Ryu rest API port isn't specified"))
 
-    LOG.debug(_("going to ofp controller mode %s"), ofp_rest_api_addr)
+    LOG.debug(_("Going to ofp controller mode %s"), ofp_rest_api_addr)
     return ofp_rest_api_addr
 
 
@@ -215,7 +215,7 @@ def main():
     options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
     db = SqlSoup(options["sql_connection"])
 
-    LOG.info(_("Connecting to database \"%(database)s\" on %(host)s") %
+    LOG.info(_("Connecting to database \"%(database)s\" on %(host)s"),
              {"database": db.engine.url.database,
               "host": db.engine.url.host})
     ofp_rest_api_addr = check_ofp_rest_api_addr(db)
@@ -230,7 +230,7 @@ def main():
         OVSQuantumOFPRyuAgent(integ_br, ofp_rest_api_addr,
                               tunnel_ip, ovsdb_ip, ovsdb_port, root_helper)
     except httplib.HTTPException, e:
-        LOG.error(_("initialization failed: %s"), e)
+        LOG.error(_("Initialization failed: %s"), e)
         sys.exit(1)
 
     LOG.info(_("Ryu initialization on the node is done."

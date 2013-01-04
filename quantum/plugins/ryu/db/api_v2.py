@@ -135,10 +135,10 @@ class TunnelKey(object):
             ).params(last_key=last_key).one()
 
         new_key = new_key[0]  # the result is tuple.
-        LOG.debug(_("last_key %(last_key)s new_key %(new_key)s") %
-                  {"last_key": last_key, "new_key": new_key})
+        LOG.debug(_("last_key %(last_key)s new_key %(new_key)s"),
+                  locals())
         if new_key > self.key_max:
-            LOG.debug(_("no key found"))
+            LOG.debug(_("No key found"))
             raise orm_exc.NoResultFound()
         return new_key
 
