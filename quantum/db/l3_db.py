@@ -195,7 +195,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                                    network_id)
             for subnet in subnets:
                 self._check_for_dup_router_subnet(context, router_id,
-                                                  network_id, subnet['id'])
+                                                  network_id, subnet['id'],
+                                                  subnet['cidr'])
 
             # Port has no 'tenant-id', as it is hidden from user
             gw_port = self.create_port(context.elevated(), {
@@ -262,30 +263,30 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                           filters=filters)
 
     def _check_for_dup_router_subnet(self, context, router_id,
-                                     network_id, subnet_id):
+                                     network_id, subnet_id, subnet_cidr):
         try:
             rport_qry = context.session.query(models_v2.Port)
             rports = rport_qry.filter_by(
                 device_id=router_id).all()
             # its possible these ports on on the same network, but
             # different subnet
-            new_cidr = self._get_subnet(context, subnet_id)['cidr']
-            new_ipnet = netaddr.IPNetwork(new_cidr)
+            new_ipnet = netaddr.IPNetwork(subnet_cidr)
             for p in rports:
                 for ip in p['fixed_ips']:
                     if ip['subnet_id'] == subnet_id:
                         msg = ("Router already has a port on subnet %s"
                                % subnet_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
+                    sub_id = ip['subnet_id']
                     cidr = self._get_subnet(context.elevated(),
-                                            ip['subnet_id'])['cidr']
+                                            sub_id)['cidr']
                     ipnet = netaddr.IPNetwork(cidr)
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
-                    match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
+                    match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
                     if match1 or match2:
-                        msg = (("Cidr %s of subnet %s is overlapped "
-                                + "with cidr %s of subnet %s")
-                               % (new_cidr, subnet_id, cidr, ip['subnet_id']))
+                        msg = (_("Cidr %(subnet_cidr)s of subnet "
+                                 "%(subnet_id)s overlaps with cidr %(cidr)s "
+                                 " of subnet %(sub_id)") % locals())
                         raise q_exc.BadRequest(resource='router', msg=msg)
         except exc.NoResultFound:
             pass
@@ -318,9 +319,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if len(fixed_ips) != 1:
                 msg = 'Router port must have exactly one fixed IP'
                 raise q_exc.BadRequest(resource='router', msg=msg)
+            subnet = self._get_subnet(context, fixed_ips[0]['subnet_id'])
             self._check_for_dup_router_subnet(context, router_id,
                                               port['network_id'],
-                                              fixed_ips[0]['subnet_id'])
+                                              subnet['id'],
+                                              subnet['cidr'])
             port.update({'device_id': router_id,
                          'device_owner': DEVICE_OWNER_ROUTER_INTF})
         elif 'subnet_id' in interface_info:
@@ -331,7 +334,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 msg = 'Subnet for router interface must have a gateway IP'
                 raise q_exc.BadRequest(resource='router', msg=msg)
             self._check_for_dup_router_subnet(context, router_id,
-                                              subnet['network_id'], subnet_id)
+                                              subnet['network_id'],
+                                              subnet_id,
+                                              subnet['cidr'])
             fixed_ip = {'ip_address': subnet['gateway_ip'],
                         'subnet_id': subnet['id']}
             port = self.create_port(context, {
