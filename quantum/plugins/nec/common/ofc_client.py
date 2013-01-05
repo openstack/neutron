@@ -54,7 +54,8 @@ class OFCClient(object):
             return httplib.HTTPConnection
 
     def do_request(self, method, action, body=None):
-        LOG.debug("Client request: %s %s [%s]" % (method, action, str(body)))
+        LOG.debug(_("Client request: %(method)s %(action)s [%(body)s]"),
+                  locals())
 
         if type(body) is dict:
             body = json.dumps(body)
@@ -71,7 +72,9 @@ class OFCClient(object):
             conn.request(method, action, body, headers)
             res = conn.getresponse()
             data = res.read()
-            LOG.debug("OFC returns [%s:%s]" % (str(res.status), data))
+            LOG.debug(_("OFC returns [%(status)s:%(data)s]"),
+                      {'status': res.status,
+                       'data': data})
             if res.status in (httplib.OK,
                               httplib.CREATED,
                               httplib.ACCEPTED,
@@ -82,7 +85,7 @@ class OFCClient(object):
                 reason = _("An operation on OFC is failed.")
                 raise nexc.OFCException(reason=reason)
         except (socket.error, IOError), e:
-            reason = _("Failed to connect OFC : %s" % str(e))
+            reason = _("Failed to connect OFC : %s") % str(e)
             LOG.error(reason)
             raise nexc.OFCException(reason=reason)
 
