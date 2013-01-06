@@ -13,12 +13,18 @@
 # limitations under the License.
 
 import setuptools
+import sys
 
 from quantum.openstack.common import setup
 from quantum.version import version_info as version
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
+
+if sys.platform == 'win32':
+    requires.append('pywin32')
+    requires.append('wmi')
+    requires.remove('pyudev')
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
@@ -35,10 +41,6 @@ EagerResources = [
     'quantum',
 ]
 
-ProjectScripts = [
-    'bin/quantum-rootwrap',
-]
-
 config_path = 'etc/quantum/'
 init_path = 'etc/init.d'
 rootwrap_path = 'etc/quantum/rootwrap.d'
@@ -50,45 +52,90 @@ nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
 ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 meta_plugin_config_path = 'etc/quantum/plugins/metaplugin'
 nec_plugin_config_path = 'etc/quantum/plugins/nec'
+hyperv_plugin_config_path = 'etc/quantum/plugins/hyperv'
 
-DataFiles = [
-    (config_path,
-        ['etc/quantum.conf',
-         'etc/rootwrap.conf',
-         'etc/api-paste.ini',
-         'etc/policy.json',
-         'etc/dhcp_agent.ini',
-         'etc/l3_agent.ini',
-         'etc/metadata_agent.ini']),
-    (rootwrap_path,
-        ['etc/quantum/rootwrap.d/dhcp.filters',
-         'etc/quantum/rootwrap.d/iptables-firewall.filters',
-         'etc/quantum/rootwrap.d/l3.filters',
-         'etc/quantum/rootwrap.d/linuxbridge-plugin.filters',
-         'etc/quantum/rootwrap.d/nec-plugin.filters',
-         'etc/quantum/rootwrap.d/openvswitch-plugin.filters',
-         'etc/quantum/rootwrap.d/ryu-plugin.filters']),
-    (init_path, ['etc/init.d/quantum-server']),
-    (ovs_plugin_config_path,
-        ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),
-    (cisco_plugin_config_path,
-        ['etc/quantum/plugins/cisco/credentials.ini',
-         'etc/quantum/plugins/cisco/l2network_plugin.ini',
-         'etc/quantum/plugins/cisco/nexus.ini',
-         'etc/quantum/plugins/cisco/ucs.ini',
-         'etc/quantum/plugins/cisco/cisco_plugins.ini',
-         'etc/quantum/plugins/cisco/db_conn.ini']),
-    (bigswitch_plugin_config_path,
-        ['etc/quantum/plugins/bigswitch/restproxy.ini']),
-    (linuxbridge_plugin_config_path,
-        ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
-    (nvp_plugin_config_path,
-        ['etc/quantum/plugins/nicira/nvp.ini']),
-    (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
-    (meta_plugin_config_path,
-        ['etc/quantum/plugins/metaplugin/metaplugin.ini']),
-    (nec_plugin_config_path, ['etc/quantum/plugins/nec/nec.ini']),
-]
+if sys.platform == 'win32':
+    # Windows doesn't have an "/etc" directory equivalent
+    DataFiles = []
+
+    ConsoleScripts = [
+        'quantum-hyperv-agent = '
+        'quantum.plugins.hyperv.agent.hyperv_quantum_agent:main',
+        'quantum-server = quantum.server:main',
+        'quantum-db-manage = quantum.db.migration.cli:main',
+    ]
+
+    ProjectScripts = []
+else:
+    DataFiles = [
+        (config_path,
+            ['etc/quantum.conf',
+             'etc/rootwrap.conf',
+             'etc/api-paste.ini',
+             'etc/policy.json',
+             'etc/dhcp_agent.ini',
+             'etc/l3_agent.ini',
+             'etc/metadata_agent.ini']),
+        (rootwrap_path,
+            ['etc/quantum/rootwrap.d/dhcp.filters',
+             'etc/quantum/rootwrap.d/iptables-firewall.filters',
+             'etc/quantum/rootwrap.d/l3.filters',
+             'etc/quantum/rootwrap.d/linuxbridge-plugin.filters',
+             'etc/quantum/rootwrap.d/nec-plugin.filters',
+             'etc/quantum/rootwrap.d/openvswitch-plugin.filters',
+             'etc/quantum/rootwrap.d/ryu-plugin.filters']),
+        (init_path, ['etc/init.d/quantum-server']),
+        (ovs_plugin_config_path,
+            ['etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini']),
+        (cisco_plugin_config_path,
+            ['etc/quantum/plugins/cisco/credentials.ini',
+             'etc/quantum/plugins/cisco/l2network_plugin.ini',
+             'etc/quantum/plugins/cisco/nexus.ini',
+             'etc/quantum/plugins/cisco/ucs.ini',
+             'etc/quantum/plugins/cisco/cisco_plugins.ini',
+             'etc/quantum/plugins/cisco/db_conn.ini']),
+        (bigswitch_plugin_config_path,
+            ['etc/quantum/plugins/bigswitch/restproxy.ini']),
+        (linuxbridge_plugin_config_path,
+            ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
+        (nvp_plugin_config_path,
+            ['etc/quantum/plugins/nicira/nvp.ini']),
+        (ryu_plugin_config_path, ['etc/quantum/plugins/ryu/ryu.ini']),
+        (meta_plugin_config_path,
+            ['etc/quantum/plugins/metaplugin/metaplugin.ini']),
+        (nec_plugin_config_path, ['etc/quantum/plugins/nec/nec.ini']),
+        (hyperv_plugin_config_path,
+            ['etc/quantum/plugins/hyperv/hyperv_quantum_plugin.ini']),
+    ]
+
+    ConsoleScripts = [
+        'quantum-dhcp-agent = quantum.agent.dhcp_agent:main',
+        'quantum-dhcp-agent-dnsmasq-lease-update ='
+        'quantum.agent.linux.dhcp:Dnsmasq.lease_update',
+        'quantum-netns-cleanup = quantum.agent.netns_cleanup_util:main',
+        'quantum-l3-agent = quantum.agent.l3_agent:main',
+        'quantum-linuxbridge-agent ='
+        'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
+        'quantum-metadata-agent ='
+        'quantum.agent.metadata.agent:main',
+        'quantum-ns-metadata-proxy ='
+        'quantum.agent.metadata.namespace_proxy:main',
+        'quantum-openvswitch-agent ='
+        'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
+        'quantum-ryu-agent = '
+        'quantum.plugins.ryu.agent.ryu_quantum_agent:main',
+        'quantum-nec-agent = '
+        'quantum.plugins.nec.agent.nec_quantum_agent:main',
+        'quantum-server = quantum.server:main',
+        'quantum-debug = quantum.debug.shell:main',
+        'quantum-ovs-cleanup = quantum.agent.ovs_cleanup_util:main',
+        'quantum-db-manage = quantum.db.migration.cli:main',
+    ]
+
+    ProjectScripts = [
+        'bin/quantum-rootwrap',
+    ]
+
 
 setuptools.setup(
     name=Name,
@@ -118,29 +165,5 @@ setuptools.setup(
     cmdclass=setup.get_cmdclass(),
     data_files=DataFiles,
     eager_resources=EagerResources,
-    entry_points={
-        'console_scripts': [
-            'quantum-dhcp-agent = quantum.agent.dhcp_agent:main',
-            'quantum-dhcp-agent-dnsmasq-lease-update ='
-            'quantum.agent.linux.dhcp:Dnsmasq.lease_update',
-            'quantum-netns-cleanup = quantum.agent.netns_cleanup_util:main',
-            'quantum-l3-agent = quantum.agent.l3_agent:main',
-            'quantum-linuxbridge-agent ='
-            'quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent:main',
-            'quantum-metadata-agent ='
-            'quantum.agent.metadata.agent:main',
-            'quantum-ns-metadata-proxy ='
-            'quantum.agent.metadata.namespace_proxy:main',
-            'quantum-openvswitch-agent ='
-            'quantum.plugins.openvswitch.agent.ovs_quantum_agent:main',
-            'quantum-ryu-agent = '
-            'quantum.plugins.ryu.agent.ryu_quantum_agent:main',
-            'quantum-nec-agent = '
-            'quantum.plugins.nec.agent.nec_quantum_agent:main',
-            'quantum-server = quantum.server:main',
-            'quantum-debug = quantum.debug.shell:main',
-            'quantum-ovs-cleanup = quantum.agent.ovs_cleanup_util:main',
-            'quantum-db-manage = quantum.db.migration.cli:main',
-        ]
-    },
+    entry_points={'console_scripts': ConsoleScripts},
 )
