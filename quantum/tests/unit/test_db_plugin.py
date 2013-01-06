@@ -2182,6 +2182,15 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         subnet = self._test_create_subnet(expected=expected,
                                           gateway_ip=gateway)
 
+    def test_create_force_subnet_gw_values(self):
+        cfg.CONF.set_override('force_gateway_on_subnet', True)
+        with self.network() as network:
+            self._create_subnet('json',
+                                network['network']['id'],
+                                '10.0.0.0/24',
+                                400,
+                                gateway_ip='100.0.0.1')
+
     def test_create_subnet_with_allocation_pool(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'

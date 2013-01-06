@@ -53,7 +53,9 @@ core_opts = [
     cfg.BoolOpt('allow_overlapping_ips', default=False),
     cfg.StrOpt('control_exchange',
                default='quantum',
-               help='AMQP exchange to connect to if using RabbitMQ or Qpid')
+               help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
+    cfg.BoolOpt('force_gateway_on_subnet', default=False,
+                help=_("Ensure that configured gateway is on subnet")),
 ]
 
 # Register the configuration options
