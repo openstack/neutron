@@ -1014,6 +1014,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             s['gateway_ip'] and
             s['gateway_ip'] != attributes.ATTR_NOT_SPECIFIED):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
+            if (cfg.CONF.force_gateway_on_subnet and
+                not QuantumDbPluginV2._check_subnet_ip(s['cidr'],
+                                                       s['gateway_ip'])):
+                error_message = _("Gateway is not valid on subnet")
+                raise q_exc.InvalidInput(error_message=error_message)
 
         if ('dns_nameservers' in s and
             s['dns_nameservers'] != attributes.ATTR_NOT_SPECIFIED):

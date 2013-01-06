@@ -54,7 +54,8 @@ core_opts = [
                default='quantum',
                help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
     cfg.StrOpt('host', default=utils.get_hostname()),
-
+    cfg.BoolOpt('force_gateway_on_subnet', default=False,
+                help=_("Ensure that configured gateway is on subnet")),
 ]
 
 # Register the configuration options
