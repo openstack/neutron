@@ -139,10 +139,9 @@ class BaseResource(object):
     @property
     def default(self):
         """Return the default value of the quota."""
-        if hasattr(cfg.CONF.QUOTAS, self.flag):
-            return cfg.CONF.QUOTAS[self.flag]
-        else:
-            return cfg.CONF.QUOTAS.default_quota
+        return getattr(cfg.CONF.QUOTAS,
+                       self.flag,
+                       cfg.CONF.QUOTAS.default_quota)
 
 
 class CountableResource(BaseResource):

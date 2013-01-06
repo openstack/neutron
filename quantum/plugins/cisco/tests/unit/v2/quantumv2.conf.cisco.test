@@ -40,4 +40,4 @@ default_quota = -1
 
 # default driver to use for quota checks
 # quota_driver = quantum.quota.ConfDriver
-quota_driver = quantum.extensions._quotav2_driver.DbQuotaDriver
+quota_driver = quantum.db.quota_db.DbQuotaDriver

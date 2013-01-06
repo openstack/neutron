@@ -26,12 +26,6 @@ _get_path = test_api_v2._get_path
 class QuotaExtensionTestCase(unittest.TestCase):
 
     def setUp(self):
-        if getattr(self, 'testflag', 1) == 1:
-            self._setUp1()
-        else:
-            self._setUp2()
-
-    def _setUp1(self):
         db._ENGINE = None
         db._MAKER = None
         # Ensure 'stale' patched copies of the plugin are never returned
@@ -53,7 +47,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
         cfg.CONF.set_override('core_plugin', TARGET_PLUGIN)
         cfg.CONF.set_override(
             'quota_driver',
-            'quantum.extensions._quotav2_driver.DbQuotaDriver',
+            'quantum.db.quota_db.DbQuotaDriver',
             group='QUOTAS')
         cfg.CONF.set_override(
             'quota_items',
@@ -62,37 +56,10 @@ class QuotaExtensionTestCase(unittest.TestCase):
 
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
+        self.plugin.return_value.supported_extension_aliases = ['quotas']
         # QUOTAS will regester the items in conf when starting
         # extra1 here is added later, so have to do it manually
         quota.QUOTAS.register_resource_by_name('extra1')
-        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
-        l2network_db_v2.initialize()
-        app = config.load_paste_app('extensions_test_app')
-        ext_middleware = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
-        self.api = webtest.TestApp(ext_middleware)
-
-    def _setUp2(self):
-        db._ENGINE = None
-        db._MAKER = None
-        # Ensure 'stale' patched copies of the plugin are never returned
-        manager.QuantumManager._instance = None
-
-        # Ensure existing ExtensionManager is not used
-        extensions.PluginAwareExtensionManager._instance = None
-
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
-            self.saved_attr_map[resource] = attrs.copy()
-
-        # Create the default configurations
-        args = ['--config-file', test_extensions.etcdir('quantum.conf.test')]
-        config.parse(args=args)
-
-        # Update the plugin and extensions path
-        cfg.CONF.set_override('core_plugin', TARGET_PLUGIN)
-        self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
-        self.plugin = self._plugin_patcher.start()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         l2network_db_v2.initialize()
         app = config.load_paste_app('extensions_test_app')
@@ -114,7 +81,7 @@ class QuotaExtensionTestCase(unittest.TestCase):
         res = self.api.get(_get_path('quotas'))
         self.assertEqual(200, res.status_int)
 
-    def test_quotas_defaul_values(self):
+    def test_quotas_default_values(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id)}
         res = self.api.get(_get_path('quotas', id=tenant_id),
@@ -181,10 +148,8 @@ class QuotaExtensionTestCase(unittest.TestCase):
         self.assertEqual(403, res.status_int)
 
     def test_quotas_loaded_bad(self):
-        self.testflag = 2
         try:
             res = self.api.get(_get_path('quotas'), expect_errors=True)
             self.assertEqual(404, res.status_int)
         except Exception:
             pass
-        self.testflag = 1

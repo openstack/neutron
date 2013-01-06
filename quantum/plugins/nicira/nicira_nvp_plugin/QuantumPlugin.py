@@ -43,6 +43,7 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import models_v2
+from quantum.db import quota_db
 from quantum.extensions import providernet as pnet
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
@@ -127,7 +128,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["provider"]
+    supported_extension_aliases = ["provider", "quotas"]
     # Default controller cluster
     default_cluster = None
 

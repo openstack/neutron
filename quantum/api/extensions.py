@@ -36,27 +36,6 @@ from quantum import wsgi
 
 LOG = logging.getLogger('quantum.api.extensions')
 
-# Besides the supported_extension_aliases in plugin class,
-# we also support register enabled extensions here so that we
-# can load some mandatory files (such as db models) before initialize plugin
-ENABLED_EXTS = {
-    'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2':
-    {
-        'ext_alias': ["quotas"],
-        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
-    },
-    'quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2':
-    {
-        'ext_alias': ["quotas"],
-        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
-    },
-    'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2':
-    {
-        'ext_alias': ["quotas"],
-        'ext_db_models': ['quantum.extensions._quotav2_model.Quota'],
-    },
-}
-
 
 class PluginInterface(object):
     __metaclass__ = ABCMeta
@@ -559,9 +538,6 @@ class PluginAwareExtensionManager(ExtensionManager):
                                   alias in plugin.supported_extension_aliases)
                                  for plugin in self.plugins.values())
         plugin_provider = cfg.CONF.core_plugin
-        if not supports_extension and plugin_provider in ENABLED_EXTS:
-            supports_extension = (alias in
-                                  ENABLED_EXTS[plugin_provider]['ext_alias'])
         if not supports_extension:
             LOG.warn(_("extension %s not supported by any of loaded plugins"),
                      alias)
@@ -581,11 +557,6 @@ class PluginAwareExtensionManager(ExtensionManager):
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            plugin_provider = cfg.CONF.core_plugin
-            if plugin_provider in ENABLED_EXTS:
-                for model in ENABLED_EXTS[plugin_provider]['ext_db_models']:
-                    LOG.debug('loading model %s', model)
-                    model_class = importutils.import_class(model)
             cls._instance = cls(get_extensions_path(),
                                 QuantumManager.get_service_plugins())
         return cls._instance
