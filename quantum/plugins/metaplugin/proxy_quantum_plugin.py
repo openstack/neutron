@@ -33,13 +33,7 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     supported_extension_aliases = ["router"]
 
     def __init__(self, configfile=None):
-        options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
-        options.update({'base': models_v2.model_base.BASEV2})
-        sql_max_retries = cfg.CONF.DATABASE.sql_max_retries
-        options.update({"sql_max_retries": sql_max_retries})
-        reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
-        options.update({"reconnect_interval": reconnect_interval})
-        db.configure_db(options)
+        db.configure_db()
         self.quantum = client.Client(
             username=cfg.CONF.PROXY.admin_user,
             password=cfg.CONF.PROXY.admin_password,

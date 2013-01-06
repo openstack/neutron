@@ -76,16 +76,6 @@ def parse_config():
         NVPCluster objects, 'plugin_config' is a dictionary with plugin
         parameters (currently only 'max_lp_per_bridged_ls').
     """
-    db_options = {
-        "sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection,
-        "sql_max_retries": cfg.CONF.DATABASE.sql_max_retries,
-        "reconnect_interval": cfg.CONF.DATABASE.reconnect_interval,
-        "base": models_v2.model_base.BASEV2,
-        "sql_min_pool_size": cfg.CONF.DATABASE.sql_min_pool_size,
-        "sql_max_pool_size": cfg.CONF.DATABASE.sql_max_pool_size,
-        "sql_idle_timeout": cfg.CONF.DATABASE.sql_idle_timeout,
-        "sql_dbpool_enable": cfg.CONF.DATABASE.sql_dbpool_enable
-    }
     nvp_options = cfg.CONF.NVP
     nvp_conf = config.ClusterConfigOptions(cfg.CONF)
     cluster_names = config.register_cluster_groups(nvp_conf)
@@ -104,7 +94,7 @@ def parse_config():
              'nvp_controller_connection':
              nvp_conf[cluster_name].nvp_controller_connection, })
     LOG.debug(_("Cluster options: %s"), clusters_options)
-    return db_options, nvp_options, clusters_options
+    return nvp_options, clusters_options
 
 
 class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -137,7 +127,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             nvplib.LOG.setLevel(loglevel)
             NvpApiClient.LOG.setLevel(loglevel)
 
-        self.db_opts, self.nvp_opts, self.clusters_opts = parse_config()
+        self.nvp_opts, self.clusters_opts = parse_config()
         self.clusters = {}
         for c_opts in self.clusters_opts:
             # Password is guaranteed to be the same across all controllers
@@ -189,7 +179,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             # otherwise set 1st cluster as default
             self.default_cluster = self.clusters[first_cluster_name]
 
-        db.configure_db(self.db_opts)
+        db.configure_db()
         # Extend the fault map
         self._extend_fault_map()
         # Set up RPC interface for DHCP agent

@@ -42,8 +42,7 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def setUp(self):
         def new_init():
-            db.configure_db({'sql_connection': 'sqlite:///:memory:',
-                             'base': network_models_v2.model_base.BASEV2})
+            db.configure_db()
 
         with mock.patch.object(network_db_v2,
                                'initialize', new=new_init):

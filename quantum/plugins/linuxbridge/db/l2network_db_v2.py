@@ -29,17 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 def initialize():
-    options = {
-        "sql_connection": cfg.CONF.DATABASE.sql_connection,
-        "sql_max_retries": cfg.CONF.DATABASE.sql_max_retries,
-        "reconnect_interval": cfg.CONF.DATABASE.reconnect_interval,
-        "base": models_v2.model_base.BASEV2,
-        "sql_min_pool_size": cfg.CONF.DATABASE.sql_min_pool_size,
-        "sql_max_pool_size": cfg.CONF.DATABASE.sql_max_pool_size,
-        "sql_idle_timeout": cfg.CONF.DATABASE.sql_idle_timeout,
-        "sql_dbpool_enable": cfg.CONF.DATABASE.sql_dbpool_enable
-    }
-    db.configure_db(options)
+    db.configure_db()
 
 
 def sync_network_states(network_vlan_ranges):

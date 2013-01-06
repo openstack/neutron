@@ -30,15 +30,7 @@ OFP_VLAN_NONE = 0xffff
 
 
 def initialize():
-    options = {"sql_connection": "%s" % config.DATABASE.sql_connection,
-               "sql_max_retries": config.DATABASE.sql_max_retries,
-               "reconnect_interval": config.DATABASE.reconnect_interval,
-               "base": model_base.BASEV2,
-               "sql_min_pool_size": config.CONF.DATABASE.sql_min_pool_size,
-               "sql_max_pool_size": config.CONF.DATABASE.sql_max_pool_size,
-               "sql_idle_timeout": config.CONF.DATABASE.sql_idle_timeout,
-               "sql_dbpool_enable": config.CONF.DATABASE.sql_dbpool_enable}
-    db.configure_db(options)
+    db.configure_db()
 
 
 def clear_db(base=model_base.BASEV2):

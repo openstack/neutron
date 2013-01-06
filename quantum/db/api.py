@@ -32,10 +32,38 @@ from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.orm import sessionmaker
 
 from quantum.db import model_base
+from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
+
+database_opts = [
+    cfg.StrOpt('sql_connection', default='sqlite://',
+               help=_('The SQLAlchemy connection string used to connect to '
+                      'the database')),
+    cfg.IntOpt('sql_max_retries', default=-1,
+               help=_('Database reconnection retry times')),
+    cfg.IntOpt('reconnect_interval', default=2,
+               help=_('Database reconnection interval in seconds')),
+    cfg.IntOpt('sql_min_pool_size',
+               default=1,
+               help=_("Minimum number of SQL connections to keep open in a "
+                      "pool")),
+    cfg.IntOpt('sql_max_pool_size',
+               default=5,
+               help=_("Maximum number of SQL connections to keep open in a "
+                      "pool")),
+    cfg.IntOpt('sql_idle_timeout',
+               default=3600,
+               help=_("Timeout in seconds before idle sql connections are "
+                      "reaped")),
+    cfg.BoolOpt('sql_dbpool_enable',
+                default=False,
+                help=_("Enable the use of eventlet's db_pool for MySQL")),
+]
+
+cfg.CONF.register_opts(database_opts, "DATABASE")
 
 _ENGINE = None
 _MAKER = None
@@ -75,16 +103,15 @@ class SqliteForeignKeysListener(PoolListener):
         dbapi_con.execute('pragma foreign_keys=ON')
 
 
-def configure_db(options):
+def configure_db():
     """
     Establish the database, create an engine if needed, and
     register the models.
-
-    :param options: Mapping of configuration options
     """
     global _ENGINE
     if not _ENGINE:
-        connection_dict = sql.engine.url.make_url(options['sql_connection'])
+        sql_connection = cfg.CONF.DATABASE.sql_connection
+        connection_dict = sql.engine.url.make_url(sql_connection)
         engine_args = {
             'pool_recycle': 3600,
             'echo': False,
@@ -94,36 +121,35 @@ def configure_db(options):
         if 'mysql' in connection_dict.drivername:
             engine_args['listeners'] = [MySQLPingListener()]
             if (MySQLdb is not None and
-                options['sql_dbpool_enable']):
+                cfg.CONF.DATABASE.sql_dbpool_enable):
                 pool_args = {
                     'db': connection_dict.database,
                     'passwd': connection_dict.password or '',
                     'host': connection_dict.host,
                     'user': connection_dict.username,
-                    'min_size': options['sql_min_pool_size'],
-                    'max_size': options['sql_max_pool_size'],
-                    'max_idle': options['sql_idle_timeout']
+                    'min_size': cfg.CONF.DATABASE.sql_min_pool_size,
+                    'max_size': cfg.CONF.DATABASE.sql_max_pool_size,
+                    'max_idle': cfg.CONF.DATABASE.sql_idle_timeout
                 }
                 creator = db_pool.ConnectionPool(MySQLdb, **pool_args)
                 engine_args['creator'] = creator.create
-            if (MySQLdb is None and options['sql_dbpool_enable']):
+            if (MySQLdb is None and cfg.CONF.DATABASE.sql_dbpool_enable):
                 LOG.warn(_("Eventlet connection pooling will not work without "
                            "python-mysqldb!"))
         if 'sqlite' in connection_dict.drivername:
             engine_args['listeners'] = [SqliteForeignKeysListener()]
-            if options['sql_connection'] == "sqlite://":
+            if sql_connection == "sqlite://":
                 engine_args["connect_args"] = {'check_same_thread': False}
 
-        _ENGINE = create_engine(options['sql_connection'], **engine_args)
+        _ENGINE = create_engine(sql_connection, **engine_args)
 
         sql.event.listen(_ENGINE, 'checkin', greenthread_yield)
 
-        base = options.get('base', BASE)
-        if not register_models(base):
+        if not register_models():
             if 'reconnect_interval' in options:
-                remaining = options.get('sql_max_retries', -1)
-                reconnect_interval = options['reconnect_interval']
-                retry_registration(remaining, reconnect_interval, base)
+                remaining = cfg.CONF.DATABASE.sql_max_retries
+                reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
+                retry_registration(remaining, reconnect_interval)
 
 
 def clear_db(base=BASE):

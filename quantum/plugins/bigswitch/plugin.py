@@ -66,28 +66,6 @@ from quantum.plugins.bigswitch.version import version_string_with_vcs
 LOG = logging.getLogger(__name__)
 
 
-database_opts = [
-    cfg.StrOpt('sql_connection', default='sqlite://'),
-    cfg.IntOpt('sql_max_retries', default=-1),
-    cfg.IntOpt('reconnect_interval', default=2),
-    cfg.IntOpt('sql_min_pool_size',
-               default=1,
-               help="Minimum number of SQL connections to keep open in a "
-                    "pool"),
-    cfg.IntOpt('sql_max_pool_size',
-               default=5,
-               help="Maximum number of SQL connections to keep open in a "
-                    "pool"),
-    cfg.IntOpt('sql_idle_timeout',
-               default=3600,
-               help="Timeout in seconds before idle sql connections are "
-                    "reaped"),
-    cfg.BoolOpt('sql_dbpool_enable',
-                default=False,
-                help="Enable the use of eventlet's db_pool for MySQL"),
-]
-
-
 restproxy_opts = [
     cfg.StrOpt('servers', default='localhost:8800'),
     cfg.StrOpt('serverauth', default='username:password'),
@@ -97,7 +75,6 @@ restproxy_opts = [
 ]
 
 
-cfg.CONF.register_opts(database_opts, "DATABASE")
 cfg.CONF.register_opts(restproxy_opts, "RESTPROXY")
 
 
@@ -277,15 +254,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2):
                  version_string_with_vcs())
 
         # init DB, proxy's persistent store defaults to in-memory sql-lite DB
-        options = {"sql_connection": "%s" % cfg.CONF.DATABASE.sql_connection,
-                   "sql_max_retries": cfg.CONF.DATABASE.sql_max_retries,
-                   "reconnect_interval": cfg.CONF.DATABASE.reconnect_interval,
-                   "base": models_v2.model_base.BASEV2,
-                   "sql_min_pool_size": cfg.CONF.DATABASE.sql_min_pool_size,
-                   "sql_max_pool_size": cfg.CONF.DATABASE.sql_max_pool_size,
-                   "sql_idle_timeout": cfg.CONF.DATABASE.sql_idle_timeout,
-                   "sql_dbpool_enable": cfg.CONF.DATABASE.sql_dbpool_enable}
-        db.configure_db(options)
+        db.configure_db()
 
         # 'servers' is the list of network controller REST end-points
         # (used in order specified till one suceeds, and it is sticky

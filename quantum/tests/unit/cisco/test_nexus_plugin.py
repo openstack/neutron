@@ -53,8 +53,7 @@ class TestCiscoNexusPlugin(unittest.TestCase):
         self.second_vlan_id = 265
 
         def new_cdb_init():
-            db.configure_db({'sql_connection': 'sqlite://',
-                             'base': network_models_v2.model_base.BASEV2})
+            db.configure_db()
 
         def new_nexus_init(self):
             self._client = importutils.import_object(NEXUS_DRIVER)

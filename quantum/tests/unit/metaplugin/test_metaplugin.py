@@ -80,10 +80,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         self.fake_tenant_id = uuidutils.generate_uuid()
         self.context = context.get_admin_context()
 
-        sql_connection = 'sqlite:///:memory:'
-        options = {"sql_connection": sql_connection}
-        options.update({'base': models_v2.model_base.BASEV2})
-        db.configure_db(options)
+        db.configure_db()
 
         setup_metaplugin_conf()
 
