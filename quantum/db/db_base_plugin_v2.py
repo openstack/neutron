@@ -413,7 +413,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                         subnet_id=subnet_id).delete()
 
     @staticmethod
-    def _generate_ip(context, network_id, subnets):
+    def _generate_ip(context, subnets):
         """Generate an IP address.
 
         The IP address will be generated from one of the subnets defined on
@@ -444,7 +444,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 # increment the first free
                 range['first_ip'] = str(netaddr.IPAddress(ip_address) + 1)
             return {'ip_address': ip_address, 'subnet_id': subnet['id']}
-        raise q_exc.IpAddressGenerationFailure(net_id=network_id)
+        raise q_exc.IpAddressGenerationFailure(net_id=subnets[0]['network_id'])
 
     @staticmethod
     def _allocate_specific_ip(context, subnet_id, ip_address):
@@ -607,7 +607,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             else:
                 subnets = [self._get_subnet(context, fixed['subnet_id'])]
                 # IP address allocation
-                result = self._generate_ip(context, network, subnets)
+                result = self._generate_ip(context, subnets)
                 ips.append({'ip_address': result['ip_address'],
                             'subnet_id': result['subnet_id']})
         return ips
@@ -673,8 +673,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             version_subnets = [v4, v6]
             for subnets in version_subnets:
                 if subnets:
-                    result = QuantumDbPluginV2._generate_ip(context, network,
-                                                            subnets)
+                    result = QuantumDbPluginV2._generate_ip(context, subnets)
                     ips.append({'ip_address': result['ip_address'],
                                 'subnet_id': result['subnet_id']})
         return ips
