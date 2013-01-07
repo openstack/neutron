@@ -120,7 +120,7 @@ def to_primitive(value, convert_instances=False, level=0):
                                 level=level + 1)
         else:
             return value
-    except TypeError, e:
+    except TypeError:
         # Class objects are tricky since they may define something like
         # __iter__ defined but it isn't callable as list().
         return unicode(value)

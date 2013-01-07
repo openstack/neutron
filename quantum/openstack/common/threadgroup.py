@@ -18,7 +18,6 @@ from eventlet import greenlet
 from eventlet import greenpool
 from eventlet import greenthread
 
-from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall
 
@@ -27,19 +26,17 @@ LOG = logging.getLogger(__name__)
 
 
 def _thread_done(gt, *args, **kwargs):
-    '''
-    Callback function to be passed to GreenThread.link() when we spawn()
-    Calls the ThreadGroup to notify if.
-    '''
+    """ Callback function to be passed to GreenThread.link() when we spawn()
+    Calls the :class:`ThreadGroup` to notify if.
+
+    """
     kwargs['group'].thread_done(kwargs['thread'])
 
 
 class Thread(object):
-    """
-    Wrapper around a greenthread, that holds a reference to
-    the ThreadGroup. The Thread will notify the ThreadGroup
-    when it has done so it can be removed from the threads
-    list.
+    """ Wrapper around a greenthread, that holds a reference to the
+    :class:`ThreadGroup`. The Thread will notify the :class:`ThreadGroup` when
+    it has done so it can be removed from the threads list.
     """
     def __init__(self, name, thread, group):
         self.name = name
@@ -54,11 +51,11 @@ class Thread(object):
 
 
 class ThreadGroup(object):
-    """
-    The point of this class is to:
-    - keep track of timers and greenthreads (making it easier to stop them
+    """ The point of the ThreadGroup classis to:
+
+    * keep track of timers and greenthreads (making it easier to stop them
       when need be).
-    - provide an easy API to add timers.
+    * provide an easy API to add timers.
     """
     def __init__(self, name, thread_pool_size=10):
         self.name = name

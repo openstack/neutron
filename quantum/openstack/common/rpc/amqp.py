@@ -26,7 +26,6 @@ AMQP, but is deprecated and predates this code.
 """
 
 import inspect
-import logging
 import sys
 import uuid
 
@@ -34,10 +33,10 @@ from eventlet import greenpool
 from eventlet import pools
 from eventlet import semaphore
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common import excutils
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import local
+from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import common as rpc_common
 
 
@@ -55,7 +54,7 @@ class Pool(pools.Pool):
 
     # TODO(comstud): Timeout connections not used in a while
     def create(self):
-        LOG.debug('Pool creating new connection')
+        LOG.debug(_('Pool creating new connection'))
         return self.connection_cls(self.conf)
 
     def empty(self):
@@ -150,7 +149,7 @@ class ConnectionContext(rpc_common.Connection):
 
 
 def msg_reply(conf, msg_id, connection_pool, reply=None, failure=None,
-              ending=False):
+              ending=False, log_failure=True):
     """Sends a reply or an error on the channel signified by msg_id.
 
     Failure should be a sys.exc_info() tuple.
@@ -158,7 +157,8 @@ def msg_reply(conf, msg_id, connection_pool, reply=None, failure=None,
     """
     with ConnectionContext(conf, connection_pool) as conn:
         if failure:
-            failure = rpc_common.serialize_remote_exception(failure)
+            failure = rpc_common.serialize_remote_exception(failure,
+                                                            log_failure)
 
         try:
             msg = {'result': reply, 'failure': failure}
@@ -168,7 +168,7 @@ def msg_reply(conf, msg_id, connection_pool, reply=None, failure=None,
                    'failure': failure}
         if ending:
             msg['ending'] = True
-        conn.direct_send(msg_id, msg)
+        conn.direct_send(msg_id, rpc_common.serialize_msg(msg))
 
 
 class RpcContext(rpc_common.CommonRpcContext):
@@ -185,10 +185,10 @@ class RpcContext(rpc_common.CommonRpcContext):
         return self.__class__(**values)
 
     def reply(self, reply=None, failure=None, ending=False,
-              connection_pool=None):
+              connection_pool=None, log_failure=True):
         if self.msg_id:
             msg_reply(self.conf, self.msg_id, connection_pool, reply, failure,
-                      ending)
+                      ending, log_failure)
             if ending:
                 self.msg_id = None
 
@@ -282,10 +282,20 @@ class ProxyCallback(object):
                 ctxt.reply(rval, None, connection_pool=self.connection_pool)
             # This final None tells multicall that it is done.
             ctxt.reply(ending=True, connection_pool=self.connection_pool)
-        except Exception as e:
-            LOG.exception('Exception during message handling')
+        except rpc_common.ClientException as e:
+            LOG.debug(_('Expected exception during message handling (%s)') %
+                      e._exc_info[1])
+            ctxt.reply(None, e._exc_info,
+                       connection_pool=self.connection_pool,
+                       log_failure=False)
+        except Exception:
+            LOG.exception(_('Exception during message handling'))
             ctxt.reply(None, sys.exc_info(),
                        connection_pool=self.connection_pool)
+
+    def wait(self):
+        """Wait for all callback threads to exit."""
+        self.pool.waitall()
 
 
 class MulticallWaiter(object):
@@ -349,7 +359,7 @@ def multicall(conf, context, topic, msg, timeout, connection_pool):
     # that will continue to use the connection.  When it's done,
     # connection.close() will get called which will put it back into
     # the pool
-    LOG.debug(_('Making asynchronous call on %s ...'), topic)
+    LOG.debug(_('Making synchronous call on %s ...'), topic)
     msg_id = uuid.uuid4().hex
     msg.update({'_msg_id': msg_id})
     LOG.debug(_('MSG_ID is %s') % (msg_id))
@@ -358,7 +368,7 @@ def multicall(conf, context, topic, msg, timeout, connection_pool):
     conn = ConnectionContext(conf, connection_pool)
     wait_msg = MulticallWaiter(conf, conn, timeout)
     conn.declare_direct_consumer(msg_id, wait_msg)
-    conn.topic_send(topic, msg)
+    conn.topic_send(topic, rpc_common.serialize_msg(msg))
     return wait_msg
 
 
@@ -377,7 +387,7 @@ def cast(conf, context, topic, msg, connection_pool):
     LOG.debug(_('Making asynchronous cast on %s...'), topic)
     pack_context(msg, context)
     with ConnectionContext(conf, connection_pool) as conn:
-        conn.topic_send(topic, msg)
+        conn.topic_send(topic, rpc_common.serialize_msg(msg))
 
 
 def fanout_cast(conf, context, topic, msg, connection_pool):
@@ -385,7 +395,7 @@ def fanout_cast(conf, context, topic, msg, connection_pool):
     LOG.debug(_('Making asynchronous fanout cast...'))
     pack_context(msg, context)
     with ConnectionContext(conf, connection_pool) as conn:
-        conn.fanout_send(topic, msg)
+        conn.fanout_send(topic, rpc_common.serialize_msg(msg))
 
 
 def cast_to_server(conf, context, server_params, topic, msg, connection_pool):
@@ -393,7 +403,7 @@ def cast_to_server(conf, context, server_params, topic, msg, connection_pool):
     pack_context(msg, context)
     with ConnectionContext(conf, connection_pool, pooled=False,
                            server_params=server_params) as conn:
-        conn.topic_send(topic, msg)
+        conn.topic_send(topic, rpc_common.serialize_msg(msg))
 
 
 def fanout_cast_to_server(conf, context, server_params, topic, msg,
@@ -402,15 +412,18 @@ def fanout_cast_to_server(conf, context, server_params, topic, msg,
     pack_context(msg, context)
     with ConnectionContext(conf, connection_pool, pooled=False,
                            server_params=server_params) as conn:
-        conn.fanout_send(topic, msg)
+        conn.fanout_send(topic, rpc_common.serialize_msg(msg))
 
 
-def notify(conf, context, topic, msg, connection_pool):
+def notify(conf, context, topic, msg, connection_pool, envelope):
     """Sends a notification event on a topic."""
-    event_type = msg.get('event_type')
-    LOG.debug(_('Sending %(event_type)s on %(topic)s'), locals())
+    LOG.debug(_('Sending %(event_type)s on %(topic)s'),
+              dict(event_type=msg.get('event_type'),
+                   topic=topic))
     pack_context(msg, context)
     with ConnectionContext(conf, connection_pool) as conn:
+        if envelope:
+            msg = rpc_common.serialize_msg(msg, force_envelope=True)
         conn.notify_send(topic, msg)
 
 
@@ -420,7 +433,4 @@ def cleanup(connection_pool):
 
 
 def get_control_exchange(conf):
-    try:
-        return conf.control_exchange
-    except cfg.NoSuchOptError:
-        return 'openstack'
+    return conf.control_exchange

@@ -5,6 +5,7 @@ amqplib==0.6.1
 anyjson>=0.2.4
 argparse
 eventlet>=0.9.17
+extras
 greenlet>=0.3.1
 httplib2
 iso8601>=0.1.4

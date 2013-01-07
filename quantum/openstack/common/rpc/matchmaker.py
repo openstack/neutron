@@ -21,10 +21,10 @@ return keys for direct exchanges, per (approximate) AMQP parlance.
 import contextlib
 import itertools
 import json
-import logging
 
 from quantum.openstack.common import cfg
 from quantum.openstack.common.gettextutils import _
+from quantum.openstack.common import log as logging
 
 
 matchmaker_opts = [

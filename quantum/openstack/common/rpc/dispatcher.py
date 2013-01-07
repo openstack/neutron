@@ -41,8 +41,8 @@ server side of the API at the same time.  However, as the code stands today,
 there can be both versioned and unversioned APIs implemented in the same code
 base.
 
-
-EXAMPLES:
+EXAMPLES
+========
 
 Nova was the first project to use versioned rpc APIs.  Consider the compute rpc
 API as an example.  The client side is in nova/compute/rpcapi.py and the server
@@ -50,12 +50,13 @@ side is in nova/compute/manager.py.
 
 
 Example 1) Adding a new method.
+-------------------------------
 
 Adding a new method is a backwards compatible change.  It should be added to
 nova/compute/manager.py, and RPC_API_VERSION should be bumped from X.Y to
 X.Y+1.  On the client side, the new method in nova/compute/rpcapi.py should
 have a specific version specified to indicate the minimum API version that must
-be implemented for the method to be supported.  For example:
+be implemented for the method to be supported.  For example::
 
     def get_host_uptime(self, ctxt, host):
         topic = _compute_topic(self.topic, ctxt, host, None)
@@ -67,10 +68,11 @@ get_host_uptime() method.
 
 
 Example 2) Adding a new parameter.
+----------------------------------
 
 Adding a new parameter to an rpc method can be made backwards compatible.  The
 RPC_API_VERSION on the server side (nova/compute/manager.py) should be bumped.
-The implementation of the method must not expect the parameter to be present.
+The implementation of the method must not expect the parameter to be present.::
 
     def some_remote_method(self, arg1, arg2, newarg=None):
         # The code needs to deal with newarg=None for cases
@@ -101,21 +103,6 @@ class RpcDispatcher(object):
         self.callbacks = callbacks
         super(RpcDispatcher, self).__init__()
 
-    @staticmethod
-    def _is_compatible(mversion, version):
-        """Determine whether versions are compatible.
-
-        :param mversion: The API version implemented by a callback.
-        :param version: The API version requested by an incoming message.
-        """
-        version_parts = version.split('.')
-        mversion_parts = mversion.split('.')
-        if int(version_parts[0]) != int(mversion_parts[0]):  # Major
-            return False
-        if int(version_parts[1]) > int(mversion_parts[1]):  # Minor
-            return False
-        return True
-
     def dispatch(self, ctxt, version, method, **kwargs):
         """Dispatch a message based on a requested version.
 
@@ -137,7 +124,8 @@ class RpcDispatcher(object):
                 rpc_api_version = proxyobj.RPC_API_VERSION
             else:
                 rpc_api_version = '1.0'
-            is_compatible = self._is_compatible(rpc_api_version, version)
+            is_compatible = rpc_common.version_is_compatible(rpc_api_version,
+                                                             version)
             had_compatible = had_compatible or is_compatible
             if not hasattr(proxyobj, method):
                 continue

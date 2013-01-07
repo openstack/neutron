@@ -27,6 +27,7 @@ from quantum.api.v2 import attributes
 from quantum.common import utils
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import rpc
 from quantum.version import version_info as quantum_version
 
 
@@ -49,9 +50,6 @@ core_opts = [
     cfg.IntOpt('max_subnet_host_routes', default=20),
     cfg.IntOpt('dhcp_lease_duration', default=120),
     cfg.BoolOpt('allow_overlapping_ips', default=False),
-    cfg.StrOpt('control_exchange',
-               default='quantum',
-               help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
     cfg.StrOpt('host', default=utils.get_hostname()),
     cfg.BoolOpt('force_gateway_on_subnet', default=False,
                 help=_("Ensure that configured gateway is on subnet")),
@@ -67,6 +65,7 @@ cfg.CONF.register_cli_opts(core_cli_opts)
 
 
 def parse(args):
+    rpc.set_defaults(control_exchange='quantum')
     cfg.CONF(args=args, project='quantum',
              version='%%prog %s' % quantum_version.version_string_with_vcs())
 

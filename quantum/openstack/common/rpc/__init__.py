@@ -50,23 +50,24 @@ rpc_opts = [
                 default=['quantum.openstack.common.exception',
                          'nova.exception',
                          'cinder.exception',
+                         'exceptions',
                          ],
                 help='Modules of exceptions that are permitted to be recreated'
                      'upon receiving exception data from an rpc call.'),
     cfg.BoolOpt('fake_rabbit',
                 default=False,
                 help='If passed, use a fake RabbitMQ provider'),
-    #
-    # The following options are not registered here, but are expected to be
-    # present. The project using this library must register these options with
-    # the configuration so that project-specific defaults may be defined.
-    #
-    #cfg.StrOpt('control_exchange',
-    #           default='nova',
-    #           help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
+    cfg.StrOpt('control_exchange',
+               default='openstack',
+               help='AMQP exchange to connect to if using RabbitMQ or Qpid'),
 ]
 
 cfg.CONF.register_opts(rpc_opts)
+
+
+def set_defaults(control_exchange):
+    cfg.set_defaults(rpc_opts,
+                     control_exchange=control_exchange)
 
 
 def create_connection(new=True):
@@ -177,17 +178,18 @@ def multicall(context, topic, msg, timeout=None):
     return _get_impl().multicall(cfg.CONF, context, topic, msg, timeout)
 
 
-def notify(context, topic, msg):
+def notify(context, topic, msg, envelope=False):
     """Send notification event.
 
     :param context: Information that identifies the user that has made this
                     request.
     :param topic: The topic to send the notification to.
     :param msg: This is a dict of content of event.
+    :param envelope: Set to True to enable message envelope for notifications.
 
     :returns: None
     """
-    return _get_impl().notify(cfg.CONF, context, topic, msg)
+    return _get_impl().notify(cfg.CONF, context, topic, msg, envelope)
 
 
 def cleanup():

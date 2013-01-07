@@ -18,11 +18,15 @@ queues.  Casts will block, but this is very useful for tests.
 """
 
 import inspect
+# NOTE(russellb): We specifically want to use json, not our own jsonutils.
+# jsonutils has some extra logic to automatically convert objects to primitive
+# types so that they can be serialized.  We want to catch all cases where
+# non-primitive types make it into this code and treat it as an error.
+import json
 import time
 
 import eventlet
 
-from quantum.openstack.common import jsonutils
 from quantum.openstack.common.rpc import common as rpc_common
 
 CONSUMERS = {}
@@ -75,6 +79,8 @@ class Consumer(object):
                     else:
                         res.append(rval)
                 done.send(res)
+            except rpc_common.ClientException as e:
+                done.send_exception(e._exc_info[1])
             except Exception as e:
                 done.send_exception(e)
 
@@ -121,7 +127,7 @@ def create_connection(conf, new=True):
 
 def check_serialize(msg):
     """Make sure a message intended for rpc can be serialized."""
-    jsonutils.dumps(msg)
+    json.dumps(msg)
 
 
 def multicall(conf, context, topic, msg, timeout=None):
@@ -154,6 +160,7 @@ def call(conf, context, topic, msg, timeout=None):
 
 
 def cast(conf, context, topic, msg):
+    check_serialize(msg)
     try:
         call(conf, context, topic, msg)
     except Exception:

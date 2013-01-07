@@ -24,19 +24,6 @@ import pkg_resources
 import setup
 
 
-class _deferred_version_string(object):
-    """Internal helper class which provides delayed version calculation."""
-    def __init__(self, version_info, prefix):
-        self.version_info = version_info
-        self.prefix = prefix
-
-    def __str__(self):
-        return "%s%s" % (self.prefix, self.version_info.version_string())
-
-    def __repr__(self):
-        return "%s%s" % (self.prefix, self.version_info.version_string())
-
-
 class VersionInfo(object):
 
     def __init__(self, package, python_package=None, pre_version=None):
@@ -57,14 +44,15 @@ class VersionInfo(object):
             self.python_package = python_package
         self.pre_version = pre_version
         self.version = None
+        self._cached_version = None
 
     def _generate_version(self):
         """Defer to the openstack.common.setup routines for making a
         version from git."""
         if self.pre_version is None:
-            return setup.get_post_version(self.python_package)
+            return setup.get_post_version(self.package)
         else:
-            return setup.get_pre_version(self.python_package, self.pre_version)
+            return setup.get_pre_version(self.package, self.pre_version)
 
     def _newer_version(self, pending_version):
         """Check to see if we're working with a stale version or not.
@@ -138,11 +126,14 @@ class VersionInfo(object):
         else:
             return '%s-dev' % (version_parts[0],)
 
-    def deferred_version_string(self, prefix=""):
+    def cached_version_string(self, prefix=""):
         """Generate an object which will expand in a string context to
         the results of version_string(). We do this so that don't
         call into pkg_resources every time we start up a program when
         passing version information into the CONF constructor, but
         rather only do the calculation when and if a version is requested
         """
-        return _deferred_version_string(self, prefix)
+        if not self._cached_version:
+            self._cached_version = "%s%s" % (prefix,
+                                             self.version_string())
+        return self._cached_version

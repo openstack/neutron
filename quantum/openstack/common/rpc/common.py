@@ -18,16 +18,59 @@
 #    under the License.
 
 import copy
-import logging
+import sys
 import traceback
 
+from quantum.openstack.common import cfg
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import local
+from quantum.openstack.common import log as logging
 
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+
+
+'''RPC Envelope Version.
+
+This version number applies to the top level structure of messages sent out.
+It does *not* apply to the message payload, which must be versioned
+independently.  For example, when using rpc APIs, a version number is applied
+for changes to the API being exposed over rpc.  This version number is handled
+in the rpc proxy and dispatcher modules.
+
+This version number applies to the message envelope that is used in the
+serialization done inside the rpc layer.  See serialize_msg() and
+deserialize_msg().
+
+The current message format (version 2.0) is very simple.  It is:
+
+    {
+        'quantum.version': <RPC Envelope Version as a String>,
+        'quantum.message': <Application Message Payload, JSON encoded>
+    }
+
+Message format version '1.0' is just considered to be the messages we sent
+without a message envelope.
+
+So, the current message envelope just includes the envelope version.  It may
+eventually contain additional information, such as a signature for the message
+payload.
+
+We will JSON encode the application message payload.  The message envelope,
+which includes the JSON encoded application message body, will be passed down
+to the messaging libraries as a dict.
+'''
+_RPC_ENVELOPE_VERSION = '2.0'
+
+_VERSION_KEY = 'quantum.version'
+_MESSAGE_KEY = 'quantum.message'
+
+
+# TODO(russellb) Turn this on after Grizzly.
+_SEND_RPC_ENVELOPE = False
 
 
 class RPCException(Exception):
@@ -40,7 +83,7 @@ class RPCException(Exception):
             try:
                 message = self.message % kwargs
 
-            except Exception as e:
+            except Exception:
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
                 LOG.exception(_('Exception in string format operation'))
@@ -88,6 +131,11 @@ class InvalidRPCConnectionReuse(RPCException):
 class UnsupportedRpcVersion(RPCException):
     message = _("Specified RPC version, %(version)s, not supported by "
                 "this endpoint.")
+
+
+class UnsupportedRpcEnvelopeVersion(RPCException):
+    message = _("Specified RPC envelope version, %(version)s, "
+                "not supported by this endpoint.")
 
 
 class Connection(object):
@@ -164,8 +212,12 @@ class Connection(object):
 
 def _safe_log(log_func, msg, msg_data):
     """Sanitizes the msg_data field before logging."""
-    SANITIZE = {'set_admin_password': ('new_pass',),
-                'run_instance': ('admin_password',), }
+    SANITIZE = {'set_admin_password': [('args', 'new_pass')],
+                'run_instance': [('args', 'admin_password')],
+                'route_message': [('args', 'message', 'args', 'method_info',
+                                   'method_kwargs', 'password'),
+                                  ('args', 'message', 'args', 'method_info',
+                                   'method_kwargs', 'admin_password')]}
 
     has_method = 'method' in msg_data and msg_data['method'] in SANITIZE
     has_context_token = '_context_auth_token' in msg_data
@@ -177,14 +229,16 @@ def _safe_log(log_func, msg, msg_data):
     msg_data = copy.deepcopy(msg_data)
 
     if has_method:
-        method = msg_data['method']
-        if method in SANITIZE:
-            args_to_sanitize = SANITIZE[method]
-            for arg in args_to_sanitize:
-                try:
-                    msg_data['args'][arg] = "<SANITIZED>"
-                except KeyError:
-                    pass
+        for arg in SANITIZE.get(msg_data['method'], []):
+            try:
+                d = msg_data
+                for elem in arg[:-1]:
+                    d = d[elem]
+                d[arg[-1]] = '<SANITIZED>'
+            except KeyError, e:
+                LOG.info(_('Failed to sanitize %(item)s. Key error %(err)s'),
+                         {'item': arg,
+                          'err': e})
 
     if has_context_token:
         msg_data['_context_auth_token'] = '<SANITIZED>'
@@ -195,7 +249,7 @@ def _safe_log(log_func, msg, msg_data):
     return log_func(msg, msg_data)
 
 
-def serialize_remote_exception(failure_info):
+def serialize_remote_exception(failure_info, log_failure=True):
     """Prepares exception data to be sent over rpc.
 
     Failure_info should be a sys.exc_info() tuple.
@@ -203,8 +257,9 @@ def serialize_remote_exception(failure_info):
     """
     tb = traceback.format_exception(*failure_info)
     failure = failure_info[1]
-    LOG.error(_("Returning exception %s to caller"), unicode(failure))
-    LOG.error(tb)
+    if log_failure:
+        LOG.error(_("Returning exception %s to caller"), unicode(failure))
+        LOG.error(tb)
 
     kwargs = {}
     if hasattr(failure, 'kwargs'):
@@ -258,7 +313,7 @@ def deserialize_remote_exception(conf, data):
         # we cannot necessarily change an exception message so we must override
         # the __str__ method.
         failure.__class__ = new_ex_type
-    except TypeError as e:
+    except TypeError:
         # NOTE(ameade): If a core exception then just add the traceback to the
         # first exception argument.
         failure.args = (message,) + failure.args[1:]
@@ -309,3 +364,107 @@ class CommonRpcContext(object):
             context.values['read_deleted'] = read_deleted
 
         return context
+
+
+class ClientException(Exception):
+    """This encapsulates some actual exception that is expected to be
+    hit by an RPC proxy object. Merely instantiating it records the
+    current exception information, which will be passed back to the
+    RPC client without exceptional logging."""
+    def __init__(self):
+        self._exc_info = sys.exc_info()
+
+
+def catch_client_exception(exceptions, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except Exception, e:
+        if type(e) in exceptions:
+            raise ClientException()
+        else:
+            raise
+
+
+def client_exceptions(*exceptions):
+    """Decorator for manager methods that raise expected exceptions.
+    Marking a Manager method with this decorator allows the declaration
+    of expected exceptions that the RPC layer should not consider fatal,
+    and not log as if they were generated in a real error scenario. Note
+    that this will cause listed exceptions to be wrapped in a
+    ClientException, which is used internally by the RPC layer."""
+    def outer(func):
+        def inner(*args, **kwargs):
+            return catch_client_exception(exceptions, func, *args, **kwargs)
+        return inner
+    return outer
+
+
+def version_is_compatible(imp_version, version):
+    """Determine whether versions are compatible.
+
+    :param imp_version: The version implemented
+    :param version: The version requested by an incoming message.
+    """
+    version_parts = version.split('.')
+    imp_version_parts = imp_version.split('.')
+    if int(version_parts[0]) != int(imp_version_parts[0]):  # Major
+        return False
+    if int(version_parts[1]) > int(imp_version_parts[1]):  # Minor
+        return False
+    return True
+
+
+def serialize_msg(raw_msg, force_envelope=False):
+    if not _SEND_RPC_ENVELOPE and not force_envelope:
+        return raw_msg
+
+    # NOTE(russellb) See the docstring for _RPC_ENVELOPE_VERSION for more
+    # information about this format.
+    msg = {_VERSION_KEY: _RPC_ENVELOPE_VERSION,
+           _MESSAGE_KEY: jsonutils.dumps(raw_msg)}
+
+    return msg
+
+
+def deserialize_msg(msg):
+    # NOTE(russellb): Hang on to your hats, this road is about to
+    # get a little bumpy.
+    #
+    # Robustness Principle:
+    #    "Be strict in what you send, liberal in what you accept."
+    #
+    # At this point we have to do a bit of guessing about what it
+    # is we just received.  Here is the set of possibilities:
+    #
+    # 1) We received a dict.  This could be 2 things:
+    #
+    #   a) Inspect it to see if it looks like a standard message envelope.
+    #      If so, great!
+    #
+    #   b) If it doesn't look like a standard message envelope, it could either
+    #      be a notification, or a message from before we added a message
+    #      envelope (referred to as version 1.0).
+    #      Just return the message as-is.
+    #
+    # 2) It's any other non-dict type.  Just return it and hope for the best.
+    #    This case covers return values from rpc.call() from before message
+    #    envelopes were used.  (messages to call a method were always a dict)
+
+    if not isinstance(msg, dict):
+        # See #2 above.
+        return msg
+
+    base_envelope_keys = (_VERSION_KEY, _MESSAGE_KEY)
+    if not all(map(lambda key: key in msg, base_envelope_keys)):
+        #  See #1.b above.
+        return msg
+
+    # At this point we think we have the message envelope
+    # format we were expecting. (#1.a above)
+
+    if not version_is_compatible(_RPC_ENVELOPE_VERSION, msg[_VERSION_KEY]):
+        raise UnsupportedRpcEnvelopeVersion(version=msg[_VERSION_KEY])
+
+    raw_msg = jsonutils.loads(msg[_MESSAGE_KEY])
+
+    return raw_msg
