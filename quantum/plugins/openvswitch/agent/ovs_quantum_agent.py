@@ -686,7 +686,7 @@ def create_agent_config_map(config):
 
 def main():
     eventlet.monkey_patch()
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF(project='quantum')
     logging_config.setup_logging(cfg.CONF)
 
     try:

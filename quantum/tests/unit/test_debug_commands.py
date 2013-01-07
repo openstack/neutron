@@ -40,7 +40,7 @@ class TestDebugCommands(unittest.TestCase):
     def setUp(self):
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(QuantumDebugAgent.OPTS)
-        cfg.CONF(args=['quantum-debug'], project='quantum')
+        cfg.CONF(args=[], project='quantum')
         cfg.CONF.set_override('use_namespaces', True)
         cfg.CONF.root_helper = 'sudo'
 

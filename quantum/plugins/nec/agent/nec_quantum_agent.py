@@ -109,7 +109,7 @@ class NECQuantumAgent(object):
 
 
 def main():
-    config.CONF(args=sys.argv, project='quantum')
+    config.CONF(project='quantum')
 
     logging_config.setup_logging(config.CONF)
 

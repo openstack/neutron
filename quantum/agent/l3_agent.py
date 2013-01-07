@@ -611,7 +611,7 @@ def main():
     conf.register_opts(L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
-    conf(sys.argv)
+    conf()
     config.setup_logging(conf)
     server = quantum_service.Service.create(binary='quantum-l3-agent',
                                             topic=topics.L3_AGENT)

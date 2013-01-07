@@ -15,7 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import socket
+import sys
 import uuid
 
 import mock
@@ -27,6 +29,14 @@ from quantum.agent.linux import interface
 from quantum.common import exceptions
 from quantum.openstack.common import cfg
 from quantum.openstack.common import jsonutils
+
+
+ROOTDIR = os.path.dirname(os.path.dirname(__file__))
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 class FakeModel:
@@ -95,12 +105,12 @@ class TestDhcpAgent(unittest.TestCase):
         logging_str = 'quantum.agent.common.config.setup_logging'
         manager_str = 'quantum.agent.dhcp_agent.DeviceManager'
         agent_str = 'quantum.agent.dhcp_agent.DhcpAgent'
-        agent_sys_str = 'quantum.agent.dhcp_agent.sys'
         with mock.patch(logging_str):
             with mock.patch(manager_str) as dev_mgr:
                 with mock.patch(agent_str) as dhcp:
-                    with mock.patch(agent_sys_str) as mock_sys:
-                        mock_sys.argv = []
+                    with mock.patch.object(sys, 'argv') as sys_argv:
+                        sys_argv.return_value = ['dhcp', '--config-file',
+                                                 etcdir('quantum.conf.test')]
                         dhcp_agent.main()
                         dev_mgr.assert_called_once(mock.ANY, 'sudo')
                         dhcp.assert_has_calls([

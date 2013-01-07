@@ -3,6 +3,7 @@ PasteDeploy==1.5.0
 Routes>=1.12.3
 amqplib==0.6.1
 anyjson>=0.2.4
+argparse
 eventlet>=0.9.17
 greenlet>=0.3.1
 httplib2

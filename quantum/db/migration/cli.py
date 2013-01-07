@@ -44,31 +44,84 @@ _db_opts = [
                help='URL to database'),
 ]
 
-_cmd_opts = [
-    cfg.StrOpt('message',
-               short='m',
-               default='',
-               help="Message string to use with 'revision'"),
-    cfg.BoolOpt('autogenerate',
-                default=False,
-                help=("Populate revision script with candidate "
-                      "migration operations, based on comparison "
-                      "of database to model.")),
-    cfg.BoolOpt('sql',
-                default=False,
-                help=("Don't emit SQL to database - dump to "
-                      "standard output/file instead")),
-    cfg.IntOpt('delta',
-               default=0,
-               help='Number of relative migrations to upgrade/downgrade'),
-
-]
-
 CONF = cfg.CommonConfigOpts()
 CONF.register_opts(_core_opts)
 CONF.register_opts(_db_opts, 'DATABASE')
 CONF.register_opts(_quota_opts, 'QUOTAS')
-CONF.register_cli_opts(_cmd_opts)
+
+
+def do_alembic_command(config, cmd, *args, **kwargs):
+    try:
+        getattr(alembic_command, cmd)(config, *args, **kwargs)
+    except alembic_util.CommandError, e:
+        alembic_util.err(str(e))
+
+
+def do_check_migration(config, cmd):
+    do_alembic_command(config, 'branches')
+
+
+def do_upgrade_downgrade(config, cmd):
+    if not CONF.command.revision and not CONF.command.delta:
+        raise SystemExit(_('You must provide a revision or relative delta'))
+
+    revision = CONF.command.revision
+
+    if CONF.command.delta:
+        sign = '+' if CONF.command.name == 'upgrade' else '-'
+        revision = sign + str(CONF.command.delta)
+    else:
+        revision = CONF.command.revision
+
+    do_alembic_command(config, cmd, revision, sql=CONF.command.sql)
+
+
+def do_stamp(config, cmd):
+    do_alembic_command(config, cmd,
+                       CONF.command.revision,
+                       sql=CONF.command.sql)
+
+
+def do_revision(config, cmd):
+    do_alembic_command(config, cmd,
+                       message=CONF.command.message,
+                       autogenerate=CONF.command.autogenerate,
+                       sql=CONF.command.sql)
+
+
+def add_command_parsers(subparsers):
+    for name in ['current', 'history', 'branches']:
+        parser = subparsers.add_parser(name)
+        parser.set_defaults(func=do_alembic_command)
+
+    parser = subparsers.add_parser('check_migration')
+    parser.set_defaults(func=do_check_migration)
+
+    for name in ['upgrade', 'downgrade']:
+        parser = subparsers.add_parser(name)
+        parser.add_argument('--delta', type=int)
+        parser.add_argument('--sql', action='store_true')
+        parser.add_argument('revision', nargs='?')
+        parser.set_defaults(func=do_upgrade_downgrade)
+
+    parser = subparsers.add_parser('stamp')
+    parser.add_argument('--sql', action='store_true')
+    parser.add_argument('revision')
+    parser.set_defaults(func=do_stamp)
+
+    parser = subparsers.add_parser('revision')
+    parser.add_argument('-m', '--message')
+    parser.add_argument('--autogenerate', action='store_true')
+    parser.add_argument('--sql', action='store_true')
+    parser.set_defaults(func=do_revision)
+
+
+command_opt = cfg.SubCommandOpt('command',
+                                title='Command',
+                                help='Available commands',
+                                handler=add_command_parsers)
+
+CONF.register_cli_opt(command_opt)
 
 
 def main():
@@ -80,49 +133,5 @@ def main():
     # attach the Quantum conf to the Alembic conf
     config.quantum_config = CONF
 
-    cmd, args, kwargs = process_argv(sys.argv)
-
-    try:
-        getattr(alembic_command, cmd)(config, *args, **kwargs)
-    except alembic_util.CommandError, e:
-        alembic_util.err(str(e))
-
-
-def process_argv(argv):
-    positional = CONF(argv)
-
-    if len(positional) > 1:
-        cmd = positional[1]
-        revision = positional[2:] and positional[2:][0]
-
-        args = ()
-        kwargs = {}
-
-        if cmd == 'stamp':
-            args = (revision,)
-            kwargs = {'sql': CONF.sql}
-        elif cmd in ('current', 'history'):
-            pass  # these commands do not require additional args
-        elif cmd in ('upgrade', 'downgrade'):
-            if CONF.delta:
-                revision = '%s%d' % ({'upgrade': '+', 'downgrade': '-'}[cmd],
-                                     CONF.delta)
-            elif not revision:
-                raise SystemExit(
-                    _('You must provide a revision or relative delta')
-                )
-            args = (revision,)
-            kwargs = {'sql': CONF.sql}
-        elif cmd == 'revision':
-            kwargs = {
-                'message': CONF.message,
-                'autogenerate': CONF.autogenerate,
-                'sql': CONF.sql}
-        elif cmd == 'check_migration':
-            cmd = 'branches'
-        else:
-            raise SystemExit(_('Unrecognized Command: %s') % cmd)
-
-        return cmd, args, kwargs
-    else:
-        raise SystemExit(_('You must provide a sub-command'))
+    CONF()
+    CONF.command.func(config, CONF.command.name)

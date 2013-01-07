@@ -21,8 +21,6 @@ subnets.
 
 """
 
-import sys
-
 from quantum import context
 from quantum import manager
 from quantum.common import config
@@ -30,7 +28,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifier_api
 
 if __name__ == '__main__':
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
 
     context = context.get_admin_context()

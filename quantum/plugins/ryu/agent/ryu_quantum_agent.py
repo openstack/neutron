@@ -205,9 +205,8 @@ def check_ofp_rest_api_addr(db):
 
 
 def main():
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF(project='quantum')
 
-    # (TODO) gary - swap with common logging
     logging_config.setup_logging(cfg.CONF)
 
     integ_br = cfg.CONF.OVS.integration_bridge
