@@ -221,7 +221,7 @@ class L3NATAgent(manager.Manager):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].add_rule(c, r)
         ri.iptables_manager.apply()
-        self._spawn_metadata_agent(ri)
+        self._spawn_metadata_proxy(ri)
 
     def _router_removed(self, router_id):
         ri = self.router_info[router_id]
@@ -230,11 +230,11 @@ class L3NATAgent(manager.Manager):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
-        self._destroy_metadata_agent(ri)
+        self._destroy_metadata_proxy(ri)
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name())
 
-    def _spawn_metadata_agent(self, router_info):
+    def _spawn_metadata_proxy(self, router_info):
         def callback(pid_file):
             return ['quantum-ns-metadata-proxy',
                     '--pid_file=%s' % pid_file,
@@ -248,7 +248,7 @@ class L3NATAgent(manager.Manager):
             router_info.ns_name())
         pm.enable(callback)
 
-    def _destroy_metadata_agent(self, router_info):
+    def _destroy_metadata_proxy(self, router_info):
         pm = external_process.ProcessManager(
             self.conf,
             router_info.router_id,
