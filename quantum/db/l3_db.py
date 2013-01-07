@@ -286,7 +286,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                     if match1 or match2:
                         msg = (_("Cidr %(subnet_cidr)s of subnet "
                                  "%(subnet_id)s overlaps with cidr %(cidr)s "
-                                 " of subnet %(sub_id)") % locals())
+                                 "of subnet %(sub_id)s") % locals())
                         raise q_exc.BadRequest(resource='router', msg=msg)
         except exc.NoResultFound:
             pass
