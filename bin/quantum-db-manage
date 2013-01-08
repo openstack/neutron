@@ -19,7 +19,8 @@
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from quantum.cli import main
+
+from quantum.db.migration.cli import main
 
 
 main()
