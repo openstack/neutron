@@ -1,7 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 OpenStack LLC.
-# All Rights Reserved.
+# Copyright 2013 OpenStack LLC
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,25 +13,3 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-# service type constants:
-CORE = "CORE"
-DUMMY = "DUMMY"
-LOADBALANCER = "LOADBALANCER"
-
-# TODO(salvatore-orlando): Move these (or derive them) from conf file
-ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER]
-
-COMMON_PREFIXES = {
-    CORE: "",
-    DUMMY: "/dummy_svc",
-    LOADBALANCER: "/lb",
-}
-
-# Service operation status constants
-ACTIVE = "ACTIVE"
-PENDING_CREATE = "PENDING_CREATE"
-PENDING_UPDATE = "PENDING_UPDATE"
-PENDING_DELETE = "PENDING_DELETE"
-INACTIVE = "INACTIVE"
-ERROR = "ERROR"
