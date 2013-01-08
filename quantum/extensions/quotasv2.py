@@ -20,17 +20,16 @@ import webob
 from quantum.api import extensions
 from quantum.api.v2 import base
 from quantum.common import exceptions
-from quantum.extensions import _quotav2_driver as quotav2_driver
-from quantum.extensions import _quotav2_model as quotav2_model
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import importutils
 from quantum import quota
 from quantum import wsgi
 
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
 QUOTAS = quota.QUOTAS
-DB_QUOTA_DRIVER = 'quantum.extensions._quotav2_driver.DbQuotaDriver'
+DB_QUOTA_DRIVER = 'quantum.db.quota_db.DbQuotaDriver'
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
@@ -48,6 +47,7 @@ class QuotaSetsController(wsgi.Controller):
     def __init__(self, plugin):
         self._resource_name = RESOURCE_NAME
         self._plugin = plugin
+        self._driver = importutils.import_class(DB_QUOTA_DRIVER)
 
     def _get_body(self, request):
         body = self._deserialize(request.body, request.get_content_type())
@@ -57,9 +57,8 @@ class QuotaSetsController(wsgi.Controller):
         return req_body
 
     def _get_quotas(self, request, tenant_id):
-        values = quotav2_driver.DbQuotaDriver.get_tenant_quotas(
+        return self._driver.get_tenant_quotas(
             request.context, QUOTAS.resources, tenant_id)
-        return dict((k, v['limit']) for k, v in values.items())
 
     def create(self, request, body=None):
         raise NotImplementedError()
@@ -69,8 +68,7 @@ class QuotaSetsController(wsgi.Controller):
         if not context.is_admin:
             raise webob.exc.HTTPForbidden()
         return {self._resource_name + "s":
-                quotav2_driver.DbQuotaDriver.get_all_quotas(
-                    context, QUOTAS.resources)}
+                self._driver.get_all_quotas(context, QUOTAS.resources)}
 
     def tenant(self, request):
         """Retrieve the tenant info in context."""
@@ -93,37 +91,26 @@ class QuotaSetsController(wsgi.Controller):
     def _check_modification_delete_privilege(self, context, tenant_id):
         if not tenant_id:
             raise webob.exc.HTTPBadRequest('invalid tenant')
-        if (not context.is_admin):
+        if not context.is_admin:
             raise webob.exc.HTTPForbidden()
         return tenant_id
 
     def delete(self, request, id):
-        tenant_id = id
         tenant_id = self._check_modification_delete_privilege(request.context,
-                                                              tenant_id)
-        quotav2_driver.DbQuotaDriver.delete_tenant_quota(request.context,
-                                                         tenant_id)
+                                                              id)
+        self._driver.delete_tenant_quota(request.context, tenant_id)
 
     def update(self, request, id):
-        tenant_id = id
         tenant_id = self._check_modification_delete_privilege(request.context,
-                                                              tenant_id)
+                                                              id)
         req_body = self._get_body(request)
         for key in req_body[self._resource_name].keys():
             if key in QUOTAS.resources:
                 value = int(req_body[self._resource_name][key])
-                with request.context.session.begin():
-                    tenant_quotas = request.context.session.query(
-                        quotav2_model.Quota).filter_by(tenant_id=tenant_id,
-                                                       resource=key).all()
-                    if not tenant_quotas:
-                        quota = quotav2_model.Quota(tenant_id=tenant_id,
-                                                    resource=key,
-                                                    limit=value)
-                        request.context.session.add(quota)
-                    else:
-                        quota = tenant_quotas[0]
-                        quota.update({'limit': value})
+                self._driver.update_quota_limit(request.context,
+                                                tenant_id,
+                                                key,
+                                                value)
         return {self._resource_name: self._get_quotas(request, tenant_id)}
 
 

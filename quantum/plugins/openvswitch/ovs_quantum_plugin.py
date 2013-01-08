@@ -31,6 +31,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
+from quantum.db import quota_db
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
@@ -194,7 +195,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider", "router", "binding"]
+    supported_extension_aliases = ["provider", "router", "binding", "quotas"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"

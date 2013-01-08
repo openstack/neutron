@@ -23,7 +23,7 @@ from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import api as db
 from quantum.db import l3_db
-from quantum.extensions import _quotav2_model as quotav2_model
+from quantum.db import quota_db
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.plugins.cisco.common import cisco_constants as const
