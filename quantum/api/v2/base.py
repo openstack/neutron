@@ -250,7 +250,7 @@ class Controller(object):
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.create.start',
-                            notifier_api.INFO,
+                            notifier_api.CONF.default_notification_level,
                             body)
         body = Controller.prepare_request_body(request.context, body, True,
                                                self._resource, self._attr_info,
@@ -314,7 +314,7 @@ class Controller(object):
             notifier_api.notify(request.context,
                                 self._publisher_id,
                                 self._resource + '.create.end',
-                                notifier_api.INFO,
+                                notifier_api.CONF.default_notification_level,
                                 create_result)
             return create_result
 
@@ -340,7 +340,7 @@ class Controller(object):
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.delete.start',
-                            notifier_api.INFO,
+                            notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
         action = "delete_%s" % self._resource
 
@@ -361,7 +361,7 @@ class Controller(object):
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.delete.end',
-                            notifier_api.INFO,
+                            notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
 
     def update(self, request, id, body=None):
@@ -371,7 +371,7 @@ class Controller(object):
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.update.start',
-                            notifier_api.INFO,
+                            notifier_api.CONF.default_notification_level,
                             payload)
         body = Controller.prepare_request_body(request.context, body, False,
                                                self._resource, self._attr_info,
@@ -403,7 +403,7 @@ class Controller(object):
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.update.end',
-                            notifier_api.INFO,
+                            notifier_api.CONF.default_notification_level,
                             result)
         return result
 

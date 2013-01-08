@@ -701,7 +701,8 @@ class V2Views(unittest.TestCase):
 
 
 class NotificationTest(APIv2TestBase):
-    def _resource_op_notifier(self, opname, resource, expected_errors=False):
+    def _resource_op_notifier(self, opname, resource, expected_errors=False,
+                              notification_level='INFO'):
         initial_input = {resource: {'name': 'myname'}}
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
@@ -726,12 +727,12 @@ class NotificationTest(APIv2TestBase):
             expected = [mock.call(mock.ANY,
                                   'network.' + cfg.CONF.host,
                                   resource + "." + opname + ".start",
-                                  'INFO',
+                                  notification_level,
                                   mock.ANY),
                         mock.call(mock.ANY,
                                   'network.' + cfg.CONF.host,
                                   resource + "." + opname + ".end",
-                                  'INFO',
+                                  notification_level,
                                   mock.ANY)]
             self.assertEqual(expected, mynotifier.call_args_list)
         self.assertEqual(res.status_int, expected_code)
@@ -744,6 +745,11 @@ class NotificationTest(APIv2TestBase):
 
     def test_network_update_notifer(self):
         self._resource_op_notifier('update', 'network')
+
+    def test_network_create_notifer(self):
+        cfg.CONF.set_override('default_notification_level', 'DEBUG')
+        self._resource_op_notifier('create', 'network',
+                                   notification_level='DEBUG')
 
 
 class QuotaTest(APIv2TestBase):
