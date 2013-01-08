@@ -19,8 +19,6 @@
 # If ../quantum/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
-import optparse
-import os
 import sys
 
 from quantum.common import config
