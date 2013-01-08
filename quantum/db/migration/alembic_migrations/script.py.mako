@@ -40,14 +40,14 @@ ${imports if imports else ""}
 from quantum.db import migration
 
 
-def upgrade(active_plugin=None, enable_db_quota=False):
+def upgrade(active_plugin=None, options=None):
     if not migration.should_run(active_plugin, migration_for_plugins):
         return
 
     ${upgrades if upgrades else "pass"}
 
 
-def downgrade(active_plugin=None, enable_db_quota=False):
+def downgrade(active_plugin=None, options=None):
     if not migration.should_run(active_plugin, migration_for_plugins):
         return
 
