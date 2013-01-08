@@ -14,3 +14,4 @@ pyudev
 sqlalchemy==0.7.9
 webob>=1.0.8
 python-keystoneclient>=0.2.0
+alembic>=0.4.1
