@@ -40,6 +40,7 @@ from quantum.openstack.common import log
 from quantum.plugins.ryu.common import config
 
 
+cfg.CONF.import_opt('sql_connection', 'quantum.db.api', 'DATABASE')
 LOG = log.getLogger(__name__)
 
 
