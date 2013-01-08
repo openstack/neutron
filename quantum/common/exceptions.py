@@ -247,3 +247,8 @@ class InvalidExtenstionEnv(BadRequest):
 
 class TooManyExternalNetworks(QuantumException):
     message = _("More than one external network exists")
+
+
+class InvalidConfigurationOption(QuantumException):
+    message = _("An invalid value was provided for %(opt_name)s: "
+                "%(opt_value)s")

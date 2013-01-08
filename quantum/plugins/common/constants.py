@@ -20,6 +20,8 @@ CORE = "CORE"
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
 
+# TODO(salvatore-orlando): Move these (or derive them) from conf file
+ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER]
 
 COMMON_PREFIXES = {
     CORE: "",
