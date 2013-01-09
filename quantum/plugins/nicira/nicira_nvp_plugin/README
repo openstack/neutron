@@ -21,8 +21,8 @@ NVP Plugin configuration
     bridged transport zone (default 64)
     - concurrent_connections: Number of connects to each controller node
     (default 3)
-    - failover_time: Time from when a connection pool is switched to another
-    controller during failures.
+    - nvp_gen_timout: Number of seconds a generation id should be valid for
+    (default -1 meaning do not time out)
     3) NVP cluster
     The Quantum NVP plugin allow for configuring multiple clusters.
     Each cluster configuration section must be declared in the following way

@@ -1,4 +1,4 @@
-# Copyright 2012 Nicira Networks, Inc.
+# Copyright 2012 Nicira, Inc.
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,3 +14,5 @@
 #    under the License.
 #
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+# @author: Aaron Rosen, Nicira Networks, Inc.

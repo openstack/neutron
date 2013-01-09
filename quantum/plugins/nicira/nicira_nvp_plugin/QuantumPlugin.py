@@ -27,7 +27,6 @@ import webob.exc
 
 # FIXME(salvatore-orlando): get rid of relative imports
 from common import config
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client import client_eventlet
 from nvp_plugin_version import PLUGIN_VERSION
 
 from quantum.plugins.nicira.nicira_nvp_plugin import nicira_models
@@ -157,12 +156,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 http_timeout=cluster.http_timeout,
                 retries=cluster.retries,
                 redirects=cluster.redirects,
-                failover_time=self.nvp_opts.failover_time,
-                concurrent_connections=self.nvp_opts.concurrent_connections)
+                concurrent_connections=self.nvp_opts['concurrent_connections'],
+                nvp_gen_timeout=self.nvp_opts['nvp_gen_timeout'])
 
-            # TODO(salvatore-orlando): do login at first request,
-            # not when plugin is instantiated
-            cluster.api_client.login()
+            if len(self.clusters) == 0:
+                first_cluster = cluster
             self.clusters[c_opts['name']] = cluster
 
         def_cluster_name = self.nvp_opts.default_cluster_name
