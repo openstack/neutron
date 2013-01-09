@@ -108,6 +108,7 @@ class MetadataProxyHandler(object):
 
     def _proxy_request(self, instance_id, req):
         headers = {
+            'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
             'X-Instance-ID': instance_id,
             'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
         }
