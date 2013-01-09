@@ -22,6 +22,7 @@ from quantum.api.v2 import base
 from quantum.common import exceptions as qexception
 from quantum import manager
 from quantum.openstack.common import cfg
+from quantum.openstack.common import uuidutils
 from quantum import quota
 
 
@@ -126,6 +127,17 @@ def convert_validate_port_value(port):
         raise SecurityGroupInvalidPortValue(port=port)
 
 
+def convert_to_uuid_or_int_list(value_list):
+    if value_list is None:
+        return
+    try:
+        return [sg_id if uuidutils.is_uuid_like(sg_id) else int(sg_id)
+                for sg_id in value_list]
+    except (ValueError, TypeError):
+        msg = _("'%s' is not an integer or uuid") % sg_id
+        raise qexception.InvalidInput(error_message=msg)
+
+
 def _validate_name_not_default(data, valid_values=None):
     if not cfg.CONF.SECURITYGROUP.proxy_mode and data == "default":
         raise SecurityGroupDefaultAlreadyExists()
@@ -208,6 +220,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {SECURITYGROUPS: {'allow_post': True,
                                'allow_put': True,
                                'is_visible': True,
+                               'convert_to': convert_to_uuid_or_int_list,
                                'default': attr.ATTR_NOT_SPECIFIED}}}
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',

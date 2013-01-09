@@ -456,8 +456,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
-            self._validate_security_groups_on_port(context, port)
-            sgids = port['port'].get(ext_sg.SECURITYGROUPS)
+            sgids = self._get_security_groups_on_port(context, port)
             port = super(LinuxBridgePluginV2,
                          self).create_port(context, port)
             self._process_port_create_security_group(
@@ -471,13 +470,14 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return self._extend_port_dict_binding(context, port)
 
     def update_port(self, context, id, port):
-        self._validate_security_groups_on_port(context, port)
         original_port = self.get_port(context, id)
         session = context.session
         port_updated = False
         with session.begin(subtransactions=True):
             # delete the port binding and read it with the new rules
             if ext_sg.SECURITYGROUPS in port['port']:
+                port['port'][ext_sg.SECURITYGROUPS] = (
+                    self._get_security_groups_on_port(context, port))
                 self._delete_port_security_group_bindings(context, id)
                 self._process_port_create_security_group(
                     context,
