@@ -177,9 +177,10 @@ class TestMetadataProxyHandler(unittest.TestCase):
             self._get_instance_id_helper(headers, ports, networks=['the_id'])
         )
 
-    def test_proxy_request_200(self):
-        req = mock.Mock(path_info='/the_path', query_string='')
-        resp = mock.Mock(status=200)
+    def _proxy_request_test_helper(self, response_code):
+        hdrs = {'X-Forwarded-For': '8.8.8.8'}
+        req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs)
+        resp = mock.Mock(status=response_code)
         with mock.patch.object(self.handler, '_sign_instance_id') as sign:
             sign.return_value = 'signed'
             with mock.patch('httplib2.Http') as mock_http:
@@ -190,100 +191,33 @@ class TestMetadataProxyHandler(unittest.TestCase):
                     mock.call().request(
                         'http://9.9.9.9:8775/the_path',
                         headers={
+                            'X-Forwarded-For': '8.8.8.8',
                             'X-Instance-ID-Signature': 'signed',
                             'X-Instance-ID': 'the_id'
                         }
                     )]
                 )
 
-                self.assertEqual(retval, 'content')
+                return retval
+
+    def test_proxy_request_200(self):
+        self.assertEqual('content', self._proxy_request_test_helper(200))
 
     def test_proxy_request_403(self):
-        req = mock.Mock(path_info='/the_path', query_string='')
-        resp = mock.Mock(status=403)
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('httplib2.Http') as mock_http:
-                mock_http.return_value.request.return_value = (resp, 'content')
-
-                retval = self.handler._proxy_request('the_id', req)
-                mock_http.assert_has_calls([
-                    mock.call().request(
-                        'http://9.9.9.9:8775/the_path',
-                        headers={
-                            'X-Instance-ID-Signature': 'signed',
-                            'X-Instance-ID': 'the_id'
-                        }
-                    )]
-                )
-
-                self.assertIsInstance(retval, webob.exc.HTTPForbidden)
+        self.assertIsInstance(self._proxy_request_test_helper(403),
+                              webob.exc.HTTPForbidden)
 
     def test_proxy_request_404(self):
-        req = mock.Mock(path_info='/the_path', query_string='')
-        resp = mock.Mock(status=404)
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('httplib2.Http') as mock_http:
-                mock_http.return_value.request.return_value = (resp, 'content')
-
-                retval = self.handler._proxy_request('the_id', req)
-                mock_http.assert_has_calls([
-                    mock.call().request(
-                        'http://9.9.9.9:8775/the_path',
-                        headers={
-                            'X-Instance-ID-Signature': 'signed',
-                            'X-Instance-ID': 'the_id'
-                        }
-                    )]
-                )
-
-                self.assertIsInstance(retval, webob.exc.HTTPNotFound)
+        self.assertIsInstance(self._proxy_request_test_helper(404),
+                              webob.exc.HTTPNotFound)
 
     def test_proxy_request_500(self):
-        req = mock.Mock(path_info='/the_path', query_string='')
-        resp = mock.Mock(status=500)
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('httplib2.Http') as mock_http:
-                mock_http.return_value.request.return_value = (resp, 'content')
-
-                retval = self.handler._proxy_request('the_id', req)
-                mock_http.assert_has_calls([
-                    mock.call().request(
-                        'http://9.9.9.9:8775/the_path',
-                        headers={
-                            'X-Instance-ID-Signature': 'signed',
-                            'X-Instance-ID': 'the_id'
-                        }
-                    )]
-                )
-
-                self.assertIsInstance(
-                    retval,
-                    webob.exc.HTTPInternalServerError)
+        self.assertIsInstance(self._proxy_request_test_helper(500),
+                              webob.exc.HTTPInternalServerError)
 
     def test_proxy_request_other_code(self):
-        req = mock.Mock(path_info='/the_path', query_string='')
-        resp = mock.Mock(status=302)
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('httplib2.Http') as mock_http:
-                mock_http.return_value.request.return_value = (resp, 'content')
-
-                with self.assertRaises(Exception) as e:
-                    self.handler._proxy_request('the_id', req)
-                    self.assertIn('302', str(e))
-
-                    mock_http.assert_has_calls([
-                        mock.call().request(
-                            'http://9.9.9.9:8775/the_path',
-                            headers={
-                                'X-Instance-ID-Signature': 'signed',
-                                'X-Instance-ID': 'the_id'
-                            }
-                        )]
-                    )
+        with self.assertRaises(Exception) as e:
+            self._proxy_request_test_helper(302)
 
     def test_sign_instance_id(self):
         self.assertEqual(
