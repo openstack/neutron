@@ -207,12 +207,12 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-SECURITYGROUP = 'security_groups'
+SECURITYGROUPS = 'security_groups'
 EXTENDED_ATTRIBUTES_2_0 = {
-    'ports': {SECURITYGROUP: {'allow_post': True,
-                              'allow_put': True,
-                              'is_visible': True,
-                              'default': attr.ATTR_NOT_SPECIFIED}}}
+    'ports': {SECURITYGROUPS: {'allow_post': True,
+                               'allow_put': True,
+                               'is_visible': True,
+                               'default': attr.ATTR_NOT_SPECIFIED}}}
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
                default=10,

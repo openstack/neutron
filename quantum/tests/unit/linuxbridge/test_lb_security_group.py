@@ -88,13 +88,13 @@ class TestLinuxBridgeSecurityGroups(LinuxBridgeSecurityGroupsTestCase,
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
                                      'name': port['port']['name'],
-                                     ext_sg.SECURITYGROUP:
+                                     ext_sg.SECURITYGROUPS:
                                      [security_group_id]}}
 
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     res = self.deserialize('json', req.get_response(self.api))
-                    self.assertEquals(res['port'][ext_sg.SECURITYGROUP][0],
+                    self.assertEquals(res['port'][ext_sg.SECURITYGROUPS][0],
                                       security_group_id)
                     self._delete('ports', port['port']['id'])
                     self.notifier.assert_has_calls(
@@ -115,7 +115,7 @@ class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
                     fixed_ips = port['port']['fixed_ips']
                     data = {'port': {'fixed_ips': fixed_ips,
                                      'name': port['port']['name'],
-                                     ext_sg.SECURITYGROUP:
+                                     ext_sg.SECURITYGROUPS:
                                      [security_group_id]}}
 
                     req = self.new_update_request('ports', data,
@@ -126,7 +126,7 @@ class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
                     port_dict = lb_db.get_port_from_device(device_id)
                     self.assertEqual(port_id, port_dict['id'])
                     self.assertEqual([security_group_id],
-                                     port_dict[ext_sg.SECURITYGROUP])
+                                     port_dict[ext_sg.SECURITYGROUPS])
                     self.assertEqual([], port_dict['security_group_rules'])
                     self.assertEqual([fixed_ips[0]['ip_address']],
                                      port_dict['fixed_ips'])
