@@ -219,8 +219,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                             'tenant_id': self._tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared') +
                     (arg_list or ())):
-            # Arg must be present and not empty
-            if arg in kwargs and kwargs[arg]:
+            # Arg must be present
+            if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
         network_req = self.new_create_request('networks', data, fmt)
         if (kwargs.get('set_context') and 'tenant_id' in kwargs):
@@ -279,16 +279,18 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         kwargs.update({'override': overrides})
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
-    def _create_port(self, fmt, net_id, expected_res_status=None, **kwargs):
+    def _create_port(self, fmt, net_id, expected_res_status=None,
+                     arg_list=None, **kwargs):
         content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
 
-        for arg in ('admin_state_up', 'device_id',
+        for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
-                    'tenant_id', 'device_owner', 'security_groups'):
-            # Arg must be present and not empty
-            if arg in kwargs and kwargs[arg]:
+                    'tenant_id', 'device_owner', 'security_groups') +
+                    (arg_list or ())):
+            # Arg must be present
+            if arg in kwargs:
                 data['port'][arg] = kwargs[arg]
         port_req = self.new_create_request('ports', data, fmt)
         if (kwargs.get('set_context') and 'tenant_id' in kwargs):
@@ -469,7 +471,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                enable_dhcp=True,
                dns_nameservers=None,
                host_routes=None,
-               shared=None):
+               shared=None,
+               do_delete=True):
         with (self.network() if not network
               else dummy_context_func()) as network_to_use:
             if network:
@@ -487,7 +490,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             try:
                 yield subnet
             finally:
-                self._delete('subnets', subnet['subnet']['id'])
+                if do_delete:
+                    self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
     def port(self, subnet=None, fmt='json', no_delete=False,
