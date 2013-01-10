@@ -166,12 +166,12 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def create_port(self, context, port):
         tenant_id = self._get_tenant_id_for_create(context, port['port'])
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if not port['port'].get(ext_sg.SECURITYGROUP):
-            port['port'][ext_sg.SECURITYGROUP] = [default_sg]
+        if not port['port'].get(ext_sg.SECURITYGROUPS):
+            port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
         self._validate_security_groups_on_port(context, port)
         session = context.session
         with session.begin(subtransactions=True):
-            sgids = port['port'].get(ext_sg.SECURITYGROUP)
+            sgids = port['port'].get(ext_sg.SECURITYGROUPS)
             port = super(SecurityGroupTestPlugin, self).create_port(context,
                                                                     port)
             self._process_port_create_security_group(context, port['id'],
@@ -182,13 +182,12 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def update_port(self, context, id, port):
         session = context.session
         with session.begin(subtransactions=True):
-            if ext_sg.SECURITYGROUP in port['port']:
+            if ext_sg.SECURITYGROUPS in port['port']:
                 self._validate_security_groups_on_port(context, port)
                 # delete the port binding and read it with the new rules
                 self._delete_port_security_group_bindings(context, id)
-                self._process_port_create_security_group(context, id,
-                                                         port['port'].get(
-                                                         ext_sg.SECURITYGROUP))
+                self._process_port_create_security_group(
+                    context, id, port['port'].get(ext_sg.SECURITYGROUPS))
             port = super(SecurityGroupTestPlugin, self).update_port(
                 context, id, port)
             self._extend_port_dict_security_group(context, port)
@@ -574,13 +573,13 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
                                      'name': port['port']['name'],
-                                     ext_sg.SECURITYGROUP:
+                                     ext_sg.SECURITYGROUPS:
                                      [sg['security_group']['id']]}}
 
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     res = self.deserialize('json', req.get_response(self.api))
-                    self.assertEqual(res['port'][ext_sg.SECURITYGROUP][0],
+                    self.assertEqual(res['port'][ext_sg.SECURITYGROUPS][0],
                                      sg['security_group']['id'])
 
                     # Test update port without security group
@@ -590,7 +589,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     res = self.deserialize('json', req.get_response(self.api))
-                    self.assertEqual(res['port'][ext_sg.SECURITYGROUP][0],
+                    self.assertEqual(res['port'][ext_sg.SECURITYGROUPS][0],
                                      sg['security_group']['id'])
 
                     self._delete('ports', port['port']['id'])
@@ -606,7 +605,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                              sg2['security_group']['id']])
                         port = self.deserialize('json', res)
                         self.assertEqual(len(
-                            port['port'][ext_sg.SECURITYGROUP]), 2)
+                            port['port'][ext_sg.SECURITYGROUPS]), 2)
                         self._delete('ports', port['port']['id'])
 
     def test_update_port_remove_security_group(self):
@@ -625,7 +624,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     res = self.deserialize('json', req.get_response(self.api))
-                    self.assertEqual(res['port'].get(ext_sg.SECURITYGROUP),
+                    self.assertEqual(res['port'].get(ext_sg.SECURITYGROUPS),
                                      [])
                     self._delete('ports', port['port']['id'])
 
@@ -646,7 +645,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                             security_groups=(
                                             [sg['security_group']['id']]))
                     port = self.deserialize('json', res)
-                    self.assertEqual(port['port'][ext_sg.SECURITYGROUP][0],
+                    self.assertEqual(port['port'][ext_sg.SECURITYGROUPS][0],
                                      sg['security_group']['id'])
                     # try to delete security group that's in use
                     res = self._delete('security-groups',

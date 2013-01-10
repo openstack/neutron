@@ -23,7 +23,6 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
 from quantum.api.v2 import attributes as attr
-from quantum.common import utils
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
@@ -408,9 +407,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         security_group_id = self._get_port_security_group_bindings(
             context, filters, fields)
 
-        port[ext_sg.SECURITYGROUP] = []
+        port[ext_sg.SECURITYGROUPS] = []
         for security_group_id in security_group_id:
-            port[ext_sg.SECURITYGROUP].append(
+            port[ext_sg.SECURITYGROUPS].append(
                 security_group_id['security_group_id'])
         return port
 
@@ -448,14 +447,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _validate_security_groups_on_port(self, context, port):
         p = port['port']
-        if not attr.is_attr_set(p.get(ext_sg.SECURITYGROUP)):
+        if not attr.is_attr_set(p.get(ext_sg.SECURITYGROUPS)):
             return
         if p.get('device_owner') and p['device_owner'].startswith('network:'):
             raise ext_sg.SecurityGroupInvalidDeviceOwner()
 
         valid_groups = self.get_security_groups(context, fields={'id': None})
         valid_groups_set = set([x['id'] for x in valid_groups])
-        req_sg_set = set(p[ext_sg.SECURITYGROUP])
+        req_sg_set = set(p[ext_sg.SECURITYGROUPS])
         invalid_sg_set = req_sg_set - valid_groups_set
         if invalid_sg_set:
             msg = ' '.join(str(x) for x in invalid_sg_set)
@@ -469,8 +468,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         tenant_id = self._get_tenant_id_for_create(context,
                                                    port['port'])
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUP)):
-            sgids = port['port'].get(ext_sg.SECURITYGROUP)
+        if attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
+            sgids = port['port'].get(ext_sg.SECURITYGROUPS)
         else:
             sgids = [default_sg]
-        port['port'][ext_sg.SECURITYGROUP] = sgids
+        port['port'][ext_sg.SECURITYGROUPS] = sgids
