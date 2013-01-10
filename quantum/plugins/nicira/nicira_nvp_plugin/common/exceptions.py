@@ -21,7 +21,7 @@ from quantum.common import exceptions as q_exc
 
 
 class NvpPluginException(q_exc.QuantumException):
-    message = _("An unexpected error occurred in the NVP Plugin:%(err_desc)s")
+    message = _("An unexpected error occurred in the NVP Plugin:%(err_msg)s")
 
 
 class NvpInvalidConnection(NvpPluginException):

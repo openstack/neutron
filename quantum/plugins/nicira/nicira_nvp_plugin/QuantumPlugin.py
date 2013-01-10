@@ -819,7 +819,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                         "in NVP for port %s") % port_data['id']
             LOG.exception(err_msg)
             super(NvpPluginV2, self).delete_port(context, port["port"]["id"])
-            raise nvp_exc.NvpPluginException(err_desc=err_msg)
+            raise nvp_exc.NvpPluginException(err_msg=err_msg)
 
         LOG.debug(_("create_port completed on NVP for tenant %(tenant_id)s: "
                     "(%(id)s)"), port_data)
