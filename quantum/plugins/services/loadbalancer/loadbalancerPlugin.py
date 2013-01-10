@@ -98,7 +98,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
         return res
 
     def get_vips(self, context, filters=None, fields=None):
-        res = super(LoadBalancerPlugin, self).get_vips_db(
+        res = super(LoadBalancerPlugin, self).get_vips(
             context, filters, fields)
         LOG.debug(_("Get vips"))
         return res
