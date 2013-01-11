@@ -44,7 +44,8 @@ class IptablesFirewallTestCase(unittest.TestCase):
         self.iptables_inst.ipv6 = {'filter': self.v6filter_inst}
         iptables_cls.return_value = self.iptables_inst
 
-        self.firewall = IptablesFirewallDriver(self.iptables_inst)
+        self.firewall = IptablesFirewallDriver()
+        self.firewall.iptables = self.iptables_inst
 
     def tearDown(self):
         self.iptables_cls_p.stop()

@@ -22,6 +22,7 @@
 
 import sys
 
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
@@ -33,8 +34,10 @@ from quantum.db import l3_db
 from quantum.db import l3_rpc_base
 # NOTE: quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
+from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
@@ -49,10 +52,14 @@ LOG = logging.getLogger(__name__)
 
 
 class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                      l3_rpc_base.L3RpcCallbackMixin):
+                      l3_rpc_base.L3RpcCallbackMixin,
+                      sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    # history
+    #   1.0 Initial version
+    #   1.1 Support Security Group RPC
+
+    RPC_API_VERSION = '1.1'
 
     def __init__(self, notifier):
         self.notifier = notifier
@@ -64,6 +71,13 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         one class as the target of rpc messages, override this method.
         '''
         return q_rpc.PluginRpcDispatcher([self])
+
+    @classmethod
+    def get_port_from_device(cls, device):
+        port = ovs_db_v2.get_port_from_device(device)
+        if port:
+            port['device'] = device
+        return port
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details"""
@@ -143,7 +157,8 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return entry
 
 
-class AgentNotifierApi(proxy.RpcProxy):
+class AgentNotifierApi(proxy.RpcProxy,
+                       sg_rpc.SecurityGroupAgentRpcApiMixin):
     '''Agent side of the openvswitch rpc API.
 
     API version history:
@@ -191,7 +206,8 @@ class AgentNotifierApi(proxy.RpcProxy):
 
 
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
-                         l3_db.L3_NAT_db_mixin):
+                         l3_db.L3_NAT_db_mixin,
+                         sg_db_rpc.SecurityGroupServerRpcMixin):
     """Implement the Quantum abstractions using Open vSwitch.
 
     Depending on whether tunneling is enabled, either a GRE tunnel or
@@ -213,7 +229,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider", "router", "binding", "quotas"]
+    supported_extension_aliases = ["provider", "router",
+                                   "binding", "quotas", "security-group"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
@@ -425,6 +442,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                           network['network'])
 
         session = context.session
+        #set up default security groups
+        tenant_id = self._get_tenant_id_for_create(
+            context, network['network'])
+        self._ensure_default_security_group(context, tenant_id)
+
         with session.begin(subtransactions=True):
             if not network_type:
                 # tenant network
@@ -521,32 +543,68 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def create_port(self, context, port):
         # Set port status as 'DOWN'. This will be updated by agent
         port['port']['status'] = q_const.PORT_STATUS_DOWN
-        port = super(OVSQuantumPluginV2, self).create_port(context, port)
+        session = context.session
+        with session.begin(subtransactions=True):
+            self._ensure_default_security_group_on_port(context, port)
+            sgids = self._get_security_groups_on_port(context, port)
+            port = super(OVSQuantumPluginV2, self).create_port(context, port)
+            self._process_port_create_security_group(
+                context, port['id'], sgids)
+            self._extend_port_dict_security_group(context, port)
+        #Note(nati): In order to allow dhcp packets,
+        # changes for dhcp ip should be notifified
+        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+            self.notifier.security_groups_provider_updated(context)
+        else:
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUPS))
         return self._extend_port_dict_binding(context, port)
 
     def get_port(self, context, id, fields=None):
-        port = super(OVSQuantumPluginV2, self).get_port(context, id, fields)
-        return self._fields(self._extend_port_dict_binding(context, port),
-                            fields)
+        with context.session.begin(subtransactions=True):
+            port = super(OVSQuantumPluginV2, self).get_port(context,
+                                                            id, fields)
+            self._extend_port_dict_security_group(context, port)
+            self._extend_port_dict_binding(context, port)
+        return self._fields(port, fields)
 
     def get_ports(self, context, filters=None, fields=None):
-        ports = super(OVSQuantumPluginV2, self).get_ports(context, filters,
-                                                          fields)
-        return [self._fields(self._extend_port_dict_binding(context, port),
-                             fields) for port in ports]
+        with context.session.begin(subtransactions=True):
+            ports = super(OVSQuantumPluginV2, self).get_ports(
+                context, filters, fields)
+            #TODO(nati) filter by security group
+            for port in ports:
+                self._extend_port_dict_security_group(context, port)
+                self._extend_port_dict_binding(context, port)
+        return [self._fields(port, fields) for port in ports]
 
     def update_port(self, context, id, port):
-        original_port = super(OVSQuantumPluginV2, self).get_port(context,
-                                                                 id)
-        port = super(OVSQuantumPluginV2, self).update_port(context, id, port)
-        if original_port['admin_state_up'] != port['admin_state_up']:
+        session = context.session
+
+        need_port_update_notify = False
+        with session.begin(subtransactions=True):
+            original_port = super(OVSQuantumPluginV2, self).get_port(
+                context, id)
+            updated_port = super(OVSQuantumPluginV2, self).update_port(
+                context, id, port)
+            need_port_update_notify = self.update_security_group_on_port(
+                context, id, port, original_port, updated_port)
+
+        need_port_update_notify |= self.is_security_group_member_updated(
+            context, original_port, updated_port)
+
+        if original_port['admin_state_up'] != updated_port['admin_state_up']:
+            need_port_update_notify = True
+
+        if need_port_update_notify:
             binding = ovs_db_v2.get_network_binding(None,
-                                                    port['network_id'])
-            self.notifier.port_update(context, port,
+                                                    updated_port['network_id'])
+            self.notifier.port_update(context, updated_port,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
-        return self._extend_port_dict_binding(context, port)
+
+        return self._extend_port_dict_binding(context, updated_port)
 
     def delete_port(self, context, id, l3_port_check=True):
 
@@ -554,5 +612,13 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # and l3-router.  If so, we should prevent deletion.
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
-        return super(OVSQuantumPluginV2, self).delete_port(context, id)
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            self.disassociate_floatingips(context, id)
+            port = self.get_port(context, id)
+            self._delete_port_security_group_bindings(context, id)
+            super(OVSQuantumPluginV2, self).delete_port(context, id)
+
+        self.notifier.security_groups_member_updated(
+            context, port.get(ext_sg.SECURITYGROUPS))

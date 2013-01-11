@@ -16,13 +16,20 @@
 #    under the License.
 #
 
-from quantum.agent.linux import iptables_firewall
-from quantum.agent.linux import iptables_manager
 from quantum.common import topics
+from quantum.openstack.common import cfg
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 SG_RPC_VERSION = "1.1"
+
+security_group_opts = [
+    cfg.StrOpt(
+        'firewall_driver',
+        default='quantum.agent.firewall.NoopFirewallDriver')
+]
+cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 
 
 class SecurityGroupServerRpcApiMixin(object):
@@ -42,6 +49,8 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     """A mix-in that enable SecurityGroup agent
     support in agent implementations.
     """
+    #mix-in object should be have sg_agent
+    sg_agent = None
 
     def security_groups_rule_updated(self, context, **kwargs):
         """ callback for security group rule update
@@ -51,7 +60,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         security_groups = kwargs.get('security_groups', [])
         LOG.debug(
             _("Security group rule updated on remote: %s"), security_groups)
-        self.agent.security_groups_rule_updated(security_groups)
+        self.sg_agent.security_groups_rule_updated(security_groups)
 
     def security_groups_member_updated(self, context, **kwargs):
         """ callback for security group member update
@@ -61,14 +70,14 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         security_groups = kwargs.get('security_groups', [])
         LOG.debug(
             _("Security group member updated on remote: %s"), security_groups)
-        self.agent.security_groups_member_updated(security_groups)
+        self.sg_agent.security_groups_member_updated(security_groups)
 
     def security_groups_provider_updated(self, context, **kwargs):
         """ callback for security group provider update
 
         """
         LOG.debug(_("Provider rule updated"))
-        self.agent.security_groups_provider_updated()
+        self.sg_agent.security_groups_provider_updated()
 
 
 class SecurityGroupAgentRpcMixin(object):
@@ -78,10 +87,8 @@ class SecurityGroupAgentRpcMixin(object):
 
     def init_firewall(self):
         LOG.debug(_("Init firewall settings"))
-        ip_manager = iptables_manager.IptablesManager(
-            root_helper=self.root_helper,
-            use_ipv6=True)
-        self.firewall = iptables_firewall.IptablesFirewallDriver(ip_manager)
+        self.firewall = importutils.import_object(
+            cfg.CONF.SECURITYGROUP.firewall_driver)
 
     def prepare_devices_filter(self, device_ids):
         if not device_ids:

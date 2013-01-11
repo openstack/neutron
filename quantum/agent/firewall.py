@@ -103,3 +103,33 @@ class FirewallDriver(object):
             yield
         finally:
             self.filter_defer_apply_off()
+
+
+class NoopFirewallDriver(FirewallDriver):
+    """ Noop Firewall Driver.
+
+    Firewall driver which does nothing.
+    This driver is for disabling the firewall functionality.
+    """
+
+    def prepare_port_filter(self, port):
+        pass
+
+    def apply_port_filter(self, port):
+        pass
+
+    def update_port_filter(self, port):
+        pass
+
+    def remove_port_filter(self, port):
+        pass
+
+    def filter_defer_apply_on(self):
+        pass
+
+    def filter_defer_apply_off(self):
+        pass
+
+    @property
+    def ports(self):
+        return {}

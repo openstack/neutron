@@ -21,6 +21,10 @@ from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 
 
+NOTIFIER = ('quantum.plugins.openvswitch.'
+            'ovs_quantum_plugin.AgentNotifierApi')
+
+
 class CreateAgentConfigMap(unittest.TestCase):
 
     def test_create_agent_config_map_succeeds(self):
@@ -38,6 +42,11 @@ class TestOvsQuantumAgent(unittest.TestCase):
 
     def setUp(self):
         self.addCleanup(cfg.CONF.reset)
+        self.addCleanup(mock.patch.stopall)
+        notifier_p = mock.patch(NOTIFIER)
+        notifier_cls = notifier_p.start()
+        self.notifier = mock.Mock()
+        notifier_cls.return_value = self.notifier
         # Avoid rpc initialization for unit tests
         cfg.CONF.set_override('rpc_backend',
                               'quantum.openstack.common.rpc.impl_fake')
@@ -48,9 +57,7 @@ class TestOvsQuantumAgent(unittest.TestCase):
             with mock.patch('quantum.agent.linux.utils.get_interface_mac',
                             return_value='000000000001'):
                 self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
-        self.agent.plugin_rpc = mock.Mock()
-        self.agent.context = mock.Mock()
-        self.agent.agent_id = mock.Mock()
+        self.agent.sg_agent = mock.Mock()
 
     def mock_port_bound(self, ofport=None):
         port = mock.Mock()

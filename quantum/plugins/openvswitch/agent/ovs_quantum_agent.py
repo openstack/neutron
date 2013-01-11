@@ -29,6 +29,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.common import utils as q_utils
@@ -37,6 +38,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config
+from quantum.extensions import securitygroup as ext_sg
 from quantum.plugins.openvswitch.common import constants
 
 
@@ -95,7 +97,20 @@ class Port(object):
         return hash(self.id)
 
 
-class OVSQuantumAgent(object):
+class OVSPluginApi(agent_rpc.PluginApi,
+                   sg_rpc.SecurityGroupServerRpcApiMixin):
+    pass
+
+
+class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
+    def __init__(self, context, plugin_rpc, root_helper):
+        self.context = context
+        self.plugin_rpc = plugin_rpc
+        self.root_helper = root_helper
+        self.init_firewall()
+
+
+class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     '''Implements OVS-based tunneling, VLANs and flat networks.
 
     Two local bridges are created: an integration bridge (defaults to
@@ -128,8 +143,10 @@ class OVSQuantumAgent(object):
     # Upper bound on available vlans.
     MAX_VLAN_TAG = 4094
 
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    # history
+    #   1.0 Initial version
+    #   1.1 Support Security Group RPC
+    RPC_API_VERSION = '1.1'
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
@@ -162,11 +179,16 @@ class OVSQuantumAgent(object):
 
         self.setup_rpc(integ_br)
 
+        # Security group agent supprot
+        self.sg_agent = OVSSecurityGroupAgent(self.context,
+                                              self.plugin_rpc,
+                                              root_helper)
+
     def setup_rpc(self, integ_br):
         mac = utils.get_interface_mac(integ_br)
         self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
         self.topic = topics.AGENT
-        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
@@ -175,7 +197,8 @@ class OVSQuantumAgent(object):
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
-                     [constants.TUNNEL, topics.UPDATE]]
+                     [constants.TUNNEL, topics.UPDATE],
+                     [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
@@ -203,6 +226,9 @@ class OVSQuantumAgent(object):
         vif_port = self.int_br.get_vif_port_by_id(port['id'])
         if not vif_port:
             return
+
+        if ext_sg.SECURITYGROUPS in port:
+            self.sg_agent.refresh_firewall()
         network_type = kwargs.get('network_type')
         segmentation_id = kwargs.get('segmentation_id')
         physical_network = kwargs.get('physical_network')
@@ -549,6 +575,7 @@ class OVSQuantumAgent(object):
 
     def treat_devices_added(self, devices):
         resync = False
+        self.sg_agent.prepare_devices_filter(devices)
         for device in devices:
             LOG.info(_("Port %s added"), device)
             try:
@@ -578,6 +605,7 @@ class OVSQuantumAgent(object):
 
     def treat_devices_removed(self, devices):
         resync = False
+        self.sg_agent.remove_devices_filter(devices)
         for device in devices:
             LOG.info(_("Attachment %s removed"), device)
             try:

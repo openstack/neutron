@@ -28,6 +28,8 @@ from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum import context
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
+from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import cfg
 from quantum.openstack.common.rpc import proxy
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_iptables_firewall as test_fw
@@ -371,23 +373,23 @@ class SGServerRpcCallBackMixinTestCaseXML(SGServerRpcCallBackMixinTestCase):
 class SGAgentRpcCallBackMixinTestCase(unittest.TestCase):
     def setUp(self):
         self.rpc = sg_rpc.SecurityGroupAgentRpcCallbackMixin()
-        self.rpc.agent = mock.Mock()
+        self.rpc.sg_agent = mock.Mock()
 
     def test_security_groups_rule_updated(self):
         self.rpc.security_groups_rule_updated(None,
                                               security_groups=['fake_sgid'])
-        self.rpc.agent.assert_has_calls(
+        self.rpc.sg_agent.assert_has_calls(
             [call.security_groups_rule_updated(['fake_sgid'])])
 
     def test_security_groups_member_updated(self):
         self.rpc.security_groups_member_updated(None,
                                                 security_groups=['fake_sgid'])
-        self.rpc.agent.assert_has_calls(
+        self.rpc.sg_agent.assert_has_calls(
             [call.security_groups_member_updated(['fake_sgid'])])
 
     def test_security_groups_provider_updated(self):
         self.rpc.security_groups_provider_updated(None)
-        self.rpc.agent.assert_has_calls(
+        self.rpc.sg_agent.assert_has_calls(
             [call.security_groups_provider_updated()])
 
 
@@ -582,16 +584,16 @@ IPTABLES_FILTER_1 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port1 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port1 ! -s 10.0.0.3 -j DROP
@@ -619,17 +621,17 @@ IPTABLES_FILTER_1_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port1 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port1 -j RETURN -s 10.0.0.4
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port1 ! -s 10.0.0.3 -j DROP
@@ -661,17 +663,17 @@ IPTABLES_FILTER_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port1 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port1 -j RETURN -s 10.0.0.4
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port1 ! -s 10.0.0.3 -j DROP
@@ -680,17 +682,17 @@ IPTABLES_FILTER_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-o_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-o_port1 -j RETURN
 -A %(bn)s-o_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port2 -j %(bn)s-i_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-i_port2
 -A %(bn)s-i_port2 -m state --state INVALID -j DROP
 -A %(bn)s-i_port2 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port2 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port2 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port2 -j RETURN -s 10.0.0.3
 -A %(bn)s-i_port2 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
 -A %(bn)s-o_port2 -m mac ! --mac-source 12:34:56:78:9a:bd -j DROP
 -A %(bn)s-o_port2 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port2 ! -s 10.0.0.4 -j DROP
@@ -720,16 +722,16 @@ IPTABLES_FILTER_2_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port1 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port1 ! -s 10.0.0.3 -j DROP
@@ -738,17 +740,17 @@ IPTABLES_FILTER_2_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-o_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-o_port1 -j RETURN
 -A %(bn)s-o_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port2 -j %(bn)s-i_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-i_port2
 -A %(bn)s-i_port2 -m state --state INVALID -j DROP
 -A %(bn)s-i_port2 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port2 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
 -A %(bn)s-i_port2 -j RETURN -p tcp --dport 22
 -A %(bn)s-i_port2 -j RETURN -s 10.0.0.3
 -A %(bn)s-i_port2 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
 -A %(bn)s-o_port2 -m mac ! --mac-source 12:34:56:78:9a:bd -j DROP
 -A %(bn)s-o_port2 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port2 ! -s 10.0.0.4 -j DROP
@@ -778,8 +780,8 @@ IPTABLES_FILTER_2_3 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
@@ -787,9 +789,9 @@ IPTABLES_FILTER_2_3 = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-i_port1 -j RETURN -s 10.0.0.4
 -A %(bn)s-i_port1 -j RETURN -p icmp
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port1 ! -s 10.0.0.3 -j DROP
@@ -798,8 +800,8 @@ IPTABLES_FILTER_2_3 = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-o_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-o_port1 -j RETURN
 -A %(bn)s-o_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port2 -j %(bn)s-i_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-i_port2
 -A %(bn)s-i_port2 -m state --state INVALID -j DROP
 -A %(bn)s-i_port2 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port2 -j RETURN -p udp --dport 68 --sport 67 -s 10.0.0.2
@@ -807,9 +809,9 @@ IPTABLES_FILTER_2_3 = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-i_port2 -j RETURN -s 10.0.0.3
 -A %(bn)s-i_port2 -j RETURN -p icmp
 -A %(bn)s-i_port2 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
 -A %(bn)s-o_port2 -m mac ! --mac-source 12:34:56:78:9a:bd -j DROP
 -A %(bn)s-o_port2 -p udp --sport 68 --dport 67 -j RETURN
 -A %(bn)s-o_port2 ! -s 10.0.0.4 -j DROP
@@ -855,14 +857,14 @@ IPTABLES_FILTER_V6_1 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p icmpv6 -j RETURN
 -A %(bn)s-o_port1 -m state --state INVALID -j DROP
@@ -890,27 +892,27 @@ IPTABLES_FILTER_V6_2 = """:%(bn)s-(%(chains)s) - [0:0]
 -A OUTPUT -j %(bn)s-OUTPUT
 -A FORWARD -j %(bn)s-FORWARD
 -A %(bn)s-sg-fallback -j DROP
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port1 -j %(bn)s-i_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port1 -j %(bn)s-i_port1
 -A %(bn)s-i_port1 -m state --state INVALID -j DROP
 -A %(bn)s-i_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port1 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port1 -j %(bn)s-o_port1
 -A %(bn)s-o_port1 -m mac ! --mac-source 12:34:56:78:9a:bc -j DROP
 -A %(bn)s-o_port1 -p icmpv6 -j RETURN
 -A %(bn)s-o_port1 -m state --state INVALID -j DROP
 -A %(bn)s-o_port1 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-o_port1 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-out tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-out tap_port2 -j %(bn)s-i_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-INGRESS tap_port2 -j %(bn)s-i_port2
 -A %(bn)s-i_port2 -m state --state INVALID -j DROP
 -A %(bn)s-i_port2 -m state --state ESTABLISHED,RELATED -j RETURN
 -A %(bn)s-i_port2 -j %(bn)s-sg-fallback
--A %(bn)s-FORWARD %(physdev)s --physdev-in tap_port2 -j %(bn)s-sg-chain
--A %(bn)s-sg-chain %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
--A %(bn)s-INPUT %(physdev)s --physdev-in tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-FORWARD %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-sg-chain
+-A %(bn)s-sg-chain %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
+-A %(bn)s-INPUT %(physdev)s --physdev-EGRESS tap_port2 -j %(bn)s-o_port2
 -A %(bn)s-o_port2 -m mac ! --mac-source 12:34:56:78:9a:bd -j DROP
 -A %(bn)s-o_port2 -p icmpv6 -j RETURN
 -A %(bn)s-o_port2 -m state --state INVALID -j DROP
@@ -936,11 +938,25 @@ IPTABLES_FILTER_V6_EMPTY = """:%(bn)s-(%(chains)s) - [0:0]
 -A %(bn)s-sg-fallback -j DROP
 """ % IPTABLES_ARG
 
+FIREWALL_BASE_PACKAGE = 'quantum.agent.linux.iptables_firewall.'
+
 
 class TestSecurityGroupAgentWithIptables(unittest.TestCase):
+    FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
+    PHYSDEV_INGRESS = 'physdev-out'
+    PHYSDEV_EGRESS = 'physdev-in'
+
     def setUp(self):
         self.mox = mox.Mox()
+        agent_opts = [
+            cfg.StrOpt('root_helper', default='sudo'),
+        ]
 
+        cfg.CONF.register_opts(agent_opts, "AGENT")
+        cfg.CONF.set_override(
+            'firewall_driver',
+            self.FIREWALL_DRIVER,
+            group='SECURITYGROUP')
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(self.mox.UnsetStubs)
 
@@ -1018,6 +1034,8 @@ class TestSecurityGroupAgentWithIptables(unittest.TestCase):
                     'security_group1']}
 
     def _regex(self, value):
+        value = value.replace('physdev-INGRESS', self.PHYSDEV_INGRESS)
+        value = value.replace('physdev-EGRESS', self.PHYSDEV_EGRESS)
         value = value.replace('\n', '\\n')
         value = value.replace('[', '\[')
         value = value.replace(']', '\]')
@@ -1093,3 +1111,71 @@ class TestSecurityGroupAgentWithIptables(unittest.TestCase):
         self.agent.security_groups_rule_updated(['security_group1'])
 
         self.mox.VerifyAll()
+
+
+class SGNotificationTestMixin():
+    def test_security_group_rule_updated(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            with self.security_group(name, description) as sg2:
+                security_group_id = sg['security_group']['id']
+                direction = "ingress"
+                source_group_id = sg2['security_group']['id']
+                protocol = 'tcp'
+                port_range_min = 88
+                port_range_max = 88
+                with self.security_group_rule(security_group_id, direction,
+                                              protocol, port_range_min,
+                                              port_range_max,
+                                              source_group_id=source_group_id
+                                              ):
+                    pass
+            self.notifier.assert_has_calls(
+                [call.security_groups_rule_updated(mock.ANY,
+                                                   [security_group_id]),
+                 call.security_groups_rule_updated(mock.ANY,
+                                                   [security_group_id])])
+
+    def test_security_group_member_updated(self):
+        with self.network() as n:
+            with self.subnet(n):
+                with self.security_group() as sg:
+                    security_group_id = sg['security_group']['id']
+                    res = self._create_port(self.fmt, n['network']['id'])
+                    port = self.deserialize(self.fmt, res)
+
+                    data = {'port': {'fixed_ips': port['port']['fixed_ips'],
+                                     'name': port['port']['name'],
+                                     ext_sg.SECURITYGROUPS:
+                                     [security_group_id]}}
+
+                    req = self.new_update_request('ports', data,
+                                                  port['port']['id'])
+                    res = self.deserialize(self.fmt,
+                                           req.get_response(self.api))
+                    self.assertEquals(res['port'][ext_sg.SECURITYGROUPS][0],
+                                      security_group_id)
+                    self._delete('ports', port['port']['id'])
+                    self.notifier.assert_has_calls(
+                        [call.security_groups_member_updated(
+                            mock.ANY, [mock.ANY]),
+                         call.security_groups_member_updated(
+                             mock.ANY, [security_group_id])])
+
+
+class TestSecurityGroupAgentWithOVSIptables(
+        TestSecurityGroupAgentWithIptables):
+
+    FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'OVSHybridIptablesFirewallDriver'
+
+    def _regex(self, value):
+        #Note(nati): tap is prefixed on the device
+        # in the OVSHybridIptablesFirewallDriver
+
+        value = value.replace('tap_port', 'taptap_port')
+        value = value.replace('o_port', 'otap_port')
+        value = value.replace('i_port', 'itap_port')
+        return super(
+            TestSecurityGroupAgentWithOVSIptables,
+            self)._regex(value)

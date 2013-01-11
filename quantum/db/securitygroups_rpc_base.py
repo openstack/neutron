@@ -18,8 +18,10 @@
 import netaddr
 
 from quantum.common import constants as q_const
+from quantum.common import utils
 from quantum.db import models_v2
 from quantum.db import securitygroups_db as sg_db
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -58,6 +60,46 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
               self).delete_security_group_rule(context, sgrid)
         self.notifier.security_groups_rule_updated(context,
                                                    [rule['security_group_id']])
+
+    def update_security_group_on_port(self, context, id, port,
+                                      original_port, updated_port):
+        """ update security groups on port
+
+        This method returns a flag which indicates request notification
+        is required and does not perform notification itself.
+        It is because another changes for the port may require notification.
+        """
+        need_notify = False
+        if ext_sg.SECURITYGROUPS in port['port']:
+            # delete the port binding and read it with the new rules
+            port['port'][ext_sg.SECURITYGROUPS] = (
+                self._get_security_groups_on_port(context, port))
+            self._delete_port_security_group_bindings(context, id)
+            self._process_port_create_security_group(
+                context,
+                id,
+                port['port'][ext_sg.SECURITYGROUPS])
+            need_notify = True
+        self._extend_port_dict_security_group(context, updated_port)
+        return need_notify
+
+    def is_security_group_member_updated(self, context,
+                                         original_port, updated_port):
+        """ check security group member updated or not
+
+        This method returns a flag which indicates request notification
+        is required and does not perform notification itself.
+        It is because another changes for the port may require notification.
+        """
+        need_notify = False
+        if (original_port['fixed_ips'] != updated_port['fixed_ips'] or
+            not utils.compare_elements(
+                original_port.get(ext_sg.SECURITYGROUPS),
+                updated_port.get(ext_sg.SECURITYGROUPS))):
+            self.notifier.security_groups_member_updated(
+                context, updated_port.get(ext_sg.SECURITYGROUPS))
+            need_notify = True
+        return need_notify
 
 
 class SecurityGroupServerRpcCallbackMixin(object):

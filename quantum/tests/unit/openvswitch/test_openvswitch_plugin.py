@@ -43,7 +43,7 @@ class TestOpenvswitchPortsV2(test_plugin.TestPortsV2,
                              test_bindings.PortBindingsTestCase):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = False
+    HAS_PORT_FILTER = True
 
     def test_update_port_status_build(self):
         with self.port() as port:

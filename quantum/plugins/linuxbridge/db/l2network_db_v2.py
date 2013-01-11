@@ -18,9 +18,9 @@ from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
-from quantum import manager
 from quantum.db import models_v2
 from quantum.db import securitygroups_db as sg_db
+from quantum import manager
 from quantum.openstack.common import log as logging
 # NOTE (e0ne): this import is needed for config init
 from quantum.plugins.linuxbridge.common import config

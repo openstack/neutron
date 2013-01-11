@@ -499,37 +499,23 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def update_port(self, context, id, port):
         original_port = self.get_port(context, id)
         session = context.session
-        port_updated = False
+        need_port_update_notify = False
+
         with session.begin(subtransactions=True):
-            # delete the port binding and read it with the new rules
-            if ext_sg.SECURITYGROUPS in port['port']:
-                port['port'][ext_sg.SECURITYGROUPS] = (
-                    self._get_security_groups_on_port(context, port))
-                self._delete_port_security_group_bindings(context, id)
-                self._process_port_create_security_group(
-                    context,
-                    id,
-                    port['port'][ext_sg.SECURITYGROUPS])
-                port_updated = True
-
-            port = super(LinuxBridgePluginV2, self).update_port(
+            updated_port = super(LinuxBridgePluginV2, self).update_port(
                 context, id, port)
-            self._extend_port_dict_security_group(context, port)
+            need_port_update_notify = self.update_security_group_on_port(
+                context, id, port, original_port, updated_port)
 
-        if original_port['admin_state_up'] != port['admin_state_up']:
-            port_updated = True
+        need_port_update_notify |= self.is_security_group_member_updated(
+            context, original_port, updated_port)
 
-        if (original_port['fixed_ips'] != port['fixed_ips'] or
-            not utils.compare_elements(
-                original_port.get(ext_sg.SECURITYGROUPS),
-                port.get(ext_sg.SECURITYGROUPS))):
-            self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+        if original_port['admin_state_up'] != updated_port['admin_state_up']:
+            need_port_update_notify = True
 
-        if port_updated:
-            self._notify_port_updated(context, port)
-
-        return self._extend_port_dict_binding(context, port)
+        if need_port_update_notify:
+            self._notify_port_updated(context, updated_port)
+        return self._extend_port_dict_binding(context, updated_port)
 
     def delete_port(self, context, id, l3_port_check=True):
 
@@ -544,8 +530,9 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port = self.get_port(context, id)
             self._delete_port_security_group_bindings(context, id)
             super(LinuxBridgePluginV2, self).delete_port(context, id)
-            self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+
+        self.notifier.security_groups_member_updated(
+            context, port.get(ext_sg.SECURITYGROUPS))
 
     def _notify_port_updated(self, context, port):
         binding = db.get_network_binding(context.session,

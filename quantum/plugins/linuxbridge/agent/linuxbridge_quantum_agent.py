@@ -400,6 +400,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def __init__(self, context, agent):
         self.context = context
         self.agent = agent
+        self.sg_agent = agent
 
     def network_delete(self, context, **kwargs):
         LOG.debug(_("network_delete received"))
@@ -418,7 +419,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             return
 
         if 'security_groups' in port:
-            self.agent.refresh_firewall()
+            self.sg_agent.refresh_firewall()
 
         if port['admin_state_up']:
             vlan_id = kwargs.get('vlan_id')
