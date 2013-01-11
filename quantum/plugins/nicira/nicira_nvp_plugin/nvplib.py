@@ -253,7 +253,7 @@ def create_lswitch(cluster, tenant_id, display_name,
     except NvpApiClient.NvpApiException:
         raise exception.QuantumException()
     lswitch = json.loads(lswitch_res)
-    LOG.debug(_("Created logical switch: %s") % lswitch['uuid'])
+    LOG.debug(_("Created logical switch: %s"), lswitch['uuid'])
     return lswitch
 
 
@@ -471,12 +471,12 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
                                      json.dumps(lport_obj),
                                      cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
-        LOG.error("Logical switch not found, Error: %s" % str(e))
+        LOG.error(_("Logical switch not found, Error: %s"), str(e))
         raise
 
     result = json.loads(resp_obj)
-    LOG.debug("Created logical port %s on logical swtich %s"
-              % (result['uuid'], lswitch_uuid))
+    LOG.debug(_("Created logical port %(result)s on logical swtich %(uuid)s"),
+              {'result': result['uuid'], 'uuid': lswitch_uuid})
     return result
 
 

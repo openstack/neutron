@@ -29,7 +29,7 @@ from quantum.plugins.nicira.nicira_nvp_plugin.api_client import request
 eventlet.monkey_patch()
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
-USER_AGENT = "NVP eventlet client/1.0"
+USER_AGENT = "NVP Quantum eventlet client/2.0"
 
 
 class NvpApiRequestEventlet(request.NvpApiRequest):

@@ -87,13 +87,13 @@ class NvpApiRequest(object):
                                                     copy.copy(self._headers),
                                                     rid=self._rid()))
         if conn is None:
-            error = Exception("No API connections available")
+            error = Exception(_("No API connections available"))
             self._request_error = error
             return error
 
         url = self._url
-        LOG.debug(_("[%d] Issuing - request '%s'"),
-                  self._rid(), self._request_str(conn, url))
+        LOG.debug(_("[%(rid)d] Issuing - request %(conn)s"),
+                  {'rid': self._rid(), 'conn': self._request_str(conn, url)})
         issued_time = time.time()
         is_conn_error = False
         is_conn_service_unavail = False
@@ -117,26 +117,29 @@ class NvpApiRequest(object):
                 gen = self._api_client.nvp_config_gen
                 if gen:
                     headers["X-Nvp-Wait-For-Config-Generation"] = gen
-                    LOG.debug(_("Setting %s request header: '%s'"),
-                              'X-Nvp-Wait-For-Config-Generation', gen)
+                    LOG.debug(_("Setting X-Nvp-Wait-For-Config-Generation "
+                                "request header: '%s'"), gen)
                 try:
                     conn.request(self._method, url, self._body, headers)
                 except Exception as e:
-                    LOG.warn(_("[%d] Exception issuing request: '%s'"),
-                             self._rid(), e)
+                    LOG.warn(_("[%(rid)d] Exception issuing request: %(e)s"),
+                             {'rid': self._rid(), 'e': e})
                     raise e
 
                 response = conn.getresponse()
                 response.body = response.read()
                 response.headers = response.getheaders()
-                LOG.debug(_("[%d] Completed request '%s': %s (%0.2f seconds)"),
-                          self._rid(), self._request_str(conn, url),
-                          response.status, time.time() - issued_time)
+                LOG.debug(_("[%(rid)d] Completed request '%(conn)s': "
+                            "%(status)s (%(sec)0.2f seconds)"),
+                          {'rid': self._rid(),
+                           'conn': self._request_str(conn, url),
+                           'status': response.status,
+                           'sec': time.time() - issued_time})
 
                 new_gen = response.getheader('X-Nvp-Config-Generation', None)
                 if new_gen:
-                    LOG.debug(_("Reading '%s' response header: '%s'"),
-                              'X-Nvp-config-Generation', new_gen)
+                    LOG.debug(_("Reading X-Nvp-config-Generation response "
+                                "header: '%s'"), new_gen)
                     if (self._api_client.nvp_config_gen is None or
                         self._api_client.nvp_config_gen < int(new_gen)):
                         self._api_client.nvp_config_gen = int(new_gen)
@@ -174,8 +177,9 @@ class NvpApiRequest(object):
                 if url is None:
                     response.status = httplib.INTERNAL_SERVER_ERROR
                     break
-                LOG.info(_("[%d] Redirecting request to: '%s'"),
-                         self._rid(), self._request_str(conn, url))
+                LOG.info(_("[%(rid)d] Redirecting request to: %(conn)s"),
+                         {'rid': self._rid(),
+                          'conn': self._request_str(conn, url)})
 
             # If we receive any of these responses, then
             # our server did not process our request and may be in an
@@ -184,20 +188,21 @@ class NvpApiRequest(object):
             # which puts the conn on the back of the client's priority
             # queue.
             if response.status >= 500:
-                LOG.warn(_("[%d] Request '%s %s' received: %s"),
-                         self._rid(), self._method, self._url,
-                         response.status)
-                raise Exception('Server error return: %s' %
-                                response.status)
+                LOG.warn(_("[%(rid)d] Request '%(method) %(url)s' "
+                           "received: %(status)s"),
+                         {'rid': self._rid(), 'method': self._method,
+                          'url': self._url, 'status': response.status})
+                raise Exception(_('Server error return: %s'), response.status)
             return response
         except Exception as e:
             if isinstance(e, httplib.BadStatusLine):
-                msg = "Invalid server response"
+                msg = (_("Invalid server response"))
             else:
                 msg = unicode(e)
-            LOG.warn(_("[%d] Failed request '%s': '%s' (%0.2f seconds)"),
-                     self._rid(), self._request_str(conn, url), msg,
-                     time.time() - issued_time)
+            LOG.warn(_("[%(rid)d] Failed request '%(conn)s': '%(msg)s' "
+                       "(%(sec)0.2f seconds)"),
+                     {'rid': self._rid(), 'conn': self._request_str(conn, url),
+                      'msg': msg, 'sec': time.time() - issued_time})
             self._request_error = e
             is_conn_error = True
             return e
@@ -245,12 +250,12 @@ class NvpApiRequest(object):
                     url = result.path
                 return (conn, url)      # case 1
             else:
-                LOG.warn(_("[%d] Received invalid redirect location: '%s'"),
-                         self._rid(), url)
+                LOG.warn(_("[%(rid)d] Received invalid redirect location: "
+                           "'%(url)s'"), {'rid': self._rid(), 'url': url})
                 return (conn, None)     # case 3
         elif result.scheme not in ["http", "https"] or not result.hostname:
-            LOG.warn(_("[%d] Received malformed redirect location: %s"),
-                     self._rid(), url)
+            LOG.warn(_("[%(rid)d] Received malformed redirect "
+                       "location: %(url)s"), {'rid': self._rid(), 'url': url})
             return (conn, None)         # case 3
         # case 2, redirect location includes a scheme
         # so setup a new connection and authenticate

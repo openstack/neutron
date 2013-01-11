@@ -169,7 +169,7 @@ class NvpApiException(Exception):
     with the keyword arguments provided to the constructor.
 
     '''
-    message = "An unknown exception occurred."
+    message = _("An unknown exception occurred.")
 
     def __init__(self, **kwargs):
         try:
@@ -184,26 +184,27 @@ class NvpApiException(Exception):
 
 
 class UnAuthorizedRequest(NvpApiException):
-    message = "Server denied session's authentication credentials."
+    message = _("Server denied session's authentication credentials.")
 
 
 class ResourceNotFound(NvpApiException):
-    message = "An entity referenced in the request was not found."
+    message = _("An entity referenced in the request was not found.")
 
 
 class Conflict(NvpApiException):
-    message = "Request conflicts with configuration on a different entity."
+    message = _("Request conflicts with configuration on a different "
+                "entity.")
 
 
 class ServiceUnavailable(NvpApiException):
-    message = ("Request could not completed because the associated "
-               "resource could not be reached.")
+    message = _("Request could not completed because the associated "
+                "resource could not be reached.")
 
 
 class Forbidden(NvpApiException):
-    message = ("The request is forbidden from accessing the "
-               "referenced resource.")
+    message = _("The request is forbidden from accessing the "
+                "referenced resource.")
 
 
 class RequestTimeout(NvpApiException):
-    message = "The request has timed out."
+    message = _("The request has timed out.")

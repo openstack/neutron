@@ -120,16 +120,18 @@ class NvpApiClient(object):
         priority, conn = self._conn_pool.get()
         now = time.time()
         if getattr(conn, 'last_used', now) < now - self.CONN_IDLE_TIMEOUT:
-            LOG.info(_("[%d] Connection %s idle for %0.2f seconds; "
-                       "reconnecting."),
-                     rid, _conn_str(conn), now - conn.last_used)
+            LOG.info(_("[%(rid)d] Connection %(conn)s idle for %(sec)0.2f "
+                       "seconds; reconnecting."),
+                     {'rid': rid, 'conn': _conn_str(conn),
+                      'sec': now - conn.last_used})
             conn = self._create_connection(*self._conn_params(conn))
 
         conn.last_used = now
         conn.priority = priority  # stash current priority for release
         qsize = self._conn_pool.qsize()
-        LOG.debug(_("[%d] Acquired connection %s. %d connection(s) "
-                    "available."), rid, _conn_str(conn), qsize)
+        LOG.debug(_("[%(rid)d] Acquired connection %(conn)s. %(qsize)d "
+                    "connection(s) available."),
+                  {'rid': rid, 'conn': _conn_str(conn), 'qsize': qsize})
         if auto_login and self.auth_cookie(conn) is None:
             self._wait_for_login(conn, headers)
         return conn
@@ -147,16 +149,18 @@ class NvpApiClient(object):
         '''
         conn_params = self._conn_params(http_conn)
         if self._conn_params(http_conn) not in self._api_providers:
-            LOG.debug(_("[%d] Released connection '%s' is not an API provider "
-                        "for the cluster"), rid, _conn_str(http_conn))
+            LOG.debug(_("[%(rid)d] Released connection %(conn)s is not an "
+                        "API provider for the cluster"),
+                      {'rid': rid, 'conn': _conn_str(http_conn)})
             return
         elif hasattr(http_conn, "no_release"):
             return
 
         if bad_state:
             # Reconnect to provider.
-            LOG.warn(_("[%d] Connection returned in bad state, reconnecting "
-                       "to %s"), rid, _conn_str(http_conn))
+            LOG.warn(_("[%(rid)d] Connection returned in bad state, "
+                       "reconnecting to %(conn)s"),
+                     {'rid': rid, 'conn': _conn_str(http_conn)})
             http_conn = self._create_connection(*self._conn_params(http_conn))
             priority = self._next_conn_priority
             self._next_conn_priority += 1
@@ -179,9 +183,10 @@ class NvpApiClient(object):
             priority = http_conn.priority
 
         self._conn_pool.put((priority, http_conn))
-        LOG.debug(_("[%d] Released connection %s. %d connection(s) "
-                    "available."),
-                  rid, _conn_str(http_conn), self._conn_pool.qsize())
+        LOG.debug(_("[%(rid)d] Released connection %(conn)s. %(qsize)d "
+                    "connection(s) available."),
+                  {'rid': rid, 'conn': _conn_str(http_conn),
+                   'qsize': self._conn_pool.qsize()})
 
     def _wait_for_login(self, conn, headers=None):
         '''Block until a login has occurred for the current API provider.'''
