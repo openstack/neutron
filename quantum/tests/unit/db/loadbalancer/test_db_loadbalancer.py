@@ -456,6 +456,22 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(res['vip'][k], v)
 
+    def test_list_vips(self):
+        name = "vips_list"
+        keys = [('name', name),
+                ('subnet_id', self._subnet_id),
+                ('address', "172.16.1.123"),
+                ('port', 80),
+                ('protocol', 'HTTP'),
+                ('connection_limit', -1),
+                ('admin_state_up', True),
+                ('status', 'PENDING_CREATE')]
+        with self.vip(name=name):
+            req = self.new_list_request('vips')
+            res = self.deserialize('json', req.get_response(self.ext_api))
+            for k, v in keys:
+                self.assertEqual(res['vips'][0][k], v)
+
     def test_create_pool(self):
         name = "pool1"
         keys = [('name', name),
