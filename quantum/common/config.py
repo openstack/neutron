@@ -47,7 +47,6 @@ core_opts = [
     cfg.BoolOpt('allow_bulk', default=True),
     cfg.IntOpt('max_dns_nameservers', default=5),
     cfg.IntOpt('max_subnet_host_routes', default=20),
-    cfg.StrOpt('state_path', default='/var/lib/quantum'),
     cfg.IntOpt('dhcp_lease_duration', default=120),
     cfg.BoolOpt('allow_overlapping_ips', default=False),
     cfg.StrOpt('control_exchange',
@@ -58,8 +57,13 @@ core_opts = [
                 help=_("Ensure that configured gateway is on subnet")),
 ]
 
+core_cli_opts = [
+    cfg.StrOpt('state_path', default='/var/lib/quantum'),
+]
+
 # Register the configuration options
 cfg.CONF.register_opts(core_opts)
+cfg.CONF.register_cli_opts(core_cli_opts)
 
 
 def parse(args):

@@ -17,7 +17,6 @@
 
 import os
 import socket
-import sys
 import uuid
 
 import eventlet
@@ -544,7 +543,7 @@ def main():
     cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
     cfg.CONF.register_opts(dhcp.OPTS)
     cfg.CONF.register_opts(interface.OPTS)
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
 
     mgr = DhcpAgent(cfg.CONF)

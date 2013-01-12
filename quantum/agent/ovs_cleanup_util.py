@@ -15,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from quantum.agent import l3_agent
 from quantum.agent.linux import interface
 from quantum.agent.linux import ovs_lib
@@ -43,7 +41,7 @@ def setup_conf():
     ]
 
     conf = cfg.CommonConfigOpts()
-    conf.register_opts(opts)
+    conf.register_cli_opts(opts)
     conf.register_opts(l3_agent.L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
     config.setup_logging(conf)
@@ -57,7 +55,7 @@ def main():
     """
 
     conf = setup_conf()
-    conf(sys.argv)
+    conf()
 
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])

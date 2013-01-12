@@ -35,83 +35,87 @@ class TestDbMigration(unittest.TestCase):
         self.assertTrue(migration.should_run('foo', ['*']))
 
 
-class TestMain(unittest.TestCase):
+class TestCli(unittest.TestCase):
     def setUp(self):
-        self.process_argv_p = mock.patch.object(cli, 'process_argv')
-        self.process_argv = self.process_argv_p.start()
-
-        self.alembic_cmd_p = mock.patch.object(cli, 'alembic_command')
-        self.alembic_cmd = self.alembic_cmd_p.start()
+        self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
+        self.do_alembic_cmd = self.do_alembic_cmd_p.start()
 
     def tearDown(self):
-        self.alembic_cmd_p.stop()
-        self.process_argv_p.stop()
+        self.do_alembic_cmd_p.stop()
+        cli.CONF.reset()
 
-    def test_main(self):
-        self.process_argv.return_value = ('foo', ('bar', ), {'baz': 1})
-        cli.main()
+    def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs={}):
+        with mock.patch.object(sys, 'argv', argv):
+            cli.main()
+            self.do_alembic_cmd.assert_has_calls(
+                [mock.call(mock.ANY, func_name, *exp_args, **exp_kwargs)]
+            )
 
-        self.process_argv.assert_called_once_with(sys.argv)
-        self.alembic_cmd.foo.assert_called_once_with(mock.ANY, 'bar', baz=1)
+    def test_stamp(self):
+        self._main_test_helper(
+            ['prog', 'stamp', 'foo'],
+            'stamp',
+            ('foo',),
+            {'sql': False}
+        )
 
+        self._main_test_helper(
+            ['prog', 'stamp', 'foo', '--sql'],
+            'stamp',
+            ('foo',),
+            {'sql': True}
+        )
 
-class TestDatabaseSync(unittest.TestCase):
-    def test_process_argv_stamp(self):
-        self.assertEqual(
-            ('stamp', ('foo',), {'sql': False}),
-            cli.process_argv(['prog', 'stamp', 'foo']))
+    def test_current(self):
+        self._main_test_helper(['prog', 'current'], 'current')
 
-        self.assertEqual(
-            ('stamp', ('foo',), {'sql': True}),
-            cli.process_argv(['prog', 'stamp', '--sql', 'foo']))
+    def test_history(self):
+        self._main_test_helper(['prog', 'history'], 'history')
 
-    def test_process_argv_current(self):
-        self.assertEqual(
-            ('current', (), {}),
-            cli.process_argv(['prog', 'current']))
-
-    def test_process_argv_history(self):
-        self.assertEqual(
-            ('history', (), {}),
-            cli.process_argv(['prog', 'history']))
-
-    def test_process_argv_check_migration(self):
-        self.assertEqual(
-            ('branches', (), {}),
-            cli.process_argv(['prog', 'check_migration']))
+    def test_check_migration(self):
+        self._main_test_helper(['prog', 'check_migration'], 'branches')
 
     def test_database_sync_revision(self):
-        expected = (
+        self._main_test_helper(
+            ['prog', 'revision', '--autogenerate', '-m', 'message'],
             'revision',
             (),
             {'message': 'message', 'sql': False, 'autogenerate': True}
         )
 
-        self.assertEqual(
-            cli.process_argv(
-                ['prog', 'revision', '-m', 'message', '--autogenerate']
-            ),
-            expected
+        self._main_test_helper(
+            ['prog', 'revision', '--sql', '-m', 'message'],
+            'revision',
+            (),
+            {'message': 'message', 'sql': True, 'autogenerate': False}
         )
 
-    def test_database_sync_upgrade(self):
-        self.assertEqual(
-            cli.process_argv(['prog', 'upgrade', 'head']),
-            ('upgrade', ('head', ), {'sql': False})
+    def test_upgrade(self):
+        self._main_test_helper(
+            ['prog', 'upgrade', '--sql', 'head'],
+            'upgrade',
+            ('head',),
+            {'sql': True}
         )
 
-        self.assertEqual(
-            cli.process_argv(['prog', 'upgrade', '--delta', '3']),
-            ('upgrade', ('+3', ), {'sql': False})
+        self._main_test_helper(
+            ['prog', 'upgrade', '--delta', '3'],
+            'upgrade',
+            ('+3',),
+            {'sql': False}
         )
 
-    def test_database_sync_downgrade(self):
-        self.assertEqual(
-            cli.process_argv(['prog', 'downgrade', 'folsom']),
-            ('downgrade', ('folsom', ), {'sql': False})
+    def test_downgrade(self):
+        self._main_test_helper(
+            ['prog', 'downgrade', '--sql', 'folsom'],
+            'downgrade',
+            ('folsom',),
+            {'sql': True}
         )
 
-        self.assertEqual(
-            cli.process_argv(['prog', 'downgrade', '--delta', '2']),
-            ('downgrade', ('-2', ), {'sql': False})
+        self._main_test_helper(
+            ['prog', 'downgrade', '--delta', '2'],
+            'downgrade',
+            ('-2',),
+            {'sql': False}
         )

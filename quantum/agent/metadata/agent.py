@@ -20,7 +20,6 @@ import hashlib
 import hmac
 import os
 import socket
-import sys
 import urlparse
 
 import eventlet
@@ -208,7 +207,7 @@ def main():
     eventlet.monkey_patch()
     cfg.CONF.register_opts(UnixDomainMetadataProxy.OPTS)
     cfg.CONF.register_opts(MetadataProxyHandler.OPTS)
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
 
     proxy = UnixDomainMetadataProxy(cfg.CONF)

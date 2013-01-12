@@ -18,7 +18,6 @@
 
 import httplib
 import socket
-import sys
 import urlparse
 
 import eventlet
@@ -149,8 +148,8 @@ def main():
                    help="TCP Port to listen for metadata server requests."),
     ]
 
-    cfg.CONF.register_opts(opts)
-    cfg.CONF(args=sys.argv, project='quantum')
+    cfg.CONF.register_cli_opts(opts)
+    cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
 
     proxy = ProxyDaemon(cfg.CONF.pid_file,

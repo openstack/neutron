@@ -16,7 +16,6 @@
 #    under the License.
 
 import re
-import sys
 
 import eventlet
 
@@ -164,7 +163,7 @@ def main():
     eventlet.monkey_patch()
 
     conf = setup_conf()
-    conf(sys.argv)
+    conf()
 
     # Identify namespaces that are candidates for deletion.
     candidates = [ns for ns in
