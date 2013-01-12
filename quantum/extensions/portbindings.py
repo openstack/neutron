@@ -24,6 +24,12 @@ HOST_ID = 'binding:host_id'
 # on the specific host to pass and receive vif port specific information to
 # the plugin.
 PROFILE = 'binding:profile'
+# The capabilities will be a dictionary that enables pass information about
+# functionalies quantum provides. The following value should be provided.
+#  - port_filter : Boolean value indicating Quantum provides port filtering
+#                  features such as security group and anti MAC/IP spoofing
+CAPABILITIES = 'binding:capabilities'
+CAP_PORT_FILTER = 'port_filter'
 
 VIF_TYPE_OVS = 'ovs'
 VIF_TYPE_BRIDGE = 'bridge'
@@ -41,7 +47,11 @@ EXTENDED_ATTRIBUTES_2_0 = {
                   'is_visible': True},
         PROFILE: {'allow_post': True, 'allow_put': True,
                   'default': attributes.ATTR_NOT_SPECIFIED,
+                  'validate': {'type:dict': None},
                   'is_visible': True},
+        CAPABILITIES: {'allow_post': False, 'allow_put': False,
+                       'default': attributes.ATTR_NOT_SPECIFIED,
+                       'is_visible': True},
     }
 }
 
