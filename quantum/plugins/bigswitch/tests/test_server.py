@@ -26,7 +26,6 @@ import json
 import re
 
 from wsgiref.simple_server import make_server
-from wsgiref.util import request_uri, application_uri
 
 
 class TestNetworkCtrl(object):

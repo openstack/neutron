@@ -15,9 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.api.v2 import attributes
 from quantum.common import exceptions as exc
-from quantum.common.utils import find_config_file
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
@@ -26,11 +24,11 @@ from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
+# NOTE (e0ne): this import is needed for config init
 from quantum.plugins.metaplugin.common import config
 from quantum.plugins.metaplugin import meta_db_v2
 from quantum.plugins.metaplugin.meta_models_v2 import (NetworkFlavor,
                                                        RouterFlavor)
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)

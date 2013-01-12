@@ -40,6 +40,7 @@ from quantum import context
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import dispatcher
+# NOTE (e0ne): this import is needed for config init
 from quantum.plugins.linuxbridge.common import config
 from quantum.plugins.linuxbridge.common import constants as lconst
 

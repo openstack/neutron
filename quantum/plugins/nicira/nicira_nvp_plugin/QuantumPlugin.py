@@ -34,7 +34,7 @@ from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
-from quantum.db import models_v2
+# NOTE: quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
 from quantum.extensions import providernet as pnet
 from quantum.openstack.common import cfg

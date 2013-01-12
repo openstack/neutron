@@ -16,10 +16,8 @@
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import relation
 
 from quantum.db.model_base import BASEV2 as BASE
-from quantum.db import models_v2 as models
 from quantum.plugins.cisco.db.network_models_v2 import L2NetworkBase
 
 

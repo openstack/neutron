@@ -21,7 +21,6 @@ from copy import deepcopy
 import inspect
 import logging
 
-from quantum.db import l3_db
 from quantum.manager import QuantumManager
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const

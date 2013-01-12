@@ -20,7 +20,6 @@
 import logging
 import os
 
-from quantum.common.utils import find_config_file
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_configparser as confp
 from quantum.plugins.cisco.common import cisco_constants as const

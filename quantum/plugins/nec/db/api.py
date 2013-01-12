@@ -20,6 +20,7 @@ import sqlalchemy as sa
 from quantum.db import api as db
 from quantum.db import model_base
 from quantum.openstack.common import log as logging
+# NOTE (e0ne): this import is needed for config init
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import models as nmodels

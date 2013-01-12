@@ -26,7 +26,6 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
 from quantum.plugins.cisco.db import network_db_v2 as cdb
