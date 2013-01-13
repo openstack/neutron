@@ -46,7 +46,6 @@ cfg.CONF.register_opts(ofc_opts, "OFC")
 
 # shortcuts
 CONF = cfg.CONF
-DATABASE = cfg.CONF.DATABASE
 OVS = cfg.CONF.OVS
 AGENT = cfg.CONF.AGENT
 OFC = cfg.CONF.OFC
