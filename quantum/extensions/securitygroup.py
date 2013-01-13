@@ -40,10 +40,6 @@ class SecurityGroupInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
 
-class SecurityGroupInvalidDeviceOwner(qexception.InvalidInput):
-    message = _("Security Group can't be applied to network ports.")
-
-
 class SecurityGroupInUse(qexception.InUse):
     message = _("Security Group %(id)s in use.")
 
