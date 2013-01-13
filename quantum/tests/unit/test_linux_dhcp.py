@@ -17,7 +17,6 @@
 
 import os
 import socket
-import tempfile
 import unittest2 as unittest
 
 import mock

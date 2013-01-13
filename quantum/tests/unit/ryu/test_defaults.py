@@ -18,6 +18,7 @@
 import unittest2
 
 from quantum.openstack.common import cfg
+#NOTE this import loads tests required options
 from quantum.plugins.ryu.common import config
 
 
