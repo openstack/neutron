@@ -81,8 +81,10 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                      'network_type': binding.network_type,
                      'segmentation_id': binding.segmentation_id,
                      'physical_network': binding.physical_network}
-            # Set the port status to UP
-            ovs_db_v2.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
+            new_status = (q_const.PORT_STATUS_ACTIVE if port['admin_state_up']
+                          else q_const.PORT_STATUS_DOWN)
+            if port['status'] != new_status:
+                ovs_db_v2.set_port_status(port['id'], new_status)
         else:
             entry = {'device': device}
             LOG.debug(_("%s can not be found in database"), device)
@@ -99,13 +101,28 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         if port:
             entry = {'device': device,
                      'exists': True}
-            # Set port status to DOWN
-            ovs_db_v2.set_port_status(port['id'], q_const.PORT_STATUS_DOWN)
+            if port['status'] != q_const.PORT_STATUS_DOWN:
+                # Set port status to DOWN
+                ovs_db_v2.set_port_status(port['id'], q_const.PORT_STATUS_DOWN)
         else:
             entry = {'device': device,
                      'exists': False}
             LOG.debug(_("%s can not be found in database"), device)
         return entry
+
+    def update_device_up(self, rpc_context, **kwargs):
+        """Device is up on agent"""
+        agent_id = kwargs.get('agent_id')
+        device = kwargs.get('device')
+        LOG.debug(_("Device %(device)s up on %(agent_id)s"),
+                  locals())
+        port = ovs_db_v2.get_port(device)
+        if port:
+            if port['status'] != q_const.PORT_STATUS_ACTIVE:
+                ovs_db_v2.set_port_status(port['id'],
+                                          q_const.PORT_STATUS_ACTIVE)
+        else:
+            LOG.debug(_("%s can not be found in database"), device)
 
     def tunnel_sync(self, rpc_context, **kwargs):
         """Update new tunnel.
@@ -502,6 +519,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return port
 
     def create_port(self, context, port):
+        # Set port status as 'DOWN'. This will be updated by agent
+        port['port']['status'] = q_const.PORT_STATUS_DOWN
         port = super(OVSQuantumPluginV2, self).create_port(context, port)
         return self._extend_port_dict_binding(context, port)
 

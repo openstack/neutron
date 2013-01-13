@@ -108,3 +108,10 @@ class rpcApiTestCase(unittest2.TestCase):
         self._test_ovs_api(rpcapi, topics.PLUGIN,
                            'tunnel_sync', rpc_method='call',
                            tunnel_ip='fake_tunnel_ip')
+
+    def test_update_device_up(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_ovs_api(rpcapi, topics.PLUGIN,
+                           'update_device_up', rpc_method='call',
+                           device='fake_device',
+                           agent_id='fake_agent_id')

@@ -25,6 +25,7 @@ class OpenvswitchPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
     def setUp(self):
         super(OpenvswitchPluginV2TestCase, self).setUp(self._plugin_name)
+        self.port_create_status = 'DOWN'
 
 
 class TestOpenvswitchBasicGet(test_plugin.TestBasicGet,
@@ -43,6 +44,11 @@ class TestOpenvswitchPortsV2(test_plugin.TestPortsV2,
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = False
+
+    def test_update_port_status_build(self):
+        with self.port() as port:
+            self.assertEqual(port['port']['status'], 'DOWN')
+            self.assertEqual(self.port_create_status, 'DOWN')
 
 
 class TestOpenvswitchNetworksV2(test_plugin.TestNetworksV2,
