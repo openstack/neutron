@@ -67,8 +67,10 @@ def _filters(request, attr_info):
         if key == 'fields':
             continue
         values = [v for v in request.GET.getall(key) if v]
-        key_attr_info = attr_info.get(key, {})
-        if not key_attr_info and values:
+        if not values:
+            continue
+        key_attr_info = attr_info.get(key)
+        if not key_attr_info:
             res[key] = values
             continue
         convert_list_to = key_attr_info.get('convert_list_to')
@@ -77,12 +79,13 @@ def _filters(request, attr_info):
             if convert_to:
                 convert_list_to = lambda values_: [convert_to(x)
                                                    for x in values_]
-        if convert_list_to:
-            result_values = convert_list_to(values)
-        else:
-            result_values = values
+            else:
+                convert_list_to = lambda values_: None
+        result_values = convert_list_to(values)
         if result_values:
             res[key] = result_values
+        else:
+            res[key] = values
     return res
 
 
