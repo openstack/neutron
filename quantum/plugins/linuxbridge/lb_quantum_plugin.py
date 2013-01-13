@@ -86,8 +86,10 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                      'network_id': port['network_id'],
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
-            # Set the port status to UP
-            db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
+            new_status = (q_const.PORT_STATUS_ACTIVE if port['admin_state_up']
+                          else q_const.PORT_STATUS_DOWN)
+            if port['status'] != new_status:
+                db.set_port_status(port['id'], new_status)
         else:
             entry = {'device': device}
             LOG.debug(_("%s can not be found in database"), device)
@@ -104,13 +106,28 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         if port:
             entry = {'device': device,
                      'exists': True}
-            # Set port status to DOWN
-            db.set_port_status(port['id'], q_const.PORT_STATUS_DOWN)
+            if port['status'] != q_const.PORT_STATUS_DOWN:
+                # Set port status to DOWN
+                db.set_port_status(port['id'], q_const.PORT_STATUS_DOWN)
         else:
             entry = {'device': device,
                      'exists': False}
             LOG.debug(_("%s can not be found in database"), device)
         return entry
+
+    def update_device_up(self, rpc_context, **kwargs):
+        """Device is up on agent"""
+        agent_id = kwargs.get('agent_id')
+        device = kwargs.get('device')
+        LOG.debug(_("Device %(device)s up %(agent_id)s"),
+                  locals())
+        port = self.get_port_from_device(device)
+        if port:
+            if port['status'] != q_const.PORT_STATUS_ACTIVE:
+                # Set port status to ACTIVE
+                db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
+        else:
+            LOG.debug(_("%s can not be found in database"), device)
 
 
 class AgentNotifierApi(proxy.RpcProxy,
@@ -508,6 +525,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         if port_updated:
             self._notify_port_updated(context, port)
+
         return self._extend_port_dict_binding(context, port)
 
     def delete_port(self, context, id, l3_port_check=True):

@@ -29,7 +29,7 @@ class TestLinuxBridge(unittest.TestCase):
         interface_mappings = {'physnet1': 'eth1'}
         root_helper = cfg.CONF.AGENT.root_helper
 
-        self.linux_bridge = linuxbridge_quantum_agent.LinuxBridge(
+        self.linux_bridge = linuxbridge_quantum_agent.LinuxBridgeManager(
             interface_mappings, root_helper)
 
     def test_ensure_physical_in_bridge_invalid(self):
