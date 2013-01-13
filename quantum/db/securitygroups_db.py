@@ -450,7 +450,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if not attr.is_attr_set(p.get(ext_sg.SECURITYGROUPS)):
             return
         if p.get('device_owner') and p['device_owner'].startswith('network:'):
-            raise ext_sg.SecurityGroupInvalidDeviceOwner()
+            return
 
         valid_groups = self.get_security_groups(context, fields={'id': None})
         valid_groups_set = set([x['id'] for x in valid_groups])
