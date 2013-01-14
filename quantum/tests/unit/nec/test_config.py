@@ -23,7 +23,6 @@ from quantum.plugins.nec.common import config
 class ConfigurationTest(unittest.TestCase):
 
     def test_defaults(self):
-        self.assertEqual('sqlite://', config.DATABASE.sql_connection)
         self.assertEqual('sqlite://', config.CONF.DATABASE.sql_connection)
         self.assertEqual(-1, config.CONF.DATABASE.sql_max_retries)
         self.assertEqual(2, config.CONF.DATABASE.reconnect_interval)
