@@ -17,15 +17,12 @@
 #
 
 import httplib
-import mock
 
 
 def _conn_str(conn):
     if isinstance(conn, httplib.HTTPSConnection):
         proto = "https://"
     elif isinstance(conn, httplib.HTTPConnection):
-        proto = "http://"
-    elif isinstance(conn, mock.Mock):
         proto = "http://"
     else:
         raise TypeError('_conn_str() invalid connection type: %s' % type(conn))
