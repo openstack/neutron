@@ -45,7 +45,7 @@ class SessionPersistence(model_base.BASEV2):
     type = sa.Column(sa.Enum("SOURCE_IP",
                              "HTTP_COOKIE",
                              "APP_COOKIE",
-                             name="type"),
+                             name="sesssionpersistences_type"),
                      nullable=False)
     cookie_name = sa.Column(sa.String(1024))
 
@@ -67,7 +67,7 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     subnet_id = sa.Column(sa.String(36), nullable=False)
     address = sa.Column(sa.String(64))
     port = sa.Column(sa.Integer, nullable=False)
-    protocol = sa.Column(sa.Enum("HTTP", "HTTPS", name="protocol"),
+    protocol = sa.Column(sa.Enum("HTTP", "HTTPS", name="vip_protocol"),
                          nullable=False)
     pool_id = sa.Column(sa.String(36), nullable=False)
     session_persistence = orm.relationship(SessionPersistence,
@@ -99,7 +99,8 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     protocol = sa.Column(sa.String(64), nullable=False)
     lb_method = sa.Column(sa.Enum("ROUND_ROBIN",
                                   "LEAST_CONNECTIONS",
-                                  "SOURCE_IP"),
+                                  "SOURCE_IP",
+                                  name="pools_lb_method"),
                           nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
@@ -115,7 +116,8 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer healthmonitor."""
-    type = sa.Column(sa.Enum("PING", "TCP", "HTTP", "HTTPS", name="type"),
+    type = sa.Column(sa.Enum("PING", "TCP", "HTTP", "HTTPS",
+                             name="healthmontiors_type"),
                      nullable=False)
     delay = sa.Column(sa.Integer, nullable=False)
     timeout = sa.Column(sa.Integer, nullable=False)
