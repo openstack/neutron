@@ -2052,10 +2052,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet_port_exists_owned_by_other(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
-                req = self.new_delete_request('subnets',
-                                              subnet['subnet']['id'])
+                id = subnet['subnet']['id']
+                req = self.new_delete_request('subnets', id)
                 res = req.get_response(self.api)
+                data = self.deserialize('json', res)
                 self.assertEqual(res.status_int, 409)
+                msg = str(q_exc.SubnetInUse(subnet_id=id))
+                self.assertEqual(data['QuantumError'], msg)
 
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'
