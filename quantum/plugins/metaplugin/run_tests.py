@@ -29,7 +29,6 @@ import os
 import sys
 
 from nose import config
-from nose import core
 
 sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(__file__))

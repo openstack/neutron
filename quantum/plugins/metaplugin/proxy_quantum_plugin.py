@@ -18,7 +18,6 @@
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
-from quantum.db import models_v2
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantumclient.common import exceptions

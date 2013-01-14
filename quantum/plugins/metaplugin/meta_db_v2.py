@@ -17,7 +17,6 @@
 
 from sqlalchemy.orm import exc
 
-import quantum.db.api as db
 from quantum.plugins.metaplugin import meta_models_v2
 
 
