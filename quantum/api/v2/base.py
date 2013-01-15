@@ -474,20 +474,18 @@ class Controller(object):
 
         if is_create:  # POST
             for attr, attr_vals in attr_info.iteritems():
-                is_required = ('default' not in attr_vals and
-                               attr_vals['allow_post'])
-                if is_required and attr not in res_dict:
-                    msg = _("Failed to parse request. Required "
-                            " attribute '%s' not specified") % attr
-                    raise webob.exc.HTTPBadRequest(msg)
-
-                if not attr_vals['allow_post'] and attr in res_dict:
-                    msg = _("Attribute '%s' not allowed in POST") % attr
-                    raise webob.exc.HTTPBadRequest(msg)
-
                 if attr_vals['allow_post']:
+                    if ('default' not in attr_vals and
+                        attr not in res_dict):
+                        msg = _("Failed to parse request. Required "
+                                "attribute '%s' not specified") % attr
+                        raise webob.exc.HTTPBadRequest(msg)
                     res_dict[attr] = res_dict.get(attr,
                                                   attr_vals.get('default'))
+                else:
+                    if attr in res_dict:
+                        msg = _("Attribute '%s' not allowed in POST") % attr
+                        raise webob.exc.HTTPBadRequest(msg)
         else:  # PUT
             for attr, attr_vals in attr_info.iteritems():
                 if attr in res_dict and not attr_vals['allow_put']:
@@ -495,16 +493,14 @@ class Controller(object):
                     raise webob.exc.HTTPBadRequest(msg)
 
         for attr, attr_vals in attr_info.iteritems():
+            if (attr not in res_dict or
+                res_dict[attr] is attributes.ATTR_NOT_SPECIFIED):
+                continue
             # Convert values if necessary
-            if ('convert_to' in attr_vals and
-                attr in res_dict and
-                res_dict[attr] != attributes.ATTR_NOT_SPECIFIED):
+            if 'convert_to' in attr_vals:
                 res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
-
             # Check that configured values are correct
-            if not ('validate' in attr_vals and
-                    attr in res_dict and
-                    res_dict[attr] != attributes.ATTR_NOT_SPECIFIED):
+            if 'validate' not in attr_vals:
                 continue
             for rule in attr_vals['validate']:
                 res = attributes.validators[rule](res_dict[attr],
