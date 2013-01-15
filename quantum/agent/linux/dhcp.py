@@ -221,9 +221,8 @@ class Dnsmasq(DhcpLocalProcess):
             '--bind-interfaces',
             '--interface=%s' % self.interface_name,
             '--except-interface=lo',
-            '--domain=%s' % self.conf.dhcp_domain,
-            '--pid-file=%s' % self.get_conf_file_name('pid',
-                                                      ensure_conf_dir=True),
+            '--pid-file=%s' % self.get_conf_file_name(
+                'pid', ensure_conf_dir=True),
             #TODO (mark): calculate value from cidr (defaults to 150)
             #'--dhcp-lease-max=%s' % ?,
             '--dhcp-hostsfile=%s' % self._output_hosts_file(),
@@ -251,6 +250,9 @@ class Dnsmasq(DhcpLocalProcess):
         cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
         if self.conf.dnsmasq_dns_server:
             cmd.append('--server=%s' % self.conf.dnsmasq_dns_server)
+
+        if self.conf.dhcp_domain:
+            cmd.append('--domain=%s' % self.conf.dhcp_domain)
 
         if self.namespace:
             ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)

@@ -426,7 +426,6 @@ class TestDnsmasq(TestBase):
             '--bind-interfaces',
             '--interface=tap0',
             '--except-interface=lo',
-            '--domain=openstacklocal',
             '--pid-file=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/pid',
             '--dhcp-hostsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host',
             '--dhcp-optsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts',
@@ -434,8 +433,7 @@ class TestDnsmasq(TestBase):
              'dnsmasq-lease-update'),
             '--leasefile-ro',
             '--dhcp-range=set:tag0,192.168.0.0,static,120s',
-            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s',
-        ]
+            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s']
         expected.extend(extra_options)
 
         self.execute.return_value = ('', '')
@@ -466,15 +464,21 @@ class TestDnsmasq(TestBase):
                                                      check_exit_code=True)
 
     def test_spawn(self):
-        self._test_spawn(['--conf-file='])
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'])
 
     def test_spawn_cfg_config_file(self):
         self.conf.set_override('dnsmasq_config_file', '/foo')
-        self._test_spawn(['--conf-file=/foo'])
+        self._test_spawn(['--conf-file=/foo', '--domain=openstacklocal'])
+
+    def test_spawn_no_dhcp_domain(self):
+        self.conf.set_override('dhcp_domain', '')
+        self._test_spawn(['--conf-file='])
 
     def test_spawn_cfg_dns_server(self):
         self.conf.set_override('dnsmasq_dns_server', '8.8.8.8')
-        self._test_spawn(['--conf-file=', '--server=8.8.8.8'])
+        self._test_spawn(['--conf-file=',
+                          '--server=8.8.8.8',
+                          '--domain=openstacklocal'])
 
     def test_output_opts_file(self):
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
