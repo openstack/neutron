@@ -21,6 +21,10 @@ from copy import deepcopy
 import inspect
 import logging
 
+from keystoneclient.v2_0 import client as keystone_client
+from novaclient.v1_1 import client as nova_client
+
+from quantum.db import l3_db
 from quantum.manager import QuantumManager
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
@@ -29,7 +33,6 @@ from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.openvswitch import ovs_db_v2 as odb
 from quantum import quantum_plugin_base_v2
-
 
 LOG = logging.getLogger(__name__)
 
@@ -46,11 +49,11 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     _plugins = {}
     _inventory = {}
     _methods_to_delegate = ['get_network', 'get_networks',
-                            'create_port', 'create_port_bulk', 'delete_port',
-                            'update_port', 'get_port', 'get_ports',
+                            'create_port_bulk', 'update_port',
+                            'get_port', 'get_ports',
                             'create_subnet', 'create_subnet_bulk',
-                            'delete_subnet', 'update_subnet', 'get_subnet',
-                            'get_subnets', ]
+                            'delete_subnet', 'update_subnet',
+                            'get_subnet', 'get_subnets', ]
 
     def __init__(self):
         """
@@ -181,6 +184,25 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         else:
             return False
 
+    def _get_instance_host(self, tenant_id, instance_id):
+        keystone = cred._creds_dictionary['keystone']
+        kc = keystone_client.Client(username=keystone['username'],
+                                    password=keystone['password'],
+                                    tenant_id=tenant_id,
+                                    auth_url=keystone['auth_url'])
+        tenant = kc.tenants.get(tenant_id)
+        tenant_name = tenant.name
+
+        nc = nova_client.Client(keystone['username'],
+                                keystone['password'],
+                                tenant_name,
+                                keystone['auth_url'],
+                                no_cache=True)
+        serv = nc.servers.get(instance_id)
+        host = serv.__getattr__('OS-EXT-SRV-ATTR:host')
+
+        return host
+
     def create_network(self, context, network):
         """
         Perform this operation in the context of the configured device
@@ -200,9 +222,6 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             args = [ovs_output[0]['tenant_id'], ovs_output[0]['name'],
                     ovs_output[0]['id'], vlan_name, vlan_id,
                     {'vlan_ids': vlanids}]
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          self._func_name(),
-                                                          args)
             return ovs_output[0]
         except:
             # TODO (Sumit): Check if we need to perform any rollback here
@@ -221,14 +240,6 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             LOG.debug("ovs_output: %s\n " % ovs_output)
             vlanids = self._get_all_segmentation_ids()
             ovs_networks = ovs_output
-            for ovs_network in ovs_networks:
-                vlan_id = self._get_segmentation_id(ovs_network['id'])
-                vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
-                args = [ovs_network['tenant_id'], ovs_network['name'],
-                        ovs_network['id'], vlan_name, vlan_id,
-                        {'vlan_ids': vlanids}]
-                nexus_output = self._invoke_plugin_per_device(
-                    const.NEXUS_PLUGIN, "create_network", args)
             return ovs_output
         except:
             # TODO (Sumit): Check if we need to perform any rollback here
@@ -289,8 +300,41 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def create_port(self, context, port):
-        """For this model this method will be delegated to vswitch plugin"""
-        pass
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        LOG.debug("create_port() called\n")
+        try:
+            args = [context, port]
+            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                        self._func_name(),
+                                                        args)
+            net_id = port['port']['network_id']
+            instance_id = port['port']['device_id']
+            tenant_id = port['port']['tenant_id']
+
+            net_dict = self.get_network(context, net_id)
+            net_name = net_dict['name']
+
+            vlan_id = self._get_segmentation_id(net_id)
+            host = ''
+            if hasattr(conf, 'TEST'):
+                host = conf.TEST['host']
+            else:
+                host = self._get_instance_host(tenant_id, instance_id)
+
+            # Trunk segmentation id for only this host
+            vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
+            n_args = [tenant_id, net_name, net_id,
+                      vlan_name, vlan_id, host, instance_id]
+            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                          'create_network',
+                                                          n_args)
+            return ovs_output[0]
+        except:
+            # TODO (asomya): Check if we need to perform any rollback here
+            raise
 
     def get_port(self, context, id, fields=None):
         """For this model this method will be delegated to vswitch plugin"""
@@ -304,9 +348,27 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
-    def delete_port(self, context, id, kwargs):
-        """For this model this method will be delegated to vswitch plugin"""
-        pass
+    def delete_port(self, context, id):
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        LOG.debug("delete_port() called\n")
+        try:
+            args = [context, id]
+            port = self.get_port(context, id)
+            vlan_id = self._get_segmentation_id(port['network_id'])
+            n_args = [port['device_id'], vlan_id]
+            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                        self._func_name(),
+                                                        args)
+            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                          self._func_name(),
+                                                          n_args)
+            return ovs_output[0]
+        except:
+            # TODO (asomya): Check if we need to perform any rollback here
+            raise
 
     def create_subnet(self, context, subnet):
         """For this model this method will be delegated to vswitch plugin"""

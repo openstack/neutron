@@ -30,10 +30,7 @@ from quantum.plugins.cisco.common import cisco_configparser as confp
 CP = confp.CiscoConfigParser(find_config_file({'plugin': 'cisco'},
                              "nexus.ini"))
 
-SECTION = CP['SWITCH']
-NEXUS_IP_ADDRESS = SECTION['nexus_ip_address']
-NEXUS_PORTS = SECTION['ports']
-NEXUS_SSH_PORT = SECTION['nexus_ssh_port']
+NEXUS_DETAILS = CP['SWITCH']
 
 SECTION = CP['DRIVER']
 NEXUS_DRIVER = SECTION['name']
