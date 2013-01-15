@@ -27,6 +27,8 @@ from quantum.openstack.common import cfg
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.test_db_plugin as test_plugin
+import quantum.tests.unit.test_extension_portsecurity as psec
+
 
 LOG = logging.getLogger(__name__)
 NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
@@ -152,3 +154,34 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_bridge_network(vlan_id=5000)
         self.assertEquals(ctx_manager.exception.code, 400)
+
+
+class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
+
+    _plugin_name = ('%s.QuantumPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
+
+    def setUp(self):
+        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
+        test_lib.test_config['config_files'] = [os.path.join(etc_path,
+                                                             'nvp.ini.test')]
+        # mock nvp api client
+        fc = fake_nvpapiclient.FakeClient(etc_path)
+        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
+                                      % NICIRA_PKG_PATH, autospec=True)
+        instance = self.mock_nvpapi.start()
+        instance.return_value.login.return_value = "the_cookie"
+
+        def _fake_request(*args, **kwargs):
+            return fc.fake_request(*args, **kwargs)
+
+        instance.return_value.request.side_effect = _fake_request
+        super(NiciraPortSecurityTestCase, self).setUp(self._plugin_name)
+
+    def tearDown(self):
+        super(NiciraPortSecurityTestCase, self).tearDown()
+        self.mock_nvpapi.stop()
+
+
+class TestNiciraPortSecurity(psec.TestPortSecurity,
+                             NiciraPortSecurityTestCase):
+        pass
