@@ -27,17 +27,17 @@ import sys
 import time
 
 import eventlet
-import extras
 import logging as std_logging
 
 from quantum.openstack.common import cfg
 from quantum.openstack.common import eventlet_backdoor
 from quantum.openstack.common.gettextutils import _
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import threadgroup
 
 
-rpc = extras.try_import('quantum.openstack.common.rpc')
+rpc = importutils.try_import('quantum.openstack.common.rpc')
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 

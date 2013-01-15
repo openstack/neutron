@@ -1735,11 +1735,13 @@ class CommonConfigOpts(ConfigOpts):
         BoolOpt('debug',
                 short='d',
                 default=False,
-                help='Print debugging output'),
+                help='Print debugging output (set logging level to '
+                     'DEBUG instead of default WARNING level).'),
         BoolOpt('verbose',
                 short='v',
                 default=False,
-                help='Print more verbose output'),
+                help='Print more verbose output (set logging level to '
+                     'INFO instead of default WARNING level).'),
     ]
 
     logging_cli_opts = [
