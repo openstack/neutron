@@ -21,7 +21,6 @@ from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
 import webob.exc as w_exc
 
-from quantum import policy
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.db import db_base_plugin_v2
@@ -33,6 +32,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
+from quantum import policy
 
 
 LOG = logging.getLogger(__name__)

@@ -15,8 +15,8 @@
 #    under the License.
 # @author: Ryota MIBU
 
-from quantum.common import topics
 from quantum.common import rpc as q_rpc
+from quantum.common import topics
 from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db

@@ -33,8 +33,8 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
-from quantum.plugins.hyperv import db as hyperv_db
 from quantum.plugins.hyperv.common import constants
+from quantum.plugins.hyperv import db as hyperv_db
 from quantum import policy
 
 LOG = logging.getLogger(__name__)

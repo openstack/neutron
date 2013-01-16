@@ -20,9 +20,9 @@
 Unit tests for Windows Hyper-V virtual switch quantum driver
 """
 
-import mock
 import sys
 
+import mock
 import unittest2 as unittest
 
 from quantum.openstack.common import cfg

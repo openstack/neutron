@@ -27,8 +27,8 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
 from quantum.openstack.common import context
 from quantum.openstack.common import rpc
-from quantum.plugins.hyperv.common import constants
 from quantum.plugins.hyperv import agent_notifier_api as ana
+from quantum.plugins.hyperv.common import constants
 
 
 class rpcHyperVApiTestCase(unittest2.TestCase):
