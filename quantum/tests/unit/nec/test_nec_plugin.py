@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from quantum.extensions import portbindings
 from quantum.tests.unit import test_db_plugin as test_plugin
+from quantum.tests.unit import _test_extension_portbindings as test_bindings
 
 
 class NecPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
@@ -33,8 +35,11 @@ class TestNecV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
-class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase):
-    pass
+class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase,
+                     test_bindings.PortBindingsTestCase):
+
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_SECURITY_GROUP = False
 
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):

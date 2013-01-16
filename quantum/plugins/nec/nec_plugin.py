@@ -21,6 +21,7 @@ from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
+from quantum.extensions import portbindings
 #NOTE(amotoki): quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
 from quantum.openstack.common import log as logging
@@ -30,6 +31,7 @@ from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import nec_plugin_base
 from quantum.plugins.nec import ofc_manager
+from quantum import policy
 
 LOG = logging.getLogger(__name__)
 
@@ -58,9 +60,15 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
     NOTE: This is for Quantum API V2.  Codes for V1.0 and V1.1 are available
           at https://github.com/nec-openstack/quantum-openflow-plugin .
+
+    The port binding extension enables an external application relay
+    information to and from the plugin.
     """
 
-    supported_extension_aliases = ["router", "quotas"]
+    supported_extension_aliases = ["router", "quotas", "binding"]
+
+    binding_view = "extension:port_binding:view"
+    binding_set = "extension:port_binding:set"
 
     def __init__(self):
         ndb.initialize()
@@ -72,6 +80,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
             self.supported_extension_aliases.append("PacketFilters")
 
         self.setup_rpc()
+
+    def _check_view_auth(self, context, resource, action):
+        return policy.check(context, action, resource)
+
+    def _enforce_set_auth(self, context, resource, action):
+        policy.enforce(context, action, resource)
 
     def setup_rpc(self):
         self.topic = topics.PLUGIN
@@ -312,6 +326,14 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         nets = self._filter_nets_l3(context, nets, filters)
         return [self._fields(net, fields) for net in nets]
 
+    def _extend_port_dict_binding(self, context, port):
+        if self._check_view_auth(context, port, self.binding_view):
+            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
+            port[portbindings.CAPABILITIES] = {
+                portbindings.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}
+        return port
+
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
@@ -320,8 +342,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
                                      OperationalStatus.BUILD)
 
         self.activate_port_if_ready(context, new_port)
-
-        return new_port
+        return self._extend_port_dict_binding(context, new_port)
 
     def update_port(self, context, id, port):
         """Update port, and handle packetfilters associated with the port.
@@ -342,7 +363,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
             else:
                 self.deactivate_port(context, old_port)
 
-        return new_port
+        return self._extend_port_dict_binding(context, new_port)
 
     def delete_port(self, context, id, l3_port_check=True):
         """Delete port and packet_filters associated with the port."""
@@ -365,6 +386,22 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
             self.prevent_l3_port_deletion(context, id)
         self.disassociate_floatingips(context, id)
         super(NECPluginV2, self).delete_port(context, id)
+
+    def get_port(self, context, id, fields=None):
+        session = context.session
+        with session.begin(subtransactions=True):
+            port = super(NECPluginV2, self).get_port(context, id, fields)
+            self._extend_port_dict_binding(context, port)
+        return self._fields(port, fields)
+
+    def get_ports(self, context, filters=None, fields=None):
+        session = context.session
+        with session.begin(subtransactions=True):
+            ports = super(NECPluginV2, self).get_ports(context, filters,
+                                                       fields)
+            for port in ports:
+                self._extend_port_dict_binding(context, port)
+        return [self._fields(port, fields) for port in ports]
 
     # For PacketFilter Extension
 
