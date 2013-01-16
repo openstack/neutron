@@ -16,12 +16,12 @@
 # @author: Ryota MIBU
 
 from quantum.common import topics
+from quantum.common import rpc as q_rpc
 from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
@@ -495,7 +495,6 @@ class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     def __init__(self, plugin):
         self.plugin = plugin
-        self.admin_context = context.get_admin_context()
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -503,7 +502,7 @@ class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return dispatcher.RpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self])
 
     def update_ports(self, rpc_context, **kwargs):
         """Update ports' information and activate/deavtivate them.
@@ -521,15 +520,15 @@ class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         datapath_id = kwargs['datapath_id']
         for p in kwargs.get('port_added', []):
             id = p['id']
-            port = self.plugin.get_port(self.admin_context, id)
+            port = self.plugin.get_port(rpc_context, id)
             if port and ndb.get_portinfo(id):
                 ndb.del_portinfo(id)
-                self.plugin.deactivate_port(self.admin_context, port)
+                self.plugin.deactivate_port(rpc_context, port)
             ndb.add_portinfo(id, datapath_id, p['port_no'],
                              mac=p.get('mac', ''))
-            self.plugin.activate_port_if_ready(self.admin_context, port)
+            self.plugin.activate_port_if_ready(rpc_context, port)
         for id in kwargs.get('port_removed', []):
-            port = self.plugin.get_port(self.admin_context, id)
+            port = self.plugin.get_port(rpc_context, id)
             if port and ndb.get_portinfo(id):
                 ndb.del_portinfo(id)
-                self.plugin.deactivate_port(self.admin_context, port)
+                self.plugin.deactivate_port(rpc_context, port)
