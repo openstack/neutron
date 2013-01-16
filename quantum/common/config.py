@@ -63,9 +63,11 @@ core_cli_opts = [
 cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_cli_opts(core_cli_opts)
 
+# Ensure that the control exchange is set correctly
+rpc.set_defaults(control_exchange='quantum')
+
 
 def parse(args):
-    rpc.set_defaults(control_exchange='quantum')
     cfg.CONF(args=args, project='quantum',
              version='%%prog %s' % quantum_version.version_string_with_vcs())
 
