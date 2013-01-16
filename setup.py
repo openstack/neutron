@@ -91,7 +91,6 @@ else:
             ['etc/quantum/plugins/cisco/credentials.ini',
              'etc/quantum/plugins/cisco/l2network_plugin.ini',
              'etc/quantum/plugins/cisco/nexus.ini',
-             'etc/quantum/plugins/cisco/ucs.ini',
              'etc/quantum/plugins/cisco/cisco_plugins.ini',
              'etc/quantum/plugins/cisco/db_conn.ini']),
         (bigswitch_plugin_config_path,

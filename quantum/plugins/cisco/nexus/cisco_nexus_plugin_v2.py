@@ -47,6 +47,8 @@ class NexusPlugin(L2DevicePluginBase):
         """
         Extracts the configuration parameters from the configuration file
         """
+        # Initialize the nxos db
+        nxos_db.initialize()
         self._client = importutils.import_object(conf.NEXUS_DRIVER)
         LOG.debug(_("Loaded driver %s"), conf.NEXUS_DRIVER)
         self._nexus_switches = conf.NEXUS_DETAILS

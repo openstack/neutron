@@ -18,19 +18,20 @@
 from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as q_exc
+from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.db import l2network_models
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 
-import logging as LOG
 import quantum.plugins.cisco.db.api as db
 
 
+LOG = logging.getLogger(__name__)
+
+
 def initialize():
-    'Establish database connection and load models'
-    options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
-               conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
-    db.configure_db(options)
+    """Establish database connection and load models"""
+    db.configure_db()
 
 
 def create_vlanids():
@@ -205,159 +206,6 @@ def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
         return binding
     except exc.NoResultFound:
         raise q_exc.NetworkNotFound(net_id=netid)
-
-
-def get_all_portprofiles():
-    """Lists all the port profiles"""
-    LOG.debug(_("get_all_portprofiles() called"))
-    session = db.get_session()
-    try:
-        pps = session.query(l2network_models.PortProfile).all()
-        return pps
-    except exc.NoResultFound:
-        return []
-
-
-def get_portprofile(tenantid, ppid):
-    """Lists a port profile"""
-    LOG.debug(_("get_portprofile() called"))
-    session = db.get_session()
-    try:
-        pp = (session.query(l2network_models.PortProfile).
-              filter_by(uuid=ppid).one())
-        return pp
-    except exc.NoResultFound:
-        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
-                                        portprofile_id=ppid)
-
-
-def add_portprofile(tenantid, ppname, vlanid, qos):
-    """Adds a port profile"""
-    LOG.debug(_("add_portprofile() called"))
-    session = db.get_session()
-    try:
-        pp = (session.query(l2network_models.PortProfile).
-              filter_by(name=ppname).one())
-        raise c_exc.PortProfileAlreadyExists(tenant_id=tenantid,
-                                             pp_name=ppname)
-    except exc.NoResultFound:
-        pp = l2network_models.PortProfile(ppname, vlanid, qos)
-        session.add(pp)
-        session.flush()
-        return pp
-
-
-def remove_portprofile(tenantid, ppid):
-    """Removes a port profile"""
-    LOG.debug(_("remove_portprofile() called"))
-    session = db.get_session()
-    try:
-        pp = (session.query(l2network_models.PortProfile).
-              filter_by(uuid=ppid).one())
-        session.delete(pp)
-        session.flush()
-        return pp
-    except exc.NoResultFound:
-        pass
-
-
-def update_portprofile(tenantid, ppid, newppname=None, newvlanid=None,
-                       newqos=None):
-    """Updates port profile"""
-    LOG.debug(_("update_portprofile() called"))
-    session = db.get_session()
-    try:
-        pp = (session.query(l2network_models.PortProfile).
-              filter_by(uuid=ppid).one())
-        if newppname:
-            pp["name"] = newppname
-        if newvlanid:
-            pp["vlan_id"] = newvlanid
-        if newqos:
-            pp["qos"] = newqos
-        session.merge(pp)
-        session.flush()
-        return pp
-    except exc.NoResultFound:
-        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
-                                        portprofile_id=ppid)
-
-
-def get_all_pp_bindings():
-    """Lists all the port profiles"""
-    LOG.debug(_("get_all_pp_bindings() called"))
-    session = db.get_session()
-    try:
-        bindings = session.query(l2network_models.PortProfileBinding).all()
-        return bindings
-    except exc.NoResultFound:
-        return []
-
-
-def get_pp_binding(tenantid, ppid):
-    """Lists a port profile binding"""
-    LOG.debug(_("get_pp_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(l2network_models.PortProfileBinding).
-                   filter_by(portprofile_id=ppid).one())
-        return binding
-    except exc.NoResultFound:
-        return []
-
-
-def add_pp_binding(tenantid, portid, ppid, default):
-    """Adds a port profile binding"""
-    LOG.debug(_("add_pp_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(l2network_models.PortProfileBinding).
-                   filter_by(portprofile_id=ppid).one())
-        raise c_exc.PortProfileBindingAlreadyExists(pp_id=ppid,
-                                                    port_id=portid)
-    except exc.NoResultFound:
-        binding = l2network_models.PortProfileBinding(tenantid, portid,
-                                                      ppid, default)
-        session.add(binding)
-        session.flush()
-        return binding
-
-
-def remove_pp_binding(tenantid, portid, ppid):
-    """Removes a port profile binding"""
-    LOG.debug(_("remove_pp_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(l2network_models.PortProfileBinding).
-                   filter_by(portprofile_id=ppid).filter_by(port_id=portid).
-                   one())
-        session.delete(binding)
-        session.flush()
-        return binding
-    except exc.NoResultFound:
-        pass
-
-
-def update_pp_binding(tenantid, ppid, newtenantid=None,
-                      newportid=None, newdefault=None):
-    """Updates port profile binding"""
-    LOG.debug(_("update_pp_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(l2network_models.PortProfileBinding).
-                   filter_by(portprofile_id=ppid).one())
-        if newtenantid:
-            binding["tenant_id"] = newtenantid
-        if newportid:
-            binding["port_id"] = newportid
-        if newdefault:
-            binding["default"] = newdefault
-        session.merge(binding)
-        session.flush()
-        return binding
-    except exc.NoResultFound:
-        raise c_exc.PortProfileNotFound(tenant_id=tenantid,
-                                        portprofile_id=ppid)
 
 
 def get_all_qoss(tenant_id):

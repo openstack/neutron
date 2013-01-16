@@ -27,8 +27,6 @@ class Fault(webob.exc.HTTPException):
     _fault_names = {
         400: "malformedRequest",
         401: "unauthorized",
-        421: "PortprofileInUse",
-        450: "PortprofileNotFound",
         451: "CredentialNotFound",
         452: "QoSNotFound",
         453: "NovatenantNotFound",
@@ -58,21 +56,6 @@ class Fault(webob.exc.HTTPException):
             fault_data, content_type)
         self.wrapped_exc.content_type = content_type
         return self.wrapped_exc
-
-
-class PortprofileNotFound(webob.exc.HTTPClientError):
-    """
-    subclass of :class:`~HTTPClientError`
-
-    This indicates that the server did not find the Portprofile specified
-    in the HTTP request
-
-    code: 450, title: Portprofile not Found
-    """
-    code = 450
-    title = _('Portprofile Not Found')
-    explanation = _('Unable to find a Portprofile with'
-                    ' the specified identifier.')
 
 
 class PortNotFound(webob.exc.HTTPClientError):
@@ -131,21 +114,6 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     code = 453
     title = _('Nova tenant Not Found')
     explanation = _('Unable to find a Novatenant with'
-                    ' the specified identifier.')
-
-
-class MultiportNotFound(webob.exc.HTTPClientError):
-    """
-    subclass of :class:`~HTTPClientError`
-
-    This indicates that the server did not find the Multiport specified
-    in the HTTP request
-
-    code: 454, title: Multiport not Found
-    """
-    code = 454
-    title = _('Multiport Not Found')
-    explanation = _('Unable to find Multiport with'
                     ' the specified identifier.')
 
 

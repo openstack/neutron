@@ -38,9 +38,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     Meta-Plugin with v2 API support for multiple sub-plugins.
     """
-    supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
-                                   "Cisco qos", "Cisco Nova Tenant",
-                                   "Cisco Multiport"]
+    supported_extension_aliases = ["Cisco Credential", "Cisco qos"]
     _methods_to_delegate = ['create_network', 'create_network_bulk',
                             'delete_network', 'update_network', 'get_network',
                             'get_networks',
@@ -275,101 +273,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     Extension API implementation
     """
-    def get_all_portprofiles(self, tenant_id):
-        """Get all port profiles"""
-        LOG.debug(_("get_all_portprofiles() called"))
-        pplist = cdb.get_all_portprofiles()
-        new_pplist = []
-        for portprofile in pplist:
-            new_pp = cutil.make_portprofile_dict(tenant_id,
-                                                 portprofile[const.UUID],
-                                                 portprofile[const.PPNAME],
-                                                 portprofile[const.PPQOS])
-            new_pplist.append(new_pp)
-
-        return new_pplist
-
-    def get_portprofile_details(self, tenant_id, profile_id):
-        """Get port profile details"""
-        LOG.debug(_("get_portprofile_details() called"))
-        try:
-            portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception:
-            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           portprofile_id=profile_id)
-
-        new_pp = cutil.make_portprofile_dict(tenant_id,
-                                             portprofile[const.UUID],
-                                             portprofile[const.PPNAME],
-                                             portprofile[const.PPQOS])
-        return new_pp
-
-    def create_portprofile(self, tenant_id, profile_name, qos):
-        """Create port profile"""
-        LOG.debug(_("create_portprofile() called"))
-        portprofile = cdb.add_portprofile(tenant_id, profile_name,
-                                          const.NO_VLAN_ID, qos)
-        new_pp = cutil.make_portprofile_dict(tenant_id,
-                                             portprofile[const.UUID],
-                                             portprofile[const.PPNAME],
-                                             portprofile[const.PPQOS])
-        return new_pp
-
-    def delete_portprofile(self, tenant_id, profile_id):
-        """Delete portprofile"""
-        LOG.debug(_("delete_portprofile() called"))
-        try:
-            portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception:
-            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           portprofile_id=profile_id)
-
-        plist = cdb.get_pp_binding(tenant_id, profile_id)
-        if plist:
-            raise cexc.PortProfileInvalidDelete(tenant_id=tenant_id,
-                                                profile_id=profile_id)
-        else:
-            cdb.remove_portprofile(tenant_id, profile_id)
-
-    def rename_portprofile(self, tenant_id, profile_id, new_name):
-        """Rename port profile"""
-        LOG.debug(_("rename_portprofile() called"))
-        try:
-            portprofile = cdb.get_portprofile(tenant_id, profile_id)
-        except Exception:
-            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           portprofile_id=profile_id)
-        portprofile = cdb.update_portprofile(tenant_id, profile_id, new_name)
-        new_pp = cutil.make_portprofile_dict(tenant_id,
-                                             portprofile[const.UUID],
-                                             portprofile[const.PPNAME],
-                                             portprofile[const.PPQOS])
-        return new_pp
-
-    def associate_portprofile(self, tenant_id, net_id,
-                              port_id, portprofile_id):
-        """Associate port profile"""
-        LOG.debug(_("associate_portprofile() called"))
-        try:
-            portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception:
-            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           portprofile_id=portprofile_id)
-
-        cdb.add_pp_binding(tenant_id, port_id, portprofile_id, False)
-
-    def disassociate_portprofile(self, tenant_id, net_id,
-                                 port_id, portprofile_id):
-        """Disassociate port profile"""
-        LOG.debug(_("disassociate_portprofile() called"))
-        try:
-            portprofile = cdb.get_portprofile(tenant_id, portprofile_id)
-        except Exception:
-            raise cexc.PortProfileNotFound(tenant_id=tenant_id,
-                                           portprofile_id=portprofile_id)
-
-        cdb.remove_pp_binding(tenant_id, port_id, portprofile_id)
-
     def get_all_qoss(self, tenant_id):
         """Get all QoS levels"""
         LOG.debug(_("get_all_qoss() called"))
@@ -485,28 +388,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
-
-    def create_multiport(self, tenant_id, net_id_list, port_state, ports_desc):
-        """
-        Creates multiple ports on the specified Virtual Network.
-        """
-        LOG.debug(_("create_ports() called"))
-        ports_num = len(net_id_list)
-        ports_id_list = []
-        ports_dict_list = []
-
-        for net_id in net_id_list:
-            db.validate_network_ownership(tenant_id, net_id)
-            port = db.port_create(net_id, port_state)
-            ports_id_list.append(port[const.UUID])
-            port_dict = {const.PORT_ID: port[const.UUID]}
-            ports_dict_list.append(port_dict)
-
-        self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                        net_id_list,
-                                                        ports_num,
-                                                        ports_id_list])
-        return ports_dict_list
 
     """
     Private functions
