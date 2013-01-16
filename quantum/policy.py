@@ -66,12 +66,10 @@ def _set_rules(data):
 
 def _is_attribute_explicitly_set(attribute_name, resource, target):
     """Verify that an attribute is present and has a non-default value"""
-    if ('default' in resource[attribute_name] and
-        target.get(attribute_name, attributes.ATTR_NOT_SPECIFIED) !=
-        attributes.ATTR_NOT_SPECIFIED):
-        if (target[attribute_name] != resource[attribute_name]['default']):
-            return True
-    return False
+    return ('default' in resource[attribute_name] and
+            attribute_name in target and
+            target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED and
+            target[attribute_name] != resource[attribute_name]['default'])
 
 
 def _build_target(action, original_target, plugin, context):

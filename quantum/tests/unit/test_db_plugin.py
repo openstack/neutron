@@ -249,7 +249,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             if arg in kwargs and kwargs[arg] is not None:
                 data['subnet'][arg] = kwargs[arg]
 
-        if kwargs.get('gateway_ip', ATTR_NOT_SPECIFIED) != ATTR_NOT_SPECIFIED:
+        if ('gateway_ip' in kwargs and
+            kwargs['gateway_ip'] is not ATTR_NOT_SPECIFIED):
             data['subnet']['gateway_ip'] = kwargs['gateway_ip']
 
         subnet_req = self.new_create_request('subnets', data, fmt)
