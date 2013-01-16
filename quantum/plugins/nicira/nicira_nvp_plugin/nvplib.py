@@ -417,7 +417,7 @@ def get_port(cluster, network, port, relations=None):
 
 
 def _configure_extensions(lport_obj, mac_address, fixed_ips,
-                          port_security_enabled):
+                          port_security_enabled, security_profiles):
     lport_obj['allowed_address_pairs'] = []
     if port_security_enabled:
         for fixed_ip in fixed_ips:
@@ -430,11 +430,13 @@ def _configure_extensions(lport_obj, mac_address, fixed_ips,
         lport_obj["allowed_address_pairs"].append(
             {"mac_address": mac_address,
              "ip_address": "0.0.0.0"})
+    lport_obj['security_profiles'] = list(security_profiles or [])
 
 
 def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
                 display_name, device_id, admin_status_enabled,
-                mac_address=None, fixed_ips=None, port_security_enabled=None):
+                mac_address=None, fixed_ips=None, port_security_enabled=None,
+                security_profiles=None):
 
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
@@ -446,7 +448,7 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
               dict(scope='vm_id', tag=hashed_device_id)])
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
-                          port_security_enabled)
+                          port_security_enabled, security_profiles)
 
     path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
@@ -465,7 +467,8 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
 
 def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
                  display_name, device_id, admin_status_enabled,
-                 mac_address=None, fixed_ips=None, port_security_enabled=None):
+                 mac_address=None, fixed_ips=None, port_security_enabled=None,
+                 security_profiles=None):
     """ Creates a logical port on the assigned logical switch """
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
@@ -478,7 +481,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
     )
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
-                          port_security_enabled)
+                          port_security_enabled, security_profiles)
 
     path = _build_uri_path(LPORT_RESOURCE, parent_resource_id=lswitch_uuid)
     try:
@@ -538,3 +541,148 @@ def plug_interface(cluster, lswitch_id, port, type, attachment=None):
 
     result = json.dumps(resp_obj)
     return result
+
+#------------------------------------------------------------------------------
+# Security Profile convenience functions.
+#------------------------------------------------------------------------------
+EXT_SECURITY_PROFILE_ID_SCOPE = 'nova_spid'
+TENANT_ID_SCOPE = 'os_tid'
+
+
+def format_exception(etype, e, execption_locals, request=None):
+    """Consistent formatting for exceptions.
+    :param etype: a string describing the exception type.
+    :param e: the exception.
+    :param request: the request object.
+    :param execption_locals: calling context local variable dict.
+    :returns: a formatted string.
+    """
+    msg = ["Error. %s exception: %s." % (etype, e)]
+    if request:
+        msg.append("request=[%s]" % request)
+        if request.body:
+            msg.append("request.body=[%s]" % str(request.body))
+    l = dict((k, v) for k, v in execption_locals if k != 'request')
+    msg.append("locals=[%s]" % str(l))
+    return ' '.join(msg)
+
+
+def do_request(*args, **kwargs):
+    """Convenience function wraps do_single_request.
+
+    :param args: a list of positional arguments.
+    :param kwargs: a list of keyworkds arguments.
+    :returns: the result of do_single_request loaded into a python object
+        or None."""
+    res = do_single_request(*args, **kwargs)
+    if res:
+        return json.loads(res)
+    return res
+
+
+def mk_body(**kwargs):
+    """Convenience function creates and dumps dictionary to string.
+
+    :param kwargs: the key/value pirs to be dumped into a json string.
+    :returns: a json string."""
+    return json.dumps(kwargs, ensure_ascii=False)
+
+
+def set_tenant_id_tag(tenant_id, taglist=None):
+    """Convenience function to add tenant_id tag to taglist.
+
+    :param tenant_id: the tenant_id to set.
+    :param taglist: the taglist to append to (or None).
+    :returns: a new taglist that includes the old taglist with the new
+        tenant_id tag set."""
+    new_taglist = []
+    if taglist:
+        new_taglist = [x for x in taglist if x['scope'] != TENANT_ID_SCOPE]
+    new_taglist.append(dict(scope=TENANT_ID_SCOPE, tag=tenant_id))
+    return new_taglist
+
+
+def set_ext_security_profile_id_tag(external_id, taglist=None):
+    """Convenience function to add spid tag to taglist.
+
+    :param external_id: the security_profile id from nova
+    :param taglist: the taglist to append to (or None).
+    :returns: a new taglist that includes the old taglist with the new
+        spid tag set."""
+    new_taglist = []
+    if taglist:
+        new_taglist = [x for x in taglist if x['scope'] !=
+                       EXT_SECURITY_PROFILE_ID_SCOPE]
+    if external_id:
+        new_taglist.append(dict(scope=EXT_SECURITY_PROFILE_ID_SCOPE,
+                                tag=str(external_id)))
+    return new_taglist
+
+
+# -----------------------------------------------------------------------------
+# Security Group API Calls
+# -----------------------------------------------------------------------------
+def create_security_profile(cluster, tenant_id, security_profile):
+    path = "/ws.v1/security-profile"
+    tags = set_tenant_id_tag(tenant_id)
+    tags = set_ext_security_profile_id_tag(
+        security_profile.get('external_id'), tags)
+    # Allow all dhcp responses in
+    dhcp = {'logical_port_egress_rules': [{'ethertype': 'IPv4',
+                                           'protocol': 17,
+                                           'port_range_min': 68,
+                                           'port_range_max': 68,
+                                           'ip_prefix': '0.0.0.0/0'}],
+            'logical_port_ingress_rules': []}
+    try:
+        body = mk_body(
+            tags=tags, display_name=security_profile.get('name'),
+            logical_port_ingress_rules=dhcp['logical_port_ingress_rules'],
+            logical_port_egress_rules=dhcp['logical_port_egress_rules'])
+        rsp = do_request("POST", path, body, cluster=cluster)
+    except NvpApiClient.NvpApiException as e:
+        LOG.error(format_exception("Unknown", e, locals()))
+        raise exception.QuantumException()
+    if security_profile.get('name') == 'default':
+        # If security group is default allow ip traffic between
+        # members of the same security profile.
+        rules = {'logical_port_egress_rules': [{'ethertype': 'IPv4',
+                                                'profile_uuid': rsp['uuid']},
+                                               {'ethertype': 'IPv6',
+                                                'profile_uuid': rsp['uuid']}],
+                 'logical_port_ingress_rules': []}
+
+        update_security_group_rules(cluster, rsp['uuid'], rules)
+    LOG.debug("Created Security Profile: %s" % rsp)
+    return rsp
+
+
+def update_security_group_rules(cluster, spid, rules):
+    path = "/ws.v1/security-profile/%s" % spid
+
+    # Allow all dhcp responses in
+    rules['logical_port_egress_rules'].append(
+        {'ethertype': 'IPv4', 'protocol': constants.UDP_PROTOCOL,
+         'port_range_min': constants.DHCP_RESPONSE_PORT,
+         'port_range_max': constants.DHCP_RESPONSE_PORT,
+         'ip_prefix': '0.0.0.0/0'})
+    try:
+        body = mk_body(
+            logical_port_ingress_rules=rules['logical_port_ingress_rules'],
+            logical_port_egress_rules=rules['logical_port_egress_rules'])
+        rsp = do_request("PUT", path, body, cluster=cluster)
+    except NvpApiClient.NvpApiException as e:
+        LOG.error(format_exception("Unknown", e, locals()))
+        raise exception.QuantumException()
+    LOG.debug("Updated Security Profile: %s" % rsp)
+    return rsp
+
+
+def delete_security_profile(cluster, spid):
+    path = "/ws.v1/security-profile/%s" % spid
+
+    try:
+        do_request("DELETE", path, cluster=cluster)
+    except NvpApiClient.NvpApiException as e:
+        LOG.error(format_exception("Unknown", e, locals()))
+        raise exception.QuantumException()
