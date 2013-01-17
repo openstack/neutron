@@ -181,7 +181,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             return []
 
     def _get_route_by_subnet(self, context, subnet_id):
-        route_qry = context.session.query(models_v2.Route)
+        route_qry = context.session.query(models_v2.SubnetRoute)
         return route_qry.filter_by(subnet_id=subnet_id).all()
 
     def _get_subnets_by_network(self, context, network_id):
@@ -1085,9 +1085,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
             if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
                 for rt in s['host_routes']:
-                    route = models_v2.Route(subnet_id=subnet.id,
-                                            destination=rt['destination'],
-                                            nexthop=rt['nexthop'])
+                    route = models_v2.SubnetRoute(
+                        subnet_id=subnet.id,
+                        destination=rt['destination'],
+                        nexthop=rt['nexthop'])
                     context.session.add(route)
 
             for pool in s['allocation_pools']:
@@ -1157,7 +1158,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         if _combine(route) == route_str:
                             context.session.delete(route)
                 for route_str in new_route_set - old_route_set:
-                    route = models_v2.Route(
+                    route = models_v2.SubnetRoute(
                         destination=route_str.partition("_")[0],
                         nexthop=route_str.partition("_")[2],
                         subnet_id=id)

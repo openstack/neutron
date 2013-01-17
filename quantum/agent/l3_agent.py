@@ -35,6 +35,7 @@ from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.common import constants as l3_constants
 from quantum.common import topics
+from quantum.common import utils as common_utils
 from quantum import context
 from quantum import manager
 from quantum.openstack.common import importutils
@@ -104,6 +105,8 @@ class RouterInfo(object):
             root_helper=root_helper,
             #FIXME(danwent): use_ipv6=True,
             namespace=self.ns_name())
+
+        self.routes = []
 
     def ns_name(self):
         if self.use_namespaces:
@@ -318,6 +321,8 @@ class L3NATAgent(manager.Manager):
             self.process_router_floating_ips(ri, ex_gw_port)
 
         ri.ex_gw_port = ex_gw_port
+
+        self.routes_updated(ri)
 
     def process_router_floating_ips(self, ri, ex_gw_port):
         floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
@@ -617,6 +622,36 @@ class L3NATAgent(manager.Manager):
 
     def after_start(self):
         LOG.info(_("L3 agent started"))
+
+    def _update_routing_table(self, ri, operation, route):
+        cmd = ['ip', 'route', operation, 'to', route['destination'],
+               'via', route['nexthop']]
+        #TODO(nati) move this code to iplib
+        if self.conf.use_namespaces:
+            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                          namespace=ri.ns_name())
+            ip_wrapper.netns.execute(cmd, check_exit_code=False)
+        else:
+            utils.execute(cmd, check_exit_code=False,
+                          root_helper=self.conf.root_helper)
+
+    def routes_updated(self, ri):
+        new_routes = ri.router['routes']
+        old_routes = ri.routes
+        adds, removes = common_utils.diff_list_of_dict(old_routes,
+                                                       new_routes)
+        for route in adds:
+            LOG.debug(_("Added route entry is '%s'"), route)
+            # remove replaced route from deleted route
+            for del_route in removes:
+                if route['destination'] == del_route['destination']:
+                    removes.remove(del_route)
+            #replace success even if there is no existing route
+            self._update_routing_table(ri, 'replace', route)
+        for route in removes:
+            LOG.debug(_("Removed route entry is '%s'"), route)
+            self._update_routing_table(ri, 'delete', route)
+        ri.routes = new_routes
 
 
 class L3NATAgentWithStateReport(L3NATAgent):
