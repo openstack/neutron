@@ -340,23 +340,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return networks
 
     def create_network(self, context, network):
-        """
-        :returns: a sequence of mappings with the following signature:
-                    {'id': UUID representing the network.
-                     'name': Human-readable name identifying the network.
-                     'tenant_id': Owner of network. only admin user
-                                  can specify a tenant_id other than its own.
-                     'admin_state_up': Sets admin state of network. if down,
-                                       network does not forward packets.
-                     'status': Indicates whether network is currently
-                               operational (limit values to "ACTIVE", "DOWN",
-                               "BUILD", and "ERROR"?
-                     'subnets': Subnets associated with this network. Plan
-                                to allow fully specified subnets as part of
-                                network create.
-                   }
-        :raises: exception.NoImplementedError
-        """
         net_data = network['network'].copy()
         # Process the provider network extension
         self._handle_provider_create(context, net_data)
@@ -393,14 +376,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return new_net
 
     def delete_network(self, context, id):
-        """
-        Deletes the network with the specified network identifier
-        belonging to the specified tenant.
-
-        :returns: None
-        :raises: exception.NetworkInUse
-        :raises: exception.NetworkNotFound
-        """
         super(NvpPluginV2, self).delete_network(context, id)
 
         # FIXME(salvatore-orlando): Failures here might lead NVP
@@ -430,55 +405,26 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return pairs
 
     def get_network(self, context, id, fields=None):
-        """
-        Retrieves all attributes of the network, NOT including
-        the ports of that network.
-
-        :returns: a sequence of mappings with the following signature:
-                    {'id': UUID representing the network.
-                     'name': Human-readable name identifying the network.
-                     'tenant_id': Owner of network. only admin user
-                                  can specify a tenant_id other than its own.
-                     'admin_state_up': Sets admin state of network. if down,
-                                       network does not forward packets.
-                     'status': Indicates whether network is currently
-                               operational (limit values to "ACTIVE", "DOWN",
-                               "BUILD", and "ERROR"?
-                     'subnets': Subnets associated with this network. Plan
-                                to allow fully specified subnets as part of
-                                network create.
-                   }
-
-        :raises: exception.NetworkNotFound
-        :raises: exception.QuantumException
-        """
-        # goto to the plugin DB and fecth the network
-        network = self._get_network(context, id)
-
+        with context.session.begin(subtransactions=True):
+            network = self._get_network(context, id)
+            net_result = self._make_network_dict(network, None)
+            self._extend_network_dict_provider(context, net_result)
         # verify the fabric status of the corresponding
         # logical switch(es) in nvp
         try:
             # FIXME(salvatore-orlando): This is not going to work unless
             # nova_id is stored in db once multiple clusters are enabled
             cluster = self._find_target_cluster(network)
+            # Returns multiple lswitches if provider network.
             lswitches = nvplib.get_lswitches(cluster, id)
-            net_op_status = constants.NET_STATUS_ACTIVE
-            quantum_status = network.status
             for lswitch in lswitches:
-                lswitch_status = lswitch.get('LogicalSwitchStatus', None)
-                # FIXME(salvatore-orlando): Being unable to fetch the
-                # logical switch status should be an exception.
-                if (lswitch_status and
-                    not lswitch_status.get('fabric_status', None)):
-                    net_op_status = constants.NET_STATUS_DOWN
+                lswitch_status = (lswitch['_relations']['LogicalSwitchStatus']
+                                  ['fabric_status'])
+                if not lswitch_status:
+                    net_result['status'] = constants.NET_STATUS_DOWN
                     break
-            LOG.debug(_("Current network status:%(net_op_status)s; "
-                        "Status in Quantum DB:%(quantum_status)s"),
-                      locals())
-            if net_op_status != network.status:
-                # update the network status
-                with context.session.begin(subtransactions=True):
-                    network.status = net_op_status
+            else:
+                net_result['status'] = constants.NET_STATUS_ACTIVE
         except Exception:
             err_msg = _("Unable to get lswitches")
             LOG.exception(err_msg)
@@ -486,39 +432,15 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         # Don't do field selection here otherwise we won't be able
         # to add provider networks fields
-        net_result = self._make_network_dict(network, None)
-        self._extend_network_dict_provider(context, net_result)
         return self._fields(net_result, fields)
 
     def get_networks(self, context, filters=None, fields=None):
-        """
-        Retrieves all attributes of the network, NOT including
-        the ports of that network.
-
-        :returns: a sequence of mappings with the following signature:
-                    {'id': UUID representing the network.
-                     'name': Human-readable name identifying the network.
-                     'tenant_id': Owner of network. only admin user
-                                  can specify a tenant_id other than its own.
-                     'admin_state_up': Sets admin state of network. if down,
-                                       network does not forward packets.
-                     'status': Indicates whether network is currently
-                               operational (limit values to "ACTIVE", "DOWN",
-                               "BUILD", and "ERROR"?
-                     'subnets': Subnets associated with this network. Plan
-                                to allow fully specified subnets as part of
-                                network create.
-                   }
-
-        :raises: exception.NetworkNotFound
-        :raises: exception.QuantumException
-        """
-        result = {}
         nvp_lswitches = []
-        quantum_lswitches = (
-            super(NvpPluginV2, self).get_networks(context, filters))
-        for net in quantum_lswitches:
-            self._extend_network_dict_provider(context, net)
+        with context.session.begin(subtransactions=True):
+            quantum_lswitches = (
+                super(NvpPluginV2, self).get_networks(context, filters))
+            for net in quantum_lswitches:
+                self._extend_network_dict_provider(context, net)
 
         if context.is_admin and not filters.get("tenant_id"):
             tenant_filter = ""
@@ -589,69 +511,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return quantum_lswitches
 
     def update_network(self, context, id, network):
-        """
-        Updates the properties of a particular Virtual Network.
-
-        :returns: a sequence of mappings with the following signature:
-        {'id': UUID representing the network.
-         'name': Human-readable name identifying the network.
-         'tenant_id': Owner of network. only admin user
-                      can specify a tenant_id other than its own.
-        'admin_state_up': Sets admin state of network. if down,
-                          network does not forward packets.
-        'status': Indicates whether network is currently
-                  operational (limit values to "ACTIVE", "DOWN",
-                               "BUILD", and "ERROR"?
-        'subnets': Subnets associated with this network. Plan
-                   to allow fully specified subnets as part of
-                   network create.
-                   }
-
-        :raises: exception.NetworkNotFound
-        :raises: exception.NoImplementedError
-        """
-
         if network["network"].get("admin_state_up"):
             if network['network']["admin_state_up"] is False:
                 raise q_exc.NotImplementedError(_("admin_state_up=False "
                                                   "networks are not "
                                                   "supported."))
-        params = {}
-        params["network"] = network["network"]
-        pairs = self._get_lswitch_cluster_pairs(id, context.tenant_id)
-
-        #Only field to update in NVP is name
-        if network['network'].get("name"):
-            for (cluster, switches) in pairs:
-                for switch in switches:
-                    nvplib.update_lswitch(cluster, switch,
-                                          network['network']['name'])
-
-        LOG.debug(_("update_network() completed for tenant: %s"),
-                  context.tenant_id)
         return super(NvpPluginV2, self).update_network(context, id, network)
 
     def get_ports(self, context, filters=None, fields=None):
-        """
-        Returns all ports from given tenant
-
-        :returns: a sequence of mappings with the following signature:
-        {'id': UUID representing the network.
-         'name': Human-readable name identifying the network.
-         'tenant_id': Owner of network. only admin user
-                      can specify a tenant_id other than its own.
-        'admin_state_up': Sets admin state of network. if down,
-                          network does not forward packets.
-        'status': Indicates whether network is currently
-                  operational (limit values to "ACTIVE", "DOWN",
-                               "BUILD", and "ERROR"?
-        'subnets': Subnets associated with this network. Plan
-                   to allow fully specified subnets as part of
-                   network create.
-                   }
-
-        :raises: exception.NetworkNotFound
-        """
         quantum_lports = super(NvpPluginV2, self).get_ports(context, filters)
         vm_filter = ""
         tenant_filter = ""
@@ -740,128 +607,67 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return lports
 
     def create_port(self, context, port):
-        """
-        Creates a port on the specified Virtual Network.
-        Returns:
+        with context.session.begin(subtransactions=True):
+            # First we allocate port in quantum database
+            quantum_db = super(NvpPluginV2, self).create_port(context, port)
+            # Update fields obtained from quantum db (eg: MAC address)
+            port["port"].update(quantum_db)
+            port_data = port['port']
+            # Fetch the network and network binding from Quantum db
+            network = self._get_network(context, port_data['network_id'])
+            network_binding = nicira_db.get_network_binding(
+                context.session, port_data['network_id'])
+            max_ports = self.nvp_opts.max_lp_per_overlay_ls
+            allow_extra_lswitches = False
+            if (network_binding and
+                network_binding.binding_type in (NetworkTypes.FLAT,
+                                                 NetworkTypes.VLAN)):
+                max_ports = self.nvp_opts.max_lp_per_bridged_ls
+                allow_extra_lswitches = True
+            try:
+                q_net_id = port_data['network_id']
+                cluster = self._find_target_cluster(port_data)
+                selected_lswitch = self._handle_lswitch_selection(
+                    cluster, network, network_binding, max_ports,
+                    allow_extra_lswitches)
+                lswitch_uuid = selected_lswitch['uuid']
+                lport = nvplib.create_lport(cluster,
+                                            lswitch_uuid,
+                                            port_data['tenant_id'],
+                                            port_data['id'],
+                                            port_data['name'],
+                                            port_data['device_id'],
+                                            port_data['admin_state_up'],
+                                            port_data['mac_address'],
+                                            port_data['fixed_ips'])
+                # Get NVP ls uuid for quantum network
+                nvplib.plug_interface(cluster, selected_lswitch['uuid'],
+                                      lport['uuid'], "VifAttachment",
+                                      port_data['id'])
+            except nvp_exc.NvpNoMorePortsException as e:
+                LOG.error(_("Number of available ports for network %s "
+                            "exhausted"), port_data['network_id'])
+                raise e
+            except Exception:
+                # failed to create port in NVP delete port from quantum_db
+                # FIXME (arosen) or the plugin_interface call failed in which
+                # case we need to garbage collect the left over port in nvp.
+                err_msg = _("An exception occured while plugging the interface"
+                            " in NVP for port %s") % port_data['id']
+                LOG.exception(err_msg)
+                raise nvp_exc.NvpPluginException(err_desc=err_msg)
 
-        {"id": uuid represeting the port.
-         "network_id": uuid of network.
-         "tenant_id": tenant_id
-         "mac_address": mac address to use on this port.
-         "admin_state_up": Sets admin state of port. if down, port
-                           does not forward packets.
-         "status": dicates whether port is currently operational
-                   (limit values to "ACTIVE", "DOWN", "BUILD", and "ERROR")
-         "fixed_ips": list of subnet ID's and IP addresses to be used on
-                      this port
-         "device_id": identifies the device (e.g., virtual server) using
-                      this port.
-        }
+            LOG.debug(_("create_port completed on NVP for tenant "
+                        "%(tenant_id)s: (%(id)s)"), port_data)
 
-        :raises: exception.NetworkNotFound
-        :raises: exception.StateInvalid
-        """
-        tenant_id = self._get_tenant_id_for_create(context, port['port'])
-        # Set admin_state_up False since not created in NVP set
-        # TODO(salvatore-orlando) : verify whether subtransactions can help
-        # us avoiding multiple operations on the db. This might also allow
-        # us to use the same identifier for the NVP and the Quantum port
-        # Set admin_state_up False since not created in NVP yet
-        port["port"]["admin_state_up"] = False
-
-        # First we allocate port in quantum database
-        quantum_db = super(NvpPluginV2, self).create_port(context, port)
-
-        # Update fields obtained from quantum db (eg: MAC address)
-        port["port"].update(quantum_db)
-        # We want port to be up in NVP
-        port["port"]["admin_state_up"] = True
-        port_data = port['port']
-        # Fetch the network and network binding from Quantum db
-        network = self._get_network(context, port_data['network_id'])
-        network_binding = nicira_db.get_network_binding(
-            context.session, port_data['network_id'])
-        max_ports = self.nvp_opts.max_lp_per_overlay_ls
-        allow_extra_lswitches = False
-        if (network_binding and
-            network_binding.binding_type in (NetworkTypes.FLAT,
-                                             NetworkTypes.VLAN)):
-            max_ports = self.nvp_opts.max_lp_per_bridged_ls
-            allow_extra_lswitches = True
-        try:
-            q_net_id = port_data['network_id']
-            cluster = self._find_target_cluster(port_data)
-            selected_lswitch = self._handle_lswitch_selection(
-                cluster, network, network_binding, max_ports,
-                allow_extra_lswitches)
-            lswitch_uuid = selected_lswitch['uuid']
-            lport = nvplib.create_lport(cluster,
-                                        lswitch_uuid,
-                                        port_data['tenant_id'],
-                                        port_data['id'],
-                                        port_data['name'],
-                                        port_data['device_id'],
-                                        port_data['admin_state_up'],
-                                        port_data['mac_address'],
-                                        port_data['fixed_ips'])
-            # Get NVP ls uuid for quantum network
-            nvplib.plug_interface(cluster, selected_lswitch['uuid'],
-                                  lport['uuid'], "VifAttachment",
-                                  port_data['id'])
-        except nvp_exc.NvpNoMorePortsException as e:
-            LOG.error(_("Number of available ports for network %s exhausted"),
-                      port_data['network_id'])
-            super(NvpPluginV2, self).delete_port(context, port["port"]["id"])
-            raise e
-        except Exception:
-            # failed to create port in NVP delete port from quantum_db
-            err_msg = _("An exception occured while plugging the interface "
-                        "in NVP for port %s") % port_data['id']
-            LOG.exception(err_msg)
-            super(NvpPluginV2, self).delete_port(context, port["port"]["id"])
-            raise nvp_exc.NvpPluginException(err_msg=err_msg)
-
-        LOG.debug(_("create_port completed on NVP for tenant %(tenant_id)s: "
-                    "(%(id)s)"), port_data)
-
-        # update port on Quantum DB with admin_state_up True
-        port_update = {"port": {"admin_state_up": True}}
-        return super(NvpPluginV2, self).update_port(context,
-                                                    port["port"]["id"],
-                                                    port_update)
+            return port_data
 
     def update_port(self, context, id, port):
-        """
-        Updates the properties of a specific port on the
-        specified Virtual Network.
-        Returns:
-
-        {"id": uuid represeting the port.
-         "network_id": uuid of network.
-         "tenant_id": tenant_id
-         "mac_address": mac address to use on this port.
-         "admin_state_up": sets admin state of port. if down, port
-                           does not forward packets.
-         "status": dicates whether port is currently operational
-                   (limit values to "ACTIVE", "DOWN", "BUILD", and
-                   "ERROR"?)
-        "fixed_ips": list of subnet ID's and IP addresses to be used on
-                     this port
-        "device_id": identifies the device (e.g., virtual server) using
-                     this port.
-        }
-
-        :raises: exception.StateInvalid
-        :raises: exception.PortNotFound
-        """
         params = {}
-
         port_quantum = super(NvpPluginV2, self).get_port(context, id)
-
         port_nvp, cluster = (
             nvplib.get_port_by_quantum_tag(self.clusters.itervalues(),
                                            port_quantum["network_id"], id))
-
         params["cluster"] = cluster
         params["port"] = port_quantum
         LOG.debug(_("Update port request: %s"), params)
@@ -870,18 +676,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return super(NvpPluginV2, self).update_port(context, id, port)
 
     def delete_port(self, context, id):
-        """
-        Deletes a port on a specified Virtual Network,
-        if the port contains a remote interface attachment,
-        the remote interface is first un-plugged and then the port
-        is deleted.
-
-        :returns: None
-        :raises: exception.PortInUse
-        :raises: exception.PortNotFound
-        :raises: exception.NetworkNotFound
-        """
-
         # TODO(salvatore-orlando): pass only actual cluster
         port, cluster = nvplib.get_port_by_quantum_tag(
             self.clusters.itervalues(), '*', id)
@@ -897,22 +691,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return super(NvpPluginV2, self).delete_port(context, id)
 
     def get_port(self, context, id, fields=None):
-        """
-        This method allows the user to retrieve a remote interface
-        that is attached to this particular port.
-
-        :returns: a mapping sequence with the following signature:
-                    {'port-id': uuid representing the port on
-                                 specified quantum network
-                     'attachment': uuid of the virtual interface
-                                   bound to the port, None otherwise
-                     'port-op-status': operational status of the port
-                     'port-state': admin status of the port
-                    }
-        :raises: exception.PortNotFound
-        :raises: exception.NetworkNotFound
-        """
-
         quantum_db = super(NvpPluginV2, self).get_port(context, id, fields)
 
         #TODO: pass only the appropriate cluster here
