@@ -16,9 +16,10 @@
 #    under the License.
 
 import os
-import unittest
 
 import mock
+import unittest2 as unittest
+import webob
 from webob import exc
 import webtest
 
@@ -916,3 +917,70 @@ class TestSubresourcePlugin():
 
         def delete_network_dummy(self, context, id, network_id):
             return
+
+
+class FieldsTestCase(unittest.TestCase):
+    def test_with_fields(self):
+        path = '/?fields=4&foo=3&fields=2&bar=1'
+        request = webob.Request.blank(path)
+        expect_val = ['2', '4']
+        actual_val = base._fields(request)
+        self.assertItemsEqual(actual_val, expect_val)
+
+    def test_without_fields(self):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        self.assertListEqual([], base._fields(request))
+
+
+class FiltersTestCase(unittest.TestCase):
+    def test_all_fields(self):
+        path = '/?fields=4&fields=3&fields=2&fields=1'
+        request = webob.Request.blank(path)
+        self.assertDictEqual({}, base._filters(request, None))
+
+    def test_blank_values(self):
+        path = '/?foo=&bar=&baz=&qux='
+        request = webob.Request.blank(path)
+        self.assertDictEqual({}, base._filters(request, {}))
+
+    def test_no_attr_info(self):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        actual_val = base._filters(request, {})
+        self.assertDictEqual(actual_val, expect_val)
+
+    def test_attr_info_without_conversion(self):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        attr_info = {'foo': {'key': 'val'}}
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        actual_val = base._filters(request, attr_info)
+        self.assertDictEqual(actual_val, expect_val)
+
+    def test_attr_info_with_convert_list_to(self):
+        path = '/?foo=key=4&bar=3&foo=key=2&qux=1'
+        request = webob.Request.blank(path)
+        attr_info = {
+            'foo': {
+                'convert_list_to': attributes.convert_kvp_list_to_dict,
+            }
+        }
+        expect_val = {'foo': {'key': ['2', '4']}, 'bar': ['3'], 'qux': ['1']}
+        actual_val = base._filters(request, attr_info)
+        self.assertDictEqual(actual_val, expect_val)
+
+    def test_attr_info_with_convert_to(self):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        attr_info = {'foo': {'convert_to': attributes.convert_to_int}}
+        expect_val = {'foo': [4], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        actual_val = base._filters(request, attr_info)
+        self.assertDictEqual(actual_val, expect_val)
+
+
+class CreateResourceTestCase(unittest.TestCase):
+    def test_resource_creation(self):
+        resource = base.create_resource('fakes', 'fake', None, {})
+        self.assertIsInstance(resource, webob.dec.wsgify)
