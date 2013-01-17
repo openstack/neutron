@@ -15,7 +15,6 @@
 #    under the License.
 #
 # @author: Aaron Rosen, Nicira, Inc
-#
 
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -446,22 +445,33 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         else:
             return default_group[0]['id']
 
-    def _validate_security_groups_on_port(self, context, port):
+    def _get_security_groups_on_port(self, context, port):
+        """Check that all security groups on port belong to tenant.
+
+        :returns: all security groups IDs on port belonging to tenant.
+        """
         p = port['port']
         if not attr.is_attr_set(p.get(ext_sg.SECURITYGROUPS)):
             return
         if p.get('device_owner') and p['device_owner'].startswith('network:'):
             return
 
-        valid_groups = self.get_security_groups(context, fields={'id': None})
-        valid_groups_set = set([x['id'] for x in valid_groups])
-        req_sg_set = set(p[ext_sg.SECURITYGROUPS])
-        invalid_sg_set = req_sg_set - valid_groups_set
-        if invalid_sg_set:
-            msg = ' '.join(str(x) for x in invalid_sg_set)
-            raise ext_sg.SecurityGroupNotFound(id=msg)
+        valid_groups = self.get_security_groups(
+            context, fields=['external_id', 'id'])
+        valid_group_map = dict((g['id'], g['id']) for g in valid_groups)
+        valid_group_map.update((g['external_id'], g['id'])
+                               for g in valid_groups if g.get('external_id'))
+        try:
+            return set([valid_group_map[sg_id]
+                        for sg_id in p.get(ext_sg.SECURITYGROUPS, [])])
+        except KeyError as e:
+            raise ext_sg.SecurityGroupNotFound(id=str(e))
 
     def _ensure_default_security_group_on_port(self, context, port):
+        # return if proxy_mode is enabled since nova will handle adding
+        # the port to the default security group.
+        if cfg.CONF.SECURITYGROUP.proxy_mode:
+            return
         # we don't apply security groups for dhcp, router
         if (port['port'].get('device_owner') and
                 port['port']['device_owner'].startswith('network:')):
