@@ -20,7 +20,6 @@
 
 import sys
 import time
-import uuid
 
 from quantum.common import exceptions as q_exc
 from quantum.openstack.common import cfg

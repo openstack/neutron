@@ -16,28 +16,24 @@
 #    under the License.
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
-import sys
-
 from quantum.api.v2 import attributes
-from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
-from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import db_base_plugin_v2
-from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
-from quantum.db import l3_rpc_base
+# NOTE: quota_db cannot be removed, it is for db model
+from quantum.db import quota_db
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import proxy
 from quantum.plugins.hyperv import agent_notifier_api
 from quantum.plugins.hyperv.common import constants
 from quantum.plugins.hyperv import db as hyperv_db
 from quantum.plugins.hyperv import rpc_callbacks
 from quantum import policy
+
 
 DEFAULT_VLAN_RANGES = []
 
