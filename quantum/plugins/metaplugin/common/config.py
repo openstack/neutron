@@ -32,7 +32,8 @@ proxy_plugin_opts = [
     cfg.StrOpt('admin_password'),
     cfg.StrOpt('admin_tenant_name'),
     cfg.StrOpt('auth_url'),
-    cfg.StrOpt('auth_strategy', default='keystone'),
+    cfg.StrOpt('auth_strategy', default='keystone',
+               help=_("The type of authentication to use")),
     cfg.StrOpt('auth_region'),
 ]
 
