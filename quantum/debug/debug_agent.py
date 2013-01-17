@@ -30,7 +30,9 @@ from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
-DEVICE_OWNER_PROBE = 'network:probe'
+DEVICE_OWNER_NETWORK_PROBE = 'network:probe'
+
+DEVICE_OWNER_COMPUTE_PROBE = 'compute:probe'
 
 
 class QuantumDebugAgent():
@@ -56,13 +58,13 @@ class QuantumDebugAgent():
     def _get_namespace(self, port):
         return "qprobe-%s" % port.id
 
-    def create_probe(self, network_id):
+    def create_probe(self, network_id, device_owner='network'):
         network = self._get_network(network_id)
         bridge = None
         if network.external:
             bridge = self.conf.external_network_bridge
 
-        port = self._create_port(network)
+        port = self._create_port(network, device_owner)
         port.network = network
         interface_name = self.driver.get_device_name(port)
         namespace = None
@@ -100,8 +102,10 @@ class QuantumDebugAgent():
         return network
 
     def clear_probe(self):
-        ports = self.client.list_ports(device_id=socket.gethostname(),
-                                       device_owner=DEVICE_OWNER_PROBE)
+        ports = self.client.list_ports(
+            device_id=socket.gethostname(),
+            device_owner=[DEVICE_OWNER_NETWORK_PROBE,
+                          DEVICE_OWNER_COMPUTE_PROBE])
         info = ports['ports']
         for port in info:
             self.delete_probe(port['id'])
@@ -128,7 +132,9 @@ class QuantumDebugAgent():
         self.client.delete_port(port.id)
 
     def list_probes(self):
-        ports = self.client.list_ports(device_owner=DEVICE_OWNER_PROBE)
+        ports = self.client.list_ports(
+            device_owner=[DEVICE_OWNER_NETWORK_PROBE,
+                          DEVICE_OWNER_COMPUTE_PROBE])
         info = ports['ports']
         for port in info:
             port['device_name'] = self.driver.get_device_name(DictModel(port))
@@ -149,7 +155,7 @@ class QuantumDebugAgent():
     def ensure_probe(self, network_id):
         ports = self.client.list_ports(network_id=network_id,
                                        device_id=socket.gethostname(),
-                                       device_owner=DEVICE_OWNER_PROBE)
+                                       device_owner=DEVICE_OWNER_NETWORK_PROBE)
         info = ports.get('ports', [])
         if info:
             return DictModel(info[0])
@@ -164,7 +170,7 @@ class QuantumDebugAgent():
         result = ""
         for port in ports:
             probe = self.ensure_probe(port['network_id'])
-            if port['device_owner'] == DEVICE_OWNER_PROBE:
+            if port['device_owner'] == DEVICE_OWNER_NETWORK_PROBE:
                 continue
             for fixed_ip in port['fixed_ips']:
                 address = fixed_ip['ip_address']
@@ -179,12 +185,12 @@ class QuantumDebugAgent():
                                                                   address))
         return result
 
-    def _create_port(self, network):
+    def _create_port(self, network, device_owner):
         body = dict(port=dict(
             admin_state_up=True,
             network_id=network.id,
             device_id='%s' % socket.gethostname(),
-            device_owner=DEVICE_OWNER_PROBE,
+            device_owner='%s:probe' % device_owner,
             tenant_id=network.tenant_id,
             fixed_ips=[dict(subnet_id=s.id) for s in network.subnets]))
         port_dict = self.client.create_port(body)['port']

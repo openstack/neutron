@@ -44,12 +44,17 @@ class CreateProbe(ProbeCommand):
         parser.add_argument(
             'id', metavar='network_id',
             help=_('ID of network to probe'))
+        parser.add_argument(
+            '--device-owner',
+            default='network', choices=['network', 'compute'],
+            help=_('owner type of the device: network/compute'))
         return parser
 
     def run(self, parsed_args):
         self.log.debug('run(%s)' % parsed_args)
         debug_agent = self.get_debug_agent()
-        port = debug_agent.create_probe(parsed_args.id)
+        port = debug_agent.create_probe(parsed_args.id,
+                                        parsed_args.device_owner)
         self.app.stdout.write(_('Probe created : %s ') % port.id + '\n')
 
 
