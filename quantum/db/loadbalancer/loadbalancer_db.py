@@ -67,7 +67,7 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     subnet_id = sa.Column(sa.String(36), nullable=False)
     address = sa.Column(sa.String(64))
     port = sa.Column(sa.Integer, nullable=False)
-    protocol = sa.Column(sa.Enum("HTTP", "HTTPS", name="vip_protocol"),
+    protocol = sa.Column(sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
                          nullable=False)
     pool_id = sa.Column(sa.String(36), nullable=False)
     session_persistence = orm.relationship(SessionPersistence,
@@ -96,7 +96,8 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
     subnet_id = sa.Column(sa.String(36), nullable=False)
-    protocol = sa.Column(sa.String(64), nullable=False)
+    protocol = sa.Column(sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
+                         nullable=False)
     lb_method = sa.Column(sa.Enum("ROUND_ROBIN",
                                   "LEAST_CONNECTIONS",
                                   "SOURCE_IP",

@@ -285,7 +285,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
     @contextlib.contextmanager
     def vip(self, fmt='json', name='vip1', pool=None,
             protocol='HTTP', port=80, admin_status_up=True, no_delete=False,
-            **kwargs):
+            address="172.16.1.123", **kwargs):
         if not pool:
             with self.pool() as pool:
                 pool_id = pool['pool']['id']
@@ -295,7 +295,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                        protocol,
                                        port,
                                        admin_status_up,
-                                       address="172.16.1.123",
+                                       address=address,
                                        **kwargs)
                 vip = self.deserialize(fmt, res)
                 if res.status_int >= 400:
@@ -311,7 +311,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                    protocol,
                                    port,
                                    admin_status_up,
-                                   address="172.16.1.123",
+                                   address=address,
                                    **kwargs)
             vip = self.deserialize(fmt, res)
             if res.status_int >= 400:
@@ -402,6 +402,23 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(vip['vip'][k], v)
 
+    def test_create_vip_with_invalid_values(self):
+        name = 'vip3'
+
+        vip = self.vip(name=name, protocol='UNSUPPORTED')
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
+        vip = self.vip(name=name, port='NOT_AN_INT')
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
+        # 100500 is not a valid port number
+        vip = self.vip(name=name, port='100500')
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
+        # 192.168.130.130.130 is not a valid IP address
+        vip = self.vip(name=name, address='192.168.130.130.130')
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
     def test_create_vip_with_session_persistence(self):
         name = 'vip2'
         keys = [('name', name),
@@ -484,6 +501,15 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(res['vips'][0][k], v)
 
+    def test_create_pool_with_invalid_values(self):
+        name = 'pool3'
+
+        pool = self.pool(name=name, protocol='UNSUPPORTED')
+        self.assertRaises(webob.exc.HTTPClientError, pool.__enter__)
+
+        pool = self.pool(name=name, lb_method='UNSUPPORTED')
+        self.assertRaises(webob.exc.HTTPClientError, pool.__enter__)
+
     def test_create_pool(self):
         name = "pool1"
         keys = [('name', name),
@@ -493,6 +519,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('lb_method', 'ROUND_ROBIN'),
                 ('admin_state_up', True),
                 ('status', 'PENDING_CREATE')]
+
         with self.pool(name=name) as pool:
             for k, v in keys:
                 self.assertEqual(pool['pool'][k], v)
