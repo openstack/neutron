@@ -6,10 +6,11 @@
 # -- External Resources:
 
  The homepage for Quantum is: http://launchpad.net/quantum .  Use this
- site for downloading the latest code, asking for help, and filing bugs.
+ site for asking for help, and filing bugs. Code is available on github at
+ <http://github.com/openstack/quantum>.
 
  The latest and most in-depth documentation on how to use Quantum is
- available at: http://docs.openstack.org .  This includes:
+ available at: <http://docs.openstack.org>.  This includes:
 
  Quantum Administrator Guide
  http://docs.openstack.org/trunk/openstack-network/admin/content/
@@ -21,4 +22,4 @@
  http://wiki.openstack.org/QuantumDevelopment
 
  For help using or hacking on Quantum, you can send mail to
- openstack-dev@lists.openstack.org .
+ <mailto:openstack-dev@lists.openstack.org>.
