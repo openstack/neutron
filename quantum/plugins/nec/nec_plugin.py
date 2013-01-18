@@ -21,6 +21,8 @@ from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
+#NOTE(amotoki): quota_db cannot be removed, it is for db model
+from quantum.db import quota_db
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.nec.common import config
@@ -58,7 +60,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
           at https://github.com/nec-openstack/quantum-openflow-plugin .
     """
 
-    supported_extension_aliases = ["router"]
+    supported_extension_aliases = ["router", "quotas"]
 
     def __init__(self):
         ndb.initialize()
