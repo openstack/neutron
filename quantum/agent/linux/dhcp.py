@@ -36,18 +36,19 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.StrOpt('dhcp_confs',
                default='$state_path/dhcp',
-               help='Location to store DHCP server config files'),
+               help=_('Location to store DHCP server config files')),
     cfg.IntOpt('dhcp_lease_time',
                default=120,
-               help='Lifetime of a DHCP lease in seconds'),
+               help=_('Lifetime of a DHCP lease in seconds')),
     cfg.StrOpt('dhcp_domain',
                default='openstacklocal',
-               help='Domain to use for building the hostnames'),
+               help=_('Domain to use for building the hostnames')),
     cfg.StrOpt('dnsmasq_config_file',
                default='',
-               help='Override the default dnsmasq settings with this file'),
+               help=_('Override the default dnsmasq settings with this file')),
     cfg.StrOpt('dnsmasq_dns_server',
-               help='Use another DNS server before any in /etc/resolv.conf.'),
+               help=_('Use another DNS server before any in '
+                      '/etc/resolv.conf.')),
 ]
 
 IPV4 = 4
@@ -128,10 +129,10 @@ class DhcpLocalProcess(DhcpBase):
                 self.device_delegate.destroy(self.network, self.interface_name)
 
         elif pid:
-            LOG.debug(_('DHCP for %s pid %d is stale, ignoring command') %
-                      (self.network.id, pid))
+            LOG.debug(_('DHCP for %(net_id)s pid %(pid)d is stale, ignoring '
+                        'command'), {'net_id': self.network.id, 'pid': pid})
         else:
-            LOG.debug(_('No DHCP started for %s') % self.network.id)
+            LOG.debug(_('No DHCP started for %s'), self.network.id)
 
     def get_conf_file_name(self, kind, ensure_conf_dir=False):
         """Returns the file name for a given kind of config file."""
@@ -264,8 +265,8 @@ class Dnsmasq(DhcpLocalProcess):
         """If all subnets turn off dhcp, kill the process."""
         if not self._enable_dhcp():
             self.disable()
-            LOG.debug(_('Killing dhcpmasq for network since all subnets have \
-                         turned off DHCP: %s') % self.network.id)
+            LOG.debug(_('Killing dhcpmasq for network since all subnets have '
+                        'turned off DHCP: %s'), self.network.id)
             return
 
         """Rebuilds the dnsmasq config and signal the dnsmasq to reload."""
@@ -278,7 +279,7 @@ class Dnsmasq(DhcpLocalProcess):
             ip_wrapper.netns.execute(cmd)
         else:
             utils.execute(cmd, self.root_helper)
-        LOG.debug(_('Reloading allocations for network: %s') % self.network.id)
+        LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
 
     def _output_hosts_file(self):
         """Writes a dnsmasq compatible hosts file."""

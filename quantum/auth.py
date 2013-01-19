@@ -33,7 +33,7 @@ class QuantumKeystoneContext(wsgi.Middleware):
         # Determine the user ID
         user_id = req.headers.get('X_USER_ID', req.headers.get('X_USER'))
         if not user_id:
-            LOG.debug("Neither X_USER_ID nor X_USER found in request")
+            LOG.debug(_("Neither X_USER_ID nor X_USER found in request"))
             return webob.exc.HTTPUnauthorized()
 
         # Determine the tenant

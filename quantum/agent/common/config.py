@@ -24,7 +24,7 @@ def setup_conf():
     bind_opts = [
         cfg.StrOpt('state_path',
                    default='/var/lib/quantum',
-                   help='Top-level directory for maintaining dhcp state'),
+                   help=_('Top-level directory for maintaining dhcp state')),
     ]
 
     conf = cfg.CommonConfigOpts()

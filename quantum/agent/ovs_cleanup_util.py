@@ -35,9 +35,10 @@ def setup_conf():
     opts = [
         cfg.BoolOpt('ovs_all_ports',
                     default=False,
-                    help='True to delete all ports on all the OpenvSwitch '
-                         'bridges. False to delete ports created by Quantum '
-                         'on integration and external network bridges.')
+                    help=_('True to delete all ports on all the OpenvSwitch '
+                           'bridges. False to delete ports created by '
+                           'Quantum on integration and external network '
+                           'bridges.'))
     ]
 
     conf = cfg.CommonConfigOpts()

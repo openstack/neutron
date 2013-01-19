@@ -399,7 +399,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # Authorize before exposing plugin details to client
         self._enforce_set_auth(context, attrs, self.network_set)
 
-        msg = _("plugin does not support updating provider attributes")
+        msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)
 
     def create_network(self, context, network):

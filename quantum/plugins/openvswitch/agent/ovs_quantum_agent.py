@@ -400,7 +400,7 @@ class OVSQuantumAgent(object):
             net_uuid = self.get_net_uuid(vif_id)
 
         if not self.local_vlan_map.get(net_uuid):
-            LOG.info('port_unbound() net_uuid %s not in local_vlan_map',
+            LOG.info(_('port_unbound() net_uuid %s not in local_vlan_map'),
                      net_uuid)
             return
         lvm = self.local_vlan_map[net_uuid]
@@ -413,7 +413,8 @@ class OVSQuantumAgent(object):
         if vif_id in lvm.vif_ports:
             del lvm.vif_ports[vif_id]
         else:
-            LOG.info('port_unbound: vif_id %s not in local_vlan_map', vif_id)
+            LOG.info(_('port_unbound: vif_id %s not in local_vlan_map'),
+                     vif_id)
 
         if not lvm.vif_ports:
             self.reclaim_local_vlan(net_uuid, lvm)
@@ -678,7 +679,7 @@ def create_agent_config_map(config):
     )
 
     if kwargs['enable_tunneling'] and not kwargs['local_ip']:
-        msg = 'Tunnelling cannot be enabled without a valid local_ip.'
+        msg = _('Tunnelling cannot be enabled without a valid local_ip.')
         raise ValueError(msg)
 
     return kwargs

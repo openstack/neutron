@@ -35,15 +35,15 @@ LOG = logging.getLogger(__name__)
 service_opts = [
     cfg.IntOpt('report_interval',
                default=10,
-               help='seconds between nodes reporting state to datastore'),
+               help=_('Seconds between nodes reporting state to datastore')),
     cfg.IntOpt('periodic_interval',
                default=40,
-               help='seconds between running periodic tasks'),
+               help=_('Seconds between running periodic tasks')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,
-               help='range of seconds to randomly delay when starting the'
-                    ' periodic task scheduler to reduce stampeding.'
-                    ' (Disable by setting to 0)'),
+               help=_('range of seconds to randomly delay when starting the'
+                      ' periodic task scheduler to reduce stampeding.'
+                      ' (Disable by setting to 0)')),
 ]
 CONF = cfg.CONF
 CONF.register_opts(service_opts)
@@ -211,7 +211,7 @@ class Service(service.Service):
             try:
                 x.stop()
             except Exception:
-                LOG.exception("exception occurs when timer stops")
+                LOG.exception(_("Exception occurs when timer stops"))
                 pass
         self.timers = []
 
@@ -221,7 +221,7 @@ class Service(service.Service):
             try:
                 x.wait()
             except Exception:
-                LOG.exception("exception occurs when waiting for timer")
+                LOG.exception(_("Exception occurs when waiting for timer"))
                 pass
 
     def periodic_tasks(self, raise_on_error=False):

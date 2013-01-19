@@ -59,13 +59,13 @@ def setup_conf():
         cfg.StrOpt('root_helper', default='sudo'),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
-                   help="The driver used to manage the DHCP server."),
+                   help=_("The driver used to manage the DHCP server.")),
         cfg.StrOpt('state_path',
                    default='.',
-                   help='Top-level directory for maintaining dhcp state'),
+                   help=_('Top-level directory for maintaining dhcp state')),
         cfg.BoolOpt('force',
                     default=False,
-                    help='Delete the namespace by removing all devices.'),
+                    help=_('Delete the namespace by removing all devices.')),
     ]
     conf = cfg.CommonConfigOpts()
     conf.register_opts(opts)
@@ -117,7 +117,7 @@ def unplug_device(conf, device):
                                        conf.root_helper)
             bridge.delete_port(device.name)
         else:
-            LOG.debug(_('Unable to find bridge for device: %s') % device.name)
+            LOG.debug(_('Unable to find bridge for device: %s'), device.name)
 
 
 def destroy_namespace(conf, namespace, force=False):
@@ -140,7 +140,7 @@ def destroy_namespace(conf, namespace, force=False):
 
         ip.garbage_collect_namespace()
     except Exception, e:
-        LOG.exception(_('Error unable to destroy namespace: %s') % namespace)
+        LOG.exception(_('Error unable to destroy namespace: %s'), namespace)
 
 
 def main():

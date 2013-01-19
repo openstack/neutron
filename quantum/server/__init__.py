@@ -30,14 +30,14 @@ def main():
     # the configuration will be read into the cfg.CONF global data structure
     config.parse(sys.argv[1:])
     if not cfg.CONF.config_file:
-        sys.exit("ERROR: Unable to find configuration file via the default"
-                 " search paths (~/.quantum/, ~/, /etc/quantum/, /etc/) and"
-                 " the '--config-file' option!")
+        sys.exit(_("ERROR: Unable to find configuration file via the default"
+                   " search paths (~/.quantum/, ~/, /etc/quantum/, /etc/) and"
+                   " the '--config-file' option!"))
     try:
         quantum_service = service.serve_wsgi(service.QuantumApiService)
         quantum_service.wait()
     except RuntimeError, e:
-        sys.exit("ERROR: %s" % e)
+        sys.exit(_("ERROR: %s") % e)
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ class SecurityGroupNotSingleGroupRules(qexception.InvalidInput):
 
 
 class SecurityGroupSourceGroupNotFound(qexception.NotFound):
-    message = _("source group id %(id)s does not exist")
+    message = _("Source group id %(id)s does not exist")
 
 
 class SecurityGroupNotFound(qexception.NotFound):
@@ -225,12 +225,12 @@ EXTENDED_ATTRIBUTES_2_0 = {
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
                default=10,
-               help='number of security groups allowed per tenant,'
-                    '-1 for unlimited'),
+               help=_('Number of security groups allowed per tenant,'
+                      '-1 for unlimited')),
     cfg.IntOpt('quota_security_group_rule',
                default=100,
-               help='number of security rules allowed per tenant, '
-                    '-1 for unlimited'),
+               help=_('Number of security rules allowed per tenant, '
+                      '-1 for unlimited')),
 ]
 cfg.CONF.register_opts(security_group_quota_opts, 'QUOTAS')
 

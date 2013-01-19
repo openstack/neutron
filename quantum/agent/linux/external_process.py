@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.StrOpt('external_pids',
                default='$state_path/external/pids',
-               help='Location to store child pid files'),
+               help=_('Location to store child pid files')),
 ]
 
 cfg.CONF.register_opts(OPTS)
@@ -69,9 +69,9 @@ class ProcessManager(object):
 
         elif pid:
             LOG.debug(_('Process for %(uuid)s pid %(pid)d is stale, ignoring '
-                        'command') % {'uuid': self.uuid, 'pid': pid})
+                        'command'), {'uuid': self.uuid, 'pid': pid})
         else:
-            LOG.debug(_('No process started for %s') % self.uuid)
+            LOG.debug(_('No process started for %s'), self.uuid)
 
     def get_pid_file_name(self, ensure_pids_dir=False):
         """Returns the file name for a given kind of config file."""
@@ -95,7 +95,7 @@ class ProcessManager(object):
         except ValueError, e:
             msg = _('Unable to convert value in %s')
 
-        LOG.debug(msg % file_name)
+        LOG.debug(msg, file_name)
         return None
 
     @property

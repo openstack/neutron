@@ -33,14 +33,14 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.StrOpt('ovs_integration_bridge',
                default='br-int',
-               help='Name of Open vSwitch bridge to use'),
+               help=_('Name of Open vSwitch bridge to use')),
     cfg.BoolOpt('ovs_use_veth',
                 default=False,
-                help='Uses veth for an interface or not'),
+                help=_('Uses veth for an interface or not')),
     cfg.StrOpt('network_device_mtu',
-               help='MTU setting for device.'),
+               help=_('MTU setting for device.')),
     cfg.StrOpt('meta_flavor_driver_mappings',
-               help='Mapping between flavor and LinuxInterfaceDriver')
+               help=_('Mapping between flavor and LinuxInterfaceDriver'))
 ]
 
 
@@ -172,7 +172,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             if self.conf.ovs_use_veth:
                 root_dev.link.set_up()
         else:
-            LOG.warn(_("Device %s already exists") % device_name)
+            LOG.warn(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
@@ -189,9 +189,9 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                 device = ip_lib.IPDevice(device_name, self.conf.root_helper,
                                          namespace)
                 device.link.delete()
-                LOG.debug(_("Unplugged interface '%s'") % device_name)
+                LOG.debug(_("Unplugged interface '%s'"), device_name)
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'") %
+            LOG.error(_("Failed unplugging interface '%s'"),
                       device_name)
 
 
@@ -228,16 +228,16 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             ns_veth.link.set_up()
 
         else:
-            LOG.warn(_("Device %s already exists") % device_name)
+            LOG.warn(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
         try:
             device.link.delete()
-            LOG.debug(_("Unplugged interface '%s'") % device_name)
+            LOG.debug(_("Unplugged interface '%s'"), device_name)
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'") %
+            LOG.error(_("Failed unplugging interface '%s'"),
                       device_name)
 
 
@@ -270,7 +270,7 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         mac_address = device.link.address
         ports = self.quantum.list_ports(mac_address=mac_address)
         if not 'ports' in ports or len(ports['ports']) < 1:
-            raise Exception('No port for this device %s' % device_name)
+            raise Exception(_('No port for this device %s') % device_name)
         return self._get_driver_by_network_id(ports['ports'][0]['network_id'])
 
     def get_device_name(self, port):

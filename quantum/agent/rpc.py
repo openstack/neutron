@@ -107,6 +107,6 @@ class NotificationDispatcher(object):
                 if hasattr(handler, name):
                     getattr(handler, name)(msg['payload'])
                 else:
-                    LOG.debug('Unknown event_type: %s.' % msg['event_type'])
+                    LOG.debug(_('Unknown event_type: %s.'), msg['event_type'])
             except Exception, e:
-                LOG.warn('Error processing message. Exception: %s' % e)
+                LOG.warn(_('Error processing message. Exception: %s'), e)

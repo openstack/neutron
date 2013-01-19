@@ -55,7 +55,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
         v = super(LoadBalancerPlugin, self).create_vip(context, vip)
         self.update_status(context, loadbalancer_db.Vip, v['id'],
                            constants.PENDING_CREATE)
-        LOG.debug(_("Create vip: %s") % v['id'])
+        LOG.debug(_("Create vip: %s"), v['id'])
 
         # If we adopt asynchronous mode, this method should return immediately
         # and let client to query the object status. The plugin will listen on

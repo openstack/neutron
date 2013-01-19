@@ -147,7 +147,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         except exc.NoResultFound:
             raise q_exc.NetworkNotFound(net_id=id)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple networks match for %s' % id)
+            LOG.error(_('Multiple networks match for %s'), id)
             raise q_exc.NetworkNotFound(net_id=id)
         return network
 
@@ -157,7 +157,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         except exc.NoResultFound:
             raise q_exc.SubnetNotFound(subnet_id=id)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple subnets match for %s' % id)
+            LOG.error(_('Multiple subnets match for %s'), id)
             raise q_exc.SubnetNotFound(subnet_id=id)
         return subnet
 
@@ -169,7 +169,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             #                kwarg in order to set the message correctly
             raise q_exc.PortNotFound(port_id=id, net_id=None)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple ports match for %s' % id)
+            LOG.error(_('Multiple ports match for %s'), id)
             raise q_exc.PortNotFound(port_id=id)
         return port
 
@@ -783,11 +783,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             netaddr.IPNetwork(route['destination'])
             netaddr.IPAddress(route['nexthop'])
         except netaddr.core.AddrFormatError:
-            err_msg = ("invalid route: %s" % (str(route)))
+            err_msg = _("Invalid route: %s") % route
             raise q_exc.InvalidInput(error_message=err_msg)
         except ValueError:
             # netaddr.IPAddress would raise this
-            err_msg = _("invalid route: %s") % str(route)
+            err_msg = _("Invalid route: %s") % route
             raise q_exc.InvalidInput(error_message=err_msg)
         self._validate_ip_version(ip_version, route['nexthop'], 'nexthop')
         self._validate_ip_version(ip_version, route['destination'],
@@ -1023,7 +1023,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     netaddr.IPAddress(dns)
                 except Exception:
                     raise q_exc.InvalidInput(
-                        error_message=(_("error parsing dns address %s") %
+                        error_message=(_("Error parsing dns address %s") %
                                        dns))
                 self._validate_ip_version(ip_ver, dns, 'dns_nameserver')
 

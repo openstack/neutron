@@ -46,9 +46,11 @@ class QuantumDebugAgent():
         cfg.StrOpt('auth_region'),
         cfg.BoolOpt('use_namespaces', default=True),
         cfg.StrOpt('interface_driver',
-                   help="The driver used to manage the virtual interface."),
+                   help=_("The driver used to manage the virtual "
+                          "interface.")),
         cfg.StrOpt('external_network_bridge', default='br-ex',
-                   help="Name of bridge used for external network traffic."),
+                   help=_("Name of bridge used for external network "
+                          "traffic.")),
     ]
 
     def __init__(self, conf, client, driver):
@@ -74,7 +76,7 @@ class QuantumDebugAgent():
 
         if ip_lib.device_exists(interface_name,
                                 self.conf.root_helper, namespace):
-            LOG.debug(_('Reusing existing device: %s.') % interface_name)
+            LOG.debug(_('Reusing existing device: %s.'), interface_name)
         else:
             self.driver.plug(network.id,
                              port.id,
@@ -125,7 +127,7 @@ class QuantumDebugAgent():
             try:
                 ip.netns.delete(namespace)
             except:
-                LOG.warn(_('failed to delete namespace %s') % namespace)
+                LOG.warn(_('Failed to delete namespace %s'), namespace)
         else:
             self.driver.unplug(self.driver.get_device_name(port),
                                bridge=bridge)

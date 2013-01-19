@@ -97,7 +97,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
         except (ValueError, AttributeError,
                 exceptions.QuantumException,
                 netaddr.AddrFormatError) as e:
-            LOG.exception('%s failed' % action)
+            LOG.exception(_('%s failed'), action)
             body = serializer({'QuantumError': str(e)})
             kwargs = {'body': body, 'content_type': content_type}
             for fault in faults:
@@ -105,13 +105,13 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
                     raise faults[fault](**kwargs)
             raise webob.exc.HTTPInternalServerError(**kwargs)
         except webob.exc.HTTPException as e:
-            LOG.exception('%s failed' % action)
+            LOG.exception(_('%s failed'), action)
             e.body = serializer({'QuantumError': str(e)})
             e.content_type = content_type
             raise
         except Exception as e:
             # NOTE(jkoelker) Everyting else is 500
-            LOG.exception('%s failed' % action)
+            LOG.exception(_('%s failed'), action)
             # Do not expose details of 500 error to clients.
             msg = _('Request Failed: internal server error while '
                     'processing your request.')

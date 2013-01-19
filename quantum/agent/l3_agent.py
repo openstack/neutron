@@ -113,27 +113,32 @@ class L3NATAgent(manager.Manager):
     OPTS = [
         cfg.StrOpt('root_helper', default='sudo'),
         cfg.StrOpt('external_network_bridge', default='br-ex',
-                   help="Name of bridge used for external network traffic."),
+                   help=_("Name of bridge used for external network "
+                          "traffic.")),
         cfg.StrOpt('interface_driver',
-                   help="The driver used to manage the virtual interface."),
+                   help=_("The driver used to manage the virtual "
+                          "interface.")),
         cfg.IntOpt('metadata_port',
                    default=9697,
-                   help="TCP Port used by Quantum metadata namespace proxy."),
+                   help=_("TCP Port used by Quantum metadata namespace "
+                          "proxy.")),
         cfg.IntOpt('send_arp_for_ha',
                    default=3,
-                   help="Send this many gratuitous ARPs for HA setup, "
-                        "set it below or equal to 0 to disable this feature."),
+                   help=_("Send this many gratuitous ARPs for HA setup, "
+                          "set it below or equal to 0 to disable this "
+                          "feature.")),
         cfg.BoolOpt('use_namespaces', default=True,
-                    help="Allow overlapping IP."),
+                    help=_("Allow overlapping IP.")),
         cfg.StrOpt('router_id', default='',
-                   help="If namespaces is disabled, the l3 agent can only"
-                        " confgure a router that has the matching router ID."),
+                   help=_("If namespaces is disabled, the l3 agent can only"
+                          " confgure a router that has the matching router "
+                          "ID.")),
         cfg.BoolOpt('handle_internal_only_routers',
                     default=True,
-                    help="Agent should implement routers with no gateway"),
+                    help=_("Agent should implement routers with no gateway")),
         cfg.StrOpt('gateway_external_network_id', default='',
-                   help="UUID of external network for routers implemented "
-                        "by the agents."),
+                   help=_("UUID of external network for routers implemented "
+                          "by the agents.")),
         cfg.StrOpt('l3_agent_manager',
                    default='quantum.agent.l3_agent.L3NATAgent'),
     ]
@@ -152,8 +157,8 @@ class L3NATAgent(manager.Manager):
             self.driver = importutils.import_object(self.conf.interface_driver,
                                                     self.conf)
         except:
-            LOG.exception(_("Error importing interface driver '%s'"
-                            % self.conf.interface_driver))
+            LOG.exception(_("Error importing interface driver '%s'"),
+                          self.conf.interface_driver)
             sys.exit(1)
         self.plugin_rpc = L3PluginApi(topics.PLUGIN, host)
         self.fullsync = True
@@ -172,7 +177,7 @@ class L3NATAgent(manager.Manager):
                 try:
                     self._destroy_router_namespace(ns)
                 except:
-                    LOG.exception(_("Failed deleting namespace '%s'") % ns)
+                    LOG.exception(_("Failed deleting namespace '%s'"), ns)
 
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
@@ -261,7 +266,7 @@ class L3NATAgent(manager.Manager):
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.error(_("Ignoring multiple IPs on router port %s") %
+            LOG.error(_("Ignoring multiple IPs on router port %s"),
                       port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
@@ -364,7 +369,7 @@ class L3NATAgent(manager.Manager):
                     utils.execute(arping_cmd, check_exit_code=True,
                                   root_helper=self.conf.root_helper)
             except Exception as e:
-                LOG.error(_("Failed sending gratuitous ARP: %s") % str(e))
+                LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
 
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
@@ -552,8 +557,8 @@ class L3NATAgent(manager.Manager):
     def _process_routers(self, routers):
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
-            LOG.error(_("The external network bridge '%s' does not exist")
-                      % self.conf.external_network_bridge)
+            LOG.error(_("The external network bridge '%s' does not exist"),
+                      self.conf.external_network_bridge)
             return
 
         target_ex_net_id = self._fetch_external_net_id()

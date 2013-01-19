@@ -32,7 +32,7 @@ class Pidfile(object):
         try:
             self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
         except IOError, e:
-            LOG.exception(_("Failed to open pidfile: %s") % pidfile)
+            LOG.exception(_("Failed to open pidfile: %s"), pidfile)
             sys.exit(1)
         self.pidfile = pidfile
         self.procname = procname
@@ -130,8 +130,8 @@ class Daemon(object):
 
         if self.pidfile.is_running():
             self.pidfile.unlock()
-            message = _('pidfile %s already exist. Daemon already running?\n')
-            LOG.error(message % self.pidfile)
+            message = _('Pidfile %s already exist. Daemon already running?')
+            LOG.error(message, self.pidfile)
             sys.exit(1)
 
         # Start the daemon

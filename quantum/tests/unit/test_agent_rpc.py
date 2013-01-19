@@ -128,7 +128,7 @@ class AgentRPCNotificationDispatcher(unittest.TestCase):
 
         with mock.patch('quantum.agent.rpc.LOG') as log:
             self._test_run_dispatch_helper(msg, handler)
-            log.assert_has_calls([mock.call.debug(mock.ANY)])
+            log.assert_has_calls([mock.call.debug(mock.ANY, mock.ANY)])
 
     def test_run_dispatch_handler_raises(self):
         class SimpleHandler:
@@ -142,4 +142,4 @@ class AgentRPCNotificationDispatcher(unittest.TestCase):
 
         with mock.patch('quantum.agent.rpc.LOG') as log:
             self._test_run_dispatch_helper(msg, handler)
-            log.assert_has_calls([mock.call.warn(mock.ANY)])
+            log.assert_has_calls([mock.call.warn(mock.ANY, mock.ANY)])

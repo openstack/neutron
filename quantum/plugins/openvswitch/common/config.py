@@ -26,23 +26,25 @@ ovs_opts = [
     cfg.BoolOpt('enable_tunneling', default=False),
     cfg.StrOpt('tunnel_bridge', default='br-tun'),
     cfg.StrOpt('int_peer_patch_port', default='patch-tun',
-               help="Peer patch port in integration bridge for tunnel bridge"),
+               help=_("Peer patch port in integration bridge for tunnel "
+                      "bridge")),
     cfg.StrOpt('tun_peer_patch_port', default='patch-int',
-               help="Peer patch port in tunnel bridge for integration bridge"),
+               help=_("Peer patch port in tunnel bridge for integration "
+                      "bridge")),
     cfg.StrOpt('local_ip', default=''),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
-                help="List of <physical_network>:<bridge>"),
+                help=_("List of <physical_network>:<bridge>")),
     cfg.StrOpt('tenant_network_type', default='local',
-               help="Network type for tenant networks "
-               "(local, vlan, gre, or none)"),
+               help=_("Network type for tenant networks "
+                      "(local, vlan, gre, or none)")),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
-                help="List of <physical_network>:<vlan_min>:<vlan_max> "
-                "or <physical_network>"),
+                help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
+                       "or <physical_network>")),
     cfg.ListOpt('tunnel_id_ranges',
                 default=DEFAULT_TUNNEL_RANGES,
-                help="List of <tun_min>:<tun_max>"),
+                help=_("List of <tun_min>:<tun_max>")),
 ]
 
 agent_opts = [

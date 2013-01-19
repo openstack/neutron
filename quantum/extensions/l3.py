@@ -147,11 +147,12 @@ EXTENDED_ATTRIBUTES_2_0 = {
 l3_quota_opts = [
     cfg.IntOpt('quota_router',
                default=10,
-               help='number of routers allowed per tenant, -1 for unlimited'),
+               help=_('Number of routers allowed per tenant, -1 for '
+                      'unlimited')),
     cfg.IntOpt('quota_floatingip',
                default=50,
-               help='number of floating IPs allowed per tenant, '
-                    '-1 for unlimited'),
+               help=_('Number of floating IPs allowed per tenant, '
+                      '-1 for unlimited')),
 ]
 cfg.CONF.register_opts(l3_quota_opts, 'QUOTAS')
 
