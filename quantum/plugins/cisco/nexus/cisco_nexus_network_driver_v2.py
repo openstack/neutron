@@ -78,7 +78,7 @@ class CiscoNEXUSDriver():
         """
         confstr = snipp.CMD_PORT_TRUNK % (interface)
         confstr = self.create_xml_snippet(confstr)
-        LOG.debug("NexusDriver: %s" % confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_switch_port(self, mgr, interface):
@@ -87,7 +87,7 @@ class CiscoNEXUSDriver():
         """
         confstr = snipp.CMD_NO_SWITCHPORT % (interface)
         confstr = self.create_xml_snippet(confstr)
-        LOG.debug("NexusDriver: %s" % confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
@@ -97,7 +97,7 @@ class CiscoNEXUSDriver():
         """
         confstr = snipp.CMD_VLAN_INT_SNIPPET % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
-        LOG.debug("NexusDriver: %s" % confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
@@ -107,7 +107,7 @@ class CiscoNEXUSDriver():
         """
         confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
-        LOG.debug("NexusDriver: %s" % confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
         mgr.edit_config(target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
@@ -122,7 +122,7 @@ class CiscoNEXUSDriver():
         self.enable_vlan(man, vlan_id, vlan_name)
         if vlan_ids is '':
             vlan_ids = self.build_vlans_cmd()
-        LOG.debug("NexusDriver VLAN IDs: %s" % vlan_ids)
+        LOG.debug(_("NexusDriver VLAN IDs: %s"), vlan_ids)
         for ports in nexus_ports:
             self.enable_vlan_on_trunk_int(man, ports, vlan_ids)
 

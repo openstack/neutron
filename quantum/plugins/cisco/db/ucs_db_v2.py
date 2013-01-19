@@ -27,7 +27,7 @@ from quantum.plugins.cisco.db import ucs_models_v2 as ucs_models
 
 def get_all_portbindings():
     """Lists all the port bindings"""
-    LOG.debug("db get_all_portbindings() called")
+    LOG.debug(_("DB get_all_portbindings() called"))
     session = db.get_session()
     try:
         port_bindings = session.query(ucs_models.PortBinding).all()
@@ -38,7 +38,7 @@ def get_all_portbindings():
 
 def get_portbinding(port_id):
     """Lists a port binding"""
-    LOG.debug("get_portbinding() called")
+    LOG.debug(_("get_portbinding() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -51,7 +51,7 @@ def get_portbinding(port_id):
 def add_portbinding(port_id, blade_intf_dn, portprofile_name,
                     vlan_name, vlan_id, qos):
     """Adds a port binding"""
-    LOG.debug("add_portbinding() called")
+    LOG.debug(_("add_portbinding() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -68,7 +68,7 @@ def add_portbinding(port_id, blade_intf_dn, portprofile_name,
 
 def remove_portbinding(port_id):
     """Removes a port binding"""
-    LOG.debug("db remove_portbinding() called")
+    LOG.debug(_("DB remove_portbinding() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -85,7 +85,7 @@ def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
                        tenant_id=None, instance_id=None,
                        vif_id=None):
     """Updates port binding"""
-    LOG.debug("db update_portbinding() called")
+    LOG.debug(_("DB update_portbinding() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -115,7 +115,7 @@ def update_portbinding(port_id, blade_intf_dn=None, portprofile_name=None,
 
 def update_portbinding_instance_id(port_id, instance_id):
     """Updates port binding for the instance ID"""
-    LOG.debug("db update_portbinding_instance_id() called")
+    LOG.debug(_("DB update_portbinding_instance_id() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -130,7 +130,7 @@ def update_portbinding_instance_id(port_id, instance_id):
 
 def update_portbinding_vif_id(port_id, vif_id):
     """Updates port binding for the VIF ID"""
-    LOG.debug("db update_portbinding_vif_id() called")
+    LOG.debug(_("DB update_portbinding_vif_id() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).
@@ -145,7 +145,7 @@ def update_portbinding_vif_id(port_id, vif_id):
 
 def get_portbinding_dn(blade_intf_dn):
     """Lists a port binding"""
-    LOG.debug("get_portbinding_dn() called")
+    LOG.debug(_("get_portbinding_dn() called"))
     session = db.get_session()
     try:
         port_binding = (session.query(ucs_models.PortBinding).

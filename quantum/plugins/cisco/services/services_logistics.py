@@ -110,15 +110,15 @@ class ServicesLogistics():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]
             _plugins[key] = importutils.import_object(plugin_obj)
         if not plugin_key in _plugins.keys():
-            LOG.debug("No %s Plugin loaded" % plugin_key)
+            LOG.debug(_("No %s Plugin loaded"), plugin_key)
             return False
         else:
-            LOG.debug("Plugin %s founded" % const.UCS_PLUGIN)
+            LOG.debug(_("Plugin %s founded"), const.UCS_PLUGIN)
             return True
 
     def press_key(self):
         """
         Waits for en external input
         """
-        key = raw_input("Press any key to continue")
+        key = raw_input(_("Press any key to continue"))
         return key
