@@ -20,8 +20,8 @@ import socket
 
 import unittest2 as unittest
 
-from quantum import wsgi
 from quantum.common import exceptions as exception
+from quantum import wsgi
 
 
 class TestWSGIServer(unittest.TestCase):

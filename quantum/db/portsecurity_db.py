@@ -16,8 +16,8 @@
 #
 # @author: Aaron Rosen, Nicira, Inc
 
-from sqlalchemy.orm import exc
 import sqlalchemy as sa
+from sqlalchemy.orm import exc
 
 from quantum.db import model_base
 from quantum.extensions import portsecurity as psec

@@ -20,8 +20,8 @@ Quantum base exception handling.
 """
 
 from quantum.openstack.common.exception import Error
-from quantum.openstack.common.exception import OpenstackException
 from quantum.openstack.common.exception import InvalidContentType
+from quantum.openstack.common.exception import OpenstackException
 
 
 class QuantumException(OpenstackException):

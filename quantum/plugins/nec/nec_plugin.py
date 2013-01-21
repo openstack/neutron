@@ -21,9 +21,9 @@ from quantum import context
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
-from quantum.extensions import portbindings
 #NOTE(amotoki): quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
+from quantum.extensions import portbindings
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.nec.common import config
