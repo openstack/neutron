@@ -15,10 +15,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 from webob import exc
 
 from quantum.openstack.common import log as logging
+
 
 LOG = logging.getLogger(__name__)
 
@@ -49,13 +49,12 @@ class QuantumController(object):
                                      self._resource_name)
         for param in params:
             param_name = param['param-name']
-            param_value = data.get(param_name, None)
+            param_value = data.get(param_name)
             # If the parameter wasn't found and it was required, return 400
             if param_value is None and param['required']:
                 msg = (_("Failed to parse request. "
                          "Parameter '%s' not specified") % param_name)
-                for line in msg.split('\n'):
-                    LOG.error(line)
+                LOG.error(msg)
                 raise exc.HTTPBadRequest(msg)
             data[param_name] = param_value or param.get('default-value')
         return body
