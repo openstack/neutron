@@ -68,7 +68,7 @@ def setup_conf():
                     default=False,
                     help=_('Delete the namespace by removing all devices.')),
     ]
-    conf = cfg.CommonConfigOpts()
+    conf = cfg.ConfigOpts()
     conf.register_opts(opts)
     conf.register_opts(dhcp.OPTS)
     config.setup_logging(conf)

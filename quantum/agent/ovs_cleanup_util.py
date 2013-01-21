@@ -47,7 +47,7 @@ def setup_conf():
                    help=_("Root helper application.")),
     ]
 
-    conf = cfg.CommonConfigOpts()
+    conf = cfg.ConfigOpts()
     conf.register_cli_opts(opts)
     conf.register_opts(l3_agent.L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)

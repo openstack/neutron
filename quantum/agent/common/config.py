@@ -27,7 +27,7 @@ def setup_conf():
                    help=_('Top-level directory for maintaining dhcp state')),
     ]
 
-    conf = cfg.CommonConfigOpts()
+    conf = cfg.ConfigOpts()
     conf.register_opts(bind_opts)
     return conf
 
