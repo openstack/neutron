@@ -878,9 +878,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                for route in subnet['routes']],
                'shared': subnet['shared']
                }
-        if subnet['gateway_ip']:
-            res['gateway_ip'] = subnet['gateway_ip']
-
         return self._fields(res, fields)
 
     def _make_port_dict(self, port, fields=None):
