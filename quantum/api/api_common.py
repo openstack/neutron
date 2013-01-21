@@ -45,15 +45,15 @@ class QuantumController(object):
             data = body[self._resource_name]
         except KeyError:
             # raise if _resource_name is not in req body.
-            raise exc.HTTPBadRequest("Unable to find '%s' in request body"
-                                     % self._resource_name)
+            raise exc.HTTPBadRequest(_("Unable to find '%s' in request body") %
+                                     self._resource_name)
         for param in params:
             param_name = param['param-name']
             param_value = data.get(param_name, None)
             # If the parameter wasn't found and it was required, return 400
             if param_value is None and param['required']:
-                msg = ("Failed to parse request. " +
-                       "Parameter: " + param_name + " not specified")
+                msg = (_("Failed to parse request. "
+                         "Parameter '%s' not specified") % param_name)
                 for line in msg.split('\n'):
                     LOG.error(line)
                 raise exc.HTTPBadRequest(msg)
