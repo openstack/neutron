@@ -41,29 +41,39 @@ class TestWSGIServer(unittest.TestCase):
         server.stop()
         server.wait()
 
+    def test_ipv6_listen_called_with_scope(self):
+        server = wsgi.Server("test_app")
 
-class TestWSGIServer2(unittest.TestCase):
-    def setUp(self):
-        self.eventlet_p = mock.patch.object(wsgi, 'eventlet')
-        self.eventlet = self.eventlet_p.start()
-        self.server = wsgi.Server("test_app")
+        with mock.patch.object(wsgi.eventlet, 'listen') as mock_listen:
+            with mock.patch.object(socket, 'getaddrinfo') as mock_get_addr:
+                mock_get_addr.return_value = [
+                    (socket.AF_INET6,
+                     socket.SOCK_STREAM,
+                     socket.IPPROTO_TCP,
+                     '',
+                     ('fe80::204:acff:fe96:da87%eth0', 1234, 0, 2))
+                ]
+                with mock.patch.object(server, 'pool') as mock_pool:
+                    server.start(None,
+                                 1234,
+                                 host="fe80::204:acff:fe96:da87%eth0")
 
-    def tearDown(self):
-        self.eventlet_p.stop()
+                    mock_get_addr.assert_called_once_with(
+                        "fe80::204:acff:fe96:da87%eth0",
+                        1234,
+                        socket.AF_UNSPEC,
+                        socket.SOCK_STREAM
+                    )
 
-    def test_ipv6_with_link_local_start(self):
-        mock_app = mock.Mock()
-        with mock.patch.object(self.server, 'pool') as pool:
-            self.server.start(mock_app,
-                              0,
-                              host="fe80::204:acff:fe96:da87%eth0")
-            self.eventlet.assert_has_calls([
-                mock.call.listen(('fe80::204:acff:fe96:da87%eth0', 0, 0, 2),
-                                 backlog=128,
-                                 family=10)
-            ])
-            pool.spawn.assert_has_calls([mock.call(
-                self.server._run,
-                mock_app,
-                self.eventlet.listen.mock_calls[0].return_value)
-            ])
+                    mock_listen.assert_called_once_with(
+                        ('fe80::204:acff:fe96:da87%eth0', 1234, 0, 2),
+                        family=socket.AF_INET6,
+                        backlog=128
+                    )
+
+                    mock_pool.spawn.assert_has_calls([
+                        mock.call(
+                            server._run,
+                            None,
+                            mock_listen.return_value)
+                    ])
