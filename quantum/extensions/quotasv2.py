@@ -26,6 +26,7 @@ from quantum.openstack.common import importutils
 from quantum import quota
 from quantum import wsgi
 
+
 RESOURCE_NAME = 'quota'
 RESOURCE_COLLECTION = RESOURCE_NAME + "s"
 QUOTAS = quota.QUOTAS
@@ -114,8 +115,9 @@ class QuotaSetsController(wsgi.Controller):
         return {self._resource_name: self._get_quotas(request, tenant_id)}
 
 
-class Quotasv2(object):
+class Quotasv2(extensions.ExtensionDescriptor):
     """Quotas management support"""
+
     @classmethod
     def get_name(cls):
         return "Quotas for each tenant"
@@ -137,6 +139,15 @@ class Quotasv2(object):
     def get_updated(cls):
         return "2012-07-29T10:00:00-00:00"
 
+    @classmethod
+    def get_resources(cls):
+        """ Returns Ext Resources """
+        controller = QuotaSetsController(QuantumManager.get_plugin())
+        return [extensions.ResourceExtension(
+            Quotasv2.get_alias(),
+            controller,
+            collection_actions={'tenant': 'GET'})]
+
     def get_extended_resources(self, version):
         if version == "2.0":
             return EXTENDED_ATTRIBUTES_2_0
@@ -147,12 +158,3 @@ class Quotasv2(object):
         if cfg.CONF.QUOTAS.quota_driver != DB_QUOTA_DRIVER:
             msg = _('Quota driver %s is needed.') % DB_QUOTA_DRIVER
             raise exceptions.InvalidExtenstionEnv(reason=msg)
-
-    @classmethod
-    def get_resources(cls):
-        """ Returns Ext Resources """
-        controller = QuotaSetsController(QuantumManager.get_plugin())
-        return [extensions.ResourceExtension(
-            Quotasv2.get_alias(),
-            controller,
-            collection_actions={'tenant': 'GET'})]

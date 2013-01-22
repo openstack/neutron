@@ -16,6 +16,7 @@
 #    under the License.
 #
 # @author: Ying Liu, Cisco Systems, Inc.
+#
 
 from webob import exc
 
@@ -28,10 +29,8 @@ from quantum.plugins.cisco.common import cisco_faults as faults
 from quantum import wsgi
 
 
-class Credential(object):
+class Credential(extensions.ExtensionDescriptor):
     """extension class Credential"""
-    def __init__(self):
-        pass
 
     @classmethod
     def get_name(cls):

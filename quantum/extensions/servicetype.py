@@ -1,4 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 # Copyright 2013 OpenStack LLC.
 # All Rights Reserved.
 #
@@ -156,7 +157,7 @@ attributes.validators['type:service_definitions'] = _validate_service_defs
 attributes.validators['type:servicetype_ref'] = _validate_servicetype_ref
 
 
-class Servicetype(object):
+class Servicetype(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
@@ -183,8 +184,8 @@ class Servicetype(object):
     def get_resources(cls):
         """ Returns Extended Resource for service type management """
         controller = base.create_resource(
-            COLLECTION_NAME, RESOURCE_NAME,
+            COLLECTION_NAME,
+            RESOURCE_NAME,
             servicetype_db.ServiceTypeManager.get_instance(),
             RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME])
-        return [extensions.ResourceExtension(COLLECTION_NAME,
-                                             controller)]
+        return [extensions.ResourceExtension(COLLECTION_NAME, controller)]
