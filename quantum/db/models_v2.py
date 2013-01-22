@@ -50,7 +50,7 @@ class IPAvailabilityRange(model_base.BASEV2):
     allocation_pool_id = sa.Column(sa.String(36),
                                    sa.ForeignKey('ipallocationpools.id',
                                                  ondelete="CASCADE"),
-                                   nullable=True,
+                                   nullable=False,
                                    primary_key=True)
     first_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
     last_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
