@@ -18,6 +18,7 @@
 """
 Utility methods for working with WSGI servers
 """
+import socket
 import sys
 from xml.dom import minidom
 from xml.parsers import expat
@@ -51,8 +52,40 @@ class Server(object):
 
     def start(self, application, port, host='0.0.0.0', backlog=128):
         """Run a WSGI server with the given application."""
-        socket = eventlet.listen((host, port), backlog=backlog)
-        self.pool.spawn_n(self._run, application, socket)
+        self._host = host
+        self._port = port
+
+        # TODO(dims): eventlet's green dns/socket module does not actually
+        # support IPv6 in getaddrinfo(). We need to get around this in the
+        # future or monitor upstream for a fix
+        try:
+            info = socket.getaddrinfo(self._host,
+                                      self._port,
+                                      socket.AF_UNSPEC,
+                                      socket.SOCK_STREAM)[0]
+            family = info[0]
+            bind_addr = info[-1]
+
+            self._socket = eventlet.listen(bind_addr,
+                                           family=family,
+                                           backlog=backlog)
+        except:
+            LOG.exception(_("Unable to listen on %(host)s:%(port)s") %
+                          {'host': host, 'port': port})
+            sys.exit(1)
+
+        self._server = self.pool.spawn(self._run, application, self._socket)
+
+    @property
+    def host(self):
+        return self._socket.getsockname()[0] if self._socket else self._host
+
+    @property
+    def port(self):
+        return self._socket.getsockname()[1] if self._socket else self._port
+
+    def stop(self):
+        self._server.kill()
 
     def wait(self):
         """Wait until all servers have completed running."""
