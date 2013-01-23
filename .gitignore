@@ -15,3 +15,4 @@ run_tests.log
 setuptools*.egg/
 .tox/
 .venv/
+*.mo

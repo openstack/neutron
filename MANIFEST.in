@@ -5,6 +5,7 @@ include quantum/db/migration/README
 include quantum/db/migration/alembic.ini
 include quantum/db/migration/alembic/script.py.mako
 include quantum/db/migration/alembic/versions/README
+recursive-include quantum/locale *
 
 exclude .gitignore
 exclude .gitreview
