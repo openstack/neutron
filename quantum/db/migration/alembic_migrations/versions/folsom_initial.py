@@ -176,7 +176,7 @@ def upgrade_base():
 
     op.create_table(
         'ipavailabilityranges',
-        sa.Column('allocation_pool_id', sa.String(length=36), nullable=True),
+        sa.Column('allocation_pool_id', sa.String(length=36), nullable=False),
         sa.Column('first_ip', sa.String(length=64), nullable=False),
         sa.Column('last_ip', sa.String(length=64), nullable=False),
         sa.ForeignKeyConstraint(['allocation_pool_id'],
