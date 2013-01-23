@@ -481,6 +481,9 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
+            # Set port status as 'DOWN'. This will be updated by agent
+            port['port']['status'] = q_const.PORT_STATUS_DOWN
+
             port = super(LinuxBridgePluginV2,
                          self).create_port(context, port)
             self._process_port_create_security_group(

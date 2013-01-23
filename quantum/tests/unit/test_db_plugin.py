@@ -103,6 +103,8 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
         self.api = APIRouter()
+        # Set the defualt port status
+        self.port_create_status = 'ACTIVE'
 
         def _is_native_bulk_supported():
             plugin_obj = QuantumManager.get_plugin()
@@ -616,7 +618,7 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
 
 class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_create_port_json(self):
-        keys = [('admin_state_up', True), ('status', 'ACTIVE')]
+        keys = [('admin_state_up', True), ('status', self.port_create_status)]
         with self.port(name='myname') as port:
             for k, v in keys:
                 self.assertEqual(port['port'][k], v)
@@ -640,7 +642,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
             self.assertEqual(res.status_int, 403)
 
     def test_create_port_public_network(self):
-        keys = [('admin_state_up', True), ('status', 'ACTIVE')]
+        keys = [('admin_state_up', True), ('status', self.port_create_status)]
         with self.network(shared=True) as network:
             port_res = self._create_port('json',
                                          network['network']['id'],
@@ -656,7 +658,8 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_create_port_public_network_with_ip(self):
         with self.network(shared=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
-                keys = [('admin_state_up', True), ('status', 'ACTIVE'),
+                keys = [('admin_state_up', True),
+                        ('status', self.port_create_status),
                         ('fixed_ips', [{'subnet_id': subnet['subnet']['id'],
                                         'ip_address': '10.0.0.2'}])]
                 port_res = self._create_port('json',

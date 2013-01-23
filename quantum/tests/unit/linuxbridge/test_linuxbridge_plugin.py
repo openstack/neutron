@@ -26,6 +26,7 @@ class LinuxBridgePluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
     def setUp(self):
         super(LinuxBridgePluginV2TestCase, self).setUp(PLUGIN_NAME)
+        self.port_create_status = 'DOWN'
 
 
 class TestLinuxBridgeBasicGet(test_plugin.TestBasicGet,
@@ -44,6 +45,11 @@ class TestLinuxBridgePortsV2(test_plugin.TestPortsV2,
 
     VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
     HAS_PORT_FILTER = True
+
+    def test_update_port_status_build(self):
+        with self.port() as port:
+            self.assertEqual(port['port']['status'], 'DOWN')
+            self.assertEqual(self.port_create_status, 'DOWN')
 
 
 class TestLinuxBridgeNetworksV2(test_plugin.TestNetworksV2,

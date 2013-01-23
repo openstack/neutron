@@ -1213,13 +1213,18 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # Returns the IP's for the port
             ips = self._allocate_ips_for_port(context, network, port)
 
+            if 'status' not in p:
+                status = constants.PORT_STATUS_ACTIVE
+            else:
+                status = p['status']
+
             port = models_v2.Port(tenant_id=tenant_id,
                                   name=p['name'],
                                   id=port_id,
                                   network_id=network_id,
                                   mac_address=mac_address,
                                   admin_state_up=p['admin_state_up'],
-                                  status=constants.PORT_STATUS_ACTIVE,
+                                  status=status,
                                   device_id=p['device_id'],
                                   device_owner=p['device_owner'])
             context.session.add(port)
