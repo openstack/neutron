@@ -603,11 +603,14 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                'delay': health_monitor['delay'],
                'timeout': health_monitor['timeout'],
                'max_retries': health_monitor['max_retries'],
-               'http_method': health_monitor['http_method'],
-               'url_path': health_monitor['url_path'],
-               'expected_codes': health_monitor['expected_codes'],
                'admin_state_up': health_monitor['admin_state_up'],
                'status': health_monitor['status']}
+        # no point to add the values below to
+        # the result if the 'type' is not HTTP/S
+        if res['type'] in ['HTTP', 'HTTPS']:
+            for attr in ['url_path', 'http_method', 'expected_codes']:
+                res[attr] = health_monitor[attr]
+
         return self._fields(res, fields)
 
     def create_health_monitor(self, context, health_monitor):

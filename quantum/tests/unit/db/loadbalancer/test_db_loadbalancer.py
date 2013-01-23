@@ -366,12 +366,24 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                           admin_status_up,
                                           **kwargs)
         health_monitor = self.deserialize(fmt, res)
+        the_health_monitor = health_monitor['health_monitor']
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
+        # make sure:
+        # 1. When the type is HTTP/S we have HTTP related attributes in
+        #    the result
+        # 2. When the type is not HTTP/S we do not have HTTP related
+        #    attributes in the result
+        http_related_attributes = ('http_method', 'url_path', 'expected_codes')
+        if type in ['HTTP', 'HTTPS']:
+            for arg in http_related_attributes:
+                self.assertIsNotNone(the_health_monitor.get(arg))
+        else:
+            for arg in http_related_attributes:
+                self.assertIsNone(the_health_monitor.get(arg))
         yield health_monitor
         if not no_delete:
-            self._delete('health_monitors',
-                         health_monitor['health_monitor']['id'])
+            self._delete('health_monitors', the_health_monitor['id'])
 
 
 class TestLoadBalancer(LoadBalancerPluginDbTestCase):
