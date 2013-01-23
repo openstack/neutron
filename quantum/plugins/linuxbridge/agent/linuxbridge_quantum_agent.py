@@ -623,7 +623,7 @@ def main():
         LOG.error(_("Parsing physical_interface_mappings failed: %s."
                     " Agent terminated!"), e)
         sys.exit(1)
-    LOG.info(_("Interface mappings: %s") % interface_mappings)
+    LOG.info(_("Interface mappings: %s"), interface_mappings)
 
     polling_interval = cfg.CONF.AGENT.polling_interval
     root_helper = cfg.CONF.AGENT.root_helper

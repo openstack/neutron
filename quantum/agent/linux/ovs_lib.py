@@ -286,7 +286,8 @@ def get_bridge_for_iface(root_helper, iface):
     try:
         return utils.execute(args, root_helper=root_helper).strip()
     except Exception, e:
-        LOG.error(_("iface %s not found. Exception: %s"), iface, e)
+        LOG.exception(_("Interface %(iface)s not found. Exception: %(e)s"),
+                      locals())
         return None
 
 
@@ -295,5 +296,5 @@ def get_bridges(root_helper):
     try:
         return utils.execute(args, root_helper=root_helper).strip().split("\n")
     except Exception, e:
-        LOG.error(_("Unable to retrieve bridges. Exception: %s"), e)
+        LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
         return []

@@ -47,9 +47,9 @@ class DhcpAgent(object):
         cfg.IntOpt('resync_interval', default=30),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
-                   help="The driver used to manage the DHCP server."),
+                   help=_("The driver used to manage the DHCP server.")),
         cfg.BoolOpt('use_namespaces', default=True,
-                    help="Allow overlapping IP.")
+                    help=_("Allow overlapping IP."))
     ]
 
     def __init__(self, conf):
@@ -91,7 +91,7 @@ class DhcpAgent(object):
 
         except Exception, e:
             self.needs_resync = True
-            LOG.exception('Unable to %s dhcp.' % action)
+            LOG.exception(_('Unable to %s dhcp.'), action)
 
     def update_lease(self, network_id, ip_address, time_remaining):
         try:
@@ -135,7 +135,7 @@ class DhcpAgent(object):
             network = self.plugin_rpc.get_network_info(network_id)
         except:
             self.needs_resync = True
-            LOG.exception(_('Network %s RPC info call failed.') % network_id)
+            LOG.exception(_('Network %s RPC info call failed.'), network_id)
             return
 
         if not network.admin_state_up:
@@ -168,7 +168,7 @@ class DhcpAgent(object):
             network = self.plugin_rpc.get_network_info(network_id)
         except:
             self.needs_resync = True
-            LOG.exception(_('Network %s RPC info call failed.') % network_id)
+            LOG.exception(_('Network %s RPC info call failed.'), network_id)
             return
 
         old_cidrs = set(s.cidr for s in old_network.subnets if s.enable_dhcp)
@@ -382,7 +382,7 @@ class DeviceManager(object):
                    help=_("The type of authentication to use")),
         cfg.StrOpt('auth_region'),
         cfg.StrOpt('interface_driver',
-                   help="The driver used to manage the virtual interface.")
+                   help=_("The driver used to manage the virtual interface."))
     ]
 
     def __init__(self, conf, plugin):
@@ -426,7 +426,7 @@ class DeviceManager(object):
                 raise exceptions.PreexistingDeviceFailure(
                     dev_name=interface_name)
 
-            LOG.debug(_('Reusing existing device: %s.') % interface_name)
+            LOG.debug(_('Reusing existing device: %s.'), interface_name)
         else:
             self.driver.plug(network.id,
                              port.id,
@@ -488,7 +488,7 @@ class DhcpLeaseRelay(object):
     OPTS = [
         cfg.StrOpt('dhcp_lease_relay_socket',
                    default='$state_path/dhcp/lease_relay',
-                   help='Location to DHCP lease relay UNIX domain socket')
+                   help=_('Location to DHCP lease relay UNIX domain socket'))
     ]
 
     def __init__(self, lease_update_callback):
@@ -519,14 +519,14 @@ class DhcpLeaseRelay(object):
             network_id = data['network_id']
             if not uuidutils.is_uuid_like(network_id):
                 raise ValueError(_("Network ID %s is not a valid UUID") %
-                                 (network_id))
+                                 network_id)
             ip_address = str(netaddr.IPAddress(data['ip_address']))
             lease_remaining = int(data['lease_remaining'])
             self.callback(network_id, ip_address, lease_remaining)
         except ValueError, e:
             LOG.warn(_('Unable to parse lease relay msg to dict.'))
-            LOG.warn(_('Exception value: %s') % e)
-            LOG.warn(_('Message representation: %s') % repr(msg))
+            LOG.warn(_('Exception value: %s'), e)
+            LOG.warn(_('Message representation: %s'), repr(msg))
         except Exception, e:
             LOG.exception(_('Unable update lease. Exception'))
 

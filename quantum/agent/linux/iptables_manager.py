@@ -122,7 +122,7 @@ class IptablesTable(object):
         chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
-            LOG.warn(('Attempted to remove chain %s which does not exist'),
+            LOG.warn(_('Attempted to remove chain %s which does not exist'),
                      name)
             return
 
@@ -147,7 +147,7 @@ class IptablesTable(object):
 
         """
         if wrap and chain not in self.chains:
-            raise LookupError(('Unknown chain: %r') % chain)
+            raise LookupError(_('Unknown chain: %r') % chain)
 
         if '$' in rule:
             rule = ' '.join(map(self._wrap_target_chain, rule.split(' ')))
@@ -170,8 +170,8 @@ class IptablesTable(object):
         try:
             self.rules.remove(IptablesRule(chain, rule, wrap, top))
         except ValueError:
-            LOG.warn(('Tried to remove rule that was not there:'
-                      ' %(chain)r %(rule)r %(wrap)r %(top)r'),
+            LOG.warn(_('Tried to remove rule that was not there:'
+                       ' %(chain)r %(rule)r %(wrap)r %(top)r'),
                      {'chain': chain, 'rule': rule,
                       'top': top, 'wrap': wrap})
 
@@ -319,7 +319,7 @@ class IptablesManager(object):
                 self.execute(args,
                              process_input='\n'.join(new_filter),
                              root_helper=self.root_helper)
-        LOG.debug(("IPTablesManager.apply completed with success"))
+        LOG.debug(_("IPTablesManager.apply completed with success"))
 
     def _modify_rules(self, current_lines, table, binary=None):
         unwrapped_chains = table.unwrapped_chains

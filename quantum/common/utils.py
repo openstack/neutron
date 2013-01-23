@@ -47,7 +47,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
     """
     mtime = os.path.getmtime(filename)
     if not cache_info or mtime != cache_info.get('mtime'):
-        LOG.debug(_("Reloading cached file %s") % filename)
+        LOG.debug(_("Reloading cached file %s"), filename)
         with open(filename) as fap:
             cache_info['data'] = fap.read()
         cache_info['mtime'] = mtime
@@ -139,11 +139,11 @@ def parse_mappings(mapping_list, unique_values=True):
         if not value:
             raise ValueError(_("Missing value in mapping: '%s'") % mapping)
         if key in mappings:
-            raise ValueError(_("Key %s in mapping: '%s' not unique") %
-                             (key, mapping))
+            raise ValueError(_("Key %(key)s in mapping: '%(mapping)s' not "
+                               "unique") % locals())
         if unique_values and value in mappings.itervalues():
-            raise ValueError(_("Value %s in mapping: '%s' not unique") %
-                             (value, mapping))
+            raise ValueError(_("Value %(value)s in mapping: '%(mapping)s' "
+                               "not unique") % locals())
         mappings[key] = value
     return mappings
 

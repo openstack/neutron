@@ -47,13 +47,13 @@ class MetadataProxyHandler(object):
                    help=_("The type of authentication to use")),
         cfg.StrOpt('auth_region'),
         cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
-                   help="IP address used by Nova metadata server."),
+                   help=_("IP address used by Nova metadata server.")),
         cfg.IntOpt('nova_metadata_port',
                    default=8775,
-                   help="TCP Port used by Nova metadata server."),
+                   help=_("TCP Port used by Nova metadata server.")),
         cfg.StrOpt('metadata_proxy_shared_secret',
                    default='',
-                   help='Shared secret to sign instance-id request')
+                   help=_('Shared secret to sign instance-id request'))
     ]
 
     def __init__(self, conf):
@@ -181,7 +181,7 @@ class UnixDomainMetadataProxy(object):
     OPTS = [
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
-                   help='Location for Metadata Proxy UNIX domain socket')
+                   help=_('Location for Metadata Proxy UNIX domain socket'))
     ]
 
     def __init__(self, conf):

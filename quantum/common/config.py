@@ -90,7 +90,7 @@ def parse(args):
     msg = attributes._validate_regex(cfg.CONF.base_mac,
                                      attributes.MAC_PATTERN)
     if msg:
-        msg = "Base MAC: %s" % msg
+        msg = _("Base MAC: %s") % msg
         raise Exception(msg)
 
 
@@ -123,8 +123,8 @@ def load_paste_app(app_name):
     try:
         app = deploy.loadapp("config:%s" % config_path, name=app_name)
     except (LookupError, ImportError):
-        msg = ("Unable to load %(app_name)s from "
-               "configuration file %(config_path)s.") % locals()
+        msg = _("Unable to load %(app_name)s from "
+                "configuration file %(config_path)s.") % locals()
         LOG.exception(msg)
         raise RuntimeError(msg)
     return app

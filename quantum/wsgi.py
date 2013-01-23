@@ -410,7 +410,7 @@ class JSONDeserializer(TextDeserializer):
         try:
             return jsonutils.loads(datastring)
         except ValueError:
-            msg = _("cannot understand JSON")
+            msg = _("Cannot understand JSON")
             raise exception.MalformedRequestBody(reason=msg)
 
     def default(self, datastring):
@@ -433,7 +433,7 @@ class XMLDeserializer(TextDeserializer):
             node = minidom.parseString(datastring).childNodes[0]
             return {node.nodeName: self._from_xml_node(node, plurals)}
         except expat.ExpatError:
-            msg = _("cannot understand XML")
+            msg = _("Cannot understand XML")
             raise exception.MalformedRequestBody(reason=msg)
 
     def _from_xml_node(self, node, listnames):
@@ -1006,7 +1006,7 @@ class Serializer(object):
         try:
             return self.get_deserialize_handler(content_type)(datastring)
         except Exception:
-            raise webob.exc.HTTPBadRequest("Could not deserialize data")
+            raise webob.exc.HTTPBadRequest(_("Could not deserialize data"))
 
     def get_deserialize_handler(self, content_type):
         handlers = {

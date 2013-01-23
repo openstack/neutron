@@ -147,8 +147,10 @@ class FieldCheck(policy.Check):
         target_value = target_dict.get(self.field)
         # target_value might be a boolean, explicitly compare with None
         if target_value is None:
-            LOG.debug("Unable to find requested field: %s in target: %s",
-                      self.field, target_dict)
+            LOG.debug(_("Unable to find requested field: %(field)s in "
+                        "target: %(target_dict)s"),
+                      {'field': self.field,
+                       'target_dict': target_dict})
             return False
 
         return target_value == self.value

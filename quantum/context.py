@@ -45,7 +45,7 @@ class ContextBase(common_context.RequestContext):
         """
         if kwargs:
             LOG.warn(_('Arguments dropped when creating '
-                       'context: %s') % str(kwargs))
+                       'context: %s'), kwargs)
         super(ContextBase, self).__init__(user=user_id, tenant=tenant_id,
                                           is_admin=is_admin)
         self.roles = roles or []

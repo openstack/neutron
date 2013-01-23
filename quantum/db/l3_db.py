@@ -107,7 +107,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except exc.NoResultFound:
             raise l3.RouterNotFound(router_id=id)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple routers match for %s' % id)
+            LOG.error(_('Multiple routers match for %s'), id)
             raise l3.RouterNotFound(router_id=id)
         return router
 
@@ -174,7 +174,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if network_id:
             self._get_network(context, network_id)
             if not self._network_is_external(context, network_id):
-                msg = "Network %s is not a valid external network" % network_id
+                msg = _("Network %s is not a valid external "
+                        "network") % network_id
                 raise q_exc.BadRequest(resource='router', msg=msg)
 
         # figure out if we need to delete existing port
@@ -214,7 +215,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if not len(gw_port['fixed_ips']):
                 self.delete_port(context.elevated(), gw_port['id'],
                                  l3_port_check=False)
-                msg = ('No IPs available for external network %s' %
+                msg = (_('No IPs available for external network %s') %
                        network_id)
                 raise q_exc.BadRequest(resource='router', msg=msg)
 
@@ -275,7 +276,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             for p in rports:
                 for ip in p['fixed_ips']:
                     if ip['subnet_id'] == subnet_id:
-                        msg = ("Router already has a port on subnet %s"
+                        msg = (_("Router already has a port on subnet %s")
                                % subnet_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
                     sub_id = ip['subnet_id']
@@ -296,7 +297,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # make sure router exists
         router = self._get_router(context, router_id)
         if not interface_info:
-            msg = "Either subnet_id or port_id must be specified"
+            msg = _("Either subnet_id or port_id must be specified")
             raise q_exc.BadRequest(resource='router', msg=msg)
 
         try:
@@ -308,7 +309,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         if 'port_id' in interface_info:
             if 'subnet_id' in interface_info:
-                msg = "cannot specify both subnet-id and port-id"
+                msg = _("Cannot specify both subnet-id and port-id")
                 raise q_exc.BadRequest(resource='router', msg=msg)
 
             port = self._get_port(context, interface_info['port_id'])
@@ -318,7 +319,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                       device_id=port['device_id'])
             fixed_ips = [ip for ip in port['fixed_ips']]
             if len(fixed_ips) != 1:
-                msg = 'Router port must have exactly one fixed IP'
+                msg = _('Router port must have exactly one fixed IP')
                 raise q_exc.BadRequest(resource='router', msg=msg)
             subnet = self._get_subnet(context, fixed_ips[0]['subnet_id'])
             self._check_for_dup_router_subnet(context, router_id,
@@ -332,7 +333,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             subnet = self._get_subnet(context, subnet_id)
             # Ensure the subnet has a gateway
             if not subnet['gateway_ip']:
-                msg = 'Subnet for router interface must have a gateway IP'
+                msg = _('Subnet for router interface must have a gateway IP')
                 raise q_exc.BadRequest(resource='router', msg=msg)
             self._check_for_dup_router_subnet(context, router_id,
                                               subnet['network_id'],
@@ -383,7 +384,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             raise l3.RouterNotFound(router_id=router_id)
 
         if not interface_info:
-            msg = "Either subnet_id or port_id must be specified"
+            msg = _("Either subnet_id or port_id must be specified")
             raise q_exc.BadRequest(resource='router', msg=msg)
         if 'port_id' in interface_info:
             port_id = interface_info['port_id']
@@ -445,7 +446,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except exc.NoResultFound:
             raise l3.FloatingIPNotFound(floatingip_id=id)
         except exc.MultipleResultsFound:
-            LOG.error('Multiple floating ips match for %s' % id)
+            LOG.error(_('Multiple floating ips match for %s'), id)
             raise l3.FloatingIPNotFound(floatingip_id=id)
         return floatingip
 
@@ -464,8 +465,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                    external_network_id):
         subnet_db = self._get_subnet(context, internal_subnet_id)
         if not subnet_db['gateway_ip']:
-            msg = ('Cannot add floating IP to port on subnet %s '
-                   'which has no gateway_ip' % internal_subnet_id)
+            msg = (_('Cannot add floating IP to port on subnet %s '
+                     'which has no gateway_ip') % internal_subnet_id)
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
         # find router interface ports on this network
@@ -518,18 +519,19 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 if ip['ip_address'] == internal_ip_address:
                     internal_subnet_id = ip['subnet_id']
             if not internal_subnet_id:
-                msg = ('Port %s does not have fixed ip %s' %
-                       (internal_port['id'], internal_ip_address))
+                msg = (_('Port %(id)s does not have fixed ip %(address)s') %
+                       {'id': internal_port['id'],
+                        'address': internal_ip_address})
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)
         else:
             ips = [ip['ip_address'] for ip in internal_port['fixed_ips']]
             if len(ips) == 0:
-                msg = ('Cannot add floating IP to port %s that has'
-                       'no fixed IP addresses' % internal_port['id'])
+                msg = (_('Cannot add floating IP to port %s that has'
+                         'no fixed IP addresses') % internal_port['id'])
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)
             if len(ips) > 1:
-                msg = ('Port %s has multiple fixed IPs.  Must provide'
-                       ' a specific IP when assigning a floating IP' %
+                msg = (_('Port %s has multiple fixed IPs.  Must provide'
+                         ' a specific IP when assigning a floating IP') %
                        internal_port['id'])
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)
             internal_ip_address = internal_port['fixed_ips'][0]['ip_address']
@@ -558,7 +560,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         port_id = internal_ip_address = router_id = None
         if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
             not ('port_id' in fip and fip['port_id'])):
-            msg = "fixed_ip_address cannot be specified without a port_id"
+            msg = _("fixed_ip_address cannot be specified without a port_id")
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
         if 'port_id' in fip and fip['port_id']:
             port_id, internal_ip_address, router_id = self.get_assoc_data(
@@ -590,7 +592,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         f_net_id = fip['floating_network_id']
         if not self._network_is_external(context, f_net_id):
-            msg = "Network %s is not a valid external network" % f_net_id
+            msg = _("Network %s is not a valid external network") % f_net_id
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
         try:
@@ -610,7 +612,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                      'name': ''}})
                 # Ensure IP addresses are allocated on external port
                 if not external_port['fixed_ips']:
-                    msg = "Unable to find any IP address on external network"
+                    msg = _("Unable to find any IP address on external "
+                            "network")
                     raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
                 floating_fixed_ip = external_port['fixed_ips'][0]
@@ -631,7 +634,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # Maybe by introducing base class for L3 exceptions
         except q_exc.BadRequest:
             LOG.exception(_("Unable to create Floating ip due to a "
-                          "malformed request"))
+                            "malformed request"))
             raise
         except Exception:
             LOG.exception(_("Floating IP association failed"))
@@ -717,7 +720,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 return
             except exc.MultipleResultsFound:
                 # should never happen
-                raise Exception('Multiple floating IPs found for port %s'
+                raise Exception(_('Multiple floating IPs found for port %s')
                                 % port_id)
         if router_id:
             routers = self.get_sync_data(context.elevated(), [router_id])
@@ -875,7 +878,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         for port in ports:
             fixed_ips = port.get('fixed_ips', [])
             if len(fixed_ips) > 1:
-                LOG.error(_("Ignoring multiple IPs on router port %s") %
+                LOG.error(_("Ignoring multiple IPs on router port %s"),
                           port['id'])
                 continue
             # Empty fixed_ips should not happen

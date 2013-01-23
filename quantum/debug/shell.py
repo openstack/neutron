@@ -56,16 +56,16 @@ class QuantumDebugShell(QuantumShell):
         parser.add_argument(
             '--config-file',
             default=env('QUANTUM_TEST_CONFIG_FILE'),
-            help='Config file for interface driver '
-                 '(You may also use l3_agent.ini)')
+            help=_('Config file for interface driver '
+                   '(You may also use l3_agent.ini)'))
         return parser
 
     def initialize_app(self, argv):
         super(QuantumDebugShell, self).initialize_app(argv)
         if not self.options.config_file:
             raise exc.CommandError(
-                "You must provide a config file for bridge -"
-                " either --config-file or env[QUANTUM_TEST_CONFIG_FILE]")
+                _("You must provide a config file for bridge -"
+                  " either --config-file or env[QUANTUM_TEST_CONFIG_FILE]"))
         client = self.client_manager.quantum
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(QuantumDebugAgent.OPTS)

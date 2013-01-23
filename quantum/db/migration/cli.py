@@ -29,19 +29,19 @@ from quantum.openstack.common import cfg
 _core_opts = [
     cfg.StrOpt('core_plugin',
                default='',
-               help='Quantum plugin provider module'),
+               help=_('Quantum plugin provider module')),
 ]
 
 _quota_opts = [
     cfg.StrOpt('quota_driver',
                default='',
-               help='Quantum quota driver class'),
+               help=_('Quantum quota driver class')),
 ]
 
 _db_opts = [
     cfg.StrOpt('sql_connection',
                default='',
-               help='URL to database'),
+               help=_('URL to database')),
 ]
 
 CONF = cfg.CommonConfigOpts()
@@ -118,7 +118,7 @@ def add_command_parsers(subparsers):
 
 command_opt = cfg.SubCommandOpt('command',
                                 title='Command',
-                                help='Available commands',
+                                help=_('Available commands'),
                                 handler=add_command_parsers)
 
 CONF.register_cli_opt(command_opt)

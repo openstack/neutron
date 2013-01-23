@@ -25,25 +25,27 @@ LOG = logging.getLogger(__name__)
 quota_opts = [
     cfg.ListOpt('quota_items',
                 default=['network', 'subnet', 'port'],
-                help='resource name(s) that are supported in quota features'),
+                help=_('Resource name(s) that are supported in quota '
+                       'features')),
     cfg.IntOpt('default_quota',
                default=-1,
-               help='default number of resource allowed per tenant, '
-               'minus for unlimited'),
+               help=_('Default number of resource allowed per tenant, '
+                      'minus for unlimited')),
     cfg.IntOpt('quota_network',
                default=10,
-               help='number of networks allowed per tenant,'
-               'minus for unlimited'),
+               help=_('Number of networks allowed per tenant,'
+                      'minus for unlimited')),
     cfg.IntOpt('quota_subnet',
                default=10,
-               help='number of subnets allowed per tenant, '
-               'minus for unlimited'),
+               help=_('Number of subnets allowed per tenant, '
+                      'minus for unlimited')),
     cfg.IntOpt('quota_port',
                default=50,
-               help='number of ports allowed per tenant, minus for unlimited'),
+               help=_('number of ports allowed per tenant, minus for '
+                      'unlimited')),
     cfg.StrOpt('quota_driver',
                default='quantum.quota.ConfDriver',
-               help='default driver to use for quota checks'),
+               help=_('Default driver to use for quota checks')),
 ]
 # Register the configuration options
 cfg.CONF.register_opts(quota_opts, 'QUOTAS')
@@ -196,7 +198,7 @@ class QuotaEngine(object):
     def register_resource(self, resource):
         """Register a resource."""
         if resource.name in self._resources:
-            LOG.warn('%s is already registered.', resource.name)
+            LOG.warn(_('%s is already registered.'), resource.name)
             return
         self._resources[resource.name] = resource
 

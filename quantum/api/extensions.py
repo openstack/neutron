@@ -496,9 +496,8 @@ class ExtensionManager(object):
                     new_ext = new_ext_class()
                     self.add_extension(new_ext)
             except Exception as exception:
-                LOG.warn(_("extension file %(file)s wasn't loaded due to "
-                           "%(e)s"),
-                         {'file': f, 'e': exception})
+                LOG.warn(_("Extension file %(f)s wasn't loaded due to "
+                           "%(exception)s"), locals())
 
     def add_extension(self, ext):
         # Do nothing if the extension doesn't check out
@@ -539,7 +538,7 @@ class PluginAwareExtensionManager(ExtensionManager):
                                  for plugin in self.plugins.values())
         plugin_provider = cfg.CONF.core_plugin
         if not supports_extension:
-            LOG.warn(_("extension %s not supported by any of loaded plugins"),
+            LOG.warn(_("Extension %s not supported by any of loaded plugins"),
                      alias)
         return supports_extension
 

@@ -49,19 +49,19 @@ def is_attr_set(attribute):
 def _validate_values(data, valid_values=None):
     if data not in valid_values:
         msg = _("'%(data)s' is not in %(valid_values)s") % locals()
-        LOG.debug("validate_values: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
 def _validate_string(data, max_len=None):
     if not isinstance(data, basestring):
         msg = _("'%s' is not a valid string") % data
-        LOG.debug("validate_string: %s", msg)
+        LOG.debug(msg)
         return msg
 
     if max_len is not None and len(data) > max_len:
         msg = _("'%(data)s' exceeds maximum length of %(max_len)s") % locals()
-        LOG.debug("validate_string: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -71,7 +71,7 @@ def _validate_range(data, valid_values=None):
     if not min_value <= data <= max_value:
         msg = _("'%(data)s' is not in range %(min_value)s through "
                 "%(max_value)s") % locals()
-        LOG.debug("validate_range: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -80,7 +80,7 @@ def _validate_mac_address(data, valid_values=None):
         netaddr.EUI(data)
     except Exception:
         msg = _("'%s' is not a valid MAC address") % data
-        LOG.debug("validate_mac_address: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -89,7 +89,7 @@ def _validate_ip_address(data, valid_values=None):
         netaddr.IPAddress(data)
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
-        LOG.debug("validate_ip_address: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -101,26 +101,26 @@ def _validate_ip_pools(data, valid_values=None):
     """
     if not isinstance(data, list):
         msg = _("'%s' is not a valid IP pool") % data
-        LOG.debug("validate_ip_pools: %s", msg)
+        LOG.debug(msg)
         return msg
 
     expected_keys = ['start', 'end']
     for ip_pool in data:
         msg = _verify_dict_keys(expected_keys, ip_pool)
         if msg:
-            LOG.debug("validate_ip_pools: %s", msg)
+            LOG.debug(msg)
             return msg
         for k in expected_keys:
             msg = _validate_ip_address(ip_pool[k])
             if msg:
-                LOG.debug("validate_ip_pools: %s", msg)
+                LOG.debug(msg)
                 return msg
 
 
 def _validate_fixed_ips(data, valid_values=None):
     if not isinstance(data, list):
         msg = _("'%s' is not a valid fixed IP") % data
-        LOG.debug("validate_fixed_ips: %s", msg)
+        LOG.debug(msg)
         return msg
 
     ips = []
@@ -134,20 +134,20 @@ def _validate_fixed_ips(data, valid_values=None):
             else:
                 msg = _validate_ip_address(fixed_ip_address)
             if msg:
-                LOG.debug("validate_fixed_ips: %s", msg)
+                LOG.debug(msg)
                 return msg
             ips.append(fixed_ip_address)
         if 'subnet_id' in fixed_ip:
             msg = _validate_uuid(fixed_ip['subnet_id'])
             if msg:
-                LOG.debug("validate_fixed_ips: %s", msg)
+                LOG.debug(msg)
                 return msg
 
 
 def _validate_nameservers(data, valid_values=None):
     if not hasattr(data, '__iter__'):
         msg = _("'%s' is not a valid nameserver") % data
-        LOG.debug("validate_nameservers: %s", msg)
+        LOG.debug(msg)
         return msg
 
     ips = []
@@ -158,11 +158,11 @@ def _validate_nameservers(data, valid_values=None):
             msg = _validate_regex(ip, HOSTNAME_PATTERN)
             if msg:
                 msg = _("'%s' is not a valid nameserver") % ip
-                LOG.debug("validate_nameservers: %s", msg)
+                LOG.debug(msg)
                 return msg
         if ip in ips:
             msg = _("Duplicate nameserver %s") % ip
-            LOG.debug("validate_nameservers: %s", msg)
+            LOG.debug(msg)
             return msg
         ips.append(ip)
 
@@ -170,7 +170,7 @@ def _validate_nameservers(data, valid_values=None):
 def _validate_hostroutes(data, valid_values=None):
     if not isinstance(data, list):
         msg = _("'%s' is not a valid hostroute") % data
-        LOG.debug("validate_hostroutes: %s", msg)
+        LOG.debug(msg)
         return msg
 
     expected_keys = ['destination', 'nexthop']
@@ -178,19 +178,19 @@ def _validate_hostroutes(data, valid_values=None):
     for hostroute in data:
         msg = _verify_dict_keys(expected_keys, hostroute)
         if msg:
-            LOG.debug("validate_hostroutes: %s", msg)
+            LOG.debug(msg)
             return msg
         msg = _validate_subnet(hostroute['destination'])
         if msg:
-            LOG.debug("validate_hostroutes: %s", msg)
+            LOG.debug(msg)
             return msg
         msg = _validate_ip_address(hostroute['nexthop'])
         if msg:
-            LOG.debug("validate_hostroutes: %s", msg)
+            LOG.debug(msg)
             return msg
         if hostroute in hostroutes:
             msg = _("Duplicate hostroute %s") % hostroute
-            LOG.debug("validate_hostroutes: %s", msg)
+            LOG.debug(msg)
             return msg
         hostroutes.append(hostroute)
 
@@ -210,7 +210,7 @@ def _validate_subnet(data, valid_values=None):
         pass
 
     msg = _("'%s' is not a valid IP subnet") % data
-    LOG.debug("validate_subnet: %s", msg)
+    LOG.debug(msg)
     return msg
 
 
@@ -222,14 +222,14 @@ def _validate_regex(data, valid_values=None):
         pass
 
     msg = _("'%s' is not a valid input") % data
-    LOG.debug("validate_regex: %s", msg)
+    LOG.debug(msg)
     return msg
 
 
 def _validate_uuid(data, valid_values=None):
     if not uuidutils.is_uuid_like(data):
         msg = _("'%s' is not a valid UUID") % data
-        LOG.debug("validate_uuid: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -241,25 +241,25 @@ def _validate_uuid_or_none(data, valid_values=None):
 def _validate_uuid_list(data, valid_values=None):
     if not isinstance(data, list):
         msg = _("'%s' is not a list") % data
-        LOG.debug("validate_uuid_list: %s", msg)
+        LOG.debug(msg)
         return msg
 
     for item in data:
         msg = _validate_uuid(item)
         if msg:
-            LOG.debug("validate_uuid_list: %s", msg)
+            LOG.debug(msg)
             return msg
 
     if len(set(data)) != len(data):
         msg = _("Duplicate items in the list: %s") % ', '.join(data)
-        LOG.debug("validate_uuid_list: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
 def _validate_dict(data, valid_values=None):
     if not isinstance(data, dict):
         msg = _("'%s' is not a dictionary") % data
-        LOG.debug("validate_dict: %s", msg)
+        LOG.debug(msg)
         return msg
 
 
@@ -268,12 +268,12 @@ def _validate_non_negative(data, valid_values=None):
         data = int(data)
     except (ValueError, TypeError):
         msg = _("'%s' is not an integer") % data
-        LOG.debug("validate_non_negative: %s", msg)
+        LOG.debug(msg)
         return msg
 
     if data < 0:
         msg = _("'%s' should be non-negative") % data
-        LOG.debug("validate_non_negative: %s", msg)
+        LOG.debug(msg)
         return msg
 
 

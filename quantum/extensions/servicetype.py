@@ -99,19 +99,19 @@ def _validate_service_defs(data, valid_values=None):
                 except KeyError:
                     msg = (_("Required attributes missing in service "
                              "definition: %s") % svc_def)
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 # Validate 'service' attribute
                 if not svc_name in constants.ALLOWED_SERVICES:
                     msg = (_("Service name '%s' unspecified "
                              "or invalid") % svc_name)
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 # Validate 'plugin' attribute
                 if not plugin_name:
                     msg = (_("Plugin name not specified in "
                              "service definition %s") % svc_def)
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 # TODO(salvatore-orlando): This code will need to change when
                 # multiple plugins for each adv service will be supported
@@ -119,11 +119,11 @@ def _validate_service_defs(data, valid_values=None):
                     svc_name)
                 if not svc_plugin:
                     msg = _("No plugin for service '%s'") % svc_name
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 if svc_plugin.get_plugin_name() != plugin_name:
                     msg = _("Plugin name '%s' is not correct ") % plugin_name
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 # Validate 'driver' attribute (just check it's a string)
                 # FIXME(salvatore-orlando): This should be a list
@@ -139,14 +139,14 @@ def _validate_service_defs(data, valid_values=None):
                 if len(svc_def_copy):
                     msg = (_("Unparseable attributes found in "
                              "service definition %s") % svc_def)
-                    LOG.error("%(f_name)s: %(msg)s", locals())
+                    LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
             except TypeError:
                 LOG.exception(_("Exception while parsing service "
                                 "definition:%s"), svc_def)
                 msg = (_("Was expecting a dict for service definition, found "
                          "the following: %s") % svc_def)
-                LOG.error("%(f_name)s: %(msg)s", locals())
+                LOG.error(_("%(f_name)s: %(msg)s"), locals())
                 return msg
     except TypeError:
         return (_("%s: provided data are not iterable") %

@@ -145,7 +145,7 @@ class Quotasv2(object):
 
     def check_env(self):
         if cfg.CONF.QUOTAS.quota_driver != DB_QUOTA_DRIVER:
-            msg = _('quota driver %s is needed.') % DB_QUOTA_DRIVER
+            msg = _('Quota driver %s is needed.') % DB_QUOTA_DRIVER
             raise exceptions.InvalidExtenstionEnv(reason=msg)
 
     @classmethod

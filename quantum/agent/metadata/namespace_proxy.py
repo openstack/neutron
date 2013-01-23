@@ -32,7 +32,8 @@ from quantum import wsgi
 
 proxy_socket = cfg.StrOpt('metadata_proxy_socket',
                           default='$state_path/metadata_proxy',
-                          help='Location of Metadata Proxy UNIX domain socket')
+                          help=_('Location of Metadata Proxy UNIX domain '
+                                 'socket'))
 
 cfg.CONF.register_opt(proxy_socket)
 
@@ -145,7 +146,8 @@ def main():
         cfg.BoolOpt('daemonize', default=True),
         cfg.IntOpt('metadata_port',
                    default=9697,
-                   help="TCP Port to listen for metadata server requests."),
+                   help=_("TCP Port to listen for metadata server "
+                          "requests.")),
     ]
 
     cfg.CONF.register_cli_opts(opts)

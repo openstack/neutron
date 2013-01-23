@@ -58,7 +58,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug(_("Updating device (%s) filter"), port['device'])
         if not port['device'] in self.filtered_ports:
             LOG.info(_('Attempted to update port filter which is not '
-                     'filtered %s') % port['device'])
+                       'filtered %s'), port['device'])
             return
         self._remove_chains()
         self.filtered_ports[port['device']] = port
@@ -69,7 +69,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug(_("Removing device (%s) filter"), port['device'])
         if not self.filtered_ports.get(port['device']):
             LOG.info(_('Attempted to remove port filter which is not '
-                     'filtered %r'), port)
+                       'filtered %r'), port)
             return
         self._remove_chains()
         self.filtered_ports.pop(port['device'], None)

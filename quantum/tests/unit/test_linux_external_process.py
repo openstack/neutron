@@ -111,7 +111,7 @@ class TestProcessManager(unittest.TestCase):
                 with mock.patch.object(ep.LOG, 'debug') as debug:
                     manager = ep.ProcessManager(self.conf, 'uuid')
                     manager.disable()
-                    debug.assert_called_once_with(mock.ANY)
+                    debug.assert_called_once_with(mock.ANY, mock.ANY)
 
     def test_disable_no_pid(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
@@ -121,7 +121,7 @@ class TestProcessManager(unittest.TestCase):
                 with mock.patch.object(ep.LOG, 'debug') as debug:
                     manager = ep.ProcessManager(self.conf, 'uuid')
                     manager.disable()
-                    debug.assert_called_once_with(mock.ANY)
+                    debug.assert_called_once_with(mock.ANY, mock.ANY)
 
     def test_get_pid_file_name_existing(self):
         with mock.patch.object(ep.os.path, 'isdir') as isdir:

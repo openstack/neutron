@@ -43,7 +43,7 @@ class CreateProbe(ProbeCommand):
         parser = super(CreateProbe, self).get_parser(prog_name)
         parser.add_argument(
             'id', metavar='network_id',
-            help='ID of network to probe')
+            help=_('ID of network to probe'))
         return parser
 
     def run(self, parsed_args):
@@ -62,7 +62,7 @@ class DeleteProbe(ProbeCommand):
         parser = super(DeleteProbe, self).get_parser(prog_name)
         parser.add_argument(
             'id', metavar='port_id',
-            help='ID of probe port to delete')
+            help=_('ID of probe port to delete'))
         return parser
 
     def run(self, parsed_args):
@@ -113,12 +113,12 @@ class ExecProbe(ProbeCommand):
         parser = super(ExecProbe, self).get_parser(prog_name)
         parser.add_argument(
             'id', metavar='port_id',
-            help='ID of probe port to execute command')
+            help=_('ID of probe port to execute command'))
         parser.add_argument(
             'command', metavar='command',
             nargs='?',
             default=None,
-            help='Command to execute')
+            help=_('Command to execute'))
         return parser
 
     def run(self, parsed_args):
@@ -139,11 +139,11 @@ class PingAll(ProbeCommand):
         parser.add_argument(
             '--timeout', metavar='<timeout>',
             default=10,
-            help='Ping timeout')
+            help=_('Ping timeout'))
         parser.add_argument(
             '--id', metavar='network_id',
             default=None,
-            help='ID of network')
+            help=_('ID of network'))
         return parser
 
     def run(self, parsed_args):
