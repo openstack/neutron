@@ -438,19 +438,26 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return port
 
     def get_port(self, context, id, fields=None):
-        port = super(LinuxBridgePluginV2, self).get_port(context, id, fields)
-        self._extend_port_dict_security_group(context, port)
+        with context.session.begin(subtransactions=True):
+            port = super(LinuxBridgePluginV2, self).get_port(context,
+                                                             id,
+                                                             fields)
+            self._extend_port_dict_security_group(context, port)
         self._extend_port_dict_binding(context, port),
         return self._fields(port, fields)
 
     def get_ports(self, context, filters=None, fields=None):
-        ports = super(LinuxBridgePluginV2, self).get_ports(context, filters,
-                                                           fields)
-        #TODO(nati) filter by security group
-        for port in ports:
-            self._extend_port_dict_security_group(context, port)
-        return [self._fields(self._extend_port_dict_binding(context, port),
-                             fields) for port in ports]
+        res_ports = []
+        with context.session.begin(subtransactions=True):
+            ports = super(LinuxBridgePluginV2, self).get_ports(context,
+                                                               filters,
+                                                               fields)
+            #TODO(nati) filter by security group
+            for port in ports:
+                self._extend_port_dict_security_group(context, port)
+                self._extend_port_dict_binding(context, port)
+                res_ports.append(self._fields(port, fields))
+        return res_ports
 
     def create_port(self, context, port):
         session = context.session
