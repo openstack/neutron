@@ -97,8 +97,8 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
     def _load_inventory(self):
         """Load the inventory from a config file"""
         inventory = deepcopy(conf.INVENTORY)
-        LOG.info("Loaded UCS inventory: %s\n" % inventory)
-        LOG.info("Building UCS inventory state (this may take a while)...")
+        LOG.info(_("Loaded UCS inventory: %s"), inventory)
+        LOG.info(_("Building UCS inventory state (this may take a while)..."))
 
         for ucsm in inventory.keys():
             ucsm_ip = inventory[ucsm][const.IP_ADDRESS]
@@ -141,7 +141,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                                                                ucsm_password)
                     blades_dict[blade_id] = blade_data
 
-        LOG.debug("UCS Inventory state is: %s\n" % self._inventory_state)
+        LOG.debug(_("UCS Inventory state is: %s"), self._inventory_state)
         return True
 
     def _get_host_name(self, ucsm_ip, chassis_id, blade_id):
@@ -285,7 +285,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                             udb.update_portbinding(port_id,
                                                    instance_id=instance_id)
                             return host_name
-        LOG.warn("Could not find a reserved dynamic nic for tenant: %s" %
+        LOG.warn(_("Could not find a reserved dynamic nic for tenant: %s"),
                  tenant_id)
         return None
 
@@ -307,9 +307,10 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                                 intf_data[const.TENANTID] == tenant_id and
                                 intf_data[const.INSTANCE_ID] == instance_id):
                             found_blade_intf_data = blade_intf_data
-                            LOG.debug(("Found blade %s associated with this"
-                                       " instance: %s") % (blade_id,
-                                                           instance_id))
+                            LOG.debug(_("Found blade %(blade_id)s "
+                                        "associated with this"
+                                        " instance: %(instance_id)s"),
+                                      locals())
                             break
 
         if found_blade_intf_data:
@@ -332,14 +333,13 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                         const.DEVICENAME: device_name,
                         const.UCSPROFILE: profile_name,
                     }
-                    LOG.debug(("Found reserved dynamic nic: %s"
-                               "associated with port %s") %
-                              (intf_data, port_id))
-                    LOG.debug("Returning dynamic nic details: %s" %
+                    LOG.debug(_("Found reserved dynamic nic: %(intf_data)s"
+                                "associated with port %(port_id)s"), locals())
+                    LOG.debug(_("Returning dynamic nic details: %s"),
                               dynamicnic_details)
                     return dynamicnic_details
 
-        LOG.warn("Could not find a reserved dynamic nic for tenant: %s" %
+        LOG.warn(_("Could not find a reserved dynamic nic for tenant: %s"),
                  tenant_id)
         return None
 
@@ -370,15 +370,15 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                             udb.update_portbinding(port_id, instance_id=None,
                                                    vif_id=None)
                             LOG.debug(
-                                ("Disassociated VIF-ID: %s "
-                                 "from port: %s"
-                                 "in UCS inventory state for blade: %s") %
-                                (vif_id, port_id, intf_data))
+                                _("Disassociated VIF-ID: %(vif_id)s "
+                                  "from port: %(port_id)s"
+                                  "in UCS inventory state for blade: "
+                                  "%(intf_data)s"), locals())
                             device_params = {const.DEVICE_IP: [ucsm_ip],
                                              const.PORTID: port_id}
                             return device_params
-        LOG.warn(("Disassociating VIF-ID in UCS inventory failed. "
-                  "Could not find a reserved dynamic nic for tenant: %s") %
+        LOG.warn(_("Disassociating VIF-ID in UCS inventory failed. "
+                   "Could not find a reserved dynamic nic for tenant: %s"),
                  tenant_id)
         return None
 
@@ -409,8 +409,8 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                                                const.BLADE_INTF_DN:
                                                interface_dn}
                             return blade_intf_info
-        LOG.warn("Could not find a reserved nic for tenant: %s port: %s" %
-                 (tenant_id, port_id))
+        LOG.warn(_("Could not find a reserved nic for tenant: %(tenant_id)s "
+                   "port: %(port_id)s"), locals())
         return None
 
     def _get_least_reserved_blade(self, intf_count=1):
@@ -436,9 +436,9 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                         least_reserved_blade_data = blade_data
 
         if unreserved_interface_count < intf_count:
-            LOG.warn(("Not enough dynamic nics available on a single host."
-                      " Requested: %s, Maximum available: %s") %
-                     (intf_count, unreserved_interface_count))
+            LOG.warn(_("Not enough dynamic nics available on a single host."
+                       " Requested: %(intf_count)s, Maximum available: "
+                       "%(unreserved_interface_count)s"), locals())
             return False
 
         least_reserved_blade_dict = {
@@ -447,7 +447,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
             const.LEAST_RSVD_BLADE_ID: least_reserved_blade_id,
             const.LEAST_RSVD_BLADE_DATA: least_reserved_blade_data,
         }
-        LOG.debug("Found dynamic nic %s available for reservation",
+        LOG.debug(_("Found dynamic nic %s available for reservation"),
                   least_reserved_blade_dict)
         return least_reserved_blade_dict
 
@@ -520,11 +520,12 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
                                                    None, None, None)
                 udb.update_portbinding(port_id,
                                        tenant_id=intf_data[const.TENANTID])
-                LOG.debug("Reserved blade interface: %s\n" % reserved_nic_dict)
+                LOG.debug(_("Reserved blade interface: %s"),
+                          reserved_nic_dict)
                 return reserved_nic_dict
 
-        LOG.warn("Dynamic nic %s could not be reserved for port-id: %s" %
-                 (blade_data, port_id))
+        LOG.warn(_("Dynamic nic %(blade_data)s could not be reserved for "
+                   "port-id: %(port_id)s"), locals())
         return False
 
     def unreserve_blade_interface(self, ucsm_ip, chassis_id, blade_id,
@@ -542,7 +543,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         blade_intf[const.PROFILE_ID] = None
         blade_intf[const.INSTANCE_ID] = None
         blade_intf[const.VIF_ID] = None
-        LOG.debug("Unreserved blade interface %s\n" % interface_dn)
+        LOG.debug(_("Unreserved blade interface %s"), interface_dn)
 
     def add_blade(self, ucsm_ip, chassis_id, blade_id):
         """Add a blade to the inventory"""
@@ -551,32 +552,32 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
 
     def get_all_networks(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("get_all_networks() called\n")
+        LOG.debug(_("get_all_networks() called"))
         return self._get_all_ucsms()
 
     def create_network(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("create_network() called\n")
+        LOG.debug(_("create_network() called"))
         return self._get_all_ucsms()
 
     def delete_network(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("delete_network() called\n")
+        LOG.debug(_("delete_network() called"))
         return self._get_all_ucsms()
 
     def get_network_details(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("get_network_details() called\n")
+        LOG.debug(_("get_network_details() called"))
         return self._get_all_ucsms()
 
     def update_network(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("update_network() called\n")
+        LOG.debug(_("update_network() called"))
         return self._get_all_ucsms()
 
     def get_all_ports(self, args):
         """Return all UCSM IPs"""
-        LOG.debug("get_all_ports() called\n")
+        LOG.debug(_("get_all_ports() called"))
         return self._get_all_ucsms()
 
     def create_port(self, args):
@@ -584,7 +585,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with information of the blade
         on which a dynamic vnic is available
         """
-        LOG.debug("create_port() called\n")
+        LOG.debug(_("create_port() called"))
         least_reserved_blade_dict = self._get_least_reserved_blade()
         if not least_reserved_blade_dict:
             raise cexc.NoMoreNics()
@@ -601,14 +602,14 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with information of the blade
         on which a dynamic vnic was reserved for this port
         """
-        LOG.debug("delete_port() called\n")
+        LOG.debug(_("delete_port() called"))
         tenant_id = args[0]
         net_id = args[1]
         port_id = args[2]
         rsvd_info = self._get_rsvd_blade_intf_by_port(tenant_id, port_id)
         if not rsvd_info:
-            LOG.warn("UCSInventory: Port not found: net_id: %s, port_id: %s" %
-                    (net_id, port_id))
+            LOG.warn(_("UCSInventory: Port not found: net_id: %(net_id)s, "
+                       "port_id: %(port_id)s"), locals())
             return {const.DEVICE_IP: []}
         device_params = {
             const.DEVICE_IP: [rsvd_info[const.UCSM_IP]],
@@ -624,7 +625,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with IP address of the blade
         on which a dynamic vnic was reserved for this port
         """
-        LOG.debug("update_port() called\n")
+        LOG.debug(_("update_port() called"))
         return self._get_blade_for_port(args)
 
     def get_port_details(self, args):
@@ -632,7 +633,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with IP address of the blade
         on which a dynamic vnic was reserved for this port
         """
-        LOG.debug("get_port_details() called\n")
+        LOG.debug(_("get_port_details() called"))
         return self._get_blade_for_port(args)
 
     def plug_interface(self, args):
@@ -640,7 +641,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with IP address of the blade
         on which a dynamic vnic was reserved for this port
         """
-        LOG.debug("plug_interface() called\n")
+        LOG.debug(_("plug_interface() called"))
         return self._get_blade_for_port(args)
 
     def unplug_interface(self, args):
@@ -648,31 +649,31 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Return the a dict with IP address of the blade
         on which a dynamic vnic was reserved for this port
         """
-        LOG.debug("unplug_interface() called\n")
+        LOG.debug(_("unplug_interface() called"))
         return self._get_blade_for_port(args)
 
     def schedule_host(self, args):
         """Provides the hostname on which a dynamic vnic is reserved"""
-        LOG.debug("schedule_host() called\n")
+        LOG.debug(_("schedule_host() called"))
         instance_id = args[1]
         tenant_id = args[2][const.PROJECT_ID]
         host_name = self._get_host_name_for_rsvd_intf(tenant_id, instance_id)
         host_list = {const.HOST_LIST: {const.HOST_1: host_name}}
-        LOG.debug("host_list is: %s" % host_list)
+        LOG.debug(_("host_list is: %s"), host_list)
         return host_list
 
     def associate_port(self, args):
         """
         Get the portprofile name and the device name for the dynamic vnic
         """
-        LOG.debug("associate_port() called\n")
+        LOG.debug(_("associate_port() called"))
         instance_id = args[1]
         tenant_id = args[2][const.PROJECT_ID]
         vif_id = args[2][const.VIF_ID]
         vif_info = self._get_instance_port(tenant_id, instance_id, vif_id)
         vif_desc = {const.VIF_DESC: vif_info}
 
-        LOG.debug("vif_desc is: %s" % vif_desc)
+        LOG.debug(_("vif_desc is: %s"), vif_desc)
         return vif_desc
 
     def detach_port(self, args):
@@ -680,7 +681,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         Remove the VIF-ID and instance name association
         with the port
         """
-        LOG.debug("detach_port() called\n")
+        LOG.debug(_("detach_port() called"))
         instance_id = args[1]
         tenant_id = args[2][const.PROJECT_ID]
         vif_id = args[2][const.VIF_ID]
@@ -693,7 +694,7 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
         """
         Create multiple ports for a VM
         """
-        LOG.debug("create_ports() called\n")
+        LOG.debug(_("create_ports() called"))
         tenant_id = args[0]
         ports_num = args[2]
         least_reserved_blade_dict = self._get_least_reserved_blade(ports_num)

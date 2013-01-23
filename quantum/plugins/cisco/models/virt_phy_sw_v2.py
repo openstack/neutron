@@ -66,12 +66,12 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         for key in conf.PLUGINS[const.PLUGINS].keys():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]
             self._plugins[key] = importutils.import_object(plugin_obj)
-            LOG.debug("Loaded device plugin %s\n" %
+            LOG.debug(_("Loaded device plugin %s\n"),
                       conf.PLUGINS[const.PLUGINS][key])
             if key in conf.PLUGINS[const.INVENTORY].keys():
                 inventory_obj = conf.PLUGINS[const.INVENTORY][key]
                 self._inventory[key] = importutils.import_object(inventory_obj)
-                LOG.debug("Loaded device inventory %s\n" %
+                LOG.debug(_("Loaded device inventory %s\n"),
                           conf.PLUGINS[const.INVENTORY][key])
 
         if hasattr(self._plugins[const.VSWITCH_PLUGIN],
@@ -80,7 +80,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 self._plugins[const.VSWITCH_PLUGIN].
                 supported_extension_aliases)
 
-        LOG.debug("%s.%s init done" % (__name__, self.__class__.__name__))
+        LOG.debug(_("%(module)s.%(name)s init done"),
+                  {'module': __name__,
+                   'name': self.__class__.__name__})
 
     def __getattribute__(self, name):
         """
@@ -113,9 +115,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         inventory and plugin implementation) for completing this operation.
         """
         if not plugin_key in self._plugins.keys():
-            LOG.info("No %s Plugin loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" %
-                     (plugin_key, function_name, args))
+            LOG.info(_("No %s Plugin loaded"), plugin_key)
+            LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
+                     "ignored"), locals())
             return
         device_params = self._invoke_inventory(plugin_key, function_name,
                                                args)
@@ -138,9 +140,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         inventory for completing this operation.
         """
         if not plugin_key in self._inventory.keys():
-            LOG.info("No %s inventory loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" %
-                     (plugin_key, function_name, args))
+            LOG.info(_("No %s inventory loaded"), plugin_key)
+            LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
+                     "ignored"), locals())
             return {const.DEVICE_IP: []}
         else:
             return getattr(self._inventory[plugin_key], function_name)(args)
@@ -208,7 +210,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug("create_network() called\n")
+        LOG.debug(_("create_network() called"))
         try:
             args = [context, network]
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
@@ -232,12 +234,12 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug("create_network_bulk() called\n")
+        LOG.debug(_("create_network_bulk() called"))
         try:
             args = [context, networks]
             ovs_output = self._plugins[
                 const.VSWITCH_PLUGIN].create_network_bulk(context, networks)
-            LOG.debug("ovs_output: %s\n " % ovs_output)
+            LOG.debug(_("ovs_output: %s"), ovs_output)
             vlanids = self._get_all_segmentation_ids()
             ovs_networks = ovs_output
             return ovs_output
@@ -250,7 +252,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug("update_network() called\n")
+        LOG.debug(_("update_network() called"))
         args = [context, id, network]
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
@@ -304,7 +306,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug("create_port() called\n")
+        LOG.debug(_("create_port() called"))
         try:
             args = [context, port]
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
@@ -353,7 +355,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Perform this operation in the context of the configured device
         plugins.
         """
-        LOG.debug("delete_port() called\n")
+        LOG.debug(_("delete_port() called"))
         try:
             args = [context, id]
             port = self.get_port(context, id)

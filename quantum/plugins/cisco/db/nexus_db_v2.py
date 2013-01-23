@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 
 def get_all_nexusport_bindings():
     """Lists all the nexusport bindings"""
-    LOG.debug("get_all_nexusport_bindings() called")
+    LOG.debug(_("get_all_nexusport_bindings() called"))
     session = db.get_session()
     try:
         bindings = session.query(nexus_models_v2.NexusPortBinding).all()
@@ -42,7 +42,7 @@ def get_all_nexusport_bindings():
 
 def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Lists a nexusport binding"""
-    LOG.debug("get_nexusport_binding() called")
+    LOG.debug(_("get_nexusport_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).
@@ -56,7 +56,7 @@ def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def get_nexusvlan_binding(vlan_id, switch_ip):
     """Lists a vlan and switch binding"""
-    LOG.debug("get_nexusvlan_binding() called")
+    LOG.debug(_("get_nexusvlan_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).
@@ -69,7 +69,7 @@ def get_nexusvlan_binding(vlan_id, switch_ip):
 
 def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Adds a nexusport binding"""
-    LOG.debug("add_nexusport_binding() called")
+    LOG.debug(_("add_nexusport_binding() called"))
     session = db.get_session()
     binding = nexus_models_v2.NexusPortBinding(
         port_id, vlan_id, switch_ip, instance_id)
@@ -80,7 +80,7 @@ def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Removes a nexusport binding"""
-    LOG.debug("remove_nexusport_binding() called")
+    LOG.debug(_("remove_nexusport_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).
@@ -98,7 +98,7 @@ def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def update_nexusport_binding(port_id, new_vlan_id):
     """Updates nexusport binding"""
-    LOG.debug("update_nexusport_binding called")
+    LOG.debug(_("update_nexusport_binding called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).
@@ -114,7 +114,7 @@ def update_nexusport_binding(port_id, new_vlan_id):
 
 def get_nexusvm_binding(vlan_id, instance_id):
     """Lists nexusvm bindings"""
-    LOG.debug("get_nexusvm_binding() called")
+    LOG.debug(_("get_nexusvm_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).
@@ -127,7 +127,7 @@ def get_nexusvm_binding(vlan_id, instance_id):
 
 def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
     """Lists nexusvm bindings"""
-    LOG.debug("get_port_vlan_switch_binding() called")
+    LOG.debug(_("get_port_vlan_switch_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(nexus_models_v2.NexusPortBinding).

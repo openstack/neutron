@@ -70,9 +70,9 @@ class PortprofileNotFound(webob.exc.HTTPClientError):
     code: 450, title: Portprofile not Found
     """
     code = 450
-    title = 'Portprofile Not Found'
-    explanation = ('Unable to find a Portprofile with'
-                   ' the specified identifier.')
+    title = _('Portprofile Not Found')
+    explanation = _('Unable to find a Portprofile with'
+                    ' the specified identifier.')
 
 
 class PortNotFound(webob.exc.HTTPClientError):
@@ -85,8 +85,8 @@ class PortNotFound(webob.exc.HTTPClientError):
     code: 430, title: Port not Found
     """
     code = 430
-    title = 'Port not Found'
-    explanation = ('Unable to find a port with the specified identifier.')
+    title = _('Port not Found')
+    explanation = _('Unable to find a port with the specified identifier.')
 
 
 class CredentialNotFound(webob.exc.HTTPClientError):
@@ -99,9 +99,9 @@ class CredentialNotFound(webob.exc.HTTPClientError):
     code: 451, title: Credential not Found
     """
     code = 451
-    title = 'Credential Not Found'
-    explanation = ('Unable to find a Credential with'
-                   ' the specified identifier.')
+    title = _('Credential Not Found')
+    explanation = _('Unable to find a Credential with'
+                    ' the specified identifier.')
 
 
 class QosNotFound(webob.exc.HTTPClientError):
@@ -114,9 +114,9 @@ class QosNotFound(webob.exc.HTTPClientError):
     code: 452, title: QoS not Found
     """
     code = 452
-    title = 'QoS Not Found'
-    explanation = ('Unable to find a QoS with'
-                   ' the specified identifier.')
+    title = _('QoS Not Found')
+    explanation = _('Unable to find a QoS with'
+                    ' the specified identifier.')
 
 
 class NovatenantNotFound(webob.exc.HTTPClientError):
@@ -129,9 +129,9 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
     code: 453, title: Nova tenant not Found
     """
     code = 453
-    title = 'Nova tenant Not Found'
-    explanation = ('Unable to find a Novatenant with'
-                   ' the specified identifier.')
+    title = _('Nova tenant Not Found')
+    explanation = _('Unable to find a Novatenant with'
+                    ' the specified identifier.')
 
 
 class MultiportNotFound(webob.exc.HTTPClientError):
@@ -144,9 +144,9 @@ class MultiportNotFound(webob.exc.HTTPClientError):
     code: 454, title: Multiport not Found
     """
     code = 454
-    title = 'Multiport Not Found'
-    explanation = ('Unable to find Multiport with'
-                   ' the specified identifier.')
+    title = _('Multiport Not Found')
+    explanation = _('Unable to find Multiport with'
+                    ' the specified identifier.')
 
 
 class RequestedStateInvalid(webob.exc.HTTPClientError):
@@ -159,5 +159,5 @@ class RequestedStateInvalid(webob.exc.HTTPClientError):
     code: 431, title: Requested State Invalid
     """
     code = 431
-    title = 'Requested State Invalid'
-    explanation = ('Unable to update port state with specified value.')
+    title = _('Requested State Invalid')
+    explanation = _('Unable to update port state with specified value.')

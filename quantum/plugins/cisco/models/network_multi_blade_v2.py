@@ -53,15 +53,17 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         for key in conf.PLUGINS[const.PLUGINS].keys():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]
             self._plugins[key] = importutils.import_object(plugin_obj)
-            LOG.debug("Loaded device plugin %s\n" %
+            LOG.debug(_("Loaded device plugin %s"),
                       conf.PLUGINS[const.PLUGINS][key])
             if key in conf.PLUGINS[const.INVENTORY].keys():
                 inventory_obj = conf.PLUGINS[const.INVENTORY][key]
                 self._inventory[key] = importutils.import_object(inventory_obj)
-                LOG.debug("Loaded device inventory %s\n" %
+                LOG.debug(_("Loaded device inventory %s"),
                           conf.PLUGINS[const.INVENTORY][key])
 
-        LOG.debug("%s.%s init done" % (__name__, self.__class__.__name__))
+        LOG.debug(_("%(module)s.%(name)s init done"),
+                  {'module': __name__,
+                   'name': self.__class__.__name__})
 
     def _func_name(self, offset=0):
         """Get the name of the calling function"""
@@ -73,9 +75,9 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         inventory and plugin implementation) for completing this operation.
         """
         if not plugin_key in self._plugins.keys():
-            LOG.info("No %s Plugin loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" %
-                     (plugin_key, function_name, args))
+            LOG.info(_("No %s Plugin loaded"), plugin_key)
+            LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
+                       "ignored"), locals())
             return
         device_params = self._invoke_inventory(plugin_key, function_name,
                                                args)
@@ -98,9 +100,9 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         inventory for completing this operation.
         """
         if not plugin_key in self._inventory.keys():
-            LOG.info("No %s inventory loaded" % plugin_key)
-            LOG.info("%s: %s with args %s ignored" %
-                     (plugin_key, function_name, args))
+            LOG.info(_("No %s inventory loaded"), plugin_key)
+            LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
+                       "ignored"), locals())
             return {const.DEVICE_IP: []}
         else:
             return getattr(self._inventory[plugin_key], function_name)(args)

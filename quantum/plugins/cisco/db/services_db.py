@@ -27,7 +27,7 @@ from quantum.plugins.cisco.db import services_models
 
 def get_all_services_bindings():
     """Lists all the services bindings"""
-    LOG.debug("get_all_services_bindings() called")
+    LOG.debug(_("get_all_services_bindings() called"))
     session = db.get_session()
     try:
         bindings = session.query(services_models.ServicesBinding).all()
@@ -38,7 +38,7 @@ def get_all_services_bindings():
 
 def get_service_bindings(service_id):
     """Lists services bindings for a service_id"""
-    LOG.debug("get_service_bindings() called")
+    LOG.debug(_("get_service_bindings() called"))
     session = db.get_session()
     try:
         bindings = (session.query(services_models.ServicesBinding).
@@ -50,7 +50,7 @@ def get_service_bindings(service_id):
 
 def add_services_binding(service_id, mngnet_id, nbnet_id, sbnet_id):
     """Adds a services binding"""
-    LOG.debug("add_services_binding() called")
+    LOG.debug(_("add_services_binding() called"))
     session = db.get_session()
     binding = services_models.ServicesBinding(service_id, mngnet_id,
                                               nbnet_id, sbnet_id)
@@ -61,7 +61,7 @@ def add_services_binding(service_id, mngnet_id, nbnet_id, sbnet_id):
 
 def remove_services_binding(service_id):
     """Removes a services binding"""
-    LOG.debug("remove_services_binding() called")
+    LOG.debug(_("remove_services_binding() called"))
     session = db.get_session()
     try:
         binding = (session.query(services_models.ServicesBinding).

@@ -40,7 +40,7 @@ class UCSVICPlugin(L2DevicePluginBase):
 
     def __init__(self):
         self._driver = importutils.import_object(conf.UCSM_DRIVER)
-        LOG.debug("Loaded driver %s\n" % conf.UCSM_DRIVER)
+        LOG.debug(_("Loaded driver %s"), conf.UCSM_DRIVER)
         # TODO (Sumit) Make the counter per UCSM
         self._port_profile_counter = 0
 
@@ -50,7 +50,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         <network_uuid, network_name> for
         the specified tenant.
         """
-        LOG.debug("UCSVICPlugin:get_all_networks() called\n")
+        LOG.debug(_("UCSVICPlugin:get_all_networks() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         networks_list = db.network_list(tenant_id)
         new_networks_list = []
@@ -68,7 +68,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Creates a new Virtual Network, and assigns it
         a symbolic name.
         """
-        LOG.debug("UCSVICPlugin:create_network() called\n")
+        LOG.debug(_("UCSVICPlugin:create_network() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         self._driver.create_vlan(vlan_name, str(vlan_id), self._ucsm_ip,
                                  self._ucsm_username, self._ucsm_password)
@@ -83,7 +83,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
         """
-        LOG.debug("UCSVICPlugin:delete_network() called\n")
+        LOG.debug(_("UCSVICPlugin:delete_network() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         vlan_binding = cdb.get_vlan_binding(net_id)
         vlan_name = vlan_binding[const.VLANNAME]
@@ -100,7 +100,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Deletes the Virtual Network belonging to a the
         spec
         """
-        LOG.debug("UCSVICPlugin:get_network_details() called\n")
+        LOG.debug(_("UCSVICPlugin:get_network_details() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         network = db.network_get(net_id)
         ports_list = network[const.NETWORKPORTS]
@@ -123,7 +123,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Updates the symbolic name belonging to a particular
         Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:update_network() called\n")
+        LOG.debug(_("UCSVICPlugin:update_network() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         network = db.network_get(net_id)
         net_dict = cutil.make_net_dict(network[const.UUID],
@@ -136,7 +136,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Retrieves all port identifiers belonging to the
         specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:get_all_ports() called\n")
+        LOG.debug(_("UCSVICPlugin:get_all_ports() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         network = db.network_get(net_id)
         ports_list = network[const.NETWORKPORTS]
@@ -151,7 +151,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         """
         Creates a port on the specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:create_port() called\n")
+        LOG.debug(_("UCSVICPlugin:create_port() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         qos = None
         ucs_inventory = kwargs[const.UCS_INVENTORY]
@@ -183,7 +183,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         the remote interface should first be un-plugged and
         then the port can be deleted.
         """
-        LOG.debug("UCSVICPlugin:delete_port() called\n")
+        LOG.debug(_("UCSVICPlugin:delete_port() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         ucs_inventory = kwargs[const.UCS_INVENTORY]
         chassis_id = kwargs[const.CHASSIS_ID]
@@ -200,7 +200,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         """
         Updates the state of a port on the specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:update_port() called\n")
+        LOG.debug(_("UCSVICPlugin:update_port() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         pass
 
@@ -209,7 +209,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         This method allows the user to retrieve a remote interface
         that is attached to this particular port.
         """
-        LOG.debug("UCSVICPlugin:get_port_details() called\n")
+        LOG.debug(_("UCSVICPlugin:get_port_details() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         port_binding = udb.get_portbinding(port_id)
         return port_binding
@@ -220,7 +220,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Attaches a remote interface to the specified port on the
         specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:plug_interface() called\n")
+        LOG.debug(_("UCSVICPlugin:plug_interface() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         port_binding = udb.get_portbinding(port_id)
         profile_name = port_binding[const.PORTPROFILENAME]
@@ -239,7 +239,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         Detaches a remote interface from the specified port on the
         specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:unplug_interface() called\n")
+        LOG.debug(_("UCSVICPlugin:unplug_interface() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         port_binding = udb.get_portbinding(port_id)
         profile_name = port_binding[const.PORTPROFILENAME]
@@ -257,7 +257,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         """
         Creates a port on the specified Virtual Network.
         """
-        LOG.debug("UCSVICPlugin:create_multiport() called\n")
+        LOG.debug(_("UCSVICPlugin:create_multiport() called"))
         self._set_ucsm(kwargs[const.DEVICE_IP])
         qos = None
         ucs_inventory = kwargs[const.UCS_INVENTORY]
@@ -290,7 +290,7 @@ class UCSVICPlugin(L2DevicePluginBase):
         """
         Remove the association of the VIF with the dynamic vnic
         """
-        LOG.debug("detach_port() called\n")
+        LOG.debug(_("detach_port() called"))
         port_id = kwargs[const.PORTID]
         kwargs.pop(const.PORTID)
         return self.unplug_interface(tenant_id, None, port_id, **kwargs)
