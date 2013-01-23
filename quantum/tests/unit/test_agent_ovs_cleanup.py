@@ -36,6 +36,17 @@ class TestOVSCleanup(unittest.TestCase):
                 mock_get_bridges.return_value = ['br-int', 'br-ex']
                 with mock.patch(
                     'quantum.agent.linux.ovs_lib.OVSBridge') as ovs:
-                    util.main()
-                    ovs.assert_has_calls([mock.call().delete_ports(
-                        all_ports=False)])
+                    setup_conf = mock.patch(
+                        'quantum.agent.ovs_cleanup_util.setup_conf')
+                    with setup_conf as mock_setup_conf:
+                        conf = mock.Mock()
+                        confroot_helper = 'sudo'
+                        conf.ovs_all_ports = False
+                        conf.ovs_integration_bridge = 'br-int'
+                        conf.external_network_bridge = 'br-ex'
+
+                        mock_setup_conf.return_value = conf
+
+                        util.main()
+                        ovs.assert_has_calls([mock.call().delete_ports(
+                            all_ports=False)])
