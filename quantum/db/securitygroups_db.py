@@ -149,8 +149,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def get_security_group(self, context, id, fields=None, tenant_id=None):
         """Tenant id is given to handle the case when we
-        are creating a security group or security group rule on behalf of
-        another use.
+        are creating a security group rule on behalf of another use.
         """
 
         if tenant_id:
@@ -158,8 +157,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             context.tenant_id = tenant_id
 
         try:
-            ret = self._make_security_group_dict(self._get_security_group(
-                                                 context, id), fields)
+            with context.session.begin(subtransactions=True):
+                ret = self._make_security_group_dict(self._get_security_group(
+                                                     context, id), fields)
+                ret['security_group_rules'] = self.get_security_group_rules(
+                    context, {'security_group_id': [id]})
         finally:
             if tenant_id:
                 context.tenant_id = tmp_context_tenant_id

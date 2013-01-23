@@ -288,8 +288,32 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group(name, description) as sg:
             source_group_id = sg['security_group']['id']
             res = self.new_show_request('security-groups', source_group_id)
-            group = self.deserialize('json', res.get_response(self.ext_api))
-            self.assertEqual(group['security_group']['id'], source_group_id)
+
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            source_ip_prefix = "10.0.0.0/24"
+            protocol = 'tcp'
+            port_range_min = 22
+            port_range_max = 22
+            keys = [('source_ip_prefix', source_ip_prefix),
+                    ('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('protocol', protocol),
+                    ('port_range_min', port_range_min),
+                    ('port_range_max', port_range_max)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max,
+                                          source_ip_prefix):
+
+                group = self.deserialize(
+                    'json', res.get_response(self.ext_api))
+                sg_rule = group['security_group']['security_group_rules']
+                self.assertEqual(group['security_group']['id'],
+                                 source_group_id)
+                self.assertEqual(len(sg_rule), 1)
+                for k, v, in keys:
+                    self.assertEqual(sg_rule[0][k], v)
 
     def test_delete_security_group(self):
         name = 'webservers'
