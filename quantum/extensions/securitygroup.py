@@ -178,6 +178,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'is_visible': True},
+        'security_group_rules': {'allow_post': False, 'allow_put': False,
+                                 'is_visible': True},
     },
     'security_group_rules': {
         'id': {'allow_post': False, 'allow_put': False,
