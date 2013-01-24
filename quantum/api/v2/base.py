@@ -40,8 +40,6 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              ValueError: webob.exc.HTTPBadRequest,
              }
 
-QUOTAS = quota.QUOTAS
-
 
 def _fields(request):
     """
@@ -284,9 +282,9 @@ class Controller(object):
                            plugin=self._plugin)
             try:
                 tenant_id = item[self._resource]['tenant_id']
-                count = QUOTAS.count(request.context, self._resource,
-                                     self._plugin, self._collection,
-                                     tenant_id)
+                count = quota.QUOTAS.count(request.context, self._resource,
+                                           self._plugin, self._collection,
+                                           tenant_id)
                 if bulk:
                     delta = deltas.get(tenant_id, 0) + 1
                     deltas[tenant_id] = delta
@@ -297,9 +295,9 @@ class Controller(object):
                 # We don't want to quota this resource
                 LOG.debug(e)
             else:
-                QUOTAS.limit_check(request.context,
-                                   item[self._resource]['tenant_id'],
-                                   **kwargs)
+                quota.QUOTAS.limit_check(request.context,
+                                         item[self._resource]['tenant_id'],
+                                         **kwargs)
 
         def notify(create_result):
             notifier_api.notify(request.context,

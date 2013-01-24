@@ -145,7 +145,7 @@ class DbQuotaDriver(object):
         quotas = DbQuotaDriver.get_tenant_quotas(
             context, sub_resources, context.tenant_id)
 
-        return dict((k, v['limit']) for k, v in quotas.items())
+        return dict((k, v) for k, v in quotas.items())
 
     def limit_check(self, context, tenant_id, resources, values):
         """Check simple quota limits.
