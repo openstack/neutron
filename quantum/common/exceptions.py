@@ -21,6 +21,7 @@ Quantum base exception handling.
 
 from quantum.openstack.common.exception import Error
 from quantum.openstack.common.exception import OpenstackException
+from quantum.openstack.common.exception import InvalidContentType
 
 
 class QuantumException(OpenstackException):
@@ -179,10 +180,6 @@ class Invalid(Error):
 
 class InvalidInput(BadRequest):
     message = _("Invalid input for operation: %(error_message)s.")
-
-
-class InvalidContentType(Invalid):
-    message = _("Invalid content type %(content_type)s.")
 
 
 class InvalidAllocationPool(BadRequest):

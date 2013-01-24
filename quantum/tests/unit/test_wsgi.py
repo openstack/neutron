@@ -21,6 +21,7 @@ import socket
 import unittest2 as unittest
 
 from quantum import wsgi
+from quantum.common import exceptions as exception
 
 
 class TestWSGIServer(unittest.TestCase):
@@ -77,3 +78,181 @@ class TestWSGIServer(unittest.TestCase):
                             None,
                             mock_listen.return_value)
                     ])
+
+
+class SerializerTest(unittest.TestCase):
+    def test_serialize_unknown_content_type(self):
+        """
+        Test serialize verifies that exception InvalidContentType is raised
+        """
+        input_dict = dict(servers={'test': 'pass'})
+        content_type = 'application/unknown'
+        serializer = wsgi.Serializer()
+
+        self.assertRaises(
+            exception.InvalidContentType, serializer.serialize,
+            input_dict, content_type)
+
+    def test_get_deserialize_handler_unknown_content_type(self):
+        """
+        Test get deserialize verifies
+        that exception InvalidContentType is raised
+        """
+        content_type = 'application/unknown'
+        serializer = wsgi.Serializer()
+
+        self.assertRaises(
+            exception.InvalidContentType,
+            serializer.get_deserialize_handler, content_type)
+
+
+class RequestDeserializerTest(unittest.TestCase):
+    def test_get_body_deserializer_unknown_content_type(self):
+        """
+        Test get body deserializer verifies
+         that exception InvalidContentType is raised
+        """
+        content_type = 'application/unknown'
+        deserializer = wsgi.RequestDeserializer()
+        self.assertRaises(
+            exception.InvalidContentType,
+            deserializer.get_body_deserializer, content_type)
+
+
+class ResponseSerializerTest(unittest.TestCase):
+    def setUp(self):
+        class JSONSerializer(object):
+            def serialize(self, data, action='default'):
+                return 'pew_json'
+
+        class XMLSerializer(object):
+            def serialize(self, data, action='default'):
+                return 'pew_xml'
+
+        class HeadersSerializer(object):
+            def serialize(self, response, data, action):
+                response.status_int = 404
+
+        self.body_serializers = {
+            'application/json': JSONSerializer(),
+            'application/xml': XMLSerializer()}
+
+        self.serializer = wsgi.ResponseSerializer(
+            self.body_serializers, HeadersSerializer())
+
+    def test_serialize_unknown_content_type(self):
+        """
+        Test serialize verifies
+        that exception InvalidContentType is raised
+        """
+        self.assertRaises(
+            exception.InvalidContentType,
+            self.serializer.serialize,
+            {}, 'application/unknown')
+
+    def test_get_body_serializer(self):
+        """
+        Test get body serializer verifies
+        that exception InvalidContentType is raised
+        """
+        self.assertRaises(
+            exception.InvalidContentType,
+            self.serializer.get_body_serializer, 'application/unknown')
+
+
+class XMLDeserializerTest(unittest.TestCase):
+    def test_default_raise_Maiformed_Exception(self):
+        """
+        Test verifies that exception MalformedRequestBody is raised
+        """
+        data_string = ""
+        deserializer = wsgi.XMLDeserializer()
+
+        self.assertRaises(
+            exception.MalformedRequestBody, deserializer.default, data_string)
+
+
+class JSONDeserializerTest(unittest.TestCase):
+    def test_default_raise_Maiformed_Exception(self):
+        """
+        Test verifies JsonDeserializer.default
+        raises exception MalformedRequestBody correctly
+        """
+        data_string = ""
+        deserializer = wsgi.JSONDeserializer()
+
+        self.assertRaises(
+            exception.MalformedRequestBody, deserializer.default, data_string)
+
+
+class ResourceTest(unittest.TestCase):
+    def test_dispatch_unknown_controller_action(self):
+        class Controller(object):
+            def index(self, request, pants=None):
+                return pants
+
+        def my_fault_body_function():
+            return 'off'
+
+        resource = wsgi.Resource(Controller(), my_fault_body_function)
+        self.assertRaises(
+            AttributeError, resource.dispatch,
+            resource.controller, 'create', {})
+
+    def test_malformed_request_body_throws_bad_request(self):
+        def my_fault_body_function():
+            return 'off'
+
+        resource = wsgi.Resource(None, my_fault_body_function)
+        request = wsgi.Request.blank(
+            "/", body="{mal:formed", method='POST',
+            headers={'Content-Type': "application/json"})
+
+        response = resource(request)
+        self.assertEqual(response.status_int, 400)
+
+    def test_wrong_content_type_throws_unsupported_media_type_error(self):
+        def my_fault_body_function():
+            return 'off'
+        resource = wsgi.Resource(None, my_fault_body_function)
+        request = wsgi.Request.blank(
+            "/", body="{some:json}", method='POST',
+            headers={'Content-Type': "xxx"})
+
+        response = resource(request)
+        self.assertEqual(response.status_int, 400)
+
+    def test_wrong_content_type_server_error(self):
+        def my_fault_body_function():
+            return 'off'
+        resource = wsgi.Resource(None, my_fault_body_function)
+        request = wsgi.Request.blank(
+            "/", method='POST', headers={'Content-Type': "unknow"})
+
+        response = resource(request)
+        self.assertEqual(response.status_int, 500)
+
+    def test_call_resource_class_bad_request(self):
+        class Controller(object):
+            def index(self, request, index=None):
+                return index
+
+        def my_fault_body_function():
+            return 'off'
+
+        class FakeRequest():
+            def __init__(self):
+                self.url = 'http://where.no'
+                self.environ = 'environ'
+                self.body = 'body'
+
+            def method(self):
+                pass
+
+            def best_match_content_type(self):
+                return 'best_match_content_type'
+
+        resource = wsgi.Resource(Controller(), my_fault_body_function)
+        request = FakeRequest()
+        result = resource(request)
+        self.assertEqual(400, result.status_int)
