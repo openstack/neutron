@@ -287,6 +287,55 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 else:
                     self.assertEquals(len(group['security_group_rules']), 0)
 
+    def test_create_security_group_rule_ethertype_invalid_as_number(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            ethertype = 2
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress', 'tcp', '22', '22', None, None,
+                ethertype=ethertype)
+            res = self._create_security_group_rule('json', rule)
+            self.deserialize('json', res)
+            self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_protocol_invalid_as_number(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            protocol = 2
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress', protocol, '22', '22',
+                None, None)
+            res = self._create_security_group_rule('json', rule)
+            self.deserialize('json', res)
+            self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_case_insensitive(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            source_ip_prefix = "10.0.0.0/24"
+            protocol = 'TCP'
+            port_range_min = 22
+            port_range_max = 22
+            ethertype = 'ipV4'
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max,
+                                          source_ip_prefix,
+                                          ethertype=ethertype) as rule:
+
+                # the lower case value will be return
+                self.assertEquals(rule['security_group_rule']['protocol'],
+                                  protocol.lower())
+                self.assertEquals(rule['security_group_rule']['ethertype'],
+                                  'IPv4')
+
     def test_get_security_group(self):
         name = 'webservers'
         description = 'my webservers'
