@@ -163,14 +163,16 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         self.assertTrue('vip' in res.json)
         self.assertEqual(res.json['vip'], return_value)
 
-    def test_vip_delete(self):
-        vip_id = _uuid()
-
-        res = self.api.delete(_get_path('lb/vips', id=vip_id))
-
-        instance = self.plugin.return_value
-        instance.delete_vip.assert_called_with(mock.ANY, vip_id)
+    def _test_entity_delete(self, entity):
+        """ does the entity deletion based on naming convention  """
+        entity_id = _uuid()
+        res = self.api.delete(_get_path('lb/' + entity + 's', id=entity_id))
+        delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
+        delete_entity.assert_called_with(mock.ANY, entity_id)
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+
+    def test_vip_delete(self):
+        self._test_entity_delete('vip')
 
     def test_pool_create(self):
         pool_id = _uuid()
@@ -252,13 +254,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         self.assertEqual(res.json['pool'], return_value)
 
     def test_pool_delete(self):
-        pool_id = _uuid()
-
-        res = self.api.delete(_get_path('lb/pools', id=pool_id))
-
-        instance = self.plugin.return_value
-        instance.delete_pool.assert_called_with(mock.ANY, pool_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        self._test_entity_delete('pool')
 
     def test_pool_stats(self):
         pool_id = _uuid()
@@ -351,13 +347,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         self.assertEqual(res.json['member'], return_value)
 
     def test_member_delete(self):
-        member_id = _uuid()
-
-        res = self.api.delete(_get_path('lb/members', id=member_id))
-
-        instance = self.plugin.return_value
-        instance.delete_member.assert_called_with(mock.ANY, member_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        self._test_entity_delete('member')
 
     def test_health_monitor_create(self):
         health_monitor_id = _uuid()
@@ -441,15 +431,7 @@ class LoadBalancerExtensionTestCase(unittest2.TestCase):
         self.assertEqual(res.json['health_monitor'], return_value)
 
     def test_health_monitor_delete(self):
-        health_monitor_id = _uuid()
-
-        res = self.api.delete(_get_path('lb/health_monitors',
-                                        id=health_monitor_id))
-
-        instance = self.plugin.return_value
-        instance.delete_health_monitor.assert_called_with(mock.ANY,
-                                                          health_monitor_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        self._test_entity_delete('health_monitor')
 
     def test_create_pool_health_monitor(self):
         health_monitor_id = _uuid()
