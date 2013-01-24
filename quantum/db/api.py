@@ -146,7 +146,7 @@ def configure_db():
         sql.event.listen(_ENGINE, 'checkin', greenthread_yield)
 
         if not register_models():
-            if 'reconnect_interval' in options:
+            if cfg.CONF.DATABASE.reconnect_interval:
                 remaining = cfg.CONF.DATABASE.sql_max_retries
                 reconnect_interval = cfg.CONF.DATABASE.reconnect_interval
                 retry_registration(remaining, reconnect_interval)
