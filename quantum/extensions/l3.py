@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Nicira Networks, Inc.  All rights reserved.
+
+# Copyright 2012 Nicira Networks, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -157,7 +158,7 @@ l3_quota_opts = [
 cfg.CONF.register_opts(l3_quota_opts, 'QUOTAS')
 
 
-class L3(object):
+class L3(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
