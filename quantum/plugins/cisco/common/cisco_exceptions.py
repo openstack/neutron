@@ -30,60 +30,16 @@ class NoMoreNics(exceptions.QuantumException):
                 "available in the system.")
 
 
-class PortProfileLimit(exceptions.QuantumException):
-    """Port profile limit has been hit"""
-    message = _("Unable to complete operation on port %(port_id)s "
-                "for network %(net_id)s. The system has reached the maximum"
-                "limit of allowed port profiles.")
-
-
-class UCSMPortProfileLimit(exceptions.QuantumException):
-    """UCSM Port profile limit has been hit"""
-    message = _("Unable to complete operation on port %(port_id)s "
-                "for network %(net_id)s. The system has reached the maximum"
-                "limit of allowed UCSM port profiles.")
-
-
 class NetworksLimit(exceptions.QuantumException):
     """Total number of network objects limit has been hit"""
     message = _("Unable to create new network. Number of networks"
                 "for the system has exceeded the limit")
 
 
-class PortProfileNotFound(exceptions.QuantumException):
-    """Port profile cannot be found"""
-    message = _("Port profile %(portprofile_id)s could not be found "
-                "for tenant %(tenant_id)s")
-
-
-class MultiportNotFound(exceptions.QuantumException):
-    """Multiport cannot be found"""
-    message = _("Multiports %(port_id)s could not be found "
-                "for tenant %(tenant_id)s")
-
-
-class PortProfileInvalidDelete(exceptions.QuantumException):
-    """Port profile cannot be deleted since its being used"""
-    message = _("Port profile %(profile_id)s could not be deleted "
-                "for tenant %(tenant_id)s since port associations exist")
-
-
 class NetworkVlanBindingAlreadyExists(exceptions.QuantumException):
     """Binding cannot be created, since it already exists"""
     message = _("NetworkVlanBinding for %(vlan_id)s and network "
                 "%(network_id)s already exists")
-
-
-class PortProfileAlreadyExists(exceptions.QuantumException):
-    """Port profile cannot be created since it already exisits"""
-    message = _("PortProfile %(pp_name)s for %(tenant_id)s "
-                "already exists")
-
-
-class PortProfileBindingAlreadyExists(exceptions.QuantumException):
-    """Binding cannot be created, since it already exists"""
-    message = _("PortProfileBinding for port profile %(pp_id)s to "
-                "port %(port_id)s already exists")
 
 
 class VlanIDNotFound(exceptions.QuantumException):
