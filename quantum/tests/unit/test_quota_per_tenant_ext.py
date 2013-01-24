@@ -1,4 +1,4 @@
-import unittest
+import unittest2 as unittest
 import webtest
 
 import mock
@@ -6,6 +6,7 @@ import mock
 from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.common import config
+from quantum.common import exceptions
 from quantum import context
 from quantum.db import api as db
 from quantum import manager
@@ -53,7 +54,8 @@ class QuotaExtensionTestCase(unittest.TestCase):
             'quota_items',
             ['network', 'subnet', 'port', 'extra1'],
             group='QUOTAS')
-
+        quota.QUOTAS = quota.QuotaEngine()
+        quota.register_resources_from_config()
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
         self.plugin.return_value.supported_extension_aliases = ['quotas']
@@ -153,3 +155,35 @@ class QuotaExtensionTestCase(unittest.TestCase):
             self.assertEqual(404, res.status_int)
         except Exception:
             pass
+
+    def test_quotas_limit_check(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id,
+                                                  is_admin=True)}
+        quotas = {'quota': {'network': 5}}
+        res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
+                                quotas, extra_environ=env)
+        self.assertEqual(200, res.status_int)
+        quota.QUOTAS.limit_check(context.Context('', tenant_id),
+                                 tenant_id,
+                                 network=4)
+
+    def test_quotas_limit_check_with_over_quota(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id,
+                                                  is_admin=True)}
+        quotas = {'quota': {'network': 5}}
+        res = self.api.put_json(_get_path('quotas', id=tenant_id, fmt='json'),
+                                quotas, extra_environ=env)
+        self.assertEqual(200, res.status_int)
+        with self.assertRaises(exceptions.OverQuota):
+            quota.QUOTAS.limit_check(context.Context('', tenant_id),
+                                     tenant_id,
+                                     network=6)
+
+    def test_quotas_limit_check_with_invalid_quota_value(self):
+        tenant_id = 'tenant_id1'
+        with self.assertRaises(exceptions.InvalidQuotaValue):
+            quota.QUOTAS.limit_check(context.Context('', tenant_id),
+                                     tenant_id,
+                                     network=-1)

@@ -282,9 +282,12 @@ def _count_resource(context, plugin, resources, tenant_id):
         return len(obj_list) if obj_list else 0
 
 
-resources = []
-for resource_item in cfg.CONF.QUOTAS.quota_items:
-    resources.append(CountableResource(resource_item, _count_resource,
-                                       'quota_' + resource_item))
+def register_resources_from_config():
+    resources = []
+    for resource_item in cfg.CONF.QUOTAS.quota_items:
+        resources.append(CountableResource(resource_item, _count_resource,
+                                           'quota_' + resource_item))
+    QUOTAS.register_resources(resources)
 
-QUOTAS.register_resources(resources)
+
+register_resources_from_config()
