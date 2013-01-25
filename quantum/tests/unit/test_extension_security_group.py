@@ -281,6 +281,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             res = self.new_list_request('security-groups')
             groups = self.deserialize('json', res.get_response(self.ext_api))
             self.assertEqual(len(groups['security_groups']), 2)
+            for group in groups['security_groups']:
+                if group['name'] == 'default':
+                    self.assertEquals(len(group['security_group_rules']), 2)
+                else:
+                    self.assertEquals(len(group['security_group_rules']), 0)
 
     def test_get_security_group(self):
         name = 'webservers'

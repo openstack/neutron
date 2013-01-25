@@ -202,6 +202,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'description': security_group['description']}
         if security_group.get('external_id'):
             res['external_id'] = security_group['external_id']
+        res['security_group_rules'] = [self._make_security_group_rule_dict(r)
+                                       for r in security_group.rules]
         return self._fields(res, fields)
 
     def _make_security_group_binding_dict(self, security_group, fields=None):
