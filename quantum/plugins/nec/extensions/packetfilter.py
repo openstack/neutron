@@ -127,4 +127,6 @@ class Packetfilter(extensions.ExtensionDescriptor):
                                             quota._count_resource,
                                             'quota_packet_filter')
         quota.QUOTAS.register_resource(qresource)
-        return [extensions.ResourceExtension('packet_filters', resource)]
+        return [extensions.ResourceExtension('packet_filters',
+                                             resource,
+                                             attr_map=PACKET_FILTER_ATTR_MAP)]

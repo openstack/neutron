@@ -281,7 +281,8 @@ class Loadbalancer(extensions.ExtensionDescriptor):
                 collection_name,
                 controller,
                 path_prefix=constants.COMMON_PREFIXES[constants.LOADBALANCER],
-                member_actions=member_actions)
+                member_actions=member_actions,
+                attr_map=params)
             resources.append(resource)
 
         for collection_name in SUB_RESOURCE_ATTRIBUTE_MAP:
@@ -300,7 +301,8 @@ class Loadbalancer(extensions.ExtensionDescriptor):
             resource = extensions.ResourceExtension(
                 collection_name,
                 controller, parent,
-                path_prefix=constants.COMMON_PREFIXES[constants.LOADBALANCER])
+                path_prefix=constants.COMMON_PREFIXES[constants.LOADBALANCER],
+                attr_map=params)
             resources.append(resource)
 
         return resources

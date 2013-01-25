@@ -590,13 +590,14 @@ class ResourceExtension(object):
     """Add top level resources to the OpenStack API in Quantum."""
 
     def __init__(self, collection, controller, parent=None, path_prefix="",
-                 collection_actions={}, member_actions={}):
+                 collection_actions={}, member_actions={}, attr_map={}):
         self.collection = collection
         self.controller = controller
         self.parent = parent
         self.collection_actions = collection_actions
         self.member_actions = member_actions
         self.path_prefix = path_prefix
+        self.attr_map = attr_map
 
 
 # Returns the extention paths from a config entry and the __path__

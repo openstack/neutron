@@ -207,7 +207,8 @@ class L3(extensions.ExtensionDescriptor):
 
             ex = extensions.ResourceExtension(collection_name,
                                               controller,
-                                              member_actions=member_actions)
+                                              member_actions=member_actions,
+                                              attr_map=params)
             exts.append(ex)
 
         return exts

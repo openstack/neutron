@@ -302,7 +302,8 @@ class Securitygroup(extensions.ExtensionDescriptor):
                                               plugin, params, allow_bulk=True)
 
             ex = extensions.ResourceExtension(collection_name,
-                                              controller)
+                                              controller,
+                                              attr_map=params)
             exts.append(ex)
 
         return exts
