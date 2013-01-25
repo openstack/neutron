@@ -41,10 +41,15 @@ def setup_conf():
                            'bridges.'))
     ]
 
+    agent_opts = [
+        cfg.StrOpt('root_helper', default='sudo'),
+    ]
+
     conf = cfg.CommonConfigOpts()
     conf.register_cli_opts(opts)
     conf.register_opts(l3_agent.L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
+    conf.register_opts(agent_opts, 'AGENT')
     config.setup_logging(conf)
     return conf
 
@@ -60,7 +65,7 @@ def main():
 
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])
-    ovs_bridges = set(ovs_lib.get_bridges(conf.root_helper))
+    ovs_bridges = set(ovs_lib.get_bridges(conf.AGENT.root_helper))
 
     if conf.ovs_all_ports:
         bridges = ovs_bridges
@@ -69,7 +74,7 @@ def main():
 
     for bridge in bridges:
         LOG.info(_("Cleaning %s"), bridge)
-        ovs = ovs_lib.OVSBridge(bridge, conf.root_helper)
+        ovs = ovs_lib.OVSBridge(bridge, conf.AGENT.root_helper)
         ovs.delete_ports(all_ports=conf.ovs_all_ports)
 
     LOG.info(_("OVS cleanup completed successfully"))
