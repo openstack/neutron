@@ -95,7 +95,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
                         'port': 80,
                         'protocol': 'HTTP',
                         'pool_id': _uuid(),
-                        'session_persistence': {'type': 'dummy'},
+                        'session_persistence': {'type': 'HTTP_COOKIE'},
                         'connection_limit': 100,
                         'admin_state_up': True,
                         'tenant_id': _uuid()}}

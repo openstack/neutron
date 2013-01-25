@@ -90,7 +90,14 @@ RESOURCE_ATTRIBUTE_MAP = {
         'session_persistence': {'allow_post': True, 'allow_put': True,
                                 'convert_to': attr.convert_none_to_empty_dict,
                                 'default': {},
-                                'validate': {'type:dict': None},
+                                'validate': {
+                                    'type:dict_or_empty': {
+                                        'type': {'type:values': ['APP_COOKIE',
+                                                                 'HTTP_COOKIE',
+                                                                 'SOURCE_IP'],
+                                                 'required': True},
+                                        'cookie_name': {'type:string': None,
+                                                        'required': False}}},
                                 'is_visible': True},
         'connection_limit': {'allow_post': True, 'allow_put': True,
                              'default': -1,

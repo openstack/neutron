@@ -23,6 +23,24 @@ from quantum.common import exceptions as q_exc
 
 class TestAttributes(unittest2.TestCase):
 
+    def _construct_dict_and_constraints(self):
+        """ Constructs a test dictionary and a definition of constraints.
+        :return: A (dictionary, constraint) tuple
+        """
+        constraints = {'key1': {'type:values': ['val1', 'val2'],
+                                'required': True},
+                       'key2': {'type:string': None,
+                                'required': False},
+                       'key3': {'type:dict': {'k4': {'type:string': None,
+                                                     'required': True}},
+                                'required': True}}
+
+        dictionary = {'key1': 'val1',
+                      'key2': 'a string value',
+                      'key3': {'k4': 'a string value'}}
+
+        return dictionary, constraints
+
     def test_is_attr_set(self):
         data = attributes.ATTR_NOT_SPECIFIED
         self.assertIs(attributes.is_attr_set(data), False)
@@ -430,16 +448,84 @@ class TestAttributes(unittest2.TestCase):
             msg = attributes._validate_uuid_list(uuid_list)
             self.assertEquals(msg, None)
 
-    def test_validate_dict(self):
+    def test_validate_dict_type(self):
         for value in (None, True, '1', []):
             self.assertEquals(attributes._validate_dict(value),
                               "'%s' is not a dictionary" % value)
 
+    def test_validate_dict_without_constraints(self):
         msg = attributes._validate_dict({})
         self.assertIsNone(msg)
 
+        # Validate a dictionary without constraints.
         msg = attributes._validate_dict({'key': 'value'})
         self.assertIsNone(msg)
+
+    def test_validate_a_valid_dict_with_constraints(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIsNone(msg, 'Validation of a valid dictionary failed.')
+
+    def test_validate_dict_with_invalid_validator(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        constraints['key1'] = {'type:unsupported': None, 'required': True}
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertEqual(msg, "Validator 'type:unsupported' does not exist.")
+
+    def test_validate_dict_not_required_keys(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        del dictionary['key2']
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIsNone(msg, 'Field that was not required by the specs was'
+                               'required by the validator.')
+
+    def test_validate_dict_required_keys(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        del dictionary['key1']
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIn('Expected keys:', msg, 'The error was not detected.')
+
+    def test_validate_dict_wrong_values(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        dictionary['key1'] = 'UNSUPPORTED'
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIsNotNone(msg)
+
+    def test_subdictionary(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        del dictionary['key3']['k4']
+        dictionary['key3']['k5'] = 'a string value'
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIn('Expected keys:', msg, 'The error was not detected.')
+
+    def test_validate_dict_or_none(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        # Check whether None is a valid value.
+        msg = attributes._validate_dict_or_none(None, constraints)
+        self.assertIsNone(msg, 'Validation of a None dictionary failed.')
+
+        # Check validation of a regular dictionary.
+        msg = attributes._validate_dict_or_none(dictionary, constraints)
+        self.assertIsNone(msg, 'Validation of a valid dictionary failed.')
+
+    def test_validate_dict_or_empty(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        # Check whether an empty dictionary is valid.
+        msg = attributes._validate_dict_or_empty({}, constraints)
+        self.assertIsNone(msg, 'Validation of a None dictionary failed.')
+
+        # Check validation of a regular dictionary.
+        msg = attributes._validate_dict_or_none(dictionary, constraints)
+        self.assertIsNone(msg, 'Validation of a valid dictionary failed.')
+        self.assertIsNone(msg, 'Validation of a valid dictionary failed.')
 
     def test_validate_non_negative(self):
         for value in (-1, '-2'):
@@ -498,6 +584,10 @@ class TestConvertToInt(unittest2.TestCase):
     def test_convert_none_to_empty_list_none(self):
         self.assertEqual(
             [], attributes.convert_none_to_empty_list(None))
+
+    def test_convert_none_to_empty_dict(self):
+        self.assertEqual(
+            {}, attributes.convert_none_to_empty_dict(None))
 
     def test_convert_none_to_empty_list_value(self):
         values = ['1', 3, [], [1], {}, {'a': 3}]

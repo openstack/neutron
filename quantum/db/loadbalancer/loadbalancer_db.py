@@ -249,10 +249,15 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                'admin_state_up': vip['admin_state_up'],
                'status': vip['status']}
         if vip['session_persistence']:
-            res['session_persistence'] = {
-                'type': vip['session_persistence']['type'],
-                'cookie_name': vip['session_persistence']['cookie_name']
+            s_p = {
+                'type': vip['session_persistence']['type']
             }
+
+            if vip['session_persistence']['type'] == 'APP_COOKIE':
+                s_p['cookie_name'] = vip['session_persistence']['cookie_name']
+
+            res['session_persistence'] = s_p
+
         return self._fields(res, fields)
 
     def _update_pool_vip_info(self, context, pool_id, vip_id):
@@ -260,13 +265,43 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         with context.session.begin(subtransactions=True):
             pool_db.update({'vip_id': vip_id})
 
+    def _check_session_persistence_info(self, info):
+        """ Performs sanity check on session persistence info.
+        :param info: Session persistence info
+        """
+        if info['type'] == 'APP_COOKIE':
+            if not info.get('cookie_name'):
+                raise ValueError(_("'cookie_name' should be specified for this"
+                                   " type of session persistence."))
+        else:
+            if 'cookie_name' in info:
+                raise ValueError(_("'cookie_name' is not allowed for this type"
+                                   " of session persistence"))
+
+    def _create_session_persistence_db(self, session_info, vip_id):
+        self._check_session_persistence_info(session_info)
+
+        sesspersist_db = SessionPersistence(
+            type=session_info['type'],
+            cookie_name=session_info.get('cookie_name'),
+            vip_id=vip_id)
+        return sesspersist_db
+
     def _update_vip_session_persistence(self, context, vip_id, info):
+        self._check_session_persistence_info(info)
+
         vip = self._get_resource(context, Vip, vip_id)
 
         with context.session.begin(subtransactions=True):
             # Update sessionPersistence table
             sess_qry = context.session.query(SessionPersistence)
             sesspersist_db = sess_qry.filter_by(vip_id=vip_id).first()
+
+            # Insert a None cookie_info if it is not present to overwrite an
+            # an existing value in the database.
+            if 'cookie_name' not in info:
+                info['cookie_name'] = None
+
             if sesspersist_db:
                 sesspersist_db.update(info)
             else:
@@ -305,16 +340,13 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                          connection_limit=v['connection_limit'],
                          admin_state_up=v['admin_state_up'],
                          status=constants.PENDING_CREATE)
-            vip_id = vip_db['id']
 
-            sessionInfo = v['session_persistence']
-            if sessionInfo:
-                has_session_persistence = True
-                sesspersist_db = SessionPersistence(
-                    type=sessionInfo['type'],
-                    cookie_name=sessionInfo['cookie_name'],
-                    vip_id=vip_id)
-                vip_db.session_persistence = sesspersist_db
+            vip_id = vip_db['id']
+            session_info = v['session_persistence']
+
+            if session_info:
+                s_p = self._create_session_persistence_db(session_info, vip_id)
+                vip_db.session_persistence = s_p
 
             context.session.add(vip_db)
             self._update_pool_vip_info(context, v['pool_id'], vip_id)

@@ -31,18 +31,28 @@ ATTR_NOT_SPECIFIED = object()
 SHARED = 'shared'
 
 
-def _verify_dict_keys(expected_keys, target_dict):
+def _verify_dict_keys(expected_keys, target_dict, strict=True):
+    """ Allows to verify keys in a dictionary.
+    :param expected_keys: A list of keys expected to be present.
+    :param target_dict: The dictionary which should be verified.
+    :param strict: Specifies whether additional keys are allowed to be present.
+    :return: True, if keys in the dictionary correspond to the specification.
+    """
     if not isinstance(target_dict, dict):
         msg = (_("Invalid input. '%(target_dict)s' must be a dictionary "
                  "with keys: %(expected_keys)s") %
                dict(target_dict=target_dict, expected_keys=expected_keys))
         return msg
 
-    provided_keys = target_dict.keys()
-    if set(expected_keys) != set(provided_keys):
-        msg = (_("Expected keys not found. Expected: '%(expected_keys)s', "
-                 "Provided: '%(provided_keys)s'") %
-               dict(expected_keys=expected_keys, provided_keys=provided_keys))
+    expected_keys = set(expected_keys)
+    provided_keys = set(target_dict.keys())
+
+    predicate = expected_keys.__eq__ if strict else expected_keys.issubset
+
+    if not predicate(provided_keys):
+        msg = (_("Validation of dictionary's keys failed."
+                 "Expected keys: %(expected_keys)s "
+                 "Provided keys: %(provided_keys)s") % locals())
         return msg
 
 
@@ -268,11 +278,55 @@ def _validate_uuid_list(data, valid_values=None):
         return msg
 
 
-def _validate_dict(data, valid_values=None):
+def _validate_dict(data, key_specs=None):
     if not isinstance(data, dict):
         msg = _("'%s' is not a dictionary") % data
         LOG.debug(msg)
         return msg
+
+    # Do not perform any further validation, if no constraints are supplied
+    if not key_specs:
+        return
+
+    # Check whether all required keys are present
+    required_keys = [key for key, spec in key_specs.iteritems()
+                     if spec.get('required')]
+
+    if required_keys:
+        msg = _verify_dict_keys(required_keys, data, False)
+        if msg:
+            LOG.debug(msg)
+            return msg
+
+    # Perform validation of all values according to the specifications.
+    for key, key_validator in [(k, v) for k, v in key_specs.iteritems()
+                               if k in data]:
+
+        for val_name in [n for n in key_validator.iterkeys()
+                         if n.startswith('type:')]:
+            # Check whether specified validator exists.
+            if val_name not in validators:
+                msg = _("Validator '%s' does not exist.") % val_name
+                LOG.debug(msg)
+                return msg
+
+            val_func = validators[val_name]
+            val_params = key_validator[val_name]
+
+            msg = val_func(data.get(key), val_params)
+            if msg:
+                LOG.debug(msg)
+                return msg
+
+
+def _validate_dict_or_none(data, key_specs=None):
+    if data is not None:
+        return _validate_dict(data, key_specs)
+
+
+def _validate_dict_or_empty(data, key_specs=None):
+    if data != {}:
+        return _validate_dict(data, key_specs)
 
 
 def _validate_non_negative(data, valid_values=None):
@@ -376,6 +430,8 @@ MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
 validators = {'type:dict': _validate_dict,
+              'type:dict_or_none': _validate_dict_or_none,
+              'type:dict_or_empty': _validate_dict_or_empty,
               'type:fixed_ips': _validate_fixed_ips,
               'type:hostroutes': _validate_hostroutes,
               'type:ip_address': _validate_ip_address,

@@ -421,22 +421,58 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('address', "172.16.1.123"),
                 ('port', 80),
                 ('protocol', 'HTTP'),
-                ('session_persistence', {'type': "HTTP_COOKIE",
-                                         'cookie_name': "jessionId"}),
+                ('session_persistence', {'type': "HTTP_COOKIE"}),
                 ('connection_limit', -1),
                 ('admin_state_up', True),
                 ('status', 'PENDING_CREATE')]
 
         with self.vip(name=name,
-                      session_persistence={'type': "HTTP_COOKIE",
-                                           'cookie_name': "jessionId"}) as vip:
+                      session_persistence={'type': "HTTP_COOKIE"}) as vip:
             for k, v in keys:
                 self.assertEqual(vip['vip'][k], v)
 
+    def test_create_vip_with_session_persistence_with_app_cookie(self):
+        name = 'vip7'
+        keys = [('name', name),
+                ('subnet_id', self._subnet_id),
+                ('address', "172.16.1.123"),
+                ('port', 80),
+                ('protocol', 'HTTP'),
+                ('session_persistence', {'type': "APP_COOKIE",
+                                         'cookie_name': 'sessionId'}),
+                ('connection_limit', -1),
+                ('admin_state_up', True),
+                ('status', 'PENDING_CREATE')]
+
+        with self.vip(name=name,
+                      session_persistence={'type': "APP_COOKIE",
+                                           'cookie_name': 'sessionId'}) as vip:
+            for k, v in keys:
+                self.assertEqual(vip['vip'][k], v)
+
+    def test_create_vip_with_session_persistence_unsupported_type(self):
+        name = 'vip5'
+
+        vip = self.vip(name=name, session_persistence={'type': "UNSUPPORTED"})
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
+    def test_create_vip_with_unnecessary_cookie_name(self):
+        name = 'vip8'
+
+        s_p = {'type': "SOURCE_IP", 'cookie_name': 'sessionId'}
+        vip = self.vip(name=name, session_persistence=s_p)
+
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
+    def test_create_vip_with_session_persistence_without_cookie_name(self):
+        name = 'vip6'
+
+        vip = self.vip(name=name, session_persistence={'type': "APP_COOKIE"})
+        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+
     def test_reset_session_persistence(self):
         name = 'vip4'
-        session_persistence = {'type': "HTTP_COOKIE",
-                               'cookie_name': "cookie_name"}
+        session_persistence = {'type': "HTTP_COOKIE"}
 
         update_info = {'vip': {'session_persistence': None}}
 
@@ -467,7 +503,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             data = {'vip': {'name': name,
                             'connection_limit': 100,
                             'session_persistence':
-                            {'type': "HTTP_COOKIE",
+                            {'type': "APP_COOKIE",
                              'cookie_name': "jesssionId"},
                             'admin_state_up': False}}
             req = self.new_update_request('vips', data, vip['vip']['id'])
