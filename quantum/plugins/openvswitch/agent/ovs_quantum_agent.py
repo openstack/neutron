@@ -199,13 +199,24 @@ class OVSQuantumAgent(object):
     def port_update(self, context, **kwargs):
         LOG.debug(_("port_update received"))
         port = kwargs.get('port')
+        # Validate that port is on OVS
+        vif_port = self.int_br.get_vif_port_by_id(port['id'])
+        if not vif_port:
+            return
         network_type = kwargs.get('network_type')
         segmentation_id = kwargs.get('segmentation_id')
         physical_network = kwargs.get('physical_network')
-        vif_port = self.int_br.get_vif_port_by_id(port['id'])
         self.treat_vif_port(vif_port, port['id'], port['network_id'],
                             network_type, physical_network,
                             segmentation_id, port['admin_state_up'])
+        if port['admin_state_up']:
+            # update plugin about port status
+            self.plugin_rpc.update_device_up(self.context, port['id'],
+                                             self.agent_id)
+        else:
+            # update plugin about port status
+            self.agent.plugin_rpc.update_device_down(self.context, port['id'],
+                                                     self.agent.agent_id)
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug(_("tunnel_update received"))
