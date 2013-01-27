@@ -20,27 +20,15 @@ import unittest
 
 import routes
 import webob
-from webtest import AppError
-from webtest import TestApp
+import webtest
 
 from quantum.api import extensions
-from quantum.api.extensions import (
-    ExtensionManager,
-    ExtensionMiddleware,
-    PluginAwareExtensionManager,
-)
 from quantum.common import config
-from quantum.db.db_base_plugin_v2 import QuantumDbPluginV2
+from quantum.db import db_base_plugin_v2
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
-from quantum.tests.unit import BaseTest
-from quantum.tests.unit.extension_stubs import (
-    ExtensionExpectingPluginInterface,
-    StubBaseAppController,
-    StubExtension,
-    StubPlugin,
-)
+from quantum.tests.unit import extension_stubs as ext_stubs
 import quantum.tests.unit.extensions
 from quantum import wsgi
 
@@ -61,13 +49,13 @@ class ExtensionsTestApp(wsgi.Router):
 
     def __init__(self, options={}):
         mapper = routes.Mapper()
-        controller = StubBaseAppController()
+        controller = ext_stubs.StubBaseAppController()
         mapper.resource("dummy_resource", "/dummy_resources",
                         controller=controller)
         super(ExtensionsTestApp, self).__init__(mapper)
 
 
-class FakePluginWithExtension(QuantumDbPluginV2):
+class FakePluginWithExtension(db_base_plugin_v2.QuantumDbPluginV2):
     """A fake plugin used only for extension testing in this file."""
 
     supported_extension_aliases = ["FOXNSOX"]
@@ -120,13 +108,13 @@ class ResourceExtensionTest(unittest.TestCase):
 
         # Ideally we would check for a 501 code here but webtest doesn't take
         # anything that is below 200 or above 400 so we can't actually check
-        # it.  It thows AppError instead.
+        # it.  It throws webtest.AppError instead.
         try:
             response = (
                 test_app.get("/tweedles/some_id/notimplemented_function"))
             # Shouldn't be reached
             self.assertTrue(False)
-        except AppError:
+        except webtest.AppError:
             pass
 
     def test_resource_can_be_added_as_extension(self):
@@ -343,7 +331,7 @@ class ActionExtensionTest(unittest.TestCase):
         self.assertEqual(404, response.status_int)
 
 
-class RequestExtensionTest(BaseTest):
+class RequestExtensionTest(unittest.TestCase):
 
     def test_headers_can_be_extended(self):
         def extend_headers(req, res):
@@ -391,7 +379,7 @@ class RequestExtensionTest(BaseTest):
             res.body = jsonutils.dumps(data)
             return res
 
-        base_app = TestApp(setup_base_app())
+        base_app = webtest.TestApp(setup_base_app())
         response = base_app.put("/dummy_resources/1",
                                 {'uneditable': "new_value"})
         self.assertEqual(response.json['uneditable'], "original_value")
@@ -422,9 +410,9 @@ class ExtensionManagerTest(unittest.TestCase):
             def get_alias(self):
                 return "invalid_extension"
 
-        ext_mgr = ExtensionManager('')
+        ext_mgr = extensions.ExtensionManager('')
         ext_mgr.add_extension(InvalidExtension())
-        ext_mgr.add_extension(StubExtension("valid_extension"))
+        ext_mgr.add_extension(ext_stubs.StubExtension("valid_extension"))
 
         self.assertTrue('valid_extension' in ext_mgr.extensions)
         self.assertFalse('invalid_extension' in ext_mgr.extensions)
@@ -433,13 +421,13 @@ class ExtensionManagerTest(unittest.TestCase):
 class PluginAwareExtensionManagerTest(unittest.TestCase):
 
     def test_unsupported_extensions_are_not_loaded(self):
-        stub_plugin = StubPlugin(supported_extensions=["e1", "e3"])
-        ext_mgr = PluginAwareExtensionManager('',
-                                              {constants.CORE: stub_plugin})
+        stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1", "e3"])
+        plugin_info = {constants.CORE: stub_plugin}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
 
-        ext_mgr.add_extension(StubExtension("e1"))
-        ext_mgr.add_extension(StubExtension("e2"))
-        ext_mgr.add_extension(StubExtension("e3"))
+        ext_mgr.add_extension(ext_stubs.StubExtension("e1"))
+        ext_mgr.add_extension(ext_stubs.StubExtension("e2"))
+        ext_mgr.add_extension(ext_stubs.StubExtension("e3"))
 
         self.assertTrue("e1" in ext_mgr.extensions)
         self.assertFalse("e2" in ext_mgr.extensions)
@@ -453,10 +441,9 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             """
             pass
 
-        ext_mgr = PluginAwareExtensionManager('',
-                                              {constants.CORE:
-                                               ExtensionUnawarePlugin()})
-        ext_mgr.add_extension(StubExtension("e1"))
+        plugin_info = {constants.CORE: ExtensionUnawarePlugin()}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+        ext_mgr.add_extension(ext_stubs.StubExtension("e1"))
 
         self.assertFalse("e1" in ext_mgr.extensions)
 
@@ -468,11 +455,10 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             """
             supported_extension_aliases = ["supported_extension"]
 
-        ext_mgr = PluginAwareExtensionManager('',
-                                              {constants.CORE:
-                                               PluginWithoutExpectedIface()})
+        plugin_info = {constants.CORE: PluginWithoutExpectedIface()}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(
-            ExtensionExpectingPluginInterface("supported_extension"))
+            ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
 
         self.assertFalse("e1" in ext_mgr.extensions)
 
@@ -486,30 +472,30 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
 
             def get_foo(self, bar=None):
                 pass
-        ext_mgr = PluginAwareExtensionManager('',
-                                              {constants.CORE:
-                                               PluginWithExpectedInterface()})
+
+        plugin_info = {constants.CORE: PluginWithExpectedInterface()}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(
-            ExtensionExpectingPluginInterface("supported_extension"))
+            ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
 
         self.assertTrue("supported_extension" in ext_mgr.extensions)
 
     def test_extensions_expecting_quantum_plugin_interface_are_loaded(self):
-        class ExtensionForQuamtumPluginInterface(StubExtension):
+        class ExtensionForQuamtumPluginInterface(ext_stubs.StubExtension):
             """
             This Extension does not implement get_plugin_interface method.
             This will work with any plugin implementing QuantumPluginBase
             """
             pass
-        stub_plugin = StubPlugin(supported_extensions=["e1"])
-        ext_mgr = PluginAwareExtensionManager('', {constants.CORE:
-                                                   stub_plugin})
+        stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
+        plugin_info = {constants.CORE: stub_plugin}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
 
         self.assertTrue("e1" in ext_mgr.extensions)
 
     def test_extensions_without_need_for__plugin_interface_are_loaded(self):
-        class ExtensionWithNoNeedForPluginInterface(StubExtension):
+        class ExtensionWithNoNeedForPluginInterface(ext_stubs.StubExtension):
             """
             This Extension does not need any plugin interface.
             This will work with any plugin implementing QuantumPluginBase
@@ -517,21 +503,21 @@ class PluginAwareExtensionManagerTest(unittest.TestCase):
             def get_plugin_interface(self):
                 return None
 
-        stub_plugin = StubPlugin(supported_extensions=["e1"])
-        ext_mgr = PluginAwareExtensionManager('', {constants.CORE:
-                                                   stub_plugin})
+        stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
+        plugin_info = {constants.CORE: stub_plugin}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
 
         self.assertTrue("e1" in ext_mgr.extensions)
 
     def test_extension_loaded_for_non_core_plugin(self):
-        class NonCorePluginExtenstion(StubExtension):
+        class NonCorePluginExtenstion(ext_stubs.StubExtension):
             def get_plugin_interface(self):
                 return None
 
-        stub_plugin = StubPlugin(supported_extensions=["e1"])
-        ext_mgr = PluginAwareExtensionManager('', {constants.DUMMY:
-                                                   stub_plugin})
+        stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
+        plugin_info = {constants.DUMMY: stub_plugin}
+        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(NonCorePluginExtenstion("e1"))
 
         self.assertTrue("e1" in ext_mgr.extensions)
@@ -580,18 +566,18 @@ def setup_base_app():
 
 def setup_extensions_middleware(extension_manager=None):
     extension_manager = (extension_manager or
-                         PluginAwareExtensionManager(
+                         extensions.PluginAwareExtensionManager(
                              extensions_path,
                              {constants.CORE: FakePluginWithExtension()}))
     config_file = 'quantum.conf.test'
     args = ['--config-file', etcdir(config_file)]
     config.parse(args=args)
     app = config.load_paste_app('extensions_test_app')
-    return ExtensionMiddleware(app, ext_mgr=extension_manager)
+    return extensions.ExtensionMiddleware(app, ext_mgr=extension_manager)
 
 
 def _setup_extensions_test_app(extension_manager=None):
-    return TestApp(setup_extensions_middleware(extension_manager))
+    return webtest.TestApp(setup_extensions_middleware(extension_manager))
 
 
 class SimpleExtensionManager(object):
