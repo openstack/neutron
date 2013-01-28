@@ -69,6 +69,7 @@ class QuantumDebugShell(QuantumShell):
         client = self.client_manager.quantum
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(QuantumDebugAgent.OPTS)
+        config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
         config.setup_logging(cfg.CONF)
         driver = importutils.import_object(cfg.CONF.interface_driver, cfg.CONF)

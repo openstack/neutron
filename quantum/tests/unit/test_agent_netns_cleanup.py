@@ -35,7 +35,7 @@ class TestNetnsCleanup(unittest.TestCase):
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()
-        conf.root_helper = 'sudo',
+        conf.AGENT.root_helper = 'sudo',
         conf.dhcp_driver = 'driver'
 
         method_to_patch = 'quantum.openstack.common.importutils.import_object'
@@ -47,7 +47,8 @@ class TestNetnsCleanup(unittest.TestCase):
 
             util.kill_dhcp(conf, 'ns')
 
-            import_object.called_once_with('driver', conf, mock.ANY, 'sudo',
+            import_object.called_once_with('driver', conf, mock.ANY,
+                                           conf.AGENT.root_helper,
                                            mock.ANY)
 
             if dhcp_active:
@@ -66,14 +67,13 @@ class TestNetnsCleanup(unittest.TestCase):
                                            expected):
         ns = prefix + '6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
-        conf.root_helper = 'sudo'
 
         with mock.patch('quantum.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.return_value.namespace_is_empty.return_value = is_empty
             self.assertEqual(util.eligible_for_deletion(conf, ns, force),
                              expected)
 
-            expected_calls = [mock.call('sudo', ns)]
+            expected_calls = [mock.call(conf.AGENT.root_helper, ns)]
             if not force:
                 expected_calls.append(mock.call().namespace_is_empty())
             ip_wrap.assert_has_calls(expected_calls)
@@ -97,7 +97,6 @@ class TestNetnsCleanup(unittest.TestCase):
     def test_unplug_device_ovs_port(self):
         conf = mock.Mock()
         conf.ovs_integration_bridge = 'br-int'
-        conf.root_helper = 'sudo'
 
         device = mock.Mock()
         device.name = 'tap1'
@@ -114,15 +113,14 @@ class TestNetnsCleanup(unittest.TestCase):
                 util.unplug_device(conf, device)
 
                 mock_get_bridge_for_iface.assert_called_once_with(
-                    conf.root_helper, 'tap1')
-                ovs_br_cls.called_once_with('br-int', 'sudo')
+                    conf.AGENT.root_helper, 'tap1')
+                ovs_br_cls.called_once_with('br-int', conf.AGENT.root_helper)
                 ovs_bridge.assert_has_calls(
                     [mock.call.delete_port(device.name)])
 
     def test_unplug_device_cannot_determine_bridge_port(self):
         conf = mock.Mock()
         conf.ovs_integration_bridge = 'br-int'
-        conf.root_helper = 'sudo'
 
         device = mock.Mock()
         device.name = 'tap1'
@@ -140,14 +138,14 @@ class TestNetnsCleanup(unittest.TestCase):
                     util.unplug_device(conf, device)
 
                     mock_get_bridge_for_iface.assert_called_once_with(
-                        conf.root_helper, 'tap1')
+                        conf.AGENT.root_helper, 'tap1')
                     self.assertEqual(ovs_br_cls.mock_calls, [])
                     self.assertTrue(debug.called)
 
     def _test_destroy_namespace_helper(self, force, num_devices):
         ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
-        conf.root_helper = 'sudo'
+#        conf.AGENT.root_helper = 'sudo'
 
         lo_device = mock.Mock()
         lo_device.name = 'lo'
@@ -168,7 +166,7 @@ class TestNetnsCleanup(unittest.TestCase):
 
                 with mock.patch.object(util, 'kill_dhcp') as kill_dhcp:
                     util.destroy_namespace(conf, ns, force)
-                    expected = [mock.call('sudo', ns)]
+                    expected = [mock.call(conf.AGENT.root_helper, ns)]
 
                     if force:
                         expected.extend([
@@ -194,7 +192,7 @@ class TestNetnsCleanup(unittest.TestCase):
     def test_destroy_namespace_exception(self):
         ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
         conf = mock.Mock()
-        conf.root_helper = 'sudo'
+        conf.AGENT.root_helper = 'sudo'
         with mock.patch('quantum.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.side_effect = Exception()
             util.destroy_namespace(conf, ns)
@@ -206,7 +204,6 @@ class TestNetnsCleanup(unittest.TestCase):
 
             with mock.patch('eventlet.sleep') as eventlet_sleep:
                 conf = mock.Mock()
-                conf.root_helper = 'sudo'
                 conf.force = False
                 methods_to_mock = dict(
                     eligible_for_deletion=mock.DEFAULT,
@@ -227,7 +224,7 @@ class TestNetnsCleanup(unittest.TestCase):
                          mock.call(conf, 'ns2', False)])
 
                     ip_wrap.assert_has_calls(
-                        [mock.call.get_namespaces('sudo')])
+                        [mock.call.get_namespaces(conf.AGENT.root_helper)])
 
                     eventlet_sleep.assert_called_once_with(2)
 
@@ -238,7 +235,6 @@ class TestNetnsCleanup(unittest.TestCase):
 
             with mock.patch('eventlet.sleep') as eventlet_sleep:
                 conf = mock.Mock()
-                conf.root_helper = 'sudo'
                 conf.force = False
                 methods_to_mock = dict(
                     eligible_for_deletion=mock.DEFAULT,
@@ -251,7 +247,7 @@ class TestNetnsCleanup(unittest.TestCase):
                     util.main()
 
                     ip_wrap.assert_has_calls(
-                        [mock.call.get_namespaces('sudo')])
+                        [mock.call.get_namespaces(conf.AGENT.root_helper)])
 
                     mocks['eligible_for_deletion'].assert_has_calls(
                         [mock.call(conf, 'ns1', False),

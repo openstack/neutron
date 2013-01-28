@@ -19,6 +19,7 @@ import abc
 
 import netaddr
 
+from quantum.agent.common import config
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
@@ -54,12 +55,14 @@ class LinuxInterfaceDriver(object):
 
     def __init__(self, conf):
         self.conf = conf
+        self.root_helper = config.get_root_helper(conf)
 
     def init_l3(self, device_name, ip_cidrs, namespace=None):
         """Set the L3 settings for the interface using data from the port.
            ip_cidrs: list of 'X.X.X.X/YY' strings
         """
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper,
+        device = ip_lib.IPDevice(device_name,
+                                 self.root_helper,
                                  namespace=namespace)
 
         previous = {}
@@ -133,7 +136,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                 'external-ids:iface-status=active',
                 '--', 'set', 'Interface', device_name,
                 'external-ids:attached-mac=%s' % mac_address]
-        utils.execute(cmd, self.conf.root_helper)
+        utils.execute(cmd, self.root_helper)
 
     def plug(self, network_id, port_id, device_name, mac_address,
              bridge=None, namespace=None, prefix=None):
@@ -144,10 +147,10 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         self.check_bridge_exists(bridge)
 
         if not ip_lib.device_exists(device_name,
-                                    self.conf.root_helper,
+                                    self.root_helper,
                                     namespace=namespace):
 
-            ip = ip_lib.IPWrapper(self.conf.root_helper)
+            ip = ip_lib.IPWrapper(self.root_helper)
             tap_name = self._get_tap_name(device_name, prefix)
 
             if self.conf.ovs_use_veth:
@@ -182,12 +185,13 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         tap_name = self._get_tap_name(device_name, prefix)
         self.check_bridge_exists(bridge)
-        ovs = ovs_lib.OVSBridge(bridge, self.conf.root_helper)
+        ovs = ovs_lib.OVSBridge(bridge, self.root_helper)
 
         try:
             ovs.delete_port(tap_name)
             if self.conf.ovs_use_veth:
-                device = ip_lib.IPDevice(device_name, self.conf.root_helper,
+                device = ip_lib.IPDevice(device_name,
+                                         self.root_helper,
                                          namespace)
                 device.link.delete()
                 LOG.debug(_("Unplugged interface '%s'"), device_name)
@@ -205,9 +209,9 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
              bridge=None, namespace=None, prefix=None):
         """Plugin the interface."""
         if not ip_lib.device_exists(device_name,
-                                    self.conf.root_helper,
+                                    self.root_helper,
                                     namespace=namespace):
-            ip = ip_lib.IPWrapper(self.conf.root_helper)
+            ip = ip_lib.IPWrapper(self.root_helper)
 
             # Enable agent to define the prefix
             if prefix:
@@ -233,7 +237,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
+        device = ip_lib.IPDevice(device_name, self.root_helper, namespace)
         try:
             device.link.delete()
             LOG.debug(_("Unplugged interface '%s'"), device_name)
@@ -267,7 +271,7 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         return self.flavor_driver_map[flavor]
 
     def _get_driver_by_device_name(self, device_name, namespace=None):
-        device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
+        device = ip_lib.IPDevice(device_name, self.root_helper, namespace)
         mac_address = device.link.address
         ports = self.quantum.list_ports(mac_address=mac_address)
         if not ports.get('ports'):

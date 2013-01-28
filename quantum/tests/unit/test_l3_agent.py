@@ -21,6 +21,7 @@ import unittest2
 import mock
 
 from quantum.agent import l3_agent
+from quantum.agent.common import config as agent_config
 from quantum.agent.linux import interface
 from quantum.common import config as base_config
 from quantum.common import constants as l3_constants
@@ -38,6 +39,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
+        agent_config.register_root_helper(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.set_override('interface_driver',
                                'quantum.agent.linux.interface.NullDriver')

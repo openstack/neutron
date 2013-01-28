@@ -111,8 +111,6 @@ class RouterInfo(object):
 class L3NATAgent(manager.Manager):
 
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo',
-                   help=_("Root helper application.")),
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help=_("Name of bridge used for external network "
                           "traffic.")),
@@ -150,6 +148,7 @@ class L3NATAgent(manager.Manager):
             self.conf = conf
         else:
             self.conf = cfg.CONF
+        self.root_helper = config.get_root_helper(self.conf)
         self.router_info = {}
 
         if not self.conf.interface_driver:
@@ -173,8 +172,8 @@ class L3NATAgent(manager.Manager):
         """Destroy all router namespaces on the host to eliminate
         all stale linux devices, iptables rules, and namespaces.
         """
-        root_ip = ip_lib.IPWrapper(self.conf.root_helper)
-        for ns in root_ip.get_namespaces(self.conf.root_helper):
+        root_ip = ip_lib.IPWrapper(self.root_helper)
+        for ns in root_ip.get_namespaces(self.root_helper):
             if ns.startswith(NS_PREFIX):
                 try:
                     self._destroy_router_namespace(ns)
@@ -182,8 +181,7 @@ class L3NATAgent(manager.Manager):
                     LOG.exception(_("Failed deleting namespace '%s'"), ns)
 
     def _destroy_router_namespace(self, namespace):
-        ns_ip = ip_lib.IPWrapper(self.conf.root_helper,
-                                 namespace=namespace)
+        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=namespace)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
                 # device is on default bridge
@@ -197,7 +195,7 @@ class L3NATAgent(manager.Manager):
         #(TODO) Address the failure for the deletion of the namespace
 
     def _create_router_namespace(self, ri):
-            ip_wrapper_root = ip_lib.IPWrapper(self.conf.root_helper)
+            ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
             ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
@@ -218,7 +216,7 @@ class L3NATAgent(manager.Manager):
                 raise
 
     def _router_added(self, router_id, router=None):
-        ri = RouterInfo(router_id, self.conf.root_helper,
+        ri = RouterInfo(router_id, self.root_helper,
                         self.conf.use_namespaces, router)
         self.router_info[router_id] = ri
         if self.conf.use_namespaces:
@@ -251,7 +249,7 @@ class L3NATAgent(manager.Manager):
         pm = external_process.ProcessManager(
             self.conf,
             router_info.router_id,
-            self.conf.root_helper,
+            self.root_helper,
             router_info.ns_name())
         pm.enable(callback)
 
@@ -259,7 +257,7 @@ class L3NATAgent(manager.Manager):
         pm = external_process.ProcessManager(
             self.conf,
             router_info.router_id,
-            self.conf.root_helper,
+            self.root_helper,
             router_info.ns_name())
         pm.disable()
 
@@ -364,12 +362,12 @@ class L3NATAgent(manager.Manager):
                           ip_address]
             try:
                 if self.conf.use_namespaces:
-                    ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                    ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                                   namespace=ri.ns_name())
                     ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
                 else:
                     utils.execute(arping_cmd, check_exit_code=True,
-                                  root_helper=self.conf.root_helper)
+                                  root_helper=self.root_helper)
             except Exception as e:
                 LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
 
@@ -384,7 +382,7 @@ class L3NATAgent(manager.Manager):
         interface_name = self.get_external_device_name(ex_gw_port['id'])
         ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         if not ip_lib.device_exists(interface_name,
-                                    root_helper=self.conf.root_helper,
+                                    root_helper=self.root_helper,
                                     namespace=ri.ns_name()):
             self.driver.plug(ex_gw_port['network_id'],
                              ex_gw_port['id'], interface_name,
@@ -401,12 +399,12 @@ class L3NATAgent(manager.Manager):
         if ex_gw_port['subnet']['gateway_ip']:
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
             if self.conf.use_namespaces:
-                ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                               namespace=ri.ns_name())
                 ip_wrapper.netns.execute(cmd, check_exit_code=False)
             else:
                 utils.execute(cmd, check_exit_code=False,
-                              root_helper=self.conf.root_helper)
+                              root_helper=self.root_helper)
 
         for (c, r) in self.external_gateway_nat_rules(ex_gw_ip,
                                                       internal_cidrs,
@@ -418,7 +416,7 @@ class L3NATAgent(manager.Manager):
 
         interface_name = self.get_external_device_name(ex_gw_port['id'])
         if ip_lib.device_exists(interface_name,
-                                root_helper=self.conf.root_helper,
+                                root_helper=self.root_helper,
                                 namespace=ri.ns_name()):
             self.driver.unplug(interface_name,
                                bridge=self.conf.external_network_bridge,
@@ -458,7 +456,7 @@ class L3NATAgent(manager.Manager):
                                internal_cidr, mac_address):
         interface_name = self.get_internal_device_name(port_id)
         if not ip_lib.device_exists(interface_name,
-                                    root_helper=self.conf.root_helper,
+                                    root_helper=self.root_helper,
                                     namespace=ri.ns_name()):
             self.driver.plug(network_id, port_id, interface_name, mac_address,
                              namespace=ri.ns_name(),
@@ -479,7 +477,7 @@ class L3NATAgent(manager.Manager):
     def internal_network_removed(self, ri, ex_gw_port, port_id, internal_cidr):
         interface_name = self.get_internal_device_name(port_id)
         if ip_lib.device_exists(interface_name,
-                                root_helper=self.conf.root_helper,
+                                root_helper=self.root_helper,
                                 namespace=ri.ns_name()):
             self.driver.unplug(interface_name, namespace=ri.ns_name(),
                                prefix=INTERNAL_DEV_PREFIX)
@@ -499,7 +497,7 @@ class L3NATAgent(manager.Manager):
     def floating_ip_added(self, ri, ex_gw_port, floating_ip, fixed_ip):
         ip_cidr = str(floating_ip) + '/32'
         interface_name = self.get_external_device_name(ex_gw_port['id'])
-        device = ip_lib.IPDevice(interface_name, self.conf.root_helper,
+        device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name())
 
         if ip_cidr not in [addr['cidr'] for addr in device.addr.list()]:
@@ -516,7 +514,7 @@ class L3NATAgent(manager.Manager):
         net = netaddr.IPNetwork(ip_cidr)
         interface_name = self.get_external_device_name(ex_gw_port['id'])
 
-        device = ip_lib.IPDevice(interface_name, self.conf.root_helper,
+        device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name())
         device.addr.delete(net.version, ip_cidr)
 
@@ -616,6 +614,7 @@ def main():
     eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(L3NATAgent.OPTS)
+    config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
     conf()

@@ -43,8 +43,6 @@ NS_PREFIX = 'qdhcp-'
 
 class DhcpAgent(object):
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo',
-                   help=_("Root helper application.")),
         cfg.IntOpt('resync_interval', default=30,
                    help=_("Interval to resync.")),
         cfg.StrOpt('dhcp_driver',
@@ -58,6 +56,7 @@ class DhcpAgent(object):
         self.needs_resync = False
         self.conf = conf
         self.cache = NetworkCache()
+        self.root_helper = config.get_root_helper(conf)
 
         self.dhcp_driver_cls = importutils.import_class(conf.dhcp_driver)
         ctx = context.get_admin_context_without_session()
@@ -85,7 +84,7 @@ class DhcpAgent(object):
             # the base models.
             driver = self.dhcp_driver_cls(self.conf,
                                           network,
-                                          self.conf.root_helper,
+                                          self.root_helper,
                                           self.device_manager,
                                           namespace)
             getattr(driver, action)()
@@ -394,6 +393,7 @@ class DeviceManager(object):
 
     def __init__(self, conf, plugin):
         self.conf = conf
+        self.root_helper = config.get_root_helper(conf)
         self.plugin = plugin
         if not conf.interface_driver:
             LOG.error(_('You must specify an interface driver'))
@@ -427,7 +427,7 @@ class DeviceManager(object):
             namespace = None
 
         if ip_lib.device_exists(interface_name,
-                                self.conf.root_helper,
+                                self.root_helper,
                                 namespace):
             if not reuse_existing:
                 raise exceptions.PreexistingDeviceFailure(
@@ -452,7 +452,8 @@ class DeviceManager(object):
 
         # ensure that the dhcp interface is first in the list
         if namespace is None:
-            device = ip_lib.IPDevice(interface_name, self.conf.root_helper)
+            device = ip_lib.IPDevice(interface_name,
+                                     self.root_helper)
             device.route.pullup_route(interface_name)
 
         return interface_name
@@ -547,6 +548,7 @@ class DhcpLeaseRelay(object):
 def main():
     eventlet.monkey_patch()
     cfg.CONF.register_opts(DhcpAgent.OPTS)
+    config.register_root_helper(cfg.CONF)
     cfg.CONF.register_opts(DeviceManager.OPTS)
     cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
     cfg.CONF.register_opts(dhcp.OPTS)

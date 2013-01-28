@@ -16,6 +16,7 @@
 #    under the License.
 
 from quantum.agent import l3_agent
+from quantum.agent.common import config as agent_config
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -42,16 +43,11 @@ def setup_conf():
                            'bridges.'))
     ]
 
-    agent_opts = [
-        cfg.StrOpt('root_helper', default='sudo',
-                   help=_("Root helper application.")),
-    ]
-
     conf = cfg.ConfigOpts()
     conf.register_cli_opts(opts)
     conf.register_opts(l3_agent.L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
-    conf.register_opts(agent_opts, 'AGENT')
+    agent_config.register_root_helper(conf)
     config.setup_logging(conf)
     return conf
 

@@ -21,6 +21,7 @@ import eventlet
 
 from quantum.agent import dhcp_agent
 from quantum.agent import l3_agent
+from quantum.agent.common import config as agent_config
 from quantum.agent.linux import dhcp
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -56,8 +57,6 @@ def setup_conf():
     """
 
     opts = [
-        cfg.StrOpt('root_helper', default='sudo',
-                   help=_("Root helper application.")),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help=_("The driver used to manage the DHCP server.")),
@@ -68,8 +67,10 @@ def setup_conf():
                     default=False,
                     help=_('Delete the namespace by removing all devices.')),
     ]
+
     conf = cfg.ConfigOpts()
     conf.register_opts(opts)
+    agent_config.register_root_helper(conf)
     conf.register_opts(dhcp.OPTS)
     config.setup_logging(conf)
     return conf
@@ -77,6 +78,7 @@ def setup_conf():
 
 def kill_dhcp(conf, namespace):
     """Disable DHCP for a network if DHCP is still active."""
+    root_helper = agent_config.get_root_helper(conf)
     network_id = namespace.replace(dhcp_agent.NS_PREFIX, '')
 
     null_delegate = NullDelegate()
@@ -84,7 +86,7 @@ def kill_dhcp(conf, namespace):
         conf.dhcp_driver,
         conf,
         FakeNetwork(network_id),
-        conf.root_helper,
+        root_helper,
         null_delegate)
 
     if dhcp_driver.active:
@@ -102,7 +104,8 @@ def eligible_for_deletion(conf, namespace, force=False):
     if not re.match(NS_MANGLING_PATTERN, namespace):
         return False
 
-    ip = ip_lib.IPWrapper(conf.root_helper, namespace)
+    root_helper = agent_config.get_root_helper(conf)
+    ip = ip_lib.IPWrapper(root_helper, namespace)
     return force or ip.namespace_is_empty()
 
 
@@ -110,12 +113,11 @@ def unplug_device(conf, device):
     try:
         device.link.delete()
     except RuntimeError:
+        root_helper = agent_config.get_root_helper(conf)
         # Maybe the device is OVS port, so try to delete
-        bridge_name = ovs_lib.get_bridge_for_iface(conf.root_helper,
-                                                   device.name)
+        bridge_name = ovs_lib.get_bridge_for_iface(root_helper, device.name)
         if bridge_name:
-            bridge = ovs_lib.OVSBridge(bridge_name,
-                                       conf.root_helper)
+            bridge = ovs_lib.OVSBridge(bridge_name, root_helper)
             bridge.delete_port(device.name)
         else:
             LOG.debug(_('Unable to find bridge for device: %s'), device.name)
@@ -129,7 +131,8 @@ def destroy_namespace(conf, namespace, force=False):
     """
 
     try:
-        ip = ip_lib.IPWrapper(conf.root_helper, namespace)
+        root_helper = agent_config.get_root_helper(conf)
+        ip = ip_lib.IPWrapper(root_helper, namespace)
 
         if force:
             kill_dhcp(conf, namespace)
@@ -166,9 +169,10 @@ def main():
     conf = setup_conf()
     conf()
 
+    root_helper = agent_config.get_root_helper(conf)
     # Identify namespaces that are candidates for deletion.
     candidates = [ns for ns in
-                  ip_lib.IPWrapper.get_namespaces(conf.root_helper)
+                  ip_lib.IPWrapper.get_namespaces(root_helper)
                   if eligible_for_deletion(conf, ns, conf.force)]
 
     if candidates:

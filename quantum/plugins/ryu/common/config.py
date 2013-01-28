@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from quantum.agent.common import config
 from quantum.openstack.common import cfg
 
 
@@ -38,11 +39,6 @@ ovs_opts = [
                help=_("OVSDB interface to connect to")),
 ]
 
-agent_opts = [
-    cfg.StrOpt('root_helper', default='sudo',
-               help=_("Root helper application.")),
-]
-
 
 cfg.CONF.register_opts(ovs_opts, "OVS")
-cfg.CONF.register_opts(agent_opts, "AGENT")
+config.register_root_helper(cfg.CONF)

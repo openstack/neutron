@@ -17,6 +17,7 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
+from quantum.agent.common import config
 from quantum.openstack.common import cfg
 
 DEFAULT_VLAN_RANGES = []
@@ -43,11 +44,10 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
-    cfg.StrOpt('root_helper', default='sudo',
-               help=_("Root helper application.")),
 ]
 
 
 cfg.CONF.register_opts(vlan_opts, "VLANS")
 cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
 cfg.CONF.register_opts(agent_opts, "AGENT")
+config.register_root_helper(cfg.CONF)

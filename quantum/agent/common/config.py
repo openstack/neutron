@@ -18,6 +18,35 @@
 
 from quantum.common import config
 from quantum.openstack.common import cfg
+from quantum.openstack.common import log as logging
+
+
+LOG = logging.getLogger(__name__)
+
+
+ROOT_HELPER_OPTS = [
+    cfg.StrOpt('root_helper', default='sudo',
+               help=_('Root helper application.')),
+]
+
+
+def register_root_helper(conf):
+    # The first call is to ensure backward compatibility
+    conf.register_opts(ROOT_HELPER_OPTS)
+    conf.register_opts(ROOT_HELPER_OPTS, 'AGENT')
+
+
+def get_root_helper(conf):
+    root_helper = conf.AGENT.root_helper
+    if root_helper is not 'sudo':
+        return root_helper
+
+    root_helper = conf.root_helper
+    if root_helper is not 'sudo':
+        LOG.deprecated(_('DEFAULT.root_helper is deprecated!'))
+        return root_helper
+
+    return 'sudo'
 
 
 def setup_conf():

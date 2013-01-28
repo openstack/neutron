@@ -20,6 +20,7 @@ import socket
 
 import netaddr
 
+from quantum.agent.common import config
 from quantum.agent.dhcp_agent import DictModel
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
@@ -35,8 +36,6 @@ DEVICE_OWNER_PROBE = 'network:probe'
 class QuantumDebugAgent():
 
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo',
-                   help=_("Root helper application.")),
         # Needed for drivers
         cfg.StrOpt('admin_user',
                    help=_("Admin user")),
@@ -62,6 +61,7 @@ class QuantumDebugAgent():
 
     def __init__(self, conf, client, driver):
         self.conf = conf
+        self.root_helper = config.get_root_helper(conf)
         self.client = client
         self.driver = driver
 
@@ -81,8 +81,7 @@ class QuantumDebugAgent():
         if self.conf.use_namespaces:
             namespace = self._get_namespace(port)
 
-        if ip_lib.device_exists(interface_name,
-                                self.conf.root_helper, namespace):
+        if ip_lib.device_exists(interface_name, self.root_helper, namespace):
             LOG.debug(_('Reusing existing device: %s.'), interface_name)
         else:
             self.driver.plug(network.id,
@@ -125,7 +124,7 @@ class QuantumDebugAgent():
         bridge = None
         if network.external:
             bridge = self.conf.external_network_bridge
-        ip = ip_lib.IPWrapper(self.conf.root_helper)
+        ip = ip_lib.IPWrapper(self.root_helper)
         namespace = self._get_namespace(port)
         if self.conf.use_namespaces and ip.netns.exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
@@ -149,7 +148,7 @@ class QuantumDebugAgent():
 
     def exec_command(self, port_id, command=None):
         port = DictModel(self.client.show_port(port_id)['port'])
-        ip = ip_lib.IPWrapper(self.conf.root_helper)
+        ip = ip_lib.IPWrapper(self.root_helper)
         namespace = self._get_namespace(port)
         if self.conf.use_namespaces:
             if not command:

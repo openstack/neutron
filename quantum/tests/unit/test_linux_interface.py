@@ -65,7 +65,7 @@ class TestBase(unittest.TestCase):
         ]
         self.conf = config.setup_conf()
         self.conf.register_opts(interface.OPTS)
-        self.conf.register_opts(root_helper_opt)
+        config.register_root_helper(self.conf)
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')

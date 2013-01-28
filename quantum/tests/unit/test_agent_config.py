@@ -15,9 +15,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest2
+
 from quantum.agent.common import config
 
 
 def test_setup_conf():
     conf = config.setup_conf()
     assert conf.state_path.endswith('/var/lib/quantum')
+
+
+class TestRootHelper(unittest2.TestCase):
+
+    def test_agent_root_helper(self):
+        conf = config.setup_conf()
+        config.register_root_helper(conf)
+        conf.set_override('root_helper', 'my_root_helper', 'AGENT')
+        self.assertEquals(config.get_root_helper(conf), 'my_root_helper')
+
+    def test_root_helper(self):
+        conf = config.setup_conf()
+        config.register_root_helper(conf)
+        conf.set_override('root_helper', 'my_root_helper')
+        self.assertEquals(config.get_root_helper(conf), 'my_root_helper')
+
+    def test_root_default(self):
+        conf = config.setup_conf()
+        config.register_root_helper(conf)
+        self.assertEquals(config.get_root_helper(conf), 'sudo')
