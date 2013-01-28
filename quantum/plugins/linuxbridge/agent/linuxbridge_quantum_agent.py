@@ -27,14 +27,12 @@ import sys
 import time
 
 import eventlet
-import logging as std_logging
 import pyudev
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
-from quantum.agent.common import validate
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.common import utils as q_utils
@@ -604,10 +602,6 @@ def main():
     cfg.CONF(project='quantum')
 
     logging_config.setup_logging(cfg.CONF)
-
-    cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
-    validate.core_config_options(cfg.CONF)
-
     try:
         interface_mappings = q_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)

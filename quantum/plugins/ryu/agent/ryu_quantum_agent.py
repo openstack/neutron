@@ -24,14 +24,12 @@ import httplib
 import socket
 import sys
 
-import logging as std_logging
 import netifaces
 from ryu.app import client
 from ryu.app import conf_switch_key
 from ryu.app import rest_nw_id
 from sqlalchemy.ext.sqlsoup import SqlSoup
 
-from quantum.agent.common import validate
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
 from quantum.common import config as logging_config
@@ -211,9 +209,6 @@ def main():
     cfg.CONF(project='quantum')
 
     logging_config.setup_logging(cfg.CONF)
-
-    cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
-    validate.core_config_options(cfg.CONF)
 
     integ_br = cfg.CONF.OVS.integration_bridge
     root_helper = cfg.CONF.AGENT.root_helper
