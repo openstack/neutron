@@ -24,7 +24,9 @@
 import socket
 import sys
 import time
+import logging as std_logging
 
+from quantum.agent.common import validate
 from quantum.agent.linux import ovs_lib
 from quantum.common import config as logging_config
 from quantum.common import topics
@@ -111,6 +113,9 @@ def main():
     config.CONF(project='quantum')
 
     logging_config.setup_logging(config.CONF)
+
+    config.CONF.log_opt_values(LOG, std_logging.DEBUG)
+    validate.core_config_options(config.CONF)
 
     # Determine which agent type to use.
     integ_br = config.OVS.integration_bridge

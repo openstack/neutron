@@ -24,7 +24,9 @@ import sys
 import time
 
 import eventlet
+import logging as std_logging
 
+from quantum.agent.common import validate
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
@@ -700,6 +702,9 @@ def main():
     eventlet.monkey_patch()
     cfg.CONF(project='quantum')
     logging_config.setup_logging(cfg.CONF)
+
+    cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
+    validate.core_config_options(cfg.CONF)
 
     try:
         agent_config = create_agent_config_map(cfg.CONF)
