@@ -215,8 +215,8 @@ class OVSQuantumAgent(object):
                                              self.agent_id)
         else:
             # update plugin about port status
-            self.agent.plugin_rpc.update_device_down(self.context, port['id'],
-                                                     self.agent.agent_id)
+            self.plugin_rpc.update_device_down(self.context, port['id'],
+                                               self.agent_id)
 
     def tunnel_update(self, context, **kwargs):
         LOG.debug(_("tunnel_update received"))
