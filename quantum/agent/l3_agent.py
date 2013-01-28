@@ -111,7 +111,8 @@ class RouterInfo(object):
 class L3NATAgent(manager.Manager):
 
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo'),
+        cfg.StrOpt('root_helper', default='sudo',
+                   help=_("Root helper application.")),
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help=_("Name of bridge used for external network "
                           "traffic.")),
@@ -140,7 +141,8 @@ class L3NATAgent(manager.Manager):
                    help=_("UUID of external network for routers implemented "
                           "by the agents.")),
         cfg.StrOpt('l3_agent_manager',
-                   default='quantum.agent.l3_agent.L3NATAgent'),
+                   default='quantum.agent.l3_agent.L3NATAgent',
+                   help=_("The Quantum L3 Agent manager.")),
     ]
 
     def __init__(self, host, conf=None):

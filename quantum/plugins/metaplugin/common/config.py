@@ -19,22 +19,33 @@ from quantum.openstack.common import cfg
 
 
 meta_plugin_opts = [
-    cfg.StrOpt('plugin_list', default=''),
-    cfg.StrOpt('l3_plugin_list', default=''),
-    cfg.StrOpt('default_flavor', default=''),
-    cfg.StrOpt('default_l3_flavor', default=''),
-    cfg.StrOpt('supported_extension_aliases', default=''),
-    cfg.StrOpt('extension_map', default='')
+    cfg.StrOpt('plugin_list', default='',
+               help=_("List of plugins to load")),
+    cfg.StrOpt('l3_plugin_list', default='',
+               help=_("List of L3 plugins to load")),
+    cfg.StrOpt('default_flavor', default='',
+               help=_("Default flavor to use")),
+    cfg.StrOpt('default_l3_flavor', default='',
+               help=_("Default L3 flavor to use")),
+    cfg.StrOpt('supported_extension_aliases', default='',
+               help=_("Supported extension aliases")),
+    cfg.StrOpt('extension_map', default='',
+               help=_("A list of extensions, per plugin, to load.")),
 ]
 
 proxy_plugin_opts = [
-    cfg.StrOpt('admin_user'),
-    cfg.StrOpt('admin_password'),
-    cfg.StrOpt('admin_tenant_name'),
-    cfg.StrOpt('auth_url'),
+    cfg.StrOpt('admin_user',
+               help=_("Admin user")),
+    cfg.StrOpt('admin_password',
+               help=_("Admin password")),
+    cfg.StrOpt('admin_tenant_name',
+               help=_("Admin tenant name")),
+    cfg.StrOpt('auth_url',
+               help=_("Authentication URL")),
     cfg.StrOpt('auth_strategy', default='keystone',
                help=_("The type of authentication to use")),
-    cfg.StrOpt('auth_region'),
+    cfg.StrOpt('auth_region',
+               help=_("Authentication region")),
 ]
 
 cfg.CONF.register_opts(meta_plugin_opts, "META")

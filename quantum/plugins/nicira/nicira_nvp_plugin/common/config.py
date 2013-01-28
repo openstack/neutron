@@ -18,20 +18,41 @@ from quantum.openstack.common import cfg
 
 
 nvp_opts = [
-    cfg.IntOpt('max_lp_per_bridged_ls', default=64),
-    cfg.IntOpt('max_lp_per_overlay_ls', default=256),
-    cfg.IntOpt('concurrent_connections', default=5),
-    cfg.IntOpt('nvp_gen_timeout', default=-1),
-    cfg.StrOpt('default_cluster_name')
+    cfg.IntOpt('max_lp_per_bridged_ls', default=64,
+               help=_("Maximum number of ports of a logical switch on a "
+                      "bridged transport zone (default 64)")),
+    cfg.IntOpt('max_lp_per_overlay_ls', default=256,
+               help=_("Maximum number of ports of a logical switch on an "
+                      "overlay transport zone (default 64)")),
+    cfg.IntOpt('concurrent_connections', default=5,
+               help=_("Maximum concurrent connections")),
+    cfg.IntOpt('nvp_gen_timeout', default=-1,
+               help=_("Number of seconds a generation id should be valid for "
+                      "(default -1 meaning do not time out)")),
+    cfg.StrOpt('default_cluster_name',
+               help=_("Default cluster name")),
 ]
 
 cluster_opts = [
-    cfg.StrOpt('default_tz_uuid'),
-    cfg.StrOpt('nvp_cluster_uuid'),
-    cfg.StrOpt('nova_zone_id'),
-    cfg.MultiStrOpt('nvp_controller_connection')
+    cfg.StrOpt('default_tz_uuid',
+               help=_("This is uuid of the default NVP Transport zone that "
+                      "will be used for creating tunneled isolated "
+                      "\"Quantum\" networks. It needs to be created in NVP "
+                      "before starting Quantum with the nvp plugin.")),
+    cfg.StrOpt('nvp_cluster_uuid',
+               help=_("Optional paramter identifying the UUID of the cluster "
+                      "in NVP.  This can be retrieved from NVP management "
+                      "console \"admin\" section.")),
+    cfg.StrOpt('nova_zone_id',
+               help=_("Optional parameter identifying the Nova \"zone\" that "
+                      "maps to this NVP cluster.")),
+    cfg.MultiStrOpt('nvp_controller_connection',
+                    help=_("Describes a connection to a single NVP "
+                           "controller. A different connection for each "
+                           "controller in the cluster can be specified; "
+                           "there must be at least one connection per "
+                           "cluster."))
 ]
-
 cfg.CONF.register_opts(nvp_opts, "NVP")
 
 

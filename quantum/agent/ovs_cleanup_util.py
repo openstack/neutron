@@ -42,7 +42,8 @@ def setup_conf():
     ]
 
     agent_opts = [
-        cfg.StrOpt('root_helper', default='sudo'),
+        cfg.StrOpt('root_helper', default='sudo',
+                   help=_("Root helper application.")),
     ]
 
     conf = cfg.CommonConfigOpts()

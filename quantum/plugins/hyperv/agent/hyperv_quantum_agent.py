@@ -47,7 +47,9 @@ agent_opts = [
         'local_network_vswitch',
         default='private',
         help=_('Private vswitch name used for local networks')),
-    cfg.IntOpt('polling_interval', default=2),
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
 ]
 
 

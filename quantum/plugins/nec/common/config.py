@@ -21,22 +21,33 @@ from quantum.openstack.common import rpc
 
 
 ovs_opts = [
-    cfg.StrOpt('integration_bridge', default='br-int'),
+    cfg.StrOpt('integration_bridge', default='br-int',
+               help=_("Integration bridge to use")),
 ]
 
 agent_opts = [
-    cfg.IntOpt('polling_interval', default=2),
-    cfg.StrOpt('root_helper', default='sudo'),
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
+    cfg.StrOpt('root_helper', default='sudo',
+               help=_("Root helper application.")),
 ]
 
 ofc_opts = [
-    cfg.StrOpt('host', default='127.0.0.1'),
-    cfg.StrOpt('port', default='8888'),
-    cfg.StrOpt('driver', default='trema'),
-    cfg.BoolOpt('enable_packet_filter', default=True),
-    cfg.BoolOpt('use_ssl', default=False),
-    cfg.StrOpt('key_file', default=None),
-    cfg.StrOpt('cert_file', default=None),
+    cfg.StrOpt('host', default='127.0.0.1',
+               help=_("Host to connect to")),
+    cfg.StrOpt('port', default='8888',
+               help=_("Port to connect to")),
+    cfg.StrOpt('driver', default='trema',
+               help=_("Driver to use")),
+    cfg.BoolOpt('enable_packet_filter', default=True,
+                help=_("Enable packet filter")),
+    cfg.BoolOpt('use_ssl', default=False,
+                help=_("Use SSL to connect")),
+    cfg.StrOpt('key_file', default=None,
+               help=_("Key file")),
+    cfg.StrOpt('cert_file', default=None,
+               help=_("Certificate file")),
 ]
 
 

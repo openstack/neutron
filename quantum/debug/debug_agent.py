@@ -35,16 +35,23 @@ DEVICE_OWNER_PROBE = 'network:probe'
 class QuantumDebugAgent():
 
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo'),
+        cfg.StrOpt('root_helper', default='sudo',
+                   help=_("Root helper application.")),
         # Needed for drivers
-        cfg.StrOpt('admin_user'),
-        cfg.StrOpt('admin_password'),
-        cfg.StrOpt('admin_tenant_name'),
-        cfg.StrOpt('auth_url'),
+        cfg.StrOpt('admin_user',
+                   help=_("Admin user")),
+        cfg.StrOpt('admin_password',
+                   help=_("Admin password")),
+        cfg.StrOpt('admin_tenant_name',
+                   help=_("Admin tenant name")),
+        cfg.StrOpt('auth_url',
+                   help=_("Authentication URL")),
         cfg.StrOpt('auth_strategy', default='keystone',
                    help=_("The type of authentication to use")),
-        cfg.StrOpt('auth_region'),
-        cfg.BoolOpt('use_namespaces', default=True),
+        cfg.StrOpt('auth_region',
+                   help=_("Authentication region")),
+        cfg.BoolOpt('use_namespaces', default=True,
+                    help=_("Use Linux network namespaces")),
         cfg.StrOpt('interface_driver',
                    help=_("The driver used to manage the virtual "
                           "interface.")),

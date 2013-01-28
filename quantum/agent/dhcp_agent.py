@@ -43,8 +43,10 @@ NS_PREFIX = 'qdhcp-'
 
 class DhcpAgent(object):
     OPTS = [
-        cfg.StrOpt('root_helper', default='sudo'),
-        cfg.IntOpt('resync_interval', default=30),
+        cfg.StrOpt('root_helper', default='sudo',
+                   help=_("Root helper application.")),
+        cfg.IntOpt('resync_interval', default=30,
+                   help=_("Interval to resync.")),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help=_("The driver used to manage the DHCP server.")),
@@ -374,13 +376,18 @@ class NetworkCache(object):
 
 class DeviceManager(object):
     OPTS = [
-        cfg.StrOpt('admin_user'),
-        cfg.StrOpt('admin_password'),
-        cfg.StrOpt('admin_tenant_name'),
-        cfg.StrOpt('auth_url'),
+        cfg.StrOpt('admin_user',
+                   help=_("Admin username")),
+        cfg.StrOpt('admin_password',
+                   help=_("Admin password")),
+        cfg.StrOpt('admin_tenant_name',
+                   help=_("Admin tenant name")),
+        cfg.StrOpt('auth_url',
+                   help=_("Authentication URL")),
         cfg.StrOpt('auth_strategy', default='keystone',
                    help=_("The type of authentication to use")),
-        cfg.StrOpt('auth_region'),
+        cfg.StrOpt('auth_region',
+                   help=_("Authentication region")),
         cfg.StrOpt('interface_driver',
                    help=_("The driver used to manage the virtual interface."))
     ]
