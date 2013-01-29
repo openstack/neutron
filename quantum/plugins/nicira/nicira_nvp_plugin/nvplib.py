@@ -290,7 +290,6 @@ def get_all_networks(cluster, tenant_id, networks):
         raise exception.QuantumException()
     if not resp_obj:
         return []
-    lswitches = json.loads(resp_obj)["results"]
     networks_result = copy(networks)
     return networks_result
 
@@ -371,7 +370,7 @@ def get_port_by_quantum_tag(clusters, lswitch, quantum_tag):
     for c in clusters:
         try:
             res_obj = do_single_request('GET', query, cluster=c)
-        except Exception as e:
+        except Exception:
             continue
         res = json.loads(res_obj)
         if len(res["results"]) == 1:
@@ -417,44 +416,56 @@ def get_port(cluster, network, port, relations=None):
     return port
 
 
-def update_port(network, port_id, **params):
-    cluster = params["cluster"]
-    lport_obj = {}
+def _configure_extensions(lport_obj, mac_address, fixed_ips,
+                          port_security_enabled):
+    lport_obj['allowed_address_pairs'] = []
+    if port_security_enabled:
+        for fixed_ip in fixed_ips:
+            ip_address = fixed_ip.get('ip_address')
+            if ip_address:
+                lport_obj['allowed_address_pairs'].append(
+                    {'mac_address': mac_address, 'ip_address': ip_address})
+        # add address pair allowing src_ip 0.0.0.0 to leave
+        # this is required for outgoing dhcp request
+        lport_obj["allowed_address_pairs"].append(
+            {"mac_address": mac_address,
+             "ip_address": "0.0.0.0"})
 
-    admin_state_up = params['port'].get('admin_state_up')
-    name = params["port"].get("name")
-    device_id = params["port"].get("device_id")
-    if admin_state_up:
-        lport_obj["admin_status_enabled"] = admin_state_up
-    if name:
-        lport_obj["display_name"] = name
 
-    if device_id:
-        # device_id can be longer than 40 so we rehash it
-        device_id = hashlib.sha1(device_id).hexdigest()
-        lport_obj["tags"] = (
-            [dict(scope='os_tid', tag=params["port"].get("tenant_id")),
-             dict(scope='q_port_id', tag=params["port"]["id"]),
-             dict(scope='vm_id', tag=device_id)])
+def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
+                display_name, device_id, admin_status_enabled,
+                mac_address=None, fixed_ips=None, port_security_enabled=None):
 
-    uri = "/ws.v1/lswitch/" + network + "/lport/" + port_id
+    # device_id can be longer than 40 so we rehash it
+    hashed_device_id = hashlib.sha1(device_id).hexdigest()
+    lport_obj = dict(
+        admin_status_enabled=admin_status_enabled,
+        display_name=display_name,
+        tags=[dict(scope='os_tid', tag=tenant_id),
+              dict(scope='q_port_id', tag=quantum_port_id),
+              dict(scope='vm_id', tag=hashed_device_id)])
+
+    _configure_extensions(lport_obj, mac_address, fixed_ips,
+                          port_security_enabled)
+
+    path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
-        resp_obj = do_single_request("PUT", uri, json.dumps(lport_obj),
+        resp_obj = do_single_request("PUT", path, json.dumps(lport_obj),
                                      cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port_id, net_id=network)
+        raise exception.PortNotFound(port_id=lport_uuid, net_id=lswitch_uuid)
     except NvpApiClient.NvpApiException as e:
         raise exception.QuantumException()
-
-    obj = json.loads(resp_obj)
-    obj["port-op-status"] = get_port_status(cluster, network, obj["uuid"])
-    return obj
+    result = json.loads(resp_obj)
+    LOG.debug(_("Updated logical port %(result)s on logical swtich %(uuid)s"),
+              {'result': result['uuid'], 'uuid': lswitch_uuid})
+    return result
 
 
 def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
                  display_name, device_id, admin_status_enabled,
-                 mac_address=None, fixed_ips=None):
+                 mac_address=None, fixed_ips=None, port_security_enabled=None):
     """ Creates a logical port on the assigned logical switch """
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
@@ -465,6 +476,10 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
               dict(scope='q_port_id', tag=quantum_port_id),
               dict(scope='vm_id', tag=hashed_device_id)],
     )
+
+    _configure_extensions(lport_obj, mac_address, fixed_ips,
+                          port_security_enabled)
+
     path = _build_uri_path(LPORT_RESOURCE, parent_resource_id=lswitch_uuid)
     try:
         resp_obj = do_single_request("POST", path,

@@ -34,8 +34,10 @@ from quantum.common import topics
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
+from quantum.db import portsecurity_db
 # NOTE: quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
+from quantum.extensions import portsecurity as psec
 from quantum.extensions import providernet as pnet
 from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
@@ -105,15 +107,21 @@ class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         return q_rpc.PluginRpcDispatcher([self])
 
 
-class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
+class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                  portsecurity_db.PortSecurityDbMixin):
     """
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["provider", "quotas"]
+    supported_extension_aliases = ["provider", "quotas", "port-security"]
     # Default controller cluster
     default_cluster = None
+
+    provider_network_view = "extension:provider_network:view"
+    provider_network_set = "extension:provider_network:set"
+    port_security_enabled_create = "create_port:port_security_enabled"
+    port_security_enabled_update = "update_port:port_security_enabled"
 
     def __init__(self, loglevel=None):
         if loglevel:
@@ -216,15 +224,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         else:
             return self.default_cluster
 
-    def _check_provider_view_auth(self, context, network):
-        return policy.check(context,
-                            "extension:provider_network:view",
-                            network)
+    def _check_view_auth(self, context, resource, action):
+        return policy.check(context, action, resource)
 
-    def _enforce_provider_set_auth(self, context, network):
-        return policy.enforce(context,
-                              "extension:provider_network:set",
-                              network)
+    def _enforce_set_auth(self, context, resource, action):
+        return policy.enforce(context, action, resource)
 
     def _handle_provider_create(self, context, attrs):
         # NOTE(salvatore-orlando): This method has been borrowed from
@@ -240,7 +244,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             return
 
         # Authorize before exposing plugin details to client
-        self._enforce_provider_set_auth(context, attrs)
+        self._enforce_set_auth(context, attrs, self.provider_network_set)
         err_msg = None
         if not network_type_set:
             err_msg = _("%s required") % pnet.NETWORK_TYPE
@@ -273,7 +277,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         # which should be specified in physical_network
 
     def _extend_network_dict_provider(self, context, network, binding=None):
-        if self._check_provider_view_auth(context, network):
+        if self._check_view_auth(context, network, self.provider_network_view):
             if not binding:
                 binding = nicira_db.get_network_binding(context.session,
                                                         network['id'])
@@ -365,6 +369,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         with context.session.begin(subtransactions=True):
             new_net = super(NvpPluginV2, self).create_network(context,
                                                               network)
+            self._process_network_create_port_security(context,
+                                                       network['network'])
             if net_data.get(pnet.NETWORK_TYPE):
                 net_binding = nicira_db.add_network_binding(
                     context.session, new_net['id'],
@@ -373,6 +379,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                     net_data.get(pnet.SEGMENTATION_ID))
                 self._extend_network_dict_provider(context, new_net,
                                                    net_binding)
+            self._extend_network_port_security_dict(context, new_net)
         return new_net
 
     def delete_network(self, context, id):
@@ -409,6 +416,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             network = self._get_network(context, id)
             net_result = self._make_network_dict(network, None)
             self._extend_network_dict_provider(context, net_result)
+            self._extend_network_port_security_dict(context, net_result)
+
         # verify the fabric status of the corresponding
         # logical switch(es) in nvp
         try:
@@ -441,6 +450,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 super(NvpPluginV2, self).get_networks(context, filters))
             for net in quantum_lswitches:
                 self._extend_network_dict_provider(context, net)
+                self._extend_network_port_security_dict(context, net)
 
         if context.is_admin and not filters.get("tenant_id"):
             tenant_filter = ""
@@ -516,10 +526,23 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 raise q_exc.NotImplementedError(_("admin_state_up=False "
                                                   "networks are not "
                                                   "supported."))
-        return super(NvpPluginV2, self).update_network(context, id, network)
+        with context.session.begin(subtransactions=True):
+            quantum_db = super(NvpPluginV2, self).update_network(
+                context, id, network)
+            if psec.PORTSECURITY in network['network']:
+                self._update_network_security_binding(
+                    context, id, network['network'][psec.PORTSECURITY])
+            self._extend_network_port_security_dict(
+                context, quantum_db)
+        return quantum_db
 
     def get_ports(self, context, filters=None, fields=None):
-        quantum_lports = super(NvpPluginV2, self).get_ports(context, filters)
+        with context.session.begin(subtransactions=True):
+            quantum_lports = super(NvpPluginV2, self).get_ports(
+                context, filters)
+            for quantum_lport in quantum_lports:
+                self._extend_port_port_security_dict(context, quantum_lport)
+
         vm_filter = ""
         tenant_filter = ""
         # This is used when calling delete_network. Quantum checks to see if
@@ -607,12 +630,28 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return lports
 
     def create_port(self, context, port):
+        # If PORTSECURITY is not the default value ATTR_NOT_SPECIFIED
+        # then we pass the port to the policy engine. The reason why we don't
+        # pass the value to the policy engine when the port is
+        # ATTR_NOT_SPECIFIED is for the case where a port is created on a
+        # shared network that is not owned by the tenant.
+        # TODO(arosen) fix policy engine to do this for us automatically.
+        if attributes.is_attr_set(port['port'].get(psec.PORTSECURITY)):
+            self._enforce_set_auth(context, port,
+                                   self.port_security_enabled_create)
+        port_data = port['port']
         with context.session.begin(subtransactions=True):
             # First we allocate port in quantum database
             quantum_db = super(NvpPluginV2, self).create_port(context, port)
             # Update fields obtained from quantum db (eg: MAC address)
             port["port"].update(quantum_db)
-            port_data = port['port']
+
+            # port security extension checks
+            (port_security, has_ip) = self._determine_port_security_and_has_ip(
+                context, port_data)
+            port_data[psec.PORTSECURITY] = port_security
+            self._process_port_security_create(context, port_data)
+            # provider networking extension checks
             # Fetch the network and network binding from Quantum db
             network = self._get_network(context, port_data['network_id'])
             network_binding = nicira_db.get_network_binding(
@@ -639,7 +678,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                             port_data['device_id'],
                                             port_data['admin_state_up'],
                                             port_data['mac_address'],
-                                            port_data['fixed_ips'])
+                                            port_data['fixed_ips'],
+                                            port_data[psec.PORTSECURITY])
                 # Get NVP ls uuid for quantum network
                 nvplib.plug_interface(cluster, selected_lswitch['uuid'],
                                       lport['uuid'], "VifAttachment",
@@ -660,20 +700,50 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             LOG.debug(_("create_port completed on NVP for tenant "
                         "%(tenant_id)s: (%(id)s)"), port_data)
 
-            return port_data
+            self._extend_port_port_security_dict(context, port_data)
+        return port_data
 
     def update_port(self, context, id, port):
-        params = {}
-        port_quantum = super(NvpPluginV2, self).get_port(context, id)
-        port_nvp, cluster = (
-            nvplib.get_port_by_quantum_tag(self.clusters.itervalues(),
-                                           port_quantum["network_id"], id))
-        params["cluster"] = cluster
-        params["port"] = port_quantum
-        LOG.debug(_("Update port request: %s"), params)
-        nvplib.update_port(port_quantum['network_id'],
-                           port_nvp['uuid'], **params)
-        return super(NvpPluginV2, self).update_port(context, id, port)
+        self._enforce_set_auth(context, port,
+                               self.port_security_enabled_update)
+        tenant_id = self._get_tenant_id_for_create(context, port)
+        with context.session.begin(subtransactions=True):
+            ret_port = super(NvpPluginV2, self).update_port(
+                context, id, port)
+            # copy values over
+            ret_port.update(port['port'])
+
+            # Handle port security
+            if psec.PORTSECURITY in port['port']:
+                self._update_port_security_binding(
+                    context, id, ret_port[psec.PORTSECURITY])
+            # populate with value
+            else:
+                ret_port[psec.PORTSECURITY] = self._get_port_security_binding(
+                    context, id)
+
+            port_nvp, cluster = (
+                nvplib.get_port_by_quantum_tag(self.clusters.itervalues(),
+                                               ret_port["network_id"], id))
+            LOG.debug(_("Update port request: %s"), port)
+            nvplib.update_port(cluster, ret_port['network_id'],
+                               port_nvp['uuid'], id, tenant_id,
+                               ret_port['name'], ret_port['device_id'],
+                               ret_port['admin_state_up'],
+                               ret_port['mac_address'],
+                               ret_port['fixed_ips'],
+                               ret_port[psec.PORTSECURITY])
+
+        # Update the port status from nvp. If we fail here hide it since
+        # the port was successfully updated but we were not able to retrieve
+        # the status.
+        try:
+            ret_port['status'] = nvplib.get_port_status(
+                cluster, ret_port['network_id'], port_nvp['uuid'])
+        except:
+            LOG.warn(_("Unable to retrieve port status for: %s."),
+                     port_nvp['uuid'])
+        return ret_port
 
     def delete_port(self, context, id):
         # TODO(salvatore-orlando): pass only actual cluster
