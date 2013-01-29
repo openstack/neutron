@@ -54,9 +54,9 @@ class SecurityGroupDefaultAlreadyExists(qexception.InUse):
     message = _("Default security group already exists.")
 
 
-class SecurityGroupRuleInvalidProtocol(qexception.InUse):
-    message = _("Security group rule protocol %(protocol)s not supported "
-                "only protocol values %(values)s supported.")
+class SecurityGroupRuleInvalidProtocol(qexception.InvalidInput):
+    message = _("Security group rule protocol %(protocol)s not supported. "
+                "Only protocol values %(values)s supported.")
 
 
 class SecurityGroupRulesNotSingleTenant(qexception.InvalidInput):
@@ -112,6 +112,23 @@ class SecurityGroupProxyModeNotAdmin(qexception.NotAuthorized):
 
 class SecurityGroupInvalidExternalID(qexception.InvalidInput):
     message = _("external_id wrong type %(data)s")
+
+
+def convert_protocol_to_case_insensitive(value):
+    if value is None:
+        return value
+    try:
+        return value.lower()
+    except AttributeError:
+        raise SecurityGroupRuleInvalidProtocol(
+            protocol=value, values=sg_supported_protocols)
+
+
+def convert_ethertype_to_case_insensitive(value):
+    if isinstance(value, basestring):
+        for ethertype in sg_supported_ethertypes:
+            if ethertype.lower() == value.lower():
+                return ethertype
 
 
 def convert_validate_port_value(port):
@@ -199,6 +216,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:values': ['ingress', 'egress']}},
         'protocol': {'allow_post': True, 'allow_put': False,
                      'is_visible': True, 'default': None,
+                     'convert_to': convert_protocol_to_case_insensitive,
                      'validate': {'type:values': sg_supported_protocols}},
         'port_range_min': {'allow_post': True, 'allow_put': False,
                            'convert_to': convert_validate_port_value,
@@ -208,6 +226,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': None, 'is_visible': True},
         'ethertype': {'allow_post': True, 'allow_put': False,
                       'is_visible': True, 'default': 'IPv4',
+                      'convert_to': convert_ethertype_to_case_insensitive,
                       'validate': {'type:values': sg_supported_ethertypes}},
         'source_ip_prefix': {'allow_post': True, 'allow_put': False,
                              'default': None, 'is_visible': True},
