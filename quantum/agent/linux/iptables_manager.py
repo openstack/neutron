@@ -25,6 +25,7 @@ import inspect
 import os
 
 from quantum.agent.linux import utils
+from quantum.openstack.common import cfg
 from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 
@@ -34,6 +35,7 @@ LOG = logging.getLogger(__name__)
 #             so we limit it to 16 characters.
 #             (max_chain_name_length - len('-POSTROUTING') == 16)
 binary_name = os.path.basename(inspect.stack()[-1][1])[:16]
+cfg.CONF.set_default('lock_path', '$state_path/lock')
 
 
 class IptablesRule(object):
