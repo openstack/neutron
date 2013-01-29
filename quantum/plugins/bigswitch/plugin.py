@@ -66,11 +66,18 @@ LOG = logging.getLogger(__name__)
 
 
 restproxy_opts = [
-    cfg.StrOpt('servers', default='localhost:8800'),
-    cfg.StrOpt('serverauth', default='username:password'),
-    cfg.BoolOpt('serverssl', default=False),
-    cfg.BoolOpt('syncdata', default=False),
-    cfg.IntOpt('servertimeout', default=10),
+    cfg.StrOpt('servers', default='localhost:8800',
+               help=_("A comma separated list of servers and port numbers "
+                      "to proxy request to.")),
+    cfg.StrOpt('serverauth', default='username:password',
+               help=_("Server authentication")),
+    cfg.BoolOpt('serverssl', default=False,
+                help=_("Use SSL to connect")),
+    cfg.BoolOpt('syncdata', default=False,
+                help=_("Sync data on connect")),
+    cfg.IntOpt('servertimeout', default=10,
+               help=_("Maximum number of seconds to wait for proxy request "
+                      "to connect and complete.")),
 ]
 
 

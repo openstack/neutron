@@ -39,13 +39,18 @@ DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
 
 class MetadataProxyHandler(object):
     OPTS = [
-        cfg.StrOpt('admin_user'),
-        cfg.StrOpt('admin_password'),
-        cfg.StrOpt('admin_tenant_name'),
-        cfg.StrOpt('auth_url'),
+        cfg.StrOpt('admin_user',
+                   help=_("Admin user")),
+        cfg.StrOpt('admin_password',
+                   help=_("Admin password")),
+        cfg.StrOpt('admin_tenant_name',
+                   help=_("Admin tenant name")),
+        cfg.StrOpt('auth_url',
+                   help=_("Authentication URL")),
         cfg.StrOpt('auth_strategy', default='keystone',
                    help=_("The type of authentication to use")),
-        cfg.StrOpt('auth_region'),
+        cfg.StrOpt('auth_region',
+                   help=_("Authentication region")),
         cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
                    help=_("IP address used by Nova metadata server.")),
         cfg.IntOpt('nova_metadata_port',

@@ -56,7 +56,8 @@ def setup_conf():
     """
 
     opts = [
-        cfg.StrOpt('root_helper', default='sudo'),
+        cfg.StrOpt('root_helper', default='sudo',
+                   help=_("Root helper application.")),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help=_("The driver used to manage the DHCP server.")),

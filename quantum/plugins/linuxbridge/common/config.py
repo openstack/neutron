@@ -40,8 +40,11 @@ bridge_opts = [
 ]
 
 agent_opts = [
-    cfg.IntOpt('polling_interval', default=2),
-    cfg.StrOpt('root_helper', default='sudo'),
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
+    cfg.StrOpt('root_helper', default='sudo',
+               help=_("Root helper application.")),
 ]
 
 

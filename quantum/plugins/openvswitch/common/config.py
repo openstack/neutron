@@ -22,16 +22,20 @@ DEFAULT_VLAN_RANGES = []
 DEFAULT_TUNNEL_RANGES = []
 
 ovs_opts = [
-    cfg.StrOpt('integration_bridge', default='br-int'),
-    cfg.BoolOpt('enable_tunneling', default=False),
-    cfg.StrOpt('tunnel_bridge', default='br-tun'),
+    cfg.StrOpt('integration_bridge', default='br-int',
+               help=_("Integration bridge to use")),
+    cfg.BoolOpt('enable_tunneling', default=False,
+                help=_("Enable tunneling support")),
+    cfg.StrOpt('tunnel_bridge', default='br-tun',
+               help=_("Tunnel bridge to use")),
     cfg.StrOpt('int_peer_patch_port', default='patch-tun',
                help=_("Peer patch port in integration bridge for tunnel "
                       "bridge")),
     cfg.StrOpt('tun_peer_patch_port', default='patch-int',
                help=_("Peer patch port in tunnel bridge for integration "
                       "bridge")),
-    cfg.StrOpt('local_ip', default=''),
+    cfg.StrOpt('local_ip', default='',
+               help=_("Local IP address of GRE tunnel endpoints.")),
     cfg.ListOpt('bridge_mappings',
                 default=DEFAULT_BRIDGE_MAPPINGS,
                 help=_("List of <physical_network>:<bridge>")),
@@ -48,8 +52,11 @@ ovs_opts = [
 ]
 
 agent_opts = [
-    cfg.IntOpt('polling_interval', default=2),
-    cfg.StrOpt('root_helper', default='sudo'),
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
+    cfg.StrOpt('root_helper', default='sudo',
+               help=_("Root helper application.")),
 ]
 
 
