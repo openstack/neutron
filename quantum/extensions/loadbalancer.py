@@ -88,6 +88,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                     'validate': {'type:uuid': None},
                     'is_visible': True},
         'session_persistence': {'allow_post': True, 'allow_put': True,
+                                'convert_to': attr.convert_none_to_empty_dict,
                                 'default': {},
                                 'validate': {'type:dict': None},
                                 'is_visible': True},

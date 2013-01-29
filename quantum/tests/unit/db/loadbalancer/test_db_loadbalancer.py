@@ -438,6 +438,26 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(vip['vip'][k], v)
 
+    def test_reset_session_persistence(self):
+        name = 'vip4'
+        session_persistence = {'type': "HTTP_COOKIE",
+                               'cookie_name': "cookie_name"}
+
+        update_info = {'vip': {'session_persistence': None}}
+
+        with self.vip(name=name, session_persistence=session_persistence) as v:
+            # Ensure that vip has been created properly
+            self.assertEqual(v['vip']['session_persistence'],
+                             session_persistence)
+
+            # Try resetting session_persistence
+            req = self.new_update_request('vips', update_info, v['vip']['id'])
+            res = self.deserialize('json', req.get_response(self.ext_api))
+
+            # If session persistence has been removed, it won't be present in
+            # the response.
+            self.assertNotIn('session_persistence', res['vip'])
+
     def test_update_vip(self):
         name = 'new_vip'
         keys = [('name', name),
