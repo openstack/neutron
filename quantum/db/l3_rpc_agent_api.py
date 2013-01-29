@@ -31,7 +31,7 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
     def router_deleted(self, context, router_id):
-        LOG.debug(_('Nofity agent the router %s is deleted'), router_id)
+        LOG.debug(_('Notify agent the router %s is deleted'), router_id)
         self.cast(context,
                   self.make_msg('router_deleted',
                                 router_id=router_id),
@@ -39,7 +39,7 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
 
     def routers_updated(self, context, routers):
         if routers:
-            LOG.debug(_('Nofity agent routers were updated:\n %s'),
+            LOG.debug(_('Notify agent routers were updated:\n %s'),
                       jsonutils.dumps(routers, indent=5))
             self.cast(context,
                       self.make_msg('routers_updated',
@@ -47,4 +47,4 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
                       topic=self.topic)
 
 
-L3AgentNofity = L3AgentNotifyAPI()
+L3AgentNotify = L3AgentNotifyAPI()

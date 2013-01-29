@@ -1327,18 +1327,18 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
             'quantum.db.l3_rpc_agent_api.L3AgentNotifyAPI')
-        oldNotify = l3_rpc_agent_api.L3AgentNofity
+        oldNotify = l3_rpc_agent_api.L3AgentNotify
         try:
             with mock.patch(l3_rpc_agent_api_str) as notifyApi:
-                l3_rpc_agent_api.L3AgentNofity = notifyApi
+                l3_rpc_agent_api.L3AgentNotify = notifyApi
                 kargs = [item for item in args]
                 kargs.append(notifyApi)
                 target_func(*kargs)
         except:
-            l3_rpc_agent_api.L3AgentNofity = oldNotify
+            l3_rpc_agent_api.L3AgentNotify = oldNotify
             raise
         else:
-            l3_rpc_agent_api.L3AgentNofity = oldNotify
+            l3_rpc_agent_api.L3AgentNotify = oldNotify
 
     def _test_router_gateway_op_agent(self, notifyApi):
         with self.router() as r:
