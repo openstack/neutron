@@ -106,7 +106,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s up %(agent_id)s"),
                   locals())
-        port = self.get_port_from_device(device)
+        port = db.get_port_from_device(device[self.TAP_PREFIX_LEN:])
         if port:
             if port['status'] != q_const.PORT_STATUS_ACTIVE:
                 # Set port status to ACTIVE

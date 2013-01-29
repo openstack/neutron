@@ -432,9 +432,9 @@ class LinuxBridgeRpcCallbacks():
     def network_delete(self, context, **kwargs):
         LOG.debug("network_delete received")
         network_id = kwargs.get('network_id')
-        bridge_name = self.agent.get_bridge_name(network_id)
+        bridge_name = self.agent.br_mgr.get_bridge_name(network_id)
         LOG.debug("Delete %s", bridge_name)
-        self.agent.delete_vlan_bridge(bridge_name)
+        self.agent.br_mgr.delete_vlan_bridge(bridge_name)
 
     def port_update(self, context, **kwargs):
         LOG.debug(_("port_update received"))
@@ -664,8 +664,7 @@ class LinuxBridgeQuantumAgentRPC:
         self.context = context.RequestContext('quantum', 'quantum',
                                               is_admin=False)
         # Handle updates from service
-        self.callbacks = LinuxBridgeRpcCallbacks(self.context,
-                                                 self.br_mgr)
+        self.callbacks = LinuxBridgeRpcCallbacks(self.context, self)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
