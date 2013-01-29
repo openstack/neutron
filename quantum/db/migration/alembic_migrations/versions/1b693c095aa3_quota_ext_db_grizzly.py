@@ -25,7 +25,7 @@ Create Date: 2013-01-19 02:58:17.667524
 
 # revision identifiers, used by Alembic.
 revision = '1b693c095aa3'
-down_revision = '1d76643bcec4'
+down_revision = '2a6d0b51f4bb'
 
 # Change to ['*'] if this migration applies to all plugins
 
