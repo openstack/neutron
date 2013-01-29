@@ -15,10 +15,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+import itertools
 import mock
 import unittest2 as unittest
 
+from quantum.agent.linux import ip_lib
+from quantum.agent.linux import ovs_lib
 from quantum.agent import ovs_cleanup_util as util
+from quantum.openstack.common import uuidutils
 
 
 class TestOVSCleanup(unittest.TestCase):
@@ -31,23 +36,58 @@ class TestOVSCleanup(unittest.TestCase):
             self.assertEqual(conf.AGENT.root_helper, 'sudo')
 
     def test_main(self):
-        with mock.patch('quantum.common.config.setup_logging'):
-            br_patch = mock.patch('quantum.agent.linux.ovs_lib.get_bridges')
-            with br_patch as mock_get_bridges:
-                mock_get_bridges.return_value = ['br-int', 'br-ex']
-                with mock.patch(
-                    'quantum.agent.linux.ovs_lib.OVSBridge') as ovs:
-                    setup_conf = mock.patch(
-                        'quantum.agent.ovs_cleanup_util.setup_conf')
-                    with setup_conf as mock_setup_conf:
-                        conf = mock.Mock()
-                        confroot_helper = 'sudo'
-                        conf.ovs_all_ports = False
-                        conf.ovs_integration_bridge = 'br-int'
-                        conf.external_network_bridge = 'br-ex'
+        bridges = ['br-int', 'br-ex']
+        ports = ['p1', 'p2', 'p3']
+        conf = mock.Mock()
+        conf.AGENT.root_helper = 'dummy_sudo'
+        conf.ovs_all_ports = False
+        conf.ovs_integration_bridge = 'br-int'
+        conf.external_network_bridge = 'br-ex'
+        with contextlib.nested(
+            mock.patch('quantum.common.config.setup_logging'),
+            mock.patch('quantum.agent.ovs_cleanup_util.setup_conf',
+                       return_value=conf),
+            mock.patch('quantum.agent.linux.ovs_lib.get_bridges',
+                       return_value=bridges),
+            mock.patch('quantum.agent.linux.ovs_lib.OVSBridge'),
+            mock.patch.object(util, 'collect_quantum_ports',
+                              return_value=ports),
+            mock.patch.object(util, 'delete_quantum_ports')
+        ) as (_log, _conf, _get, ovs, collect, delete):
+            util.main()
+            ovs.assert_has_calls([mock.call().delete_ports(all_ports=False)])
+            collect.assert_called_once_with(set(bridges), 'dummy_sudo')
+            delete.assert_called_once_with(ports, 'dummy_sudo')
 
-                        mock_setup_conf.return_value = conf
+    def test_collect_quantum_ports(self):
+        port1 = ovs_lib.VifPort('tap1234', 1, uuidutils.generate_uuid(),
+                                '11:22:33:44:55:66', 'br')
+        port2 = ovs_lib.VifPort('tap5678', 2, uuidutils.generate_uuid(),
+                                '77:88:99:aa:bb:cc', 'br')
+        port3 = ovs_lib.VifPort('tap90ab', 3, uuidutils.generate_uuid(),
+                                '99:00:aa:bb:cc:dd', 'br')
+        ports = [[port1, port2], [port3]]
+        portnames = [p.port_name for p in itertools.chain(*ports)]
+        with mock.patch('quantum.agent.linux.ovs_lib.OVSBridge') as ovs:
+            ovs.return_value.get_vif_ports.side_effect = ports
+            bridges = ['br-int', 'br-ex']
+            ret = util.collect_quantum_ports(bridges, 'dummy_sudo')
+            self.assertEqual(ret, portnames)
 
-                        util.main()
-                        ovs.assert_has_calls([mock.call().delete_ports(
-                            all_ports=False)])
+    def test_delete_quantum_ports(self):
+        ports = ['tap1234', 'tap5678', 'tap09ab']
+        port_found = [True, False, True]
+        delete_ports = [p for p, found
+                        in itertools.izip(ports, port_found) if found]
+        with contextlib.nested(
+            mock.patch.object(ip_lib, 'device_exists',
+                              side_effect=port_found),
+            mock.patch.object(ip_lib, 'IPDevice')
+        ) as (device_exists, ip_dev):
+            util.delete_quantum_ports(ports, 'dummy_sudo')
+            device_exists.assert_has_calls([mock.call(p) for p in ports])
+            ip_dev.assert_has_calls(
+                [mock.call('tap1234', 'dummy_sudo'),
+                 mock.call().link.delete(),
+                 mock.call('tap09ab', 'dummy_sudo'),
+                 mock.call().link.delete()])
