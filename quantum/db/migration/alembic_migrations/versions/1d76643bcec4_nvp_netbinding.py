@@ -46,7 +46,9 @@ def upgrade(active_plugin=None, options=None):
     op.create_table(
         'nvp_network_bindings',
         sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('binding_type', sa.Enum('flat', 'vlan', 'stt', 'gre'),
+        sa.Column('binding_type',
+                  sa.Enum('flat', 'vlan', 'stt', 'gre',
+                          name='nvp_network_bindings_binding_type'),
                   nullable=False),
         sa.Column('tz_uuid', sa.String(length=36), nullable=True),
         sa.Column('vlan_id', sa.Integer(), nullable=True),

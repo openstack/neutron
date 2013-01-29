@@ -33,7 +33,9 @@ class NvpNetworkBinding(model_base.BASEV2):
                         ForeignKey('networks.id', ondelete="CASCADE"),
                         primary_key=True)
     # 'flat', 'vlan', stt' or 'gre'
-    binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre'), nullable=False)
+    binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre',
+                               name='nvp_network_bindings_binding_type'),
+                          nullable=False)
     tz_uuid = Column(String(36))
     vlan_id = Column(Integer)
 
