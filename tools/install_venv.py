@@ -6,6 +6,7 @@
 # All Rights Reserved.
 #
 # Copyright 2010 OpenStack LLC.
+# Copyright 2013 IBM Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -27,84 +28,7 @@ import os
 import subprocess
 import sys
 
-
-ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-VENV = os.path.join(ROOT, '.venv')
-PIP_REQUIRES = os.path.join(ROOT, 'tools', 'pip-requires')
-TEST_REQUIRES = os.path.join(ROOT, 'tools', 'test-requires')
-PY_VERSION = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
-
-VENV_EXISTS = bool(os.path.exists(VENV))
-
-
-def die(message, *args):
-    print >> sys.stderr, message % args
-    sys.exit(1)
-
-
-def run_command(cmd, redirect_output=True, check_exit_code=True):
-    """
-    Runs a command in an out-of-process shell, returning the
-    output of that command.  Working directory is ROOT.
-    """
-    if redirect_output:
-        stdout = subprocess.PIPE
-    else:
-        stdout = None
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=stdout)
-    output = proc.communicate()[0]
-    if check_exit_code and proc.returncode != 0:
-        raise Exception('Command "%s" failed.\n%s' % (' '.join(cmd), output))
-    return output
-
-
-HAS_EASY_INSTALL = bool(run_command(['which', 'easy_install'],
-                                    check_exit_code=False).strip())
-HAS_VIRTUALENV = bool(run_command(['which', 'virtualenv'],
-                                  check_exit_code=False).strip())
-
-
-def check_dependencies():
-    """Make sure virtualenv is in the path."""
-
-    if not HAS_VIRTUALENV:
-        raise Exception('Virtualenv not found. '
-                        'Try installing python-virtualenv')
-    print 'done.'
-
-
-def create_virtualenv(venv=VENV, install_pip=False):
-    """Creates the virtual environment and installs PIP only into the
-    virtual environment
-    """
-    print 'Creating venv...',
-
-    install = ['virtualenv', '-q', venv]
-    run_command(install)
-
-    print 'done.'
-    print 'Installing pip in virtualenv...',
-    if install_pip and \
-            not run_command(['tools/with_venv.sh', 'easy_install',
-                             'pip>1.0']):
-        die("Failed to install pip.")
-    print 'done.'
-
-
-def install_dependencies(venv=VENV):
-    print 'Installing dependencies with pip (this can take a while)...'
-    run_command(['tools/with_venv.sh', 'pip', 'install', '-r',
-                 PIP_REQUIRES], redirect_output=False)
-    run_command(['tools/with_venv.sh', 'pip', 'install', '-r',
-                 TEST_REQUIRES], redirect_output=False)
-    run_command(['tools/with_venv.sh', 'pip', 'install',
-                 'setuptools_git>=0.4'], redirect_output=False)
-
-    # Tell the virtual env how to "import quantum"
-    pthfile = os.path.join(venv, "lib", PY_VERSION, "site-packages",
-                                 "quantum.pth")
-    f = open(pthfile, 'w')
-    f.write("%s\n" % ROOT)
+import install_venv_common as install_venv
 
 
 def print_help():
@@ -130,10 +54,22 @@ def print_help():
 
 
 def main(argv):
-    check_dependencies()
-    create_virtualenv()
-    install_dependencies()
+    root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    venv = os.path.join(root, '.venv')
+    pip_requires = os.path.join(root, 'tools', 'pip-requires')
+    test_requires = os.path.join(root, 'tools', 'test-requires')
+    py_version = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+    project = 'Quantum'
+    install = install_venv.InstallVenv(root, venv, pip_requires, test_requires,
+                                       py_version, project)
+    options = install.parse_args(argv)
+    install.check_python_version()
+    install.check_dependencies()
+    install.create_virtualenv(no_site_packages=options.no_site_packages)
+    install.install_dependencies()
+    install.post_process()
     print_help()
+
 
 if __name__ == '__main__':
     main(sys.argv)
