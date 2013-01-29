@@ -22,6 +22,7 @@
 
 from copy import copy
 import hashlib
+import inspect
 import json
 import logging
 
@@ -80,6 +81,28 @@ taken_context_ids = []
 _net_type_cache = {}  # cache of {net_id: network_type}
 # XXX Only cache default for now
 _lqueue_cache = {}
+
+
+def version_dependent(func):
+    func_name = func.__name__
+
+    def dispatch_version_dependent_function(cluster, *args, **kwargs):
+        nvp_ver = cluster.api_client.get_nvp_version()
+        if nvp_ver:
+            ver_major = int(nvp_ver.split('.')[0])
+            real_func = NVPLIB_FUNC_DICT[func_name][ver_major]
+        func_kwargs = kwargs
+        arg_spec = inspect.getargspec(real_func)
+        if not arg_spec.keywords and not arg_spec.varargs:
+            # drop args unknown to function from func_args
+            arg_set = set(func_kwargs.keys())
+            for arg in arg_set - set(arg_spec.args):
+                del func_kwargs[arg]
+        # NOTE(salvatore-orlando): shall we fail here if a required
+        # argument is not passed, or let the called function raise?
+        real_func(cluster, *args, **func_kwargs)
+
+    return dispatch_version_dependent_function
 
 
 def _build_uri_path(resource,
@@ -990,32 +1013,69 @@ def _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj):
     return rule
 
 
-def create_lrouter_snat_rule(cluster, router_id,
-                             min_src_ip, max_src_ip, **kwargs):
+def _build_snat_rule_obj(min_src_ip, max_src_ip, nat_match_obj):
+    return {"to_source_ip_address_min": min_src_ip,
+            "to_source_ip_address_max": max_src_ip,
+            "type": "SourceNatRule",
+            "match": nat_match_obj}
 
-    nat_match_obj = _create_nat_match_obj(**kwargs)
-    nat_rule_obj = {
-        "to_source_ip_address_min": min_src_ip,
-        "to_source_ip_address_max": max_src_ip,
-        "type": "SourceNatRule",
-        "match": nat_match_obj
-    }
+
+def create_lrouter_snat_rule_v2(cluster, router_id,
+                                min_src_ip, max_src_ip, match_criteria=None):
+
+    nat_match_obj = _create_nat_match_obj(**match_criteria)
+    nat_rule_obj = _build_snat_rule_obj(min_src_ip, max_src_ip, nat_match_obj)
     return _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj)
 
 
-def create_lrouter_dnat_rule(cluster, router_id, to_min_dst_ip,
-                             to_max_dst_ip, to_dst_port=None, **kwargs):
+def create_lrouter_dnat_rule_v2(cluster, router_id, dst_ip,
+                                to_dst_port=None, match_criteria=None):
 
-    nat_match_obj = _create_nat_match_obj(**kwargs)
+    nat_match_obj = _create_nat_match_obj(**match_criteria)
     nat_rule_obj = {
-        "to_destination_ip_address_min": to_min_dst_ip,
-        "to_destination_ip_address_max": to_max_dst_ip,
+        "to_destination_ip_address_min": dst_ip,
+        "to_destination_ip_address_max": dst_ip,
         "type": "DestinationNatRule",
         "match": nat_match_obj
     }
     if to_dst_port:
         nat_rule_obj['to_destination_port'] = to_dst_port
     return _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj)
+
+
+def create_lrouter_snat_rule_v3(cluster, router_id, min_src_ip, max_src_ip,
+                                order=None, match_criteria=None):
+    nat_match_obj = _create_nat_match_obj(**match_criteria)
+    nat_rule_obj = _build_snat_rule_obj(min_src_ip, max_src_ip, nat_match_obj)
+    if order:
+        nat_rule_obj['order'] = order
+    return _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj)
+
+
+def create_lrouter_dnat_rule_v3(cluster, router_id, dst_ip, to_dst_port=None,
+                                order=None, match_criteria=None):
+
+    nat_match_obj = _create_nat_match_obj(**match_criteria)
+    nat_rule_obj = {
+        "to_destination_ip_address": dst_ip,
+        "type": "DestinationNatRule",
+        "match": nat_match_obj
+    }
+    if to_dst_port:
+        nat_rule_obj['to_destination_port'] = to_dst_port
+    if order:
+        nat_rule_obj['order'] = order
+    return _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj)
+
+
+@version_dependent
+def create_lrouter_dnat_rule(cluster, *args, **kwargs):
+    pass
+
+
+@version_dependent
+def create_lrouter_snat_rule(cluster, *args, **kwargs):
+    pass
 
 
 def delete_nat_rules_by_match(cluster, router_id, rule_type,
@@ -1113,3 +1173,12 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
                 "router logical port:%s") % str(e)
         LOG.exception(msg)
         raise nvp_exc.NvpPluginException(err_desc=msg)
+
+
+# TODO(salvatore-orlando): Also handle changes in minor versions
+NVPLIB_FUNC_DICT = {
+    'create_lrouter_dnat_rule': {2: create_lrouter_dnat_rule_v2,
+                                 3: create_lrouter_dnat_rule_v3},
+    'create_lrouter_snat_rule': {2: create_lrouter_snat_rule_v2,
+                                 3: create_lrouter_snat_rule_v3}
+}

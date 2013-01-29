@@ -70,11 +70,12 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
                                       % NICIRA_PKG_PATH, autospec=True)
         instance = self.mock_nvpapi.start()
-        instance.return_value.login.return_value = "the_cookie"
 
         def _fake_request(*args, **kwargs):
             return self.fc.fake_request(*args, **kwargs)
 
+        # Emulate tests against NVP 2.x
+        instance.return_value.get_nvp_version.return_value = "2.999"
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
 
