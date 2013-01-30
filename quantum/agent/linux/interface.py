@@ -28,6 +28,7 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 
+
 LOG = logging.getLogger(__name__)
 
 OPTS = [
@@ -269,7 +270,7 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         device = ip_lib.IPDevice(device_name, self.conf.root_helper, namespace)
         mac_address = device.link.address
         ports = self.quantum.list_ports(mac_address=mac_address)
-        if not 'ports' in ports or len(ports['ports']) < 1:
+        if not ports.get('ports'):
             raise Exception(_('No port for this device %s') % device_name)
         return self._get_driver_by_network_id(ports['ports'][0]['network_id'])
 
