@@ -160,7 +160,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 router_db.update(r)
         routers = self.get_sync_data(context.elevated(),
                                      [router_db['id']])
-        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+        l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         return self._make_router_dict(router_db)
 
     def _update_router_gw_info(self, context, router_id, info):
@@ -249,7 +249,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 self._delete_port(context.elevated(), ports[0]['id'])
 
             context.session.delete(router)
-        l3_rpc_agent_api.L3AgentNofity.router_deleted(context, id)
+        l3_rpc_agent_api.L3AgentNotify.router_deleted(context, id)
 
     def get_router(self, context, id, fields=None):
         router = self._get_router(context, id)
@@ -353,7 +353,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                  'name': ''}})
 
         routers = self.get_sync_data(context.elevated(), [router_id])
-        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+        l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         info = {'port_id': port['id'],
                 'subnet_id': port['fixed_ips'][0]['subnet_id']}
         notifier_api.notify(context,
@@ -431,7 +431,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
                                                           subnet_id=subnet_id)
         routers = self.get_sync_data(context.elevated(), [router_id])
-        l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+        l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         notifier_api.notify(context,
                             notifier_api.publisher_id('network'),
                             'router.interface.delete',
@@ -642,7 +642,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         router_id = floatingip_db['router_id']
         if router_id:
             routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         return self._make_floatingip_dict(floatingip_db)
 
     def update_floatingip(self, context, id, floatingip):
@@ -664,7 +664,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             router_ids.append(router_id)
         if router_ids:
             routers = self.get_sync_data(context.elevated(), router_ids)
-            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         return self._make_floatingip_dict(floatingip_db)
 
     def delete_floatingip(self, context, id):
@@ -677,7 +677,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                              l3_port_check=False)
         if router_id:
             routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
@@ -724,7 +724,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                 % port_id)
         if router_id:
             routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNofity.routers_updated(context, routers)
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
 
     def _check_l3_view_auth(self, context, network):
         return policy.check(context,
