@@ -28,11 +28,14 @@ import netifaces
 from ryu.app import client
 from ryu.app import conf_switch_key
 from ryu.app import rest_nw_id
-from sqlalchemy.ext.sqlsoup import SqlSoup
 
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux.ovs_lib import VifPort
+from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
+from quantum.common import exceptions as q_exc
+from quantum.common import topics
+from quantum import q_context
 from quantum.openstack.common import cfg
 from quantum.openstack.common.cfg import NoSuchGroupError
 from quantum.openstack.common.cfg import NoSuchOptError
@@ -40,7 +43,6 @@ from quantum.openstack.common import log
 from quantum.plugins.ryu.common import config
 
 
-cfg.CONF.import_opt('sql_connection', 'quantum.db.api', 'DATABASE')
 LOG = log.getLogger(__name__)
 
 
@@ -148,29 +150,42 @@ class VifPortSet(object):
                                  port.switch.datapath_id, port.ofport)
 
 
+class RyuPluginApi(agent_rpc.PluginApi):
+    def get_ofp_rest_api_addr(self, context):
+        LOG.debug(_("Get Ryu rest API address"))
+        return self.call(context,
+                         self.make_msg('get_ofp_rest_api'),
+                         topic=self.topic)
+
+
 class OVSQuantumOFPRyuAgent(object):
-    def __init__(self, integ_br, ofp_rest_api_addr,
-                 tunnel_ip, ovsdb_ip, ovsdb_port,
+    def __init__(self, integ_br, tunnel_ip, ovsdb_ip, ovsdb_port,
                  root_helper):
         super(OVSQuantumOFPRyuAgent, self).__init__()
-        self.int_br = None
-        self.vif_ports = None
-        self._setup_integration_br(root_helper, integ_br,
-                                   ofp_rest_api_addr,
-                                   tunnel_ip, ovsdb_port, ovsdb_ip)
+        self._setup_rpc()
+        self._setup_integration_br(root_helper, integ_br, tunnel_ip,
+                                   ovsdb_port, ovsdb_ip)
+
+    def _setup_rpc(self):
+        self.plugin_rpc = RyuPluginApi(topics.PLUGIN)
+        self.context = q_context.get_admin_context_without_session()
 
     def _setup_integration_br(self, root_helper, integ_br,
-                              ofp_rest_api_addr,
                               tunnel_ip, ovsdb_port, ovsdb_ip):
         self.int_br = OVSBridge(integ_br, root_helper)
         self.int_br.find_datapath_id()
 
-        ryu_rest_client = client.OFPClient(ofp_rest_api_addr)
+        rest_api_addr = self.plugin_rpc.get_ofp_rest_api_addr(self.context)
+        if not rest_api_addr:
+            raise q_exc.Invalid(_("Ryu rest API port isn't specified"))
+        LOG.debug(_("Going to ofp controller mode %s"), rest_api_addr)
+
+        ryu_rest_client = client.OFPClient(rest_api_addr)
 
         self.vif_ports = VifPortSet(self.int_br, ryu_rest_client)
         self.vif_ports.setup()
 
-        sc_client = client.SwitchConfClient(ofp_rest_api_addr)
+        sc_client = client.SwitchConfClient(rest_api_addr)
         sc_client.set_key(self.int_br.datapath_id,
                           conf_switch_key.OVS_TUNNEL_ADDR, tunnel_ip)
 
@@ -180,31 +195,6 @@ class OVSQuantumOFPRyuAgent(object):
                           'tcp:%s:%d' % (ovsdb_ip, ovsdb_port))
 
 
-def check_ofp_rest_api_addr(db):
-    LOG.debug(_("Checking db"))
-
-    servers = db.ofp_server.all()
-
-    ofp_controller_addr = None
-    ofp_rest_api_addr = None
-    for serv in servers:
-        if serv.host_type == "REST_API":
-            ofp_rest_api_addr = serv.address
-        elif serv.host_type == "controller":
-            ofp_controller_addr = serv.address
-        else:
-            LOG.warn(_("Ignoring unknown server type %s"), serv)
-
-    LOG.debug(_("API %s"), ofp_rest_api_addr)
-    if ofp_controller_addr:
-        LOG.warn(_('OF controller parameter is stale %s'), ofp_controller_addr)
-    if not ofp_rest_api_addr:
-        raise RuntimeError(_("Ryu rest API port isn't specified"))
-
-    LOG.debug(_("Going to ofp controller mode %s"), ofp_rest_api_addr)
-    return ofp_rest_api_addr
-
-
 def main():
     cfg.CONF(project='quantum')
 
@@ -212,13 +202,6 @@ def main():
 
     integ_br = cfg.CONF.OVS.integration_bridge
     root_helper = cfg.CONF.AGENT.root_helper
-    options = {"sql_connection": cfg.CONF.DATABASE.sql_connection}
-    db = SqlSoup(options["sql_connection"])
-
-    LOG.info(_("Connecting to database \"%(database)s\" on %(host)s"),
-             {"database": db.engine.url.database,
-              "host": db.engine.url.host})
-    ofp_rest_api_addr = check_ofp_rest_api_addr(db)
 
     tunnel_ip = _get_tunnel_ip()
     LOG.debug(_('tunnel_ip %s'), tunnel_ip)
@@ -227,8 +210,8 @@ def main():
     ovsdb_ip = _get_ovsdb_ip()
     LOG.debug(_('ovsdb_ip %s'), ovsdb_ip)
     try:
-        OVSQuantumOFPRyuAgent(integ_br, ofp_rest_api_addr,
-                              tunnel_ip, ovsdb_ip, ovsdb_port, root_helper)
+        OVSQuantumOFPRyuAgent(integ_br, tunnel_ip, ovsdb_ip, ovsdb_port,
+                              root_helper)
     except httplib.HTTPException, e:
         LOG.error(_("Initialization failed: %s"), e)
         sys.exit(1)

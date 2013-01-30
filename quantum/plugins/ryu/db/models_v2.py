@@ -19,20 +19,6 @@ import sqlalchemy as sa
 from quantum.db import model_base
 
 
-class OFPServer(model_base.BASEV2):
-    """Openflow Server/API address."""
-    __tablename__ = 'ofp_server'
-
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    address = sa.Column(sa.String(64))        # netloc <host ip address>:<port>
-    host_type = sa.Column(sa.String(255))     # server type
-                                              # Controller, REST_API
-
-    def __repr__(self):
-        return "<OFPServer(%s,%s,%s)>" % (self.id, self.address,
-                                          self.host_type)
-
-
 class TunnelKeyLast(model_base.BASEV2):
     """Lastly allocated Tunnel key. The next key allocation will be started
     from this value + 1

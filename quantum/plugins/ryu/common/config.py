@@ -20,8 +20,6 @@ from quantum.openstack.common import cfg
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
                help=_("Integration bridge to use")),
-    cfg.StrOpt('openflow_controller', default='127.0.0.1:6633',
-               help=_("OpenFlow controller to connect to")),
     cfg.StrOpt('openflow_rest_api', default='127.0.0.1:8080',
                help=_("OpenFlow REST API location")),
     cfg.IntOpt('tunnel_key_min', default=1,
