@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2012 Cisco Systems, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -16,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
+#
 
 from copy import deepcopy
 import inspect
@@ -33,6 +35,7 @@ from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.openvswitch import ovs_db_v2 as odb
 from quantum import quantum_plugin_base_v2
+
 
 LOG = logging.getLogger(__name__)
 
@@ -114,7 +117,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Invokes a device plugin's relevant functions (on the it's
         inventory and plugin implementation) for completing this operation.
         """
-        if not plugin_key in self._plugins.keys():
+        if plugin_key not in self._plugins:
             LOG.info(_("No %s Plugin loaded"), plugin_key)
             LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
                      "ignored"), locals())
@@ -139,7 +142,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Invokes the relevant function on a device plugin's
         inventory for completing this operation.
         """
-        if not plugin_key in self._inventory.keys():
+        if plugin_key not in self._inventory:
             LOG.info(_("No %s inventory loaded"), plugin_key)
             LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
                      "ignored"), locals())
