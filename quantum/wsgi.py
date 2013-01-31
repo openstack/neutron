@@ -192,7 +192,7 @@ class Request(webob.Request):
 
     def get_content_type(self):
         allowed_types = ("application/xml", "application/json")
-        if not "Content-Type" in self.headers:
+        if "Content-Type" not in self.headers:
             LOG.debug(_("Missing Content-Type"))
             return None
         type = self.content_type

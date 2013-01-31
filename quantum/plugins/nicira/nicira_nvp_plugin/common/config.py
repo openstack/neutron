@@ -132,7 +132,7 @@ def _retrieve_extra_groups(conf, key=None, delimiter=':'):
     results = []
     for parsed_file in cfg.CONF._cparser.parsed:
         for parsed_item in parsed_file.keys():
-            if not parsed_item in cfg.CONF:
+            if parsed_item not in cfg.CONF:
                 items = key and parsed_item.split(delimiter)
                 if not key or key == items[0]:
                     results.append(parsed_item)

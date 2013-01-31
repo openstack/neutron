@@ -502,7 +502,7 @@ class L3NATAgent(manager.Manager):
         device = ip_lib.IPDevice(interface_name, self.conf.root_helper,
                                  namespace=ri.ns_name())
 
-        if not ip_cidr in [addr['cidr'] for addr in device.addr.list()]:
+        if ip_cidr not in [addr['cidr'] for addr in device.addr.list()]:
             net = netaddr.IPNetwork(ip_cidr)
             device.addr.add(net.version, ip_cidr, str(net.broadcast))
             self._send_gratuitous_arp_packet(ri, interface_name, floating_ip)

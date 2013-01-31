@@ -302,7 +302,7 @@ class ExtensionMiddleware(wsgi.Middleware):
         """Return a dict of ActionExtensionController-s by collection."""
         action_controllers = {}
         for action in ext_mgr.get_actions():
-            if not action.collection in action_controllers.keys():
+            if action.collection not in action_controllers.keys():
                 controller = ActionExtensionController(application)
                 mapper.connect("/%s/:(id)/action.:(format)" %
                                action.collection,
@@ -321,7 +321,7 @@ class ExtensionMiddleware(wsgi.Middleware):
         """Returns a dict of RequestExtensionController-s by collection."""
         request_ext_controllers = {}
         for req_ext in ext_mgr.get_request_extensions():
-            if not req_ext.key in request_ext_controllers.keys():
+            if req_ext.key not in request_ext_controllers.keys():
                 controller = RequestExtensionController(application)
                 mapper.connect(req_ext.url_route + '.:(format)',
                                action='process',

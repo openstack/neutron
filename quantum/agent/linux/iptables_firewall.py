@@ -56,7 +56,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def update_port_filter(self, port):
         LOG.debug(_("Updating device (%s) filter"), port['device'])
-        if not port['device'] in self.filtered_ports:
+        if port['device'] not in self.filtered_ports:
             LOG.info(_('Attempted to update port filter which is not '
                        'filtered %s'), port['device'])
             return

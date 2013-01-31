@@ -103,7 +103,7 @@ def _validate_service_defs(data, valid_values=None):
                     LOG.error(_("%(f_name)s: %(msg)s"), locals())
                     return msg
                 # Validate 'service' attribute
-                if not svc_name in constants.ALLOWED_SERVICES:
+                if svc_name not in constants.ALLOWED_SERVICES:
                     msg = (_("Service name '%s' unspecified "
                              "or invalid") % svc_name)
                     LOG.error(_("%(f_name)s: %(msg)s"), locals())

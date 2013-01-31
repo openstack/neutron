@@ -305,7 +305,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if allow_extra_lswitches:
             main_ls = [ls for ls in lswitches if ls['uuid'] == network.id]
             tag_dict = dict((x['scope'], x['tag']) for x in main_ls[0]['tags'])
-            if not 'multi_lswitch' in tag_dict:
+            if 'multi_lswitch' not in tag_dict:
                 nvplib.update_lswitch(cluster,
                                       main_ls[0]['uuid'],
                                       main_ls[0]['display_name'],

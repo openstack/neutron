@@ -220,7 +220,7 @@ class HyperVQuantumAgent(object):
 
     def _port_unbound(self, port_id):
         (net_uuid, map) = self._get_network_vswitch_map_by_port_id(port_id)
-        if not net_uuid in self._network_vswitch_map:
+        if net_uuid not in self._network_vswitch_map:
             LOG.info(_('Network %s is not avalailable on this agent'),
                      net_uuid)
             return

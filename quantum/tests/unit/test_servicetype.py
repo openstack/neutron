@@ -283,7 +283,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
                 }
         if default:
             data[self.resource_name]['default'] = default
-        if not 'tenant_id' in data[self.resource_name]:
+        if 'tenant_id' not in data[self.resource_name]:
             data[self.resource_name]['tenant_id'] = 'fake'
         return self.api.post_json(_get_path('service-types'), data,
                                   expect_errors=expect_errors)

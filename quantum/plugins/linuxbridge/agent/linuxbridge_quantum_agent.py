@@ -414,7 +414,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         port = kwargs.get('port')
         tap_device_name = self.agent.br_mgr.get_tap_device_name(port['id'])
         devices = self.agent.br_mgr.udev_get_tap_devices()
-        if not tap_device_name in devices:
+        if tap_device_name not in devices:
             return
 
         if 'security_groups' in port:

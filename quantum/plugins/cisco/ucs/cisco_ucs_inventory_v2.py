@@ -166,15 +166,15 @@ class UCSInventory(L2NetworkDeviceInventoryBase):
             # marked as reserved, else we temporarily mark it as unreserved
             # based on the UCSM state, but may later change it if a port
             # association is found in the DB
-            if not const.TENANTID in blade_intf_data[blade_intf].keys():
+            if const.TENANTID not in blade_intf_data[blade_intf].keys():
                 blade_intf_data[blade_intf][const.TENANTID] = None
-            if not const.PORTID in blade_intf_data[blade_intf].keys():
+            if const.PORTID not in blade_intf_data[blade_intf].keys():
                 blade_intf_data[blade_intf][const.PORTID] = None
-            if not const.PROFILE_ID in blade_intf_data[blade_intf].keys():
+            if const.PROFILE_ID not in blade_intf_data[blade_intf].keys():
                 blade_intf_data[blade_intf][const.PROFILE_ID] = None
-            if not const.INSTANCE_ID in blade_intf_data[blade_intf].keys():
+            if const.INSTANCE_ID not in blade_intf_data[blade_intf].keys():
                 blade_intf_data[blade_intf][const.INSTANCE_ID] = None
-            if not const.VIF_ID in blade_intf_data[blade_intf].keys():
+            if const.VIF_ID not in blade_intf_data[blade_intf].keys():
                 blade_intf_data[blade_intf][const.VIF_ID] = None
 
             if (blade_intf_data[blade_intf][const.BLADE_INTF_LINK_STATE] ==

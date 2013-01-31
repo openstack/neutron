@@ -87,12 +87,12 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 db._ENGINE = None
 
         self.default_flavor = cfg.CONF.META.default_flavor
-        if not self.default_flavor in self.plugins:
+        if self.default_flavor not in self.plugins:
             raise exc.Invalid(_('default_flavor %s is not plugin list') %
                               self.default_flavor)
 
         self.default_l3_flavor = cfg.CONF.META.default_l3_flavor
-        if not self.default_l3_flavor in self.l3_plugins:
+        if self.default_l3_flavor not in self.l3_plugins:
             raise exc.Invalid(_('default_l3_flavor %s is not plugin list') %
                               self.default_l3_flavor)
 
@@ -114,12 +114,12 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return plugin_klass()
 
     def _get_plugin(self, flavor):
-        if not flavor in self.plugins:
+        if flavor not in self.plugins:
             raise FlavorNotFound(flavor=flavor)
         return self.plugins[flavor]
 
     def _get_l3_plugin(self, flavor):
-        if not flavor in self.l3_plugins:
+        if flavor not in self.l3_plugins:
             raise FlavorNotFound(flavor=flavor)
         return self.l3_plugins[flavor]
 
@@ -152,7 +152,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def create_network(self, context, network):
         n = network['network']
         flavor = n.get(FLAVOR_NETWORK)
-        if not str(flavor) in self.plugins:
+        if str(flavor) not in self.plugins:
             flavor = self.default_flavor
         plugin = self._get_plugin(flavor)
         with context.session.begin(subtransactions=True):
@@ -238,7 +238,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def create_port(self, context, port):
         p = port['port']
-        if not 'network_id' in p:
+        if 'network_id' not in p:
             raise exc.NotFound
         plugin = self._get_plugin_by_network_id(context, p['network_id'])
         return plugin.create_port(context, port)
@@ -260,7 +260,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
-        if not 'network_id' in s:
+        if 'network_id' not in s:
             raise exc.NotFound
         plugin = self._get_plugin_by_network_id(context,
                                                 s['network_id'])
@@ -285,7 +285,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def create_router(self, context, router):
         r = router['router']
         flavor = r.get(FLAVOR_ROUTER)
-        if not str(flavor) in self.l3_plugins:
+        if str(flavor) not in self.l3_plugins:
             flavor = self.default_l3_flavor
         plugin = self._get_l3_plugin(flavor)
         with context.session.begin(subtransactions=True):
