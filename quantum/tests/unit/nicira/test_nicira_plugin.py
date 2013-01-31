@@ -150,6 +150,12 @@ class TestNiciraPortsV2(test_plugin.TestPortsV2, NiciraPluginV2TestCase):
                 self.assertEqual(res['port']['fixed_ips'],
                                  data['port']['fixed_ips'])
 
+    def test_create_port_name_exceeds_40_chars(self):
+        name = 'this_is_a_port_whose_name_is_longer_than_40_chars'
+        with self.port(name=name) as port:
+            # Assert the Quantum name is not truncated
+            self.assertEqual(name, port['port']['name'])
+
 
 class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                            NiciraPluginV2TestCase):
@@ -228,6 +234,12 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                 # tenant must see a single network
                 self.assertEqual(len(res['networks']), 1)
 
+    def test_create_network_name_exceeds_40_chars(self):
+        name = 'this_is_a_network_whose_name_is_longer_than_40_chars'
+        with self.network(name=name) as net:
+            # Assert Quantum name is not truncated
+            self.assertEqual(net['network']['name'], name)
+
 
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
@@ -285,7 +297,12 @@ class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
 class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
                               NiciraSecurityGroupsTestCase):
-    pass
+
+    def test_create_security_group_name_exceeds_40_chars(self):
+        name = 'this_is_a_secgroup_whose_name_is_longer_than_40_chars'
+        with self.security_group(name=name) as sg:
+            # Assert Quantum name is not truncated
+            self.assertEqual(sg['security_group']['name'], name)
 
 
 class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
@@ -410,6 +427,12 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
 
     def _nvp_metadata_teardown(self):
         cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
+
+    def test_create_router_name_exceeds_40_chars(self):
+        name = 'this_is_a_router_whose_name_is_longer_than_40_chars'
+        with self.router(name=name) as rtr:
+            # Assert Quantum name is not truncated
+            self.assertEqual(rtr['router']['name'], name)
 
     def test_router_add_interface_subnet_with_metadata_access(self):
         self._nvp_metadata_setup()
@@ -570,6 +593,12 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             self.assertEqual(q['qos_queue']['max'], 44)
             self.assertEqual(q['qos_queue']['qos_marking'], 'untrusted')
             self.assertFalse(q['qos_queue']['default'])
+
+    def test_create_qos_queue_name_exceeds_40_chars(self):
+        name = 'this_is_a_queue_whose_name_is_longer_than_40_chars'
+        with self.qos_queue(name=name) as queue:
+            # Assert Quantum name is not truncated
+            self.assertEqual(queue['qos_queue']['name'], name)
 
     def test_create_qos_queue_default(self):
         with self.qos_queue(default=True) as q:
@@ -841,6 +870,12 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                                 NICIRA_EXT_PATH)
         cfg.CONF.set_override('api_extensions_path', ext_path)
         super(TestNiciraNetworkGateway, self).setUp()
+
+    def test_create_network_gateway_name_exceeds_40_chars(self):
+        name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
+        with self._network_gateway(name=name) as nw_gw:
+            # Assert Quantum name is not truncated
+            self.assertEqual(nw_gw[self.resource]['name'], name)
 
     def test_list_network_gateways(self):
         with self._network_gateway(name='test-gw-1') as gw1:

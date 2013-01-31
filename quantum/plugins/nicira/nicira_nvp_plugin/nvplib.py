@@ -54,6 +54,8 @@ LROUTERNAT_RESOURCE = "nat/lrouter"
 LQUEUE_RESOURCE = "lqueue"
 GWSERVICE_RESOURCE = "gateway-service"
 QUANTUM_VERSION = "2013.1"
+# Other constants for NVP resource
+MAX_DISPLAY_NAME_LEN = 40
 # Constants for NAT rules
 MATCH_KEYS = ["destination_ip_addresses", "destination_port_max",
               "destination_port_min", "source_ip_addresses",
@@ -140,6 +142,14 @@ def _build_uri_path(resource,
         if query_string:
             uri_path += "?%s" % query_string
     return uri_path
+
+
+def _check_and_truncate_name(display_name):
+    if display_name and len(display_name) > MAX_DISPLAY_NAME_LEN:
+        LOG.debug(_("Specified name:'%s' exceeds maximum length. "
+                    "It will be truncated on NVP"), display_name)
+        return display_name[:MAX_DISPLAY_NAME_LEN]
+    return display_name
 
 
 def get_cluster_version(cluster):
@@ -286,7 +296,7 @@ def create_lswitch(cluster, tenant_id, display_name,
                                            cluster.default_tz_uuid),
                              "transport_type": (nvp_binding_type or
                                                 DEF_TRANSPORT_TYPE)}
-    lswitch_obj = {"display_name": display_name,
+    lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
                    "transport_zones": [transport_zone_config],
                    "tags": [{"tag": tenant_id, "scope": "os_tid"}]}
     if nvp_binding_type == 'bridge' and vlan_id:
@@ -315,9 +325,7 @@ def create_lswitch(cluster, tenant_id, display_name,
 def update_lswitch(cluster, lswitch_id, display_name,
                    tenant_id=None, **kwargs):
     uri = _build_uri_path(LSWITCH_RESOURCE, resource_id=lswitch_id)
-    # TODO(salvatore-orlando): Make sure this operation does not remove
-    # any other important tag set on the lswtich object
-    lswitch_obj = {"display_name": display_name,
+    lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
                    "tags": [{"tag": tenant_id, "scope": "os_tid"}]}
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
@@ -354,7 +362,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
                  "device_id": device['interface_name'],
                  "type": "L2Gateway"} for device in devices]
     gwservice_obj = {
-        "display_name": display_name,
+        "display_name": _check_and_truncate_name(display_name),
         "tags": tags,
         "gateways": gateways,
         "type": "L2GatewayServiceConfig"
@@ -382,6 +390,7 @@ def create_lrouter(cluster, tenant_id, display_name, nexthop):
         with the NVP controller
     """
     tags = [{"tag": tenant_id, "scope": "os_tid"}]
+    display_name = _check_and_truncate_name(display_name)
     lrouter_obj = {
         "display_name": display_name,
         "tags": tags,
@@ -493,7 +502,7 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
     if not display_name:
         # Nothing to update
         return gwservice_obj
-    gwservice_obj["display_name"] = display_name
+    gwservice_obj["display_name"] = _check_and_truncate_name(display_name)
     try:
         return json.loads(do_single_request("PUT",
                           _build_uri_path(GWSERVICE_RESOURCE,
@@ -513,7 +522,8 @@ def update_lrouter(cluster, lrouter_id, display_name, nexthop):
         # Nothing to update
         return lrouter_obj
     # It seems that this is faster than the doing an if on display_name
-    lrouter_obj["display_name"] = display_name or lrouter_obj["display_name"]
+    lrouter_obj["display_name"] = (_check_and_truncate_name(display_name) or
+                                   lrouter_obj["display_name"])
     if nexthop:
         nh_element = lrouter_obj["routing_config"].get(
             "default_route_next_hop")
@@ -705,16 +715,14 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
                 display_name, device_id, admin_status_enabled,
                 mac_address=None, fixed_ips=None, port_security_enabled=None,
                 security_profiles=None, queue_id=None):
-
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
-        display_name=display_name,
+        display_name=_check_and_truncate_name(display_name),
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=quantum_port_id),
               dict(scope='vm_id', tag=hashed_device_id)])
-
     _configure_extensions(lport_obj, mac_address, fixed_ips,
                           port_security_enabled, security_profiles,
                           queue_id)
@@ -741,6 +749,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
     """ Creates a logical port on the assigned logical switch """
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
+    display_name = _check_and_truncate_name(display_name)
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
@@ -1048,8 +1057,9 @@ def create_security_profile(cluster, tenant_id, security_profile):
                                            'ip_prefix': '0.0.0.0/0'}],
             'logical_port_ingress_rules': []}
     try:
+        display_name = _check_and_truncate_name(security_profile.get('name'))
         body = mk_body(
-            tags=tags, display_name=security_profile.get('name'),
+            tags=tags, display_name=display_name,
             logical_port_ingress_rules=dhcp['logical_port_ingress_rules'],
             logical_port_egress_rules=dhcp['logical_port_egress_rules'])
         rsp = do_request(HTTP_POST, path, body, cluster=cluster)

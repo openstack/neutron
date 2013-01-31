@@ -25,6 +25,7 @@ from quantum.db import models_v2
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 
 
 class QoSQueue(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -297,4 +298,7 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             for api_name, nvp_name in params.iteritems()
             if attr.is_attr_set(queue.get(api_name))
         )
+        if 'display_name' in nvp_queue:
+            nvp_queue['display_name'] = nvplib._check_and_truncate_name(
+                nvp_queue['display_name'])
         return nvp_queue

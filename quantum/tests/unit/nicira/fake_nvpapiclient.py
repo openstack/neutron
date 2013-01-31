@@ -23,6 +23,17 @@ from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
 
 
 LOG = logging.getLogger(__name__)
+MAX_NAME_LEN = 40
+
+
+def _validate_name(name):
+    if name and len(name) > MAX_NAME_LEN:
+        raise Exception("Logical switch name exceeds %d characters",
+                        MAX_NAME_LEN)
+
+
+def _validate_resource(body):
+    _validate_name(body.get('display_name'))
 
 
 class FakeClient:
@@ -103,6 +114,15 @@ class FakeClient:
     _fake_securityprofile_dict = {}
     _fake_lqueue_dict = {}
     _fake_gatewayservice_dict = {}
+
+    _validators = {
+        LSWITCH_RESOURCE: _validate_resource,
+        LSWITCH_LPORT_RESOURCE: _validate_resource,
+        LROUTER_LPORT_RESOURCE: _validate_resource,
+        SECPROF_RESOURCE: _validate_resource,
+        LQUEUE_RESOURCE: _validate_resource,
+        GWSERVICE_RESOURCE: _validate_resource
+    }
 
     def __init__(self, fake_files_path):
         self.fake_files_path = fake_files_path
@@ -436,6 +456,10 @@ class FakeClient:
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             add_resource = getattr(self, '_add_%s' % res_type)
+            body_json = json.loads(body)
+            val_func = self._validators.get(res_type)
+            if val_func:
+                val_func(body_json)
             args = [body]
             if len(uuids):
                 args.append(uuids[0])
@@ -456,9 +480,13 @@ class FakeClient:
                 is_attachment = True
                 res_type = res_type[:res_type.index('attachment')]
             res_dict = getattr(self, '_fake_%s_dict' % res_type)
+            body_json = json.loads(body)
+            val_func = self._validators.get(res_type)
+            if val_func:
+                val_func(body_json)
             resource = res_dict[uuids[-1]]
             if not is_attachment:
-                resource.update(json.loads(body))
+                resource.update(body_json)
             else:
                 relations = resource.get("_relations", {})
                 body_2 = json.loads(body)
