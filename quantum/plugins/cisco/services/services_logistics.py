@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2011 Cisco Systems, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -15,6 +16,8 @@
 #    under the License.
 #
 #    @author: Edgar Magana, Cisco Systems
+#
+
 """
 Logistic components for Service Insertion utility
 """
@@ -109,7 +112,7 @@ class ServicesLogistics():
         for key in conf.PLUGINS[const.PLUGINS].keys():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]
             _plugins[key] = importutils.import_object(plugin_obj)
-        if not plugin_key in _plugins.keys():
+        if plugin_key not in _plugins:
             LOG.debug(_("No %s Plugin loaded"), plugin_key)
             return False
         else:

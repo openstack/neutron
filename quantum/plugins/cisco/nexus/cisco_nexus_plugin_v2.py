@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2012 Cisco Systems, Inc.  All rights reserved.
+
+# Copyright 2012 Cisco Systems, Inc.
+# All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -18,9 +19,11 @@
 # @author: Edgar Magana, Cisco Systems, Inc.
 # @author: Arvind Somya, Cisco Systems, Inc. (asomya@cisco.com)
 #
+
 """
 PlugIn for Nexus OS driver
 """
+
 import logging
 
 from quantum.common import exceptions as exc
@@ -55,7 +58,7 @@ class NexusPlugin(L2DevicePluginBase):
         self.credentials = {}
 
     def get_credential(self, nexus_ip):
-        if not nexus_ip in self.credentials.keys():
+        if nexus_ip not in self.credentials:
             _nexus_username = cred.Store.get_username(nexus_ip)
             _nexus_password = cred.Store.get_password(nexus_ip)
             self.credentials[nexus_ip] = {
