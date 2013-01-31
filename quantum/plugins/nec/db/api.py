@@ -34,6 +34,26 @@ LOG = logging.getLogger(__name__)
 OFP_VLAN_NONE = 0xffff
 
 
+resource_map = {'ofc_tenant': nmodels.OFCTenantMapping,
+                'ofc_network': nmodels.OFCNetworkMapping,
+                'ofc_port': nmodels.OFCPortMapping,
+                'ofc_packet_filter': nmodels.OFCFilterMapping}
+
+old_resource_map = {'ofc_tenant': nmodels.OFCTenant,
+                    'ofc_network': nmodels.OFCNetwork,
+                    'ofc_port': nmodels.OFCPort,
+                    'ofc_packet_filter': nmodels.OFCFilter}
+
+
+# utitlity methods
+
+def _get_resource_model(resource, old_style):
+    if old_style:
+        return old_resource_map[resource]
+    else:
+        return resource_map[resource]
+
+
 def initialize():
     db.configure_db()
 
@@ -42,30 +62,52 @@ def clear_db(base=model_base.BASEV2):
     db.clear_db(base)
 
 
-def get_ofc_item(model, id):
-    session = db.get_session()
+def get_ofc_item(session, resource, quantum_id, old_style=False):
     try:
-        return (session.query(model).
-                filter_by(id=id).
-                one())
+        model = _get_resource_model(resource, old_style)
+        return session.query(model).filter_by(quantum_id=quantum_id).one()
     except sa.orm.exc.NoResultFound:
         return None
 
 
-def find_ofc_item(model, quantum_id):
-    session = db.get_session()
+def get_ofc_id(session, resource, quantum_id, old_style=False):
+    ofc_item = get_ofc_item(session, resource, quantum_id, old_style)
+    if ofc_item:
+        if old_style:
+            return ofc_item.id
+        else:
+            return ofc_item.ofc_id
+    else:
+        return None
+
+
+def exists_ofc_item(session, resource, quantum_id, old_style=False):
+    if get_ofc_item(session, resource, quantum_id, old_style):
+        return True
+    else:
+        return False
+
+
+def find_ofc_item(session, resource, ofc_id, old_style=False):
     try:
-        return (session.query(model).
-                filter_by(quantum_id=quantum_id).
-                one())
+        model = _get_resource_model(resource, old_style)
+        if old_style:
+            params = dict(id=ofc_id)
+        else:
+            params = dict(ofc_id=ofc_id)
+        return (session.query(model).filter_by(**params).one())
     except sa.orm.exc.NoResultFound:
         return None
 
 
-def add_ofc_item(model, id, quantum_id):
-    session = db.get_session()
+def add_ofc_item(session, resource, quantum_id, ofc_id, old_style=False):
     try:
-        item = model(id=id, quantum_id=quantum_id)
+        model = _get_resource_model(resource, old_style)
+        if old_style:
+            params = dict(quantum_id=quantum_id, id=ofc_id)
+        else:
+            params = dict(quantum_id=quantum_id, ofc_id=ofc_id)
+        item = model(**params)
         session.add(item)
         session.flush()
     except Exception as exc:
@@ -74,21 +116,61 @@ def add_ofc_item(model, id, quantum_id):
     return item
 
 
-def del_ofc_item(model, id):
-    session = db.get_session()
+def del_ofc_item(session, resource, quantum_id, old_style=False,
+                 warning=True):
     try:
-        item = (session.query(model).
-                filter_by(id=id).
-                one())
+        model = _get_resource_model(resource, old_style)
+        item = session.query(model).filter_by(quantum_id=quantum_id).one()
         session.delete(item)
         session.flush()
+        return True
     except sa.orm.exc.NoResultFound:
-        LOG.warning(_("_del_ofc_item(): NotFound item "
-                      "(model=%(model)s, id=%(id)s) "), locals())
+        if warning:
+            LOG.warning(_("_del_ofc_item(): NotFound item "
+                          "(model=%(model)s, id=%(id)s) "),
+                        {'model': model, 'id': quantum_id})
+        return False
 
 
-def get_portinfo(id):
-    session = db.get_session()
+def get_ofc_id_lookup_both(session, resource, quantum_id):
+    ofc_id = get_ofc_id(session, resource, quantum_id)
+    # Lookup old style of OFC mapping table
+    if not ofc_id:
+        ofc_id = get_ofc_id(session, resource, quantum_id,
+                            old_style=True)
+    if not ofc_id:
+        reason = (_("NotFound %(resource)s for quantum_id=%(id)s.")
+                  % {'resource': resource, 'id': quantum_id})
+        raise nexc.OFCConsistencyBroken(reason=reason)
+    return ofc_id
+
+
+def exists_ofc_item_lookup_both(session, resource, quantum_id):
+    if exists_ofc_item(session, resource, quantum_id):
+        return True
+    # Check old style of OFC mapping table
+    if exists_ofc_item(session, resource, quantum_id,
+                       old_style=True):
+        return True
+    return False
+
+
+def del_ofc_item_lookup_both(session, resource, quantum_id):
+    # Delete the mapping from new style of OFC mapping table
+    if del_ofc_item(session, resource, quantum_id,
+                    old_style=False, warning=False):
+        return
+    # Delete old style of OFC mapping table
+    if del_ofc_item(session, resource, quantum_id,
+                    old_style=True, warning=False):
+        return
+    # The specified resource not found
+    LOG.warning(_("_del_ofc_item(): NotFound item "
+                  "(resource=%(resource)s, id=%(id)s) "),
+                {'resource': resource, 'id': quantum_id})
+
+
+def get_portinfo(session, id):
     try:
         return (session.query(nmodels.PortInfo).
                 filter_by(id=id).
@@ -97,8 +179,8 @@ def get_portinfo(id):
         return None
 
 
-def add_portinfo(id, datapath_id='', port_no=0, vlan_id=OFP_VLAN_NONE, mac=''):
-    session = db.get_session()
+def add_portinfo(session, id, datapath_id='', port_no=0,
+                 vlan_id=OFP_VLAN_NONE, mac=''):
     try:
         portinfo = nmodels.PortInfo(id=id, datapath_id=datapath_id,
                                     port_no=port_no, vlan_id=vlan_id, mac=mac)
@@ -110,12 +192,9 @@ def add_portinfo(id, datapath_id='', port_no=0, vlan_id=OFP_VLAN_NONE, mac=''):
     return portinfo
 
 
-def del_portinfo(id):
-    session = db.get_session()
+def del_portinfo(session, id):
     try:
-        portinfo = (session.query(nmodels.PortInfo).
-                    filter_by(id=id).
-                    one())
+        portinfo = session.query(nmodels.PortInfo).filter_by(id=id).one()
         session.delete(portinfo)
         session.flush()
     except sa.orm.exc.NoResultFound:

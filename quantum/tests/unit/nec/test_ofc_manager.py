@@ -17,6 +17,7 @@
 
 import unittest
 
+from quantum import context
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.db import api as ndb
@@ -24,7 +25,7 @@ from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import ofc_manager
 
 
-class OFCManagerTest(unittest.TestCase):
+class OFCManagerTestBase(object):
     """Class conisting of OFCManager unit tests"""
 
     def setUp(self):
@@ -32,6 +33,7 @@ class OFCManagerTest(unittest.TestCase):
         config.CONF.set_override('driver', driver, 'OFC')
         ndb.initialize()
         self.ofc = ofc_manager.OFCManager()
+        self.ctx = context.get_admin_context()
 
     def tearDown(self):
         ndb.clear_db()
@@ -45,116 +47,230 @@ class OFCManagerTest(unittest.TestCase):
         none = uuidutils.generate_uuid()
         return tenant, network, port, _filter, none
 
+
+class OFCManagerTest(OFCManagerTestBase, unittest.TestCase):
     def testa_create_ofc_tenant(self):
         """test create ofc_tenant"""
         t, n, p, f, none = self.get_random_params()
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCTenant, t))
-        self.ofc.create_ofc_tenant(t)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCTenant, t))
-        tenant = ndb.find_ofc_item(nmodels.OFCTenant, t)
-        self.assertEqual(tenant.id, "ofc-" + t[:-4])
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
+        tenant = ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t)
+        self.assertEqual(tenant.ofc_id, "ofc-" + t[:-4])
 
     def testb_exists_ofc_tenant(self):
         """test exists_ofc_tenant"""
         t, n, p, f, none = self.get_random_params()
-        self.assertFalse(self.ofc.exists_ofc_tenant(t))
-        self.ofc.create_ofc_tenant(t)
-        self.assertTrue(self.ofc.exists_ofc_tenant(t))
+        self.assertFalse(self.ofc.exists_ofc_tenant(self.ctx, t))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.assertTrue(self.ofc.exists_ofc_tenant(self.ctx, t))
 
     def testc_delete_ofc_tenant(self):
         """test delete ofc_tenant"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCTenant, t))
-        self.ofc.delete_ofc_tenant(t)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCTenant, t))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
+        self.ofc.delete_ofc_tenant(self.ctx, t)
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
 
     def testd_create_ofc_network(self):
         """test create ofc_network"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCNetwork, n))
-        self.ofc.create_ofc_network(t, n)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCNetwork, n))
-        network = ndb.find_ofc_item(nmodels.OFCNetwork, n)
-        self.assertEqual(network.id, "ofc-" + n[:-4])
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
+        network = ndb.get_ofc_item(self.ctx.session, 'ofc_network', n)
+        self.assertEqual(network.ofc_id, "ofc-" + n[:-4])
 
     def teste_exists_ofc_network(self):
         """test exists_ofc_network"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.assertFalse(self.ofc.exists_ofc_network(n))
-        self.ofc.create_ofc_network(t, n)
-        self.assertTrue(self.ofc.exists_ofc_network(n))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.assertFalse(self.ofc.exists_ofc_network(self.ctx, n))
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        self.assertTrue(self.ofc.exists_ofc_network(self.ctx, n))
 
     def testf_delete_ofc_network(self):
         """test delete ofc_network"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCNetwork, n))
-        self.ofc.delete_ofc_network(t, n)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCNetwork, n))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
+        self.ofc.delete_ofc_network(self.ctx, n, {'tenant_id': t})
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
 
     def testg_create_ofc_port(self):
         """test create ofc_port"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        ndb.add_portinfo(p, "0xabc", 1, 65535, "00:11:22:33:44:55")
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCPort, p))
-        self.ofc.create_ofc_port(t, n, p)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCPort, p))
-        port = ndb.find_ofc_item(nmodels.OFCPort, p)
-        self.assertEqual(port.id, "ofc-" + p[:-4])
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        ndb.add_portinfo(self.ctx.session, p, "0xabc", 1, 65535,
+                         "00:11:22:33:44:55")
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
+        port = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_port(self.ctx, p, port)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
+        port = ndb.get_ofc_item(self.ctx.session, 'ofc_port', p)
+        self.assertEqual(port.ofc_id, "ofc-" + p[:-4])
 
     def testh_exists_ofc_port(self):
         """test exists_ofc_port"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        ndb.add_portinfo(p, "0xabc", 2, 65535, "00:12:22:33:44:55")
-        self.assertFalse(self.ofc.exists_ofc_port(p))
-        self.ofc.create_ofc_port(t, n, p)
-        self.assertTrue(self.ofc.exists_ofc_port(p))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        ndb.add_portinfo(self.ctx.session, p, "0xabc", 2, 65535,
+                         "00:12:22:33:44:55")
+        self.assertFalse(self.ofc.exists_ofc_port(self.ctx, p))
+        port = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_port(self.ctx, p, port)
+        self.assertTrue(self.ofc.exists_ofc_port(self.ctx, p))
 
     def testi_delete_ofc_port(self):
         """test delete ofc_port"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        ndb.add_portinfo(p, "0xabc", 3, 65535, "00:13:22:33:44:55")
-        self.ofc.create_ofc_port(t, n, p)
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCPort, p))
-        self.ofc.delete_ofc_port(t, n, p)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCPort, p))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        ndb.add_portinfo(self.ctx.session, p, "0xabc", 3, 65535,
+                         "00:13:22:33:44:55")
+        port = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_port(self.ctx, p, port)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
+        self.ofc.delete_ofc_port(self.ctx, p, port)
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
 
     def testj_create_ofc_packet_filter(self):
         """test create ofc_filter"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCFilter, f))
-        self.ofc.create_ofc_packet_filter(t, n, f, {})
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCFilter, f))
-        _filter = ndb.find_ofc_item(nmodels.OFCFilter, f)
-        self.assertEqual(_filter.id, "ofc-" + f[:-4])
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session,
+                                          'ofc_packet_filter', f))
+        pf = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_packet_filter(self.ctx, f, pf)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session,
+                                         'ofc_packet_filter', f))
+        _filter = ndb.get_ofc_item(self.ctx.session, 'ofc_packet_filter', f)
+        self.assertEqual(_filter.ofc_id, "ofc-" + f[:-4])
 
     def testk_exists_ofc_packet_filter(self):
         """test exists_ofc_packet_filter"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        self.assertFalse(self.ofc.exists_ofc_packet_filter(f))
-        self.ofc.create_ofc_packet_filter(t, n, f, {})
-        self.assertTrue(self.ofc.exists_ofc_packet_filter(f))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        self.assertFalse(self.ofc.exists_ofc_packet_filter(self.ctx, f))
+        pf = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_packet_filter(self.ctx, f, pf)
+        self.assertTrue(self.ofc.exists_ofc_packet_filter(self.ctx, f))
 
     def testl_delete_ofc_packet_filter(self):
         """test delete ofc_filter"""
         t, n, p, f, none = self.get_random_params()
-        self.ofc.create_ofc_tenant(t)
-        self.ofc.create_ofc_network(t, n)
-        self.ofc.create_ofc_packet_filter(t, n, f, {})
-        self.assertTrue(ndb.find_ofc_item(nmodels.OFCFilter, f))
-        self.ofc.delete_ofc_packet_filter(t, n, f)
-        self.assertFalse(ndb.find_ofc_item(nmodels.OFCFilter, f))
+        self.ofc.create_ofc_tenant(self.ctx, t)
+        self.ofc.create_ofc_network(self.ctx, t, n)
+        pf = {'tenant_id': t, 'network_id': n}
+        self.ofc.create_ofc_packet_filter(self.ctx, f, pf)
+        self.assertTrue(ndb.get_ofc_item(self.ctx.session,
+                                         'ofc_packet_filter', f))
+        self.ofc.delete_ofc_packet_filter(self.ctx, f)
+        self.assertFalse(ndb.get_ofc_item(self.ctx.session,
+                                          'ofc_packet_filter', f))
+
+
+class OFCManagerTestWithOldMapping(OFCManagerTestBase, unittest.TestCase):
+
+    def test_exists_ofc_tenant(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_tenant(self.ctx, t))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_tenant', t, ofc_t, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_tenant(self.ctx, t))
+
+    def test_delete_ofc_tenant(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_tenant(self.ctx, t))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_tenant', t, ofc_t, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_tenant(self.ctx, t))
+
+        self.ofc.delete_ofc_tenant(self.ctx, t)
+        self.assertFalse(self.ofc.exists_ofc_tenant(self.ctx, t))
+
+    def test_exists_ofc_network(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_network(self.ctx, n))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_network', n, ofc_n, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_network(self.ctx, n))
+
+    def test_delete_ofc_network(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_network(self.ctx, n))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_network', n, ofc_n, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_network(self.ctx, n))
+
+        net = {'tenant_id': t}
+        self.ofc.delete_ofc_network(self.ctx, n, net)
+        self.assertFalse(self.ofc.exists_ofc_network(self.ctx, n))
+
+    def test_exists_ofc_port(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_port(self.ctx, p))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_port', p, ofc_p, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_port(self.ctx, p))
+
+    def test_delete_ofc_port(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_port(self.ctx, p))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_port', p, ofc_p, old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_port(self.ctx, p))
+
+        port = {'tenant_id': t, 'network_id': n}
+        self.ofc.delete_ofc_port(self.ctx, p, port)
+        self.assertFalse(self.ofc.exists_ofc_port(self.ctx, p))
+
+    def test_exists_ofc_packet_filter(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_packet_filter(self.ctx, f))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_packet_filter', f, ofc_f,
+                         old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_packet_filter(self.ctx, f))
+
+    def test_delete_ofc_packet_filter(self):
+        t, n, p, f, none = self.get_random_params()
+        ofc_t, ofc_n, ofc_p, ofc_f, ofc_none = self.get_random_params()
+
+        self.assertFalse(self.ofc.exists_ofc_packet_filter(self.ctx, f))
+
+        session = self.ctx.session
+        ndb.add_ofc_item(session, 'ofc_packet_filter', f, ofc_f,
+                         old_style=True)
+        self.assertTrue(self.ofc.exists_ofc_packet_filter(self.ctx, f))
+
+        self.ofc.delete_ofc_packet_filter(self.ctx, f)
+        self.assertFalse(self.ofc.exists_ofc_packet_filter(self.ctx, f))

@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Ryota MIBU
+# @author: Akihiro MOTOKI
 
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import constants as q_const
@@ -141,7 +142,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             LOG.debug(_("activate_port_if_ready(): skip, "
                         "network.admin_state_up is False."))
             port_status = OperationalStatus.DOWN
-        elif not ndb.get_portinfo(port['id']):
+        elif not ndb.get_portinfo(context.session, port['id']):
             LOG.debug(_("activate_port_if_ready(): skip, "
                         "no portinfo for this port."))
             port_status = OperationalStatus.DOWN
@@ -160,14 +161,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                                                           in_port=port)
 
         if port_status in [OperationalStatus.ACTIVE]:
-            if self.ofc.exists_ofc_port(port['id']):
+            if self.ofc.exists_ofc_port(context, port['id']):
                 LOG.debug(_("activate_port_if_ready(): skip, "
                             "ofc_port already exists."))
             else:
                 try:
-                    self.ofc.create_ofc_port(port['tenant_id'],
-                                             port['network_id'],
-                                             port['id'])
+                    self.ofc.create_ofc_port(context, port['id'], port)
                 except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
                     reason = _("create_ofc_port() failed due to %s") % exc
                     LOG.error(reason)
@@ -183,11 +182,9 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         Deactivate port and packet_filters associated with the port.
         """
         port_status = OperationalStatus.DOWN
-        if self.ofc.exists_ofc_port(port['id']):
+        if self.ofc.exists_ofc_port(context, port['id']):
             try:
-                self.ofc.delete_ofc_port(port['tenant_id'],
-                                         port['network_id'],
-                                         port['id'])
+                self.ofc.delete_ofc_port(context, port['id'], port)
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
                 reason = _("delete_ofc_port() failed due to %s") % exc
                 LOG.error(reason)
@@ -228,10 +225,10 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                                          OperationalStatus.BUILD)
 
         try:
-            if not self.ofc.exists_ofc_tenant(new_net['tenant_id']):
-                self.ofc.create_ofc_tenant(new_net['tenant_id'])
-            self.ofc.create_ofc_network(new_net['tenant_id'], new_net['id'],
-                                        new_net['name'])
+            if not self.ofc.exists_ofc_tenant(context, new_net['tenant_id']):
+                self.ofc.create_ofc_tenant(context, new_net['tenant_id'])
+            self.ofc.create_ofc_network(context, new_net['tenant_id'],
+                                        new_net['id'], new_net['name'])
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
             reason = _("create_network() failed due to %s") % exc
             LOG.error(reason)
@@ -250,7 +247,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         or deactivate ports and packetfilters associated with the network.
         """
         LOG.debug(_("NECPluginV2.update_network() called, "
-                    "id=%(id)s network=%(network)s ."), locals())
+                    "id=%(id)s network=%(network)s ."),
+                  {'id': id, 'network': network})
         session = context.session
         with session.begin(subtransactions=True):
             old_net = super(NECPluginV2, self).get_network(context, id)
@@ -311,7 +309,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
 
         super(NECPluginV2, self).delete_network(context, id)
         try:
-            self.ofc.delete_ofc_network(tenant_id, id)
+            # 'net' parameter is required to lookup old OFC mapping
+            self.ofc.delete_ofc_network(context, id, net)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
             reason = _("delete_network() failed due to %s") % exc
             # NOTE: The OFC configuration of this network could be remained
@@ -329,7 +328,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         nets = super(NECPluginV2, self).get_networks(context, filters=filters)
         if len(nets) == 0:
             try:
-                self.ofc.delete_ofc_tenant(tenant_id)
+                self.ofc.delete_ofc_tenant(context, tenant_id)
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
                 reason = _("delete_ofc_tenant() failed due to %s") % exc
                 LOG.warn(reason)
@@ -384,7 +383,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         or deactivate the port and packetfilters associated with it.
         """
         LOG.debug(_("NECPluginV2.update_port() called, "
-                    "id=%(id)s port=%(port)s ."), locals())
+                    "id=%(id)s port=%(port)s ."),
+                  {'id': id, 'port': port})
         need_port_update_notify = False
         with context.session.begin(subtransactions=True):
             old_port = super(NECPluginV2, self).get_port(context, id)
@@ -486,20 +486,19 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
                         "invalid in_port_id."))
             pf_status = OperationalStatus.DOWN
-        elif in_port_id and not ndb.get_portinfo(in_port_id):
+        elif in_port_id and not ndb.get_portinfo(context.session, in_port_id):
             LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
                         "no portinfo for in_port."))
             pf_status = OperationalStatus.DOWN
 
         if pf_status in [OperationalStatus.ACTIVE]:
-            if self.ofc.exists_ofc_packet_filter(packet_filter['id']):
+            if self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
                 LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
                             "ofc_packet_filter already exists."))
             else:
                 try:
                     (self.ofc.
-                     create_ofc_packet_filter(packet_filter['tenant_id'],
-                                              packet_filter['network_id'],
+                     create_ofc_packet_filter(context,
                                               packet_filter['id'],
                                               packet_filter))
                 except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
@@ -515,14 +514,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     def _deactivate_packet_filter(self, context, packet_filter):
         """Deactivate packet_filter by deleting filter from OFC if exixts."""
         pf_status = OperationalStatus.DOWN
-        if not self.ofc.exists_ofc_packet_filter(packet_filter['id']):
+        if not self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
             LOG.debug(_("_deactivate_packet_filter(): skip, "
                         "ofc_packet_filter does not exist."))
         else:
             try:
-                self.ofc.delete_ofc_packet_filter(packet_filter['tenant_id'],
-                                                  packet_filter['network_id'],
-                                                  packet_filter['id'])
+                self.ofc.delete_ofc_packet_filter(context, packet_filter['id'])
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
                 reason = _("delete_ofc_packet_filter() failed due to "
                            "%s") % exc
@@ -553,7 +550,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         """
         LOG.debug(_("NECPluginV2.update_packet_filter() called, "
                     "id=%(id)s packet_filter=%(packet_filter)s ."),
-                  locals())
+                  {'id': id, 'packet_filter': packet_filter})
         old_pf = super(NECPluginV2, self).get_packet_filter(context, id)
         new_pf = super(NECPluginV2, self).update_packet_filter(context, id,
                                                                packet_filter)
@@ -655,17 +652,18 @@ class NECPluginV2RPCCallbacks(object):
                     "kwargs=%s ."), kwargs)
         topic = kwargs['topic']
         datapath_id = kwargs['datapath_id']
+        session = rpc_context.session
         for p in kwargs.get('port_added', []):
             id = p['id']
             port = self.plugin.get_port(rpc_context, id)
-            if port and ndb.get_portinfo(id):
-                ndb.del_portinfo(id)
+            if port and ndb.get_portinfo(session, id):
+                ndb.del_portinfo(session, id)
                 self.plugin.deactivate_port(rpc_context, port)
-            ndb.add_portinfo(id, datapath_id, p['port_no'],
+            ndb.add_portinfo(session, id, datapath_id, p['port_no'],
                              mac=p.get('mac', ''))
             self.plugin.activate_port_if_ready(rpc_context, port)
         for id in kwargs.get('port_removed', []):
             port = self.plugin.get_port(rpc_context, id)
-            if port and ndb.get_portinfo(id):
-                ndb.del_portinfo(id)
+            if port and ndb.get_portinfo(session, id):
+                ndb.del_portinfo(session, id)
                 self.plugin.deactivate_port(rpc_context, port)

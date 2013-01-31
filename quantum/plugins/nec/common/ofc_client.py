@@ -54,9 +54,10 @@ class OFCClient(object):
             return httplib.HTTPConnection
 
     def do_request(self, method, action, body=None):
-        LOG.debug(_("Client request: %(method)s %(action)s [%(body)s]"),
-                  locals())
-
+        LOG.debug(_("Client request: %(host)s:%(port)s "
+                    "%(method)s %(action)s [%(body)s]"),
+                  {'host': self.host, 'port': self.port,
+                   'method': method, 'action': action, 'body': body})
         if type(body) is dict:
             body = json.dumps(body)
         try:

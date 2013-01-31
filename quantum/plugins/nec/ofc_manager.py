@@ -14,11 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Ryota MIBU
+# @author: Akihiro MOTOKI
 
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
-from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import drivers
 
 
@@ -31,121 +31,106 @@ class OFCManager(object):
     OFC is identified by a switch ID 'datapath_id' and a port number 'port_no'
     of the switch.  An ID named as 'ofc_*' is used to identify resource on OFC.
     """
-    resource_map = {'ofc_tenant': nmodels.OFCTenant,
-                    'ofc_network': nmodels.OFCNetwork,
-                    'ofc_port': nmodels.OFCPort,
-                    'ofc_packet_filter': nmodels.OFCFilter}
 
     def __init__(self):
         self.driver = drivers.get_driver(config.OFC.driver)(config.OFC)
 
-    def _get_ofc_id(self, resource, quantum_id):
-        model = self.resource_map[resource]
-        ofc_item = ndb.find_ofc_item(model, quantum_id)
-        if not ofc_item:
-            reason = _("NotFound %(resource)s for "
-                       "quantum_id=%(quantum_id)s.") % locals()
-            raise nexc.OFCConsistencyBroken(reason=reason)
-        return ofc_item.id
+    def _get_ofc_id(self, context, resource, quantum_id):
+        return ndb.get_ofc_id_lookup_both(context.session,
+                                          resource, quantum_id)
 
-    def _exists_ofc_item(self, resource, quantum_id):
-        model = self.resource_map[resource]
-        if ndb.find_ofc_item(model, quantum_id):
-            return True
-        else:
-            return False
+    def _exists_ofc_item(self, context, resource, quantum_id):
+        return ndb.exists_ofc_item_lookup_both(context.session,
+                                               resource, quantum_id)
 
-    # Tenant
+    def _add_ofc_item(self, context, resource, quantum_id, ofc_id):
+        # Ensure a new item is added to the new mapping table
+        ndb.add_ofc_item(context.session, resource, quantum_id, ofc_id)
 
-    def create_ofc_tenant(self, tenant_id):
+    def _del_ofc_item(self, context, resource, quantum_id):
+        ndb.del_ofc_item_lookup_both(context.session, resource, quantum_id)
+
+    def create_ofc_tenant(self, context, tenant_id):
         desc = "ID=%s at OpenStack." % tenant_id
         ofc_tenant_id = self.driver.create_tenant(desc, tenant_id)
-        ndb.add_ofc_item(nmodels.OFCTenant, ofc_tenant_id, tenant_id)
+        self._add_ofc_item(context, "ofc_tenant", tenant_id, ofc_tenant_id)
 
-    def exists_ofc_tenant(self, tenant_id):
-        return self._exists_ofc_item("ofc_tenant", tenant_id)
+    def exists_ofc_tenant(self, context, tenant_id):
+        return self._exists_ofc_item(context, "ofc_tenant", tenant_id)
 
-    def delete_ofc_tenant(self, tenant_id):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
+    def delete_ofc_tenant(self, context, tenant_id):
+        ofc_tenant_id = self._get_ofc_id(context, "ofc_tenant", tenant_id)
+        ofc_tenant_id = self.driver.convert_ofc_tenant_id(
+            context, ofc_tenant_id)
 
         self.driver.delete_tenant(ofc_tenant_id)
-        ndb.del_ofc_item(nmodels.OFCTenant, ofc_tenant_id)
+        self._del_ofc_item(context, "ofc_tenant", tenant_id)
 
-    # Network
-
-    def create_ofc_network(self, tenant_id, network_id, network_name=None):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
+    def create_ofc_network(self, context, tenant_id, network_id,
+                           network_name=None):
+        ofc_tenant_id = self._get_ofc_id(context, "ofc_tenant", tenant_id)
+        ofc_tenant_id = self.driver.convert_ofc_tenant_id(
+            context, ofc_tenant_id)
 
         desc = "ID=%s Name=%s at Quantum." % (network_id, network_name)
         ofc_net_id = self.driver.create_network(ofc_tenant_id, desc,
                                                 network_id)
-        ndb.add_ofc_item(nmodels.OFCNetwork, ofc_net_id, network_id)
+        self._add_ofc_item(context, "ofc_network", network_id, ofc_net_id)
 
-    def update_ofc_network(self, tenant_id, network_id, network_name):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
+    def exists_ofc_network(self, context, network_id):
+        return self._exists_ofc_item(context, "ofc_network", network_id)
 
-        desc = "ID=%s Name=%s at Quantum." % (network_id, network_name)
-        self.driver.update_network(ofc_tenant_id, ofc_net_id, desc)
+    def delete_ofc_network(self, context, network_id, network):
+        ofc_net_id = self._get_ofc_id(context, "ofc_network", network_id)
+        ofc_net_id = self.driver.convert_ofc_network_id(
+            context, ofc_net_id, network['tenant_id'])
+        self.driver.delete_network(ofc_net_id)
+        self._del_ofc_item(context, "ofc_network", network_id)
 
-    def exists_ofc_network(self, network_id):
-        return self._exists_ofc_item("ofc_network", network_id)
-
-    def delete_ofc_network(self, tenant_id, network_id):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
-
-        self.driver.delete_network(ofc_tenant_id, ofc_net_id)
-        ndb.del_ofc_item(nmodels.OFCNetwork, ofc_net_id)
-
-    # Port
-
-    def create_ofc_port(self, tenant_id, network_id, port_id):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
-        portinfo = ndb.get_portinfo(port_id)
+    def create_ofc_port(self, context, port_id, port):
+        ofc_net_id = self._get_ofc_id(context, "ofc_network",
+                                      port['network_id'])
+        ofc_net_id = self.driver.convert_ofc_network_id(
+            context, ofc_net_id, port['tenant_id'])
+        portinfo = ndb.get_portinfo(context.session, port_id)
         if not portinfo:
             raise nexc.PortInfoNotFound(id=port_id)
 
-        ofc_port_id = self.driver.create_port(ofc_tenant_id, ofc_net_id,
-                                              portinfo, port_id)
-        ndb.add_ofc_item(nmodels.OFCPort, ofc_port_id, port_id)
+        ofc_port_id = self.driver.create_port(ofc_net_id, portinfo, port_id)
+        self._add_ofc_item(context, "ofc_port", port_id, ofc_port_id)
 
-    def exists_ofc_port(self, port_id):
-        return self._exists_ofc_item("ofc_port", port_id)
+    def exists_ofc_port(self, context, port_id):
+        return self._exists_ofc_item(context, "ofc_port", port_id)
 
-    def delete_ofc_port(self, tenant_id, network_id, port_id):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
-        ofc_port_id = self._get_ofc_id("ofc_port", port_id)
+    def delete_ofc_port(self, context, port_id, port):
+        ofc_port_id = self._get_ofc_id(context, "ofc_port", port_id)
+        ofc_port_id = self.driver.convert_ofc_port_id(
+            context, ofc_port_id, port['tenant_id'], port['network_id'])
+        self.driver.delete_port(ofc_port_id)
+        self._del_ofc_item(context, "ofc_port", port_id)
 
-        self.driver.delete_port(ofc_tenant_id, ofc_net_id, ofc_port_id)
-        ndb.del_ofc_item(nmodels.OFCPort, ofc_port_id)
-
-    # PacketFilter
-
-    def create_ofc_packet_filter(self, tenant_id, network_id, filter_id,
-                                 filter_dict):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
+    def create_ofc_packet_filter(self, context, filter_id, filter_dict):
+        ofc_net_id = self._get_ofc_id(context, "ofc_network",
+                                      filter_dict['network_id'])
+        ofc_net_id = self.driver.convert_ofc_network_id(
+            context, ofc_net_id, filter_dict['tenant_id'])
         in_port_id = filter_dict.get('in_port')
         portinfo = None
         if in_port_id:
-            portinfo = ndb.get_portinfo(in_port_id)
+            portinfo = ndb.get_portinfo(context.session, in_port_id)
             if not portinfo:
                 raise nexc.PortInfoNotFound(id=in_port_id)
 
-        ofc_pf_id = self.driver.create_filter(ofc_tenant_id, ofc_net_id,
+        ofc_pf_id = self.driver.create_filter(ofc_net_id,
                                               filter_dict, portinfo, filter_id)
-        ndb.add_ofc_item(nmodels.OFCFilter, ofc_pf_id, filter_id)
+        self._add_ofc_item(context, "ofc_packet_filter", filter_id, ofc_pf_id)
 
-    def exists_ofc_packet_filter(self, filter_id):
-        return self._exists_ofc_item("ofc_packet_filter", filter_id)
+    def exists_ofc_packet_filter(self, context, filter_id):
+        return self._exists_ofc_item(context, "ofc_packet_filter", filter_id)
 
-    def delete_ofc_packet_filter(self, tenant_id, network_id, filter_id):
-        ofc_tenant_id = self._get_ofc_id("ofc_tenant", tenant_id)
-        ofc_net_id = self._get_ofc_id("ofc_network", network_id)
-        ofc_pf_id = self._get_ofc_id("ofc_packet_filter", filter_id)
+    def delete_ofc_packet_filter(self, context, filter_id):
+        ofc_pf_id = self._get_ofc_id(context, "ofc_packet_filter", filter_id)
+        ofc_pf_id = self.driver.convert_ofc_filter_id(context, ofc_pf_id)
 
-        res = self.driver.delete_filter(ofc_tenant_id, ofc_net_id, ofc_pf_id)
-        ndb.del_ofc_item(nmodels.OFCFilter, ofc_pf_id)
+        res = self.driver.delete_filter(ofc_pf_id)
+        self._del_ofc_item(context, "ofc_packet_filter", filter_id)
