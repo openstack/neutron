@@ -260,7 +260,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         with context.session.begin(subtransactions=True):
             pool_db.update({'vip_id': vip_id})
 
-    def _update_vip_session_persistence_info(self, context, vip_id, info):
+    def _update_vip_session_persistence(self, context, vip_id, info):
         vip = self._get_resource(context, Vip, vip_id)
 
         with context.session.begin(subtransactions=True):
@@ -279,10 +279,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 vip.session_persistence = sesspersist_db
             context.session.add(vip)
 
-    def _delete_sessionpersistence(self, context, id):
+    def _delete_session_persistence(self, context, vip_id):
         with context.session.begin(subtransactions=True):
             sess_qry = context.session.query(SessionPersistence)
-            sess_qry.filter_by(vip_id=id).delete()
+            sess_qry.filter_by(vip_id=vip_id).delete()
 
     def create_vip(self, context, vip):
         v = vip['vip']
@@ -325,12 +325,12 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
     def update_vip(self, context, id, vip):
         v = vip['vip']
 
-        sesspersist_info = v.pop('session_persistence', None)
+        sess_persist = v.pop('session_persistence', None)
         with context.session.begin(subtransactions=True):
-            if sesspersist_info:
-                self._update_vip_session_persistence_info(context,
-                                                          id,
-                                                          sesspersist_info)
+            if sess_persist:
+                self._update_vip_session_persistence(context, id, sess_persist)
+            else:
+                self._delete_session_persistence(context, id)
 
             vip_db = self._get_resource(context, Vip, id)
             old_pool_id = vip_db['pool_id']

@@ -338,6 +338,10 @@ def convert_none_to_empty_list(value):
     return [] if value is None else value
 
 
+def convert_none_to_empty_dict(value):
+    return {} if value is None else value
+
+
 def convert_to_list(data):
     if data is None:
         return []
