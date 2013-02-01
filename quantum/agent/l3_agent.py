@@ -32,12 +32,14 @@ from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import iptables_manager
 from quantum.agent.linux import utils
+from quantum.agent import rpc as agent_rpc
 from quantum.common import constants as l3_constants
 from quantum.common import topics
 from quantum import context
 from quantum import manager
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import loopingcall
 from quantum.openstack.common import periodic_task
 from quantum.openstack.common.rpc import common as rpc_common
 from quantum.openstack.common.rpc import proxy
@@ -139,7 +141,7 @@ class L3NATAgent(manager.Manager):
                    help=_("UUID of external network for routers implemented "
                           "by the agents.")),
         cfg.StrOpt('l3_agent_manager',
-                   default='quantum.agent.l3_agent.L3NATAgent',
+                   default='quantum.agent.l3_agent.L3NATAgentWithStateReport',
                    help=_("The Quantum L3 Agent manager.")),
     ]
 
@@ -161,6 +163,7 @@ class L3NATAgent(manager.Manager):
             LOG.exception(_("Error importing interface driver '%s'"),
                           self.conf.interface_driver)
             sys.exit(1)
+        self.context = context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.PLUGIN, host)
         self.fullsync = True
         self.sync_sem = semaphore.Semaphore(1)
@@ -211,8 +214,7 @@ class L3NATAgent(manager.Manager):
         if self.conf.gateway_external_network_id:
             return self.conf.gateway_external_network_id
         try:
-            return self.plugin_rpc.get_external_network_id(
-                context.get_admin_context())
+            return self.plugin_rpc.get_external_network_id(self.context)
         except rpc_common.RemoteError as e:
             if e.exc_type == 'TooManyExternalNetworks':
                 msg = _(
@@ -617,15 +619,69 @@ class L3NATAgent(manager.Manager):
         LOG.info(_("L3 agent started"))
 
 
+class L3NATAgentWithStateReport(L3NATAgent):
+
+    def __init__(self, host, conf=None):
+        super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.agent_state = {
+            'binary': 'quantum-l3-agent',
+            'host': host,
+            'topic': topics.L3_AGENT,
+            'configurations': {
+                'use_namespaces': self.conf.use_namespaces,
+                'router_id': self.conf.router_id,
+                'handle_internal_only_routers':
+                self.conf.handle_internal_only_routers,
+                'gateway_external_network_id':
+                self.conf.gateway_external_network_id,
+                'interface_driver': self.conf.interface_driver},
+            'start_flag': True,
+            'agent_type': l3_constants.AGENT_TYPE_L3}
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
+
+    def _report_state(self):
+        num_ex_gw_ports = 0
+        num_interfaces = 0
+        num_floating_ips = 0
+        router_infos = self.router_info.values()
+        num_routers = len(router_infos)
+        for ri in router_infos:
+            ex_gw_port = self._get_ex_gw_port(ri)
+            if ex_gw_port:
+                num_ex_gw_ports += 1
+            num_interfaces += len(ri.router.get(l3_constants.INTERFACE_KEY,
+                                                []))
+            num_floating_ips += len(ri.router.get(l3_constants.FLOATINGIP_KEY,
+                                                  []))
+        configurations = self.agent_state['configurations']
+        configurations['routers'] = num_routers
+        configurations['ex_gw_ports'] = num_ex_gw_ports
+        configurations['interfaces'] = num_interfaces
+        configurations['floating_ips'] = num_floating_ips
+        try:
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
+
+
 def main():
     eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(L3NATAgent.OPTS)
+    config.register_agent_state_opts_helper(conf)
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
     conf()
     config.setup_logging(conf)
-    server = quantum_service.Service.create(binary='quantum-l3-agent',
-                                            topic=topics.L3_AGENT)
+    server = quantum_service.Service.create(
+        binary='quantum-l3-agent',
+        topic=topics.L3_AGENT,
+        report_interval=cfg.CONF.AGENT.report_interval)
     service.launch(server).wait()

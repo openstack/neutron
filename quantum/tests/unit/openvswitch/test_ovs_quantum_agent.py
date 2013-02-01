@@ -50,6 +50,7 @@ class TestOvsQuantumAgent(unittest.TestCase):
         # Avoid rpc initialization for unit tests
         cfg.CONF.set_override('rpc_backend',
                               'quantum.openstack.common.rpc.impl_fake')
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
         kwargs = ovs_quantum_agent.create_agent_config_map(cfg.CONF)
         with mock.patch('quantum.plugins.openvswitch.agent.ovs_quantum_agent.'
                         'OVSQuantumAgent.setup_integration_br',
@@ -160,14 +161,19 @@ class TestOvsQuantumAgent(unittest.TestCase):
                 'admin_state_up': True}
         with mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                                return_value='2'):
-            with mock.patch.object(self.agent, 'port_bound') as port_bound:
-                self.agent.port_update(mock.Mock(), port=port)
-                self.assertTrue(port_bound.called)
-
-            with mock.patch.object(self.agent, 'port_dead') as port_dead:
-                port['admin_state_up'] = False
-                self.agent.port_update(mock.Mock(), port=port)
-                self.assertTrue(port_dead.called)
+            with mock.patch.object(self.agent.plugin_rpc,
+                                   'update_device_up') as device_up:
+                with mock.patch.object(self.agent, 'port_bound') as port_bound:
+                    self.agent.port_update(mock.Mock(), port=port)
+                    self.assertTrue(port_bound.called)
+                    self.assertTrue(device_up.called)
+            with mock.patch.object(self.agent.plugin_rpc,
+                                   'update_device_down') as device_down:
+                with mock.patch.object(self.agent, 'port_dead') as port_dead:
+                    port['admin_state_up'] = False
+                    self.agent.port_update(mock.Mock(), port=port)
+                    self.assertTrue(port_dead.called)
+                    self.assertTrue(device_down.called)
 
     def test_process_network_ports(self):
         reply = {'current': set(['tap0']),

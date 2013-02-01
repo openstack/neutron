@@ -49,6 +49,21 @@ def create_consumers(dispatcher, prefix, topic_details):
     return connection
 
 
+class PluginReportStateAPI(proxy.RpcProxy):
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(PluginReportStateAPI, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+
+    def report_state(self, context, agent_state):
+        return self.cast(context,
+                         self.make_msg('report_state',
+                                       agent_state={'agent_state':
+                                                    agent_state}),
+                         topic=self.topic)
+
+
 class PluginApi(proxy.RpcProxy):
     '''Agent side of the rpc API.
 

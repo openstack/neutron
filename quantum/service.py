@@ -34,9 +34,6 @@ from quantum import wsgi
 LOG = logging.getLogger(__name__)
 
 service_opts = [
-    cfg.IntOpt('report_interval',
-               default=10,
-               help=_('Seconds between nodes reporting state to datastore')),
     cfg.IntOpt('periodic_interval',
                default=40,
                help=_('Seconds between running periodic tasks')),
