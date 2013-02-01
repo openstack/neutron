@@ -35,7 +35,7 @@ HOSTNAME = 'myhost'
 class TestBasicRouterOperations(unittest2.TestCase):
 
     def setUp(self):
-        self.conf = cfg.CommonConfigOpts()
+        self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
         self.conf.register_opts(interface.OPTS)

@@ -56,7 +56,7 @@ cluster_opts = [
 cfg.CONF.register_opts(nvp_opts, "NVP")
 
 
-class ClusterConfigOptions(cfg.CommonConfigOpts):
+class ClusterConfigOptions(cfg.ConfigOpts):
 
     def __init__(self, config_options):
         super(ClusterConfigOptions, self).__init__()
