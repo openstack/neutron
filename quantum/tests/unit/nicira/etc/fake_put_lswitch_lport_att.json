@@ -1,0 +1,11 @@
+{
+  "LogicalPortAttachment":
+    {
+      %(peer_port_href_field)s
+      %(peer_port_uuid_field)s
+      %(vif_uuid_field)s
+      "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(lp_uuid)s/attachment",
+      "type": "%(type)s",
+      "schema": "/ws.v1/schema/%(type)s"
+    }
+}

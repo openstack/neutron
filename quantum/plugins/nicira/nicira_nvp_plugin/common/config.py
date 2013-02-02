@@ -17,6 +17,10 @@
 from quantum.openstack.common import cfg
 
 
+core_opts = [
+    cfg.BoolOpt('metadata_dhcp_host_route', default=False),
+]
+
 nvp_opts = [
     cfg.IntOpt('max_lp_per_bridged_ls', default=64,
                help=_("Maximum number of ports of a logical switch on a "
@@ -51,8 +55,15 @@ cluster_opts = [
                            "controller. A different connection for each "
                            "controller in the cluster can be specified; "
                            "there must be at least one connection per "
-                           "cluster."))
+                           "cluster.")),
+    cfg.StrOpt('default_l3_gw_service_uuid',
+               help=_("Unique identifier of the NVP L3 Gateway service "
+                      "which will be used for implementing routers and "
+                      "floating IPs"))
 ]
+
+# Register the configuration options
+cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_opts(nvp_opts, "NVP")
 
 

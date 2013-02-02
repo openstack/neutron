@@ -1,0 +1,28 @@
+{
+  "display_name": "%(display_name)s",
+  "uuid": "%(uuid)s",
+  "tags": %(tags_json)s,
+  "routing_config": {
+    "type": "SingleDefaultRouteImplicitRoutingConfig",
+    "_schema": "/ws.v1/schema/SingleDefaultRouteImplicitRoutingConfig",
+    "default_route_next_hop": {
+      "type": "RouterNextHop",
+      "_schema": "/ws.v1/schema/RouterNextHop",
+      "gateway_ip_address": "%(default_next_hop)s"
+    }
+  },
+  "_schema": "/ws.v1/schema/LogicalRouterConfig",
+  "_relations": {
+    "LogicalRouterStatus": {
+      "_href": "/ws.v1/lrouter/%(uuid)s/status",
+      "lport_admin_up_count": %(lport_count)d,
+      "_schema": "/ws.v1/schema/LogicalRouterStatus",
+      "lport_count": %(lport_count)d,
+      "fabric_status": true,
+      "type": "LogicalRouterStatus",
+      "lport_link_up_count": %(lport_count)d
+    }
+  },
+  "type": "LogicalRouterConfig",
+  "_href": "/ws.v1/lrouter/%(uuid)s"
+}
