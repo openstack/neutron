@@ -34,7 +34,6 @@ from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
-from quantum.plugins.ryu import ofp_service_type
 
 
 LOG = logging.getLogger(__name__)
@@ -45,8 +44,15 @@ class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
 
     RPC_API_VERSION = '1.0'
 
+    def __init__(self, ofp_rest_api_addr):
+        self.ofp_rest_api_addr = ofp_rest_api_addr
+
     def create_rpc_dispatcher(self):
         return q_rpc.PluginRpcDispatcher([self])
+
+    def get_ofp_rest_api(self, context, **kwargs):
+        LOG.debug(_("get_ofp_rest_api: %s"), self.ofp_rest_api_addr)
+        return self.ofp_rest_api_addr
 
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
@@ -59,19 +65,13 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         self.tunnel_key = db_api_v2.TunnelKey(
             cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)
-        ofp_con_host = cfg.CONF.OVS.openflow_controller
-        ofp_api_host = cfg.CONF.OVS.openflow_rest_api
-
-        if ofp_con_host is None or ofp_api_host is None:
+        self.ofp_api_host = cfg.CONF.OVS.openflow_rest_api
+        if not self.ofp_api_host:
             raise q_exc.Invalid(_('Invalid configuration. check ryu.ini'))
 
-        hosts = [(ofp_con_host, ofp_service_type.CONTROLLER),
-                 (ofp_api_host, ofp_service_type.REST_API)]
-        db_api_v2.set_ofp_servers(hosts)
-
-        self.client = client.OFPClient(ofp_api_host)
-        self.tun_client = client.TunnelClient(ofp_api_host)
-        self.iface_client = client.QuantumIfaceClient(ofp_api_host)
+        self.client = client.OFPClient(self.ofp_api_host)
+        self.tun_client = client.TunnelClient(self.ofp_api_host)
+        self.iface_client = client.QuantumIfaceClient(self.ofp_api_host)
         for nw_id in rest_nw_id.RESERVED_NETWORK_IDS:
             if nw_id != rest_nw_id.NW_ID_UNKNOWN:
                 self.client.update_network(nw_id)
@@ -82,7 +82,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _setup_rpc(self):
         self.conn = rpc.create_connection(new=True)
-        self.callbacks = RyuRpcCallbacks()
+        self.callbacks = RyuRpcCallbacks(self.ofp_api_host)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(topics.PLUGIN, self.dispatcher, fanout=False)
         self.conn.consume_in_thread()

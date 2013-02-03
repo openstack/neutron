@@ -31,5 +31,4 @@ class ConfigurationTest(unittest2.TestCase):
         self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
-        self.assertEqual('127.0.0.1:6633', cfg.CONF.OVS.openflow_controller)
         self.assertEqual('127.0.0.1:8080', cfg.CONF.OVS.openflow_rest_api)

@@ -28,16 +28,6 @@ from quantum.plugins.ryu.db import models_v2 as ryu_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def set_ofp_servers(hosts):
-    session = db.get_session()
-    session.query(ryu_models_v2.OFPServer).delete()
-    for (host_address, host_type) in hosts:
-        host = ryu_models_v2.OFPServer(address=host_address,
-                                       host_type=host_type)
-        session.add(host)
-    session.flush()
-
-
 def network_all_tenant_list():
     session = db.get_session()
     return session.query(models_v2.Network).all()
