@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins-quantum-propose-translation-update-6\n"
+"Project-Id-Version: quantum jenkins-quantum-propose-translation-update-7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-03 00:04+0000\n"
+"POT-Creation-Date: 2013-02-04 00:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -233,7 +233,7 @@ msgstr ""
 #: quantum/plugins/linuxbridge/common/config.py:47
 #: quantum/plugins/nec/common/config.py:33
 #: quantum/plugins/openvswitch/common/config.py:59
-#: quantum/plugins/ryu/common/config.py:45
+#: quantum/plugins/ryu/common/config.py:43
 msgid "Root helper application."
 msgstr ""
 
@@ -5724,125 +5724,106 @@ msgstr ""
 msgid "List of <tun_min>:<tun_max>"
 msgstr ""
 
-#: quantum/plugins/ryu/ryu_quantum_plugin.py:66
+#: quantum/plugins/ryu/ryu_quantum_plugin.py:54
+#, python-format
+msgid "get_ofp_rest_api: %s"
+msgstr ""
+
+#: quantum/plugins/ryu/ryu_quantum_plugin.py:70
 msgid "Invalid configuration. check ryu.ini"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:146
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:148
 #, python-format
 msgid "External port %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:184
-msgid "Checking db"
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:155
+msgid "Get Ryu rest API address"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:196
-#, python-format
-msgid "Ignoring unknown server type %s"
-msgstr ""
-
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:198
-#, python-format
-msgid "API %s"
-msgstr ""
-
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:200
-#, python-format
-msgid "OF controller parameter is stale %s"
-msgstr ""
-
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:202
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:180
 msgid "Ryu rest API port isn't specified"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:204
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:181
 #, python-format
 msgid "Going to ofp controller mode %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:218
-#, python-format
-msgid "Connecting to database \"%(database)s\" on %(host)s"
-msgstr ""
-
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:224
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:207
 #, python-format
 msgid "tunnel_ip %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:226
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:209
 #, python-format
 msgid "ovsdb_port %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:228
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:211
 #, python-format
 msgid "ovsdb_ip %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:233
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:216
 #, python-format
 msgid "Initialization failed: %s"
 msgstr ""
 
-#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:236
+#: quantum/plugins/ryu/agent/ryu_quantum_agent.py:219
 msgid "Ryu initialization on the node is done. Now Ryu agent exits successfully."
 msgstr ""
 
 #: quantum/plugins/ryu/common/config.py:24
-msgid "OpenFlow controller to connect to"
-msgstr ""
-
-#: quantum/plugins/ryu/common/config.py:26
 msgid "OpenFlow REST API location"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:28
+#: quantum/plugins/ryu/common/config.py:26
 msgid "Minimum tunnel ID to use"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:30
+#: quantum/plugins/ryu/common/config.py:28
 msgid "Maximum tunnel ID to use"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:32
+#: quantum/plugins/ryu/common/config.py:30
 msgid "Tunnel IP to use"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:34
+#: quantum/plugins/ryu/common/config.py:32
 msgid "Tunnel interface to use"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:36
+#: quantum/plugins/ryu/common/config.py:34
 msgid "OVSDB port to connect to"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:38
+#: quantum/plugins/ryu/common/config.py:36
 msgid "OVSDB IP to connect to"
 msgstr ""
 
-#: quantum/plugins/ryu/common/config.py:40
+#: quantum/plugins/ryu/common/config.py:38
 msgid "OVSDB interface to connect to"
 msgstr ""
 
-#: quantum/plugins/ryu/db/api_v2.py:59
+#: quantum/plugins/ryu/db/api_v2.py:49
 #, python-format
 msgid ""
 "Invalid tunnel key options tunnel_key_min: %(key_min)d tunnel_key_max: "
 "%(key_max)d. Using default value"
 msgstr ""
 
-#: quantum/plugins/ryu/db/api_v2.py:138
+#: quantum/plugins/ryu/db/api_v2.py:128
 #, python-format
 msgid "last_key %(last_key)s new_key %(new_key)s"
 msgstr ""
 
-#: quantum/plugins/ryu/db/api_v2.py:141
+#: quantum/plugins/ryu/db/api_v2.py:131
 msgid "No key found"
 msgstr ""
 
-#: quantum/plugins/ryu/db/api_v2.py:174
+#: quantum/plugins/ryu/db/api_v2.py:164
 #, python-format
 msgid "Transaction retry exhausted (%d). Abandoned tunnel key allocation."
 msgstr ""
