@@ -214,9 +214,14 @@ class L3(extensions.ExtensionDescriptor):
 
         return exts
 
+    def update_attributes_map(self, attributes):
+        super(L3, self).update_attributes_map(
+            attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
+
     def get_extended_resources(self, version):
         if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
+            return dict(EXTENDED_ATTRIBUTES_2_0.items() +
+                        RESOURCE_ATTRIBUTE_MAP.items())
         else:
             return {}
 

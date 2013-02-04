@@ -318,6 +318,16 @@ class Loadbalancer(extensions.ExtensionDescriptor):
     def get_plugin_interface(cls):
         return LoadBalancerPluginBase
 
+    def update_attributes_map(self, attributes):
+        super(Loadbalancer, self).update_attributes_map(
+            attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return RESOURCE_ATTRIBUTE_MAP
+        else:
+            return {}
+
 
 class LoadBalancerPluginBase(ServicePluginBase):
     __metaclass__ = abc.ABCMeta
