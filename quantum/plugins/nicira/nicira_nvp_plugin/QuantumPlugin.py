@@ -173,7 +173,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if not def_cluster_name:
                 LOG.info(_("Default cluster name not specified. "
                            "Using first cluster:%s"), first_cluster_name)
-            elif not def_cluster_name in self.clusters:
+            elif def_cluster_name not in self.clusters:
                 LOG.warning(_("Default cluster name %(def_cluster_name)s. "
                               "Using first cluster:%(first_cluster_name)s"),
                             locals())
