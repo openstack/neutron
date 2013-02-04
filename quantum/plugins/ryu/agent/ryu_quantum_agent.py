@@ -35,7 +35,7 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
-from quantum import q_context
+from quantum import context as q_context
 from quantum.openstack.common import cfg
 from quantum.openstack.common.cfg import NoSuchGroupError
 from quantum.openstack.common.cfg import NoSuchOptError
