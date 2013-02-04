@@ -70,7 +70,8 @@ restproxy_opts = [
                help=_("A comma separated list of servers and port numbers "
                       "to proxy request to.")),
     cfg.StrOpt('serverauth', default='username:password',
-               help=_("Server authentication")),
+               help=_("Server authentication"),
+               secret=True),
     cfg.BoolOpt('serverssl', default=False,
                 help=_("Use SSL to connect")),
     cfg.BoolOpt('syncdata', default=False,
