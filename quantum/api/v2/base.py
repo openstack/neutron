@@ -127,8 +127,8 @@ class Controller(object):
             fields_to_strip = []
 
         return dict(item for item in data.iteritems()
-                    if self._is_visible(item[0])
-                    and not item[0] in fields_to_strip)
+                    if (self._is_visible(item[0]) and
+                        item[0] not in fields_to_strip))
 
     def _do_field_list(self, original_fields):
         fields_to_add = None
@@ -376,7 +376,7 @@ class Controller(object):
         field_list = [name for (name, value) in self._attr_info.iteritems()
                       if ('required_by_policy' in value and
                           value['required_by_policy'] or
-                          not 'default' in value)]
+                          'default' not in value)]
         orig_obj = self._item(request, id, field_list=field_list,
                               parent_id=parent_id)
         orig_obj.update(body[self._resource])

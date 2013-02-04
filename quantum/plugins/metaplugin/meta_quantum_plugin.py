@@ -198,7 +198,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_l3(context, net)
         if not fields or FLAVOR_NETWORK in fields:
             self._extend_network_dict(context, net)
-        if fields and not 'id' in fields:
+        if fields and 'id' not in fields:
             del net['id']
         return net
 
