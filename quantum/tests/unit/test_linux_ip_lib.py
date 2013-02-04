@@ -54,6 +54,24 @@ ADDR_SAMPLE = ("""
        valid_lft forever preferred_lft forever
 """)
 
+ADDR_SAMPLE2 = ("""
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP qlen 1000
+    link/ether dd:cc:aa:b9:76:ce brd ff:ff:ff:ff:ff:ff
+    inet 172.16.77.240/24 scope global eth0
+    inet6 2001:470:9:1224:5595:dd51:6ba2:e788/64 scope global temporary dynamic
+       valid_lft 14187sec preferred_lft 3387sec
+    inet6 2001:470:9:1224:fd91:272:581e:3a32/64 scope global temporary """
+                """deprecated dynamic
+       valid_lft 14187sec preferred_lft 0sec
+    inet6 2001:470:9:1224:4508:b885:5fb:740b/64 scope global temporary """
+                """deprecated dynamic
+       valid_lft 14187sec preferred_lft 0sec
+    inet6 2001:470:9:1224:dfcc:aaff:feb9:76ce/64 scope global dynamic
+       valid_lft 14187sec preferred_lft 3387sec
+    inet6 fe80::dfcc:aaff:feb9:76ce/64 scope link
+       valid_lft forever preferred_lft forever
+""")
+
 GATEWAY_SAMPLE1 = ("""
 default via 10.35.19.254  metric 100
 10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
@@ -493,9 +511,12 @@ class TestIpAddrCommand(TestIPCmdBase):
                  dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64',
                  broadcast='::')]
 
-        self.parent._run = mock.Mock(return_value=ADDR_SAMPLE)
-        self.assertEqual(self.addr_cmd.list(), expected)
-        self._assert_call([], ('show', 'tap0'))
+        test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
+
+        for test_case in test_cases:
+            self.parent._run = mock.Mock(return_value=test_case)
+            self.assertEqual(self.addr_cmd.list(), expected)
+            self._assert_call([], ('show', 'tap0'))
 
     def test_list_filtered(self):
         expected = [
@@ -503,11 +524,15 @@ class TestIpAddrCommand(TestIPCmdBase):
                  dynamic=False, cidr='172.16.77.240/24',
                  broadcast='172.16.77.255')]
 
-        output = '\n'.join(ADDR_SAMPLE.split('\n')[0:4])
-        self.parent._run.return_value = output
-        self.assertEqual(self.addr_cmd.list('global', filters=['permanent']),
-                         expected)
-        self._assert_call([], ('show', 'tap0', 'permanent', 'scope', 'global'))
+        test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
+
+        for test_case in test_cases:
+            output = '\n'.join(test_case.split('\n')[0:4])
+            self.parent._run.return_value = output
+            self.assertEqual(self.addr_cmd.list('global',
+                             filters=['permanent']), expected)
+            self._assert_call([], ('show', 'tap0', 'permanent', 'scope',
+                              'global'))
 
 
 class TestIpRouteCommand(TestIPCmdBase):
