@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from quantum.agent.linux import utils
 from quantum.common import exceptions
 
@@ -273,8 +275,15 @@ class IpAddrCommand(IpDeviceCommandBase):
                 broadcast = '::'
             else:
                 version = 4
-                broadcast = parts[3]
-                scope = parts[5]
+                if parts[2] == 'brd':
+                    broadcast = parts[3]
+                    scope = parts[5]
+                else:
+                    # sometimes output of 'ip a' might look like:
+                    # inet 192.168.100.100/24 scope global eth0
+                    # and broadcast needs to be calculated from CIDR
+                    broadcast = str(netaddr.IPNetwork(parts[1]).broadcast)
+                    scope = parts[3]
 
             retval.append(dict(cidr=parts[1],
                                broadcast=broadcast,
