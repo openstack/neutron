@@ -31,10 +31,10 @@ from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
 from quantum.plugins.cisco.common import cisco_exceptions as excep
+from quantum.plugins.cisco.common import config as conf
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import nexus_db_v2 as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
-from quantum.plugins.cisco.nexus import cisco_nexus_configuration as conf
 
 
 LOG = logging.getLogger(__name__)
@@ -50,9 +50,9 @@ class NexusPlugin(L2DevicePluginBase):
         """
         Extracts the configuration parameters from the configuration file
         """
-        self._client = importutils.import_object(conf.NEXUS_DRIVER)
-        LOG.debug(_("Loaded driver %s"), conf.NEXUS_DRIVER)
-        self._nexus_switches = conf.NEXUS_DETAILS
+        self._client = importutils.import_object(conf.CISCO.nexus_driver)
+        LOG.debug(_("Loaded driver %s"), conf.CISCO.nexus_driver)
+        self._nexus_switches = conf.get_nexus_dictionary()
         self.credentials = {}
 
     def get_credential(self, nexus_ip):
@@ -85,11 +85,11 @@ class NexusPlugin(L2DevicePluginBase):
         # Grab the switch IP and port for this host
         switch_ip = ''
         port_id = ''
-        for switch in self._nexus_switches.keys():
-            for hostname in self._nexus_switches[switch].keys():
-                if str(hostname) == str(host):
-                    switch_ip = switch
-                    port_id = self._nexus_switches[switch][hostname]['ports']
+        for keys in self._nexus_switches.keys():
+            if str(keys[1]) == str(host):
+                switch_ip = keys[0]
+                port_id = self._nexus_switches[keys[0], keys[1]]
+
         # Check if this network is already in the DB
         binding = nxos_db.get_port_vlan_switch_binding(
             port_id, vlan_id, switch_ip)
@@ -97,7 +97,7 @@ class NexusPlugin(L2DevicePluginBase):
             _nexus_ip = switch_ip
             _nexus_ports = (port_id,)
             _nexus_ssh_port = \
-                self._nexus_switches[switch_ip]['ssh_port']['ssh_port']
+                self._nexus_switches[switch_ip, 'ssh_port']
             _nexus_creds = self.get_credential(_nexus_ip)
             _nexus_username = _nexus_creds['username']
             _nexus_password = _nexus_creds['password']
@@ -187,7 +187,7 @@ class NexusPlugin(L2DevicePluginBase):
                 _nexus_ip = row['switch_ip']
                 _nexus_ports = (row['port_id'],)
                 _nexus_ssh_port = \
-                    self._nexus_switches[_nexus_ip]['ssh_port']['ssh_port']
+                    self._nexus_switches[_nexus_ip, 'ssh_port']
                 _nexus_creds = self.get_credential(_nexus_ip)
                 _nexus_username = _nexus_creds['username']
                 _nexus_password = _nexus_creds['password']

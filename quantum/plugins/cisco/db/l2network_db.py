@@ -20,8 +20,8 @@ from sqlalchemy.orm import exc
 from quantum.common import exceptions as q_exc
 from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
+from quantum.plugins.cisco.common import config
 from quantum.plugins.cisco.db import l2network_models
-from quantum.plugins.cisco import l2network_plugin_configuration as conf
 
 import quantum.plugins.cisco.db.api as db
 
@@ -43,8 +43,8 @@ def create_vlanids():
     except exc.MultipleResultsFound:
         pass
     except exc.NoResultFound:
-        start = int(conf.VLAN_START)
-        end = int(conf.VLAN_END)
+        start = int(config.CISCO.vlan_start)
+        end = int(config.CISCO.vlan_end)
         while start <= end:
             vlanid = l2network_models.VlanID(start)
             session.add(vlanid)

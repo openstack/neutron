@@ -28,8 +28,8 @@ from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
+from quantum.plugins.cisco.common import config
 from quantum.plugins.cisco.db import network_db_v2 as cdb
-from quantum.plugins.cisco import l2network_plugin_configuration as conf
 
 LOG = logging.getLogger(__name__)
 
@@ -53,10 +53,10 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         Loads the model class.
         """
-        self._model = importutils.import_object(conf.MODEL_CLASS)
+        self._model = importutils.import_object(config.CISCO.model_class)
         if hasattr(self._model, "MANAGE_STATE") and self._model.MANAGE_STATE:
             self._master = False
-            LOG.debug(_("Model %s manages state"), conf.MODEL_CLASS)
+            LOG.debug(_("Model %s manages state"), config.CISCO.model_class)
             native_bulk_attr_name = ("_%s__native_bulk_support"
                                      % self._model.__class__.__name__)
             self.__native_bulk_support = getattr(self._model,

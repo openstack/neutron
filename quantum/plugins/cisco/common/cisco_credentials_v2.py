@@ -18,8 +18,9 @@
 
 import logging as LOG
 
-from quantum.common.utils import find_config_file
-from quantum.plugins.cisco.common import cisco_configparser as confp
+from oslo.config import cfg
+
+from quantum.plugins.cisco.common import config
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.db import network_db_v2 as cdb
@@ -28,12 +29,9 @@ from quantum.plugins.cisco.db import network_db_v2 as cdb
 LOG.basicConfig(level=LOG.WARN)
 LOG.getLogger(const.LOGGER_COMPONENT_NAME)
 
-CREDENTIALS_FILE = find_config_file({'plugin': 'cisco'},
-                                    "credentials.ini")
 TENANT = const.NETWORK_ADMIN
 
-cp = confp.CiscoConfigParser(CREDENTIALS_FILE)
-_creds_dictionary = cp.walk(cp.dummy)
+_nexus_dict = config.get_nexus_dictionary()
 
 
 class Store(object):
@@ -41,16 +39,17 @@ class Store(object):
 
     @staticmethod
     def initialize():
-        for id in _creds_dictionary.keys():
-            try:
-                cdb.add_credential(TENANT, id,
-                                   _creds_dictionary[id][const.USERNAME],
-                                   _creds_dictionary[id][const.PASSWORD])
-            except cexc.CredentialAlreadyExists:
-                # We are quietly ignoring this, since it only happens
-                # if this class module is loaded more than once, in which
-                # case, the credentials are already populated
-                pass
+        for keys in _nexus_dict.keys():
+            if keys[1] == const.USERNAME:
+                try:
+                    cdb.add_credential(TENANT, keys[0],
+                                       _nexus_dict[keys[0], const.USERNAME],
+                                       _nexus_dict[keys[0], const.PASSWORD])
+                except cexc.CredentialAlreadyExists:
+                    # We are quietly ignoring this, since it only happens
+                    # if this class module is loaded more than once, in which
+                    # case, the credentials are already populated
+                    pass
 
     @staticmethod
     def put_credential(cred_name, username, password):
