@@ -228,6 +228,10 @@ class OverQuota(Conflict):
     message = _("Quota exceeded for resources: %(overs)s")
 
 
+class QuotaMissingTenant(BadRequest):
+    message = _("Tenant-id was missing from Quota request")
+
+
 class InvalidQuotaValue(Conflict):
     message = _("Change would make usage less than 0 for the following "
                 "resources: %(unders)s")
