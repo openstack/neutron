@@ -100,6 +100,7 @@ class TestDhcpAgent(unittest.TestCase):
     def tearDown(self):
         self.notification_p.stop()
         self.driver_cls_p.stop()
+        cfg.CONF.reset()
 
     def test_dhcp_agent_main(self):
         logging_str = 'quantum.agent.common.config.setup_logging'
@@ -130,6 +131,19 @@ class TestDhcpAgent(unittest.TestCase):
                 mocks['lease_relay'].assert_has_mock_calls(
                     [mock.call.start()])
                 self.notification.assert_has_calls([mock.call.run_dispatch()])
+
+    def test_ns_name(self):
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+            mock_net = mock.Mock(id='foo')
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            self.assertTrue(dhcp._ns_name(mock_net), 'qdhcp-foo')
+
+    def test_ns_name_disabled_namespace(self):
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+            cfg.CONF.set_override('use_namespaces', False)
+            mock_net = mock.Mock(id='foo')
+            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            self.assertIsNone(dhcp._ns_name(mock_net))
 
     def test_call_driver(self):
         network = mock.Mock()
@@ -275,8 +289,13 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
 
         self.call_driver = self.call_driver_p.start()
+        self.external_process_p = mock.patch(
+            'quantum.agent.linux.external_process.ProcessManager'
+        )
+        self.external_process = self.external_process_p.start()
 
     def tearDown(self):
+        self.external_process_p.stop()
         self.call_driver_p.stop()
         self.cache_p.stop()
         self.plugin_p.stop()
@@ -289,6 +308,14 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             [mock.call.get_network_info(fake_network.id)])
         self.call_driver.assert_called_once_with('enable', fake_network)
         self.cache.assert_has_calls([mock.call.put(fake_network)])
+        self.external_process.assert_has_calls([
+            mock.call(
+                cfg.CONF,
+                '12345678-1234-5678-1234567890ab',
+                'sudo',
+                'qdhcp-12345678-1234-5678-1234567890ab'),
+            mock.call().enable(mock.ANY)
+        ])
 
     def test_enable_dhcp_helper_down_network(self):
         self.plugin.get_network_info.return_value = fake_down_network
@@ -297,6 +324,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             [mock.call.get_network_info(fake_down_network.id)])
         self.assertFalse(self.call_driver.called)
         self.assertFalse(self.cache.called)
+        self.assertFalse(self.external_process.called)
 
     def test_enable_dhcp_helper_exception_during_rpc(self):
         self.plugin.get_network_info.side_effect = Exception
@@ -308,15 +336,17 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
             self.assertTrue(log.called)
             self.assertTrue(self.dhcp.needs_resync)
             self.assertFalse(self.cache.called)
+            self.assertFalse(self.external_process.called)
 
     def test_enable_dhcp_helper_driver_failure(self):
         self.plugin.get_network_info.return_value = fake_network
+        self.call_driver.return_value = False
         self.dhcp.enable_dhcp_helper(fake_network.id)
-        self.call_driver.enable.return_value = False
         self.plugin.assert_has_calls(
             [mock.call.get_network_info(fake_network.id)])
         self.call_driver.assert_called_once_with('enable', fake_network)
         self.assertFalse(self.cache.called)
+        self.assertFalse(self.external_process.called)
 
     def test_disable_dhcp_helper_known_network(self):
         self.cache.get_network_by_id.return_value = fake_network
@@ -324,6 +354,14 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
         self.call_driver.assert_called_once_with('disable', fake_network)
+        self.external_process.assert_has_calls([
+            mock.call(
+                cfg.CONF,
+                '12345678-1234-5678-1234567890ab',
+                'sudo',
+                'qdhcp-12345678-1234-5678-1234567890ab'),
+            mock.call().disable()
+        ])
 
     def test_disable_dhcp_helper_unknown_network(self):
         self.cache.get_network_by_id.return_value = None
@@ -331,16 +369,51 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id('abcdef')])
         self.assertEqual(self.call_driver.call_count, 0)
+        self.assertFalse(self.external_process.called)
 
     def test_disable_dhcp_helper_driver_failure(self):
         self.cache.get_network_by_id.return_value = fake_network
+        self.call_driver.return_value = False
         self.dhcp.disable_dhcp_helper(fake_network.id)
-        self.call_driver.disable.return_value = False
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
         self.call_driver.assert_called_once_with('disable', fake_network)
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
+        self.external_process.assert_has_calls([
+            mock.call(
+                cfg.CONF,
+                '12345678-1234-5678-1234567890ab',
+                'sudo',
+                'qdhcp-12345678-1234-5678-1234567890ab'),
+            mock.call().disable()
+        ])
+
+    def test_enable_isolated_metadata_proxy(self):
+        class_path = 'quantum.agent.linux.external_process.ProcessManager'
+        with mock.patch(class_path) as ext_process:
+            self.dhcp.enable_isolated_metadata_proxy(fake_network)
+            ext_process.assert_has_calls([
+                mock.call(
+                    cfg.CONF,
+                    '12345678-1234-5678-1234567890ab',
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().enable(mock.ANY)
+            ])
+
+    def test_disable_isolated_metadata_proxy(self):
+        class_path = 'quantum.agent.linux.external_process.ProcessManager'
+        with mock.patch(class_path) as ext_process:
+            self.dhcp.disable_isolated_metadata_proxy(fake_network)
+            ext_process.assert_has_calls([
+                mock.call(
+                    cfg.CONF,
+                    '12345678-1234-5678-1234567890ab',
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().disable()
+            ])
 
     def test_network_create_end(self):
         payload = dict(network=dict(id=fake_network.id))
@@ -668,6 +741,8 @@ class TestDeviceManager(unittest.TestCase):
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)
+        cfg.CONF.set_override('use_namespaces', True)
+        cfg.CONF.set_override('enable_isolated_metadata', True)
 
         self.device_exists_p = mock.patch(
             'quantum.agent.linux.ip_lib.device_exists')
@@ -683,6 +758,7 @@ class TestDeviceManager(unittest.TestCase):
     def tearDown(self):
         self.dvr_cls_p.stop()
         self.device_exists_p.stop()
+        cfg.CONF.reset()
 
     def _test_setup_helper(self, device_exists, reuse_existing=False):
         plugin = mock.Mock()
@@ -691,7 +767,9 @@ class TestDeviceManager(unittest.TestCase):
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
 
         dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
-        dh.setup(fake_network, reuse_existing)
+        interface_name = dh.setup(fake_network, reuse_existing)
+
+        self.assertEqual(interface_name, 'tap12345678-12')
 
         plugin.assert_has_calls([
             mock.call.get_dhcp_port(fake_network.id, mock.ANY)])
@@ -699,7 +777,7 @@ class TestDeviceManager(unittest.TestCase):
         namespace = dhcp_agent.NS_PREFIX + fake_network.id
 
         expected = [mock.call.init_l3('tap12345678-12',
-                                      ['172.9.9.9/24'],
+                                      ['172.9.9.9/24', '169.254.169.254/16'],
                                       namespace=namespace)]
 
         if not reuse_existing:
