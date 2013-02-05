@@ -1643,7 +1643,7 @@ class ConfigOpts(collections.Mapping):
         """
         self._args = args
 
-        for opt, group in self._all_cli_opts():
+        for opt, group in sorted(self._all_cli_opts()):
             opt._add_to_cli(self._oparser, group)
 
         return vars(self._oparser.parse_args(args))

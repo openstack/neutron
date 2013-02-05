@@ -23,6 +23,8 @@ import logging
 
 from quantum.openstack.common.gettextutils import _
 
+_FATAL_EXCEPTION_FORMAT_ERRORS = False
+
 
 class Error(Exception):
     def __init__(self, message=None):
@@ -121,9 +123,12 @@ class OpenstackException(Exception):
         try:
             self._error_string = self.message % kwargs
 
-        except Exception:
-            # at least get the core message out if something happened
-            self._error_string = self.message
+        except Exception as e:
+            if _FATAL_EXCEPTION_FORMAT_ERRORS:
+                raise e
+            else:
+                # at least get the core message out if something happened
+                self._error_string = self.message
 
     def __str__(self):
         return self._error_string

@@ -38,8 +38,7 @@ class Thread(object):
     :class:`ThreadGroup`. The Thread will notify the :class:`ThreadGroup` when
     it has done so it can be removed from the threads list.
     """
-    def __init__(self, name, thread, group):
-        self.name = name
+    def __init__(self, thread, group):
         self.thread = thread
         self.thread.link(_thread_done, group=group, thread=self)
 
@@ -57,8 +56,7 @@ class ThreadGroup(object):
       when need be).
     * provide an easy API to add timers.
     """
-    def __init__(self, name, thread_pool_size=10):
-        self.name = name
+    def __init__(self, thread_pool_size=10):
         self.pool = greenpool.GreenPool(thread_pool_size)
         self.threads = []
         self.timers = []
@@ -72,7 +70,7 @@ class ThreadGroup(object):
 
     def add_thread(self, callback, *args, **kwargs):
         gt = self.pool.spawn(callback, *args, **kwargs)
-        th = Thread(callback.__name__, gt, self)
+        th = Thread(gt, self)
         self.threads.append(th)
 
     def thread_done(self, thread):
