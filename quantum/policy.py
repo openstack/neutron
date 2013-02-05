@@ -30,6 +30,7 @@ from quantum.openstack.common import policy
 LOG = logging.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
+cfg.CONF.import_opt('policy_file', 'quantum.common.config')
 
 
 def reset():
