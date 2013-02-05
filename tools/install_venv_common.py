@@ -25,6 +25,12 @@ import os
 import subprocess
 import sys
 
+possible_topdir = os.getcwd()
+if os.path.exists(os.path.join(possible_topdir, "quantum",
+                               "__init__.py")):
+    sys.path.insert(0, possible_topdir)
+
+
 from quantum.openstack.common import cfg
 
 
