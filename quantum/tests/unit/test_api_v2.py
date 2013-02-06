@@ -20,7 +20,8 @@ import urlparse
 
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
+from testtools import matchers
 import webob
 from webob import exc
 import webtest
@@ -67,7 +68,7 @@ def _get_path(resource, id=None, action=None, fmt=None):
     return path
 
 
-class ResourceIndexTestCase(unittest.TestCase):
+class ResourceIndexTestCase(testtools.TestCase):
     def test_index_json(self):
         index = webtest.TestApp(router.Index({'foo': 'bar'}))
         res = index.get('')
@@ -92,8 +93,10 @@ class ResourceIndexTestCase(unittest.TestCase):
         self.assertTrue(link['rel'] == 'self')
 
 
-class APIv2TestBase(unittest.TestCase):
+class APIv2TestBase(testtools.TestCase):
     def setUp(self):
+        super(APIv2TestBase, self).setUp()
+
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
         # Ensure 'stale' patched copies of the plugin are never returned
         QuantumManager._instance = None
@@ -111,15 +114,11 @@ class APIv2TestBase(unittest.TestCase):
         instance = self.plugin.return_value
         instance._QuantumPluginBaseV2__native_pagination_support = True
         instance._QuantumPluginBaseV2__native_sorting_support = True
+        self.addCleanup(self._plugin_patcher.stop)
+        self.addCleanup(cfg.CONF.reset)
+
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
-        super(APIv2TestBase, self).setUp()
-
-    def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
-        cfg.CONF.reset()
 
 
 class _ArgMatcher(object):
@@ -138,10 +137,6 @@ def _list_cmp(l1, l2):
 
 
 class APIv2TestCase(APIv2TestBase):
-    # NOTE(jkoelker) This potentially leaks the mock object if the setUp
-    #                raises without being caught. Using unittest2
-    #                or dropping 2.6 support so we can use addCleanup
-    #                will get around this.
     def _do_field_list(self, resource, base_fields):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
         policy_attrs = [name for (name, info) in attr_info.items()
@@ -599,9 +594,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                            params=params).json
 
         self.assertEqual(len(res['networks']), 2)
-        self.assertItemsEqual([id1, id2],
-                              [res['networks'][0]['id'],
-                               res['networks'][1]['id']])
+        self.assertEqual(sorted([id1, id2]),
+                         sorted([res['networks'][0]['id'],
+                                res['networks'][1]['id']]))
 
         self.assertIn('networks_links', res)
         next_links = []
@@ -1110,8 +1105,10 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertEqual(res.status_int, 400)
 
 
-class SubresourceTest(unittest.TestCase):
+class SubresourceTest(testtools.TestCase):
     def setUp(self):
+        super(SubresourceTest, self).setUp()
+
         plugin = 'quantum.tests.unit.test_api_v2.TestSubresourcePlugin'
         QuantumManager._instance = None
         PluginAwareExtensionManager._instance = None
@@ -1127,6 +1124,8 @@ class SubresourceTest(unittest.TestCase):
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
+        self.addCleanup(self._plugin_patcher.stop)
+        self.addCleanup(cfg.CONF.reset)
 
         router.SUB_RESOURCES['dummy'] = {
             'collection_name': 'dummies',
@@ -1146,13 +1145,10 @@ class SubresourceTest(unittest.TestCase):
         self.api = webtest.TestApp(api)
 
     def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
         router.SUB_RESOURCES = {}
-        cfg.CONF.reset()
         # Restore the global RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
+        super(SubresourceTest, self).tearDown()
 
     def test_index_sub_resource(self):
         instance = self.plugin.return_value
@@ -1210,7 +1206,7 @@ class XMLV2TestCase(JSONV2TestCase):
     fmt = 'xml'
 
 
-class V2Views(unittest.TestCase):
+class V2Views(testtools.TestCase):
     def _view(self, keys, collection, resource):
         data = dict((key, 'value') for key in keys)
         data['fake'] = 'value'
@@ -1332,12 +1328,9 @@ class QuotaTest(APIv2TestBase):
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
 
-class ExtensionTestCase(unittest.TestCase):
-    # NOTE(jkoelker) This potentially leaks the mock object if the setUp
-    #                raises without being caught. Using unittest2
-    #                or dropping 2.6 support so we can use addCleanup
-    #                will get around this.
+class ExtensionTestCase(testtools.TestCase):
     def setUp(self):
+        super(ExtensionTestCase, self).setUp()
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
 
         # Ensure 'stale' patched copies of the plugin are never returned
@@ -1369,6 +1362,7 @@ class ExtensionTestCase(unittest.TestCase):
         self.api = webtest.TestApp(api)
 
     def tearDown(self):
+        super(ExtensionTestCase, self).tearDown()
         self._plugin_patcher.stop()
         self.api = None
         self.plugin = None
@@ -1424,13 +1418,13 @@ class TestSubresourcePlugin():
             return
 
 
-class ListArgsTestCase(unittest.TestCase):
+class ListArgsTestCase(testtools.TestCase):
     def test_list_args(self):
         path = '/?fields=4&foo=3&fields=2&bar=1'
         request = webob.Request.blank(path)
         expect_val = ['2', '4']
         actual_val = api_common.list_args(request, 'fields')
-        self.assertItemsEqual(actual_val, expect_val)
+        self.assertEqual(sorted(actual_val), expect_val)
 
     def test_list_args_with_empty(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
@@ -1438,7 +1432,7 @@ class ListArgsTestCase(unittest.TestCase):
         self.assertEqual([], api_common.list_args(request, 'fields'))
 
 
-class FiltersTestCase(unittest.TestCase):
+class FiltersTestCase(testtools.TestCase):
     def test_all_skip_args(self):
         path = '/?fields=4&fields=3&fields=2&fields=1'
         request = webob.Request.blank(path)
@@ -1486,7 +1480,7 @@ class FiltersTestCase(unittest.TestCase):
         self.assertEqual(actual_val, expect_val)
 
 
-class CreateResourceTestCase(unittest.TestCase):
+class CreateResourceTestCase(testtools.TestCase):
     def test_resource_creation(self):
         resource = base.create_resource('fakes', 'fake', None, {})
         self.assertIsInstance(resource, webob.dec.wsgify)

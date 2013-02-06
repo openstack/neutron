@@ -16,7 +16,7 @@
 
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 
@@ -25,7 +25,7 @@ NOTIFIER = ('quantum.plugins.openvswitch.'
             'ovs_quantum_plugin.AgentNotifierApi')
 
 
-class CreateAgentConfigMap(unittest.TestCase):
+class CreateAgentConfigMap(testtools.TestCase):
 
     def test_create_agent_config_map_succeeds(self):
         self.assertTrue(ovs_quantum_agent.create_agent_config_map(cfg.CONF))
@@ -34,13 +34,14 @@ class CreateAgentConfigMap(unittest.TestCase):
         self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             ovs_quantum_agent.create_agent_config_map(cfg.CONF)
 
 
-class TestOvsQuantumAgent(unittest.TestCase):
+class TestOvsQuantumAgent(testtools.TestCase):
 
     def setUp(self):
+        super(TestOvsQuantumAgent, self).setUp()
         self.addCleanup(cfg.CONF.reset)
         self.addCleanup(mock.patch.stopall)
         notifier_p = mock.patch(NOTIFIER)

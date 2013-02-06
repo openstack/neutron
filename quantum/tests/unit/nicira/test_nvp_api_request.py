@@ -8,8 +8,9 @@
 import eventlet
 eventlet.monkey_patch()
 import logging
-import unittest
 import urllib2
+
+import testtools
 
 logging.basicConfig(level=logging.DEBUG)
 lg = logging.getLogger("test_nvp_api_request")
@@ -21,10 +22,6 @@ def fetch(url):
     return urllib2.urlopen(url).read()
 
 
-class NvpApiRequestTest(unittest.TestCase):
+class NvpApiRequestTest(testtools.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+    pass

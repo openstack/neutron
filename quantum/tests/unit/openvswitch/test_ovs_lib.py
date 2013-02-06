@@ -16,13 +16,13 @@
 # @author: Dan Wendlandt, Nicira, Inc.
 
 import mox
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.linux import ovs_lib, utils
 from quantum.openstack.common import uuidutils
 
 
-class OVS_Lib_Test(unittest.TestCase):
+class OVS_Lib_Test(testtools.TestCase):
     """
     A test suite to excercise the OVS libraries shared by Quantum agents.
     Note: these tests do not actually execute ovs-* utilities, and thus
@@ -30,6 +30,7 @@ class OVS_Lib_Test(unittest.TestCase):
     """
 
     def setUp(self):
+        super(OVS_Lib_Test, self).setUp()
         self.BR_NAME = "br-int"
         self.TO = "--timeout=2"
 
@@ -37,9 +38,7 @@ class OVS_Lib_Test(unittest.TestCase):
         self.root_helper = 'sudo'
         self.br = ovs_lib.OVSBridge(self.BR_NAME, self.root_helper)
         self.mox.StubOutWithMock(utils, "execute")
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def test_vifport(self):
         """create and stringify vif port, confirm no exceptions"""

@@ -19,7 +19,7 @@
 # @author: Ryu Ishimoto, Midokura Japan KK
 # @author: Tomoe Sugihara, Midokura Japan KK
 
-import unittest2 as unittest
+import testtools
 import uuid
 
 import mock
@@ -27,13 +27,11 @@ import mock
 from quantum.plugins.midonet import midonet_lib
 
 
-class MidonetLibTestCase(unittest.TestCase):
+class MidonetLibTestCase(testtools.TestCase):
 
     def setUp(self):
+        super(MidonetLibTestCase, self).setUp()
         self.mock_api = mock.Mock()
-
-    def tearDown(self):
-        self.mock_api = None
 
     def _create_mock_chains(self, sg_id, sg_name):
         mock_in_chain = mock.Mock()
@@ -68,10 +66,6 @@ class MidonetChainManagerTestCase(MidonetLibTestCase):
     def setUp(self):
         super(MidonetChainManagerTestCase, self).setUp()
         self.mgr = midonet_lib.ChainManager(self.mock_api)
-
-    def tearDown(self):
-        self.mgr = None
-        super(MidonetChainManagerTestCase, self).tearDown()
 
     def test_create_for_sg(self):
         tenant_id = 'test_tenant'
@@ -147,10 +141,6 @@ class MidonetPortGroupManagerTestCase(MidonetLibTestCase):
         super(MidonetPortGroupManagerTestCase, self).setUp()
         self.mgr = midonet_lib.PortGroupManager(self.mock_api)
 
-    def tearDown(self):
-        self.mgr = None
-        super(MidonetPortGroupManagerTestCase, self).tearDown()
-
     def test_create(self):
         tenant_id = 'test_tenant'
         sg_id = str(uuid.uuid4())
@@ -196,10 +186,6 @@ class MidonetRuleManagerTestCase(MidonetLibTestCase):
         self.mgr = midonet_lib.RuleManager(self.mock_api)
         self.mgr.chain_manager = mock.Mock()
         self.mgr.pg_manager = mock.Mock()
-
-    def tearDown(self):
-        self.mgr = None
-        super(MidonetRuleManagerTestCase, self).tearDown()
 
     def _create_test_rule(self, tenant_id, sg_id, rule_id, direction="egress",
                           protocol="tcp", port_min=1, port_max=65535,

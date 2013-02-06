@@ -15,10 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
 import mock
 from oslo.config import cfg
+import testtools
 
 from quantum.agent.common import config
 from quantum.agent.dhcp_agent import DeviceManager
@@ -58,8 +57,9 @@ class FakePort:
     network_id = network.id
 
 
-class TestBase(unittest.TestCase):
+class TestBase(testtools.TestCase):
     def setUp(self):
+        super(TestBase, self).setUp()
         root_helper_opt = [
             cfg.StrOpt('root_helper', default='sudo'),
         ]
@@ -68,19 +68,13 @@ class TestBase(unittest.TestCase):
         config.register_root_helper(self.conf)
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
+        self.addCleanup(self.ip_dev_p.stop)
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')
         self.ip = self.ip_p.start()
+        self.addCleanup(self.ip_p.stop)
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
-
-    def tearDown(self):
-        # sometimes a test may turn this off
-        try:
-            self.device_exists_p.stop()
-        except RuntimeError, e:
-            pass
-        self.ip_dev_p.stop()
-        self.ip_p.stop()
+        self.addCleanup(self.device_exists_p.stop)
 
 
 class TestABCDriver(TestBase):
@@ -357,6 +351,7 @@ class TestMetaInterfaceDriver(TestBase):
         self.conf.register_opts(DeviceManager.OPTS)
         self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
+        self.addCleanup(self.client_cls_p.stop)
         self.client_inst = mock.Mock()
         client_cls.return_value = self.client_inst
 
@@ -377,10 +372,6 @@ class TestMetaInterfaceDriver(TestBase):
             'meta_flavor_driver_mappings',
             'fake1:quantum.agent.linux.interface.OVSInterfaceDriver,'
             'fake2:quantum.agent.linux.interface.BridgeInterfaceDriver')
-
-    def tearDown(self):
-        self.client_cls_p.stop()
-        super(TestMetaInterfaceDriver, self).tearDown()
 
     def test_get_driver_by_network_id(self):
         meta_interface = interface.MetaInterfaceDriver(self.conf)

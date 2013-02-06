@@ -21,7 +21,7 @@ import mock
 import mox
 from oslo.config import cfg
 import stubout
-import unittest2 as unittest
+import testtools
 
 from quantum import context
 from quantum.db import api as db
@@ -65,7 +65,7 @@ def setup_metaplugin_conf():
     cfg.CONF.set_override('max_dns_nameservers', 10)
 
 
-class MetaQuantumPluginV2Test(unittest.TestCase):
+class MetaQuantumPluginV2Test(testtools.TestCase):
     """Class conisting of MetaQuantumPluginV2 unit tests"""
 
     def setUp(self):
@@ -287,7 +287,7 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
 
         self.plugin.delete_router(self.context, router_ret1['id'])
         self.plugin.delete_router(self.context, router_ret2['id'])
-        with self.assertRaises(FlavorNotFound):
+        with testtools.ExpectedException(FlavorNotFound):
             self.plugin.get_router(self.context, router_ret1['id'])
 
     def test_extension_method(self):
@@ -310,3 +310,4 @@ class MetaQuantumPluginV2Test(unittest.TestCase):
         self.stubs.SmartUnsetAll()
         self.mox.VerifyAll()
         db.clear_db()
+        super(MetaQuantumPluginV2Test, self).tearDown()

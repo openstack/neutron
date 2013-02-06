@@ -17,20 +17,21 @@
 
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.agent import netns_cleanup_util as util
 
 
-class TestNullDelegate(unittest.TestCase):
+class TestNullDelegate(testtools.TestCase):
     def test_getattribute(self):
         null_delegate = util.NullDelegate()
         self.assertIsNone(null_delegate.test())
 
 
-class TestNetnsCleanup(unittest.TestCase):
-    def tearDown(self):
-        cfg.CONF.reset()
+class TestNetnsCleanup(testtools.TestCase):
+    def setUp(self):
+        super(TestNetnsCleanup, self).setUp()
+        self.addCleanup(cfg.CONF.reset)
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()

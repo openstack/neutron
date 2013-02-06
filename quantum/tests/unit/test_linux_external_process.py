@@ -17,20 +17,19 @@
 # @author: Mark McClain, DreamHost
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.linux import external_process as ep
 
 
-class TestProcessManager(unittest.TestCase):
+class TestProcessManager(testtools.TestCase):
     def setUp(self):
+        super(TestProcessManager, self).setUp()
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')
         self.execute = self.execute_p.start()
+        self.addCleanup(self.execute_p.stop)
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
-
-    def tearDown(self):
-        self.execute_p.stop()
 
     def test_enable_no_namespace(self):
         callback = mock.Mock()

@@ -19,10 +19,10 @@
 
 import contextlib
 import logging
-import unittest2 as unittest
 
 import mock
 from oslo.config import cfg
+import testtools
 import webob.exc as webexc
 import webtest
 
@@ -73,6 +73,7 @@ class ServiceTypeTestCaseBase(testlib_api.WebTestCase):
         cfg.CONF.set_override('service_plugins',
                               ["%s.%s" % (dp.__name__,
                                           dp.DummyServicePlugin.__name__)])
+        self.addCleanup(cfg.CONF.reset)
         # Make sure at each test a new instance of the plugin is returned
         manager.QuantumManager._instance = None
         # Ensure existing ExtensionManager is not used
@@ -83,10 +84,6 @@ class ServiceTypeTestCaseBase(testlib_api.WebTestCase):
         self.resource_name = servicetype.RESOURCE_NAME.replace('-', '_')
         super(ServiceTypeTestCaseBase, self).setUp()
 
-    def tearDown(self):
-        self.api = None
-        cfg.CONF.reset()
-
 
 class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
 
@@ -95,13 +92,10 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
             "%s.%s" % (servicetype_db.__name__,
                        servicetype_db.ServiceTypeManager.__name__),
             autospec=True)
+        self.addCleanup(self._patcher.stop)
         self.mock_mgr = self._patcher.start()
         self.mock_mgr.get_instance.return_value = self.mock_mgr.return_value
         super(ServiceTypeExtensionTestCase, self).setUp()
-
-    def tearDown(self):
-        self._patcher.stop()
-        super(ServiceTypeExtensionTestCase, self).tearDown()
 
     def _test_service_type_create(self, env=None,
                                   expected_status=webexc.HTTPCreated.code):
@@ -256,11 +250,8 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
         plugin_name = "%s.%s" % (dp.__name__, dp.DummyServicePlugin.__name__)
         cfg.CONF.set_override('service_definition', ['dummy:%s' % plugin_name],
                               group='DEFAULT_SERVICETYPE')
+        self.addCleanup(db_api.clear_db)
         super(ServiceTypeManagerTestCase, self).setUp()
-
-    def tearDown(self):
-        super(ServiceTypeManagerTestCase, self).tearDown()
-        db_api.clear_db()
 
     @contextlib.contextmanager
     def service_type(self, name='svc_type',

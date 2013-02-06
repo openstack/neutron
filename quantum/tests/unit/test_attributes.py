@@ -15,13 +15,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2
+import testtools
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 
 
-class TestAttributes(unittest2.TestCase):
+class TestAttributes(testtools.TestCase):
 
     def _construct_dict_and_constraints(self):
         """ Constructs a test dictionary and a definition of constraints.
@@ -487,7 +487,7 @@ class TestAttributes(unittest2.TestCase):
 
         del dictionary['key1']
         msg = attributes._validate_dict(dictionary, constraints)
-        self.assertIn('Expected keys:', msg, 'The error was not detected.')
+        self.assertIn('Expected keys:', msg)
 
     def test_validate_dict_wrong_values(self):
         dictionary, constraints = self._construct_dict_and_constraints()
@@ -502,7 +502,7 @@ class TestAttributes(unittest2.TestCase):
         del dictionary['key3']['k4']
         dictionary['key3']['k5'] = 'a string value'
         msg = attributes._validate_dict(dictionary, constraints)
-        self.assertIn('Expected keys:', msg, 'The error was not detected.')
+        self.assertIn('Expected keys:', msg)
 
     def test_validate_dict_or_none(self):
         dictionary, constraints = self._construct_dict_and_constraints()
@@ -537,7 +537,7 @@ class TestAttributes(unittest2.TestCase):
             self.assertIsNone(msg)
 
 
-class TestConvertToBoolean(unittest2.TestCase):
+class TestConvertToBoolean(testtools.TestCase):
 
     def test_convert_to_boolean_bool(self):
         self.assertIs(attributes.convert_to_boolean(True), True)
@@ -562,7 +562,7 @@ class TestConvertToBoolean(unittest2.TestCase):
                           '7')
 
 
-class TestConvertToInt(unittest2.TestCase):
+class TestConvertToInt(testtools.TestCase):
 
     def test_convert_to_int_int(self):
         self.assertEqual(attributes.convert_to_int(-1), -1)
@@ -596,7 +596,7 @@ class TestConvertToInt(unittest2.TestCase):
                 value, attributes.convert_none_to_empty_list(value))
 
 
-class TestConvertKvp(unittest2.TestCase):
+class TestConvertKvp(testtools.TestCase):
 
     def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):
         result = attributes.convert_kvp_list_to_dict(['True'])
@@ -612,11 +612,11 @@ class TestConvertKvp(unittest2.TestCase):
         self.assertEqual({'a': ['b'], 'c': ['d']}, result)
 
     def test_convert_kvp_str_to_list_fails_for_missing_key(self):
-        with self.assertRaises(q_exc.InvalidInput):
+        with testtools.ExpectedException(q_exc.InvalidInput):
             attributes.convert_kvp_str_to_list('=a')
 
     def test_convert_kvp_str_to_list_fails_for_missing_equals(self):
-        with self.assertRaises(q_exc.InvalidInput):
+        with testtools.ExpectedException(q_exc.InvalidInput):
             attributes.convert_kvp_str_to_list('a')
 
     def test_convert_kvp_str_to_list_succeeds_for_one_equals(self):
@@ -628,7 +628,7 @@ class TestConvertKvp(unittest2.TestCase):
         self.assertEqual(['a', 'a=a'], result)
 
 
-class TestConvertToList(unittest2.TestCase):
+class TestConvertToList(testtools.TestCase):
 
     def test_convert_to_empty_list(self):
         for item in (None, [], (), {}):

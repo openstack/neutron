@@ -1,8 +1,7 @@
-import unittest2 as unittest
-import webtest
-
 import mock
 from oslo.config import cfg
+import testtools
+import webtest
 
 from quantum.api import extensions
 from quantum.api.v2 import attributes
@@ -27,6 +26,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
     fmt = 'json'
 
     def setUp(self):
+        super(QuotaExtensionTestCase, self).setUp()
         db._ENGINE = None
         db._MAKER = None
         # Ensure 'stale' patched copies of the plugin are never returned
@@ -79,6 +79,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
         # Restore the global RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
+        super(QuotaExtensionTestCase, self).tearDown()
 
     def test_quotas_loaded_right(self):
         res = self.api.get(_get_path('quotas', fmt=self.fmt))
@@ -182,14 +183,14 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
                                      fmt=self.fmt),
                            self.serialize(quotas), extra_environ=env)
         self.assertEqual(200, res.status_int)
-        with self.assertRaises(exceptions.OverQuota):
+        with testtools.ExpectedException(exceptions.OverQuota):
             quota.QUOTAS.limit_check(context.Context('', tenant_id),
                                      tenant_id,
                                      network=6)
 
     def test_quotas_limit_check_with_invalid_quota_value(self):
         tenant_id = 'tenant_id1'
-        with self.assertRaises(exceptions.InvalidQuotaValue):
+        with testtools.ExpectedException(exceptions.InvalidQuotaValue):
             quota.QUOTAS.limit_check(context.Context('', tenant_id),
                                      tenant_id,
                                      network=-1)

@@ -15,21 +15,21 @@
 
 """Test of DB API"""
 
+import fixtures
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 import quantum.db.api as db
 
 
-class DBTestCase(unittest.TestCase):
+class DBTestCase(testtools.TestCase):
     def setUp(self):
+        super(DBTestCase, self).setUp()
         cfg.CONF.set_override('sql_max_retries', 1, 'DATABASE')
         cfg.CONF.set_override('reconnect_interval', 0, 'DATABASE')
-
-    def tearDown(self):
-        db._ENGINE = None
-        cfg.CONF.reset()
+        self.addCleanup(cfg.CONF.reset)
+        self.useFixture(fixtures.MonkeyPatch('quantum.db.api._ENGINE', None))
 
     def test_db_reconnect(self):
         with mock.patch.object(db, 'register_models') as mock_register:

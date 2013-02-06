@@ -16,12 +16,12 @@ import httplib
 import logging
 import new
 import random
-import unittest
 
 import eventlet
 from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
+import testtools
 
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
     client_eventlet as nace,
@@ -40,10 +40,11 @@ def fetch(url):
     return urllib2.urlopen(url).read()
 
 
-class NvpApiRequestEventletTest(unittest.TestCase):
+class NvpApiRequestEventletTest(testtools.TestCase):
 
     def setUp(self):
 
+        super(NvpApiRequestEventletTest, self).setUp()
         self.client = nace.NvpApiClientEventlet(
             [("127.0.0.1", 4401, True)], "admin", "admin")
         self.url = "/ws.v1/_debug"
@@ -52,6 +53,7 @@ class NvpApiRequestEventletTest(unittest.TestCase):
     def tearDown(self):
         self.client = None
         self.req = None
+        super(NvpApiRequestEventletTest, self).tearDown()
 
     def test_construct_eventlet_api_request(self):
         e = nare.NvpApiRequestEventlet(self.client, self.url)

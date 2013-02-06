@@ -22,7 +22,7 @@ import uuid
 import eventlet
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.common import config
 from quantum.agent import dhcp_agent
@@ -108,8 +108,9 @@ fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
                               ports=[])
 
 
-class TestDhcpAgent(unittest.TestCase):
+class TestDhcpAgent(testtools.TestCase):
     def setUp(self):
+        super(TestDhcpAgent, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
@@ -124,6 +125,7 @@ class TestDhcpAgent(unittest.TestCase):
     def tearDown(self):
         self.driver_cls_p.stop()
         cfg.CONF.reset()
+        super(TestDhcpAgent, self).tearDown()
 
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'quantum.agent.rpc.PluginReportStateAPI'
@@ -314,15 +316,16 @@ class TestDhcpAgent(unittest.TestCase):
             dhcp.needs_resync = True
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
-                with self.assertRaises(RuntimeError):
+                with testtools.ExpectedException(RuntimeError):
                     dhcp._periodic_resync_helper()
                 sync_state.assert_called_once_with()
                 sleep.assert_called_once_with(dhcp.conf.resync_interval)
                 self.assertFalse(dhcp.needs_resync)
 
 
-class TestDhcpAgentEventHandler(unittest.TestCase):
+class TestDhcpAgentEventHandler(testtools.TestCase):
     def setUp(self):
+        super(TestDhcpAgentEventHandler, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         cfg.CONF.set_override('interface_driver',
@@ -354,6 +357,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.call_driver_p.stop()
         self.cache_p.stop()
         self.plugin_p.stop()
+        super(TestDhcpAgentEventHandler, self).tearDown()
 
     def test_enable_dhcp_helper(self):
         self.plugin.get_network_info.return_value = fake_network
@@ -634,8 +638,9 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.assertEqual(self.call_driver.call_count, 0)
 
 
-class TestDhcpPluginApiProxy(unittest.TestCase):
+class TestDhcpPluginApiProxy(testtools.TestCase):
     def setUp(self):
+        super(TestDhcpPluginApiProxy, self).setUp()
         self.proxy = dhcp_agent.DhcpPluginApi('foo', {})
         self.proxy.host = 'foo'
 
@@ -647,6 +652,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
     def tearDown(self):
         self.make_msg_p.stop()
         self.call_p.stop()
+        super(TestDhcpPluginApiProxy, self).tearDown()
 
     def test_get_active_networks(self):
         self.proxy.get_active_networks()
@@ -701,7 +707,7 @@ class TestDhcpPluginApiProxy(unittest.TestCase):
                                               host='foo')
 
 
-class TestNetworkCache(unittest.TestCase):
+class TestNetworkCache(testtools.TestCase):
     def test_put_network(self):
         nc = dhcp_agent.NetworkCache()
         nc.put(fake_network)
@@ -809,8 +815,9 @@ class TestNetworkCache(unittest.TestCase):
         self.assertEqual(nc.get_port_by_id(fake_port1.id), fake_port1)
 
 
-class TestDeviceManager(unittest.TestCase):
+class TestDeviceManager(testtools.TestCase):
     def setUp(self):
+        super(TestDeviceManager, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.set_override('interface_driver',
@@ -840,6 +847,7 @@ class TestDeviceManager(unittest.TestCase):
         self.device_exists_p.stop()
         self.iproute_cls_p.stop()
         cfg.CONF.reset()
+        super(TestDeviceManager, self).tearDown()
 
     def _test_setup_helper(self, device_exists, reuse_existing=False,
                            metadata_access_network=False,
@@ -886,7 +894,7 @@ class TestDeviceManager(unittest.TestCase):
         self._test_setup_helper(False)
 
     def test_setup_device_exists(self):
-        with self.assertRaises(exceptions.PreexistingDeviceFailure):
+        with testtools.ExpectedException(exceptions.PreexistingDeviceFailure):
             self._test_setup_helper(True)
 
     def test_setup_device_exists_reuse(self):
@@ -1002,14 +1010,16 @@ class TestDeviceManager(unittest.TestCase):
                 self.assertEqual(dh.get_device_id(fake_network), expected)
 
 
-class TestDhcpLeaseRelay(unittest.TestCase):
+class TestDhcpLeaseRelay(testtools.TestCase):
     def setUp(self):
+        super(TestDhcpLeaseRelay, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         self.unlink_p = mock.patch('os.unlink')
         self.unlink = self.unlink_p.start()
 
     def tearDown(self):
         self.unlink_p.stop()
+        super(TestDhcpLeaseRelay, self).tearDown()
 
     def test_init_relay_socket_path_no_prev_socket(self):
         with mock.patch('os.path.exists') as exists:
@@ -1036,7 +1046,7 @@ class TestDhcpLeaseRelay(unittest.TestCase):
         self.unlink.side_effect = OSError
         with mock.patch('os.path.exists') as exists:
             exists.return_value = True
-            with self.assertRaises(OSError):
+            with testtools.ExpectedException(OSError):
                 relay = dhcp_agent.DhcpLeaseRelay(None)
 
                 self.unlink.assert_called_once_with(
@@ -1125,7 +1135,7 @@ class TestDhcpLeaseRelay(unittest.TestCase):
                                  relay._handler)])
 
 
-class TestDictModel(unittest.TestCase):
+class TestDictModel(testtools.TestCase):
     def test_basic_dict(self):
         d = dict(a=1, b=2)
 

@@ -19,7 +19,7 @@ import contextlib
 import itertools
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -27,9 +27,10 @@ from quantum.agent import ovs_cleanup_util as util
 from quantum.openstack.common import uuidutils
 
 
-class TestOVSCleanup(unittest.TestCase):
-    def tearDown(self):
-        cfg.CONF.reset()
+class TestOVSCleanup(testtools.TestCase):
+    def setUp(self):
+        super(TestOVSCleanup, self).setUp()
+        self.addCleanup(cfg.CONF.reset)
 
     def test_setup_conf(self):
         conf = util.setup_conf()

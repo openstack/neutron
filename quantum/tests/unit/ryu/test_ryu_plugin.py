@@ -27,6 +27,7 @@ class RyuPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         self.ryu_patcher = fake_ryu.patch_fake_ryu_client()
         self.ryu_patcher.start()
         super(RyuPluginV2TestCase, self).setUp(self._plugin_name)
+        self.addCleanup(self.ryu_patcher.stop)
 
 
 class TestRyuBasicGet(test_plugin.TestBasicGet, RyuPluginV2TestCase):

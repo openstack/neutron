@@ -14,13 +14,13 @@
 # limitations under the License.
 
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 #NOTE this import loads tests required options
 from quantum.plugins.linuxbridge.common import config
 
 
-class ConfigurationTest(unittest.TestCase):
+class ConfigurationTest(testtools.TestCase):
 
     def test_defaults(self):
         self.assertEqual(-1,

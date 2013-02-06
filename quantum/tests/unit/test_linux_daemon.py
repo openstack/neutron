@@ -19,26 +19,25 @@
 import os
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.linux import daemon
 
 FAKE_FD = 8
 
 
-class TestPidfile(unittest.TestCase):
+class TestPidfile(testtools.TestCase):
     def setUp(self):
+        super(TestPidfile, self).setUp()
         self.os_p = mock.patch.object(daemon, 'os')
         self.os = self.os_p.start()
+        self.addCleanup(self.os_p.stop)
         self.os.open.return_value = FAKE_FD
 
         self.fcntl_p = mock.patch.object(daemon, 'fcntl')
         self.fcntl = self.fcntl_p.start()
+        self.addCleanup(self.fcntl_p.stop)
         self.fcntl.flock.return_value = 0
-
-    def tearDown(self):
-        self.fcntl_p.stop()
-        self.os_p.stop()
 
     def test_init(self):
         self.os.O_CREAT = os.O_CREAT
@@ -52,7 +51,7 @@ class TestPidfile(unittest.TestCase):
         self.os.open.side_effect = IOError
 
         with mock.patch.object(daemon.sys, 'stderr') as stderr:
-            with self.assertRaises(SystemExit):
+            with testtools.ExpectedException(SystemExit):
                 p = daemon.Pidfile('thefile', 'python')
                 sys.assert_has_calls([
                     mock.call.stderr.write(mock.ANY),
@@ -95,8 +94,9 @@ class TestPidfile(unittest.TestCase):
                 ['cat', '/proc/34/cmdline'], 'sudo')
 
 
-class TestDaemon(unittest.TestCase):
+class TestDaemon(testtools.TestCase):
     def setUp(self):
+        super(TestDaemon, self).setUp()
         self.os_p = mock.patch.object(daemon, 'os')
         self.os = self.os_p.start()
 
@@ -106,6 +106,7 @@ class TestDaemon(unittest.TestCase):
     def tearDown(self):
         self.pidfile_p.stop()
         self.os_p.stop()
+        super(TestDaemon, self).tearDown()
 
     def test_init(self):
         d = daemon.Daemon('pidfile')
@@ -113,7 +114,7 @@ class TestDaemon(unittest.TestCase):
 
     def test_fork_parent(self):
         self.os.fork.return_value = 1
-        with self.assertRaises(SystemExit):
+        with testtools.ExpectedException(SystemExit):
             d = daemon.Daemon('pidfile')
             d._fork()
 
@@ -125,7 +126,7 @@ class TestDaemon(unittest.TestCase):
     def test_fork_error(self):
         self.os.fork.side_effect = lambda: OSError(1)
         with mock.patch.object(daemon.sys, 'stderr') as stderr:
-            with self.assertRaises(SystemExit):
+            with testtools.ExpectedException(SystemExit):
                 d = daemon.Daemon('pidfile', 'stdin')
                 d._fork()
 
@@ -174,6 +175,6 @@ class TestDaemon(unittest.TestCase):
 
         with mock.patch.object(daemon.sys, 'stderr') as stderr:
             with mock.patch.object(d, 'daemonize') as daemonize:
-                with self.assertRaises(SystemExit):
+                with testtools.ExpectedException(SystemExit):
                     d.start()
                 self.assertFalse(daemonize.called)

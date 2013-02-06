@@ -20,13 +20,13 @@
 import sys
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.db import migration
 from quantum.db.migration import cli
 
 
-class TestDbMigration(unittest.TestCase):
+class TestDbMigration(testtools.TestCase):
     def test_should_run_plugin_in_list(self):
         self.assertTrue(migration.should_run('foo', ['foo', 'bar']))
         self.assertFalse(migration.should_run('foo', ['bar']))
@@ -35,14 +35,13 @@ class TestDbMigration(unittest.TestCase):
         self.assertTrue(migration.should_run('foo', ['*']))
 
 
-class TestCli(unittest.TestCase):
+class TestCli(testtools.TestCase):
     def setUp(self):
+        super(TestCli, self).setUp()
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
-
-    def tearDown(self):
-        self.do_alembic_cmd_p.stop()
-        cli.CONF.reset()
+        self.addCleanup(self.do_alembic_cmd_p.stop)
+        self.addCleanup(cli.CONF.reset)
 
     def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs={}):
         with mock.patch.object(sys, 'argv', argv):

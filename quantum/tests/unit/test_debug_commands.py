@@ -19,7 +19,7 @@ import socket
 
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.common import config
 from quantum.agent.linux import interface
@@ -32,8 +32,9 @@ class MyApp(object):
         self.stdout = _stdout
 
 
-class TestDebugCommands(unittest.TestCase):
+class TestDebugCommands(testtools.TestCase):
     def setUp(self):
+        super(TestDebugCommands, self).setUp()
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(QuantumDebugAgent.OPTS)
         cfg.CONF(args=[], project='quantum')

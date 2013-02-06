@@ -21,7 +21,7 @@ Unit Tests for hyperv quantum rpc
 """
 
 import mock
-import unittest2
+import testtools
 
 from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
@@ -31,7 +31,7 @@ from quantum.plugins.hyperv import agent_notifier_api as ana
 from quantum.plugins.hyperv.common import constants
 
 
-class rpcHyperVApiTestCase(unittest2.TestCase):
+class rpcHyperVApiTestCase(testtools.TestCase):
 
     def _test_hyperv_quantum_api(
             self, rpcapi, topic, method, rpc_method, **kwargs):

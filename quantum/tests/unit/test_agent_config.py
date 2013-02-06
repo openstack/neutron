@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2
+import testtools
 
 from quantum.agent.common import config
 
@@ -25,7 +25,7 @@ def test_setup_conf():
     assert conf.state_path.endswith('/var/lib/quantum')
 
 
-class TestRootHelper(unittest2.TestCase):
+class TestRootHelper(testtools.TestCase):
 
     def test_agent_root_helper(self):
         conf = config.setup_conf()

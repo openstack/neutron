@@ -20,6 +20,7 @@ import os
 import mock
 import netaddr
 from oslo.config import cfg
+import testtools
 import webob.exc
 
 from quantum.common import constants
@@ -88,11 +89,8 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
         cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
-
-    def tearDown(self):
-        self.fc.reset_all()
-        super(NiciraPluginV2TestCase, self).tearDown()
-        self.mock_nvpapi.stop()
+        self.addCleanup(self.fc.reset_all)
+        self.addCleanup(self.mock_nvpapi.stop)
 
 
 class TestNiciraBasicGet(test_plugin.TestBasicGet, NiciraPluginV2TestCase):
@@ -183,9 +181,10 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         self._test_create_bridge_network(vlan_id=123)
 
     def test_create_bridge_vlan_network_outofrange_returns_400(self):
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_bridge_network(vlan_id=5000)
-        self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_list_networks_filter_by_id(self):
         # We add this unit test to cover some logic specific to the
@@ -220,10 +219,7 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPortSecurityTestCase, self).setUp(self._plugin_name)
-
-    def tearDown(self):
-        super(NiciraPortSecurityTestCase, self).tearDown()
-        self.mock_nvpapi.stop()
+        self.addCleanup(self.mock_nvpapi.stop)
 
 
 class TestNiciraPortSecurity(psec.TestPortSecurity,

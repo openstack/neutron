@@ -16,7 +16,7 @@
 # @author: Ryota MIBU
 
 import random
-import unittest
+import testtools
 
 from quantum.db import api as db_api
 from quantum.openstack.common import uuidutils
@@ -25,17 +25,15 @@ from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
 
 
-class NECPluginV2DBTestBase(object):
+class NECPluginV2DBTestBase(testtools.TestCase):
     """Class conisting of NECPluginV2 DB unit tests"""
 
     def setUp(self):
         """Setup for tests"""
+        super(NECPluginV2DBTestBase, self).setUp()
         ndb.initialize()
         self.session = db_api.get_session()
-
-    def tearDown(self):
-        """Tear Down"""
-        ndb.clear_db()
+        self.addCleanup(ndb.clear_db)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
@@ -55,8 +53,7 @@ class NECPluginV2DBTestBase(object):
         return port_id, datapath_id, port_no, vlan_id, mac, none
 
 
-class NECPluginV2DBTest(NECPluginV2DBTestBase,
-                        unittest.TestCase):
+class NECPluginV2DBTest(NECPluginV2DBTestBase):
 
     def testa_add_ofc_item(self):
         """test add OFC item"""
@@ -166,8 +163,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase,
         self.assertEqual(None, portinfo_none)
 
 
-class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase,
-                                  unittest.TestCase):
+class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):
     """Test related to old ID mapping"""
 
     # Mapping Table mode

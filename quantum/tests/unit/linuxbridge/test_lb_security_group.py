@@ -37,7 +37,6 @@ class LinuxBridgeSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self, plugin=None):
-        self.addCleanup(mock.patch.stopall)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
@@ -48,10 +47,11 @@ class LinuxBridgeSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
                                              RESOURCE_ATTRIBUTE_MAP[item].
                                              copy())
         super(LinuxBridgeSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
+        self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
-        super(LinuxBridgeSecurityGroupsTestCase, self).tearDown()
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk_
+        super(LinuxBridgeSecurityGroupsTestCase, self).tearDown()
 
 
 class TestLinuxBridgeSecurityGroups(LinuxBridgeSecurityGroupsTestCase,

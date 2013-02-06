@@ -20,7 +20,7 @@ Unit tests for extension extended attribute
 """
 
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 import webob.exc as webexc
 
 import quantum
@@ -66,8 +66,9 @@ class ExtensionExtendedAttributeTestPlugin(
         return self.objh[id]
 
 
-class ExtensionExtendedAttributeTestCase(unittest.TestCase):
+class ExtensionExtendedAttributeTestCase(testtools.TestCase):
     def setUp(self):
+        super(ExtensionExtendedAttributeTestCase, self).setUp()
         plugin = (
             "quantum.tests.unit.test_extension_extended_attribute."
             "ExtensionExtendedAttributeTestPlugin"
@@ -92,11 +93,7 @@ class ExtensionExtendedAttributeTestCase(unittest.TestCase):
         self._api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
         self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
-
-    def tearDown(self):
-        # restore original resource attribute map before
-        self._api = None
-        cfg.CONF.reset()
+        self.addCleanup(cfg.CONF.reset)
 
     def _do_request(self, method, path, data=None, params=None, action=None):
         content_type = 'application/json'

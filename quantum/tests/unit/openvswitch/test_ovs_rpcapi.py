@@ -19,7 +19,7 @@ Unit Tests for openvswitch rpc
 """
 
 import stubout
-import unittest2
+import testtools
 
 from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
@@ -29,7 +29,7 @@ from quantum.plugins.openvswitch.common import constants
 from quantum.plugins.openvswitch import ovs_quantum_plugin as povs
 
 
-class rpcApiTestCase(unittest2.TestCase):
+class rpcApiTestCase(testtools.TestCase):
 
     def _test_ovs_api(self, rpcapi, topic, method, rpc_method, **kwargs):
         ctxt = context.RequestContext('fake_user', 'fake_project')

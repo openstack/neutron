@@ -19,24 +19,23 @@
 
 import inspect
 import os
-import unittest
 
 import mox
+import testtools
 
 from quantum.agent.linux import iptables_manager
 
 
-class IptablesManagerStateFulTestCase(unittest.TestCase):
+class IptablesManagerStateFulTestCase(testtools.TestCase):
 
     def setUp(self):
+        super(IptablesManagerStateFulTestCase, self).setUp()
         self.mox = mox.Mox()
         self.root_helper = 'sudo'
         self.iptables = (iptables_manager.
                          IptablesManager(root_helper=self.root_helper))
         self.mox.StubOutWithMock(self.iptables, "execute")
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def test_binary_name(self):
         self.assertEqual(iptables_manager.binary_name,
@@ -285,9 +284,10 @@ class IptablesManagerStateFulTestCase(unittest.TestCase):
         self.mox.VerifyAll()
 
 
-class IptablesManagerStateLessTestCase(unittest.TestCase):
+class IptablesManagerStateLessTestCase(testtools.TestCase):
 
     def setUp(self):
+        super(IptablesManagerStateLessTestCase, self).setUp()
         self.iptables = (iptables_manager.IptablesManager(state_less=True))
 
     def test_nat_not_found(self):

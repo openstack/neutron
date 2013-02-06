@@ -16,7 +16,8 @@
 #    under the License.
 
 import os
-import unittest
+
+import testtools
 
 from quantum.agent.linux import utils
 from quantum.openstack.common import log as logging
@@ -25,7 +26,7 @@ from quantum.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class RootwrapTestExec(unittest.TestCase):
+class RootwrapTestExec(testtools.TestCase):
     """Simple unit test to test the basic rootwrap mechanism
 
     Essentially hello-world.  Just run a command as root and check that
@@ -39,6 +40,7 @@ class RootwrapTestExec(unittest.TestCase):
     """
 
     def setUp(self):
+        super(RootwrapTestExec, self).setUp()
         self.cwd = os.getcwd() + "/../../.."
         # stuff a stupid bash script into /tmp, so that the next
         # method can execute it.
@@ -77,3 +79,4 @@ come to the aid of their party.")
     def tearDown(self):
         os.remove(self.test_file)
         os.remove(self.conf_file)
+        super(RootwrapTestExec, self).tearDown()

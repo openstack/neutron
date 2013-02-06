@@ -40,6 +40,7 @@ def curdir(*p):
 class APIv2TestCase(test_api_v2.APIv2TestCase):
 
     def setUp(self):
+        super(APIv2TestCase, self).setUp()
         plugin = 'quantum.plugins.cisco.network_plugin.PluginV2'
         # Ensure 'stale' patched copies of the plugin are never returned
         QuantumManager._instance = None

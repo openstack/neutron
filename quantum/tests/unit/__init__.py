@@ -20,7 +20,8 @@
 
 import __builtin__
 import os
-import unittest
+
+import testtools
 
 setattr(__builtin__, '_', lambda x: x)
 
@@ -33,13 +34,3 @@ cfg.CONF.state_path = absdir
 # An empty lock path forces lockutils.synchronized to use a temporary
 # location for lock files that will be cleaned up automatically.
 cfg.CONF.lock_path = ''
-
-
-class BaseTest(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-
-def setUp():
-    pass

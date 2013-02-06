@@ -16,17 +16,4 @@
 #    under the License.
 
 import __builtin__
-import unittest
-
-
 setattr(__builtin__, '_', lambda x: x)
-
-
-class BaseTest(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-
-def setUp():
-    pass

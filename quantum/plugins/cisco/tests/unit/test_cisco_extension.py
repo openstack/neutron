@@ -20,9 +20,9 @@
 
 import logging
 import os.path
-import unittest
 
 import routes
+import testtools
 import webob
 from webtest import TestApp
 
@@ -149,19 +149,14 @@ class ExtensionsTestApp(wsgi.Router):
         self._delete_port(net_id, port_id)
         self._delete_network(net_id)
 
-    def tearDown(self):
 
-        """ Tear down """
-
-        db.clear_db()
-
-
-class QosExtensionTest(unittest.TestCase):
+class QosExtensionTest(testtools.TestCase):
 
     def setUp(self):
 
         """ Set up function """
 
+        super(QosExtensionTest, self).setUp()
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         controller = qos.QosController(QuantumManager.get_plugin())
@@ -411,12 +406,13 @@ class QosExtensionTest(unittest.TestCase):
         db.clear_db()
 
 
-class CredentialExtensionTest(unittest.TestCase):
+class CredentialExtensionTest(testtools.TestCase):
 
     def setUp(self):
 
         """ Set up function """
 
+        super(CredentialExtensionTest, self).setUp()
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         controller = credential.CredentialController(QuantumManager.

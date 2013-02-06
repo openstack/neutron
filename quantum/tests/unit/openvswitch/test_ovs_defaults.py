@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+import testtools
 
 from oslo.config import cfg
 
@@ -21,7 +21,7 @@ from oslo.config import cfg
 from quantum.plugins.openvswitch.common import config
 
 
-class ConfigurationTest(unittest.TestCase):
+class ConfigurationTest(testtools.TestCase):
 
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)

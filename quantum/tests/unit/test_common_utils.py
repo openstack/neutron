@@ -12,37 +12,37 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2 as unittest
+import testtools
 
 from quantum.common import utils
 
 
-class TestParseMappings(unittest.TestCase):
+class TestParseMappings(testtools.TestCase):
     def parse(self, mapping_list, unique_values=True):
         return utils.parse_mappings(mapping_list, unique_values)
 
     def test_parse_mappings_fails_for_missing_separator(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse(['key'])
 
     def test_parse_mappings_fails_for_missing_key(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse([':val'])
 
     def test_parse_mappings_fails_for_missing_value(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse(['key:'])
 
     def test_parse_mappings_fails_for_extra_separator(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse(['key:val:junk'])
 
     def test_parse_mappings_fails_for_duplicate_key(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse(['key:val1', 'key:val2'])
 
     def test_parse_mappings_fails_for_duplicate_value(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             self.parse(['key1:val', 'key2:val'])
 
     def test_parse_mappings_succeeds_for_one_mapping(self):

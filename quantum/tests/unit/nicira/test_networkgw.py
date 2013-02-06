@@ -16,7 +16,7 @@
 import contextlib
 
 import mock
-import unittest2 as unittest
+import testtools
 from webob import exc
 import webtest
 
@@ -53,9 +53,10 @@ class TestExtensionManager(object):
         return []
 
 
-class NetworkGatewayExtensionTestCase(unittest.TestCase):
+class NetworkGatewayExtensionTestCase(testtools.TestCase):
 
     def setUp(self):
+        super(NetworkGatewayExtensionTestCase, self).setUp()
         plugin = '%s.%s' % (networkgw.__name__,
                             networkgw.NetworkGatewayPluginBase.__name__)
         self._resource = networkgw.RESOURCE_NAME.replace('-', '_')
@@ -71,9 +72,11 @@ class NetworkGatewayExtensionTestCase(unittest.TestCase):
 
         # Update the plugin and extensions path
         cfg.CONF.set_override('core_plugin', plugin)
+        self.addCleanup(cfg.CONF.reset)
 
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
+        _plugin_patcher = mock.patch(plugin, autospec=True)
+        self.plugin = _plugin_patcher.start()
+        self.addCleanup(_plugin_patcher.stop)
 
         # Instantiate mock plugin and enable extensions
         manager.QuantumManager.get_plugin().supported_extension_aliases = (
@@ -82,12 +85,6 @@ class NetworkGatewayExtensionTestCase(unittest.TestCase):
         PluginAwareExtensionManager._instance = ext_mgr
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
-
-    def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
-        cfg.CONF.reset()
 
     def test_network_gateway_create(self):
         nw_gw_id = _uuid()

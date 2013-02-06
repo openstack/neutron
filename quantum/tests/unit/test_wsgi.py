@@ -18,7 +18,7 @@
 import socket
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.api.v2 import attributes
 from quantum.common import constants
@@ -26,7 +26,7 @@ from quantum.common import exceptions as exception
 from quantum import wsgi
 
 
-class TestWSGIServer(unittest.TestCase):
+class TestWSGIServer(testtools.TestCase):
     """WSGI server tests."""
 
     def test_start_random_port(self):
@@ -82,7 +82,7 @@ class TestWSGIServer(unittest.TestCase):
                     ])
 
 
-class SerializerTest(unittest.TestCase):
+class SerializerTest(testtools.TestCase):
     def test_serialize_unknown_content_type(self):
         """
         Test serialize verifies that exception InvalidContentType is raised
@@ -108,7 +108,7 @@ class SerializerTest(unittest.TestCase):
             serializer.get_deserialize_handler, content_type)
 
 
-class RequestDeserializerTest(unittest.TestCase):
+class RequestDeserializerTest(testtools.TestCase):
     def test_get_body_deserializer_unknown_content_type(self):
         """
         Test get body deserializer verifies
@@ -121,8 +121,10 @@ class RequestDeserializerTest(unittest.TestCase):
             deserializer.get_body_deserializer, content_type)
 
 
-class ResponseSerializerTest(unittest.TestCase):
+class ResponseSerializerTest(testtools.TestCase):
     def setUp(self):
+        super(ResponseSerializerTest, self).setUp()
+
         class JSONSerializer(object):
             def serialize(self, data, action='default'):
                 return 'pew_json'
@@ -162,7 +164,7 @@ class ResponseSerializerTest(unittest.TestCase):
             self.serializer.get_body_serializer, 'application/unknown')
 
 
-class XMLDeserializerTest(unittest.TestCase):
+class XMLDeserializerTest(testtools.TestCase):
     def test_default_raise_Maiformed_Exception(self):
         """
         Test verifies that exception MalformedRequestBody is raised
@@ -174,7 +176,7 @@ class XMLDeserializerTest(unittest.TestCase):
             exception.MalformedRequestBody, deserializer.default, data_string)
 
 
-class JSONDeserializerTest(unittest.TestCase):
+class JSONDeserializerTest(testtools.TestCase):
     def test_default_raise_Maiformed_Exception(self):
         """
         Test verifies JsonDeserializer.default
@@ -187,7 +189,7 @@ class JSONDeserializerTest(unittest.TestCase):
             exception.MalformedRequestBody, deserializer.default, data_string)
 
 
-class ResourceTest(unittest.TestCase):
+class ResourceTest(testtools.TestCase):
     def test_dispatch_unknown_controller_action(self):
         class Controller(object):
             def index(self, request, pants=None):
@@ -260,7 +262,7 @@ class ResourceTest(unittest.TestCase):
         self.assertEqual(400, result.status_int)
 
 
-class XMLDictSerializerTest(unittest.TestCase):
+class XMLDictSerializerTest(testtools.TestCase):
     def test_xml(self):
         NETWORK = {'network': {'test': None,
                                'tenant_id': 'test-tenant',

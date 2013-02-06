@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
+import testtools
+from testtools import matchers
 
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
@@ -33,14 +34,13 @@ TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 
 
-class VlanAllocationsTest(unittest2.TestCase):
+class VlanAllocationsTest(testtools.TestCase):
     def setUp(self):
+        super(VlanAllocationsTest, self).setUp()
         ovs_db_v2.initialize()
         ovs_db_v2.sync_vlan_allocations(VLAN_RANGES)
         self.session = db.get_session()
-
-    def tearDown(self):
-        db.clear_db()
+        self.addCleanup(db.clear_db)
 
     def test_sync_vlan_allocations(self):
         self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
@@ -117,19 +117,19 @@ class VlanAllocationsTest(unittest2.TestCase):
         for x in xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
             self.assertEqual(physical_network, PHYS_NET)
-            self.assertGreaterEqual(vlan_id, VLAN_MIN)
-            self.assertLessEqual(vlan_id, VLAN_MAX)
+            self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+            self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
-        with self.assertRaises(q_exc.NoNetworkAvailable):
+        with testtools.ExpectedException(q_exc.NoNetworkAvailable):
             physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
 
         ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop(),
                                VLAN_RANGES)
         physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
         self.assertEqual(physical_network, PHYS_NET)
-        self.assertGreaterEqual(vlan_id, VLAN_MIN)
-        self.assertLessEqual(vlan_id, VLAN_MAX)
+        self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+        self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
         vlan_ids.add(vlan_id)
 
         for vlan_id in vlan_ids:
@@ -144,7 +144,7 @@ class VlanAllocationsTest(unittest2.TestCase):
         self.assertTrue(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                       vlan_id).allocated)
 
-        with self.assertRaises(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(q_exc.VlanIdInUse):
             ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
 
         ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
@@ -158,7 +158,7 @@ class VlanAllocationsTest(unittest2.TestCase):
         self.assertTrue(ovs_db_v2.get_vlan_allocation(PHYS_NET,
                                                       vlan_id).allocated)
 
-        with self.assertRaises(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(q_exc.VlanIdInUse):
             ovs_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
 
         ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
@@ -169,8 +169,8 @@ class VlanAllocationsTest(unittest2.TestCase):
         for x in xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
             self.assertEqual(physical_network, PHYS_NET)
-            self.assertGreaterEqual(vlan_id, VLAN_MIN)
-            self.assertLessEqual(vlan_id, VLAN_MAX)
+            self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+            self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
         ovs_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop(),
@@ -178,14 +178,13 @@ class VlanAllocationsTest(unittest2.TestCase):
         ovs_db_v2.sync_vlan_allocations({})
 
 
-class TunnelAllocationsTest(unittest2.TestCase):
+class TunnelAllocationsTest(testtools.TestCase):
     def setUp(self):
+        super(TunnelAllocationsTest, self).setUp()
         ovs_db_v2.initialize()
         ovs_db_v2.sync_tunnel_allocations(TUNNEL_RANGES)
         self.session = db.get_session()
-
-    def tearDown(self):
-        db.clear_db()
+        self.addCleanup(db.clear_db)
 
     def test_sync_tunnel_allocations(self):
         self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MIN - 1))
@@ -214,17 +213,17 @@ class TunnelAllocationsTest(unittest2.TestCase):
         tunnel_ids = set()
         for x in xrange(TUN_MIN, TUN_MAX + 1):
             tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
-            self.assertGreaterEqual(tunnel_id, TUN_MIN)
-            self.assertLessEqual(tunnel_id, TUN_MAX)
+            self.assertThat(tunnel_id, matchers.GreaterThan(TUN_MIN - 1))
+            self.assertThat(tunnel_id, matchers.LessThan(TUN_MAX + 1))
             tunnel_ids.add(tunnel_id)
 
-        with self.assertRaises(q_exc.NoNetworkAvailable):
+        with testtools.ExpectedException(q_exc.NoNetworkAvailable):
             tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
 
         ovs_db_v2.release_tunnel(self.session, tunnel_ids.pop(), TUNNEL_RANGES)
         tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
-        self.assertGreaterEqual(tunnel_id, TUN_MIN)
-        self.assertLessEqual(tunnel_id, TUN_MAX)
+        self.assertThat(tunnel_id, matchers.GreaterThan(TUN_MIN - 1))
+        self.assertThat(tunnel_id, matchers.LessThan(TUN_MAX + 1))
         tunnel_ids.add(tunnel_id)
 
         for tunnel_id in tunnel_ids:
@@ -236,7 +235,7 @@ class TunnelAllocationsTest(unittest2.TestCase):
         ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
         self.assertTrue(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
 
-        with self.assertRaises(q_exc.TunnelIdInUse):
+        with testtools.ExpectedException(q_exc.TunnelIdInUse):
             ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
 
         ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)
@@ -248,7 +247,7 @@ class TunnelAllocationsTest(unittest2.TestCase):
         ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
         self.assertTrue(ovs_db_v2.get_tunnel_allocation(tunnel_id).allocated)
 
-        with self.assertRaises(q_exc.TunnelIdInUse):
+        with testtools.ExpectedException(q_exc.TunnelIdInUse):
             ovs_db_v2.reserve_specific_tunnel(self.session, tunnel_id)
 
         ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)

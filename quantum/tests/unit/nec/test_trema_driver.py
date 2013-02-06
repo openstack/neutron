@@ -16,7 +16,7 @@
 # @author: Ryota MIBU
 
 import mox
-import unittest
+import testtools
 
 from quantum import context
 from quantum.openstack.common import uuidutils
@@ -32,17 +32,16 @@ class TestConfig(object):
     port = 8888
 
 
-class TremaDriverTestBase():
+class TremaDriverTestBase(testtools.TestCase):
 
     driver_name = "trema"
 
     def setUp(self):
+        super(TremaDriverTestBase, self).setUp()
         self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver_name)(TestConfig)
         self.mox.StubOutWithMock(ofc_client.OFCClient, 'do_request')
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
@@ -80,7 +79,7 @@ class TremaDriverNetworkTestBase(TremaDriverTestBase):
         self.mox.VerifyAll()
 
 
-class TremaPortBaseDriverTest(TremaDriverNetworkTestBase, unittest.TestCase):
+class TremaPortBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_port"
 
@@ -111,8 +110,7 @@ class TremaPortBaseDriverTest(TremaDriverNetworkTestBase, unittest.TestCase):
         self.mox.VerifyAll()
 
 
-class TremaPortMACBaseDriverTest(TremaDriverNetworkTestBase,
-                                 unittest.TestCase):
+class TremaPortMACBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_portmac"
 
@@ -152,7 +150,7 @@ class TremaPortMACBaseDriverTest(TremaDriverNetworkTestBase,
         self.mox.VerifyAll()
 
 
-class TremaMACBaseDriverTest(TremaDriverNetworkTestBase, unittest.TestCase):
+class TremaMACBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_mac"
 
@@ -180,7 +178,7 @@ class TremaMACBaseDriverTest(TremaDriverNetworkTestBase, unittest.TestCase):
         self.mox.VerifyAll()
 
 
-class TremaFilterDriverTest(TremaDriverTestBase, unittest.TestCase):
+class TremaFilterDriverTest(TremaDriverTestBase):
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
@@ -247,16 +245,15 @@ def generate_random_ids(count=1):
         return [uuidutils.generate_uuid() for i in xrange(count)]
 
 
-class TremaIdConvertTest(unittest.TestCase):
+class TremaIdConvertTest(testtools.TestCase):
     driver_name = 'trema'
 
     def setUp(self):
+        super(TremaIdConvertTest, self).setUp()
         self.driver = drivers.get_driver(self.driver_name)(TestConfig)
         self.mox = mox.Mox()
         self.ctx = self.mox.CreateMock(context.Context)
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def test_convert_tenant_id(self):
         ofc_t_id = generate_random_ids(1)
@@ -291,16 +288,15 @@ class TremaIdConvertTest(unittest.TestCase):
         self.assertEqual(ret, ofc_f_id)
 
 
-class TremaIdConvertTestBase(object):
+class TremaIdConvertTestBase(testtools.TestCase):
     def setUp(self):
+        super(TremaIdConvertTestBase, self).setUp()
         self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver_name)(TestConfig)
         self.ctx = self.mox.CreateMock(context.Context)
         self.ctx.session = "session"
         self.mox.StubOutWithMock(ndb, 'get_ofc_id_lookup_both')
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def _test_convert_port_id(self, port_path_template):
         t_id, n_id = generate_random_ids(2)
@@ -339,7 +335,7 @@ class TremaIdConvertTestBase(object):
         self.assertEqual(ret, ofc_p_id)
 
 
-class TremaIdConvertPortBaseTest(TremaIdConvertTestBase, unittest.TestCase):
+class TremaIdConvertPortBaseTest(TremaIdConvertTestBase):
     driver_name = "trema_port"
 
     def test_convert_port_id(self):
@@ -354,7 +350,7 @@ class TremaIdConvertPortBaseTest(TremaIdConvertTestBase, unittest.TestCase):
             '/networs/%(network)s/ports/%(port)s')
 
 
-class TremaIdConvertPortMACBaseTest(TremaIdConvertTestBase, unittest.TestCase):
+class TremaIdConvertPortMACBaseTest(TremaIdConvertTestBase):
     driver_name = "trema_portmac"
 
     def test_convert_port_id(self):
@@ -370,7 +366,7 @@ class TremaIdConvertPortMACBaseTest(TremaIdConvertTestBase, unittest.TestCase):
             '/networs/%(network)s/ports/dummy-%(port)s/attachments/%(port)s')
 
 
-class TremaIdConvertMACBaseTest(TremaIdConvertTestBase, unittest.TestCase):
+class TremaIdConvertMACBaseTest(TremaIdConvertTestBase):
     driver_name = "trema_mac"
 
     def test_convert_port_id(self):

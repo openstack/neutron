@@ -17,17 +17,18 @@ from contextlib import nested
 import httplib
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.openstack.common import importutils
 from quantum.tests.unit.ryu import fake_ryu
 
 
-class RyuAgentTestCase(unittest.TestCase):
+class RyuAgentTestCase(testtools.TestCase):
 
     _AGENT_NAME = 'quantum.plugins.ryu.agent.ryu_quantum_agent'
 
     def setUp(self):
+        super(RyuAgentTestCase, self).setUp()
         self.addCleanup(mock.patch.stopall)
         self.fake_ryu = fake_ryu.patch_fake_ryu_client().start()
         self.mod_agent = importutils.import_module(self._AGENT_NAME)

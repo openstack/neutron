@@ -16,10 +16,10 @@
 #    under the License.
 
 import copy
-import unittest2
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from quantum.agent.common import config as agent_config
 from quantum.agent import l3_agent
@@ -33,9 +33,10 @@ _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
 
 
-class TestBasicRouterOperations(unittest2.TestCase):
+class TestBasicRouterOperations(testtools.TestCase):
 
     def setUp(self):
+        super(TestBasicRouterOperations, self).setUp()
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
@@ -82,6 +83,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         self.dvr_cls_p.stop()
         self.utils_exec_p.stop()
         self.external_process_p.stop()
+        super(TestBasicRouterOperations, self).tearDown()
 
     def testRouterInfoCreate(self):
         id = _uuid()

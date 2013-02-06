@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2 as unittest
+import testtools
 import webob.exc as webexc
 
 import quantum
@@ -151,8 +151,9 @@ class RouterServiceInsertionTestPlugin(
         pass
 
 
-class RouterServiceInsertionTestCase(unittest.TestCase):
+class RouterServiceInsertionTestCase(testtools.TestCase):
     def setUp(self):
+        super(RouterServiceInsertionTestCase, self).setUp()
         plugin = (
             "quantum.tests.unit.test_routerserviceinsertion."
             "RouterServiceInsertionTestPlugin"
@@ -166,6 +167,7 @@ class RouterServiceInsertionTestCase(unittest.TestCase):
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('service_plugins', [plugin])
         cfg.CONF.set_override('quota_router', -1, group='QUOTAS')
+        self.addCleanup(cfg.CONF.reset)
 
         # Ensure 'stale' patched copies of the plugin are never returned
         quantum.manager.QuantumManager._instance = None
@@ -185,10 +187,6 @@ class RouterServiceInsertionTestCase(unittest.TestCase):
 
         res = self._do_request('GET', _get_path('service-types'))
         self._service_type_id = res['service_types'][0]['id']
-
-    def tearDown(self):
-        self._api = None
-        cfg.CONF.reset()
 
     def _do_request(self, method, path, data=None, params=None, action=None):
         content_type = 'application/json'
@@ -245,10 +243,11 @@ class RouterServiceInsertionTestCase(unittest.TestCase):
         }
         if update_service_type_id:
             data["router"]["service_type_id"] = _uuid()
-            with self.assertRaises(webexc.HTTPClientError) as ctx_manager:
+            with testtools.ExpectedException(
+                    webexc.HTTPClientError) as ctx_manager:
                 res = self._do_request(
                     'PUT', _get_path('routers/{0}'.format(router_id)), data)
-            self.assertEqual(ctx_manager.exception.code, 400)
+                self.assertEqual(ctx_manager.exception.code, 400)
         else:
             res = self._do_request(
                 'PUT', _get_path('routers/{0}'.format(router_id)), data)
@@ -375,11 +374,12 @@ class RouterServiceInsertionTestCase(unittest.TestCase):
         data = {res: uattrs}
         if update_router_id:
             uattrs['router_id'] = self._router_id
-            with self.assertRaises(webexc.HTTPClientError) as ctx_manager:
+            with testtools.ExpectedException(
+                    webexc.HTTPClientError) as ctx_manager:
                 newobj = self._do_request(
                     'PUT',
                     _get_path('lb/{0}s/{1}'.format(res, obj['id'])), data)
-            self.assertEqual(ctx_manager.exception.code, 400)
+                self.assertEqual(ctx_manager.exception.code, 400)
         else:
             newobj = self._do_request(
                 'PUT',

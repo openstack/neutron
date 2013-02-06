@@ -18,7 +18,8 @@
 # @author: Zhongyue Luo, Intel Corporation.
 #
 
-import unittest2
+import testtools
+from testtools import matchers
 from webob import exc
 
 from quantum.api import api_common as common
@@ -28,8 +29,9 @@ class FakeController(common.QuantumController):
     _resource_name = 'fake'
 
 
-class APICommonTestCase(unittest2.TestCase):
+class APICommonTestCase(testtools.TestCase):
     def setUp(self):
+        super(APICommonTestCase, self).setUp()
         self.controller = FakeController(None)
 
     def test_prepare_request_body(self):
@@ -56,7 +58,7 @@ class APICommonTestCase(unittest2.TestCase):
             }
         }
         actual = self.controller._prepare_request_body(body, params)
-        self.assertDictEqual(expect, actual)
+        self.assertThat(expect, matchers.Equals(actual))
 
     def test_prepare_request_body_none(self):
         body = None
@@ -71,7 +73,7 @@ class APICommonTestCase(unittest2.TestCase):
             }
         }
         actual = self.controller._prepare_request_body(body, params)
-        self.assertDictEqual(expect, actual)
+        self.assertThat(expect, matchers.Equals(actual))
 
     def test_prepare_request_body_keyerror(self):
         body = {'t2': {}}

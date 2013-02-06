@@ -1,11 +1,10 @@
-import unittest
-
+import testtools
 import webob
 
 from quantum import auth
 
 
-class QuantumKeystoneContextTestCase(unittest.TestCase):
+class QuantumKeystoneContextTestCase(testtools.TestCase):
     def setUp(self):
         super(QuantumKeystoneContextTestCase, self).setUp()
 

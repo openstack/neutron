@@ -157,8 +157,8 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                         {'router': {'routes': routes}})
 
                     body = self._show('routers', r['router']['id'])
-                    self.assertItemsEqual(body['router']['routes'],
-                                          routes)
+                    self.assertEqual(sorted(body['router']['routes']),
+                                     sorted(routes))
 
                     # clean-up
                     self._update('routers', r['router']['id'],
@@ -189,8 +189,8 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                                     routes_orig}})
 
                     body = self._show('routers', r['router']['id'])
-                    self.assertItemsEqual(body['router']['routes'],
-                                          routes_orig)
+                    self.assertEqual(sorted(body['router']['routes']),
+                                     sorted(routes_orig))
 
                     routes_left = [{'destination': '135.207.0.0/16',
                                     'nexthop': '10.0.1.3'},
@@ -202,8 +202,8 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                                     routes_left}})
 
                     body = self._show('routers', r['router']['id'])
-                    self.assertItemsEqual(body['router']['routes'],
-                                          routes_left)
+                    self.assertEqual(sorted(body['router']['routes']),
+                                     sorted(routes_left))
 
                     body = self._update('routers', r['router']['id'],
                                         {'router': {'routes': []}})

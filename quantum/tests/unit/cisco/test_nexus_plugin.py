@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import mock
-import unittest
+import testtools
 
 from quantum.db import api as db
 from quantum.openstack.common import importutils
@@ -34,12 +34,13 @@ NEXUS_DRIVER = ('quantum.plugins.cisco.tests.unit.v2.nexus.'
                 'fake_nexus_driver.CiscoNEXUSFakeDriver')
 
 
-class TestCiscoNexusPlugin(unittest.TestCase):
+class TestCiscoNexusPlugin(testtools.TestCase):
 
     def setUp(self):
         """
         Set up function
         """
+        super(TestCiscoNexusPlugin, self).setUp()
         self.tenant_id = "test_tenant_cisco1"
         self.net_name = "test_network_cisco1"
         self.net_id = 000007
@@ -133,9 +134,3 @@ class TestCiscoNexusPlugin(unittest.TestCase):
         )
 
         self.assertEqual(expected_instance_id, INSTANCE)
-
-    def tearDown(self):
-        """Clear the test environment"""
-        pass
-        # Remove database contents
-        #db.clear_db(network_models_v2.model_base.BASEV2)

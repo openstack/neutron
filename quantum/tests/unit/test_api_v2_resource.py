@@ -18,9 +18,8 @@
 # @author: Zhongyue Luo, Intel Corporation.
 #
 
-import unittest2 as unittest
-
 import mock
+import testtools
 from webob import exc
 import webtest
 
@@ -30,8 +29,9 @@ from quantum import context
 from quantum import wsgi
 
 
-class RequestTestCase(unittest.TestCase):
+class RequestTestCase(testtools.TestCase):
     def setUp(self):
+        super(RequestTestCase, self).setUp()
         self.req = wsgi_resource.Request({'foo': 'bar'})
 
     def test_content_type_missing(self):
@@ -99,7 +99,7 @@ class RequestTestCase(unittest.TestCase):
         self.assertTrue(self.req.context.is_admin)
 
 
-class ResourceTestCase(unittest.TestCase):
+class ResourceTestCase(testtools.TestCase):
     def test_unmapped_quantum_error(self):
         controller = mock.MagicMock()
         controller.test.side_effect = q_exc.QuantumException()

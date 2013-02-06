@@ -16,15 +16,16 @@
 
 import mock
 from oslo.config import cfg
-import unittest2 as unittest
+import testtools
 
 from quantum.plugins.linuxbridge.agent import linuxbridge_quantum_agent
 from quantum.plugins.linuxbridge.common import constants as lconst
 
 
-class TestLinuxBridge(unittest.TestCase):
+class TestLinuxBridge(testtools.TestCase):
 
     def setUp(self):
+        super(TestLinuxBridge, self).setUp()
         self.addCleanup(cfg.CONF.reset)
         interface_mappings = {'physnet1': 'eth1'}
         root_helper = cfg.CONF.AGENT.root_helper

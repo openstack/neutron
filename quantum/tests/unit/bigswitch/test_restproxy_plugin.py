@@ -67,13 +67,10 @@ class BigSwitchProxyPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
         self.httpPatch = patch('httplib.HTTPConnection', create=True,
                                new=HTTPConnectionMock)
+        self.addCleanup(self.httpPatch.stop)
         MockHTTPConnection = self.httpPatch.start()
         super(BigSwitchProxyPluginV2TestCase,
               self).setUp(self._plugin_name)
-
-    def tearDown(self):
-        super(BigSwitchProxyPluginV2TestCase, self).tearDown()
-        self.httpPatch.stop()
 
 
 class TestBigSwitchProxyBasicGet(test_plugin.TestBasicGet,

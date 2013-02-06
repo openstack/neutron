@@ -19,7 +19,7 @@ Unit Tests for linuxbridge rpc
 """
 
 import stubout
-import unittest2
+import testtools
 
 from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
@@ -28,7 +28,7 @@ from quantum.openstack.common import rpc
 from quantum.plugins.linuxbridge import lb_quantum_plugin as plb
 
 
-class rpcApiTestCase(unittest2.TestCase):
+class rpcApiTestCase(testtools.TestCase):
 
     def _test_lb_api(self, rpcapi, topic, method, rpc_method, **kwargs):
         ctxt = context.RequestContext('fake_user', 'fake_project')

@@ -20,10 +20,10 @@ import os.path
 import shutil
 import StringIO
 import tempfile
-import unittest2 as unittest
 import urllib2
 
 import mock
+import testtools
 
 import quantum
 from quantum.common import exceptions
@@ -33,16 +33,13 @@ from quantum.openstack.common import policy as common_policy
 from quantum import policy
 
 
-class PolicyFileTestCase(unittest.TestCase):
+class PolicyFileTestCase(testtools.TestCase):
     def setUp(self):
         super(PolicyFileTestCase, self).setUp()
         policy.reset()
+        self.addCleanup(policy.reset)
         self.context = context.Context('fake', 'fake')
         self.target = {}
-
-    def tearDown(self):
-        super(PolicyFileTestCase, self).tearDown()
-        policy.reset()
 
     @contextlib.contextmanager
     def _tempdir(self, **kwargs):
@@ -81,10 +78,11 @@ class PolicyFileTestCase(unittest.TestCase):
                                   self.target)
 
 
-class PolicyTestCase(unittest.TestCase):
+class PolicyTestCase(testtools.TestCase):
     def setUp(self):
         super(PolicyTestCase, self).setUp()
         policy.reset()
+        self.addCleanup(policy.reset)
         # NOTE(vish): preload rules to circumvent reloading from file
         policy.init()
         rules = {
@@ -104,10 +102,6 @@ class PolicyTestCase(unittest.TestCase):
                  for k, v in rules.items())))
         self.context = context.Context('fake', 'fake', roles=['member'])
         self.target = {}
-
-    def tearDown(self):
-        policy.reset()
-        super(PolicyTestCase, self).tearDown()
 
     def test_enforce_nonexistent_action_throws(self):
         action = "example:noexist"
@@ -178,12 +172,13 @@ class PolicyTestCase(unittest.TestCase):
         policy.enforce(admin_context, uppercase_action, self.target)
 
 
-class DefaultPolicyTestCase(unittest.TestCase):
+class DefaultPolicyTestCase(testtools.TestCase):
 
     def setUp(self):
         super(DefaultPolicyTestCase, self).setUp()
         policy.reset()
         policy.init()
+        self.addCleanup(policy.reset)
 
         self.rules = {
             "default": '',
@@ -200,10 +195,6 @@ class DefaultPolicyTestCase(unittest.TestCase):
                  for k, v in self.rules.items()), default_rule)
         common_policy.set_rules(rules)
 
-    def tearDown(self):
-        super(DefaultPolicyTestCase, self).tearDown()
-        policy.reset()
-
     def test_policy_called(self):
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, "example:exist", {})
@@ -217,12 +208,13 @@ class DefaultPolicyTestCase(unittest.TestCase):
                           self.context, "example:noexist", {})
 
 
-class QuantumPolicyTestCase(unittest.TestCase):
+class QuantumPolicyTestCase(testtools.TestCase):
 
     def setUp(self):
         super(QuantumPolicyTestCase, self).setUp()
         policy.reset()
         policy.init()
+        self.addCleanup(policy.reset)
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "admin_or_network_owner": "role:admin or "
                                       "tenant_id:%(network_tenant_id)s",
@@ -251,14 +243,11 @@ class QuantumPolicyTestCase(unittest.TestCase):
                                          'init',
                                          new=fakepolicyinit)
         self.patcher.start()
+        self.addCleanup(self.patcher.stop)
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
             "quantum.db.db_base_plugin_v2.QuantumDbPluginV2")
         self.plugin = plugin_klass()
-
-    def tearDown(self):
-        self.patcher.stop()
-        policy.reset()
 
     def _test_action_on_attr(self, context, action, attr, value,
                              exception=None):

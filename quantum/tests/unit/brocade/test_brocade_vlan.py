@@ -19,18 +19,20 @@
 """
 Test vlans alloc/dealloc.
 """
-import unittest2 as unittest
+import testtools
 
 from quantum.db import api as db
 from quantum.openstack.common import context
 from quantum.plugins.brocade import vlanbm as vlan_bitmap
 
 
-class TestVlanBitmap(unittest.TestCase):
+class TestVlanBitmap(testtools.TestCase):
     """exercise Vlan bitmap ."""
 
     def setUp(self):
+        super(TestVlanBitmap, self).setUp()
         db.configure_db()
+        self.addCleanup(db.clear_db)
         self.context = context.get_admin_context()
         self.context.session = db.get_session()
 
@@ -69,6 +71,3 @@ class TestVlanBitmap(unittest.TestCase):
         self.vbm_.release_vlan(4)
         vlan_id = self.vbm_.get_next_vlan(None)
         self.assertEqual(vlan_id, 4)
-
-    def tearDown(self):
-        db.clear_db()

@@ -19,7 +19,7 @@ import random
 import string
 
 import mox
-import unittest
+import testtools
 
 from quantum import context
 from quantum.openstack.common import uuidutils
@@ -43,17 +43,16 @@ def _ofc(id):
     return "ofc-%s" % id
 
 
-class PFCDriverTestBase():
+class PFCDriverTestBase(testtools.TestCase):
 
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
     def setUp(self):
+        super(PFCDriverTestBase, self).setUp()
         self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver)(TestConfig)
         self.mox.StubOutWithMock(ofc.OFCClient, 'do_request')
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test"""
@@ -168,11 +167,11 @@ class PFCDriverTestBase():
         self.mox.VerifyAll()
 
 
-class PFCDriverBaseTest(PFCDriverTestBase, unittest.TestCase):
+class PFCDriverBaseTest(PFCDriverTestBase):
     pass
 
 
-class PFCV3DriverTest(PFCDriverTestBase, unittest.TestCase):
+class PFCV3DriverTest(PFCDriverTestBase):
     driver = 'pfc_v3'
 
     def testa_create_tenant(self):
@@ -189,19 +188,17 @@ class PFCV3DriverTest(PFCDriverTestBase, unittest.TestCase):
         pass
 
 
-class PFCV4DriverTest(PFCDriverTestBase, unittest.TestCase):
+class PFCV4DriverTest(PFCDriverTestBase):
     driver = 'pfc_v4'
 
 
-class PFCDriverStringTest(unittest.TestCase):
+class PFCDriverStringTest(testtools.TestCase):
 
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
     def setUp(self):
+        super(PFCDriverStringTest, self).setUp()
         self.driver = drivers.get_driver(self.driver)(TestConfig)
-
-    def tearDown(self):
-        pass
 
     def test_generate_pfc_id_uuid(self):
         id_str = uuidutils.generate_uuid()
@@ -238,18 +235,17 @@ class PFCDriverStringTest(unittest.TestCase):
         self.assertEqual(exp_str, ret_str)
 
 
-class PFCIdConvertTest(unittest.TestCase):
+class PFCIdConvertTest(testtools.TestCase):
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
     def setUp(self):
+        super(PFCIdConvertTest, self).setUp()
         self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver)(TestConfig)
         self.ctx = self.mox.CreateMock(context.Context)
         self.ctx.session = "session"
         self.mox.StubOutWithMock(ndb, 'get_ofc_id_lookup_both')
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
+        self.addCleanup(self.mox.UnsetStubs)
 
     def generate_random_ids(self, count=1):
         if count == 1:

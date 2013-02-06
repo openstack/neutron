@@ -43,7 +43,6 @@ To run a single functional test module::
 
 import gettext
 import os
-import unittest
 import sys
 
 from quantum.common.test_lib import run_tests

@@ -16,12 +16,12 @@
 #    under the License.
 
 from contextlib import nested
+
 import mock
 from mock import call
-import unittest2 as unittest
-
 import mox
 from oslo.config import cfg
+import testtools
 
 from quantum.agent import firewall as firewall_base
 from quantum.agent.linux import iptables_manager
@@ -370,8 +370,9 @@ class SGServerRpcCallBackMixinTestCaseXML(SGServerRpcCallBackMixinTestCase):
     fmt = 'xml'
 
 
-class SGAgentRpcCallBackMixinTestCase(unittest.TestCase):
+class SGAgentRpcCallBackMixinTestCase(testtools.TestCase):
     def setUp(self):
+        super(SGAgentRpcCallBackMixinTestCase, self).setUp()
         self.rpc = sg_rpc.SecurityGroupAgentRpcCallbackMixin()
         self.rpc.sg_agent = mock.Mock()
 
@@ -393,8 +394,9 @@ class SGAgentRpcCallBackMixinTestCase(unittest.TestCase):
             [call.security_groups_provider_updated()])
 
 
-class SecurityGroupAgentRpcTestCase(unittest.TestCase):
+class SecurityGroupAgentRpcTestCase(testtools.TestCase):
     def setUp(self):
+        super(SecurityGroupAgentRpcTestCase, self).setUp()
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None
         self.addCleanup(mock.patch.stopall)
@@ -477,8 +479,9 @@ class FakeSGRpcApi(agent_rpc.PluginApi,
     pass
 
 
-class SecurityGroupServerRpcApiTestCase(unittest.TestCase):
+class SecurityGroupServerRpcApiTestCase(testtools.TestCase):
     def setUp(self):
+        super(SecurityGroupServerRpcApiTestCase, self).setUp()
         self.rpc = FakeSGRpcApi('fake_topic')
         self.rpc.call = mock.Mock()
 
@@ -499,8 +502,9 @@ class FakeSGNotifierAPI(proxy.RpcProxy,
     pass
 
 
-class SecurityGroupAgentRpcApiTestCase(unittest.TestCase):
+class SecurityGroupAgentRpcApiTestCase(testtools.TestCase):
     def setUp(self):
+        super(SecurityGroupAgentRpcApiTestCase, self).setUp()
         self.notifier = FakeSGNotifierAPI(topic='fake',
                                           default_version='1.0')
         self.notifier.fanout_cast = mock.Mock()
@@ -941,12 +945,13 @@ IPTABLES_FILTER_V6_EMPTY = """:%(bn)s-(%(chains)s) - [0:0]
 FIREWALL_BASE_PACKAGE = 'quantum.agent.linux.iptables_firewall.'
 
 
-class TestSecurityGroupAgentWithIptables(unittest.TestCase):
+class TestSecurityGroupAgentWithIptables(testtools.TestCase):
     FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
     PHYSDEV_INGRESS = 'physdev-out'
     PHYSDEV_EGRESS = 'physdev-in'
 
     def setUp(self):
+        super(TestSecurityGroupAgentWithIptables, self).setUp()
         self.mox = mox.Mox()
         agent_opts = [
             cfg.StrOpt('root_helper', default='sudo'),

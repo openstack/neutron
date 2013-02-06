@@ -15,16 +15,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
-
 import mock
 from oslo.config import cfg
+import testtools
 
 from quantum.agent import rpc
 from quantum.openstack.common import context
 
 
-class AgentRPCPluginApi(unittest.TestCase):
+class AgentRPCPluginApi(testtools.TestCase):
     def _test_rpc_call(self, method):
         agent = rpc.PluginApi('fake_topic')
         ctxt = context.RequestContext('fake_user', 'fake_project')
@@ -48,7 +47,7 @@ class AgentRPCPluginApi(unittest.TestCase):
         self._test_rpc_call('tunnel_sync')
 
 
-class AgentRPCMethods(unittest.TestCase):
+class AgentRPCMethods(testtools.TestCase):
     def test_create_consumers(self):
         dispatcher = mock.Mock()
         expected = [

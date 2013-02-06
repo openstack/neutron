@@ -19,17 +19,4 @@
 # The code below enables nosetests to work with i18n _() blocks
 
 import __builtin__
-import unittest
-
-
 setattr(__builtin__, '_', lambda x: x)
-
-
-class BaseTest(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-
-def setUp():
-    pass

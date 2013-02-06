@@ -21,7 +21,8 @@ that tests the database api method calls
 """
 
 import logging as LOG
-import unittest
+
+import testtools
 
 from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_constants as const
@@ -346,17 +347,15 @@ class QuantumDB(object):
             raise Exception("Failed to unplug interface: %s" % str(exc))
 
 
-class NexusDBTest(unittest.TestCase):
+class NexusDBTest(testtools.TestCase):
     """Class conisting of nexus DB unit tests"""
     def setUp(self):
+        super(NexusDBTest, self).setUp()
         """Setup for nexus db tests"""
         l2network_db.initialize()
+        self.addCleanup(db.clear_db)
         self.dbtest = NexusDB()
         LOG.debug("Setup")
-
-    def tearDown(self):
-        """Tear Down"""
-        db.clear_db()
 
     def testa_create_nexusportbinding(self):
         """create nexus port binding"""
@@ -410,18 +409,16 @@ class NexusDBTest(unittest.TestCase):
             self.dbtest.delete_nexusportbinding(vlan_id)
 
 
-class L2networkDBTest(unittest.TestCase):
+class L2networkDBTest(testtools.TestCase):
     """Class conisting of L2network DB unit tests"""
     def setUp(self):
         """Setup for tests"""
+        super(L2networkDBTest, self).setUp()
         l2network_db.initialize()
         self.dbtest = L2networkDB()
         self.quantum = QuantumDB()
+        self.addCleanup(db.clear_db)
         LOG.debug("Setup")
-
-    def tearDown(self):
-        """Tear Down"""
-        db.clear_db()
 
     def testa_create_vlanbinding(self):
         """test add vlan binding"""
@@ -518,18 +515,16 @@ class L2networkDBTest(unittest.TestCase):
             self.dbtest.delete_vlan_binding(netid)
 
 
-class QuantumDBTest(unittest.TestCase):
+class QuantumDBTest(testtools.TestCase):
     """Class conisting of Quantum DB unit tests"""
     def setUp(self):
         """Setup for tests"""
+        super(QuantumDBTest, self).setUp()
         l2network_db.initialize()
+        self.addCleanup(db.clear_db)
         self.dbtest = QuantumDB()
         self.tenant_id = "t1"
         LOG.debug("Setup")
-
-    def tearDown(self):
-        """Tear Down"""
-        db.clear_db()
 
     def testa_create_network(self):
         """test to create network"""

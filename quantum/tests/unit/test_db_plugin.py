@@ -24,7 +24,8 @@ import random
 import mock
 from oslo.config import cfg
 import sqlalchemy as sa
-import unittest2
+import testtools
+from testtools import matchers
 import webob.exc
 
 import quantum
@@ -158,7 +159,6 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
     def tearDown(self):
-        super(QuantumDbPluginV2TestCase, self).tearDown()
         self.api = None
         self._deserializers = None
         self._skip_native_bulk = None
@@ -173,6 +173,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.reset()
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
+        super(QuantumDbPluginV2TestCase, self).tearDown()
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
              action=None, subresource=None, sub_id=None):
@@ -514,8 +515,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
                          quantum_context=quantum_context,
                          query_params=query_params)
         resource = resource.replace('-', '_')
-        self.assertItemsEqual([i['id'] for i in res['%ss' % resource]],
-                              [i[resource]['id'] for i in items])
+        self.assertEqual(sorted([i['id'] for i in res['%ss' % resource]]),
+                         sorted([i[resource]['id'] for i in items]))
 
     @contextlib.contextmanager
     def network(self, name='net1',
@@ -587,8 +588,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         res = self.deserialize(self.fmt, req.get_response(api))
         collection = collection.replace('-', '_')
         expected_res = [item[collection]['id'] for item in items]
-        self.assertListEqual([n['id'] for n in res["%ss" % collection]],
-                             expected_res)
+        self.assertEqual(sorted([n['id'] for n in res["%ss" % collection]]),
+                         sorted(expected_res))
 
     def _test_list_with_pagination(self, collection, items, sort,
                                    limit, expected_page_num, query_params='',
@@ -604,7 +605,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         while req:
             page_num = page_num + 1
             res = self.deserialize(self.fmt, req.get_response(api))
-            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            self.assertThat(len(res["%ss" % collection]),
+                            matchers.LessThan(limit + 1))
             items_res = items_res + res["%ss" % collection]
             req = None
             if '%ss_links' % collection in res:
@@ -616,8 +618,9 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
                         self.assertEqual(len(res["%ss" % collection]),
                                          limit)
         self.assertEqual(page_num, expected_page_num)
-        self.assertListEqual([n[verify_key] for n in items_res],
-                             [item[collection][verify_key] for item in items])
+        self.assertEqual(sorted([n[verify_key] for n in items_res]),
+                         sorted([item[collection][verify_key]
+                                for item in items]))
 
     def _test_list_with_pagination_reverse(self, collection, items, sort,
                                            limit, expected_page_num,
@@ -637,7 +640,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         while req:
             page_num = page_num + 1
             res = self.deserialize(self.fmt, req.get_response(api))
-            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            self.assertThat(len(res["%ss" % collection]),
+                            matchers.LessThan(limit + 1))
             res["%ss" % collection].reverse()
             item_res = item_res + res["%ss" % collection]
             req = None
@@ -652,8 +656,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertEqual(page_num, expected_page_num)
         expected_res = [item[collection]['id'] for item in items]
         expected_res.reverse()
-        self.assertListEqual([n['id'] for n in item_res],
-                             expected_res)
+        self.assertEqual(sorted([n['id'] for n in item_res]),
+                         sorted(expected_res))
 
 
 class TestBasicGet(QuantumDbPluginV2TestCase):
@@ -1644,9 +1648,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
                 ip_allocation = q.one()
 
-                self.assertGreater(
+                self.assertThat(
                     ip_allocation.expiration - timeutils.utcnow(),
-                    datetime.timedelta(seconds=10))
+                    matchers.GreaterThan(datetime.timedelta(seconds=10)))
 
     def test_port_delete_holds_ip(self):
         plugin = QuantumManager.get_plugin()
@@ -1765,13 +1769,14 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         name = 'public_net'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
                 ('status', 'ACTIVE'), ('shared', True)]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             with self.network(name=name,
                               shared=True,
                               tenant_id="another_tenant",
                               set_context=True):
                 pass
-        self.assertEqual(ctx_manager.exception.code, 403)
+            self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_update_network(self):
         with self.network() as network:
@@ -2288,13 +2293,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             with self.subnet(network=network,
                              gateway_ip=gateway_ip_1,
                              cidr=cidr_1):
-                with self.assertRaises(
+                with testtools.ExpectedException(
                         webob.exc.HTTPClientError) as ctx_manager:
                     with self.subnet(network=network,
                                      gateway_ip=gateway_ip_2,
                                      cidr=cidr_2):
                         pass
-                self.assertEqual(ctx_manager.exception.code, 400)
+                    self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_bad_V4_cidr(self):
         with self.network() as network:
@@ -2331,8 +2336,8 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr_1 = '10.0.0.0/23'
         cidr_2 = '10.0.0.0/24'
         cfg.CONF.set_override('allow_overlapping_ips', False)
-        with self.assertRaises(
-            webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             with contextlib.nested(self.subnet(cidr=cidr_1),
                                    self.subnet(cidr=cidr_2)):
                 pass
@@ -2744,21 +2749,23 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.1',
                              'end': '10.0.0.5'}]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+            self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         gateway_ip = '10.0.0.50'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.1',
                              'end': '10.0.0.100'}]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+            self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_overlapping_allocation_pools_returns_409(self):
         gateway_ip = '10.0.0.1'
@@ -2767,40 +2774,44 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                              'end': '10.0.0.150'},
                             {'start': '10.0.0.140',
                              'end': '10.0.0.180'}]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+            self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_invalid_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.0.256'}]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_out_of_range_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.1.6'}]
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_shared_returns_400(self):
         cidr = '10.0.0.0/24'
-        with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      shared=True)
-        self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_inconsistent_ipv6_cidrv4(self):
         with self.network() as network:
@@ -3367,7 +3378,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         self.assertEqual(res.status_int, 204)
 
 
-class DbModelTestCase(unittest2.TestCase):
+class DbModelTestCase(testtools.TestCase):
     """ DB model tests """
     def test_repr(self):
         """ testing the string representation of 'model' classes """

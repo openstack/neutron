@@ -19,7 +19,7 @@
 import socket
 
 import mock
-import unittest2 as unittest
+import testtools
 import webob
 
 from quantum.agent.metadata import agent
@@ -37,19 +37,18 @@ class FakeConf(object):
     metadata_proxy_shared_secret = 'secret'
 
 
-class TestMetadataProxyHandler(unittest.TestCase):
+class TestMetadataProxyHandler(testtools.TestCase):
     def setUp(self):
+        super(TestMetadataProxyHandler, self).setUp()
         self.qclient_p = mock.patch('quantumclient.v2_0.client.Client')
         self.qclient = self.qclient_p.start()
+        self.addCleanup(self.qclient_p.stop)
 
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
+        self.addCleanup(self.log_p.stop)
 
         self.handler = agent.MetadataProxyHandler(FakeConf)
-
-    def tearDown(self):
-        self.log_p.stop()
-        self.qclient_p.stop()
 
     def test_call(self):
         req = mock.Mock()
@@ -216,7 +215,7 @@ class TestMetadataProxyHandler(unittest.TestCase):
                               webob.exc.HTTPInternalServerError)
 
     def test_proxy_request_other_code(self):
-        with self.assertRaises(Exception) as e:
+        with testtools.ExpectedException(Exception) as e:
             self._proxy_request_test_helper(302)
 
     def test_sign_instance_id(self):
@@ -226,7 +225,7 @@ class TestMetadataProxyHandler(unittest.TestCase):
         )
 
 
-class TestUnixDomainHttpProtocol(unittest.TestCase):
+class TestUnixDomainHttpProtocol(testtools.TestCase):
     def test_init_empty_client(self):
         u = agent.UnixDomainHttpProtocol(mock.Mock(), '', mock.Mock())
         self.assertEqual(u.client_address, ('<local>', 0))
@@ -236,14 +235,13 @@ class TestUnixDomainHttpProtocol(unittest.TestCase):
         self.assertEqual(u.client_address, 'foo')
 
 
-class TestUnixDomainWSGIServer(unittest.TestCase):
+class TestUnixDomainWSGIServer(testtools.TestCase):
     def setUp(self):
+        super(TestUnixDomainWSGIServer, self).setUp()
         self.eventlet_p = mock.patch.object(agent, 'eventlet')
         self.eventlet = self.eventlet_p.start()
+        self.addCleanup(self.eventlet_p.stop)
         self.server = agent.UnixDomainWSGIServer('test')
-
-    def tearDown(self):
-        self.eventlet_p.stop()
 
     def test_start(self):
         mock_app = mock.Mock()
@@ -276,14 +274,13 @@ class TestUnixDomainWSGIServer(unittest.TestCase):
             self.assertTrue(len(logging.mock_calls))
 
 
-class TestUnixDomainMetadataProxy(unittest.TestCase):
+class TestUnixDomainMetadataProxy(testtools.TestCase):
     def setUp(self):
+        super(TestUnixDomainMetadataProxy, self).setUp()
         self.cfg_p = mock.patch.object(agent, 'cfg')
         self.cfg = self.cfg_p.start()
+        self.addCleanup(self.cfg_p.stop)
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
-
-    def tearDown(self):
-        self.cfg_p.stop()
 
     def test_init_doesnot_exists(self):
         with mock.patch('os.path.isdir') as isdir:
@@ -325,7 +322,7 @@ class TestUnixDomainMetadataProxy(unittest.TestCase):
                     exists.return_value = True
                     unlink.side_effect = OSError
 
-                    with self.assertRaises(OSError):
+                    with testtools.ExpectedException(OSError):
                         p = agent.UnixDomainMetadataProxy(mock.Mock())
 
                     isdir.assert_called_once_with('/the')

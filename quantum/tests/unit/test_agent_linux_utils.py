@@ -15,15 +15,15 @@
 #    under the License.
 # @author: Dan Wendlandt, Nicira, Inc.
 
-import unittest
-
 import mock
+import testtools
 
 from quantum.agent.linux import utils
 
 
-class AgentUtilsExecuteTest(unittest.TestCase):
+class AgentUtilsExecuteTest(testtools.TestCase):
     def setUp(self):
+        super(AgentUtilsExecuteTest, self).setUp()
         self.root_helper = "echo"
         self.test_file = "/tmp/test_execute.tmp"
         open(self.test_file, 'w').close()
@@ -61,7 +61,7 @@ class AgentUtilsExecuteTest(unittest.TestCase):
         self.assertEqual(result, "%s\n" % self.test_file)
 
 
-class AgentUtilsGetInterfaceMAC(unittest.TestCase):
+class AgentUtilsGetInterfaceMAC(testtools.TestCase):
     def test_get_interface_mac(self):
         expect_val = '01:02:03:04:05:06'
         with mock.patch('fcntl.ioctl') as ioctl:

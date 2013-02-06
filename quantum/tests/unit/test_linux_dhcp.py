@@ -17,10 +17,10 @@
 
 import os
 import socket
-import unittest2 as unittest
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
@@ -134,7 +134,7 @@ class FakeV4NoGatewayNetwork:
     ports = [FakePort1()]
 
 
-class TestDhcpBase(unittest.TestCase):
+class TestDhcpBase(testtools.TestCase):
     def test_base_abc_error(self):
         self.assertRaises(TypeError, dhcp.DhcpBase, None)
 
@@ -195,8 +195,9 @@ class LocalChild(dhcp.DhcpLocalProcess):
         self.called.append('spawn')
 
 
-class TestBase(unittest.TestCase):
+class TestBase(testtools.TestCase):
     def setUp(self):
+        super(TestBase, self).setUp()
         root = os.path.dirname(os.path.dirname(__file__))
         args = ['--config-file',
                 os.path.join(root, 'etc', 'quantum.conf.test')]
@@ -213,12 +214,10 @@ class TestBase(unittest.TestCase):
 
         self.replace_p = mock.patch('quantum.agent.linux.dhcp.replace_file')
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')
+        self.addCleanup(self.execute_p.stop)
         self.safe = self.replace_p.start()
+        self.addCleanup(self.replace_p.stop)
         self.execute = self.execute_p.start()
-
-    def tearDown(self):
-        self.execute_p.stop()
-        self.replace_p.stop()
 
 
 class TestDhcpLocalProcess(TestBase):

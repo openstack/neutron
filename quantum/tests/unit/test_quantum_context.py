@@ -15,22 +15,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2 as unittest
-
 import mock
+import testtools
 
 from quantum import context
 
 
-class TestQuantumContext(unittest.TestCase):
+class TestQuantumContext(testtools.TestCase):
 
     def setUp(self):
+        super(TestQuantumContext, self).setUp()
         db_api = 'quantum.db.api.get_session'
         self._db_api_session_patcher = mock.patch(db_api)
         self.db_api_session = self._db_api_session_patcher.start()
-
-    def tearDown(self):
-        self._db_api_session_patcher.stop()
+        self.addCleanup(self._db_api_session_patcher.stop)
 
     def testQuantumContextCreate(self):
         cxt = context.Context('user_id', 'tenant_id')

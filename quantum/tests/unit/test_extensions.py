@@ -16,9 +16,9 @@
 #    under the License.
 
 import os
-import unittest
 
 import routes
+import testtools
 import webob
 import webtest
 
@@ -65,7 +65,7 @@ class FakePluginWithExtension(db_base_plugin_v2.QuantumDbPluginV2):
         self._log("method_to_support_foxnsox_extension", context)
 
 
-class ResourceExtensionTest(unittest.TestCase):
+class ResourceExtensionTest(testtools.TestCase):
 
     class ResourceExtensionController(wsgi.Controller):
 
@@ -308,7 +308,7 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(404, response.status_int)
 
 
-class ActionExtensionTest(unittest.TestCase):
+class ActionExtensionTest(testtools.TestCase):
 
     def setUp(self):
         super(ActionExtensionTest, self).setUp()
@@ -355,7 +355,7 @@ class ActionExtensionTest(unittest.TestCase):
         self.assertEqual(404, response.status_int)
 
 
-class RequestExtensionTest(unittest.TestCase):
+class RequestExtensionTest(testtools.TestCase):
 
     def test_headers_can_be_extended(self):
         def extend_headers(req, res):
@@ -422,7 +422,7 @@ class RequestExtensionTest(unittest.TestCase):
         return _setup_extensions_test_app(manager)
 
 
-class ExtensionManagerTest(unittest.TestCase):
+class ExtensionManagerTest(testtools.TestCase):
 
     def test_invalid_extensions_are_not_registered(self):
 
@@ -442,7 +442,7 @@ class ExtensionManagerTest(unittest.TestCase):
         self.assertFalse('invalid_extension' in ext_mgr.extensions)
 
 
-class PluginAwareExtensionManagerTest(unittest.TestCase):
+class PluginAwareExtensionManagerTest(testtools.TestCase):
 
     def test_unsupported_extensions_are_not_loaded(self):
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1", "e3"])

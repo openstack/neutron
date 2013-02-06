@@ -19,7 +19,7 @@
 import socket
 
 import mock
-import unittest2 as unittest
+import testtools
 import webob
 
 from quantum.agent.metadata import namespace_proxy as ns_proxy
@@ -37,7 +37,7 @@ class FakeConf(object):
     metadata_proxy_shared_secret = 'secret'
 
 
-class TestUnixDomainHttpConnection(unittest.TestCase):
+class TestUnixDomainHttpConnection(testtools.TestCase):
     def test_connect(self):
         with mock.patch.object(ns_proxy, 'cfg') as cfg:
             cfg.CONF.metadata_proxy_socket = '/the/path'
@@ -55,15 +55,14 @@ class TestUnixDomainHttpConnection(unittest.TestCase):
                 self.assertEqual(conn.timeout, 3)
 
 
-class TestNetworkMetadataProxyHandler(unittest.TestCase):
+class TestNetworkMetadataProxyHandler(testtools.TestCase):
     def setUp(self):
+        super(TestNetworkMetadataProxyHandler, self).setUp()
         self.log_p = mock.patch.object(ns_proxy, 'LOG')
         self.log = self.log_p.start()
+        self.addCleanup(self.log_p.stop)
 
         self.handler = ns_proxy.NetworkMetadataProxyHandler('router_id')
-
-    def tearDown(self):
-        self.log_p.stop()
 
     def test_call(self):
         req = mock.Mock(headers={})
@@ -77,7 +76,7 @@ class TestNetworkMetadataProxyHandler(unittest.TestCase):
                                               req.query_string)
 
     def test_no_argument_passed_to_init(self):
-        with self.assertRaises(ValueError):
+        with testtools.ExpectedException(ValueError):
             ns_proxy.NetworkMetadataProxyHandler()
 
     def test_call_internal_server_error(self):
@@ -192,7 +191,7 @@ class TestNetworkMetadataProxyHandler(unittest.TestCase):
         with mock.patch('httplib2.Http') as mock_http:
             mock_http.return_value.request.return_value = (resp, '')
 
-            with self.assertRaises(Exception):
+            with testtools.ExpectedException(Exception):
                 self.handler._proxy_request('192.168.1.1',
                                             '/latest/meta-data',
                                             '')
@@ -215,7 +214,7 @@ class TestNetworkMetadataProxyHandler(unittest.TestCase):
         with mock.patch('httplib2.Http') as mock_http:
             mock_http.return_value.request.side_effect = Exception
 
-            with self.assertRaises(Exception):
+            with testtools.ExpectedException(Exception):
                 self.handler._proxy_request('192.168.1.1',
                                             '/latest/meta-data',
                                             '')
@@ -232,7 +231,7 @@ class TestNetworkMetadataProxyHandler(unittest.TestCase):
             )
 
 
-class TestProxyDaemon(unittest.TestCase):
+class TestProxyDaemon(testtools.TestCase):
     def test_init(self):
         with mock.patch('quantum.agent.linux.daemon.Pidfile') as pf:
             pd = ns_proxy.ProxyDaemon('pidfile', 9697, 'net_id', 'router_id')

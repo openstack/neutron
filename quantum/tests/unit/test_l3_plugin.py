@@ -24,6 +24,7 @@ import itertools
 
 import mock
 from oslo.config import cfg
+import testtools
 from webob import exc
 import webtest
 
@@ -72,6 +73,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
     fmt = 'json'
 
     def setUp(self):
+        super(L3NatExtensionTestCase, self).setUp()
 
         plugin = 'quantum.extensions.l3.RouterPluginBase'
         # Ensure 'stale' patched copies of the plugin are never returned
@@ -115,6 +117,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
 
         # Restore the global RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
+        super(L3NatExtensionTestCase, self).tearDown()
 
     def test_router_create(self):
         router_id = _uuid()
@@ -1427,7 +1430,8 @@ class L3NatDBTestCase(L3NatTestCaseBase):
     def test_create_port_external_network_non_admin_fails(self):
         with self.network(router__external=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
-                with self.assertRaises(exc.HTTPClientError) as ctx_manager:
+                with testtools.ExpectedException(
+                        exc.HTTPClientError) as ctx_manager:
                     with self.port(subnet=ext_subnet,
                                    set_context='True',
                                    tenant_id='noadmin'):
@@ -1442,7 +1446,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                          ext_net['network']['id'])
 
     def test_create_external_network_non_admin_fails(self):
-        with self.assertRaises(exc.HTTPClientError) as ctx_manager:
+        with testtools.ExpectedException(exc.HTTPClientError) as ctx_manager:
             with self.network(router__external=True,
                               set_context='True',
                               tenant_id='noadmin'):

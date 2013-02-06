@@ -15,10 +15,10 @@
 #
 # @author: Salvatore Orlando, VMware
 
+import mock
 import os
 
-import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.openstack.common import jsonutils as json
 import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
@@ -32,7 +32,7 @@ NICIRA_PKG_PATH = nvp_plugin.__name__
 _uuid = test_api_v2._uuid
 
 
-class NvplibTestCase(unittest.TestCase):
+class NvplibTestCase(testtools.TestCase):
 
     def setUp(self):
         # mock nvp api client
@@ -57,10 +57,8 @@ class NvplibTestCase(unittest.TestCase):
             self.fake_cluster.retries, self.fake_cluster.redirects)
 
         super(NvplibTestCase, self).setUp()
-
-    def tearDown(self):
-        self.fc.reset_all()
-        self.mock_nvpapi.stop()
+        self.addCleanup(self.fc.reset_all)
+        self.addCleanup(self.mock_nvpapi.stop)
 
 
 class TestNvplibNatRules(NvplibTestCase):
@@ -143,7 +141,7 @@ class NvplibL2GatewayTestCase(NvplibTestCase):
             gw_ids.append(self._create_gw_service(_uuid(), name)['uuid'])
         results = nvplib.get_l2_gw_services(self.fake_cluster)
         self.assertEqual(len(results), 2)
-        self.assertItemsEqual(gw_ids, [r['uuid'] for r in results])
+        self.assertEqual(sorted(gw_ids), sorted([r['uuid'] for r in results]))
 
     def test_delete_l2_gw_service(self):
         display_name = 'fake-gateway'

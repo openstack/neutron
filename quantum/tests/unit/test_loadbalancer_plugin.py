@@ -18,7 +18,7 @@ import copy
 
 import mock
 from oslo.config import cfg
-import unittest2
+import testtools
 from webob import exc
 import webtest
 
@@ -54,7 +54,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
     fmt = 'json'
 
     def setUp(self):
-
+        super(LoadBalancerExtensionTestCase, self).setUp()
         plugin = 'quantum.extensions.loadbalancer.LoadBalancerPluginBase'
         # Ensure 'stale' patched copies of the plugin are never returned
         manager.QuantumManager._instance = None
@@ -85,6 +85,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         self.api = None
         self.plugin = None
         cfg.CONF.reset()
+        super(LoadBalancerExtensionTestCase, self).tearDown()
 
     def test_vip_create(self):
         vip_id = _uuid()

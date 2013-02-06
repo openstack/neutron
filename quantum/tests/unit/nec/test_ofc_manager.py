@@ -15,7 +15,7 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import unittest
+import testtools
 
 from quantum import context
 from quantum.openstack.common import uuidutils
@@ -25,18 +25,17 @@ from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import ofc_manager
 
 
-class OFCManagerTestBase(object):
+class OFCManagerTestBase(testtools.TestCase):
     """Class conisting of OFCManager unit tests"""
 
     def setUp(self):
+        super(OFCManagerTestBase, self).setUp()
         driver = "quantum.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
         ndb.initialize()
+        self.addCleanup(ndb.clear_db)
         self.ofc = ofc_manager.OFCManager()
         self.ctx = context.get_admin_context()
-
-    def tearDown(self):
-        ndb.clear_db()
 
     def get_random_params(self):
         """create random parameters for portinfo test"""
@@ -48,7 +47,7 @@ class OFCManagerTestBase(object):
         return tenant, network, port, _filter, none
 
 
-class OFCManagerTest(OFCManagerTestBase, unittest.TestCase):
+class OFCManagerTest(OFCManagerTestBase):
     def testa_create_ofc_tenant(self):
         """test create ofc_tenant"""
         t, n, p, f, none = self.get_random_params()
@@ -177,7 +176,7 @@ class OFCManagerTest(OFCManagerTestBase, unittest.TestCase):
                                           'ofc_packet_filter', f))
 
 
-class OFCManagerTestWithOldMapping(OFCManagerTestBase, unittest.TestCase):
+class OFCManagerTestWithOldMapping(OFCManagerTestBase):
 
     def test_exists_ofc_tenant(self):
         t, n, p, f, none = self.get_random_params()

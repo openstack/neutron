@@ -16,7 +16,7 @@
 #    under the License.
 
 import mock
-import unittest2 as unittest
+import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.common import exceptions
@@ -97,13 +97,12 @@ SUBNET_SAMPLE2 = ("10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2\n"
                   "10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1")
 
 
-class TestSubProcessBase(unittest.TestCase):
+class TestSubProcessBase(testtools.TestCase):
     def setUp(self):
+        super(TestSubProcessBase, self).setUp()
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')
         self.execute = self.execute_p.start()
-
-    def tearDown(self):
-        self.execute_p.stop()
+        self.addCleanup(self.execute_p.stop)
 
     def test_execute_wrapper(self):
         ip_lib.SubProcessBase._execute('o', 'link', ('list',), 'sudo')
@@ -150,13 +149,12 @@ class TestSubProcessBase(unittest.TestCase):
                           [], 'link', ('list',))
 
 
-class TestIpWrapper(unittest.TestCase):
+class TestIpWrapper(testtools.TestCase):
     def setUp(self):
+        super(TestIpWrapper, self).setUp()
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
-
-    def tearDown(self):
-        self.execute_p.stop()
+        self.addCleanup(self.execute_p.stop)
 
     def test_get_devices(self):
         self.execute.return_value = '\n'.join(LINK_SAMPLE)
@@ -307,7 +305,7 @@ class TestIpWrapper(unittest.TestCase):
         self.assertEqual(dev.mock_calls, [])
 
 
-class TestIPDevice(unittest.TestCase):
+class TestIPDevice(testtools.TestCase):
     def test_eq_same_name(self):
         dev1 = ip_lib.IPDevice('tap0')
         dev2 = ip_lib.IPDevice('tap0')
@@ -336,8 +334,9 @@ class TestIPDevice(unittest.TestCase):
         self.assertEqual(str(ip_lib.IPDevice('tap0')), 'tap0')
 
 
-class TestIPCommandBase(unittest.TestCase):
+class TestIPCommandBase(testtools.TestCase):
     def setUp(self):
+        super(TestIPCommandBase, self).setUp()
         self.ip = mock.Mock()
         self.ip.root_helper = 'sudo'
         self.ip.namespace = 'namespace'
@@ -363,8 +362,9 @@ class TestIPCommandBase(unittest.TestCase):
             [mock.call._as_root('o', 'foo', ('link', ), False)])
 
 
-class TestIPDeviceCommandBase(unittest.TestCase):
+class TestIPDeviceCommandBase(testtools.TestCase):
     def setUp(self):
+        super(TestIPDeviceCommandBase, self).setUp()
         self.ip_dev = mock.Mock()
         self.ip_dev.name = 'eth0'
         self.ip_dev.root_helper = 'sudo'
@@ -376,8 +376,9 @@ class TestIPDeviceCommandBase(unittest.TestCase):
         self.assertEqual(self.ip_cmd.name, 'eth0')
 
 
-class TestIPCmdBase(unittest.TestCase):
+class TestIPCmdBase(testtools.TestCase):
     def setUp(self):
+        super(TestIPCmdBase, self).setUp()
         self.parent = mock.Mock()
         self.parent.name = 'eth0'
         self.parent.root_helper = 'sudo'
@@ -653,7 +654,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 root_helper='sudo', check_exit_code=True)
 
 
-class TestDeviceExists(unittest.TestCase):
+class TestDeviceExists(testtools.TestCase):
     def test_device_exists(self):
         with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
             _execute.return_value = LINK_SAMPLE[1]

@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
+import testtools
+from testtools import matchers
 
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
@@ -29,14 +30,13 @@ UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
                        PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
 
 
-class NetworkStatesTest(unittest2.TestCase):
+class NetworkStatesTest(testtools.TestCase):
     def setUp(self):
+        super(NetworkStatesTest, self).setUp()
         lb_db.initialize()
         lb_db.sync_network_states(VLAN_RANGES)
         self.session = db.get_session()
-
-    def tearDown(self):
-        db.clear_db()
+        self.addCleanup(db.clear_db)
 
     def test_sync_network_states(self):
         self.assertIsNone(lb_db.get_network_state(PHYS_NET,
@@ -105,11 +105,11 @@ class NetworkStatesTest(unittest2.TestCase):
         for x in xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = lb_db.reserve_network(self.session)
             self.assertEqual(physical_network, PHYS_NET)
-            self.assertGreaterEqual(vlan_id, VLAN_MIN)
-            self.assertLessEqual(vlan_id, VLAN_MAX)
+            self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+            self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
-        with self.assertRaises(q_exc.NoNetworkAvailable):
+        with testtools.ExpectedException(q_exc.NoNetworkAvailable):
             physical_network, vlan_id = lb_db.reserve_network(self.session)
 
         for vlan_id in vlan_ids:
@@ -123,7 +123,7 @@ class NetworkStatesTest(unittest2.TestCase):
         self.assertTrue(lb_db.get_network_state(PHYS_NET,
                                                 vlan_id).allocated)
 
-        with self.assertRaises(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(q_exc.VlanIdInUse):
             lb_db.reserve_specific_network(self.session, PHYS_NET, vlan_id)
 
         lb_db.release_network(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
@@ -137,7 +137,7 @@ class NetworkStatesTest(unittest2.TestCase):
         self.assertTrue(lb_db.get_network_state(PHYS_NET,
                                                 vlan_id).allocated)
 
-        with self.assertRaises(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(q_exc.VlanIdInUse):
             lb_db.reserve_specific_network(self.session, PHYS_NET, vlan_id)
 
         lb_db.release_network(self.session, PHYS_NET, vlan_id, VLAN_RANGES)

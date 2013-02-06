@@ -17,7 +17,9 @@
 
 import os
 import types
-import unittest2
+
+import fixtures
+import testtools
 
 from oslo.config import cfg
 
@@ -39,18 +41,16 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class QuantumManagerTestCase(unittest2.TestCase):
+class QuantumManagerTestCase(testtools.TestCase):
 
     def setUp(self):
         super(QuantumManagerTestCase, self).setUp()
         args = ['--config-file', etcdir('quantum.conf.test')]
         # If test_config specifies some config-file, use it, as well
         config.parse(args=args)
-
-    def tearDown(self):
-        unittest2.TestCase.tearDown(self)
-        cfg.CONF.reset()
-        QuantumManager._instance = None
+        self.addCleanup(cfg.CONF.reset)
+        self.useFixture(
+            fixtures.MonkeyPatch('quantum.manager.QuantumManager._instance'))
 
     def test_service_plugin_is_loaded(self):
         cfg.CONF.set_override("core_plugin",
@@ -59,7 +59,6 @@ class QuantumManagerTestCase(unittest2.TestCase):
         cfg.CONF.set_override("service_plugins",
                               ["quantum.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
-        QuantumManager._instance = None
         mgr = QuantumManager.get_instance()
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
@@ -74,7 +73,6 @@ class QuantumManagerTestCase(unittest2.TestCase):
                                "QuantumDummyPlugin",
                                "quantum.tests.unit.dummy_plugin."
                                "QuantumDummyPlugin"])
-        QuantumManager._instance = None
 
         try:
             QuantumManager.get_instance().get_service_plugins()

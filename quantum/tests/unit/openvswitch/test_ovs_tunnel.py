@@ -16,10 +16,9 @@
 #
 # @author: Dave Lapsley, Nicira Networks, Inc.
 
-import unittest
-
 import mox
 from oslo.config import cfg
+import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -60,12 +59,16 @@ class DummyVlanBinding:
         self.vlan_id = vlan_id
 
 
-class TunnelTest(unittest.TestCase):
+class TunnelTest(testtools.TestCase):
+
     def setUp(self):
+        super(TunnelTest, self).setUp()
         cfg.CONF.set_override('rpc_backend',
                               'quantum.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         self.mox = mox.Mox()
+        self.addCleanup(self.mox.UnsetStubs)
+
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'
         self.MAP_TUN_BRIDGE = 'tunnel_bridge_mapping'
@@ -123,9 +126,6 @@ class TunnelTest(unittest.TestCase):
 
         self.mox.StubOutWithMock(utils, 'get_interface_mac')
         utils.get_interface_mac(self.INT_BRIDGE).AndReturn('000000000001')
-
-    def tearDown(self):
-        self.mox.UnsetStubs()
 
     def testConstruct(self):
         self.mox.ReplayAll()
