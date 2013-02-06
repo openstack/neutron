@@ -17,30 +17,24 @@ import contextlib
 import logging
 import os
 
-import unittest2
 import webob.exc
 
-import quantum
 from quantum.api.extensions import ExtensionMiddleware
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
-from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
-from quantum import context
 from quantum.db import api as db
-from quantum.db import db_base_plugin_v2
-from quantum.db import models_v2
+import quantum.extensions
 from quantum.extensions import loadbalancer
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
-from quantum.openstack.common import timeutils
 from quantum.plugins.common import constants
 from quantum.plugins.services.loadbalancer import loadbalancerPlugin
-from quantum.tests.unit import test_extensions
+from quantum.tests.unit import testlib_api
 from quantum.tests.unit.testlib_api import create_request
-from quantum.wsgi import Serializer, JSONDeserializer
+from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)
@@ -60,7 +54,7 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class LoadBalancerPluginDbTestCase(unittest2.TestCase):
+class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
     def setUp(self, core_plugin=None, lb_plugin=None):
         super(LoadBalancerPluginDbTestCase, self).setUp()
@@ -74,11 +68,6 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
         self._attribute_map_bk = loadbalancer.RESOURCE_ATTRIBUTE_MAP.copy()
         self._tenant_id = "test-tenant"
         self._subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
-
-        json_deserializer = JSONDeserializer()
-        self._deserializers = {
-            'application/json': json_deserializer,
-        }
 
         if not core_plugin:
             core_plugin = test_config.get('plugin_name_v2',
@@ -103,11 +92,11 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
         )
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        super(LoadBalancerPluginDbTestCase, self).setUp()
 
     def tearDown(self):
         super(LoadBalancerPluginDbTestCase, self).tearDown()
         self.api = None
-        self._deserializers = None
         self._skip_native_bulk = None
         self.ext_api = None
 
@@ -118,8 +107,10 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
         # Restore the original attribute map
         loadbalancer.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
 
-    def _req(self, method, resource, data=None, fmt='json',
+    def _req(self, method, resource, data=None, fmt=None,
              id=None, subresource=None, sub_id=None, params=None, action=None):
+        if not fmt:
+            fmt = self.fmt
         if id and action:
             path = '/lb/%(resource)s/%(id)s/%(action)s.%(fmt)s' % locals()
         elif id and subresource and sub_id:
@@ -138,7 +129,8 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
         content_type = 'application/%s' % fmt
         body = None
         if data is not None:  # empty dict is valid
-            body = Serializer().serialize(data, content_type)
+            body = wsgi.Serializer(
+                attributes.get_attr_metadata()).serialize(data, content_type)
 
         req = create_request(path,
                              body,
@@ -147,31 +139,26 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                              query_string=params)
         return req
 
-    def new_create_request(self, resource, data, fmt='json', id=None,
+    def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None):
         return self._req('POST', resource, data, fmt, id=id,
                          subresource=subresource)
 
-    def new_list_request(self, resource, fmt='json', params=None):
+    def new_list_request(self, resource, fmt=None, params=None):
         return self._req('GET', resource, None, fmt, params=params)
 
-    def new_show_request(self, resource, id, fmt='json', action=None,
+    def new_show_request(self, resource, id, fmt=None, action=None,
                          subresource=None, sub_id=None):
         return self._req('GET', resource, None, fmt, id=id, action=action,
                          subresource=subresource, sub_id=sub_id)
 
-    def new_delete_request(self, resource, id, fmt='json',
+    def new_delete_request(self, resource, id, fmt=None,
                            subresource=None, sub_id=None):
         return self._req('DELETE', resource, None, fmt, id=id,
                          subresource=subresource, sub_id=sub_id)
 
-    def new_update_request(self, resource, data, id, fmt='json'):
+    def new_update_request(self, resource, data, id, fmt=None):
         return self._req('PUT', resource, data, fmt, id=id)
-
-    def deserialize(self, content_type, response):
-        ctype = 'application/%s' % content_type
-        data = self._deserializers[ctype].deserialize(response.body)['body']
-        return data
 
     def _create_vip(self, fmt, name, pool_id, protocol, port, admin_status_up,
                     expected_res_status=None, **kwargs):
@@ -267,25 +254,27 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
         req = self.new_show_request(resource, id)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, expected_code)
-        return self.deserialize('json', res)
+        return self.deserialize(res)
 
     def _update(self, resource, id, new_data,
                 expected_code=webob.exc.HTTPOk.code):
         req = self.new_update_request(resource, new_data, id)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, expected_code)
-        return self.deserialize('json', res)
+        return self.deserialize(res)
 
-    def _list(self, resource, fmt='json', query_params=None):
+    def _list(self, resource, fmt=None, query_params=None):
         req = self.new_list_request(resource, fmt, query_params)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
-        return self.deserialize('json', res)
+        return self.deserialize(res)
 
     @contextlib.contextmanager
-    def vip(self, fmt='json', name='vip1', pool=None,
+    def vip(self, fmt=None, name='vip1', pool=None,
             protocol='HTTP', port=80, admin_status_up=True, no_delete=False,
             address="172.16.1.123", **kwargs):
+        if not fmt:
+            fmt = self.fmt
         if not pool:
             with self.pool() as pool:
                 pool_id = pool['pool']['id']
@@ -297,7 +286,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                        admin_status_up,
                                        address=address,
                                        **kwargs)
-                vip = self.deserialize(fmt, res)
+                vip = self.deserialize(res)
                 if res.status_int >= 400:
                     raise webob.exc.HTTPClientError(code=res.status_int)
                 yield vip
@@ -313,7 +302,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                    admin_status_up,
                                    address=address,
                                    **kwargs)
-            vip = self.deserialize(fmt, res)
+            vip = self.deserialize(res)
             if res.status_int >= 400:
                 raise webob.exc.HTTPClientError(code=res.status_int)
             yield vip
@@ -321,16 +310,18 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                 self._delete('vips', vip['vip']['id'])
 
     @contextlib.contextmanager
-    def pool(self, fmt='json', name='pool1', lb_method='ROUND_ROBIN',
+    def pool(self, fmt=None, name='pool1', lb_method='ROUND_ROBIN',
              protocol='HTTP', admin_status_up=True, no_delete=False,
              **kwargs):
+        if not fmt:
+            fmt = self.fmt
         res = self._create_pool(fmt,
                                 name,
                                 lb_method,
                                 protocol,
                                 admin_status_up,
                                 **kwargs)
-        pool = self.deserialize(fmt, res)
+        pool = self.deserialize(res)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         yield pool
@@ -338,15 +329,17 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
             self._delete('pools', pool['pool']['id'])
 
     @contextlib.contextmanager
-    def member(self, fmt='json', address='192.168.1.100',
+    def member(self, fmt=None, address='192.168.1.100',
                port=80, admin_status_up=True, no_delete=False,
                **kwargs):
+        if not fmt:
+            fmt = self.fmt
         res = self._create_member(fmt,
                                   address,
                                   port,
                                   admin_status_up,
                                   **kwargs)
-        member = self.deserialize(fmt, res)
+        member = self.deserialize(res)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         yield member
@@ -354,10 +347,12 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
             self._delete('members', member['member']['id'])
 
     @contextlib.contextmanager
-    def health_monitor(self, fmt='json', type='TCP',
+    def health_monitor(self, fmt=None, type='TCP',
                        delay=30, timeout=10, max_retries=3,
                        admin_status_up=True,
                        no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
         res = self._create_health_monitor(fmt,
                                           type,
                                           delay,
@@ -365,7 +360,7 @@ class LoadBalancerPluginDbTestCase(unittest2.TestCase):
                                           max_retries,
                                           admin_status_up,
                                           **kwargs)
-        health_monitor = self.deserialize(fmt, res)
+        health_monitor = self.deserialize(res)
         the_health_monitor = health_monitor['health_monitor']
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -452,7 +447,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
             # Try resetting session_persistence
             req = self.new_update_request('vips', update_info, v['vip']['id'])
-            res = self.deserialize('json', req.get_response(self.ext_api))
+            res = self.deserialize(req.get_response(self.ext_api))
 
             # If session persistence has been removed, it won't be present in
             # the response.
@@ -476,7 +471,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                              'cookie_name': "jesssionId"},
                             'admin_state_up': False}}
             req = self.new_update_request('vips', data, vip['vip']['id'])
-            res = self.deserialize('json', req.get_response(self.ext_api))
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['vip'][k], v)
 
@@ -501,7 +496,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.vip(name=name) as vip:
             req = self.new_show_request('vips',
                                         vip['vip']['id'])
-            res = self.deserialize('json', req.get_response(self.ext_api))
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['vip'][k], v)
 
@@ -517,7 +512,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('status', 'PENDING_CREATE')]
         with self.vip(name=name):
             req = self.new_list_request('vips')
-            res = self.deserialize('json', req.get_response(self.ext_api))
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['vips'][0][k], v)
 
@@ -548,7 +543,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         name = "pool2"
         with self.pool(name=name) as pool:
             pool_id = pool['pool']['id']
-            res1 = self._create_member('json',
+            res1 = self._create_member(self.fmt,
                                        '192.168.1.100',
                                        '80',
                                        True,
@@ -556,11 +551,10 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                        weight=1)
             req = self.new_show_request('pools',
                                         pool_id,
-                                        fmt='json')
-            pool_updated = self.deserialize('json',
-                                            req.get_response(self.ext_api))
+                                        fmt=self.fmt)
+            pool_updated = self.deserialize(req.get_response(self.ext_api))
 
-            member1 = self.deserialize('json', res1)
+            member1 = self.deserialize(res1)
             self.assertEqual(member1['member']['id'],
                              pool_updated['pool']['members'][0])
             self.assertEqual(len(pool_updated['pool']['members']), 1)
@@ -596,8 +590,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool(name=name) as pool:
             req = self.new_show_request('pools',
                                         pool['pool']['id'],
-                                        fmt='json')
-            res = self.deserialize('json', req.get_response(self.ext_api))
+                                        fmt=self.fmt)
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['pool'][k], v)
 
@@ -612,9 +606,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                  pool_id=pool_id) as member2:
                     req = self.new_show_request('pools',
                                                 pool_id,
-                                                fmt='json')
+                                                fmt=self.fmt)
                     pool_update = self.deserialize(
-                        'json',
                         req.get_response(self.ext_api))
                     self.assertIn(member1['member']['id'],
                                   pool_update['pool']['members'])
@@ -634,17 +627,15 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 with self.member(pool_id=pool1['pool']['id']) as member:
                     req = self.new_show_request('pools',
                                                 pool1['pool']['id'],
-                                                fmt='json')
+                                                fmt=self.fmt)
                     pool1_update = self.deserialize(
-                        'json',
                         req.get_response(self.ext_api))
                     self.assertEqual(len(pool1_update['pool']['members']), 1)
 
                     req = self.new_show_request('pools',
                                                 pool2['pool']['id'],
-                                                fmt='json')
+                                                fmt=self.fmt)
                     pool2_update = self.deserialize(
-                        'json',
                         req.get_response(self.ext_api))
                     self.assertEqual(len(pool1_update['pool']['members']), 1)
                     self.assertEqual(len(pool2_update['pool']['members']), 0)
@@ -655,23 +646,20 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_update_request('members',
                                                   data,
                                                   member['member']['id'])
-                    res = self.deserialize('json',
-                                           req.get_response(self.ext_api))
+                    res = self.deserialize(req.get_response(self.ext_api))
                     for k, v in keys:
                         self.assertEqual(res['member'][k], v)
 
                     req = self.new_show_request('pools',
                                                 pool1['pool']['id'],
-                                                fmt='json')
+                                                fmt=self.fmt)
                     pool1_update = self.deserialize(
-                        'json',
                         req.get_response(self.ext_api))
 
                     req = self.new_show_request('pools',
                                                 pool2['pool']['id'],
-                                                fmt='json')
+                                                fmt=self.fmt)
                     pool2_update = self.deserialize(
-                        'json',
                         req.get_response(self.ext_api))
 
                     self.assertEqual(len(pool2_update['pool']['members']), 1)
@@ -689,9 +677,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
                 req = self.new_show_request('pools',
                                             pool_id,
-                                            fmt='json')
+                                            fmt=self.fmt)
                 pool_update = self.deserialize(
-                    'json',
                     req.get_response(self.ext_api))
                 self.assertEqual(len(pool_update['pool']['members']), 0)
 
@@ -707,8 +694,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             with self.member(pool_id=pool['pool']['id']) as member:
                 req = self.new_show_request('members',
                                             member['member']['id'],
-                                            fmt='json')
-                res = self.deserialize('json', req.get_response(self.ext_api))
+                                            fmt=self.fmt)
+                res = self.deserialize(req.get_response(self.ext_api))
                 for k, v in keys:
                     self.assertEqual(res['member'][k], v)
 
@@ -740,7 +727,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             req = self.new_update_request("health_monitors",
                                           data,
                                           monitor['health_monitor']['id'])
-            res = self.deserialize('json', req.get_response(self.ext_api))
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['health_monitor'][k], v)
 
@@ -762,8 +749,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     ('status', 'PENDING_CREATE')]
             req = self.new_show_request('health_monitors',
                                         monitor['health_monitor']['id'],
-                                        fmt='json')
-            res = self.deserialize('json', req.get_response(self.ext_api))
+                                        fmt=self.fmt)
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['health_monitor'][k], v)
 
@@ -776,8 +763,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             req = self.new_show_request("pools",
                                         pool['pool']['id'],
                                         subresource="stats",
-                                        fmt='json')
-            res = self.deserialize('json', req.get_response(self.ext_api))
+                                        fmt=self.fmt)
+            res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['stats'][k], v)
 
@@ -791,7 +778,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_create_request(
                         "pools",
                         data,
-                        fmt='json',
+                        fmt=self.fmt,
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
@@ -803,7 +790,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_create_request(
                         "pools",
                         data,
-                        fmt='json',
+                        fmt=self.fmt,
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
@@ -812,9 +799,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_show_request(
                         'pools',
                         pool['pool']['id'],
-                        fmt='json')
-                    res = self.deserialize('json',
-                                           req.get_response(self.ext_api))
+                        fmt=self.fmt)
+                    res = self.deserialize(req.get_response(self.ext_api))
                     self.assertIn(monitor1['health_monitor']['id'],
                                   res['pool']['health_monitors'])
                     self.assertIn(monitor2['health_monitor']['id'],
@@ -831,7 +817,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_create_request(
                         "pools",
                         data,
-                        fmt='json',
+                        fmt=self.fmt,
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
@@ -843,7 +829,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_create_request(
                         "pools",
                         data,
-                        fmt='json',
+                        fmt=self.fmt,
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
@@ -852,7 +838,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     # remove one of healthmonitor from the pool
                     req = self.new_delete_request(
                         "pools",
-                        fmt='json',
+                        fmt=self.fmt,
                         id=pool['pool']['id'],
                         sub_id=monitor1['health_monitor']['id'],
                         subresource="health_monitors")
@@ -862,9 +848,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     req = self.new_show_request(
                         'pools',
                         pool['pool']['id'],
-                        fmt='json')
-                    res = self.deserialize('json',
-                                           req.get_response(self.ext_api))
+                        fmt=self.fmt)
+                    res = self.deserialize(req.get_response(self.ext_api))
                     self.assertNotIn(monitor1['health_monitor']['id'],
                                      res['pool']['health_monitors'])
                     self.assertIn(monitor2['health_monitor']['id'],
@@ -879,26 +864,26 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 pool_id = pool['pool']['id']
                 vip_id = vip['vip']['id']
                 # Add two members
-                res1 = self._create_member('json',
+                res1 = self._create_member(self.fmt,
                                            '192.168.1.100',
                                            '80',
                                            True,
                                            pool_id=pool_id,
                                            weight=1)
-                res2 = self._create_member('json',
+                res2 = self._create_member(self.fmt,
                                            '192.168.1.101',
                                            '80',
                                            True,
                                            pool_id=pool_id,
                                            weight=2)
                 # Add a health_monitor
-                req = self._create_health_monitor('json',
+                req = self._create_health_monitor(self.fmt,
                                                   'HTTP',
                                                   '10',
                                                   '10',
                                                   '3',
                                                   True)
-                health_monitor = self.deserialize('json', req)
+                health_monitor = self.deserialize(req)
                 self.assertEqual(req.status_int, 201)
 
                 # Associate the health_monitor to the pool
@@ -907,7 +892,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         'tenant_id': self._tenant_id}}
                 req = self.new_create_request("pools",
                                               data,
-                                              fmt='json',
+                                              fmt=self.fmt,
                                               id=pool['pool']['id'],
                                               subresource="health_monitors")
                 res = req.get_response(self.ext_api)
@@ -916,11 +901,10 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 # Get pool and vip
                 req = self.new_show_request('pools',
                                             pool_id,
-                                            fmt='json')
-                pool_updated = self.deserialize('json',
-                                                req.get_response(self.ext_api))
-                member1 = self.deserialize('json', res1)
-                member2 = self.deserialize('json', res2)
+                                            fmt=self.fmt)
+                pool_updated = self.deserialize(req.get_response(self.ext_api))
+                member1 = self.deserialize(res1)
+                member2 = self.deserialize(res2)
                 self.assertIn(member1['member']['id'],
                               pool_updated['pool']['members'])
                 self.assertIn(member2['member']['id'],
@@ -930,9 +914,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
                 req = self.new_show_request('vips',
                                             vip_id,
-                                            fmt='json')
-                vip_updated = self.deserialize('json',
-                                               req.get_response(self.ext_api))
+                                            fmt=self.fmt)
+                vip_updated = self.deserialize(req.get_response(self.ext_api))
                 self.assertEqual(vip_updated['vip']['pool_id'],
                                  pool_updated['pool']['id'])
 
@@ -941,3 +924,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                              health_monitor['health_monitor']['id'])
                 self._delete('members', member1['member']['id'])
                 self._delete('members', member2['member']['id'])
+
+
+class TestLoadBalancerXML(TestLoadBalancer):
+    fmt = 'xml'

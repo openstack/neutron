@@ -18,6 +18,7 @@
 import netaddr
 import re
 
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
@@ -536,3 +537,19 @@ RESOURCE_HIERARCHY_MAP = {
     'ports': {'parent': 'networks', 'identified_by': 'network_id'},
     'subnets': {'parent': 'networks', 'identified_by': 'network_id'}
 }
+
+PLURALS = {'networks': 'network',
+           'ports': 'port',
+           'subnets': 'subnet',
+           'dns_nameservers': 'dns_nameserver',
+           'host_routes': 'host_route',
+           'allocation_pools': 'allocation_pool',
+           'fixed_ips': 'fixed_ip',
+           'extensions': 'extension'}
+EXT_NSES = {}
+
+
+def get_attr_metadata():
+    return {'plurals': PLURALS,
+            'xmlns': constants.XML_NS_V20,
+            constants.EXT_NS: EXT_NSES}

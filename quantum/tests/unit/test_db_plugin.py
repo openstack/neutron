@@ -42,8 +42,7 @@ from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common import timeutils
 from quantum.tests.unit import test_extensions
-from quantum.tests.unit.testlib_api import create_request
-from quantum.wsgi import Serializer, JSONDeserializer
+from quantum.tests.unit import testlib_api
 
 
 DB_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
@@ -60,7 +59,8 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class QuantumDbPluginV2TestCase(unittest2.TestCase):
+class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
+    fmt = 'json'
 
     def setUp(self, plugin=None):
         super(QuantumDbPluginV2TestCase, self).setUp()
@@ -84,11 +84,6 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                                             copy())
         self._tenant_id = 'test-tenant'
 
-        json_deserializer = JSONDeserializer()
-        self._deserializers = {
-            'application/json': json_deserializer,
-        }
-
         if not plugin:
             plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
         # Create the default configurations
@@ -105,6 +100,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         self.api = APIRouter()
         # Set the defualt port status
         self.port_create_status = 'ACTIVE'
+        super(QuantumDbPluginV2TestCase, self).setUp()
 
         def _is_native_bulk_supported():
             plugin_obj = QuantumManager.get_plugin()
@@ -133,8 +129,9 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
 
-    def _req(self, method, resource, data=None, fmt='json',
+    def _req(self, method, resource, data=None, fmt=None,
              id=None, params=None, action=None):
+        fmt = fmt or self.fmt
         if id and action:
             path = '/%(resource)s/%(id)s/%(action)s.%(fmt)s' % locals()
         elif id:
@@ -145,29 +142,26 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         content_type = 'application/%s' % fmt
         body = None
         if data is not None:  # empty dict is valid
-            body = Serializer().serialize(data, content_type)
-        return create_request(path,
-                              body,
-                              content_type,
-                              method,
-                              query_string=params)
+            body = self.serialize(data)
+        return testlib_api.create_request(path, body, content_type, method,
+                                          query_string=params)
 
-    def new_create_request(self, resource, data, fmt='json'):
+    def new_create_request(self, resource, data, fmt=None):
         return self._req('POST', resource, data, fmt)
 
-    def new_list_request(self, resource, fmt='json', params=None):
+    def new_list_request(self, resource, fmt=None, params=None):
         return self._req('GET', resource, None, fmt, params=params)
 
-    def new_show_request(self, resource, id, fmt='json'):
+    def new_show_request(self, resource, id, fmt=None):
         return self._req('GET', resource, None, fmt, id=id)
 
-    def new_delete_request(self, resource, id, fmt='json'):
+    def new_delete_request(self, resource, id, fmt=None):
         return self._req('DELETE', resource, None, fmt, id=id)
 
-    def new_update_request(self, resource, data, id, fmt='json'):
+    def new_update_request(self, resource, data, id, fmt=None):
         return self._req('PUT', resource, data, fmt, id=id)
 
-    def new_action_request(self, resource, data, id, action, fmt='json'):
+    def new_action_request(self, resource, data, id, action, fmt=None):
         return self._req('PUT', resource, data, fmt, id=id, action=action)
 
     def deserialize(self, content_type, response):
@@ -391,7 +385,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             req.environ['quantum.context'] = quantum_context
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, expected_code)
-        return self.deserialize('json', res)
+        return self.deserialize(self.fmt, res)
 
     def _update(self, resource, id, new_data,
                 expected_code=webob.exc.HTTPOk.code,
@@ -402,16 +396,17 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
             req.environ['quantum.context'] = quantum_context
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, expected_code)
-        return self.deserialize('json', res)
+        return self.deserialize(self.fmt, res)
 
-    def _list(self, resource, fmt='json', quantum_context=None,
+    def _list(self, resource, fmt=None, quantum_context=None,
               query_params=None):
+        fmt = fmt or self.fmt
         req = self.new_list_request(resource, fmt, query_params)
         if quantum_context:
             req.environ['quantum.context'] = quantum_context
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
-        return self.deserialize('json', res)
+        return self.deserialize(fmt, res)
 
     def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
         """ Invoked by test cases for injecting failures in plugin """
@@ -425,13 +420,13 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
         req = self.new_list_request(collection)
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 200)
-        items = self.deserialize('json', res)
+        items = self.deserialize(self.fmt, res)
         self.assertEqual(len(items[collection]), 0)
 
     def _validate_behavior_on_bulk_success(self, res, collection,
                                            names=['test_0', 'test_1']):
         self.assertEqual(res.status_int, 201)
-        items = self.deserialize('json', res)[collection]
+        items = self.deserialize(self.fmt, res)[collection]
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['name'], 'test_0')
         self.assertEqual(items[1]['name'], 'test_1')
@@ -447,10 +442,11 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     @contextlib.contextmanager
     def network(self, name='net1',
                 admin_status_up=True,
-                fmt='json',
+                fmt=None,
                 do_delete=True,
                 **kwargs):
-        network = self._make_network(fmt, name, admin_status_up, **kwargs)
+        network = self._make_network(fmt or self.fmt, name,
+                                     admin_status_up, **kwargs)
         try:
             yield network
         finally:
@@ -465,7 +461,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
     def subnet(self, network=None,
                gateway_ip=ATTR_NOT_SPECIFIED,
                cidr='10.0.0.0/24',
-               fmt='json',
+               fmt=None,
                ip_version=4,
                allocation_pools=None,
                enable_dhcp=True,
@@ -477,7 +473,7 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
               else dummy_context_func()) as network_to_use:
             if network:
                 network_to_use = network
-            subnet = self._make_subnet(fmt,
+            subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
                                        gateway_ip,
                                        cidr,
@@ -494,14 +490,14 @@ class QuantumDbPluginV2TestCase(unittest2.TestCase):
                     self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt='json', no_delete=False,
+    def port(self, subnet=None, fmt=None, no_delete=False,
              **kwargs):
         with (self.subnet() if not subnet
               else dummy_context_func()) as subnet_to_use:
             if subnet:
                 subnet_to_use = subnet
             net_id = subnet_to_use['subnet']['network_id']
-            port = self._make_port(fmt, net_id, **kwargs)
+            port = self._make_port(fmt or self.fmt, net_id, **kwargs)
             try:
                 yield port
             finally:
@@ -530,7 +526,7 @@ class TestBasicGet(QuantumDbPluginV2TestCase):
 
 class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
     def test_create_returns_201(self):
-        res = self._create_network('json', 'net2', True)
+        res = self._create_network(self.fmt, 'net2', True)
         self.assertEqual(res.status_int, 201)
 
     def test_list_returns_200(self):
@@ -540,7 +536,7 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
 
     def _check_list_with_fields(self, res, field_name):
         self.assertEqual(res.status_int, 200)
-        body = self.deserialize('json', res)
+        body = self.deserialize(self.fmt, res)
         # further checks: 1 networks
         self.assertEqual(len(body['networks']), 1)
         # 1 field in the network record
@@ -549,14 +545,14 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
         self.assertIn(field_name, body['networks'][0])
 
     def test_list_with_fields(self):
-        self._create_network('json', 'some_net', True)
+        self._create_network(self.fmt, 'some_net', True)
         req = self.new_list_request('networks', params="fields=name")
         res = req.get_response(self.api)
         self._check_list_with_fields(res, 'name')
 
     def test_list_with_fields_noadmin(self):
         tenant_id = 'some_tenant'
-        self._create_network('json',
+        self._create_network(self.fmt,
                              'some_net',
                              True,
                              tenant_id=tenant_id,
@@ -575,7 +571,7 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
 
         """
         tenant_id = 'some_tenant'
-        self._create_network('json',
+        self._create_network(self.fmt,
                              'some_net',
                              True,
                              tenant_id=tenant_id,
@@ -592,8 +588,8 @@ class TestV2HTTPResponse(QuantumDbPluginV2TestCase):
             self.assertEqual(res.status_int, 200)
 
     def test_delete_returns_204(self):
-        res = self._create_network('json', 'net1', True)
-        net = self.deserialize('json', res)
+        res = self._create_network(self.fmt, 'net1', True)
+        net = self.deserialize(self.fmt, res)
         req = self.new_delete_request('networks', net['network']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
@@ -648,12 +644,12 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
     def test_create_port_public_network(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
         with self.network(shared=True) as network:
-            port_res = self._create_port('json',
+            port_res = self._create_port(self.fmt,
                                          network['network']['id'],
                                          201,
                                          tenant_id='another_tenant',
                                          set_context=True)
-            port = self.deserialize('json', port_res)
+            port = self.deserialize(self.fmt, port_res)
             for k, v in keys:
                 self.assertEqual(port['port'][k], v)
             self.assertTrue('mac_address' in port['port'])
@@ -666,12 +662,12 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                         ('status', self.port_create_status),
                         ('fixed_ips', [{'subnet_id': subnet['subnet']['id'],
                                         'ip_address': '10.0.0.2'}])]
-                port_res = self._create_port('json',
+                port_res = self._create_port(self.fmt,
                                              network['network']['id'],
                                              201,
                                              tenant_id='another_tenant',
                                              set_context=True)
-                port = self.deserialize('json', port_res)
+                port = self.deserialize(self.fmt, port_res)
                 for k, v in keys:
                     self.assertEqual(port['port'][k], v)
                 self.assertTrue('mac_address' in port['port'])
@@ -681,10 +677,10 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")
         with self.network() as net:
-            res = self._create_port_bulk('json', 2, net['network']['id'],
+            res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                          'test', True)
             self._validate_behavior_on_bulk_success(res, 'ports')
-            for p in self.deserialize('json', res)['ports']:
+            for p in self.deserialize(self.fmt, res)['ports']:
                 self._delete('ports', p['id'])
 
     def test_create_ports_bulk_emulated(self):
@@ -699,23 +695,23 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
             with self.network() as net:
-                res = self._create_port_bulk('json', 2, net['network']['id'],
+                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True)
                 self._validate_behavior_on_bulk_success(res, 'ports')
-                for p in self.deserialize('json', res)['ports']:
+                for p in self.deserialize(self.fmt, res)['ports']:
                     self._delete('ports', p['id'])
 
     def test_create_ports_bulk_wrong_input(self):
         with self.network() as net:
             overrides = {1: {'admin_state_up': 'doh'}}
-            res = self._create_port_bulk('json', 2, net['network']['id'],
+            res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                          'test', True,
                                          override=overrides)
             self.assertEqual(res.status_int, 400)
             req = self.new_list_request('ports')
             res = req.get_response(self.api)
             self.assertEqual(res.status_int, 200)
-            ports = self.deserialize('json', res)
+            ports = self.deserialize(self.fmt, res)
             self.assertEqual(len(ports['ports']), 0)
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
@@ -739,7 +735,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
-                    res = self._create_port_bulk('json', 2,
+                    res = self._create_port_bulk(self.fmt, 2,
                                                  net['network']['id'],
                                                  'test',
                                                  True)
@@ -760,7 +756,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
                                                 *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
-                res = self._create_port_bulk('json', 2, net['network']['id'],
+                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(res, 'ports')
@@ -805,27 +801,27 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_show_port(self):
         with self.port() as port:
-            req = self.new_show_request('ports', port['port']['id'], 'json')
-            sport = self.deserialize('json', req.get_response(self.api))
+            req = self.new_show_request('ports', port['port']['id'], self.fmt)
+            sport = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(port['port']['id'], sport['port']['id'])
 
     def test_delete_port(self):
         port_id = None
         with self.port() as port:
             port_id = port['port']['id']
-        req = self.new_show_request('port', 'json', port['port']['id'])
+        req = self.new_show_request('port', self.fmt, port['port']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 404)
 
     def test_delete_port_public_network(self):
         with self.network(shared=True) as network:
-            port_res = self._create_port('json',
+            port_res = self._create_port(self.fmt,
                                          network['network']['id'],
                                          201,
                                          tenant_id='another_tenant',
                                          set_context=True)
 
-            port = self.deserialize('json', port_res)
+            port = self.deserialize(self.fmt, port_res)
             port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
@@ -835,7 +831,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         with self.port() as port:
             data = {'port': {'admin_state_up': False}}
             req = self.new_update_request('ports', data, port['port']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['port']['admin_state_up'],
                              data['port']['admin_state_up'])
 
@@ -847,7 +843,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res.status_int, 400)
 
     def test_delete_network_if_port_exists(self):
-        fmt = 'json'
         with self.port() as port:
             req = self.new_delete_request('networks',
                                           port['port']['network_id'])
@@ -855,16 +850,11 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res.status_int, 409)
 
     def test_delete_network_port_exists_owned_by_network(self):
-        gateway_ip = '10.0.0.1'
-        cidr = '10.0.0.0/24'
-        fmt = 'json'
-        # Create new network
-
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
+        network = self.deserialize(self.fmt, res)
         network_id = network['network']['id']
-        self._create_port(fmt, network_id, device_owner='network:dhcp')
+        self._create_port(self.fmt, network_id, device_owner='network:dhcp')
         req = self.new_delete_request('networks', network_id)
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
@@ -876,18 +866,17 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  'fixed_ips': []}}
                 req = self.new_update_request('ports',
                                               data, port['port']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(res['port']['admin_state_up'],
                                  data['port']['admin_state_up'])
                 self.assertEqual(res['port']['fixed_ips'],
                                  data['port']['fixed_ips'])
 
     def test_no_more_port_exception(self):
-        fmt = 'json'
         with self.subnet(cidr='10.0.0.0/32') as subnet:
             id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, id)
-            data = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, id)
+            data = self.deserialize(self.fmt, res)
             msg = str(q_exc.IpAddressGenerationFailure(net_id=id))
             self.assertEqual(data['QuantumError'], msg)
             self.assertEqual(res.status_int, 409)
@@ -908,7 +897,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                                 'ip_address': "10.0.0.10"}]}}
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 ips = res['port']['fixed_ips']
                 self.assertEqual(len(ips), 1)
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.10')
@@ -927,7 +916,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                                 subnet['subnet']['id']}]}}
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(res['port']['admin_state_up'],
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
@@ -946,7 +935,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                                 subnet['subnet']['id']}]}}
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(res['port']['admin_state_up'],
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
@@ -957,7 +946,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
 
     def test_requested_duplicate_mac(self):
-        fmt = 'json'
         with self.port() as port:
             mac = port['port']['mac_address']
             # check that MAC address matches base MAC
@@ -965,8 +953,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertTrue(mac.startswith(base_mac))
             kwargs = {"mac_address": mac}
             net_id = port['port']['network_id']
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 409)
 
     def test_mac_generation(self):
@@ -1000,18 +988,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         def fake_gen_mac(context, net_id):
             raise q_exc.MacAddressGenerationFailure(net_id=net_id)
 
-        fmt = 'json'
         with mock.patch.object(quantum.db.db_base_plugin_v2.QuantumDbPluginV2,
                                '_generate_mac', new=fake_gen_mac):
-            res = self._create_network(fmt=fmt, name='net1',
+            res = self._create_network(fmt=self.fmt, name='net1',
                                        admin_status_up=True)
-            network = self.deserialize(fmt, res)
+            network = self.deserialize(self.fmt, res)
             net_id = network['network']['id']
-            res = self._create_port(fmt, net_id=net_id)
+            res = self._create_port(self.fmt, net_id=net_id)
             self.assertEqual(res.status_int, 503)
 
     def test_requested_duplicate_ip(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
@@ -1022,12 +1008,11 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                          'ip_address': ips[0]['ip_address']}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 409)
 
     def test_requested_subnet_delete(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
@@ -1040,7 +1025,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(res.status_int, 404)
 
     def test_requested_subnet_id(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
@@ -1050,8 +1034,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 # Request a IP from specific subnet
                 kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id']}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 ips = port2['port']['fixed_ips']
                 self.assertEqual(len(ips), 1)
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
@@ -1059,29 +1043,27 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self._delete('ports', port2['port']['id'])
 
     def test_requested_subnet_id_not_on_network(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 # Create new network
-                res = self._create_network(fmt=fmt, name='net2',
+                res = self._create_network(fmt=self.fmt, name='net2',
                                            admin_status_up=True)
-                network2 = self.deserialize(fmt, res)
-                subnet2 = self._make_subnet(fmt, network2, "1.1.1.1",
+                network2 = self.deserialize(self.fmt, res)
+                subnet2 = self._make_subnet(self.fmt, network2, "1.1.1.1",
                                             "1.1.1.0/24", ip_version=4)
                 net_id = port['port']['network_id']
                 # Request a IP from specific subnet
                 kwargs = {"fixed_ips": [{'subnet_id':
                                          subnet2['subnet']['id']}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 self.assertEqual(res.status_int, 400)
 
     def test_overlapping_subnets(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             tenant_id = subnet['subnet']['tenant_id']
             net_id = subnet['subnet']['network_id']
-            res = self._create_subnet(fmt,
+            res = self._create_subnet(self.fmt,
                                       tenant_id=tenant_id,
                                       net_id=net_id,
                                       cidr='10.0.0.225/28',
@@ -1090,31 +1072,30 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res.status_int, 400)
 
     def test_requested_subnet_id_v4_and_v6(self):
-        fmt = 'json'
         with self.subnet() as subnet:
                 # Get a IPv4 and IPv6 address
                 tenant_id = subnet['subnet']['tenant_id']
                 net_id = subnet['subnet']['network_id']
-                res = self._create_subnet(fmt,
+                res = self._create_subnet(self.fmt,
                                           tenant_id=tenant_id,
                                           net_id=net_id,
                                           cidr='2607:f0d0:1002:51::0/124',
                                           ip_version=6,
                                           gateway_ip=ATTR_NOT_SPECIFIED)
-                subnet2 = self.deserialize(fmt, res)
+                subnet2 = self.deserialize(self.fmt, res)
                 kwargs = {"fixed_ips":
                           [{'subnet_id': subnet['subnet']['id']},
                            {'subnet_id': subnet2['subnet']['id']}]}
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port3 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port3 = self.deserialize(self.fmt, res)
                 ips = port3['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
                 self.assertEqual(ips[1]['ip_address'], '2607:f0d0:1002:51::2')
                 self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
-                res = self._create_port(fmt, net_id=net_id)
-                port4 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id)
+                port4 = self.deserialize(self.fmt, res)
                 # Check that a v4 and a v6 address are allocated
                 ips = port4['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
@@ -1126,7 +1107,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self._delete('ports', port4['port']['id'])
 
     def test_range_allocation(self):
-        fmt = 'json'
         with self.subnet(gateway_ip='10.0.0.3',
                          cidr='10.0.0.0/29') as subnet:
                 kwargs = {"fixed_ips":
@@ -1136,8 +1116,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                            {'subnet_id': subnet['subnet']['id']},
                            {'subnet_id': subnet['subnet']['id']}]}
                 net_id = subnet['subnet']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port = self.deserialize(self.fmt, res)
                 ips = port['port']['fixed_ips']
                 self.assertEqual(len(ips), 5)
                 alloc = ['10.0.0.1', '10.0.0.2', '10.0.0.4', '10.0.0.5',
@@ -1157,8 +1137,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                            {'subnet_id': subnet['subnet']['id']},
                            {'subnet_id': subnet['subnet']['id']}]}
                 net_id = subnet['subnet']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port = self.deserialize(self.fmt, res)
                 ips = port['port']['fixed_ips']
                 self.assertEqual(len(ips), 5)
                 alloc = ['11.0.0.1', '11.0.0.2', '11.0.0.3', '11.0.0.4',
@@ -1170,7 +1150,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self._delete('ports', port['port']['id'])
 
     def test_requested_invalid_fixed_ips(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
@@ -1183,8 +1162,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                            {'subnet_id':
                             '00000000-ffff-ffff-ffff-000000000000'}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 404)
 
                 # Test invalid IP address on specified subnet_id
@@ -1192,8 +1171,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                           [{'subnet_id': subnet['subnet']['id'],
                             'ip_address': '1.1.1.1'}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 400)
 
                 # Test invalid addresses - IP's not on subnet or network
@@ -1202,8 +1181,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 net_id = port['port']['network_id']
                 for ip in bad_ips:
                     kwargs = {"fixed_ips": [{'ip_address': ip}]}
-                    res = self._create_port(fmt, net_id=net_id, **kwargs)
-                    port2 = self.deserialize(fmt, res)
+                    res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                    port2 = self.deserialize(self.fmt, res)
                     self.assertEqual(res.status_int, 400)
 
                 # Enable allocation of gateway address
@@ -1211,8 +1190,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                           [{'subnet_id': subnet['subnet']['id'],
                             'ip_address': '10.0.0.1'}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 ips = port2['port']['fixed_ips']
                 self.assertEqual(len(ips), 1)
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.1')
@@ -1220,18 +1199,16 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self._delete('ports', port2['port']['id'])
 
     def test_invalid_ip(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             # Allocate specific IP
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '1011.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
-            port = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_requested_split(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ports_to_delete = []
@@ -1243,8 +1220,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                          'ip_address': '10.0.0.5'}]}
                 net_id = port['port']['network_id']
-                res = self._create_port(fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(fmt, res)
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                port2 = self.deserialize(self.fmt, res)
                 ports_to_delete.append(port2)
                 ips = port2['port']['fixed_ips']
                 self.assertEqual(len(ips), 1)
@@ -1254,8 +1231,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 allocated = ['10.0.0.3', '10.0.0.4', '10.0.0.6']
 
                 for a in allocated:
-                    res = self._create_port(fmt, net_id=net_id)
-                    port2 = self.deserialize(fmt, res)
+                    res = self._create_port(self.fmt, net_id=net_id)
+                    port2 = self.deserialize(self.fmt, res)
                     ports_to_delete.append(port2)
                     ips = port2['port']['fixed_ips']
                     self.assertEqual(len(ips), 1)
@@ -1267,7 +1244,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self._delete('ports', p['port']['id'])
 
     def test_duplicate_ips(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             # Allocate specific IP
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
@@ -1275,34 +1251,31 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                     {'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_fixed_ip_invalid_subnet_id(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             # Allocate specific IP
             kwargs = {"fixed_ips": [{'subnet_id': 'i am invalid',
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_fixed_ip_invalid_ip(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             # Allocate specific IP
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.55555'}]}
             net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_requested_ips_only(self):
-        fmt = 'json'
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
@@ -1315,8 +1288,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 for i in ips_only:
                     kwargs = {"fixed_ips": [{'ip_address': i}]}
                     net_id = port['port']['network_id']
-                    res = self._create_port(fmt, net_id=net_id, **kwargs)
-                    port = self.deserialize(fmt, res)
+                    res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                    port = self.deserialize(self.fmt, res)
                     ports_to_delete.append(port)
                     ips = port['port']['fixed_ips']
                     self.assertEqual(len(ips), 1)
@@ -1330,7 +1303,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         # set expirations to past so that recycling is checked
         reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
         cfg.CONF.set_override('dhcp_lease_duration', 0)
-        fmt = 'json'
 
         with self.subnet(cidr='10.0.1.0/24') as subnet:
             with self.port(subnet=subnet) as port:
@@ -1344,15 +1316,15 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     net_id = port['port']['network_id']
                     ports = []
                     for i in range(16 - 3):
-                        res = self._create_port(fmt, net_id=net_id)
-                        p = self.deserialize(fmt, res)
+                        res = self._create_port(self.fmt, net_id=net_id)
+                        p = self.deserialize(self.fmt, res)
                         ports.append(p)
                     for i in range(16 - 3):
                         x = random.randrange(0, len(ports), 1)
                         p = ports.pop(x)
                         self._delete('ports', p['port']['id'])
-                    res = self._create_port(fmt, net_id=net_id)
-                    port = self.deserialize(fmt, res)
+                    res = self._create_port(self.fmt, net_id=net_id)
+                    port = self.deserialize(self.fmt, res)
                     ips = port['port']['fixed_ips']
                     self.assertEqual(len(ips), 1)
                     self.assertEqual(ips[0]['ip_address'], '10.0.1.3')
@@ -1517,7 +1489,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         name = 'net1'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
                 ('status', 'ACTIVE'), ('shared', False)]
-        with self.network(name=name) as net:
+        with self.network(name=name, arg_list=('test',), test=None) as net:
             for k, v in keys:
                 self.assertEqual(net['network'][k], v)
 
@@ -1547,7 +1519,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['network']['name'],
                              data['network']['name'])
 
@@ -1568,7 +1540,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertTrue(res['network']['shared'])
 
     def test_update_network_with_subnet_set_shared(self):
@@ -1578,7 +1550,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                 req = self.new_update_request('networks',
                                               data,
                                               network['network']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertTrue(res['network']['shared'])
                 # must query db to see whether subnet's shared attribute
                 # has been updated or not
@@ -1589,7 +1561,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
     def test_update_network_set_not_shared_single_tenant(self):
         with self.network(shared=True) as network:
-            res1 = self._create_port('json',
+            res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      201,
                                      tenant_id=network['network']['tenant_id'],
@@ -1598,14 +1570,14 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertFalse(res['network']['shared'])
-            port1 = self.deserialize('json', res1)
+            port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
     def test_update_network_set_not_shared_other_tenant_returns_409(self):
         with self.network(shared=True) as network:
-            res1 = self._create_port('json',
+            res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      201,
                                      tenant_id='somebody_else',
@@ -1615,17 +1587,17 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                           data,
                                           network['network']['id'])
             self.assertEqual(req.get_response(self.api).status_int, 409)
-            port1 = self.deserialize('json', res1)
+            port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
     def test_update_network_set_not_shared_multi_tenants_returns_409(self):
         with self.network(shared=True) as network:
-            res1 = self._create_port('json',
+            res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      201,
                                      tenant_id='somebody_else',
                                      set_context=True)
-            res2 = self._create_port('json',
+            res2 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      201,
                                      tenant_id=network['network']['tenant_id'],
@@ -1635,19 +1607,19 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                           data,
                                           network['network']['id'])
             self.assertEqual(req.get_response(self.api).status_int, 409)
-            port1 = self.deserialize('json', res1)
-            port2 = self.deserialize('json', res2)
+            port1 = self.deserialize(self.fmt, res1)
+            port2 = self.deserialize(self.fmt, res2)
             self._delete('ports', port1['port']['id'])
             self._delete('ports', port2['port']['id'])
 
     def test_update_network_set_not_shared_multi_tenants2_returns_409(self):
         with self.network(shared=True) as network:
-            res1 = self._create_port('json',
+            res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      201,
                                      tenant_id='somebody_else',
                                      set_context=True)
-            self._create_subnet('json',
+            self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
                                 201,
@@ -1659,13 +1631,13 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                           network['network']['id'])
             self.assertEqual(req.get_response(self.api).status_int, 409)
 
-            port1 = self.deserialize('json', res1)
+            port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
     def test_create_networks_bulk_native(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
-        res = self._create_network_bulk('json', 2, 'test', True)
+        res = self._create_network_bulk(self.fmt, 2, 'test', True)
         self._validate_behavior_on_bulk_success(res, 'networks')
 
     def test_create_networks_bulk_native_quotas(self):
@@ -1673,7 +1645,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         quota = 4
         cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
-        res = self._create_network_bulk('json', quota + 1, 'test', True)
+        res = self._create_network_bulk(self.fmt, quota + 1, 'test', True)
         self._validate_behavior_on_bulk_failure(res, 'networks', errcode=409)
 
     def test_create_networks_bulk_tenants_and_quotas(self):
@@ -1690,7 +1662,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                     {'network': {'name': 'n2',
                                  'tenant_id': 't1'}}]
 
-        res = self._create_bulk_from_list('json', 'network', networks)
+        res = self._create_bulk_from_list(self.fmt, 'network', networks)
         self.assertEqual(res.status_int, 201)
 
     def test_create_networks_bulk_tenants_and_quotas_fail(self):
@@ -1709,7 +1681,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                     {'network': {'name': 'n2',
                                  'tenant_id': 't1'}}]
 
-        res = self._create_bulk_from_list('json', 'network', networks)
+        res = self._create_bulk_from_list(self.fmt, 'network', networks)
         self.assertEqual(res.status_int, 409)
 
     def test_create_networks_bulk_emulated(self):
@@ -1723,18 +1695,18 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
-            res = self._create_network_bulk('json', 2, 'test', True)
+            res = self._create_network_bulk(self.fmt, 2, 'test', True)
             self._validate_behavior_on_bulk_success(res, 'networks')
 
     def test_create_networks_bulk_wrong_input(self):
-        res = self._create_network_bulk('json', 2, 'test', True,
+        res = self._create_network_bulk(self.fmt, 2, 'test', True,
                                         override={1:
                                                   {'admin_state_up': 'doh'}})
         self.assertEqual(res.status_int, 400)
         req = self.new_list_request('networks')
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 200)
-        nets = self.deserialize('json', res)
+        nets = self.deserialize(self.fmt, res)
         self.assertEqual(len(nets['networks']), 0)
 
     def test_create_networks_bulk_emulated_plugin_failure(self):
@@ -1757,7 +1729,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                                 *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
-                res = self._create_network_bulk('json', 2, 'test', True)
+                res = self._create_network_bulk(self.fmt, 2, 'test', True)
                 # We expect a 500 as we injected a fault in the plugin
                 self._validate_behavior_on_bulk_failure(res, 'networks')
 
@@ -1773,7 +1745,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
                                             *args, **kwargs)
 
             patched_plugin.side_effect = side_effect
-            res = self._create_network_bulk('json', 2, 'test', True)
+            res = self._create_network_bulk(self.fmt, 2, 'test', True)
             # We expect a 500 as we injected a fault in the plugin
             self._validate_behavior_on_bulk_failure(res, 'networks')
 
@@ -1798,7 +1770,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         with self.network(name='net1') as net1:
             req = self.new_list_request('networks',
                                         params='fields=name')
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(1, len(res['networks']))
             self.assertEqual(res['networks'][0]['name'],
                              net1['network']['name'])
@@ -1817,7 +1789,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
     def test_show_network(self):
         with self.network(name='net1') as net:
             req = self.new_show_request('networks', net['network']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['network']['name'],
                              net['network']['name'])
 
@@ -1825,12 +1797,11 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         with self.network(name='net1') as net:
             with self.subnet(net) as subnet:
                 req = self.new_show_request('networks', net['network']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(res['network']['subnets'][0],
                                  subnet['subnet']['id'])
 
     def test_invalid_admin_status(self):
-        fmt = 'json'
         value = [[7, False, 400], [True, True, 201], ["True", True, 201],
                  ["true", True, 201], [1, True, 201], ["False", False, 201],
                  [False, False, 201], ["false", False, 201],
@@ -1843,7 +1814,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             req = network_req.get_response(self.api)
             self.assertEqual(req.status_int, v[2])
             if v[2] == 201:
-                res = self.deserialize(fmt, req)
+                res = self.deserialize(self.fmt, req)
                 self.assertEqual(res['network']['admin_state_up'], v[1])
 
 
@@ -1871,7 +1842,8 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         subnet = self._test_create_subnet(gateway_ip=gateway_ip,
                                           cidr=cidr)
-        self.assertTrue('name' in subnet['subnet'])
+        self.assertEqual(4, subnet['subnet']['ip_version'])
+        self.assertIn('name', subnet['subnet'])
 
     def test_create_two_subnets(self):
         gateway_ips = ['10.0.0.1', '10.0.1.1']
@@ -1886,11 +1858,11 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     net_req = self.new_show_request('networks',
                                                     network['network']['id'])
                     raw_res = net_req.get_response(self.api)
-                    net_res = self.deserialize('json', raw_res)
+                    net_res = self.deserialize(self.fmt, raw_res)
                     for subnet_id in net_res['network']['subnets']:
                         sub_req = self.new_show_request('subnets', subnet_id)
                         raw_res = sub_req.get_response(self.api)
-                        sub_res = self.deserialize('json', raw_res)
+                        sub_res = self.deserialize(self.fmt, raw_res)
                         self.assertIn(sub_res['subnet']['cidr'], cidrs)
                         self.assertIn(sub_res['subnet']['gateway_ip'],
                                       gateway_ips)
@@ -1958,7 +1930,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")
         with self.network() as net:
-            res = self._create_subnet_bulk('json', 2, net['network']['id'],
+            res = self._create_subnet_bulk(self.fmt, 2, net['network']['id'],
                                            'test')
             self._validate_behavior_on_bulk_success(res, 'subnets')
 
@@ -1974,7 +1946,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
             with self.network() as net:
-                res = self._create_subnet_bulk('json', 2,
+                res = self._create_subnet_bulk(self.fmt, 2,
                                                net['network']['id'],
                                                'test')
                 self._validate_behavior_on_bulk_success(res, 'subnets')
@@ -2000,7 +1972,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
-                    res = self._create_subnet_bulk('json', 2,
+                    res = self._create_subnet_bulk(self.fmt, 2,
                                                    net['network']['id'],
                                                    'test')
                 # We expect a 500 as we injected a fault in the plugin
@@ -2018,7 +1990,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
             patched_plugin.side_effect = side_effect
             with self.network() as net:
-                res = self._create_subnet_bulk('json', 2,
+                res = self._create_subnet_bulk(self.fmt, 2,
                                                net['network']['id'],
                                                'test')
 
@@ -2028,12 +2000,11 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
@@ -2042,15 +2013,14 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet_port_exists_owned_by_network(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
+        network = self.deserialize(self.fmt, res)
         network_id = network['network']['id']
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
-        self._create_port(fmt,
+        self._create_port(self.fmt,
                           network['network']['id'],
                           device_owner='network:dhcp')
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
@@ -2063,7 +2033,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                 id = subnet['subnet']['id']
                 req = self.new_delete_request('subnets', id)
                 res = req.get_response(self.api)
-                data = self.deserialize('json', res)
+                data = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 409)
                 msg = str(q_exc.SubnetInUse(subnet_id=id))
                 self.assertEqual(data['QuantumError'], msg)
@@ -2071,12 +2041,11 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
@@ -2252,7 +2221,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_create_force_subnet_gw_values(self):
         cfg.CONF.set_override('force_gateway_on_subnet', True)
         with self.network() as network:
-            self._create_subnet('json',
+            self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
                                 400,
@@ -2282,7 +2251,6 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
     def test_subnet_with_allocation_range(self):
         cfg.CONF.set_override('dhcp_lease_duration', 0)
-        fmt = 'json'
         with self.network() as network:
             net_id = network['network']['id']
             data = {'subnet': {'network_id': net_id,
@@ -2293,14 +2261,14 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                                'allocation_pools': [{'start': '10.0.0.100',
                                                     'end': '10.0.0.120'}]}}
             subnet_req = self.new_create_request('subnets', data)
-            subnet = self.deserialize('json',
+            subnet = self.deserialize(self.fmt,
                                       subnet_req.get_response(self.api))
             # Check fixed IP not in allocation range
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.10'}]}
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 201)
-            port = self.deserialize('json', res)
+            port = self.deserialize(self.fmt, res)
             port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
@@ -2308,9 +2276,9 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             # Check when fixed IP is gateway
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.1'}]}
-            res = self._create_port(fmt, net_id=net_id, **kwargs)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 201)
-            port = self.deserialize('json', res)
+            port = self.deserialize(self.fmt, res)
             port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
@@ -2506,7 +2474,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['subnet']['gateway_ip'],
                              data['subnet']['gateway_ip'])
 
@@ -2577,7 +2545,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             with self.subnet(network=network) as subnet:
                 req = self.new_show_request('subnets',
                                             subnet['subnet']['id'])
-                res = self.deserialize('json', req.get_response(self.api))
+                res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertEqual(res['subnet']['id'],
                                  subnet['subnet']['id'])
                 self.assertEqual(res['subnet']['network_id'],
@@ -2604,7 +2572,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     req = self.new_list_request('subnets')
                     req.environ['quantum.context'] = context.Context(
                         '', 'some_tenant')
-                    res = self.deserialize('json',
+                    res = self.deserialize(self.fmt,
                                            req.get_response(self.api))
                     self.assertEqual(len(res['subnets']), 1)
                     self.assertEqual(res['subnets'][0]['cidr'],
@@ -2612,7 +2580,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     # admin will see both subnets
                     admin_req = self.new_list_request('subnets')
                     admin_res = self.deserialize(
-                        'json', admin_req.get_response(self.api))
+                        self.fmt, admin_req.get_response(self.api))
                     self.assertEqual(len(admin_res['subnets']), 2)
                     cidrs = [sub['cidr'] for sub in admin_res['subnets']]
                     self.assertIn(subnet['subnet']['cidr'], cidrs)
@@ -2770,7 +2738,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             data = {'subnet': {'dns_nameservers': ['11.0.0.1']}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['subnet']['dns_nameservers'],
                              data['subnet']['dns_nameservers'])
 
@@ -2779,12 +2747,12 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             data = {'subnet': {'dns_nameservers': None}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual([], res['subnet']['dns_nameservers'])
             data = {'subnet': {'dns_nameservers': ['11.0.0.3']}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(data['subnet']['dns_nameservers'],
                              res['subnet']['dns_nameservers'])
 
@@ -2803,7 +2771,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                     [{'destination': '12.0.0.0/8', 'nexthop': '1.2.3.4'}]}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['subnet']['host_routes'],
                              data['subnet']['host_routes'])
 
@@ -2813,13 +2781,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             data = {'subnet': {'host_routes': None}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual([], res['subnet']['host_routes'])
             data = {'subnet': {'host_routes': [{'destination': '12.0.0.0/8',
                                                 'nexthop': '1.2.3.4'}]}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
-            res = self.deserialize('json', req.get_response(self.api))
+            res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(data['subnet']['host_routes'],
                              res['subnet']['host_routes'])
 
@@ -2837,13 +2805,12 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet_with_dns(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         dns_nameservers = ['1.2.3.4']
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,
                                    dns_nameservers=dns_nameservers)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
@@ -2853,14 +2820,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet_with_route(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         host_routes = [{'destination': '135.207.0.0/16',
                         'nexthop': '1.2.3.4'}]
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,
                                    host_routes=host_routes)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
@@ -2870,15 +2836,14 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
     def test_delete_subnet_with_dns_and_route(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
-        fmt = 'json'
         dns_nameservers = ['1.2.3.4']
         host_routes = [{'destination': '135.207.0.0/16',
                         'nexthop': '1.2.3.4'}]
         # Create new network
-        res = self._create_network(fmt=fmt, name='net',
+        res = self._create_network(fmt=self.fmt, name='net',
                                    admin_status_up=True)
-        network = self.deserialize(fmt, res)
-        subnet = self._make_subnet(fmt, network, gateway_ip,
+        network = self.deserialize(self.fmt, res)
+        subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,
                                    dns_nameservers=dns_nameservers,
                                    host_routes=host_routes)
@@ -2901,3 +2866,23 @@ class DbModelTestCase(unittest2.TestCase):
                         "admin_state_up=True, shared=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(actual_repr_output, final_exp)
+
+
+class TestBasicGetXML(TestBasicGet):
+    fmt = 'xml'
+
+
+class TestNetworksV2XML(TestNetworksV2):
+    fmt = 'xml'
+
+
+class TestPortsV2XML(TestPortsV2):
+    fmt = 'xml'
+
+
+class TestSubnetsV2XML(TestSubnetsV2):
+    fmt = 'xml'
+
+
+class TestV2HTTPResponseXML(TestV2HTTPResponse):
+    fmt = 'xml'

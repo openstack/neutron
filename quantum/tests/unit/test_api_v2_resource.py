@@ -27,15 +27,68 @@ import webtest
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions as q_exc
 from quantum import context
+from quantum import wsgi
 
 
 class RequestTestCase(unittest.TestCase):
     def setUp(self):
         self.req = wsgi_resource.Request({'foo': 'bar'})
 
-    def test_best_match_content_type(self):
-        self.assertEqual(self.req.best_match_content_type(),
-                         'application/json')
+    def test_content_type_missing(self):
+        request = wsgi.Request.blank('/tests/123', method='POST')
+        request.body = "<body />"
+        self.assertEqual(None, request.get_content_type())
+
+    def test_content_type_with_charset(self):
+        request = wsgi.Request.blank('/tests/123')
+        request.headers["Content-Type"] = "application/json; charset=UTF-8"
+        result = request.get_content_type()
+        self.assertEqual(result, "application/json")
+
+    def test_content_type_from_accept(self):
+        for content_type in ('application/xml',
+                             'application/json'):
+            request = wsgi.Request.blank('/tests/123')
+            request.headers["Accept"] = content_type
+            result = request.best_match_content_type()
+            self.assertEqual(result, content_type)
+
+    def test_content_type_from_accept_best(self):
+        request = wsgi.Request.blank('/tests/123')
+        request.headers["Accept"] = "application/xml, application/json"
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/json")
+
+        request = wsgi.Request.blank('/tests/123')
+        request.headers["Accept"] = ("application/json; q=0.3, "
+                                     "application/xml; q=0.9")
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/xml")
+
+    def test_content_type_from_query_extension(self):
+        request = wsgi.Request.blank('/tests/123.xml')
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/xml")
+
+        request = wsgi.Request.blank('/tests/123.json')
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/json")
+
+        request = wsgi.Request.blank('/tests/123.invalid')
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/json")
+
+    def test_content_type_accept_and_query_extension(self):
+        request = wsgi.Request.blank('/tests/123.xml')
+        request.headers["Accept"] = "application/json"
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/xml")
+
+    def test_content_type_accept_default(self):
+        request = wsgi.Request.blank('/tests/123.unsupported')
+        request.headers["Accept"] = "application/unsupported1"
+        result = request.best_match_content_type()
+        self.assertEqual(result, "application/json")
 
     def test_context_with_quantum_context(self):
         ctxt = context.Context('fake_user', 'fake_tenant')

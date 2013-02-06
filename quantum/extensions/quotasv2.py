@@ -51,7 +51,8 @@ class QuotaSetsController(wsgi.Controller):
         self._driver = importutils.import_class(DB_QUOTA_DRIVER)
 
     def _get_body(self, request):
-        body = self._deserialize(request.body, request.get_content_type())
+        body = self._deserialize(request.body,
+                                 request.best_match_content_type())
         attr_info = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
         req_body = base.Controller.prepare_request_body(
             request.context, body, False, self._resource_name, attr_info)

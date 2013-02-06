@@ -26,9 +26,9 @@ import webob.exc as webexc
 import webtest
 
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum import context
 from quantum.db import api as db_api
-from quantum.db import models_v2
 from quantum.db import servicetype_db
 from quantum.extensions import servicetype
 from quantum import manager
@@ -38,6 +38,7 @@ from quantum.tests.unit import dummy_plugin as dp
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
 from quantum.tests.unit import test_extensions
+from quantum.tests.unit import testlib_api
 
 
 LOG = logging.getLogger(__name__)
@@ -62,7 +63,8 @@ class TestServiceTypeExtensionManager(object):
         return []
 
 
-class ServiceTypeTestCaseBase(unittest.TestCase):
+class ServiceTypeTestCaseBase(testlib_api.WebTestCase):
+    fmt = 'json'
 
     def setUp(self):
         # This is needed because otherwise a failure will occur due to
@@ -79,6 +81,7 @@ class ServiceTypeTestCaseBase(unittest.TestCase):
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
         self.resource_name = servicetype.RESOURCE_NAME.replace('-', '_')
+        super(ServiceTypeTestCaseBase, self).setUp()
 
     def tearDown(self):
         self.api = None
@@ -119,15 +122,18 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         instance = self.mock_mgr.return_value
         instance.create_service_type.return_value = return_value
         expect_errors = expected_status >= webexc.HTTPBadRequest.code
-        res = self.api.post_json(_get_path('service-types'), data,
-                                 extra_environ=env,
-                                 expect_errors=expect_errors)
+        res = self.api.post(_get_path('service-types', fmt=self.fmt),
+                            self.serialize(data),
+                            extra_environ=env,
+                            expect_errors=expect_errors,
+                            content_type='application/%s' % self.fmt)
         self.assertEqual(res.status_int, expected_status)
         if not expect_errors:
             instance.create_service_type.assert_called_with(mock.ANY,
                                                             service_type=data)
-            self.assertTrue(self.resource_name in res.json)
-            svc_type = res.json[self.resource_name]
+            res = self.deserialize(res)
+            self.assertTrue(self.resource_name in res)
+            svc_type = res[self.resource_name]
             self.assertEqual(svc_type['id'], svc_type_id)
             # NOTE(salvatore-orlando): The following two checks are
             # probably not essential
@@ -149,15 +155,17 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         instance = self.mock_mgr.return_value
         expect_errors = expected_status >= webexc.HTTPBadRequest.code
         instance.update_service_type.return_value = return_value
-        res = self.api.put_json(_get_path('service-types/%s' % svc_type_id),
-                                data)
+        res = self.api.put(_get_path('service-types/%s' % svc_type_id,
+                                     fmt=self.fmt),
+                           self.serialize(data))
         if not expect_errors:
             instance.update_service_type.assert_called_with(mock.ANY,
                                                             svc_type_id,
                                                             service_type=data)
             self.assertEqual(res.status_int, webexc.HTTPOk.code)
-            self.assertTrue(self.resource_name in res.json)
-            svc_type = res.json[self.resource_name]
+            res = self.deserialize(res)
+            self.assertTrue(self.resource_name in res)
+            svc_type = res[self.resource_name]
             self.assertEqual(svc_type['id'], svc_type_id)
             self.assertEqual(svc_type['name'],
                              data[self.resource_name]['name'])
@@ -171,7 +179,8 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
     def test_service_type_delete(self):
         svctype_id = _uuid()
         instance = self.mock_mgr.return_value
-        res = self.api.delete(_get_path('service-types/%s' % svctype_id))
+        res = self.api.delete(_get_path('service-types/%s' % svctype_id,
+                                        fmt=self.fmt))
         instance.delete_service_type.assert_called_with(mock.ANY,
                                                         svctype_id)
         self.assertEqual(res.status_int, webexc.HTTPNoContent.code)
@@ -185,7 +194,8 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         instance = self.mock_mgr.return_value
         instance.get_service_type.return_value = return_value
 
-        res = self.api.get(_get_path('service-types/%s' % svctype_id))
+        res = self.api.get(_get_path('service-types/%s' % svctype_id,
+                                     fmt=self.fmt))
 
         instance.get_service_type.assert_called_with(mock.ANY,
                                                      svctype_id,
@@ -201,7 +211,8 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         instance = self.mock_mgr.return_value
         instance.get_service_types.return_value = return_value
 
-        res = self.api.get(_get_path('service-types'))
+        res = self.api.get(_get_path('service-types',
+                                     fmt=self.fmt))
 
         instance.get_service_types.assert_called_with(mock.ANY,
                                                       fields=mock.ANY,
@@ -231,6 +242,10 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         self._test_service_type_update(env=env)
 
 
+class ServiceTypeExtensionTestCaseXML(ServiceTypeExtensionTestCase):
+    fmt = 'xml'
+
+
 class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
 
     def setUp(self):
@@ -256,7 +271,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             service_defs = [{'service_class': constants.DUMMY,
                              'plugin': dp.DUMMY_PLUGIN_NAME}]
         res = self._create_service_type(name, service_defs)
-        svc_type = res.json
+        svc_type = self.deserialize(res)
         if res.status_int >= 400:
             raise webexc.HTTPClientError(code=res.status_int)
         yield svc_type
@@ -269,10 +284,11 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             self._delete_service_type(svc_type[self.resource_name]['id'])
 
     def _list_service_types(self):
-        return self.api.get(_get_path('service-types'))
+        return self.api.get(_get_path('service-types', fmt=self.fmt))
 
     def _show_service_type(self, svctype_id, expect_errors=False):
-        return self.api.get(_get_path('service-types/%s' % str(svctype_id)),
+        return self.api.get(_get_path('service-types/%s' % str(svctype_id),
+                                      fmt=self.fmt),
                             expect_errors=expect_errors)
 
     def _create_service_type(self, name, service_defs,
@@ -285,14 +301,19 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             data[self.resource_name]['default'] = default
         if 'tenant_id' not in data[self.resource_name]:
             data[self.resource_name]['tenant_id'] = 'fake'
-        return self.api.post_json(_get_path('service-types'), data,
-                                  expect_errors=expect_errors)
+        return self.api.post(_get_path('service-types', fmt=self.fmt),
+                             self.serialize(data),
+                             expect_errors=expect_errors,
+                             content_type='application/%s' % self.fmt)
 
     def _create_dummy(self, dummyname='dummyobject'):
         data = {'dummy': {'name': dummyname,
                           'tenant_id': 'fake'}}
-        dummy_res = self.api.post_json(_get_path('dummys'), data)
-        return dummy_res.json['dummy']
+        dummy_res = self.api.post(_get_path('dummys', fmt=self.fmt),
+                                  self.serialize(data),
+                                  content_type='application/%s' % self.fmt)
+        dummy_res = self.deserialize(dummy_res)
+        return dummy_res['dummy']
 
     def _update_service_type(self, svc_type_id, name, service_defs,
                              default=None, expect_errors=False):
@@ -303,28 +324,34 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
         # set this attribute only if True
         if default:
             data[self.resource_name]['default'] = default
-        return self.api.put_json(
-            _get_path('service-types/%s' % str(svc_type_id)), data,
+        return self.api.put(
+            _get_path('service-types/%s' % str(svc_type_id), fmt=self.fmt),
+            self.serialize(data),
             expect_errors=expect_errors)
 
     def _delete_service_type(self, svctype_id, expect_errors=False):
-        return self.api.delete(_get_path('service-types/%s' % str(svctype_id)),
+        return self.api.delete(_get_path('service-types/%s' % str(svctype_id),
+                                         fmt=self.fmt),
                                expect_errors=expect_errors)
 
     def _validate_service_type(self, res, name, service_defs,
                                svc_type_id=None):
-        self.assertTrue(self.resource_name in res.json)
-        svc_type = res.json[self.resource_name]
+        res = self.deserialize(res)
+        self.assertTrue(self.resource_name in res)
+        svc_type = res[self.resource_name]
         if svc_type_id:
             self.assertEqual(svc_type['id'], svc_type_id)
         if name:
             self.assertEqual(svc_type['name'], name)
         if service_defs:
+            target_defs = []
             # unspecified drivers will value None in response
             for svc_def in service_defs:
-                svc_def['driver'] = svc_def.get('driver')
+                new_svc_def = svc_def.copy()
+                new_svc_def['driver'] = svc_def.get('driver')
+                target_defs.append(new_svc_def)
             self.assertEqual(svc_type['service_definitions'],
-                             service_defs)
+                             target_defs)
         self.assertEqual(svc_type['default'], False)
 
     def _test_service_type_create(self, name='test',
@@ -390,7 +417,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
                                self.service_type('st2')):
             res = self._list_service_types()
             self.assertEqual(res.status_int, webexc.HTTPOk.code)
-            data = res.json
+            data = self.deserialize(res)
             self.assertTrue('service_types' in data)
             # it must be 3 because we have the default service type too!
             self.assertEquals(len(data['service_types']), 3)
@@ -398,7 +425,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
     def test_get_default_service_type(self):
         res = self._list_service_types()
         self.assertEqual(res.status_int, webexc.HTTPOk.code)
-        data = res.json
+        data = self.deserialize(res)
         self.assertTrue('service_types' in data)
         self.assertEquals(len(data['service_types']), 1)
         def_svc_type = data['service_types'][0]
@@ -426,15 +453,23 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
     def test_create_dummy_increases_service_type_refcount(self):
         dummy = self._create_dummy()
         svc_type_res = self._show_service_type(dummy['service_type'])
-        svc_type = svc_type_res.json[self.resource_name]
+        svc_type_res = self.deserialize(svc_type_res)
+        svc_type = svc_type_res[self.resource_name]
         self.assertEquals(svc_type['num_instances'], 1)
 
     def test_delete_dummy_decreases_service_type_refcount(self):
         dummy = self._create_dummy()
         svc_type_res = self._show_service_type(dummy['service_type'])
-        svc_type = svc_type_res.json[self.resource_name]
+        svc_type_res = self.deserialize(svc_type_res)
+        svc_type = svc_type_res[self.resource_name]
         self.assertEquals(svc_type['num_instances'], 1)
-        self.api.delete(_get_path('dummys/%s' % str(dummy['id'])))
+        self.api.delete(_get_path('dummys/%s' % str(dummy['id']),
+                                  fmt=self.fmt))
         svc_type_res = self._show_service_type(dummy['service_type'])
-        svc_type = svc_type_res.json[self.resource_name]
+        svc_type_res = self.deserialize(svc_type_res)
+        svc_type = svc_type_res[self.resource_name]
         self.assertEquals(svc_type['num_instances'], 0)
+
+
+class ServiceTypeManagerTestCaseXML(ServiceTypeManagerTestCase):
+    fmt = 'xml'

@@ -28,12 +28,15 @@ from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.api.v2 import router
 from quantum.common import config
+from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifer_api
 from quantum.openstack.common import uuidutils
+from quantum.tests.unit import testlib_api
+from quantum import wsgi
 
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
@@ -105,6 +108,7 @@ class APIv2TestBase(unittest.TestCase):
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
+        super(APIv2TestBase, self).setUp()
 
     def tearDown(self):
         self._plugin_patcher.stop()
@@ -270,7 +274,9 @@ class APIv2TestCase(APIv2TestBase):
 
 # Note: since all resources use the same controller and validation
 # logic, we actually get really good coverage from testing just networks.
-class JSONV2TestCase(APIv2TestBase):
+class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
+    def setUp(self):
+        super(JSONV2TestCase, self).setUp()
 
     def _test_list(self, req_tenant_id, real_tenant_id):
         env = {}
@@ -287,19 +293,21 @@ class JSONV2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance.get_networks.return_value = return_value
 
-        res = self.api.get(_get_path('networks'), extra_environ=env)
-        self.assertTrue('networks' in res.json)
+        res = self.api.get(_get_path('networks',
+                                     fmt=self.fmt), extra_environ=env)
+        res = self.deserialize(res)
+        self.assertTrue('networks' in res)
         if not req_tenant_id or req_tenant_id == real_tenant_id:
             # expect full list returned
-            self.assertEqual(len(res.json['networks']), 1)
-            output_dict = res.json['networks'][0]
+            self.assertEqual(len(res['networks']), 1)
+            output_dict = res['networks'][0]
             input_dict['shared'] = False
             self.assertEqual(len(input_dict), len(output_dict))
             for k, v in input_dict.iteritems():
                 self.assertEqual(v, output_dict[k])
         else:
             # expect no results
-            self.assertEqual(len(res.json['networks']), 0)
+            self.assertEqual(len(res['networks']), 0)
 
     def test_list_noauth(self):
         self._test_list(None, _uuid())
@@ -324,11 +332,13 @@ class JSONV2TestCase(APIv2TestBase):
         instance.create_network.return_value = return_value
         instance.get_networks_count.return_value = 0
 
-        res = self.api.post_json(_get_path('networks'), data)
-
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('network' in res.json)
-        net = res.json['network']
+        res = self.deserialize(res)
+        self.assertTrue('network' in res)
+        net = res['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['status'], "ACTIVE")
 
@@ -346,21 +356,25 @@ class JSONV2TestCase(APIv2TestBase):
         instance.create_network.return_value = return_value
         instance.get_networks_count.return_value = 0
 
-        res = self.api.post_json(_get_path('networks'), initial_input)
-
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(initial_input),
+                            content_type='application/' + self.fmt)
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=full_input)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('network' in res.json)
-        net = res.json['network']
+        res = self.deserialize(res)
+        self.assertIn('network', res)
+        net = res['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['admin_state_up'], True)
         self.assertEqual(net['status'], "ACTIVE")
 
     def test_create_no_keystone_env(self):
         data = {'name': 'net1'}
-        res = self.api.post_json(_get_path('networks'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_with_keystone_env(self):
@@ -380,8 +394,10 @@ class JSONV2TestCase(APIv2TestBase):
         instance.create_network.return_value = return_value
         instance.get_networks_count.return_value = 0
 
-        res = self.api.post_json(_get_path('networks'), initial_input,
-                                 extra_environ=env)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(initial_input),
+                            content_type='application/' + self.fmt,
+                            extra_environ=env)
 
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=full_input)
@@ -391,33 +407,44 @@ class JSONV2TestCase(APIv2TestBase):
         tenant_id = _uuid()
         data = {'network': {'name': 'net1', 'tenant_id': tenant_id}}
         env = {'quantum.context': context.Context('', tenant_id + "bad")}
-        res = self.api.post_json(_get_path('networks'), data,
-                                 expect_errors=True,
-                                 extra_environ=env)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True,
+                            extra_environ=env)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_no_body(self):
         data = {'whoa': None}
-        res = self.api.post_json(_get_path('networks'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_no_resource(self):
-        res = self.api.post_json(_get_path('networks'), dict(),
-                                 expect_errors=True)
+        data = {}
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_missing_attr(self):
         data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
-        res = self.api.post_json(_get_path('ports'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('ports', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
     def test_create_readonly_attr(self):
         data = {'network': {'name': 'net1', 'tenant_id': _uuid(),
                             'status': "ACTIVE"}}
-        res = self.api.post_json(_get_path('networks'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
     def test_create_bulk(self):
@@ -436,28 +463,35 @@ class JSONV2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance.create_network.side_effect = side_effect
         instance.get_networks_count.return_value = 0
-
-        res = self.api.post_json(_get_path('networks'), data)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
     def test_create_bulk_no_networks(self):
         data = {'networks': []}
-        res = self.api.post_json(_get_path('networks'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPBadRequest.code)
 
     def test_create_bulk_missing_attr(self):
         data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}
-        res = self.api.post_json(_get_path('ports'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('ports', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
     def test_create_bulk_partial_body(self):
         data = {'ports': [{'device_id': 'device_1',
                            'tenant_id': _uuid()},
                           {'tenant_id': _uuid()}]}
-        res = self.api.post_json(_get_path('ports'), data,
-                                 expect_errors=True)
+        res = self.api.post(_get_path('ports', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt,
+                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
     def test_create_attr_not_specified(self):
@@ -484,12 +518,14 @@ class JSONV2TestCase(APIv2TestBase):
         instance.get_network.return_value = {'tenant_id': unicode(tenant_id)}
         instance.get_ports_count.return_value = 1
         instance.create_port.return_value = return_value
-        res = self.api.post_json(_get_path('ports'), initial_input)
-
+        res = self.api.post(_get_path('ports', fmt=self.fmt),
+                            self.serialize(initial_input),
+                            content_type='application/' + self.fmt)
         instance.create_port.assert_called_with(mock.ANY, port=full_input)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('port' in res.json)
-        port = res.json['port']
+        res = self.deserialize(res)
+        self.assertIn('port', res)
+        port = res['port']
         self.assertEqual(port['network_id'], net_id)
         self.assertEqual(port['mac_address'], 'ca:fe:de:ad:be:ef')
 
@@ -505,11 +541,13 @@ class JSONV2TestCase(APIv2TestBase):
         instance.create_network.return_value = return_value
         instance.get_networks_count.return_value = 0
 
-        res = self.api.post_json(_get_path('networks'), data)
-
+        res = self.api.post(_get_path('networks', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('network' in res.json)
-        net = res.json['network']
+        res = self.deserialize(res)
+        self.assertIn('network', res)
+        net = res['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['status'], "ACTIVE")
         self.assertFalse('v2attrs:something' in net)
@@ -521,7 +559,9 @@ class JSONV2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance.get_network.return_value = return_value
 
-        self.api.get(_get_path('networks', id=uuidutils.generate_uuid()))
+        self.api.get(_get_path('networks',
+                               id=uuidutils.generate_uuid(),
+                               fmt=self.fmt))
 
     def _test_delete(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):
@@ -534,7 +574,8 @@ class JSONV2TestCase(APIv2TestBase):
         instance.delete_network.return_value = None
 
         res = self.api.delete(_get_path('networks',
-                                        id=uuidutils.generate_uuid()),
+                                        id=uuidutils.generate_uuid(),
+                                        fmt=self.fmt),
                               extra_environ=env,
                               expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
@@ -566,7 +607,8 @@ class JSONV2TestCase(APIv2TestBase):
         instance.get_network.return_value = data
 
         res = self.api.get(_get_path('networks',
-                                     id=uuidutils.generate_uuid()),
+                                     id=uuidutils.generate_uuid(),
+                                     fmt=self.fmt),
                            extra_environ=env,
                            expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
@@ -602,11 +644,12 @@ class JSONV2TestCase(APIv2TestBase):
                                              'shared': False}
         instance.update_network.return_value = return_value
 
-        res = self.api.put_json(_get_path('networks',
-                                          id=uuidutils.generate_uuid()),
-                                data,
-                                extra_environ=env,
-                                expect_errors=expect_errors)
+        res = self.api.put(_get_path('networks',
+                                     id=uuidutils.generate_uuid(),
+                                     fmt=self.fmt),
+                           self.serialize(data),
+                           extra_environ=env,
+                           expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
 
     def test_update_noauth(self):
@@ -623,8 +666,10 @@ class JSONV2TestCase(APIv2TestBase):
 
     def test_update_readonly_field(self):
         data = {'network': {'status': "NANANA"}}
-        res = self.api.put_json(_get_path('networks', id=_uuid()), data,
-                                expect_errors=True)
+        res = self.api.put(_get_path('networks', id=_uuid()),
+                           self.serialize(data),
+                           content_type='application/' + self.fmt,
+                           expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
 
@@ -705,6 +750,12 @@ class SubresourceTest(unittest.TestCase):
                                                               network_id='id1')
 
 
+# Note: since all resources use the same controller and validation
+# logic, we actually get really good coverage from testing just networks.
+class XMLV2TestCase(JSONV2TestCase):
+    fmt = 'xml'
+
+
 class V2Views(unittest.TestCase):
     def _view(self, keys, collection, resource):
         data = dict((key, 'value') for key in keys)
@@ -778,7 +829,7 @@ class NotificationTest(APIv2TestBase):
     def test_network_update_notifer(self):
         self._resource_op_notifier('update', 'network')
 
-    def test_network_create_notifer(self):
+    def test_network_create_notifer_with_log_level(self):
         cfg.CONF.set_override('default_notification_level', 'DEBUG')
         self._resource_op_notifier('create', 'network',
                                    notification_level='DEBUG')

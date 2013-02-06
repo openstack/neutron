@@ -25,11 +25,12 @@ import routes
 import webob.dec
 import webob.exc
 
+from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import exceptions
 import quantum.extensions
 from quantum.manager import QuantumManager
 from quantum.openstack.common import cfg
-from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 
@@ -436,6 +437,8 @@ class ExtensionManager(object):
                         attr_map[resource].update(resource_attrs)
                     else:
                         attr_map[resource] = resource_attrs
+                if extended_attrs:
+                    attributes.EXT_NSES[ext.get_alias()] = ext.get_namespace()
             except AttributeError:
                 LOG.exception(_("Error fetching extended attributes for "
                                 "extension '%s'"), ext.get_name())
@@ -536,7 +539,6 @@ class PluginAwareExtensionManager(ExtensionManager):
                                           "supported_extension_aliases") and
                                   alias in plugin.supported_extension_aliases)
                                  for plugin in self.plugins.values())
-        plugin_provider = cfg.CONF.core_plugin
         if not supports_extension:
             LOG.warn(_("Extension %s not supported by any of loaded plugins"),
                      alias)

@@ -67,14 +67,14 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     security_groups=[sg1_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
@@ -116,14 +116,14 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     security_groups=[sg1_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
@@ -162,23 +162,23 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                     '25', source_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     security_groups=[sg1_id,
                                      sg2_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
 
                 res2 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     security_groups=[sg2_id])
-                ports_rest2 = self.deserialize('json', res2)
+                ports_rest2 = self.deserialize(self.fmt, res2)
                 port_id2 = ports_rest2['port']['id']
                 ctx = context.get_admin_context()
                 ports_rpc = self.rpc.security_group_rules_for_devices(
@@ -219,15 +219,15 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
                     security_groups=[sg1_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
@@ -273,15 +273,15 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
                     security_groups=[sg1_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
@@ -325,25 +325,25 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                     source_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
-                res = self._create_security_group_rule('json', rules)
-                self.deserialize('json', res)
+                res = self._create_security_group_rule(self.fmt, rules)
+                self.deserialize(self.fmt, res)
                 self.assertEquals(res.status_int, 201)
 
                 res1 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
                     security_groups=[sg1_id,
                                      sg2_id])
-                ports_rest1 = self.deserialize('json', res1)
+                ports_rest1 = self.deserialize(self.fmt, res1)
                 port_id1 = ports_rest1['port']['id']
                 self.rpc.devices = {port_id1: ports_rest1['port']}
                 devices = [port_id1, 'no_exist_device']
 
                 res2 = self._create_port(
-                    'json', n['network']['id'],
+                    self.fmt, n['network']['id'],
                     fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
                     security_groups=[sg2_id])
-                ports_rest2 = self.deserialize('json', res2)
+                ports_rest2 = self.deserialize(self.fmt, res2)
                 port_id2 = ports_rest2['port']['id']
 
                 ctx = context.get_admin_context()
@@ -362,6 +362,10 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                   expected)
                 self._delete('ports', port_id1)
                 self._delete('ports', port_id2)
+
+
+class SGServerRpcCallBackMixinTestCaseXML(SGServerRpcCallBackMixinTestCase):
+    fmt = 'xml'
 
 
 class SGAgentRpcCallBackMixinTestCase(unittest.TestCase):

@@ -26,8 +26,8 @@ from quantum.openstack.common.notifier import api as notifier_api
 from quantum import policy
 from quantum import quota
 
+
 LOG = logging.getLogger(__name__)
-XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
 
 FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.Conflict: webob.exc.HTTPConflict,
@@ -527,13 +527,4 @@ def create_resource(collection, resource, plugin, params, allow_bulk=False,
     controller = Controller(plugin, collection, resource, params, allow_bulk,
                             member_actions=member_actions, parent=parent)
 
-    # NOTE(jkoelker) To anyone wishing to add "proper" xml support
-    #                this is where you do it
-    serializers = {}
-    #    'application/xml': wsgi.XMLDictSerializer(metadata, XML_NS_V20),
-
-    deserializers = {}
-    #    'application/xml': wsgi.XMLDeserializer(metadata),
-
-    return wsgi_resource.Resource(controller, FAULT_MAP, deserializers,
-                                  serializers)
+    return wsgi_resource.Resource(controller, FAULT_MAP)
