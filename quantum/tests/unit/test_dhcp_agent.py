@@ -23,6 +23,7 @@ import uuid
 import mock
 import unittest2 as unittest
 
+from quantum.agent.common import config
 from quantum.agent import dhcp_agent
 from quantum.agent.linux import interface
 from quantum.common import exceptions
@@ -254,7 +255,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
-        cfg.CONF.root_helper = 'sudo'
+        config.register_root_helper(cfg.CONF)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         self.notification_p = mock.patch(
             'quantum.agent.rpc.NotificationDispatcher')
@@ -666,7 +667,7 @@ class TestDeviceManager(unittest.TestCase):
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
-        cfg.CONF.root_helper = 'sudo'
+        config.register_root_helper(cfg.CONF)
 
         self.device_exists_p = mock.patch(
             'quantum.agent.linux.ip_lib.device_exists')

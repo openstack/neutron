@@ -20,6 +20,7 @@ import socket
 import mock
 import unittest2 as unittest
 
+from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.debug import commands
 from quantum.debug.debug_agent import DEVICE_OWNER_PROBE, QuantumDebugAgent
@@ -37,7 +38,7 @@ class TestDebugCommands(unittest.TestCase):
         cfg.CONF.register_opts(QuantumDebugAgent.OPTS)
         cfg.CONF(args=[], project='quantum')
         cfg.CONF.set_override('use_namespaces', True)
-        cfg.CONF.root_helper = 'sudo'
+        config.register_root_helper(cfg.CONF)
 
         self.addCleanup(mock.patch.stopall)
         device_exists_p = mock.patch(
