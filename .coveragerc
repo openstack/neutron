@@ -1,6 +1,7 @@
 [run]
 branch = True
-omit = /usr*,setup.py,*egg*,.venv/*,.tox/*,quantum/tests/*
+source = quantum
+omit = quantum/tests/*,quantum/plugins/cisco/tests/*,quantum/openstack/*
 
 [report]
 ignore-errors = True
