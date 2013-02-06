@@ -1,6 +1,5 @@
 include AUTHORS
 include ChangeLog
-include quantum/versioninfo
 include quantum/db/migration/README
 include quantum/db/migration/alembic.ini
 include quantum/db/migration/alembic/script.py.mako
