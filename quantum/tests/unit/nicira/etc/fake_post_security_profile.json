@@ -1,0 +1,10 @@
+{
+   "display_name": "%(display_name)s",
+   "_href": "/ws.v1/security-profile/%(uuid)s",
+   "tags": [{"scope": "os_tid", "tag": "%(tenant_id)s"},
+            {"scope": "nova_spid", "tag": "%(nova_spid)s"}],
+   "logical_port_egress_rules": [],
+   "_schema": "/ws.v1/schema/SecurityProfileConfig",
+   "logical_port_ingress_rules": [],
+   "uuid": "%(uuid)s"
+}

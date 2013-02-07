@@ -34,6 +34,9 @@ INTERFACE_KEY = '_interfaces'
 IPv4 = 'IPv4'
 IPv6 = 'IPv6'
 
+UDP_PROTOCOL = 17
+DHCP_RESPONSE_PORT = 68
+
 EXT_NS = '_extension_ns'
 XML_NS_V20 = 'http://openstack.org/quantum/api/v2.0'
 XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"

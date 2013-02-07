@@ -30,7 +30,8 @@ down_revision = '48b6f43f7471'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2'
+    'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
+    'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2'
 ]
 
 from alembic import op

@@ -22,13 +22,14 @@ import webob.exc
 import quantum.common.test_lib as test_lib
 from quantum import context
 from quantum.extensions import providernet as pnet
+from quantum.extensions import securitygroup as secgrp
 from quantum import manager
 from quantum.openstack.common import cfg
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.test_db_plugin as test_plugin
 import quantum.tests.unit.test_extension_portsecurity as psec
-
+import quantum.tests.unit.test_extension_security_group as ext_sg
 
 LOG = logging.getLogger(__name__)
 NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
@@ -120,6 +121,24 @@ class TestNiciraPortsV2(test_plugin.TestPortsV2, NiciraPluginV2TestCase):
                                                   net['network']['id'])
                         self.assertEqual(len(ls), 2)
 
+    def test_update_port_delete_ip(self):
+        # This test case overrides the default because the nvp plugin
+        # implements port_security/security groups and it is not allowed
+        # to remove an ip address from a port unless the security group
+        # is first removed.
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                data = {'port': {'admin_state_up': False,
+                                 'fixed_ips': [],
+                                 secgrp.SECURITYGROUPS: []}}
+                req = self.new_update_request('ports',
+                                              data, port['port']['id'])
+                res = self.deserialize('json', req.get_response(self.api))
+                self.assertEqual(res['port']['admin_state_up'],
+                                 data['port']['admin_state_up'])
+                self.assertEqual(res['port']['fixed_ips'],
+                                 data['port']['fixed_ips'])
+
 
 class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                            NiciraPluginV2TestCase):
@@ -185,3 +204,34 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 class TestNiciraPortSecurity(psec.TestPortSecurity,
                              NiciraPortSecurityTestCase):
         pass
+
+
+class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
+
+    _plugin_name = ('%s.QuantumPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
+
+    def setUp(self):
+        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
+        test_lib.test_config['config_files'] = [os.path.join(etc_path,
+                                                             'nvp.ini.test')]
+        # mock nvp api client
+        fc = fake_nvpapiclient.FakeClient(etc_path)
+        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
+                                      % NICIRA_PKG_PATH, autospec=True)
+        instance = self.mock_nvpapi.start()
+        instance.return_value.login.return_value = "the_cookie"
+
+        def _fake_request(*args, **kwargs):
+            return fc.fake_request(*args, **kwargs)
+
+        instance.return_value.request.side_effect = _fake_request
+        super(NiciraSecurityGroupsTestCase, self).setUp(self._plugin_name)
+
+    def tearDown(self):
+        super(NiciraSecurityGroupsTestCase, self).tearDown()
+        self.mock_nvpapi.stop()
+
+
+class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
+                              NiciraSecurityGroupsTestCase):
+    pass

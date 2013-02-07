@@ -1,5 +1,5 @@
 # Copyright (c) 2012 OpenStack, LLC.
-#
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import os
 import mock
 import webob.exc
 
+from quantum.api.v2 import attributes as attr
 from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import db_base_plugin_v2
@@ -174,7 +175,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def create_port(self, context, port):
         tenant_id = self._get_tenant_id_for_create(context, port['port'])
         default_sg = self._ensure_default_security_group(context, tenant_id)
-        if not port['port'].get(ext_sg.SECURITYGROUPS):
+        if not attr.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
         session = context.session
         with session.begin(subtransactions=True):
@@ -207,6 +208,13 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         return super(SecurityGroupTestPlugin, self).create_network(context,
                                                                    network)
 
+    def get_ports(self, context, filters=None, fields=None):
+        quantum_lports = super(SecurityGroupTestPlugin, self).get_ports(
+            context, filters)
+        for quantum_lport in quantum_lports:
+            self._extend_port_dict_security_group(context, quantum_lport)
+        return quantum_lports
+
 
 class SecurityGroupDBTestCase(SecurityGroupsTestCase):
     def setUp(self, plugin=None):
@@ -214,6 +222,10 @@ class SecurityGroupDBTestCase(SecurityGroupsTestCase):
         ext_mgr = SecurityGroupTestExtensionManager()
         test_config['extension_manager'] = ext_mgr
         super(SecurityGroupDBTestCase, self).setUp(plugin)
+
+    def tearDown(self):
+        del test_config['plugin_name_v2']
+        super(SecurityGroupDBTestCase, self).tearDown()
 
 
 class TestSecurityGroups(SecurityGroupDBTestCase):
@@ -648,6 +660,18 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 400)
+
+    def test_list_ports_security_group(self):
+        with self.network() as n:
+            with self.subnet(n):
+                res = self._create_port(self.fmt, n['network']['id'])
+                self.deserialize(self.fmt, res)
+                res = self.new_list_request('ports')
+                ports = self.deserialize(self.fmt,
+                                         res.get_response(self.api))
+                port = ports['ports'][0]
+                self.assertEquals(len(port[ext_sg.SECURITYGROUPS]), 1)
+                self._delete('ports', port['id'])
 
     def test_update_port_with_security_group(self):
         with self.network() as n:
