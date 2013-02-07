@@ -287,8 +287,6 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
     def _test_list_with_pagination(self, collection, items, sort,
                                    limit, expected_page_num, query_params=''):
-        if self.fmt == 'xml':
-            self.skipTest("Skip xml test for pagination")
         query_str = query_params + '&' if query_params else ''
         query_str = query_str + ("limit=%s&sort_key=%s&"
                                  "sort_dir=%s") % (limit, sort[0], sort[1])
@@ -317,8 +315,6 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
     def _test_list_with_pagination_reverse(self, collection, items, sort,
                                            limit, expected_page_num,
                                            query_params=''):
-        if self.fmt == 'xml':
-            self.skipTest("Skip xml test for pagination")
         resources = '%ss' % collection
         collection = collection.replace('-', '_')
         api = self._api_for_resource(resources)

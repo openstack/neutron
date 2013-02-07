@@ -255,21 +255,33 @@ class XMLDictSerializer(DictSerializer):
         self.xmlns = xmlns
 
     def default(self, data):
-        # We expect data to contain a single key which is the XML root or
-        # non root
+        """
+        :param data: expect data to contain a single key as XML root, or
+                     contain another '*_links' key as atom links. Other
+                     case will use 'VIRTUAL_ROOT_KEY' as XML root.
+        """
         try:
-            key_len = data and len(data.keys()) or 0
-            if (key_len == 1):
-                root_key = data.keys()[0]
-                root_value = data[root_key]
-            else:
+            links = None
+            has_atom = False
+            if data is None:
                 root_key = constants.VIRTUAL_ROOT_KEY
-                root_value = data
+                root_value = None
+            else:
+                link_keys = [k for k in data.iterkeys() or []
+                             if k.endswith('_links')]
+                if link_keys:
+                    links = data.pop(link_keys[0], None)
+                    has_atom = True
+                root_key = (len(data) == 1 and
+                            data.keys()[0] or constants.VIRTUAL_ROOT_KEY)
+                root_value = data.get(root_key, data)
             doc = etree.Element("_temp_root")
             used_prefixes = []
             self._to_xml_node(doc, self.metadata, root_key,
                               root_value, used_prefixes)
-            return self.to_xml_string(list(doc)[0], used_prefixes)
+            if links:
+                self._create_link_nodes(list(doc)[0], links)
+            return self.to_xml_string(list(doc)[0], used_prefixes, has_atom)
         except AttributeError as e:
             LOG.exception(str(e))
             return ''
@@ -292,7 +304,7 @@ class XMLDictSerializer(DictSerializer):
         node.set('xmlns', self.xmlns)
         node.set(constants.TYPE_XMLNS, self.xmlns)
         if has_atom:
-            node.set('xmlns:atom', "http://www.w3.org/2005/Atom")
+            node.set(constants.ATOM_XMLNS, constants.ATOM_NAMESPACE)
         node.set(constants.XSI_NIL_ATTR, constants.XSI_NAMESPACE)
         ext_ns = self.metadata.get(constants.EXT_NS, {})
         for prefix in used_prefixes:
@@ -358,6 +370,12 @@ class XMLDictSerializer(DictSerializer):
                        'type': type(data)})
             result.text = str(data)
         return result
+
+    def _create_link_nodes(self, xml_doc, links):
+        for link in links:
+            link_node = etree.SubElement(xml_doc, 'atom:link')
+            link_node.set('rel', link['rel'])
+            link_node.set('href', link['href'])
 
 
 class ResponseHeaderSerializer(ActionDispatcher):
@@ -462,18 +480,35 @@ class XMLDeserializer(TextDeserializer):
         else:
             return tag
 
+    def _get_links(self, root_tag, node):
+        link_nodes = node.findall(constants.ATOM_LINK_NOTATION)
+        root_tag = self._get_key(node.tag)
+        link_key = "%s_links" % root_tag
+        link_list = []
+        for link in link_nodes:
+            link_list.append({'rel': link.get('rel'),
+                              'href': link.get('href')})
+            # Remove link node in order to avoid link node process as
+            # an item in _from_xml_node
+            node.remove(link)
+        return link_list and {link_key: link_list} or {}
+
     def _from_xml(self, datastring):
         if datastring is None:
             return None
         plurals = set(self.metadata.get('plurals', {}))
         try:
             node = etree.fromstring(datastring)
-            result = self._from_xml_node(node, plurals)
             root_tag = self._get_key(node.tag)
+            # Deserialize link node was needed by unit test for verifying
+            # the request's response
+            links = self._get_links(root_tag, node)
+            result = self._from_xml_node(node, plurals)
+            # root_tag = constants.VIRTUAL_ROOT_KEY and links is not None
+            # is not possible because of the way data are serialized.
             if root_tag == constants.VIRTUAL_ROOT_KEY:
                 return result
-            else:
-                return {root_tag: result}
+            return dict({root_tag: result}, **links)
         except Exception as e:
             parseError = False
             # Python2.7
