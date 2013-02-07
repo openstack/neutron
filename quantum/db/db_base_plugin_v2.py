@@ -706,14 +706,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                            'cidr': subnet.cidr})
                 raise q_exc.InvalidInput(error_message=err_msg)
 
-    def _validate_allocation_pools(self, ip_pools, gateway_ip, subnet_cidr):
+    def _validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
 
         Verify start and end address for each allocation pool are valid,
         ie: constituted by valid and appropriately ordered IP addresses.
-        Also, verify pools do not overlap among themselves and with the
-        gateway IP. Finally, verify that each range, and the gateway IP,
-        fall within the subnet's CIDR.
+        Also, verify pools do not overlap among themselves.
+        Finally, verify that each range fall within the subnet's CIDR.
 
         """
 
@@ -760,10 +759,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         LOG.debug(_("Checking for overlaps among allocation pools "
                     "and gateway ip"))
         ip_ranges = ip_pools[:]
-        # Treat gw as IPset as well
-        if gateway_ip:
-            ip_ranges.append(gateway_ip)
-            ip_sets.append(netaddr.IPSet([gateway_ip]))
+
         # Use integer cursors as an efficient way for implementing
         # comparison and avoiding comparing the same pair twice
         for l_cursor in range(len(ip_sets)):
@@ -803,30 +799,23 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """
 
         pools = []
-        if subnet['allocation_pools'] is attributes.ATTR_NOT_SPECIFIED:
-            # Auto allocate the pool around gateway_ip
-            net = netaddr.IPNetwork(subnet['cidr'])
-            first_ip = net.first + 1
-            last_ip = net.last - 1
-            gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
-            # Use the gw_ip to find a point for splitting allocation pools
-            # for this subnet
-            split_ip = min(max(gw_ip, net.first), net.last)
-            if split_ip > first_ip:
-                pools.append({'start': str(netaddr.IPAddress(first_ip)),
-                              'end': str(netaddr.IPAddress(split_ip - 1))})
-            if split_ip < last_ip:
-                pools.append({'start': str(netaddr.IPAddress(split_ip + 1)),
-                              'end': str(netaddr.IPAddress(last_ip))})
-            # return auto-generated pools
-            # no need to check for their validity
-            return pools
-        else:
-            pools = subnet['allocation_pools']
-            self._validate_allocation_pools(pools,
-                                            subnet['gateway_ip'],
-                                            subnet['cidr'])
-            return pools
+        # Auto allocate the pool around gateway_ip
+        net = netaddr.IPNetwork(subnet['cidr'])
+        first_ip = net.first + 1
+        last_ip = net.last - 1
+        gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
+        # Use the gw_ip to find a point for splitting allocation pools
+        # for this subnet
+        split_ip = min(max(gw_ip, net.first), net.last)
+        if split_ip > first_ip:
+            pools.append({'start': str(netaddr.IPAddress(first_ip)),
+                          'end': str(netaddr.IPAddress(split_ip - 1))})
+        if split_ip < last_ip:
+            pools.append({'start': str(netaddr.IPAddress(split_ip + 1)),
+                          'end': str(netaddr.IPAddress(last_ip))})
+        # return auto-generated pools
+        # no need to check for their validity
+        return pools
 
     def _validate_shared_update(self, context, id, original, updated):
         # The only case that needs to be validated is when 'shared'
@@ -997,14 +986,18 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def _validate_subnet(self, s):
         """Validate a subnet spec"""
 
+        # This method will validate attributes which may change during
+        # create_subnet() and update_subnet().
         # The method requires the subnet spec 's' has 'ip_version' field.
         # If 's' dict does not have 'ip_version' field in an API call
         # (e.g., update_subnet()), you need to set 'ip_version' field
         # before calling this method.
+
         ip_ver = s['ip_version']
 
         if 'cidr' in s:
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
+
         if attributes.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
             if (cfg.CONF.force_gateway_on_subnet and
@@ -1036,13 +1029,33 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             for rt in s['host_routes']:
                 self._validate_host_route(rt, ip_ver)
 
-    def create_subnet(self, context, subnet):
-        s = subnet['subnet']
-        self._validate_subnet(s)
+    def _validate_gw_out_of_pools(self, gateway_ip, pools):
+        for allocation_pool in pools:
+            pool_range = netaddr.IPRange(
+                allocation_pool['start'],
+                allocation_pool['end'])
+            if netaddr.IPAddress(gateway_ip) in pool_range:
+                raise q_exc.GatewayConflictWithAllocationPools(
+                    pool=pool_range,
+                    ip_address=gateway_ip)
 
+    def create_subnet(self, context, subnet):
+
+        s = subnet['subnet']
         net = netaddr.IPNetwork(s['cidr'])
+
         if s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))
+
+        if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
+            s['allocation_pools'] = self._allocate_pools_for_subnet(context, s)
+        else:
+            self._validate_allocation_pools(s['allocation_pools'], s['cidr'])
+            if s['gateway_ip'] is not None:
+                self._validate_gw_out_of_pools(s['gateway_ip'],
+                                               s['allocation_pools'])
+
+        self._validate_subnet(s)
 
         tenant_id = self._get_tenant_id_for_create(context, s)
         with context.session.begin(subtransactions=True):
@@ -1061,9 +1074,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     'shared': network.shared}
             subnet = models_v2.Subnet(**args)
 
-            # perform allocate pools first, since it might raise an error
-            pools = self._allocate_pools_for_subnet(context, s)
-
             context.session.add(subnet)
             if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
                 for addr in s['dns_nameservers']:
@@ -1077,7 +1087,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                             destination=rt['destination'],
                                             nexthop=rt['nexthop'])
                     context.session.add(route)
-            for pool in pools:
+
+            for pool in s['allocation_pools']:
                 ip_pool = models_v2.IPAllocationPool(subnet=subnet,
                                                      first_ip=pool['start'],
                                                      last_ip=pool['end'])
@@ -1096,15 +1107,22 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
            gratuitous DHCP offers"""
 
         s = subnet['subnet']
-        # Fill 'ip_version' field with the current value since
-        # _validate_subnet() expects subnet spec has 'ip_version' field.
-        s['ip_version'] = self._get_subnet(context, id).ip_version
+        db_subnet = self._get_subnet(context, id)
+        # Fill 'ip_version' and 'allocation_pools' fields with the current
+        # value since _validate_subnet() expects subnet spec has 'ip_version'
+        # and 'allocation_pools' fields.
+        s['ip_version'] = db_subnet.ip_version
+        s['cidr'] = db_subnet.cidr
         self._validate_subnet(s)
+
+        if 'gateway_ip' in s:
+            allocation_pools = [{'start': p['first_ip'], 'end': p['last_ip']}
+                                for p in db_subnet.allocation_pools]
+            self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
 
         with context.session.begin(subtransactions=True):
             if "dns_nameservers" in s:
                 old_dns_list = self._get_dns_by_subnet(context, id)
-
                 new_dns_addr_set = set(s["dns_nameservers"])
                 old_dns_addr_set = set([dns['address']
                                         for dns in old_dns_list])

@@ -249,3 +249,8 @@ class TooManyExternalNetworks(QuantumException):
 class InvalidConfigurationOption(QuantumException):
     message = _("An invalid value was provided for %(opt_name)s: "
                 "%(opt_value)s")
+
+
+class GatewayConflictWithAllocationPools(InUse):
+    message = _("Gateway ip %(ip_address)s conflicts with "
+                "allocation pool %(pool)s")
