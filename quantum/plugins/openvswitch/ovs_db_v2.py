@@ -129,6 +129,7 @@ def reserve_vlan(session):
     with session.begin(subtransactions=True):
         alloc = (session.query(ovs_models_v2.VlanAllocation).
                  filter_by(allocated=False).
+                 with_lockmode('update').
                  first())
         if alloc:
             LOG.debug("reserving vlan %s on physical network %s from pool" %
@@ -144,6 +145,7 @@ def reserve_specific_vlan(session, physical_network, vlan_id):
             alloc = (session.query(ovs_models_v2.VlanAllocation).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id).
+                     with_lockmode('update').
                      one())
             if alloc.allocated:
                 if vlan_id == constants.FLAT_VLAN_ID:
@@ -169,6 +171,7 @@ def release_vlan(session, physical_network, vlan_id, network_vlan_ranges):
             alloc = (session.query(ovs_models_v2.VlanAllocation).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id).
+                     with_lockmode('update').
                      one())
             alloc.allocated = False
             inside = False
@@ -227,6 +230,7 @@ def get_tunnel_allocation(tunnel_id):
     try:
         alloc = (session.query(ovs_models_v2.TunnelAllocation).
                  filter_by(tunnel_id=tunnel_id).
+                 with_lockmode('update').
                  one())
         return alloc
     except exc.NoResultFound:
@@ -237,6 +241,7 @@ def reserve_tunnel(session):
     with session.begin(subtransactions=True):
         alloc = (session.query(ovs_models_v2.TunnelAllocation).
                  filter_by(allocated=False).
+                 with_lockmode('update').
                  first())
         if alloc:
             LOG.debug("reserving tunnel %s from pool" % alloc.tunnel_id)
@@ -250,6 +255,7 @@ def reserve_specific_tunnel(session, tunnel_id):
         try:
             alloc = (session.query(ovs_models_v2.TunnelAllocation).
                      filter_by(tunnel_id=tunnel_id).
+                     with_lockmode('update').
                      one())
             if alloc.allocated:
                 raise q_exc.TunnelIdInUse(tunnel_id=tunnel_id)
@@ -267,6 +273,7 @@ def release_tunnel(session, tunnel_id, tunnel_id_ranges):
         try:
             alloc = (session.query(ovs_models_v2.TunnelAllocation).
                      filter_by(tunnel_id=tunnel_id).
+                     with_lockmode('update').
                      one())
             alloc.allocated = False
             inside = False
@@ -330,7 +337,7 @@ def add_tunnel_endpoint(ip):
     session = db.get_session()
     try:
         tunnel = (session.query(ovs_models_v2.TunnelEndpoint).
-                  filter_by(ip_address=ip).one())
+                  filter_by(ip_address=ip).with_lockmode('update').one())
     except exc.NoResultFound:
         id = _generate_tunnel_id(session)
         tunnel = ovs_models_v2.TunnelEndpoint(ip, id)

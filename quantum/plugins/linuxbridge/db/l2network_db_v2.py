@@ -110,6 +110,7 @@ def reserve_network(session):
     with session.begin(subtransactions=True):
         state = (session.query(l2network_models_v2.NetworkState).
                  filter_by(allocated=False).
+                 with_lockmode('update').
                  first())
         if not state:
             raise q_exc.NoNetworkAvailable()
@@ -125,6 +126,7 @@ def reserve_specific_network(session, physical_network, vlan_id):
             state = (session.query(l2network_models_v2.NetworkState).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id).
+                     with_lockmode('update').
                      one())
             if state.allocated:
                 if vlan_id == constants.FLAT_VLAN_ID:
@@ -150,6 +152,7 @@ def release_network(session, physical_network, vlan_id, network_vlan_ranges):
             state = (session.query(l2network_models_v2.NetworkState).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id).
+                     with_lockmode('update').
                      one())
             state.allocated = False
             inside = False

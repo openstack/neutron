@@ -255,7 +255,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     @staticmethod
     def _hold_ip(context, network_id, subnet_id, port_id, ip_address):
-        alloc_qry = context.session.query(models_v2.IPAllocation)
+        alloc_qry = context.session.query(
+            models_v2.IPAllocation).with_lockmode('update')
         allocated = alloc_qry.filter_by(network_id=network_id,
                                         port_id=port_id,
                                         ip_address=ip_address,
@@ -278,7 +279,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         if network_id in getattr(context, '_recycled_networks', set()):
             return
 
-        expired_qry = context.session.query(models_v2.IPAllocation)
+        expired_qry = context.session.query(
+            models_v2.IPAllocation).with_lockmode('update')
         expired_qry = expired_qry.filter_by(network_id=network_id,
                                             port_id=None)
         expired_qry = expired_qry.filter(
@@ -301,7 +303,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         subnet.
         """
         # Grab all allocation pools for the subnet
-        pool_qry = context.session.query(models_v2.IPAllocationPool)
+        pool_qry = context.session.query(
+            models_v2.IPAllocationPool).with_lockmode('update')
         allocation_pools = pool_qry.filter_by(subnet_id=subnet_id).all()
         # Find the allocation pool for the IP to recycle
         pool_id = None
@@ -322,7 +325,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         # If 1 of the above holds true then the specific entry will be
         # modified. If both hold true then the two ranges will be merged.
         # If there are no entries then a single entry will be added.
-        range_qry = context.session.query(models_v2.IPAvailabilityRange)
+        range_qry = context.session.query(
+            models_v2.IPAvailabilityRange).with_lockmode('update')
         ip_first = str(netaddr.IPAddress(ip_address) + 1)
         ip_last = str(netaddr.IPAddress(ip_address) - 1)
         LOG.debug("Recycle %s", ip_address)
@@ -401,7 +405,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         # Delete the IP address from the IPAllocate table
         LOG.debug("Delete allocated IP %s (%s/%s)", ip_address,
                   network_id, subnet_id)
-        alloc_qry = context.session.query(models_v2.IPAllocation)
+        alloc_qry = context.session.query(
+            models_v2.IPAllocation).with_lockmode('update')
         allocated = alloc_qry.filter_by(network_id=network_id,
                                         ip_address=ip_address,
                                         subnet_id=subnet_id).delete()
@@ -415,7 +420,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """
         range_qry = context.session.query(
             models_v2.IPAvailabilityRange).join(
-                models_v2.IPAllocationPool)
+                models_v2.IPAllocationPool).with_lockmode('update')
         for subnet in subnets:
             range = range_qry.filter_by(subnet_id=subnet['id']).first()
             if not range:
@@ -443,7 +448,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         range_qry = context.session.query(
             models_v2.IPAvailabilityRange,
             models_v2.IPAllocationPool).join(
-                models_v2.IPAllocationPool)
+                models_v2.IPAllocationPool).with_lockmode('update')
         results = range_qry.filter_by(subnet_id=subnet_id).all()
         for (range, pool) in results:
             first = int(netaddr.IPAddress(range['first_ip']))
@@ -1260,7 +1265,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def _delete_port(self, context, id):
         port = self._get_port(context, id)
 
-        allocated_qry = context.session.query(models_v2.IPAllocation)
+        allocated_qry = context.session.query(
+            models_v2.IPAllocation).with_lockmode('update')
         # recycle all of the IP's
         allocated = allocated_qry.filter_by(port_id=id).all()
         if allocated:
