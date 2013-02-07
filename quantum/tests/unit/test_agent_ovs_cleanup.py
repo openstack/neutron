@@ -23,17 +23,20 @@ import unittest2 as unittest
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent import ovs_cleanup_util as util
+from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 
 
 class TestOVSCleanup(unittest.TestCase):
+    def tearDown(self):
+        cfg.CONF.reset()
+
     def test_setup_conf(self):
-        with mock.patch('quantum.common.config.setup_logging'):
-            conf = util.setup_conf()
-            self.assertEqual(conf.external_network_bridge, 'br-ex')
-            self.assertEqual(conf.ovs_integration_bridge, 'br-int')
-            self.assertFalse(conf.ovs_all_ports)
-            self.assertEqual(conf.AGENT.root_helper, 'sudo')
+        conf = util.setup_conf()
+        self.assertEqual(conf.external_network_bridge, 'br-ex')
+        self.assertEqual(conf.ovs_integration_bridge, 'br-int')
+        self.assertFalse(conf.ovs_all_ports)
+        self.assertEqual(conf.AGENT.root_helper, 'sudo')
 
     def test_main(self):
         bridges = ['br-int', 'br-ex']
@@ -54,10 +57,12 @@ class TestOVSCleanup(unittest.TestCase):
                               return_value=ports),
             mock.patch.object(util, 'delete_quantum_ports')
         ) as (_log, _conf, _get, ovs, collect, delete):
-            util.main()
-            ovs.assert_has_calls([mock.call().delete_ports(all_ports=False)])
-            collect.assert_called_once_with(set(bridges), 'dummy_sudo')
-            delete.assert_called_once_with(ports, 'dummy_sudo')
+            with mock.patch('quantum.common.config.setup_logging'):
+                util.main()
+                ovs.assert_has_calls([mock.call().delete_ports(
+                    all_ports=False)])
+                collect.assert_called_once_with(set(bridges), 'dummy_sudo')
+                delete.assert_called_once_with(ports, 'dummy_sudo')
 
     def test_collect_quantum_ports(self):
         port1 = ovs_lib.VifPort('tap1234', 1, uuidutils.generate_uuid(),
