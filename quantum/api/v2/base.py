@@ -36,8 +36,6 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              exceptions.ServiceUnavailable: webob.exc.HTTPServiceUnavailable,
              exceptions.NotAuthorized: webob.exc.HTTPForbidden,
              netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
-             AttributeError: webob.exc.HTTPBadRequest,
-             ValueError: webob.exc.HTTPBadRequest,
              }
 
 
@@ -359,7 +357,11 @@ class Controller(object):
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes"""
         parent_id = kwargs.get(self._parent_id_name)
-        payload = body.copy()
+        try:
+            payload = body.copy()
+        except AttributeError:
+            msg = _("Invalid format: %s") % request.body
+            raise exceptions.BadRequest(resource='body', msg=msg)
         payload['id'] = id
         notifier_api.notify(request.context,
                             self._publisher_id,
