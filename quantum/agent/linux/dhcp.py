@@ -58,6 +58,7 @@ TCP = 'tcp'
 DNS_PORT = 53
 DHCPV4_PORT = 67
 DHCPV6_PORT = 467
+METADATA_DEFAULT_IP = '169.254.169.254'
 
 
 class DhcpBase(object):
@@ -264,14 +265,15 @@ class Dnsmasq(DhcpLocalProcess):
             utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
-        """If all subnets turn off dhcp, kill the process."""
+        """Rebuild the dnsmasq config and signal the dnsmasq to reload."""
+
+        # If all subnets turn off dhcp, kill the process.
         if not self._enable_dhcp():
             self.disable()
             LOG.debug(_('Killing dhcpmasq for network since all subnets have '
                         'turned off DHCP: %s'), self.network.id)
             return
 
-        """Rebuilds the dnsmasq config and signal the dnsmasq to reload."""
         self._output_hosts_file()
         self._output_opts_file()
         cmd = ['kill', '-HUP', self.pid]
@@ -301,6 +303,10 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _output_opts_file(self):
         """Write a dnsmasq compatible options file."""
+
+        if self.conf.enable_isolated_metadata:
+            subnet_to_interface_ip = self._make_subnet_interface_ip_map()
+
         options = []
         for i, subnet in enumerate(self.network.subnets):
             if not subnet.enable_dhcp:
@@ -312,6 +318,19 @@ class Dnsmasq(DhcpLocalProcess):
 
             host_routes = ["%s,%s" % (hr.destination, hr.nexthop)
                            for hr in subnet.host_routes]
+
+            # Add host routes for isolated network segments
+            enable_metadata = (
+                self.conf.enable_isolated_metadata
+                and not subnet.gateway_ip
+                and subnet.ip_version == 4)
+
+            if enable_metadata:
+                subnet_dhcp_ip = subnet_to_interface_ip[subnet.id]
+                host_routes.append(
+                    '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
+                )
+
             if host_routes:
                 options.append(
                     self._format_option(i, 'classless-static-route',
@@ -327,6 +346,28 @@ class Dnsmasq(DhcpLocalProcess):
         name = self.get_conf_file_name('opts')
         replace_file(name, '\n'.join(options))
         return name
+
+    def _make_subnet_interface_ip_map(self):
+        ip_dev = ip_lib.IPDevice(
+            self.interface_name,
+            self.root_helper,
+            self.namespace
+        )
+
+        subnet_lookup = dict(
+            (netaddr.IPNetwork(subnet.cidr), subnet.id)
+            for subnet in self.network.subnets
+        )
+
+        retval = {}
+
+        for addr in ip_dev.addr.list():
+            ip_net = netaddr.IPNetwork(addr['cidr'])
+
+            if ip_net in subnet_lookup:
+                retval[subnet_lookup[ip_net]] = addr['cidr'].split('/')[0]
+
+        return retval
 
     def _lease_relay_script_path(self):
         return os.path.join(os.path.dirname(sys.argv[0]),

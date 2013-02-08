@@ -202,8 +202,11 @@ class TestBase(unittest.TestCase):
                 os.path.join(root, 'etc', 'quantum.conf.test')]
         self.conf = config.setup_conf()
         self.conf.register_opts(dhcp.OPTS)
-        self.conf.register_opt(cfg.StrOpt('dhcp_lease_relay_socket',
-                               default='$state_path/dhcp/lease_relay'))
+        self.conf.register_opt(
+            cfg.StrOpt('dhcp_lease_relay_socket',
+                       default='$state_path/dhcp/lease_relay'))
+        self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
+                                           default=True))
         self.conf(args=args)
         self.conf.set_override('state_path', '')
         self.conf.use_namespaces = True
@@ -511,12 +514,18 @@ tag:tag0,option:router,192.168.0.1""".lstrip()
         self.safe.assert_called_once_with('/foo/opts', expected)
 
     def test_output_opts_file_no_gateway(self):
-        expected = "tag:tag0,option:router"
+        expected = """
+tag:tag0,option:classless-static-route,169.254.169.254/32,192.168.1.1
+tag:tag0,option:router""".lstrip()
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
             dm = dhcp.Dnsmasq(self.conf, FakeV4NoGatewayNetwork())
-            dm._output_opts_file()
+            with mock.patch.object(dm, '_make_subnet_interface_ip_map') as ipm:
+                ipm.return_value = {FakeV4SubnetNoGateway.id: '192.168.1.1'}
+
+                dm._output_opts_file()
+                self.assertTrue(ipm.called)
 
         self.safe.assert_called_once_with('/foo/opts', expected)
 
@@ -549,12 +558,32 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
                 pid.__get__ = mock.Mock(return_value=5)
                 dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
                                   namespace='qdhcp-ns')
-                dm.reload_allocations()
+
+                method_name = '_make_subnet_interface_ip_map'
+                with mock.patch.object(dhcp.Dnsmasq, method_name) as ip_map:
+                    ip_map.return_value = {}
+                    dm.reload_allocations()
+                    self.assertTrue(ip_map.called)
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
         self.execute.assert_called_once_with(exp_args, root_helper='sudo',
                                              check_exit_code=True)
+
+    def test_make_subnet_interface_ip_map(self):
+        with mock.patch('quantum.agent.linux.ip_lib.IPDevice') as ip_dev:
+            ip_dev.return_value.addr.list.return_value = [
+                {'cidr': '192.168.0.1/24'}
+            ]
+
+            dm = dhcp.Dnsmasq(self.conf,
+                              FakeDualNetwork(),
+                              namespace='qdhcp-ns')
+
+            self.assertEqual(
+                dm._make_subnet_interface_ip_map(),
+                {FakeV4Subnet.id: '192.168.0.1'}
+            )
 
     def _test_lease_relay_script_helper(self, action, lease_remaining,
                                         path_exists=True):

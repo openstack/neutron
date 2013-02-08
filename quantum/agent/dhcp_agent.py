@@ -24,6 +24,7 @@ import netaddr
 
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
+from quantum.agent.linux import external_process
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent import rpc as agent_rpc
@@ -39,6 +40,8 @@ from quantum.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qdhcp-'
+METADATA_DEFAULT_IP = '169.254.169.254/16'
+METADATA_PORT = 80
 
 
 class DhcpAgent(object):
@@ -49,7 +52,9 @@ class DhcpAgent(object):
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help=_("The driver used to manage the DHCP server.")),
         cfg.BoolOpt('use_namespaces', default=True,
-                    help=_("Allow overlapping IP."))
+                    help=_("Allow overlapping IP.")),
+        cfg.BoolOpt('enable_isolated_metadata', default=False,
+                    help=_("Support Metadata requests on isolated networks."))
     ]
 
     def __init__(self, conf):
@@ -73,12 +78,12 @@ class DhcpAgent(object):
         self.lease_relay.start()
         self.notifications.run_dispatch(self)
 
+    def _ns_name(self, network):
+        if self.conf.use_namespaces:
+            return NS_PREFIX + network.id
+
     def call_driver(self, action, network):
         """Invoke an action on a DHCP driver instance."""
-        if self.conf.use_namespaces:
-            namespace = NS_PREFIX + network.id
-        else:
-            namespace = None
         try:
             # the Driver expects something that is duck typed similar to
             # the base models.
@@ -86,7 +91,7 @@ class DhcpAgent(object):
                                           network,
                                           self.root_helper,
                                           self.device_manager,
-                                          namespace)
+                                          self._ns_name(network))
             getattr(driver, action)()
             return True
 
@@ -145,6 +150,8 @@ class DhcpAgent(object):
         for subnet in network.subnets:
             if subnet.enable_dhcp:
                 if self.call_driver('enable', network):
+                    if self.conf.use_namespaces:
+                        self.enable_isolated_metadata_proxy(network)
                     self.cache.put(network)
                 break
 
@@ -152,6 +159,8 @@ class DhcpAgent(object):
         """Disable DHCP for a network known to the agent."""
         network = self.cache.get_network_by_id(network_id)
         if network:
+            if self.conf.use_namespaces:
+                self.disable_isolated_metadata_proxy(network)
             if self.call_driver('disable', network):
                 self.cache.remove(network)
 
@@ -234,6 +243,29 @@ class DhcpAgent(object):
             network = self.cache.get_network_by_id(port.network_id)
             self.cache.remove_port(port)
             self.call_driver('reload_allocations', network)
+
+    def enable_isolated_metadata_proxy(self, network):
+        def callback(pid_file):
+            return ['quantum-ns-metadata-proxy',
+                    '--pid_file=%s' % pid_file,
+                    '--network_id=%s' % network.id,
+                    '--state_path=%s' % self.conf.state_path,
+                    '--metadata_port=%d' % METADATA_PORT]
+
+        pm = external_process.ProcessManager(
+            self.conf,
+            network.id,
+            self.conf.root_helper,
+            self._ns_name(network))
+        pm.enable(callback)
+
+    def disable_isolated_metadata_proxy(self, network):
+        pm = external_process.ProcessManager(
+            self.conf,
+            network.id,
+            self.conf.root_helper,
+            self._ns_name(network))
+        pm.disable()
 
 
 class DhcpPluginApi(proxy.RpcProxy):
@@ -446,6 +478,9 @@ class DeviceManager(object):
             net = netaddr.IPNetwork(subnet.cidr)
             ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
             ip_cidrs.append(ip_cidr)
+
+        if self.conf.enable_isolated_metadata and self.conf.use_namespaces:
+            ip_cidrs.append(METADATA_DEFAULT_IP)
 
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=namespace)
