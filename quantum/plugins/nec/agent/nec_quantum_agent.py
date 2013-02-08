@@ -20,21 +20,97 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Ryota MIBU
+# @author: Akihiro MOTOKI
 
 import socket
 import sys
 import time
 
+import eventlet
+
 from quantum.agent.linux import ovs_lib
+from quantum.agent import rpc as agent_rpc
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
 from quantum.common import topics
-from quantum import context
+from quantum import context as q_context
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
-from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import dispatcher
+from quantum.openstack.common.rpc import proxy
 from quantum.plugins.nec.common import config
 
 
 LOG = logging.getLogger(__name__)
+
+
+class NECPluginApi(agent_rpc.PluginApi):
+    BASE_RPC_API_VERSION = '1.0'
+
+    def update_ports(self, context, agent_id, datapath_id,
+                     port_added, port_removed):
+        """RPC to update information of ports on Quantum Server"""
+        LOG.info(_("Update ports: added=%(added)s, "
+                   "removed=%(removed)s"),
+                 {'added': port_added, 'removed': port_removed})
+        try:
+            self.call(context,
+                      self.make_msg('update_ports',
+                                    topic=topics.AGENT,
+                                    agent_id=agent_id,
+                                    datapath_id=datapath_id,
+                                    port_added=port_added,
+                                    port_removed=port_removed))
+        except Exception as e:
+            LOG.warn(_("update_ports() failed."))
+            return
+
+
+class NECAgentRpcCallback(object):
+
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self, context, agent, sg_agent):
+        self.context = context
+        self.agent = agent
+        self.sg_agent = sg_agent
+
+    def port_update(self, context, **kwargs):
+        LOG.debug(_("port_update received: %s"), kwargs)
+        port = kwargs.get('port')
+        # Validate that port is on OVS
+        vif_port = self.agent.int_br.get_vif_port_by_id(port['id'])
+        if not vif_port:
+            return
+
+        if ext_sg.SECURITYGROUPS in port:
+            self.sg_agent.refresh_firewall()
+
+
+class SecurityGroupServerRpcApi(proxy.RpcProxy,
+                                sg_rpc.SecurityGroupServerRpcApiMixin):
+
+    def __init__(self, topic):
+        super(SecurityGroupServerRpcApi, self).__init__(
+            topic=topic, default_version=sg_rpc.SG_RPC_VERSION)
+
+
+class SecurityGroupAgentRpcCallback(
+    sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+
+    RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
+
+    def __init__(self, context, sg_agent):
+        self.context = context
+        self.sg_agent = sg_agent
+
+
+class SecurityGroupAgentRpc(sg_rpc.SecurityGroupAgentRpcMixin):
+
+    def __init__(self, context):
+        self.context = context
+        self.plugin_rpc = SecurityGroupServerRpcApi(topics.PLUGIN)
+        self.init_firewall()
 
 
 class NECQuantumAgent(object):
@@ -49,35 +125,45 @@ class NECQuantumAgent(object):
         self.int_br = ovs_lib.OVSBridge(integ_br, root_helper)
         self.polling_interval = polling_interval
 
+        self.datapath_id = "0x%s" % self.int_br.get_datapath_id()
+        self.setup_rpc()
+
+    def setup_rpc(self):
         self.host = socket.gethostname()
         self.agent_id = 'nec-q-agent.%s' % self.host
-        self.datapath_id = "0x%s" % self.int_br.get_datapath_id()
+        LOG.info(_("RPC agent_id: %s"), self.agent_id)
+
+        self.topic = topics.AGENT
+        self.context = q_context.get_admin_context_without_session()
+
+        self.plugin_rpc = NECPluginApi(topics.PLUGIN)
+        self.sg_agent = SecurityGroupAgentRpc(self.context)
 
         # RPC network init
-        self.context = context.get_admin_context_without_session()
-        self.conn = rpc.create_connection(new=True)
-
-    def update_ports(self, port_added=[], port_removed=[]):
-        """RPC to update information of ports on Quantum Server"""
-        LOG.info(_("Update ports: added=%(port_added)s, "
-                   "removed=%(port_removed)s"),
-                 locals())
-        try:
-            rpc.call(self.context,
-                     topics.PLUGIN,
-                     {'method': 'update_ports',
-                      'args': {'topic': topics.AGENT,
-                               'agent_id': self.agent_id,
-                               'datapath_id': self.datapath_id,
-                               'port_added': port_added,
-                               'port_removed': port_removed}})
-        except Exception as e:
-            LOG.warn(_("update_ports() failed."))
-            return
+        # Handle updates from service
+        self.callback_nec = NECAgentRpcCallback(self.context,
+                                                self, self.sg_agent)
+        self.callback_sg = SecurityGroupAgentRpcCallback(self.context,
+                                                         self.sg_agent)
+        self.dispatcher = dispatcher.RpcDispatcher([self.callback_nec,
+                                                    self.callback_sg])
+        # Define the listening consumer for the agent
+        consumers = [[topics.PORT, topics.UPDATE],
+                     [topics.SECURITY_GROUP, topics.UPDATE]]
+        self.connection = agent_rpc.create_consumers(self.dispatcher,
+                                                     self.topic,
+                                                     consumers)
 
     def _vif_port_to_port_info(self, vif_port):
         return dict(id=vif_port.vif_id, port_no=vif_port.ofport,
                     mac=vif_port.vif_mac)
+
+    def _process_security_group(self, port_added, port_removed):
+        if port_added:
+            devices_added = [p['id'] for p in port_added]
+            self.sg_agent.prepare_devices_filter(devices_added)
+        if port_removed:
+            self.sg_agent.remove_devices_filter(port_removed)
 
     def daemon_loop(self):
         """Main processing loop for NEC Plugin Agent."""
@@ -99,7 +185,10 @@ class NECQuantumAgent(object):
                     port_removed.append(port_id)
 
             if port_added or port_removed:
-                self.update_ports(port_added, port_removed)
+                self.plugin_rpc.update_ports(self.context,
+                                             self.agent_id, self.datapath_id,
+                                             port_added, port_removed)
+                self._process_security_group(port_added, port_removed)
             else:
                 LOG.debug(_("No port changed."))
 
@@ -108,6 +197,8 @@ class NECQuantumAgent(object):
 
 
 def main():
+    eventlet.monkey_patch()
+
     config.CONF(project='quantum')
 
     logging_config.setup_logging(config.CONF)

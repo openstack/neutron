@@ -15,6 +15,9 @@
 #    under the License.
 # @author: Ryota MIBU
 
+from quantum.agent import securitygroups_rpc as sg_rpc
+from quantum.common import constants as q_const
+from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum import context
@@ -23,9 +26,12 @@ from quantum.db import l3_db
 from quantum.db import l3_rpc_base
 #NOTE(amotoki): quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
+from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import proxy
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
@@ -51,7 +57,9 @@ class OperationalStatus:
     ERROR = "ERROR"
 
 
-class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
+class NECPluginV2(nec_plugin_base.NECPluginV2Base,
+                  l3_db.L3_NAT_db_mixin,
+                  sg_db_rpc.SecurityGroupServerRpcMixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Quantum NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -65,7 +73,8 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
     information to and from the plugin.
     """
 
-    supported_extension_aliases = ["router", "quotas", "binding"]
+    supported_extension_aliases = ["router", "quotas", "binding",
+                                   "security-group"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -81,20 +90,27 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
 
         self.setup_rpc()
 
+    def setup_rpc(self):
+        self.topic = topics.PLUGIN
+        self.conn = rpc.create_connection(new=True)
+        self.notifier = NECPluginV2AgentNotifierApi(topics.AGENT)
+
+        self.callback_nec = NECPluginV2RPCCallbacks(self)
+        self.callback_dhcp = DhcpRpcCallback()
+        self.callback_l3 = L3RpcCallback()
+        self.callback_sg = SecurityGroupServerRpcCallback()
+        callbacks = [self.callback_nec, self.callback_dhcp,
+                     self.callback_l3, self.callback_sg]
+        self.dispatcher = q_rpc.PluginRpcDispatcher(callbacks)
+        self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
+        # Consume from all consumers in a thread
+        self.conn.consume_in_thread()
+
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
     def _enforce_set_auth(self, context, resource, action):
         policy.enforce(context, action, resource)
-
-    def setup_rpc(self):
-        self.topic = topics.PLUGIN
-        self.conn = rpc.create_connection(new=True)
-        self.callbacks = NECPluginV2RPCCallbacks(self)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
 
     def _update_resource_status(self, context, resource, id, status):
         """Update status of specified resource."""
@@ -199,8 +215,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         """Create a new network entry on DB, and create it on OFC."""
         LOG.debug(_("NECPluginV2.create_network() called, "
                     "network=%s ."), network)
-        session = context.session
-        with session.begin(subtransactions=True):
+        #set up default security groups
+        tenant_id = self._get_tenant_id_for_create(
+            context, network['network'])
+        self._ensure_default_security_group(context, tenant_id)
+
+        with context.session.begin(subtransactions=True):
             new_net = super(NECPluginV2, self).create_network(context, network)
             self._process_l3_create(context, network['network'], new_net['id'])
             self._extend_network_dict_l3(context, new_net)
@@ -337,12 +357,25 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
-        new_port = super(NECPluginV2, self).create_port(context, port)
-        self._update_resource_status(context, "port", new_port['id'],
-                                     OperationalStatus.BUILD)
+        with context.session.begin(subtransactions=True):
+            self._ensure_default_security_group_on_port(context, port)
+            sgids = self._get_security_groups_on_port(context, port)
+            port = super(NECPluginV2, self).create_port(context, port)
+            self._process_port_create_security_group(
+                context, port['id'], sgids)
+            self._extend_port_dict_security_group(context, port)
+        # Note: In order to allow dhcp packets,
+        # changes for dhcp ip should be notifified
+        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+            self.notifier.security_groups_provider_updated(context)
+        else:
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUPS))
 
-        self.activate_port_if_ready(context, new_port)
-        return self._extend_port_dict_binding(context, new_port)
+        self._update_resource_status(context, "port", port['id'],
+                                     OperationalStatus.BUILD)
+        self.activate_port_if_ready(context, port)
+        return self._extend_port_dict_binding(context, port)
 
     def update_port(self, context, id, port):
         """Update port, and handle packetfilters associated with the port.
@@ -352,23 +385,37 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         """
         LOG.debug(_("NECPluginV2.update_port() called, "
                     "id=%(id)s port=%(port)s ."), locals())
-        old_port = super(NECPluginV2, self).get_port(context, id)
-        new_port = super(NECPluginV2, self).update_port(context, id, port)
+        need_port_update_notify = False
+        with context.session.begin(subtransactions=True):
+            old_port = super(NECPluginV2, self).get_port(context, id)
+            new_port = super(NECPluginV2, self).update_port(context, id, port)
+            need_port_update_notify = self.update_security_group_on_port(
+                context, id, port, old_port, new_port)
 
-        changed = (old_port['admin_state_up'] is
-                   not new_port['admin_state_up'])
+        need_port_update_notify |= self.is_security_group_member_updated(
+            context, old_port, new_port)
+        if need_port_update_notify:
+            self.notifier.port_update(context, new_port)
+
+        changed = (old_port['admin_state_up'] != new_port['admin_state_up'])
         if changed:
             if new_port['admin_state_up']:
                 self.activate_port_if_ready(context, new_port)
             else:
                 self.deactivate_port(context, old_port)
 
+        # NOTE: _extend_port_dict_security_group() is called in
+        # update_security_group_on_port() above, so we don't need to
+        # call it here.
         return self._extend_port_dict_binding(context, new_port)
 
     def delete_port(self, context, id, l3_port_check=True):
         """Delete port and packet_filters associated with the port."""
         LOG.debug(_("NECPluginV2.delete_port() called, id=%s ."), id)
-        port = super(NECPluginV2, self).get_port(context, id)
+        # ext_sg.SECURITYGROUPS attribute for the port is required
+        # since notifier.security_groups_member_updated() need the attribute.
+        # Thus we need to call self.get_port() instead of super().get_port()
+        port = self.get_port(context, id)
 
         self.deactivate_port(context, port)
 
@@ -384,22 +431,27 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         # and l3-router.  If so, we should prevent deletion.
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
-        super(NECPluginV2, self).delete_port(context, id)
+        with context.session.begin(subtransactions=True):
+            self.disassociate_floatingips(context, id)
+            self._delete_port_security_group_bindings(context, id)
+            super(NECPluginV2, self).delete_port(context, id)
+        self.notifier.security_groups_member_updated(
+            context, port.get(ext_sg.SECURITYGROUPS))
 
     def get_port(self, context, id, fields=None):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             port = super(NECPluginV2, self).get_port(context, id, fields)
+            self._extend_port_dict_security_group(context, port)
             self._extend_port_dict_binding(context, port)
         return self._fields(port, fields)
 
     def get_ports(self, context, filters=None, fields=None):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             ports = super(NECPluginV2, self).get_ports(context, filters,
                                                        fields)
+            # TODO(amotoki) filter by security group
             for port in ports:
+                self._extend_port_dict_security_group(context, port)
                 self._extend_port_dict_binding(context, port)
         return [self._fields(port, fields) for port in ports]
 
@@ -529,8 +581,52 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base, l3_db.L3_NAT_db_mixin):
         super(NECPluginV2, self).delete_packet_filter(context, id)
 
 
-class NECPluginV2RPCCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                              l3_rpc_base.L3RpcCallbackMixin):
+class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
+                                  sg_rpc.SecurityGroupAgentRpcApiMixin):
+    '''RPC API for NEC plugin agent'''
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(NECPluginV2AgentNotifierApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic_port_update = topics.get_topic_name(
+            topic, topics.PORT, topics.UPDATE)
+
+    def port_update(self, context, port):
+        self.fanout_cast(context,
+                         self.make_msg('port_update',
+                                       port=port),
+                         topic=self.topic_port_update)
+
+
+class DhcpRpcCallback(dhcp_rpc_base.DhcpRpcCallbackMixin):
+    # DhcpPluginApi BASE_RPC_API_VERSION
+    RPC_API_VERSION = '1.0'
+
+
+class L3RpcCallback(l3_rpc_base.L3RpcCallbackMixin):
+    # L3PluginApi BASE_RPC_API_VERSION
+    RPC_API_VERSION = '1.0'
+
+
+class SecurityGroupServerRpcCallback(
+    sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+
+    RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
+
+    @staticmethod
+    def get_port_from_device(device):
+        port = ndb.get_port_from_device(device)
+        if port:
+            port['device'] = device
+        LOG.debug(_("NECPluginV2RPCCallbacks.get_port_from_device() called, "
+                    "device=%(device)s => %(ret)s."),
+                  {'device': device, 'ret': port})
+        return port
+
+
+class NECPluginV2RPCCallbacks(object):
 
     RPC_API_VERSION = '1.0'
 

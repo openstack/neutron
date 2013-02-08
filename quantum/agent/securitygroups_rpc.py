@@ -86,9 +86,9 @@ class SecurityGroupAgentRpcMixin(object):
     """
 
     def init_firewall(self):
-        LOG.debug(_("Init firewall settings"))
-        self.firewall = importutils.import_object(
-            cfg.CONF.SECURITYGROUP.firewall_driver)
+        firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver
+        LOG.debug(_("Init firewall settings (driver=%s)"), firewall_driver)
+        self.firewall = importutils.import_object(firewall_driver)
 
     def prepare_devices_filter(self, device_ids):
         if not device_ids:

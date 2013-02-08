@@ -39,7 +39,7 @@ class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase,
                      test_bindings.PortBindingsTestCase):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_SECURITY_GROUP = False
+    HAS_PORT_FILTER = True
 
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):
