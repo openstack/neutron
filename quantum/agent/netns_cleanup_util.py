@@ -68,11 +68,10 @@ def setup_conf():
                     help=_('Delete the namespace by removing all devices.')),
     ]
 
-    conf = cfg.ConfigOpts()
+    conf = cfg.CONF
     conf.register_opts(opts)
     agent_config.register_root_helper(conf)
     conf.register_opts(dhcp.OPTS)
-    config.setup_logging(conf)
     return conf
 
 
@@ -168,6 +167,7 @@ def main():
 
     conf = setup_conf()
     conf()
+    config.setup_logging(conf)
 
     root_helper = agent_config.get_root_helper(conf)
     # Identify namespaces that are candidates for deletion.
