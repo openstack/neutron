@@ -52,6 +52,7 @@ ryu_plugin_config_path = 'etc/quantum/plugins/ryu'
 meta_plugin_config_path = 'etc/quantum/plugins/metaplugin'
 nec_plugin_config_path = 'etc/quantum/plugins/nec'
 hyperv_plugin_config_path = 'etc/quantum/plugins/hyperv'
+plumgrid_plugin_config_path = 'etc/quantum/plugins/plumgrid'
 
 if sys.platform == 'win32':
     # Windows doesn't have an "/etc" directory equivalent
@@ -104,6 +105,8 @@ else:
         (nec_plugin_config_path, ['etc/quantum/plugins/nec/nec.ini']),
         (hyperv_plugin_config_path,
             ['etc/quantum/plugins/hyperv/hyperv_quantum_plugin.ini']),
+        (plumgrid_plugin_config_path,
+            ['etc/quantum/plugins/plumgrid/plumgrid.ini']),
     ]
 
     ConsoleScripts = [
