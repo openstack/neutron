@@ -24,12 +24,11 @@ from quantum.agent import ovs_cleanup_util as util
 
 class TestOVSCleanup(unittest.TestCase):
     def test_setup_conf(self):
-        with mock.patch('quantum.common.config.setup_logging'):
-            conf = util.setup_conf()
-            self.assertEqual(conf.external_network_bridge, 'br-ex')
-            self.assertEqual(conf.ovs_integration_bridge, 'br-int')
-            self.assertFalse(conf.ovs_all_ports)
-            self.assertEqual(conf.AGENT.root_helper, 'sudo')
+        conf = util.setup_conf()
+        self.assertEqual(conf.external_network_bridge, 'br-ex')
+        self.assertEqual(conf.ovs_integration_bridge, 'br-int')
+        self.assertFalse(conf.ovs_all_ports)
+        self.assertEqual(conf.AGENT.root_helper, 'sudo')
 
     def test_main(self):
         with mock.patch('quantum.common.config.setup_logging'):
