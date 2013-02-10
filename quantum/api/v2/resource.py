@@ -80,8 +80,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             method = getattr(controller, action)
 
             result = method(request=request, **args)
-        except (ValueError, AttributeError,
-                exceptions.QuantumException,
+        except (exceptions.QuantumException,
                 netaddr.AddrFormatError) as e:
             LOG.exception(_('%s failed'), action)
             body = serializer.serialize({'QuantumError': str(e)})

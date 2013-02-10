@@ -33,13 +33,16 @@ SHARED = 'shared'
 
 def _verify_dict_keys(expected_keys, target_dict):
     if not isinstance(target_dict, dict):
-        msg = _("Invalid input. %s must be a dictionary.") % target_dict
+        msg = (_("Invalid input. '%(target_dict)s' must be a dictionary "
+                 "with keys: %(expected_keys)s") %
+               dict(target_dict=target_dict, expected_keys=expected_keys))
         return msg
 
     provided_keys = target_dict.keys()
     if set(expected_keys) != set(provided_keys):
-        msg = (_("Expected keys not found. Expected: %(expected_keys)s "
-                 "Provided: %(provided_keys)s") % locals())
+        msg = (_("Expected keys not found. Expected: '%(expected_keys)s', "
+                 "Provided: '%(provided_keys)s'") %
+               dict(expected_keys=expected_keys, provided_keys=provided_keys))
         return msg
 
 
@@ -49,7 +52,8 @@ def is_attr_set(attribute):
 
 def _validate_values(data, valid_values=None):
     if data not in valid_values:
-        msg = _("'%(data)s' is not in %(valid_values)s") % locals()
+        msg = (_("'%(data)s' is not in %(valid_values)s") %
+               dict(data=data, valid_values=valid_values))
         LOG.debug(msg)
         return msg
 
@@ -61,7 +65,8 @@ def _validate_string(data, max_len=None):
         return msg
 
     if max_len is not None and len(data) > max_len:
-        msg = _("'%(data)s' exceeds maximum length of %(max_len)s") % locals()
+        msg = (_("'%(data)s' exceeds maximum length of %(max_len)s") %
+               dict(data=data, max_len=max_len))
         LOG.debug(msg)
         return msg
 
@@ -71,7 +76,9 @@ def _validate_range(data, valid_values=None):
     max_value = valid_values[1]
     if not min_value <= data <= max_value:
         msg = _("'%(data)s' is not in range %(min_value)s through "
-                "%(max_value)s") % locals()
+                "%(max_value)s") % dict(data=data,
+                                        min_value=min_value,
+                                        max_value=max_value)
         LOG.debug(msg)
         return msg
 
@@ -101,7 +108,7 @@ def _validate_ip_pools(data, valid_values=None):
 
     """
     if not isinstance(data, list):
-        msg = _("'%s' is not a valid IP pool") % data
+        msg = _("Invalid data format for IP pool: '%s'") % data
         LOG.debug(msg)
         return msg
 
@@ -120,18 +127,22 @@ def _validate_ip_pools(data, valid_values=None):
 
 def _validate_fixed_ips(data, valid_values=None):
     if not isinstance(data, list):
-        msg = _("'%s' is not a valid fixed IP") % data
+        msg = _("Invalid data format for fixed IP: '%s'") % data
         LOG.debug(msg)
         return msg
 
     ips = []
     for fixed_ip in data:
+        if not isinstance(fixed_ip, dict):
+            msg = _("Invalid data format for fixed IP: '%s'") % fixed_ip
+            LOG.debug(msg)
+            return msg
         if 'ip_address' in fixed_ip:
             # Ensure that duplicate entries are not set - just checking IP
             # suffices. Duplicate subnet_id's are legitimate.
             fixed_ip_address = fixed_ip['ip_address']
             if fixed_ip_address in ips:
-                msg = _("Duplicate entry %s") % fixed_ip
+                msg = _("Duplicate IP address '%s'") % fixed_ip_address
             else:
                 msg = _validate_ip_address(fixed_ip_address)
             if msg:
@@ -147,7 +158,7 @@ def _validate_fixed_ips(data, valid_values=None):
 
 def _validate_nameservers(data, valid_values=None):
     if not hasattr(data, '__iter__'):
-        msg = _("'%s' is not a valid nameserver") % data
+        msg = _("Invalid data format for nameserver: '%s'") % data
         LOG.debug(msg)
         return msg
 
@@ -162,7 +173,7 @@ def _validate_nameservers(data, valid_values=None):
                 LOG.debug(msg)
                 return msg
         if ip in ips:
-            msg = _("Duplicate nameserver %s") % ip
+            msg = _("Duplicate nameserver '%s'") % ip
             LOG.debug(msg)
             return msg
         ips.append(ip)
@@ -170,7 +181,7 @@ def _validate_nameservers(data, valid_values=None):
 
 def _validate_hostroutes(data, valid_values=None):
     if not isinstance(data, list):
-        msg = _("'%s' is not a valid hostroute") % data
+        msg = _("Invalid data format for hostroute: '%s'") % data
         LOG.debug(msg)
         return msg
 
@@ -190,7 +201,7 @@ def _validate_hostroutes(data, valid_values=None):
             LOG.debug(msg)
             return msg
         if hostroute in hostroutes:
-            msg = _("Duplicate hostroute %s") % hostroute
+            msg = _("Duplicate hostroute '%s'") % hostroute
             LOG.debug(msg)
             return msg
         hostroutes.append(hostroute)
@@ -252,7 +263,7 @@ def _validate_uuid_list(data, valid_values=None):
             return msg
 
     if len(set(data)) != len(data):
-        msg = _("Duplicate items in the list: %s") % ', '.join(data)
+        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
         LOG.debug(msg)
         return msg
 

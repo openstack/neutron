@@ -92,7 +92,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                                  'test',
                                                  True)
                     # We expect a 500 as we injected a fault in the plugin
-                    self._validate_behavior_on_bulk_failure(res, 'ports')
+                    self._validate_behavior_on_bulk_failure(res, 'ports', 500)
 
     def test_create_ports_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -112,7 +112,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'ports')
+                self._validate_behavior_on_bulk_failure(res, 'ports', 500)
 
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
@@ -140,7 +140,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                 res = self._create_network_bulk(self.fmt, 2, 'test', True)
                 LOG.debug("response is %s" % res)
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'networks')
+                self._validate_behavior_on_bulk_failure(res, 'networks', 500)
 
     def test_create_networks_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -157,7 +157,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
             patched_plugin.side_effect = side_effect
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
             # We expect a 500 as we injected a fault in the plugin
-            self._validate_behavior_on_bulk_failure(res, 'networks')
+            self._validate_behavior_on_bulk_failure(res, 'networks', 500)
 
 
 class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
@@ -189,7 +189,7 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
                                                    net['network']['id'],
                                                    'test')
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets')
+                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
 
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -209,7 +209,7 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
                                                'test')
 
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets')
+                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
 
 
 class TestCiscoPortsV2XML(TestCiscoPortsV2):

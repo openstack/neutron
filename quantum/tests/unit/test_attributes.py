@@ -139,17 +139,32 @@ class TestAttributes(unittest2.TestCase):
             self.assertIsNone(msg)
 
     def test_validate_fixed_ips(self):
-        fixed_ips = [[{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
+        fixed_ips = [
+            {'data': [{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
                        'ip_address': '1111.1.1.1'}],
-                     [{'subnet_id': 'invalid'}],
-                     None,
-                     [{'subnet_id': '00000000-0fff-ffff-ffff-000000000000',
+             'error_msg': "'1111.1.1.1' is not a valid IP address"},
+            {'data': [{'subnet_id': 'invalid',
+                       'ip_address': '1.1.1.1'}],
+             'error_msg': "'invalid' is not a valid UUID"},
+            {'data': None,
+             'error_msg': "Invalid data format for fixed IP: 'None'"},
+            {'data': "1.1.1.1",
+             'error_msg': "Invalid data format for fixed IP: '1.1.1.1'"},
+            {'data': ['00000000-ffff-ffff-ffff-000000000000', '1.1.1.1'],
+             'error_msg': "Invalid data format for fixed IP: "
+                          "'00000000-ffff-ffff-ffff-000000000000'"},
+            {'data': [['00000000-ffff-ffff-ffff-000000000000', '1.1.1.1']],
+             'error_msg': "Invalid data format for fixed IP: "
+                          "'['00000000-ffff-ffff-ffff-000000000000', "
+                          "'1.1.1.1']'"},
+            {'data': [{'subnet_id': '00000000-0fff-ffff-ffff-000000000000',
                        'ip_address': '1.1.1.1'},
                       {'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
-                       'ip_address': '1.1.1.1'}]]
+                       'ip_address': '1.1.1.1'}],
+             'error_msg': "Duplicate IP address '1.1.1.1'"}]
         for fixed in fixed_ips:
-            msg = attributes._validate_fixed_ips(fixed)
-            self.assertIsNotNone(msg)
+            msg = attributes._validate_fixed_ips(fixed['data'])
+            self.assertEqual(msg, fixed['error_msg'])
 
         fixed_ips = [[{'subnet_id': '00000000-ffff-ffff-ffff-000000000000',
                        'ip_address': '1.1.1.1'}],
@@ -402,7 +417,8 @@ class TestAttributes(unittest2.TestCase):
                            'f3eeab00-8367-4524-b662-55e64d4cacb5',
                            'e5069610-744b-42a7-8bd8-ceac1a229cd4']
         msg = attributes._validate_uuid_list(duplicate_uuids)
-        error = "Duplicate items in the list: %s" % ', '.join(duplicate_uuids)
+        error = ("Duplicate items in the list: "
+                 "'%s'" % ', '.join(duplicate_uuids))
         self.assertEquals(msg, error)
 
         # check valid uuid lists
