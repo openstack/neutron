@@ -290,9 +290,35 @@ class TestBasicRouterOperations(unittest2.TestCase):
             def __init__(self, name):
                 self.name = name
 
-        self.mock_ip.get_namespaces.return_value = ['qrouter-foo']
+        self.mock_ip.get_namespaces.return_value = ['qrouter-foo',
+                                                    'qrouter-bar']
         self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
                                                  FakeDev('qgw-aaaa')]
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        agent._destroy_all_router_namespaces()
+
+        agent._destroy_router_namespace = mock.MagicMock()
+        agent._destroy_router_namespaces()
+
+        self.assertEqual(agent._destroy_router_namespace.call_count, 2)
+
+    def testDestroyNamespaceWithRouterId(self):
+
+        class FakeDev(object):
+            def __init__(self, name):
+                self.name = name
+
+        self.conf.router_id = _uuid()
+
+        namespaces = ['qrouter-foo', 'qrouter-' + self.conf.router_id]
+
+        self.mock_ip.get_namespaces.return_value = namespaces
+        self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
+                                                 FakeDev('qgw-aaaa')]
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        agent._destroy_router_namespace = mock.MagicMock()
+        agent._destroy_router_namespaces(self.conf.router_id)
+
+        self.assertEqual(agent._destroy_router_namespace.call_count, 1)
