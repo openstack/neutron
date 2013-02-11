@@ -18,6 +18,7 @@
 import re
 
 import eventlet
+from oslo.config import cfg
 
 from quantum.agent import dhcp_agent
 from quantum.agent import l3_agent
@@ -27,7 +28,6 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.api.v2 import attributes
 from quantum.common import config
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 

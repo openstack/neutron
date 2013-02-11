@@ -18,9 +18,9 @@
 import unittest
 
 import mock
+from oslo.config import cfg
 
 from quantum.agent import rpc
-from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 
 

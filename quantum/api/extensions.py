@@ -21,6 +21,7 @@ from abc import ABCMeta
 import imp
 import os
 
+from oslo.config import cfg
 import routes
 import webob.dec
 import webob.exc
@@ -30,7 +31,6 @@ from quantum.common import constants
 from quantum.common import exceptions
 import quantum.extensions
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 

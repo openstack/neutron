@@ -21,8 +21,9 @@
 import sys
 import time
 
+from oslo.config import cfg
+
 from quantum.common import exceptions as q_exc
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 # Check needed for unit testing on Unix

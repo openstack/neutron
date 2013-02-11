@@ -24,6 +24,7 @@ import sys
 import time
 
 import eventlet
+from oslo.config import cfg
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -34,7 +35,6 @@ from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum.common import utils as q_utils
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config

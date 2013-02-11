@@ -17,6 +17,7 @@ import contextlib
 import os
 
 import mock
+from oslo.config import cfg
 import webob.exc
 
 from quantum.api.v2 import attributes as attr
@@ -25,7 +26,6 @@ from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import securitygroups_db
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
 
 DB_PLUGIN_KLASS = ('quantum.tests.unit.test_extension_security_group.'

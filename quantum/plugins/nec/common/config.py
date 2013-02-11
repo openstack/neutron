@@ -15,8 +15,9 @@
 #    under the License.
 # @author: Ryota MIBU
 
+from oslo.config import cfg
+
 from quantum.agent.common import config
-from quantum.openstack.common import cfg
 # import rpc config options
 from quantum.openstack.common import rpc
 

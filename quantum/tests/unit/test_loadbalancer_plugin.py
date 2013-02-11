@@ -17,6 +17,7 @@
 import copy
 
 import mock
+from oslo.config import cfg
 import unittest2
 from webob import exc
 import webtest
@@ -26,7 +27,6 @@ from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.extensions import loadbalancer
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
 from quantum.tests.unit import test_api_v2

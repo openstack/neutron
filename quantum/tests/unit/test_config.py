@@ -16,8 +16,9 @@
 import os
 import unittest
 
+from oslo.config import cfg
+
 from quantum.common import config
-from quantum.openstack.common import cfg
 
 
 class ConfigurationTest(unittest.TestCase):

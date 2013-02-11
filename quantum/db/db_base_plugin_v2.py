@@ -19,6 +19,7 @@ import datetime
 import random
 
 import netaddr
+from oslo.config import cfg
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
@@ -27,7 +28,6 @@ from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils

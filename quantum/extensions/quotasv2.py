@@ -15,13 +15,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
 import webob
 
 from quantum.api import extensions
 from quantum.api.v2 import base
 from quantum.common import exceptions
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum import quota
 from quantum import wsgi

@@ -16,11 +16,11 @@
 #    under the License.
 
 import netaddr
+from oslo.config import cfg
 
 from quantum.agent import firewall
 from quantum.agent.linux import iptables_manager
 from quantum.common import constants
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 

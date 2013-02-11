@@ -16,8 +16,9 @@
 
 """Quotas for instances, volumes, and floating ips."""
 
+from oslo.config import cfg
+
 from quantum.common import exceptions
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 

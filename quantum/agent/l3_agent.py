@@ -24,6 +24,7 @@ import sys
 import eventlet
 from eventlet import semaphore
 import netaddr
+from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.linux import external_process
@@ -35,7 +36,6 @@ from quantum.common import constants as l3_constants
 from quantum.common import topics
 from quantum import context
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import periodic_task

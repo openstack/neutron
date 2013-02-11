@@ -19,6 +19,7 @@
 Unit tests for extension extended attribute
 """
 
+from oslo.config import cfg
 import unittest2 as unittest
 import webob.exc as webexc
 
@@ -26,7 +27,6 @@ import quantum
 from quantum.api import extensions
 from quantum.common import config
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.plugins.common import constants
 from quantum.plugins.openvswitch import ovs_quantum_plugin
 from quantum.tests.unit.extensions import extendedattribute as extattr

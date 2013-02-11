@@ -2,6 +2,7 @@ import unittest2 as unittest
 import webtest
 
 import mock
+from oslo.config import cfg
 
 from quantum.api import extensions
 from quantum.api.v2 import attributes
@@ -10,7 +11,6 @@ from quantum.common import exceptions
 from quantum import context
 from quantum.db import api as db
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.db import l2network_db_v2
 from quantum import quota
 from quantum.tests.unit import test_api_v2

@@ -24,7 +24,7 @@ import unittest
 
 setattr(__builtin__, '_', lambda x: x)
 
-from quantum.openstack.common import cfg
+from oslo.config import cfg
 
 
 reldir = os.path.join(os.path.dirname(__file__), '..', '..', '..')

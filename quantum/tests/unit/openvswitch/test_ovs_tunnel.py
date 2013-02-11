@@ -19,12 +19,12 @@
 import unittest
 
 import mox
+from oslo.config import cfg
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
 from quantum.agent import rpc
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.plugins.openvswitch.common import constants

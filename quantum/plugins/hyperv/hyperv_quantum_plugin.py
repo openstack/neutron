@@ -16,6 +16,8 @@
 #    under the License.
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
+from oslo.config import cfg
+
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
@@ -25,7 +27,6 @@ from quantum.db import l3_db
 from quantum.db import quota_db
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.hyperv import agent_notifier_api

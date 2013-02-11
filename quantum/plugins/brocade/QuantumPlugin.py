@@ -26,6 +26,9 @@
 """
 Implentation of Brocade Quantum Plugin.
 """
+
+from oslo.config import cfg
+
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
@@ -38,7 +41,6 @@ from quantum.db import l3_rpc_base
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging

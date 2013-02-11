@@ -23,6 +23,7 @@
 import hashlib
 import logging
 
+from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
 
@@ -45,7 +46,6 @@ from quantum.extensions import l3
 from quantum.extensions import portsecurity as psec
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common import rpc
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (securitygroups
                                                              as nvp_sec)

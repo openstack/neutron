@@ -16,10 +16,10 @@
 #    under the License.
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
 from quantum.agent import netns_cleanup_util as util
-from quantum.openstack.common import cfg
 
 
 class TestNullDelegate(unittest.TestCase):

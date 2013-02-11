@@ -16,6 +16,7 @@
 #
 # @author: Aaron Rosen, Nicira, Inc
 
+from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -25,7 +26,6 @@ from quantum.api.v2 import attributes as attr
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 
 

@@ -15,13 +15,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
+
 from quantum.agent import l3_agent
 from quantum.agent.common import config as agent_config
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.common import config
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 

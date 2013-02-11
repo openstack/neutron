@@ -28,7 +28,8 @@ For some wrappers that add message versioning to rpc, see:
 import inspect
 import logging
 
-from quantum.openstack.common import cfg
+from oslo.config import cfg
+
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils
 from quantum.openstack.common import local

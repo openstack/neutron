@@ -14,7 +14,8 @@
 #    under the License.
 
 
-from quantum.openstack.common import cfg
+from oslo.config import cfg
+
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
 

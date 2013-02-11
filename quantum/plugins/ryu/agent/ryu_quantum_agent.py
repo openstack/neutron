@@ -25,6 +25,7 @@ import socket
 import sys
 
 import netifaces
+from oslo.config import cfg
 from ryu.app import client
 from ryu.app import conf_switch_key
 from ryu.app import rest_nw_id
@@ -36,9 +37,6 @@ from quantum.common import config as logging_config
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum import context as q_context
-from quantum.openstack.common import cfg
-from quantum.openstack.common.cfg import NoSuchGroupError
-from quantum.openstack.common.cfg import NoSuchOptError
 from quantum.openstack.common import log
 from quantum.plugins.ryu.common import config
 
@@ -68,7 +66,7 @@ def _get_ip(cfg_ip_str, cfg_interface_str):
     ip = None
     try:
         ip = getattr(cfg.CONF.OVS, cfg_ip_str)
-    except (NoSuchOptError, NoSuchGroupError):
+    except (cfg.NoSuchOptError, cfg.NoSuchGroupError):
         pass
     if ip:
         return ip
@@ -76,7 +74,7 @@ def _get_ip(cfg_ip_str, cfg_interface_str):
     iface = None
     try:
         iface = getattr(cfg.CONF.OVS, cfg_interface_str)
-    except (NoSuchOptError, NoSuchGroupError):
+    except (cfg.NoSuchOptError, cfg.NoSuchGroupError):
         pass
     if iface:
         iface = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]

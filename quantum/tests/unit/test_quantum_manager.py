@@ -19,10 +19,11 @@ import os
 import types
 import unittest2
 
+from oslo.config import cfg
+
 from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
 from quantum.tests.unit import dummy_plugin

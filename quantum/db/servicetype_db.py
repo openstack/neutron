@@ -17,6 +17,7 @@
 #    @author: Salvatore Orlando, VMware
 #
 
+from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc as orm_exc
@@ -27,7 +28,6 @@ from quantum import context
 from quantum.db import api as db
 from quantum.db import model_base
 from quantum.db import models_v2
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum import policy
 

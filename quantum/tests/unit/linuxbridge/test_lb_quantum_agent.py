@@ -15,9 +15,9 @@
 #    under the License.
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
-from quantum.openstack.common import cfg
 from quantum.plugins.linuxbridge.agent import linuxbridge_quantum_agent
 from quantum.plugins.linuxbridge.common import constants as lconst
 

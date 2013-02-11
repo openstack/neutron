@@ -25,8 +25,8 @@ import time
 import weakref
 
 from eventlet import semaphore
+from oslo.config import cfg
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common import fileutils
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import local

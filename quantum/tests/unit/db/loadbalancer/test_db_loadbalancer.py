@@ -17,6 +17,7 @@ import contextlib
 import logging
 import os
 
+from oslo.config import cfg
 import webob.exc
 
 from quantum.api.extensions import ExtensionMiddleware
@@ -29,7 +30,6 @@ from quantum.db import api as db
 import quantum.extensions
 from quantum.extensions import loadbalancer
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.plugins.common import constants
 from quantum.plugins.services.loadbalancer import loadbalancerPlugin
 from quantum.tests.unit import testlib_api

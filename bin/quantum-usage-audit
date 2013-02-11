@@ -21,10 +21,11 @@ subnets.
 
 """
 
+from oslo.config import cfg
+
 from quantum import context
 from quantum import manager
 from quantum.common import config
-from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifier_api
 
 if __name__ == '__main__':

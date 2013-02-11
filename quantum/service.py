@@ -20,9 +20,10 @@ import logging as std_logging
 import os
 import random
 
+from oslo.config import cfg
+
 from quantum.common import config
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall

@@ -50,6 +50,8 @@ import httplib
 import json
 import socket
 
+from oslo.config import cfg
+
 from quantum.common import constants as const
 from quantum.common import exceptions
 from quantum.common import rpc as q_rpc
@@ -61,7 +63,6 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.extensions import l3
-from quantum.openstack.common import cfg
 from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc

@@ -23,9 +23,10 @@ to the Network Operating System by PLUMgrid called NOS
 
 import sys
 
+from oslo.config import cfg
+
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.plugins.plumgrid.common import exceptions as plum_excep
 from quantum.plugins.plumgrid.plumgrid_nos_plugin import plumgrid_nos_snippets

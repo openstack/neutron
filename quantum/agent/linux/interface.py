@@ -18,6 +18,7 @@
 import abc
 
 import netaddr
+from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.linux import ip_lib
@@ -25,7 +26,6 @@ from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
 from quantum.common import exceptions
 from quantum.extensions.flavor import (FLAVOR_NETWORK)
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 

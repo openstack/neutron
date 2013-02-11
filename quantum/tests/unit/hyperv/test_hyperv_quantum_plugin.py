@@ -18,10 +18,11 @@
 
 import contextlib
 
+from oslo.config import cfg
+
 from quantum import context
 from quantum.extensions import portbindings
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 

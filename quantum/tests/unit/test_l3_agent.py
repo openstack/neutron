@@ -19,13 +19,13 @@ import copy
 import unittest2
 
 import mock
+from oslo.config import cfg
 
 from quantum.agent import l3_agent
 from quantum.agent.common import config as agent_config
 from quantum.agent.linux import interface
 from quantum.common import config as base_config
 from quantum.common import constants as l3_constants
-from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 
 

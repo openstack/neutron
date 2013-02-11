@@ -26,8 +26,8 @@ import signal
 import socket
 
 from eventlet.green import subprocess
+from oslo.config import cfg
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 

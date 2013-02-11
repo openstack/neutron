@@ -15,9 +15,9 @@
 #    under the License.
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
-from quantum.openstack.common import cfg
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 
 
