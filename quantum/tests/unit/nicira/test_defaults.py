@@ -22,7 +22,6 @@ from quantum.plugins.nicira.nicira_nvp_plugin.common import config
 class ConfigurationTest(unittest.TestCase):
 
     def test_defaults(self):
-        self.assertEqual('sqlite://', cfg.CONF.DATABASE.sql_connection)
         self.assertEqual(-1, cfg.CONF.DATABASE.sql_max_retries)
         self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(64, cfg.CONF.NVP.max_lp_per_bridged_ls)

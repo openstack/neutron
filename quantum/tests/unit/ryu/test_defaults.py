@@ -26,7 +26,6 @@ class ConfigurationTest(unittest2.TestCase):
     """Configuration file Tests"""
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
-        self.assertEqual('sqlite://', cfg.CONF.DATABASE.sql_connection)
         self.assertEqual(-1, cfg.CONF.DATABASE.sql_max_retries)
         self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
