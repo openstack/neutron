@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 import logging
 import os
 
@@ -30,6 +31,7 @@ from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.test_db_plugin as test_plugin
 import quantum.tests.unit.test_extension_portsecurity as psec
 import quantum.tests.unit.test_extension_security_group as ext_sg
+import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
 LOG = logging.getLogger(__name__)
 NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
@@ -174,6 +176,18 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
             self._test_create_bridge_network(vlan_id=5000)
         self.assertEquals(ctx_manager.exception.code, 400)
 
+    def test_list_networks_filter_by_id(self):
+        # We add this unit test to cover some logic specific to the
+        # nvp plugin
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2')) as (net1, net2):
+            query_params = 'id=%s' % net1['network']['id']
+            self._test_list_resources('network', [net1],
+                                      query_params=query_params)
+            query_params += '&id=%s' % net2['network']['id']
+            self._test_list_resources('network', [net1, net2],
+                                      query_params=query_params)
+
 
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
@@ -235,3 +249,12 @@ class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
                               NiciraSecurityGroupsTestCase):
     pass
+
+
+class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
+                              NiciraPluginV2TestCase):
+
+        def test_floatingip_with_assoc_fails(self):
+            self._test_floatingip_with_assoc_fails(
+                'quantum.plugins.nicira.nicira_nvp_plugin.'
+                'QuantumPlugin.NvpPluginV2')

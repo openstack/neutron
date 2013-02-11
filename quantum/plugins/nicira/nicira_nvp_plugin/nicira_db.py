@@ -54,3 +54,20 @@ def add_network_binding(session, network_id, binding_type, tz_uuid, vlan_id):
                                                   tz_uuid, vlan_id)
         session.add(binding)
     return binding
+
+
+def add_quantum_nvp_port_mapping(session, quantum_id, nvp_id):
+    with session.begin(subtransactions=True):
+        mapping = nicira_models.QuantumNvpPortMapping(quantum_id, nvp_id)
+        session.add(mapping)
+        return mapping
+
+
+def get_nvp_port_id(session, quantum_id):
+    try:
+        mapping = (session.query(nicira_models.QuantumNvpPortMapping).
+                   filter_by(quantum_id=quantum_id).
+                   one())
+        return mapping['nvp_id']
+    except exc.NoResultFound:
+        return

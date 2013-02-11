@@ -1,0 +1,6 @@
+{
+  "_href": "/ws.v1/lrouter/%(lr_uuid)s/nat/%(uuid)s",
+  "type": "%(type)s",
+  "match": %(match_json)s,
+  "uuid": "%(uuid)s"
+}

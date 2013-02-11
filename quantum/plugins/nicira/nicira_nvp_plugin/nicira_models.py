@@ -50,3 +50,17 @@ class NvpNetworkBinding(model_base.BASEV2):
                                                   self.binding_type,
                                                   self.tz_uuid,
                                                   self.vlan_id)
+
+
+class QuantumNvpPortMapping(model_base.BASEV2):
+    """Represents the mapping between quantum and nvp port uuids."""
+
+    __tablename__ = 'quantum_nvp_port_mapping'
+    quantum_id = Column(String(36),
+                        ForeignKey('ports.id', ondelete="CASCADE"),
+                        primary_key=True)
+    nvp_id = Column(String(36))
+
+    def __init__(self, quantum_id, nvp_id):
+        self.quantum_id = quantum_id
+        self.nvp_id = nvp_id

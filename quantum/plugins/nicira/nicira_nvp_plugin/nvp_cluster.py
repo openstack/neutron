@@ -14,6 +14,16 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
+
+import re
+
+from quantum.api.v2 import attributes
+from quantum.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
 
 
 class NVPCluster(object):
@@ -45,8 +55,9 @@ class NVPCluster(object):
         return ''.join(ss)
 
     def add_controller(self, ip, port, user, password, request_timeout,
-                       http_timeout, retries, redirects,
-                       default_tz_uuid, uuid=None, zone=None):
+                       http_timeout, retries, redirects, default_tz_uuid,
+                       uuid=None, zone=None,
+                       default_l3_gw_service_uuid=None):
         """Add a new set of controller parameters.
 
         :param ip: IP address of controller.
@@ -59,14 +70,33 @@ class NVPCluster(object):
         :param redirects: maximum number of server redirect responses to
             follow.
         :param default_tz_uuid: default transport zone uuid.
+        :param default_next_hop: default next hop for routers in this cluster.
         :param uuid: UUID of this cluster (used in MDI configs).
         :param zone: Zone of this cluster (used in MDI configs).
         """
 
-        keys = [
-            'ip', 'user', 'password', 'default_tz_uuid', 'uuid', 'zone']
+        keys = ['ip', 'user', 'password', 'default_tz_uuid',
+                'default_l3_gw_service_uuid', 'uuid', 'zone']
         controller_dict = dict([(k, locals()[k]) for k in keys])
-
+        default_tz_uuid = controller_dict.get('default_tz_uuid')
+        if not re.match(attributes.UUID_PATTERN, default_tz_uuid):
+            LOG.warning(_("default_tz_uuid:%(default_tz_uuid)s is not a "
+                          "valid UUID in the cluster %(cluster_name)s. "
+                          "Network operations might not work "
+                          "properly in this cluster"),
+                        {'default_tz_uuid': default_tz_uuid,
+                         'cluster_name': self.name})
+        # default_l3_gw_service_uuid is an optional parameter
+        # validate only if specified
+        l3_gw_service_uuid = controller_dict.get('default_l3_gw_service_uuid')
+        if (l3_gw_service_uuid and
+            not re.match(attributes.UUID_PATTERN, l3_gw_service_uuid)):
+            LOG.warning(_("default_l3_gw_service_uuid:%(l3_gw_service_uuid)s "
+                          "is not a valid UUID in the cluster "
+                          "%(cluster_name)s. Logical router operations "
+                          "might not work properly in this cluster"),
+                        {'l3_gw_service_uuid': l3_gw_service_uuid,
+                         'cluster_name': self.name})
         int_keys = [
             'port', 'request_timeout', 'http_timeout', 'retries', 'redirects']
         for k in int_keys:
@@ -120,6 +150,10 @@ class NVPCluster(object):
     @property
     def default_tz_uuid(self):
         return self.controllers[0]['default_tz_uuid']
+
+    @property
+    def default_l3_gw_service_uuid(self):
+        return self.controllers[0]['default_l3_gw_service_uuid']
 
     @property
     def zone(self):

@@ -15,39 +15,82 @@
 #    under the License.
 
 import json
-import logging
 import urlparse
 
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 
 
-LOG = logging.getLogger("fake_nvpapiclient")
-LOG.setLevel(logging.DEBUG)
+LOG = logging.getLogger(__name__)
 
 
 class FakeClient:
 
+    LSWITCH_RESOURCE = 'lswitch'
+    LPORT_RESOURCE = 'lport'
+    LROUTER_RESOURCE = 'lrouter'
+    NAT_RESOURCE = 'nat'
+    SECPROF_RESOURCE = 'securityprofile'
+    LSWITCH_STATUS = 'lswitchstatus'
+    LROUTER_STATUS = 'lrouterstatus'
+    LSWITCH_LPORT_RESOURCE = 'lswitch_lport'
+    LROUTER_LPORT_RESOURCE = 'lrouter_lport'
+    LROUTER_NAT_RESOURCE = 'lrouter_nat'
+    LSWITCH_LPORT_STATUS = 'lswitch_lportstatus'
+    LSWITCH_LPORT_ATT = 'lswitch_lportattachment'
+    LROUTER_LPORT_STATUS = 'lrouter_lportstatus'
+    LROUTER_LPORT_ATT = 'lrouter_lportattachment'
+
+    RESOURCES = [LSWITCH_RESOURCE, LROUTER_RESOURCE,
+                 LPORT_RESOURCE, NAT_RESOURCE, SECPROF_RESOURCE]
+
     FAKE_GET_RESPONSES = {
-        "lswitch": "fake_get_lswitch.json",
-        "lport": "fake_get_lport.json",
-        "lportstatus": "fake_get_lport_status.json"
+        LSWITCH_RESOURCE: "fake_get_lswitch.json",
+        LSWITCH_LPORT_RESOURCE: "fake_get_lswitch_lport.json",
+        LSWITCH_LPORT_STATUS: "fake_get_lswitch_lport_status.json",
+        LSWITCH_LPORT_ATT: "fake_get_lswitch_lport_att.json",
+        LROUTER_RESOURCE: "fake_get_lrouter.json",
+        LROUTER_LPORT_RESOURCE: "fake_get_lrouter_lport.json",
+        LROUTER_LPORT_STATUS: "fake_get_lrouter_lport_status.json",
+        LROUTER_LPORT_ATT: "fake_get_lrouter_lport_att.json",
+        LROUTER_STATUS: "fake_get_lrouter_status.json",
+        LROUTER_NAT_RESOURCE: "fake_get_lrouter_nat.json"
     }
 
     FAKE_POST_RESPONSES = {
-        "lswitch": "fake_post_lswitch.json",
-        "lport": "fake_post_lport.json",
-        "securityprofile": "fake_post_security_profile.json"
+        LSWITCH_RESOURCE: "fake_post_lswitch.json",
+        LROUTER_RESOURCE: "fake_post_lrouter.json",
+        LSWITCH_LPORT_RESOURCE: "fake_post_lswitch_lport.json",
+        LROUTER_LPORT_RESOURCE: "fake_post_lrouter_lport.json",
+        LROUTER_NAT_RESOURCE: "fake_post_lrouter_nat.json",
+        SECPROF_RESOURCE: "fake_post_security_profile.json"
     }
 
     FAKE_PUT_RESPONSES = {
-        "lswitch": "fake_post_lswitch.json",
-        "lport": "fake_post_lport.json",
-        "securityprofile": "fake_post_security_profile.json"
+        LSWITCH_RESOURCE: "fake_post_lswitch.json",
+        LROUTER_RESOURCE: "fake_post_lrouter.json",
+        LSWITCH_LPORT_RESOURCE: "fake_post_lswitch_lport.json",
+        LROUTER_LPORT_RESOURCE: "fake_post_lrouter_lport.json",
+        LROUTER_NAT_RESOURCE: "fake_post_lrouter_nat.json",
+        LSWITCH_LPORT_ATT: "fake_put_lswitch_lport_att.json",
+        LROUTER_LPORT_ATT: "fake_put_lrouter_lport_att.json",
+        SECPROF_RESOURCE: "fake_post_security_profile.json"
+    }
+
+    MANAGED_RELATIONS = {
+        LSWITCH_RESOURCE: [],
+        LROUTER_RESOURCE: [],
+        LSWITCH_LPORT_RESOURCE: ['LogicalPortAttachment'],
+        LROUTER_LPORT_RESOURCE: ['LogicalPortAttachment'],
     }
 
     _fake_lswitch_dict = {}
-    _fake_lport_dict = {}
-    _fake_lportstatus_dict = {}
+    _fake_lrouter_dict = {}
+    _fake_lswitch_lport_dict = {}
+    _fake_lrouter_lport_dict = {}
+    _fake_lrouter_nat_dict = {}
+    _fake_lswitch_lportstatus_dict = {}
+    _fake_lrouter_lportstatus_dict = {}
     _fake_securityprofile_dict = {}
 
     def __init__(self, fake_files_path):
@@ -83,9 +126,22 @@ class FakeClient:
         fake_lswitch['lport_count'] = 0
         return fake_lswitch
 
-    def _add_lport(self, body, ls_uuid):
+    def _add_lrouter(self, body):
+        fake_lrouter = json.loads(body)
+        fake_lrouter['uuid'] = uuidutils.generate_uuid()
+        self._fake_lrouter_dict[fake_lrouter['uuid']] = fake_lrouter
+        fake_lrouter['tenant_id'] = self._get_tag(fake_lrouter, 'os_tid')
+        fake_lrouter['lport_count'] = 0
+        default_nexthop = fake_lrouter['routing_config'].get(
+            'default_route_next_hop')
+        fake_lrouter['default_next_hop'] = default_nexthop.get(
+            'gateway_ip_address', '0.0.0.0')
+        return fake_lrouter
+
+    def _add_lswitch_lport(self, body, ls_uuid):
         fake_lport = json.loads(body)
-        fake_lport['uuid'] = uuidutils.generate_uuid()
+        new_uuid = uuidutils.generate_uuid()
+        fake_lport['uuid'] = new_uuid
         # put the tenant_id and the ls_uuid in the main dict
         # for simplyfying templating
         fake_lport['ls_uuid'] = ls_uuid
@@ -93,7 +149,7 @@ class FakeClient:
         fake_lport['quantum_port_id'] = self._get_tag(fake_lport,
                                                       'q_port_id')
         fake_lport['quantum_device_id'] = self._get_tag(fake_lport, 'vm_id')
-        self._fake_lport_dict[fake_lport['uuid']] = fake_lport
+        self._fake_lswitch_lport_dict[fake_lport['uuid']] = fake_lport
 
         fake_lswitch = self._fake_lswitch_dict[ls_uuid]
         fake_lswitch['lport_count'] += 1
@@ -102,7 +158,31 @@ class FakeClient:
         fake_lport_status['ls_uuid'] = fake_lswitch['uuid']
         fake_lport_status['ls_name'] = fake_lswitch['display_name']
         fake_lport_status['ls_zone_uuid'] = fake_lswitch['zone_uuid']
-        self._fake_lportstatus_dict[fake_lport['uuid']] = fake_lport_status
+        self._fake_lswitch_lportstatus_dict[new_uuid] = fake_lport_status
+        return fake_lport
+
+    def _add_lrouter_lport(self, body, lr_uuid):
+        fake_lport = json.loads(body)
+        new_uuid = uuidutils.generate_uuid()
+        fake_lport['uuid'] = new_uuid
+        # put the tenant_id and the ls_uuid in the main dict
+        # for simplyfying templating
+        fake_lport['lr_uuid'] = lr_uuid
+        fake_lport['tenant_id'] = self._get_tag(fake_lport, 'os_tid')
+        fake_lport['quantum_port_id'] = self._get_tag(fake_lport,
+                                                      'q_port_id')
+        # replace ip_address with its json dump
+        if 'ip_addresses' in fake_lport:
+            ip_addresses_json = json.dumps(fake_lport['ip_addresses'])
+            fake_lport['ip_addresses_json'] = ip_addresses_json
+        self._fake_lrouter_lport_dict[fake_lport['uuid']] = fake_lport
+        fake_lrouter = self._fake_lrouter_dict[lr_uuid]
+        fake_lrouter['lport_count'] += 1
+        fake_lport_status = fake_lport.copy()
+        fake_lport_status['lr_tenant_id'] = fake_lrouter['tenant_id']
+        fake_lport_status['lr_uuid'] = fake_lrouter['uuid']
+        fake_lport_status['lr_name'] = fake_lrouter['display_name']
+        self._fake_lrouter_lportstatus_dict[new_uuid] = fake_lport_status
         return fake_lport
 
     def _add_securityprofile(self, body):
@@ -117,29 +197,91 @@ class FakeClient:
             fake_securityprofile)
         return fake_securityprofile
 
+    def _add_lrouter_nat(self, body, lr_uuid):
+        fake_nat = json.loads(body)
+        new_uuid = uuidutils.generate_uuid()
+        fake_nat['uuid'] = new_uuid
+        fake_nat['lr_uuid'] = lr_uuid
+        self._fake_lrouter_nat_dict[fake_nat['uuid']] = fake_nat
+        if 'match' in fake_nat:
+            match_json = json.dumps(fake_nat['match'])
+            fake_nat['match_json'] = match_json
+        return fake_nat
+
+    def _build_relation(self, src, dst, resource_type, relation):
+        if not relation in self.MANAGED_RELATIONS[resource_type]:
+            return  # Relation is not desired in output
+        if not '_relations' in src or not src['_relations'].get(relation):
+            return  # Item does not have relation
+        relation_data = src['_relations'].get(relation)
+        dst_relations = dst.get('_relations')
+        if not dst_relations:
+            dst_relations = {}
+        dst_relations[relation] = relation_data
+
+    def _fill_attachment(self, att_data, ls_uuid=None,
+                         lr_uuid=None, lp_uuid=None):
+        new_data = att_data.copy()
+        for k in ('ls_uuid', 'lr_uuid', 'lp_uuid'):
+            if locals().get(k):
+                new_data[k] = locals()[k]
+
+        def populate_field(field_name):
+            if field_name in att_data:
+                new_data['%s_field' % field_name] = ('"%s" : "%s",'
+                                                     % (field_name,
+                                                        att_data[field_name]))
+                del new_data[field_name]
+            else:
+                new_data['%s_field' % field_name] = ""
+
+        for field in ['vif_uuid', 'peer_port_href', 'peer_port_uuid']:
+            populate_field(field)
+        return new_data
+
     def _get_resource_type(self, path):
-        uri_split = path.split('/')
-        resource_type = ('status' in uri_split and
-                         'lport' in uri_split and 'lportstatus'
-                         or 'lport' in uri_split and 'lport'
-                         or 'lswitch' in uri_split and 'lswitch' or
-                         'security-profile' in uri_split and 'securityprofile')
-        switch_uuid = ('lswitch' in uri_split and
-                       len(uri_split) > 3 and uri_split[3])
-        port_uuid = ('lport' in uri_split and
-                     len(uri_split) > 5 and uri_split[5])
-        securityprofile_uuid = ('security-profile' in uri_split and
-                                len(uri_split) > 3 and uri_split[3])
-        return (resource_type, switch_uuid, port_uuid, securityprofile_uuid)
+        """
+        Identifies resource type and relevant uuids in the uri
+
+        /ws.v1/lswitch/xxx
+        /ws.v1/lswitch/xxx/status
+        /ws.v1/lswitch/xxx/lport/yyy
+        /ws.v1/lswitch/xxx/lport/yyy/status
+        /ws.v1/lrouter/zzz
+        /ws.v1/lrouter/zzz/status
+        /ws.v1/lrouter/zzz/lport/www
+        /ws.v1/lrouter/zzz/lport/www/status
+        """
+        # The first element will always be 'ws.v1' - so we just discard it
+        uri_split = path.split('/')[1:]
+        # parse uri_split backwards
+        suffix = ""
+        idx = len(uri_split) - 1
+        if 'status' in uri_split[idx]:
+            suffix = "status"
+            idx = idx - 1
+        elif 'attachment' in uri_split[idx]:
+            suffix = "attachment"
+            idx = idx - 1
+        # then check if we have an uuid
+        uuids = []
+        if uri_split[idx].replace('-', '') not in self.RESOURCES:
+            uuids.append(uri_split[idx])
+            idx = idx - 1
+        resource_type = "%s%s" % (uri_split[idx], suffix)
+        if idx > 1:
+            uuids.insert(0, uri_split[idx - 1])
+            resource_type = "%s_%s" % (uri_split[idx - 2], resource_type)
+        return (resource_type.replace('-', ''), uuids)
 
     def _list(self, resource_type, response_file,
-              switch_uuid=None, query=None):
+              parent_uuid=None, query=None, relations=None):
         (tag_filter, attr_filter) = self._get_filters(query)
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
-            if switch_uuid == "*":
-                switch_uuid = None
+            if parent_uuid == '*':
+                parent_uuid = None
 
             def _attr_match(res_uuid):
                 if not attr_filter:
@@ -158,16 +300,49 @@ class FakeClient:
                             for x in res_dict[res_uuid]['tags']])
 
             def _lswitch_match(res_uuid):
-                if (not switch_uuid or
-                        res_dict[res_uuid].get('ls_uuid') == switch_uuid):
+                # verify that the switch exist
+                if parent_uuid and not parent_uuid in self._fake_lswitch_dict:
+                    raise Exception(_("lswitch:%s not found" % parent_uuid))
+                if (not parent_uuid
+                    or res_dict[res_uuid].get('ls_uuid') == parent_uuid):
                     return True
                 return False
+
+            def _lrouter_match(res_uuid):
+                # verify that the router exist
+                if parent_uuid and not parent_uuid in self._fake_lrouter_dict:
+                    raise Exception(_("lrouter:%s not found" % parent_uuid))
+                if (not parent_uuid or
+                    res_dict[res_uuid].get('lr_uuid') == parent_uuid):
+                    return True
+                return False
+
+            def _build_item(resource):
+                item = json.loads(response_template % resource)
+                if relations:
+                    for relation in relations:
+                        self._build_relation(resource, item,
+                                             resource_type, relation)
+                return item
+
             for item in res_dict.itervalues():
                 if 'tags' in item:
                     item['tags_json'] = json.dumps(item['tags'])
-            items = [json.loads(response_template % res_dict[res_uuid])
+            if resource_type in (self.LSWITCH_LPORT_RESOURCE,
+                                 self.LSWITCH_LPORT_ATT,
+                                 self.LSWITCH_LPORT_STATUS):
+                parent_func = _lswitch_match
+            elif resource_type in (self.LROUTER_LPORT_RESOURCE,
+                                   self.LROUTER_LPORT_ATT,
+                                   self.LROUTER_NAT_RESOURCE,
+                                   self.LROUTER_LPORT_STATUS):
+                parent_func = _lrouter_match
+            else:
+                parent_func = lambda x: True
+
+            items = [_build_item(res_dict[res_uuid])
                      for res_uuid in res_dict
-                     if (_lswitch_match(res_uuid) and
+                     if (parent_func(res_uuid) and
                          _tag_match(res_uuid) and
                          _attr_match(res_uuid))]
 
@@ -175,8 +350,8 @@ class FakeClient:
                                'result_count': len(items)})
 
     def _show(self, resource_type, response_file,
-              switch_uuid, port_uuid=None):
-        target_uuid = port_uuid or switch_uuid
+              uuid1, uuid2=None, relations=None):
+        target_uuid = uuid2 or uuid1
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
@@ -194,32 +369,33 @@ class FakeClient:
     def handle_get(self, url):
         #TODO(salvatore-orlando): handle field selection
         parsedurl = urlparse.urlparse(url)
-        (res_type, s_uuid, p_uuid, sec_uuid) = self._get_resource_type(
-            parsedurl.path)
+        (res_type, uuids) = self._get_resource_type(parsedurl.path)
+        relations = urlparse.parse_qs(parsedurl.query).get('relations')
         response_file = self.FAKE_GET_RESPONSES.get(res_type)
         if not response_file:
             raise Exception("resource not found")
-        if res_type == 'lport':
-            if p_uuid:
-                return self._show(res_type, response_file, s_uuid, p_uuid)
+        if 'lport' in res_type or 'nat' in res_type:
+            if len(uuids) > 1:
+                return self._show(res_type, response_file, uuids[0],
+                                  uuids[1], relations=relations)
             else:
-                return self._list(res_type, response_file, s_uuid,
-                                  query=parsedurl.query)
-        elif res_type == 'lportstatus':
-            return self._show(res_type, response_file, s_uuid, p_uuid)
-        elif res_type == 'lswitch':
-            if s_uuid:
-                return self._show(res_type, response_file, s_uuid)
+                return self._list(res_type, response_file, uuids[0],
+                                  query=parsedurl.query, relations=relations)
+        elif ('lswitch' in res_type or 'lrouter' in res_type
+              or self.SECPROF_RESOURCE in res_type):
+            if len(uuids) > 0:
+                return self._show(res_type, response_file, uuids[0],
+                                  relations=relations)
             else:
                 return self._list(res_type, response_file,
-                                  query=parsedurl.query)
+                                  query=parsedurl.query,
+                                  relations=relations)
         else:
             raise Exception("unknown resource:%s" % res_type)
 
     def handle_post(self, url, body):
         parsedurl = urlparse.urlparse(url)
-        (res_type, s_uuid, _p, sec_uuid) = self._get_resource_type(
-            parsedurl.path)
+        (res_type, uuids) = self._get_resource_type(parsedurl.path)
         response_file = self.FAKE_POST_RESPONSES.get(res_type)
         if not response_file:
             raise Exception("resource not found")
@@ -227,37 +403,76 @@ class FakeClient:
             response_template = f.read()
             add_resource = getattr(self, '_add_%s' % res_type)
             args = [body]
-            if s_uuid:
-                args.append(s_uuid)
+            if len(uuids):
+                args.append(uuids[0])
             response = response_template % add_resource(*args)
             return response
 
     def handle_put(self, url, body):
         parsedurl = urlparse.urlparse(url)
-        (res_type, s_uuid, p_uuid, sec_uuid) = self._get_resource_type(
-            parsedurl.path)
-        target_uuid = p_uuid or s_uuid or sec_uuid
+        (res_type, uuids) = self._get_resource_type(parsedurl.path)
         response_file = self.FAKE_PUT_RESPONSES.get(res_type)
         if not response_file:
             raise Exception("resource not found")
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
+            # Manage attachment operations
+            is_attachment = False
+            if res_type.endswith('attachment'):
+                is_attachment = True
+                res_type = res_type[:res_type.index('attachment')]
             res_dict = getattr(self, '_fake_%s_dict' % res_type)
-            resource = res_dict[target_uuid]
-            resource.update(json.loads(body))
-            response = response_template % resource
+            resource = res_dict[uuids[-1]]
+            if not is_attachment:
+                resource.update(json.loads(body))
+            else:
+                relations = resource.get("_relations")
+                if not relations:
+                    relations = {}
+                relations['LogicalPortAttachment'] = json.loads(body)
+                resource['_relations'] = relations
+                body_2 = json.loads(body)
+                if body_2['type'] == "PatchAttachment":
+                    # We need to do a trick here
+                    if self.LROUTER_RESOURCE in res_type:
+                        res_type_2 = res_type.replace(self.LROUTER_RESOURCE,
+                                                      self.LSWITCH_RESOURCE)
+                    elif self.LSWITCH_RESOURCE in res_type:
+                        res_type_2 = res_type.replace(self.LSWITCH_RESOURCE,
+                                                      self.LROUTER_RESOURCE)
+                    res_dict_2 = getattr(self, '_fake_%s_dict' % res_type_2)
+                    body_2['peer_port_uuid'] = uuids[-1]
+                    resource_2 = res_dict_2[json.loads(body)['peer_port_uuid']]
+                    relations_2 = resource_2.get("_relations")
+                    if not relations_2:
+                        relations_2 = {}
+                    relations_2['LogicalPortAttachment'] = body_2
+                    resource_2['_relations'] = relations_2
+                elif body_2['type'] == "L3GatewayAttachment":
+                    resource['attachment_gwsvc_uuid'] = (
+                        body_2['l3_gateway_service_uuid'])
+            if not is_attachment:
+                response = response_template % resource
+            else:
+                if res_type == self.LROUTER_LPORT_RESOURCE:
+                    lr_uuid = uuids[0]
+                    ls_uuid = None
+                elif res_type == self.LSWITCH_LPORT_RESOURCE:
+                    ls_uuid = uuids[0]
+                    lr_uuid = None
+                lp_uuid = uuids[1]
+                response = response_template % self._fill_attachment(
+                    json.loads(body), ls_uuid, lr_uuid, lp_uuid)
             return response
 
     def handle_delete(self, url):
         parsedurl = urlparse.urlparse(url)
-        (res_type, s_uuid, p_uuid, sec_uuid) = self._get_resource_type(
-            parsedurl.path)
-        target_uuid = p_uuid or s_uuid or sec_uuid
+        (res_type, uuids) = self._get_resource_type(parsedurl.path)
         response_file = self.FAKE_PUT_RESPONSES.get(res_type)
         if not response_file:
             raise Exception("resource not found")
         res_dict = getattr(self, '_fake_%s_dict' % res_type)
-        del res_dict[target_uuid]
+        del res_dict[uuids[-1]]
         return ""
 
     def fake_request(self, *args, **kwargs):
@@ -267,5 +482,8 @@ class FakeClient:
 
     def reset_all(self):
         self._fake_lswitch_dict.clear()
-        self._fake_lport_dict.clear()
-        self._fake_lportstatus_dict.clear()
+        self._fake_lrouter_dict.clear()
+        self._fake_lswitch_lport_dict.clear()
+        self._fake_lrouter_lport_dict.clear()
+        self._fake_lswitch_lportstatus_dict.clear()
+        self._fake_lrouter_lportstatus_dict.clear()

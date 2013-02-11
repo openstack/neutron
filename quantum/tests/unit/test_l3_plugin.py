@@ -324,12 +324,17 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         super(L3NatDBTestCase, self).tearDown()
 
     def _create_router(self, fmt, tenant_id, name=None,
-                       admin_state_up=None, set_context=False):
+                       admin_state_up=None, set_context=False,
+                       arg_list=None, **kwargs):
         data = {'router': {'tenant_id': tenant_id}}
         if name:
             data['router']['name'] = name
         if admin_state_up:
             data['router']['admin_state_up'] = admin_state_up
+        for arg in (('admin_state_up', 'tenant_id') + (arg_list or ())):
+            # Arg must be present and not empty
+            if arg in kwargs and kwargs[arg]:
+                data['router'][arg] = kwargs[arg]
         router_req = self.new_create_request('routers', data, fmt)
         if set_context and tenant_id:
             # create a specific auth context for this request
@@ -1080,7 +1085,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         self._show('floatingips', fip['floatingip']['id'],
                    expected_code=exc.HTTPNotFound.code)
 
-    def test_floatingip_with_assoc_fails(self):
+    def _test_floatingip_with_assoc_fails(self, plugin_class):
         with self.subnet(cidr='200.0.0.1/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
@@ -1093,9 +1098,8 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     self._router_interface_action('add', r['router']['id'],
                                                   private_sub['subnet']['id'],
                                                   None)
-                    PLUGIN_CLASS = 'quantum.db.l3_db.L3_NAT_db_mixin'
-                    METHOD = PLUGIN_CLASS + '._update_fip_assoc'
-                    with mock.patch(METHOD) as pl:
+                    method = plugin_class + '._update_fip_assoc'
+                    with mock.patch(method) as pl:
                         pl.side_effect = q_exc.BadRequest(
                             resource='floatingip',
                             msg='fake_error')
@@ -1116,6 +1120,10 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                   r['router']['id'],
                                                   private_sub['subnet']['id'],
                                                   None)
+
+    def test_floatingip_with_assoc_fails(self):
+        self._test_floatingip_with_assoc_fails(
+            'quantum.db.l3_db.L3_NAT_db_mixin')
 
     def test_floatingip_update(self):
         with self.port() as p:

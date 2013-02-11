@@ -1,0 +1,10 @@
+{
+  "display_name": "%(display_name)s",
+  "_href": "/ws.v1/lrouter/%(lr_uuid)s/lport/%(uuid)s",
+  "_schema": "/ws.v1/schema/LogicalRouterPortConfig",
+  "mac_address": "00:00:00:00:00:00",
+  "admin_status_enabled": true,
+  "ip_addresses": %(ip_addresses_json)s,
+  "type": "LogicalRouterPortConfig",
+  "uuid": "%(uuid)s"
+}
