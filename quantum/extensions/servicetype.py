@@ -188,9 +188,12 @@ class Servicetype(extensions.ExtensionDescriptor):
                       key in RESOURCE_ATTRIBUTE_MAP.keys()]
         my_plurals.append(('service_definitions', 'service_definition'))
         attributes.PLURALS.update(dict(my_plurals))
+        attr_map = RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME]
         controller = base.create_resource(
             COLLECTION_NAME,
             RESOURCE_NAME,
             servicetype_db.ServiceTypeManager.get_instance(),
-            RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME])
-        return [extensions.ResourceExtension(COLLECTION_NAME, controller)]
+            attr_map)
+        return [extensions.ResourceExtension(COLLECTION_NAME,
+                                             controller,
+                                             attr_map=attr_map)]

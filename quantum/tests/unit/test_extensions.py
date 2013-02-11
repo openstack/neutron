@@ -277,6 +277,29 @@ class ResourceExtensionTest(unittest.TestCase):
         self.assertEqual(200, response.status_int)
         self.assertEqual(jsonutils.loads(response.body)['collection'], "value")
 
+    def test_resource_extension_with_custom_member_action_and_attr_map(self):
+        controller = self.ResourceExtensionController()
+        member = {'custom_member_action': "GET"}
+        params = {
+            'tweedles': {
+                'id': {'allow_post': False, 'allow_put': False,
+                       'validate': {'type:uuid': None},
+                       'is_visible': True},
+                'name': {'allow_post': True, 'allow_put': True,
+                         'validate': {'type:string': None},
+                         'default': '', 'is_visible': True},
+            }
+        }
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               member_actions=member,
+                                               attr_map=params)
+        test_app = _setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        response = test_app.get("/tweedles/some_id/custom_member_action")
+        self.assertEqual(200, response.status_int)
+        self.assertEqual(jsonutils.loads(response.body)['member_action'],
+                         "value")
+
     def test_returns_404_for_non_existent_extension(self):
         test_app = _setup_extensions_test_app(SimpleExtensionManager(None))
 
