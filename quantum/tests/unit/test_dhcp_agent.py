@@ -136,7 +136,7 @@ class TestDhcpAgent(unittest.TestCase):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             mock_net = mock.Mock(id='foo')
             dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
-            self.assertTrue(dhcp._ns_name(mock_net), 'qdhcp-foo')
+            self.assertEqual(dhcp._ns_name(mock_net), 'qdhcp-foo')
 
     def test_ns_name_disabled_namespace(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
