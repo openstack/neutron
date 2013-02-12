@@ -1097,14 +1097,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    self.port_security_enabled_create)
         port_data = port['port']
         with context.session.begin(subtransactions=True):
-            # Set admin_state_up False since not created in NVP set
-            # TODO(salvatore-orlando) : verify whether subtransactions can help
-            # us avoiding multiple operations on the db. This might also allow
-            # us to use the same identifier for the NVP and the Quantum port
-            # Set admin_state_up False since not created in NVP yet
-            requested_admin_state = port["port"]["admin_state_up"]
-            port["port"]["admin_state_up"] = False
-
             # First we allocate port in quantum database
             quantum_db = super(NvpPluginV2, self).create_port(context, port)
             # If we have just created a dhcp port, and metadata request are
@@ -1137,26 +1129,17 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # Fetch the network and network binding from Quantum db
             try:
                 port_data = port['port'].copy()
-                port_data['admin_state_up'] = requested_admin_state
                 port_create_func = self._port_drivers['create'].get(
                     port_data['device_owner'],
                     self._port_drivers['create']['default'])
 
                 port_create_func(context, port_data)
             except Exception as e:
-                # failed to create port in NVP -  Delete port from quantum_db
                 # FIXME (arosen) or the plugin_interface call failed in which
                 # case we need to garbage collect the left over port in nvp.
-                err_msg = _("An exception occured while plugging the "
-                            "interface in NVP for port %s") % port_data['id']
+                err_msg = _("Unable to create port or set port attachment "
+                            "in NVP.")
                 LOG.exception(err_msg)
-                try:
-                    super(NvpPluginV2, self).delete_port(context,
-                                                         port['port']['id'])
-                except q_exc.PortNotFound:
-                    LOG.warning(_("The delete port operation failed for %s. "
-                                  "This means the port was already deleted"),
-                                port['port']['id'])
                 raise e
 
             LOG.debug(_("create_port completed on NVP for tenant "
