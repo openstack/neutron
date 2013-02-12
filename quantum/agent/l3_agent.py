@@ -165,16 +165,23 @@ class L3NATAgent(manager.Manager):
         self.fullsync = True
         self.sync_sem = semaphore.Semaphore(1)
         if self.conf.use_namespaces:
-            self._destroy_all_router_namespaces()
+            self._destroy_router_namespaces(self.conf.router_id)
         super(L3NATAgent, self).__init__(host=self.conf.host)
 
-    def _destroy_all_router_namespaces(self):
-        """Destroy all router namespaces on the host to eliminate
-        all stale linux devices, iptables rules, and namespaces.
+    def _destroy_router_namespaces(self, only_router_id=None):
+        """Destroy router namespaces on the host to eliminate all stale
+        linux devices, iptables rules, and namespaces.
+
+        If only_router_id is passed, only destroy single namespace, to allow
+        for multiple l3 agents on the same host, without stepping on each
+        other's toes on init.  This only makes sense if router_id is set.
         """
         root_ip = ip_lib.IPWrapper(self.root_helper)
         for ns in root_ip.get_namespaces(self.root_helper):
             if ns.startswith(NS_PREFIX):
+                if only_router_id and not ns.endswith(only_router_id):
+                    continue
+
                 try:
                     self._destroy_router_namespace(ns)
                 except:
