@@ -2540,6 +2540,18 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int, 400)
 
+    def test_update_subnet_gateway_in_allocation_pool_returns_409(self):
+        allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
+        with self.network() as network:
+            with self.subnet(network=network,
+                             allocation_pools=allocation_pools,
+                             cidr='10.0.0.0/24') as subnet:
+                data = {'subnet': {'gateway_ip': '10.0.0.50'}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEquals(res.status_int, 409)
+
     def test_show_subnet(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:
