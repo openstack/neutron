@@ -672,12 +672,26 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                            expect_errors=True)
         self.assertEqual(res.status_int, 400)
 
+    def test_invalid_attribute_field(self):
+        data = {'network': {'invalid_key1': "foo1", 'invalid_key2': "foo2"}}
+        res = self.api.put(_get_path('networks', id=_uuid()),
+                           self.serialize(data),
+                           content_type='application/' + self.fmt,
+                           expect_errors=True)
+        self.assertEqual(res.status_int, 400)
+
 
 class SubresourceTest(unittest.TestCase):
     def setUp(self):
         plugin = 'quantum.tests.unit.test_api_v2.TestSubresourcePlugin'
         QuantumManager._instance = None
         PluginAwareExtensionManager._instance = None
+
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
+
         args = ['--config-file', etcdir('quantum.conf.test')]
         config.parse(args=args)
         cfg.CONF.set_override('core_plugin', plugin)
@@ -690,7 +704,15 @@ class SubresourceTest(unittest.TestCase):
             'parent': {'collection_name': 'networks',
                        'member_name': 'network'}
         }
-
+        attributes.RESOURCE_ATTRIBUTE_MAP['dummies'] = {
+            'foo': {'allow_post': True, 'allow_put': True,
+                    'validate': {'type:string': None},
+                    'default': '', 'is_visible': True},
+            'tenant_id': {'allow_post': True, 'allow_put': False,
+                          'validate': {'type:string': None},
+                          'required_by_policy': True,
+                          'is_visible': True}
+        }
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
 
@@ -699,6 +721,8 @@ class SubresourceTest(unittest.TestCase):
         self.api = None
         self.plugin = None
         cfg.CONF.reset()
+        # Restore the global RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_index_sub_resource(self):
         instance = self.plugin.return_value
@@ -732,7 +756,7 @@ class SubresourceTest(unittest.TestCase):
         instance = self.plugin.return_value
 
         dummy_id = _uuid()
-        body = {'dummy': {'foo': 'bar', 'tenant_id': _uuid()}}
+        body = {'dummy': {'foo': 'bar'}}
         self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
                           body)
         instance.update_network_dummy.assert_called_once_with(mock.ANY,

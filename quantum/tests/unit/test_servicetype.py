@@ -146,8 +146,8 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
         tenant_id = 'fake'
         if env and 'quantum.context' in env:
             tenant_id = env['quantum.context'].tenant_id
-        data = {self.resource_name: {'name': svc_type_name,
-                                     'tenant-id': tenant_id}}
+        data = {self.resource_name: {'name': svc_type_name}}
+
         svc_type_id = _uuid()
         return_value = {'id': svc_type_id,
                         'name': svc_type_name}
