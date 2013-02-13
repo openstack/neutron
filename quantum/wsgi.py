@@ -359,17 +359,6 @@ class XMLDictSerializer(DictSerializer):
             result.text = str(data)
         return result
 
-    def _create_link_nodes(self, xml_doc, links):
-        link_nodes = []
-        for link in links:
-            link_node = xml_doc.createElement('atom:link')
-            link_node.set('rel', link['rel'])
-            link_node.set('href', link['href'])
-            if 'type' in link:
-                link_node.set('type', link['type'])
-            link_nodes.append(link_node)
-        return link_nodes
-
 
 class ResponseHeaderSerializer(ActionDispatcher):
     """Default response headers serialization"""
@@ -548,27 +537,6 @@ class XMLDeserializer(TextDeserializer):
                 result[self._get_key(child.tag)] = self._from_xml_node(
                     child, listnames)
             return result
-
-    def find_first_child_named(self, parent, name):
-        """Search a nodes children for the first child with a given name"""
-        for node in parent.childNodes:
-            if node.nodeName == name:
-                return node
-        return None
-
-    def find_children_named(self, parent, name):
-        """Return all of a nodes children who have the given name"""
-        for node in parent.childNodes:
-            if node.nodeName == name:
-                yield node
-
-    def extract_text(self, node):
-        """Get the text field contained by the given node"""
-        if len(node.childNodes) == 1:
-            child = node.childNodes[0]
-            if child.nodeType == child.TEXT_NODE:
-                return child.nodeValue
-        return ""
 
     def default(self, datastring):
         return {'body': self._from_xml(datastring)}
