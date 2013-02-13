@@ -19,7 +19,6 @@ import unittest
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
 
@@ -62,9 +61,6 @@ class TestCiscoNexusPlugin(unittest.TestCase):
         }
         self._hostname = HOSTNAME
 
-        def new_cdb_init():
-            db.configure_db()
-
         def new_nexus_init(self):
             self._client = importutils.import_object(NEXUS_DRIVER)
             self._nexus_ip = NEXUS_IP_ADDRESS
@@ -78,13 +74,12 @@ class TestCiscoNexusPlugin(unittest.TestCase):
                     'password': self._nexus_password
                 }
             }
+            db.configure_db()
 
-        with mock.patch.object(cdb, 'initialize', new=new_cdb_init):
-            cdb.initialize()
-            with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
-                                   '__init__', new=new_nexus_init):
-                self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
-                self._cisco_nexus_plugin._nexus_switches = self._nexus_switches
+        with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
+                               '__init__', new=new_nexus_init):
+            self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
+            self._cisco_nexus_plugin._nexus_switches = self._nexus_switches
 
     def test_a_create_network(self):
         """

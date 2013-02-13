@@ -36,10 +36,11 @@ from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+SQL_CONNECTION_DEFAULT = 'sqlite://'
 
 
 database_opts = [
-    cfg.StrOpt('sql_connection', default='sqlite://',
+    cfg.StrOpt('sql_connection',
                help=_('The SQLAlchemy connection string used to connect to '
                       'the database')),
     cfg.IntOpt('sql_max_retries', default=-1,
@@ -111,6 +112,11 @@ def configure_db():
     global _ENGINE
     if not _ENGINE:
         sql_connection = cfg.CONF.DATABASE.sql_connection
+        if not sql_connection:
+            LOG.warn(_("Option 'sql_connection' not specified "
+                       "in any config file - using default "
+                       "value '%s'" % SQL_CONNECTION_DEFAULT))
+            sql_connection = SQL_CONNECTION_DEFAULT
         connection_dict = sql.engine.url.make_url(sql_connection)
         engine_args = {
             'pool_recycle': 3600,

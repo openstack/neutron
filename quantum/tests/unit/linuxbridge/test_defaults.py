@@ -23,8 +23,6 @@ from quantum.plugins.linuxbridge.common import config
 class ConfigurationTest(unittest.TestCase):
 
     def test_defaults(self):
-        self.assertEqual('sqlite://',
-                         cfg.CONF.DATABASE.sql_connection)
         self.assertEqual(-1,
                          cfg.CONF.DATABASE.sql_max_retries)
         self.assertEqual(2,
