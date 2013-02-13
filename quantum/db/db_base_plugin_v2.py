@@ -688,8 +688,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         """
         new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
-        subnet_list = network.subnets
-        if not cfg.CONF.allow_overlapping_ips:
+        if cfg.CONF.allow_overlapping_ips:
+            subnet_list = network.subnets
+        else:
             subnet_list = self._get_all_subnets(context)
         for subnet in subnet_list:
             if (netaddr.IPSet([subnet.cidr]) & new_subnet_ipset):
