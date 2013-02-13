@@ -35,6 +35,7 @@ class OpenvswitchSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self, plugin=None):
+        test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
         self.addCleanup(mock.patch.stopall)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()

@@ -16,6 +16,7 @@
 from quantum.extensions import portbindings
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
+from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
 class OpenvswitchPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
@@ -39,11 +40,7 @@ class TestOpenvswitchV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 
 class TestOpenvswitchPortsV2(test_plugin.TestPortsV2,
-                             OpenvswitchPluginV2TestCase,
-                             test_bindings.PortBindingsTestCase):
-
-    VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = True
+                             OpenvswitchPluginV2TestCase):
 
     def test_update_port_status_build(self):
         with self.port() as port:
@@ -54,3 +51,19 @@ class TestOpenvswitchPortsV2(test_plugin.TestPortsV2,
 class TestOpenvswitchNetworksV2(test_plugin.TestNetworksV2,
                                 OpenvswitchPluginV2TestCase):
     pass
+
+
+class TestOpenvswitchPortBinding(OpenvswitchPluginV2TestCase,
+                                 test_bindings.PortBindingsTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = True
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
+
+    def setUp(self, firewall_driver=None):
+        test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        super(TestOpenvswitchPortBinding, self).setUp()
+
+
+class TestOpenvswitchPortBindingNoSG(TestOpenvswitchPortBinding):
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER

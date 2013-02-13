@@ -16,6 +16,7 @@
 from quantum.extensions import portbindings
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
+from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
 PLUGIN_NAME = 'quantum.plugins.nec.nec_plugin.NECPluginV2'
@@ -38,8 +39,7 @@ class TestNecV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
-class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase,
-                     test_bindings.PortBindingsTestCase):
+class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
@@ -47,3 +47,19 @@ class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase,
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):
     pass
+
+
+class TestNecPortBinding(test_bindings.PortBindingsTestCase,
+                         NecPluginV2TestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = True
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
+
+    def setUp(self):
+        test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        super(TestNecPortBinding, self).setUp()
+
+
+class TestNecPortBindingNoSG(TestNecPortBinding):
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER

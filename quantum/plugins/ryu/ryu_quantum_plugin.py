@@ -89,7 +89,15 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin):
 
-    supported_extension_aliases = ["router", "extraroute", "security-group"]
+    _supported_extension_aliases = ["router", "extraroute", "security-group"]
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            self._aliases = aliases
+        return self._aliases
 
     def __init__(self, configfile=None):
         db.configure_db()

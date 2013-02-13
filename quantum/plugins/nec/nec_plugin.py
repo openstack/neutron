@@ -79,11 +79,18 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     The port binding extension enables an external application relay
     information to and from the plugin.
     """
+    _supported_extension_aliases = ["router", "quotas", "binding",
+                                    "security-group", "extraroute",
+                                    "agent", "agent_scheduler",
+                                    ]
 
-    supported_extension_aliases = ["router", "quotas", "binding",
-                                   "security-group", "extraroute",
-                                   "agent", "agent_scheduler",
-                                   ]
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            self._aliases = aliases
+        return self._aliases
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"

@@ -971,10 +971,19 @@ IPTABLES_FILTER_V6_EMPTY = """:%(bn)s-(%(chains)s) - [0:0]
 """ % IPTABLES_ARG
 
 FIREWALL_BASE_PACKAGE = 'quantum.agent.linux.iptables_firewall.'
+FIREWALL_IPTABLES_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
+FIREWALL_HYBRID_DRIVER = (FIREWALL_BASE_PACKAGE +
+                          'OVSHybridIptablesFirewallDriver')
+FIREWALL_NOOP_DRIVER = 'quantum.agent.firewall.NoopFirewallDriver'
+
+
+def set_firewall_driver(firewall_driver):
+    cfg.CONF.set_override('firewall_driver', firewall_driver,
+                          group='SECURITYGROUP')
 
 
 class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
-    FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
+    FIREWALL_DRIVER = FIREWALL_IPTABLES_DRIVER
     PHYSDEV_INGRESS = 'physdev-out'
     PHYSDEV_EGRESS = 'physdev-in'
 
@@ -1200,7 +1209,7 @@ class SGNotificationTestMixin():
 class TestSecurityGroupAgentWithOVSIptables(
         TestSecurityGroupAgentWithIptables):
 
-    FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'OVSHybridIptablesFirewallDriver'
+    FIREWALL_DRIVER = FIREWALL_HYBRID_DRIVER
 
     def _regex(self, value):
         #Note(nati): tap is prefixed on the device
@@ -1212,3 +1221,27 @@ class TestSecurityGroupAgentWithOVSIptables(
         return super(
             TestSecurityGroupAgentWithOVSIptables,
             self)._regex(value)
+
+
+class TestSecurityGroupExtensionControl(base.BaseTestCase):
+    def test_firewall_enabled_noop_driver(self):
+        set_firewall_driver(FIREWALL_NOOP_DRIVER)
+        self.assertFalse(sg_rpc.is_firewall_enabled())
+
+    def test_firewall_enabled_iptables_driver(self):
+        set_firewall_driver(FIREWALL_IPTABLES_DRIVER)
+        self.assertTrue(sg_rpc.is_firewall_enabled())
+
+    def test_disable_security_group_extension_noop_driver(self):
+        set_firewall_driver(FIREWALL_NOOP_DRIVER)
+        exp_aliases = ['dummy1', 'dummy2']
+        ext_aliases = ['dummy1', 'security-group', 'dummy2']
+        sg_rpc.disable_security_group_extension_if_noop_driver(ext_aliases)
+        self.assertEqual(ext_aliases, exp_aliases)
+
+    def test_disable_security_group_extension_iptables_driver(self):
+        set_firewall_driver(FIREWALL_IPTABLES_DRIVER)
+        exp_aliases = ['dummy1', 'security-group', 'dummy2']
+        ext_aliases = ['dummy1', 'security-group', 'dummy2']
+        sg_rpc.disable_security_group_extension_if_noop_driver(ext_aliases)
+        self.assertEqual(ext_aliases, exp_aliases)

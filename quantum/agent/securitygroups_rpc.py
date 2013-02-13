@@ -33,6 +33,18 @@ security_group_opts = [
 cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 
 
+def is_firewall_enabled():
+    return (cfg.CONF.SECURITYGROUP.firewall_driver !=
+            'quantum.agent.firewall.NoopFirewallDriver')
+
+
+def disable_security_group_extension_if_noop_driver(
+    supported_extension_aliases):
+    if not is_firewall_enabled():
+        LOG.debug(_('Disabled security-group extension.'))
+        supported_extension_aliases.remove('security-group')
+
+
 class SecurityGroupServerRpcApiMixin(object):
     """A mix-in that enable SecurityGroup support in plugin rpc
     """

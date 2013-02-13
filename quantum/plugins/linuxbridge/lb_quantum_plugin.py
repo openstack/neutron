@@ -202,9 +202,17 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["provider", "router", "binding", "quotas",
-                                   "security-group", "agent", "extraroute",
-                                   "agent_scheduler"]
+    _supported_extension_aliases = ["provider", "router", "binding", "quotas",
+                                    "security-group", "agent", "extraroute",
+                                    "agent_scheduler"]
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            self._aliases = aliases
+        return self._aliases
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
