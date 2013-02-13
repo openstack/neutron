@@ -49,5 +49,9 @@
     "create_service_type": "rule:admin_only",
     "update_service_type": "rule:admin_only",
     "delete_service_type": "rule:admin_only",
-    "get_service_type": "rule:regular_user"
+    "get_service_type": "rule:regular_user",
+
+    "create_qos_queue:": "rule:admin_only",
+    "get_qos_queue:": "rule:admin_only",
+    "get_qos_queues:": "rule:admin_only"
 }

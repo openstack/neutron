@@ -26,8 +26,11 @@ from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
 from quantum.openstack.common import cfg
+from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
+                                                                 as ext_qos)
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
+from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_db_plugin as test_plugin
 import quantum.tests.unit.test_extension_portsecurity as psec
 import quantum.tests.unit.test_extension_security_group as ext_sg
@@ -35,6 +38,7 @@ import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
 LOG = logging.getLogger(__name__)
 NICIRA_PKG_PATH = 'quantum.plugins.nicira.nicira_nvp_plugin'
+NICIRA_EXT_PATH = "../../plugins/nicira/nicira_nvp_plugin/extensions"
 
 
 class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
@@ -149,11 +153,11 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
     def _test_create_bridge_network(self, vlan_id=None):
         net_type = vlan_id and 'vlan' or 'flat'
         name = 'bridge_net'
-        keys = [('subnets', []), ('name', name), ('admin_state_up', True),
-                ('status', 'ACTIVE'), ('shared', False),
-                (pnet.NETWORK_TYPE, net_type),
-                (pnet.PHYSICAL_NETWORK, 'tzuuid'),
-                (pnet.SEGMENTATION_ID, vlan_id)]
+        expected = [('subnets', []), ('name', name), ('admin_state_up', True),
+                    ('status', 'ACTIVE'), ('shared', False),
+                    (pnet.NETWORK_TYPE, net_type),
+                    (pnet.PHYSICAL_NETWORK, 'tzuuid'),
+                    (pnet.SEGMENTATION_ID, vlan_id)]
         providernet_args = {pnet.NETWORK_TYPE: net_type,
                             pnet.PHYSICAL_NETWORK: 'tzuuid'}
         if vlan_id:
@@ -163,8 +167,8 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                           arg_list=(pnet.NETWORK_TYPE,
                                     pnet.PHYSICAL_NETWORK,
                                     pnet.SEGMENTATION_ID)) as net:
-            for k, v in keys:
-                self.assertEquals(net['network'][k], v)
+            for k, v in expected:
+                self.assertEqual(net['network'][k], v)
 
     def test_create_bridge_network(self):
         self._test_create_bridge_network()
@@ -175,7 +179,7 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
     def test_create_bridge_vlan_network_outofrange_returns_400(self):
         with self.assertRaises(webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_bridge_network(vlan_id=5000)
-        self.assertEquals(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_list_networks_filter_by_id(self):
         # We add this unit test to cover some logic specific to the
@@ -259,3 +263,230 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
             self._test_floatingip_with_assoc_fails(
                 'quantum.plugins.nicira.nicira_nvp_plugin.'
                 'QuantumPlugin.NvpPluginV2')
+
+
+class NvpQoSTestExtensionManager(object):
+
+    def get_resources(self):
+        return ext_qos.Nvp_qos.get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
+class TestNiciraQoSQueue(NiciraPluginV2TestCase):
+
+    def setUp(self, plugin=None):
+        ext_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                NICIRA_EXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', ext_path)
+        super(TestNiciraQoSQueue, self).setUp()
+        ext_mgr = NvpQoSTestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+
+    def _create_qos_queue(self, fmt, body, **kwargs):
+        qos_queue = self.new_create_request('qos-queues', body)
+        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
+            # create a specific auth context for this request
+            qos_queue.environ['quantum.context'] = context.Context(
+                '', kwargs['tenant_id'])
+
+        return qos_queue.get_response(self.ext_api)
+
+    @contextlib.contextmanager
+    def qos_queue(self, name='foo', min='0', max='10',
+                  qos_marking=None, dscp='0', default=None, no_delete=False):
+
+        body = {'qos_queue': {'tenant_id': 'tenant',
+                              'name': name,
+                              'min': min,
+                              'max': max}}
+
+        if qos_marking:
+            body['qos_queue']['qos_marking'] = qos_marking
+        if dscp:
+            body['qos_queue']['dscp'] = dscp
+        if default:
+            body['qos_queue']['default'] = default
+
+        res = self._create_qos_queue('json', body)
+        qos_queue = self.deserialize('json', res)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        try:
+            yield qos_queue
+        finally:
+            if not no_delete:
+                self._delete('qos-queues',
+                             qos_queue['qos_queue']['id'])
+
+    def test_create_qos_queue(self):
+        with self.qos_queue(name='fake_lqueue', min=34, max=44,
+                            qos_marking='untrusted', default=False) as q:
+            self.assertEqual(q['qos_queue']['name'], 'fake_lqueue')
+            self.assertEqual(q['qos_queue']['min'], 34)
+            self.assertEqual(q['qos_queue']['max'], 44)
+            self.assertEqual(q['qos_queue']['qos_marking'], 'untrusted')
+            self.assertFalse(q['qos_queue']['default'])
+
+    def test_create_qos_queue_default(self):
+        with self.qos_queue(default=True) as q:
+            self.assertTrue(q['qos_queue']['default'])
+
+    def test_create_qos_queue_two_default_queues_fail(self):
+        with self.qos_queue(default=True):
+            body = {'qos_queue': {'tenant_id': 'tenant',
+                                  'name': 'second_default_queue',
+                                  'default': True}}
+            res = self._create_qos_queue('json', body)
+            self.assertEqual(res.status_int, 409)
+
+    def test_create_port_with_queue(self):
+        with self.qos_queue(default=True) as q1:
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            self.assertEqual(net1['network'][ext_qos.QUEUE],
+                             q1['qos_queue']['id'])
+            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+            with self.port(device_id=device_id, do_delete=False) as p:
+                self.assertEqual(len(p['port'][ext_qos.QUEUE]), 36)
+
+    def test_create_shared_queue_networks(self):
+        with self.qos_queue(default=True, no_delete=True) as q1:
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            self.assertEqual(net1['network'][ext_qos.QUEUE],
+                             q1['qos_queue']['id'])
+            res = self._create_network('json', 'net2', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net2 = self.deserialize('json', res)
+            self.assertEqual(net1['network'][ext_qos.QUEUE],
+                             q1['qos_queue']['id'])
+            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+            res = self._create_port('json', net1['network']['id'],
+                                    device_id=device_id)
+            port1 = self.deserialize('json', res)
+            res = self._create_port('json', net2['network']['id'],
+                                    device_id=device_id)
+            port2 = self.deserialize('json', res)
+            self.assertEqual(port1['port'][ext_qos.QUEUE],
+                             port2['port'][ext_qos.QUEUE])
+
+            self._delete('ports', port1['port']['id'])
+            self._delete('ports', port2['port']['id'])
+
+    def test_remove_queue_in_use_fail(self):
+        with self.qos_queue(no_delete=True) as q1:
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+            res = self._create_port('json', net1['network']['id'],
+                                    device_id=device_id)
+            port = self.deserialize('json', res)
+            self._delete('qos-queues', port['port'][ext_qos.QUEUE], 409)
+
+    def test_update_network_new_queue(self):
+        with self.qos_queue() as q1:
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            with self.qos_queue() as new_q:
+                data = {'network': {ext_qos.QUEUE: new_q['qos_queue']['id']}}
+                req = self.new_update_request('networks', data,
+                                              net1['network']['id'])
+                res = req.get_response(self.api)
+                net1 = self.deserialize('json', res)
+                self.assertEqual(net1['network'][ext_qos.QUEUE],
+                                 new_q['qos_queue']['id'])
+
+    def test_update_port_adding_device_id(self):
+        with self.qos_queue(no_delete=True) as q1:
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+            res = self._create_port('json', net1['network']['id'])
+            port = self.deserialize('json', res)
+            self.assertEqual(port['port'][ext_qos.QUEUE], None)
+
+            data = {'port': {'device_id': device_id}}
+            req = self.new_update_request('ports', data,
+                                          port['port']['id'])
+
+            res = req.get_response(self.api)
+            port = self.deserialize('json', res)
+            self.assertEqual(len(port['port'][ext_qos.QUEUE]), 36)
+
+    def test_get_port_with_qos_not_admin(self):
+        body = {'qos_queue': {'tenant_id': 'not_admin',
+                              'name': 'foo', 'min': 20, 'max': 20}}
+        res = self._create_qos_queue('json', body, tenant_id='not_admin')
+        q1 = self.deserialize('json', res)
+        res = self._create_network('json', 'net1', True,
+                                   arg_list=(ext_qos.QUEUE, 'tenant_id',),
+                                   queue_id=q1['qos_queue']['id'],
+                                   tenant_id="not_admin")
+        net1 = self.deserialize('json', res)
+        self.assertEqual(len(net1['network'][ext_qos.QUEUE]), 36)
+        res = self._create_port('json', net1['network']['id'],
+                                tenant_id='not_admin', set_context=True)
+
+        port = self.deserialize('json', res)
+        self.assertEqual(ext_qos.QUEUE not in port['port'], True)
+
+    def test_non_admin_cannot_create_queue(self):
+        body = {'qos_queue': {'tenant_id': 'not_admin',
+                              'name': 'foo', 'min': 20, 'max': 20}}
+        res = self._create_qos_queue('json', body, tenant_id='not_admin',
+                                     set_context=True)
+        self.assertEqual(res.status_int, 403)
+
+    def test_update_port_non_admin_does_not_show_queue_id(self):
+        body = {'qos_queue': {'tenant_id': 'not_admin',
+                              'name': 'foo', 'min': 20, 'max': 20}}
+        res = self._create_qos_queue('json', body, tenant_id='not_admin')
+        q1 = self.deserialize('json', res)
+        res = self._create_network('json', 'net1', True,
+                                   arg_list=(ext_qos.QUEUE,),
+                                   tenant_id='not_admin',
+                                   queue_id=q1['qos_queue']['id'])
+
+        net1 = self.deserialize('json', res)
+        res = self._create_port('json', net1['network']['id'],
+                                tenant_id='not_admin', set_context=True)
+        port = self.deserialize('json', res)
+        device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+        data = {'port': {'device_id': device_id}}
+        quantum_context = context.Context('', 'not_admin')
+        port = self._update('ports', port['port']['id'], data,
+                            quantum_context=quantum_context)
+        self.assertEqual(ext_qos.QUEUE not in port['port'], True)
+
+    def test_rxtx_factor(self):
+        with self.qos_queue(max=10) as q1:
+
+            res = self._create_network('json', 'net1', True,
+                                       arg_list=(ext_qos.QUEUE,),
+                                       queue_id=q1['qos_queue']['id'])
+            net1 = self.deserialize('json', res)
+            res = self._create_port('json', net1['network']['id'],
+                                    arg_list=(ext_qos.RXTX_FACTOR,),
+                                    rxtx_factor=2, device_id='1')
+            port = self.deserialize('json', res)
+            req = self.new_show_request('qos-queues',
+                                        port['port'][ext_qos.QUEUE])
+            res = req.get_response(self.ext_api)
+            queue = self.deserialize('json', res)
+            self.assertEqual(queue['qos_queue']['max'], 20)

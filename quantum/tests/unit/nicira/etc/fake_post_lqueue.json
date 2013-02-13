@@ -1,0 +1,11 @@
+{
+   "display_name": "%(display_name)s",
+   "uuid": "%(uuid)s",
+   "type": "LogicalSwitchConfig",
+   "_schema": "/ws.v1/schema/LogicalQueueConfig",
+   "dscp": "%(dscp)s",
+   "max_bandwidth_rate": "%(max_bandwidth_rate)s",
+   "min_bandwidth_rate": "%(min_bandwidth_rate)s",
+   "qos_marking": "%(qos_marking)s",
+   "_href": "/ws.v1/lqueue/%(uuid)s"
+}
