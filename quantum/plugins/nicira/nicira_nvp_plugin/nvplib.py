@@ -1024,31 +1024,12 @@ def set_tenant_id_tag(tenant_id, taglist=None):
     return new_taglist
 
 
-def set_ext_security_profile_id_tag(external_id, taglist=None):
-    """Convenience function to add spid tag to taglist.
-
-    :param external_id: the security_profile id from nova
-    :param taglist: the taglist to append to (or None).
-    :returns: a new taglist that includes the old taglist with the new
-        spid tag set."""
-    new_taglist = []
-    if taglist:
-        new_taglist = [x for x in taglist if x['scope'] !=
-                       EXT_SECURITY_PROFILE_ID_SCOPE]
-    if external_id:
-        new_taglist.append(dict(scope=EXT_SECURITY_PROFILE_ID_SCOPE,
-                                tag=str(external_id)))
-    return new_taglist
-
-
 # -----------------------------------------------------------------------------
 # Security Group API Calls
 # -----------------------------------------------------------------------------
 def create_security_profile(cluster, tenant_id, security_profile):
     path = "/ws.v1/security-profile"
     tags = set_tenant_id_tag(tenant_id)
-    tags = set_ext_security_profile_id_tag(
-        security_profile.get('external_id'), tags)
     # Allow all dhcp responses in
     dhcp = {'logical_port_egress_rules': [{'ethertype': 'IPv4',
                                            'protocol': 17,

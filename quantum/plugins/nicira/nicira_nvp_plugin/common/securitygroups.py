@@ -63,8 +63,7 @@ class NVPSecurityGroups(object):
 
     def _get_security_group_rules_nvp_format(self, context, security_group_id,
                                              with_id=False):
-        """Query quantum db for security group rules. If external_id is
-        provided the external_id will also be returned.
+        """Query quantum db for security group rules.
         """
         fields = ['source_ip_prefix', 'source_group_id', 'protocol',
                   'port_range_min', 'port_range_max', 'protocol', 'ethertype']
