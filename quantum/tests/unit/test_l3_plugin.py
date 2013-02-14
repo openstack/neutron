@@ -588,7 +588,16 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 fip['floatingip']['router_id'], None,
                 expected_code=exc.HTTPConflict.code)
 
-    def test_router_add_interface_subnet(self):
+    def test_router_add_interface_subnet(self, exp_notifications=None):
+        if not exp_notifications:
+            exp_notifications = ['router.create.start',
+                                 'router.create.end',
+                                 'network.create.start',
+                                 'network.create.end',
+                                 'subnet.create.start',
+                                 'subnet.create.end',
+                                 'router.interface.create',
+                                 'router.interface.delete']
         with self.router() as r:
             with self.subnet() as s:
                 body = self._router_interface_action('add',
@@ -609,17 +618,9 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 body = self._show('ports', r_port_id,
                                   expected_code=exc.HTTPNotFound.code)
 
-                self.assertEqual(len(test_notifier.NOTIFICATIONS), 8)
                 self.assertEqual(
                     set(n['event_type'] for n in test_notifier.NOTIFICATIONS),
-                    set(['router.create.start',
-                         'router.create.end',
-                         'network.create.start',
-                         'network.create.end',
-                         'subnet.create.start',
-                         'subnet.create.end',
-                         'router.interface.create',
-                         'router.interface.delete']))
+                    set(exp_notifications))
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
         with mock.patch('quantum.context.Context.to_dict') as tdict:

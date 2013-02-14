@@ -47,6 +47,8 @@ from quantum.extensions import portsecurity as psec
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import rpc
+from quantum.plugins.nicira.nicira_nvp_plugin.common import (metadata_access
+                                                             as nvp_meta)
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (securitygroups
                                                              as nvp_sec)
 from quantum import policy
@@ -84,7 +86,11 @@ def parse_config():
         NVPCluster objects, 'plugin_config' is a dictionary with plugin
         parameters (currently only 'max_lp_per_bridged_ls').
     """
-    nvp_options = cfg.CONF.NVP
+    # Warn if metadata_dhcp_host_route option is specified
+    if cfg.CONF.metadata_dhcp_host_route:
+        LOG.warning(_("The metadata_dhcp_host_route is now obsolete, and "
+                      "will have no effect. Instead, please set the "
+                      "enable_isolated_metadata option in dhcp_agent.ini"))
     nvp_conf = config.ClusterConfigOptions(cfg.CONF)
     cluster_names = config.register_cluster_groups(nvp_conf)
     nvp_conf.log_opt_values(LOG, logging.DEBUG)
@@ -104,7 +110,7 @@ def parse_config():
              'default_l3_gw_service_uuid':
              nvp_conf[cluster_name].default_l3_gw_service_uuid})
     LOG.debug(_("Cluster options:%s"), clusters_options)
-    return nvp_options, clusters_options
+    return cfg.CONF.NVP, clusters_options
 
 
 class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -125,7 +131,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   l3_db.L3_NAT_db_mixin,
                   portsecurity_db.PortSecurityDbMixin,
                   securitygroups_db.SecurityGroupDbMixin,
-                  nvp_sec.NVPSecurityGroups, qos_db.NVPQoSDbMixin):
+                  nvp_sec.NVPSecurityGroups,
+                  qos_db.NVPQoSDbMixin,
+                  nvp_meta.NvpMetadataAccess):
     """
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
@@ -671,26 +679,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         "logical network %s"), network.id)
             raise nvp_exc.NvpNoMorePortsException(network=network.id)
 
-    def _ensure_metadata_host_route(self, context, fixed_ip_data,
-                                    is_delete=False):
-        subnet = self._get_subnet(context, fixed_ip_data['subnet_id'])
-        metadata_routes = [r for r in subnet.routes
-                           if r['destination'] == '169.254.169.254/32']
-        if metadata_routes:
-            # We should have only a single metadata route at any time
-            # because the route logic forbids two routes with the same
-            # destination. Update next hop with the provided IP address
-            if not is_delete:
-                metadata_routes[0].nexthop = fixed_ip_data['ip_address']
-            else:
-                context.session.delete(metadata_routes[0])
-        else:
-            # add the metadata route
-            route = models_v2.Route(subnet_id=subnet.id,
-                                    destination='169.254.169.254/32',
-                                    nexthop=fixed_ip_data['ip_address'])
-            context.session.add(route)
-
     def setup_rpc(self):
         # RPC support for dhcp
         self.topic = topics.PLUGIN
@@ -1100,16 +1088,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             # First we allocate port in quantum database
             quantum_db = super(NvpPluginV2, self).create_port(context, port)
-            # If we have just created a dhcp port, and metadata request are
-            # forwarded there, we need to verify the appropriate host route is
-            # in place
-            if (cfg.CONF.metadata_dhcp_host_route and
-                (quantum_db.get('device_owner') ==
-                 constants.DEVICE_OWNER_DHCP)):
-                if (quantum_db.get('fixed_ips') and
-                    len(quantum_db.get('fixed_ips'))):
-                    self._ensure_metadata_host_route(
-                        context, quantum_db.get('fixed_ips')[0])
             # Update fields obtained from quantum db (eg: MAC address)
             port["port"].update(quantum_db)
             # port security extension checks
@@ -1171,16 +1149,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, port)
             # copy values over
             ret_port.update(port['port'])
-
-            # TODO(salvatore-orlando): We might need transaction management
-            # but the change for metadata support should not be too disruptive
-            fixed_ip_data = port['port'].get('fixed_ips')
-            if (cfg.CONF.metadata_dhcp_host_route and
-                ret_port.get('device_owner') == constants.DEVICE_OWNER_DHCP
-                and fixed_ip_data):
-                    self._ensure_metadata_host_route(context,
-                                                     fixed_ip_data[0],
-                                                     is_delete=True)
 
             # populate port_security setting
             if psec.PORTSECURITY not in port['port']:
@@ -1526,6 +1494,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     order=NVP_EXTGW_NAT_RULES_ORDER,
                     match_criteria={'source_ip_addresses': subnet['cidr']})
 
+        # Ensure the NVP logical router has a connection to a 'metadata access'
+        # network (with a proxy listening on its DHCP port), by creating it
+        # if needed.
+        self._handle_metadata_access_network(context, router_id)
         LOG.debug(_("Add_router_interface completed for subnet:%(subnet_id)s "
                     "and router:%(router_id)s"),
                   {'subnet_id': subnet_id, 'router_id': router_id})
@@ -1585,6 +1557,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         {'q_port_id': port_id,
                          'nvp_port_id': lport['uuid']})
             return
+
+        # Ensure the connection to the 'metadata access network'
+        # is removed  (with the network) if this the last subnet
+        # on the router
+        self._handle_metadata_access_network(context, router_id)
         try:
             if not subnet:
                 subnet = self._get_subnet(context, subnet_id)
