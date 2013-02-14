@@ -45,6 +45,7 @@ init_path = 'etc/init.d'
 rootwrap_path = 'etc/quantum/rootwrap.d'
 ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
 bigswitch_plugin_config_path = 'etc/quantum/plugins/bigswitch'
+brocade_plugin_config_path = 'etc/quantum/plugins/brocade'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
 linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 nvp_plugin_config_path = 'etc/quantum/plugins/nicira'
@@ -94,6 +95,8 @@ else:
              'etc/quantum/plugins/cisco/db_conn.ini']),
         (bigswitch_plugin_config_path,
             ['etc/quantum/plugins/bigswitch/restproxy.ini']),
+        (brocade_plugin_config_path,
+            ['etc/quantum/plugins/brocade/brocade.ini']),
         (linuxbridge_plugin_config_path,
             ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
         (nvp_plugin_config_path,
