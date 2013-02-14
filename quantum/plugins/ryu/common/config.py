@@ -40,6 +40,13 @@ ovs_opts = [
                help=_("OVSDB interface to connect to")),
 ]
 
+agent_opts = [
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
+]
+
 
 cfg.CONF.register_opts(ovs_opts, "OVS")
+cfg.CONF.register_opts(agent_opts, "AGENT")
 config.register_root_helper(cfg.CONF)

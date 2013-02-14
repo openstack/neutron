@@ -20,6 +20,7 @@ from oslo.config import cfg
 from ryu.app import client
 from ryu.app import rest_nw_id
 
+from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
@@ -30,8 +31,12 @@ from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
 from quantum.db import models_v2
+from quantum.db import securitygroups_rpc_base as sg_db_rpc
+from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
+from quantum.openstack.common.rpc import proxy
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 
@@ -40,9 +45,10 @@ LOG = logging.getLogger(__name__)
 
 
 class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                      l3_rpc_base.L3RpcCallbackMixin):
+                      l3_rpc_base.L3RpcCallbackMixin,
+                      sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
     def __init__(self, ofp_rest_api_addr):
         self.ofp_rest_api_addr = ofp_rest_api_addr
@@ -54,11 +60,37 @@ class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         LOG.debug(_("get_ofp_rest_api: %s"), self.ofp_rest_api_addr)
         return self.ofp_rest_api_addr
 
+    @classmethod
+    def get_port_from_device(cls, device):
+        port = db_api_v2.get_port_from_device(device)
+        if port:
+            port['device'] = device
+        return port
+
+
+class AgentNotifierApi(proxy.RpcProxy,
+                       sg_rpc.SecurityGroupAgentRpcApiMixin):
+
+    BASE_RPC_API_VERSION = '1.0'
+
+    def __init__(self, topic):
+        super(AgentNotifierApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic_port_update = topics.get_topic_name(topic,
+                                                       topics.PORT,
+                                                       topics.UPDATE)
+
+    def port_update(self, context, port):
+        self.fanout_cast(context,
+                         self.make_msg('port_update', port=port),
+                         topic=self.topic_port_update)
+
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
-                         extraroute_db.ExtraRoute_db_mixin):
+                         extraroute_db.ExtraRoute_db_mixin,
+                         sg_db_rpc.SecurityGroupServerRpcMixin):
 
-    supported_extension_aliases = ["router", "extraroute"]
+    supported_extension_aliases = ["router", "extraroute", "security-group"]
 
     def __init__(self, configfile=None):
         db.configure_db()
@@ -82,6 +114,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _setup_rpc(self):
         self.conn = rpc.create_connection(new=True)
+        self.notifier = AgentNotifierApi(topics.AGENT)
         self.callbacks = RyuRpcCallbacks(self.ofp_api_host)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(topics.PLUGIN, self.dispatcher, fanout=False)
@@ -109,6 +142,11 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def create_network(self, context, network):
         session = context.session
         with session.begin(subtransactions=True):
+            #set up default security groups
+            tenant_id = self._get_tenant_id_for_create(
+                context, network['network'])
+            self._ensure_default_security_group(context, tenant_id)
+
             net = super(RyuQuantumPluginV2, self).create_network(context,
                                                                  network)
             self._process_l3_create(context, network['network'], net['id'])
@@ -154,7 +192,19 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def create_port(self, context, port):
-        port = super(RyuQuantumPluginV2, self).create_port(context, port)
+        session = context.session
+        with session.begin(subtransactions=True):
+            self._ensure_default_security_group_on_port(context, port)
+            sgids = self._get_security_groups_on_port(context, port)
+            port = super(RyuQuantumPluginV2, self).create_port(context, port)
+            self._process_port_create_security_group(
+                context, port['id'], sgids)
+            self._extend_port_dict_security_group(context, port)
+        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+            self.notifier.security_groups_provider_updated(context)
+        else:
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUPS))
         self.iface_client.create_network_id(port['id'], port['network_id'])
         return port
 
@@ -163,13 +213,53 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # and l3-router. If so, we should prevent deletion.
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
-        return super(RyuQuantumPluginV2, self).delete_port(context, id)
+
+        with context.session.begin(subtransactions=True):
+            self.disassociate_floatingips(context, id)
+            port = self.get_port(context, id)
+            self._delete_port_security_group_bindings(context, id)
+            super(RyuQuantumPluginV2, self).delete_port(context, id)
+
+        self.notifier.security_groups_member_updated(
+            context, port.get(ext_sg.SECURITYGROUPS))
 
     def update_port(self, context, id, port):
         deleted = port['port'].get('deleted', False)
-        port = super(RyuQuantumPluginV2, self).update_port(context, id, port)
+        session = context.session
+
+        need_port_update_notify = False
+        with session.begin(subtransactions=True):
+            original_port = super(RyuQuantumPluginV2, self).get_port(
+                context, id)
+            updated_port = super(RyuQuantumPluginV2, self).update_port(
+                context, id, port)
+            need_port_update_notify = self.update_security_group_on_port(
+                context, id, port, original_port, updated_port)
+
+        need_port_update_notify |= self.is_security_group_member_updated(
+            context, original_port, updated_port)
+
+        need_port_update_notify |= (original_port['admin_state_up'] !=
+                                    updated_port['admin_state_up'])
+
+        if need_port_update_notify:
+            self.notifier.port_update(context, updated_port)
+
         if deleted:
-            session = context.session
             db_api_v2.set_port_status(session, id, q_const.PORT_STATUS_DOWN)
-        return port
+        return updated_port
+
+    def get_port(self, context, id, fields=None):
+        with context.session.begin(subtransactions=True):
+            port = super(RyuQuantumPluginV2, self).get_port(context, id,
+                                                            fields)
+            self._extend_port_dict_security_group(context, port)
+        return self._fields(port, fields)
+
+    def get_ports(self, context, filters=None, fields=None):
+        with context.session.begin(subtransactions=True):
+            ports = super(RyuQuantumPluginV2, self).get_ports(
+                context, filters, fields)
+            for port in ports:
+                self._extend_port_dict_security_group(context, port)
+        return [self._fields(port, fields) for port in ports]

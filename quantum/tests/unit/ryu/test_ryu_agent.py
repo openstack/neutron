@@ -44,12 +44,19 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
             self._AGENT_NAME + '.VifPortSet').start()
         self.q_ctx = mock.patch(
             self._AGENT_NAME + '.q_context').start()
+        self.agent_rpc = mock.patch(
+            self._AGENT_NAME + '.agent_rpc.create_consumers').start()
+        self.sg_rpc = mock.patch(
+            self._AGENT_NAME + '.sg_rpc').start()
+        self.sg_agent = mock.patch(
+            self._AGENT_NAME + '.RyuSecurityGroupAgent').start()
 
     def mock_rest_addr(self, rest_addr):
         integ_br = 'integ_br'
         tunnel_ip = '192.168.0.1'
         ovsdb_ip = '172.16.0.1'
         ovsdb_port = 16634
+        interval = 2
         root_helper = 'helper'
 
         self.mod_agent.OVSBridge.return_value.datapath_id = '1234'
@@ -61,8 +68,8 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
         self.plugin_api.return_value.get_ofp_rest_api_addr = mock_rest_addr
 
         # Instantiate OVSQuantumOFPRyuAgent
-        self.agent = self.mod_agent.OVSQuantumOFPRyuAgent(
-            integ_br, tunnel_ip, ovsdb_ip, ovsdb_port, root_helper)
+        return self.mod_agent.OVSQuantumOFPRyuAgent(
+            integ_br, tunnel_ip, ovsdb_ip, ovsdb_port, interval, root_helper)
 
     def test_valid_rest_addr(self):
         self.mock_rest_addr('192.168.0.1:8080')
@@ -79,6 +86,11 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
             mock.call().get_ofp_rest_api_addr('abc')
         ])
 
+        # Agent RPC
+        self.agent_rpc.assert_has_calls([
+            mock.call(mock.ANY, 'q-agent-notifier', mock.ANY)
+        ])
+
         # OFPClient
         self.mod_agent.client.OFPClient.assert_calls([
             mock.call('192.168.0.1:8080')
@@ -93,7 +105,6 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
         ])
 
         # SwitchConfClient
-
         self.mod_agent.client.SwitchConfClient.assert_has_calls([
             mock.call('192.168.0.1:8080'),
             mock.call().set_key('1234', 'ovs_tunnel_addr', '192.168.0.1'),
@@ -109,6 +120,108 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
     def test_invalid_rest_addr(self):
         self.assertRaises(self.mod_agent.q_exc.Invalid,
                           self.mock_rest_addr, (''))
+
+    def mock_port_update(self, **kwargs):
+        agent = self.mock_rest_addr('192.168.0.1:8080')
+        agent.port_update(mock.Mock(), **kwargs)
+
+    def test_port_update(self, **kwargs):
+        port = {'id': 1, 'security_groups': 'default'}
+
+        with mock.patch.object(self.ovsbridge.return_value,
+                               'get_vif_port_by_id',
+                               return_value=1) as get_vif:
+            self.mock_port_update(port=port)
+
+        get_vif.assert_called_once_with(1)
+        self.sg_agent.assert_calls([
+            mock.call().refresh_firewall()
+        ])
+
+    def test_port_update_not_vifport(self, **kwargs):
+        port = {'id': 1, 'security_groups': 'default'}
+
+        with mock.patch.object(self.ovsbridge.return_value,
+                               'get_vif_port_by_id',
+                               return_value=0) as get_vif:
+            self.mock_port_update(port=port)
+
+        get_vif.assert_called_once_with(1)
+        self.assertFalse(self.sg_agent.return_value.refresh_firewall.called)
+
+    def test_port_update_without_secgroup(self, **kwargs):
+        port = {'id': 1}
+
+        with mock.patch.object(self.ovsbridge.return_value,
+                               'get_vif_port_by_id',
+                               return_value=1) as get_vif:
+            self.mock_port_update(port=port)
+
+        get_vif.assert_called_once_with(1)
+        self.assertFalse(self.sg_agent.return_value.refresh_firewall.called)
+
+    def mock_update_ports(self, vif_port_set=None, registered_ports=None):
+        with mock.patch.object(self.ovsbridge.return_value,
+                               'get_vif_port_set',
+                               return_value=vif_port_set):
+            agent = self.mock_rest_addr('192.168.0.1:8080')
+            return agent._update_ports(registered_ports)
+
+    def test_update_ports_unchanged(self):
+        self.assertIsNone(self.mock_update_ports())
+
+    def test_update_ports_changed(self):
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        expected = dict(current=vif_port_set,
+                        added=set([3]),
+                        removed=set([2]))
+
+        actual = self.mock_update_ports(vif_port_set, registered_ports)
+
+        self.assertEqual(expected, actual)
+
+    def mock_process_devices_filter(self, port_info):
+        agent = self.mock_rest_addr('192.168.0.1:8080')
+        agent._process_devices_filter(port_info)
+
+    def test_process_devices_filter_add(self):
+        port_info = {'added': 1}
+
+        self.mock_process_devices_filter(port_info)
+
+        self.sg_agent.assert_calls([
+            mock.call().prepare_devices_filter(1)
+        ])
+
+    def test_process_devices_filter_remove(self):
+        port_info = {'removed': 2}
+
+        self.mock_process_devices_filter(port_info)
+
+        self.sg_agent.assert_calls([
+            mock.call().remove_devices_filter(2)
+        ])
+
+    def test_process_devices_filter_both(self):
+        port_info = {'added': 1, 'removed': 2}
+
+        self.mock_process_devices_filter(port_info)
+
+        self.sg_agent.assert_calls([
+            mock.call().prepare_devices_filter(1),
+            mock.call().remove_devices_filter(2)
+        ])
+
+    def test_process_devices_filter_none(self):
+        port_info = {}
+
+        self.mock_process_devices_filter(port_info)
+
+        self.assertFalse(
+            self.sg_agent.return_value.prepare_devices_filter.called)
+        self.assertFalse(
+            self.sg_agent.return_value.remove_devices_filter.called)
 
 
 class TestRyuPluginApi(RyuAgentTestCase):
@@ -468,17 +581,15 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         ])
 
     def test_main(self):
-        with nested(
-            mock.patch(self._AGENT_NAME + '.OVSQuantumOFPRyuAgent'),
-            mock.patch('sys.exit', side_effect=SystemExit(0))
-        ) as (mock_agent, mock_exit):
+        agent_attrs = {'daemon_loop.side_effect': SystemExit(0)}
+        with mock.patch(self._AGENT_NAME + '.OVSQuantumOFPRyuAgent',
+                        **agent_attrs) as mock_agent:
             self.assertRaises(SystemExit, self.mock_main)
 
         mock_agent.assert_calls([
-            mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 'helper')
-        ])
-        mock_exit.assert_calls([
-            mock.call(0)
+            mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 2,
+                      'helper'),
+            mock.call().daemon_loop()
         ])
 
     def test_main_raise(self):
@@ -490,7 +601,8 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
             self.assertRaises(SystemExit, self.mock_main)
 
         mock_agent.assert_calls([
-            mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 'helper')
+            mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 2,
+                      'helper')
         ])
         mock_exit.assert_calls([
             mock.call(1)
