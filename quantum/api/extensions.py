@@ -159,6 +159,26 @@ class ExtensionDescriptor(object):
         """
         return None
 
+    def update_attributes_map(self, extended_attributes,
+                              extension_attrs_map=None):
+        """Update attributes map for this extension
+
+        This is default method for extending an extension's attributes map.
+        An extension can use this method and supplying its own resource
+        attribute map in extension_attrs_map argument to extend all its
+        attributes that needs to be extended.
+
+        If an extension does not implement update_attributes_map, the method
+        does nothing and just return.
+        """
+        if not extension_attrs_map:
+            return
+
+        for resource, attrs in extension_attrs_map.iteritems():
+            extended_attrs = extended_attributes.get(resource)
+            if extended_attrs:
+                attrs.update(extended_attrs)
+
 
 class ActionExtensionController(wsgi.Controller):
 
@@ -427,9 +447,12 @@ class ExtensionManager(object):
         After this function, we will extend the attr_map if an extension
         wants to extend this map.
         """
+        update_exts = []
         for ext in self.extensions.itervalues():
             if not hasattr(ext, 'get_extended_resources'):
                 continue
+            if hasattr(ext, 'update_attributes_map'):
+                update_exts.append(ext)
             try:
                 extended_attrs = ext.get_extended_resources(version)
                 for resource, resource_attrs in extended_attrs.iteritems():
@@ -442,6 +465,10 @@ class ExtensionManager(object):
             except AttributeError:
                 LOG.exception(_("Error fetching extended attributes for "
                                 "extension '%s'"), ext.get_name())
+
+        """Extending extensions' attributes map."""
+        for ext in update_exts:
+            ext.update_attributes_map(attr_map)
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""
