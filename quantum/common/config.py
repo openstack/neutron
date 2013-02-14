@@ -84,7 +84,7 @@ rpc.set_defaults(control_exchange='quantum')
 
 def parse(args):
     cfg.CONF(args=args, project='quantum',
-             version='%%prog %s' % quantum_version.version_string_with_vcs())
+             version='%%prog %s' % quantum_version.release_string())
 
     # Validate that the base_mac is of the correct format
     msg = attributes._validate_regex(cfg.CONF.base_mac,

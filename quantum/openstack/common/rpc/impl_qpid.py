@@ -51,7 +51,8 @@ qpid_opts = [
                help='Username for qpid connection'),
     cfg.StrOpt('qpid_password',
                default='',
-               help='Password for qpid connection'),
+               help='Password for qpid connection',
+               secret=True),
     cfg.StrOpt('qpid_sasl_mechanisms',
                default='',
                help='Space separated list of SASL mechanisms to use for auth'),
@@ -486,9 +487,20 @@ class Connection(object):
         """Send a 'direct' message"""
         self.publisher_send(DirectPublisher, msg_id, msg)
 
-    def topic_send(self, topic, msg):
+    def topic_send(self, topic, msg, timeout=None):
         """Send a 'topic' message"""
-        self.publisher_send(TopicPublisher, topic, msg)
+        #
+        # We want to create a message with attributes, e.g. a TTL. We
+        # don't really need to keep 'msg' in its JSON format any longer
+        # so let's create an actual qpid message here and get some
+        # value-add on the go.
+        #
+        # WARNING: Request timeout happens to be in the same units as
+        # qpid's TTL (seconds). If this changes in the future, then this
+        # will need to be altered accordingly.
+        #
+        qpid_message = qpid_messaging.Message(content=msg, ttl=timeout)
+        self.publisher_send(TopicPublisher, topic, qpid_message)
 
     def fanout_send(self, topic, msg):
         """Send a 'fanout' message"""
