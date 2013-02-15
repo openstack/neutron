@@ -42,7 +42,8 @@ class MetadataProxyHandler(object):
         cfg.StrOpt('admin_user',
                    help=_("Admin user")),
         cfg.StrOpt('admin_password',
-                   help=_("Admin password")),
+                   help=_("Admin password"),
+                   secret=True),
         cfg.StrOpt('admin_tenant_name',
                    help=_("Admin tenant name")),
         cfg.StrOpt('auth_url',
@@ -58,7 +59,8 @@ class MetadataProxyHandler(object):
                    help=_("TCP Port used by Nova metadata server.")),
         cfg.StrOpt('metadata_proxy_shared_secret',
                    default='',
-                   help=_('Shared secret to sign instance-id request'))
+                   help=_('Shared secret to sign instance-id request'),
+                   secret=True)
     ]
 
     def __init__(self, conf):
