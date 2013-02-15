@@ -86,6 +86,7 @@ fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
 
 class TestDhcpAgent(unittest.TestCase):
     def setUp(self):
+        cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         self.driver_cls_p = mock.patch(
@@ -267,6 +268,7 @@ class TestDhcpAgent(unittest.TestCase):
 class TestDhcpAgentEventHandler(unittest.TestCase):
     def setUp(self):
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
+        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)
