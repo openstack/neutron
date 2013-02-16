@@ -224,7 +224,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
                                    'delay': delay,
                                    'timeout': timeout,
                                    'max_retries': max_retries,
-                                   'admin_status_up': admin_status_up,
+                                   'admin_state_up': admin_status_up,
                                    'tenant_id': self._tenant_id}}
         for arg in ('http_method', 'path', 'expected_code'):
             if arg in kwargs and kwargs[arg] is not None:
