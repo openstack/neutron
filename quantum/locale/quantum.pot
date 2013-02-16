@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.18"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.19"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-15 00:05+0000\n"
+"POT-Creation-Date: 2013-02-16 00:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -281,72 +281,72 @@ msgstr ""
 msgid "Admin password"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:415 quantum/agent/metadata/agent.py:47
-#: quantum/debug/debug_agent.py:45
-#: quantum/plugins/metaplugin/common/config.py:42
+#: quantum/agent/dhcp_agent.py:416 quantum/agent/metadata/agent.py:48
+#: quantum/debug/debug_agent.py:46
+#: quantum/plugins/metaplugin/common/config.py:43
 msgid "Admin tenant name"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:417 quantum/agent/metadata/agent.py:49
-#: quantum/debug/debug_agent.py:47
-#: quantum/plugins/metaplugin/common/config.py:44
+#: quantum/agent/dhcp_agent.py:418 quantum/agent/metadata/agent.py:50
+#: quantum/debug/debug_agent.py:48
+#: quantum/plugins/metaplugin/common/config.py:45
 msgid "Authentication URL"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:419 quantum/agent/metadata/agent.py:51
-#: quantum/common/config.py:48 quantum/debug/debug_agent.py:49
-#: quantum/plugins/metaplugin/common/config.py:46
+#: quantum/agent/dhcp_agent.py:420 quantum/agent/metadata/agent.py:52
+#: quantum/common/config.py:48 quantum/debug/debug_agent.py:50
+#: quantum/plugins/metaplugin/common/config.py:47
 msgid "The type of authentication to use"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:421 quantum/agent/metadata/agent.py:53
-#: quantum/debug/debug_agent.py:51
-#: quantum/plugins/metaplugin/common/config.py:48
+#: quantum/agent/dhcp_agent.py:422 quantum/agent/metadata/agent.py:54
+#: quantum/debug/debug_agent.py:52
+#: quantum/plugins/metaplugin/common/config.py:49
 msgid "Authentication region"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:423 quantum/agent/l3_agent.py:118
-#: quantum/debug/debug_agent.py:55
+#: quantum/agent/dhcp_agent.py:424 quantum/agent/l3_agent.py:118
+#: quantum/debug/debug_agent.py:56
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:431
+#: quantum/agent/dhcp_agent.py:432
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:468 quantum/debug/debug_agent.py:85
+#: quantum/agent/dhcp_agent.py:469 quantum/debug/debug_agent.py:86
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:534
+#: quantum/agent/dhcp_agent.py:535
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:564
+#: quantum/agent/dhcp_agent.py:565
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:570
-msgid "Unable to parse lease relay msg to dict."
-msgstr ""
-
 #: quantum/agent/dhcp_agent.py:571
-#, python-format
-msgid "Exception value: %s"
+msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
 #: quantum/agent/dhcp_agent.py:572
 #, python-format
+msgid "Exception value: %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:573
+#, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:574
+#: quantum/agent/dhcp_agent.py:575
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:115 quantum/debug/debug_agent.py:58
+#: quantum/agent/l3_agent.py:115 quantum/debug/debug_agent.py:59
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
@@ -778,52 +778,52 @@ msgstr ""
 msgid "Admin user"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:55
+#: quantum/agent/metadata/agent.py:56
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:58
+#: quantum/agent/metadata/agent.py:59
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:61
+#: quantum/agent/metadata/agent.py:62
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:79
+#: quantum/agent/metadata/agent.py:81
 #: quantum/agent/metadata/namespace_proxy.py:74
 #, python-format
 msgid "Request: %s"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:88
+#: quantum/agent/metadata/agent.py:90
 #: quantum/agent/metadata/namespace_proxy.py:80
 msgid "Unexpected error."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:89
+#: quantum/agent/metadata/agent.py:91
 #: quantum/agent/metadata/namespace_proxy.py:81
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:136
+#: quantum/agent/metadata/agent.py:138
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:145
+#: quantum/agent/metadata/agent.py:147
 #: quantum/agent/metadata/namespace_proxy.py:115
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:151
+#: quantum/agent/metadata/agent.py:153
 #: quantum/agent/metadata/namespace_proxy.py:121
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:189
+#: quantum/agent/metadata/agent.py:191
 msgid "Location for Metadata Proxy UNIX domain socket"
 msgstr ""
 
@@ -1723,82 +1723,82 @@ msgstr ""
 msgid "Port update. Adding %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:697
+#: quantum/db/db_base_plugin_v2.py:698
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:702
+#: quantum/db/db_base_plugin_v2.py:703
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:724
+#: quantum/db/db_base_plugin_v2.py:725
 msgid "Performing IP validity checks on allocation pools"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:731
+#: quantum/db/db_base_plugin_v2.py:732
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:738
+#: quantum/db/db_base_plugin_v2.py:739
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:742
+#: quantum/db/db_base_plugin_v2.py:743
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:747
+#: quantum/db/db_base_plugin_v2.py:748
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:760
+#: quantum/db/db_base_plugin_v2.py:761
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:771
+#: quantum/db/db_base_plugin_v2.py:772
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:783 quantum/db/db_base_plugin_v2.py:787
+#: quantum/db/db_base_plugin_v2.py:784 quantum/db/db_base_plugin_v2.py:788
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:899
+#: quantum/db/db_base_plugin_v2.py:900
 #, python-format
 msgid "An exception occured while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:983
+#: quantum/db/db_base_plugin_v2.py:984
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1007
+#: quantum/db/db_base_plugin_v2.py:1008
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1020
+#: quantum/db/db_base_plugin_v2.py:1021
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1256
+#: quantum/db/db_base_plugin_v2.py:1257
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1330
+#: quantum/db/db_base_plugin_v2.py:1331
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -2095,11 +2095,11 @@ msgstr ""
 msgid "ID of network"
 msgstr ""
 
-#: quantum/debug/debug_agent.py:53
+#: quantum/debug/debug_agent.py:54
 msgid "Use Linux network namespaces"
 msgstr ""
 
-#: quantum/debug/debug_agent.py:136
+#: quantum/debug/debug_agent.py:137
 #, python-format
 msgid "Failed to delete namespace %s"
 msgstr ""
@@ -3000,82 +3000,82 @@ msgstr ""
 msgid "Server authentication"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:75
+#: quantum/plugins/bigswitch/plugin.py:76
 #: quantum/plugins/nec/common/config.py:45
 msgid "Use SSL to connect"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:77
+#: quantum/plugins/bigswitch/plugin.py:78
 msgid "Sync data on connect"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:79
+#: quantum/plugins/bigswitch/plugin.py:80
 msgid ""
 "Maximum number of seconds to wait for proxy request to connect and "
 "complete."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:103
+#: quantum/plugins/bigswitch/plugin.py:104
 msgid "Error in REST call to remote network controller"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:134
+#: quantum/plugins/bigswitch/plugin.py:135
 #, python-format
 msgid ""
 "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r, "
 "action=%(action)s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:138
+#: quantum/plugins/bigswitch/plugin.py:139
 #, python-format
 msgid "ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:146
+#: quantum/plugins/bigswitch/plugin.py:147
 msgid "ServerProxy: Could not establish HTTPS connection"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:153
+#: quantum/plugins/bigswitch/plugin.py:154
 msgid "ServerProxy: Could not establish HTTP connection"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:170
+#: quantum/plugins/bigswitch/plugin.py:171
 #, python-format
 msgid "ServerProxy: %(action)s failure, %(e)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:173
+#: quantum/plugins/bigswitch/plugin.py:174
 #, python-format
 msgid ""
 "ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
 "data=%(data)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:219
+#: quantum/plugins/bigswitch/plugin.py:220
 #, python-format
 msgid "ServerProxy: %(action)s failure for servers: %(server)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:227
+#: quantum/plugins/bigswitch/plugin.py:228
 #, python-format
 msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:259
+#: quantum/plugins/bigswitch/plugin.py:260
 #, python-format
 msgid "QuantumRestProxy: Starting plugin. Version=%s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:296
+#: quantum/plugins/bigswitch/plugin.py:297
 msgid "QuantumRestProxyV2: initialization done"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:320
+#: quantum/plugins/bigswitch/plugin.py:321
 msgid "QuantumRestProxyV2: create_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:326
-#: quantum/plugins/bigswitch/plugin.py:384
+#: quantum/plugins/bigswitch/plugin.py:327
+#: quantum/plugins/bigswitch/plugin.py:385
 #: quantum/plugins/nicira/nicira_nvp_plugin/QuantumPlugin.py:718
 #, python-format
 msgid ""
@@ -3083,63 +3083,63 @@ msgid ""
 "Ignoring setting for network %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:347
+#: quantum/plugins/bigswitch/plugin.py:348
 #, python-format
 msgid "QuantumRestProxyV2:Unable to create remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:379
+#: quantum/plugins/bigswitch/plugin.py:380
 msgid "QuantumRestProxyV2.update_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:405
-#: quantum/plugins/bigswitch/plugin.py:442
+#: quantum/plugins/bigswitch/plugin.py:406
+#: quantum/plugins/bigswitch/plugin.py:443
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:426
+#: quantum/plugins/bigswitch/plugin.py:427
 msgid "QuantumRestProxyV2: delete_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:471
+#: quantum/plugins/bigswitch/plugin.py:472
 msgid "QuantumRestProxyV2: create_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:498
-#: quantum/plugins/bigswitch/plugin.py:565
+#: quantum/plugins/bigswitch/plugin.py:499
+#: quantum/plugins/bigswitch/plugin.py:566
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:536
+#: quantum/plugins/bigswitch/plugin.py:537
 msgid "QuantumRestProxyV2: update_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:586
+#: quantum/plugins/bigswitch/plugin.py:587
 msgid "QuantumRestProxyV2: delete_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:606
-#: quantum/plugins/bigswitch/plugin.py:675
+#: quantum/plugins/bigswitch/plugin.py:607
+#: quantum/plugins/bigswitch/plugin.py:676
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:620
+#: quantum/plugins/bigswitch/plugin.py:621
 msgid "QuantumRestProxyV2: _plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:654
+#: quantum/plugins/bigswitch/plugin.py:655
 #, python-format
 msgid "QuantumRestProxyV2:Unable to update remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:666
+#: quantum/plugins/bigswitch/plugin.py:667
 msgid "QuantumRestProxyV2: _unplug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:732
+#: quantum/plugins/bigswitch/plugin.py:733
 #, python-format
 msgid "QuantumRestProxy: Unable to update remote network: %s"
 msgstr ""
@@ -3249,6 +3249,7 @@ msgid "create_subnet() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:240
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:285
 msgid "update_subnet() called"
 msgstr ""
 
@@ -5819,6 +5820,169 @@ msgstr ""
 
 #: quantum/plugins/openvswitch/common/config.py:52
 msgid "List of <tun_min>:<tun_max>"
+msgstr ""
+
+#: quantum/plugins/plumgrid/common/exceptions.py:26
+#, python-format
+msgid "An unexpected error occurred in the PLUMgrid Plugin: %(err_msg)s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/common/exceptions.py:31
+#, python-format
+msgid "Connection failed with PLUMgrid NOS: %(err_msg)s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_nos_snippets.py:34
+msgid "QuantumPluginPLUMgrid Status: NOS Body Data Creation"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:41
+msgid "PLUMgrid NOS server to connect to"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:43
+msgid "PLUMgrid NOS server port to connect to"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:45
+msgid "PLUMgrid NOS admin username"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:47
+msgid "PLUMgrid NOS admin password"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:49
+msgid "PLUMgrid NOS server timeout"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:51
+msgid "PLUMgrid NOS topology name"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:60
+msgid "QuantumPluginPLUMgrid Status: Starting Plugin"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:75
+msgid "QuantumPluginPLUMgrid Status: Aborting Plugin"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:83
+#, python-format
+msgid "QuantumPluginPLUMgrid NOS: %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:85
+msgid "QuantumPluginPLUMgrid Status: NOS value is missing in config file"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:88
+msgid ""
+"QuantumPluginPLUMgrid Status: Quantum server with PLUMgrid Plugin has "
+"started"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:96
+msgid "QuantumPluginPLUMgrid Status: create_network() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:108
+#, python-format
+msgid "QuantumPluginPLUMgrid Status: %s, %s, %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:117
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:155
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:181
+msgid "PLUMgrid NOS communication failed"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:129
+msgid "QuantumPluginPLUMgridV2.update_network() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:166
+msgid "QuantumPluginPLUMgrid Status: delete_network() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:189
+msgid "QuantumPluginPLUMgrid Status: create_port() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:204
+msgid "QuantumPluginPLUMgrid Status: update_port() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:218
+msgid "QuantumPluginPLUMgrid Status: delete_port() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:231
+msgid "QuantumPluginPLUMgrid Status: create_subnet() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:249
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:274
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:308
+msgid "PLUMgrid NOS communication failed: "
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:260
+msgid "QuantumPluginPLUMgrid Status: delete_subnet() called"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:337
+#, python-format
+msgid ""
+"Network with admin_state_up=False are not supported yet by this plugin. "
+"Ignoring setting for network %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:341
+msgid "Network Admin State Validation Falied: "
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:40
+msgid "QuantumPluginPLUMgrid Status: REST Connection Started"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:53
+#, python-format
+msgid "PLUMgrid_NOS_Server: %s %s %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:59
+msgid "PLUMgrid_NOS_Server: Could not establish HTTP connection"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:64
+#, python-format
+msgid "PLUMgrid_NOS_Server Sending Data: %s %s %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:70
+#, python-format
+msgid "PLUMgrid_NOS_Server Connection Data: %s, %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:76
+#, python-format
+msgid "PLUMgrid_NOS_Server Connection RESP: %s"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:80
+msgid "PLUMgrid HTTP Connection Failed: "
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:86
+#, python-format
+msgid "PLUMgrid_NOS_Server: %(action)s failure, %(e)r"
+msgstr ""
+
+#: quantum/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:89
+#, python-format
+msgid "PLUMgrid_NOS_Server: status=%(status)d, reason=%(reason)r, ret=%(ret)s"
 msgstr ""
 
 #: quantum/plugins/ryu/ryu_quantum_plugin.py:54
