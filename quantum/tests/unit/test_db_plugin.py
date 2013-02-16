@@ -835,6 +835,20 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(res['port']['admin_state_up'],
                              data['port']['admin_state_up'])
 
+    def test_update_port_not_admin(self):
+        res = self._create_network(self.fmt, 'net1', True,
+                                   tenant_id='not_admin',
+                                   set_context=True)
+        net1 = self.deserialize(self.fmt, res)
+        res = self._create_port(self.fmt, net1['network']['id'],
+                                tenant_id='not_admin', set_context=True)
+        port = self.deserialize(self.fmt, res)
+        data = {'port': {'admin_state_up': False}}
+        quantum_context = context.Context('', 'not_admin')
+        port = self._update('ports', port['port']['id'], data,
+                            quantum_context=quantum_context)
+        self.assertEqual(port['port']['admin_state_up'], False)
+
     def test_update_device_id_null(self):
         with self.port() as port:
             data = {'port': {'device_id': None}}
