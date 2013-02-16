@@ -206,10 +206,10 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
             req.environ['quantum.context'] = kwargs['context']
         return req.get_response(self.api)
 
-    def _create_network(self, fmt, name, admin_status_up,
+    def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, **kwargs):
         data = {'network': {'name': name,
-                            'admin_state_up': admin_status_up,
+                            'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared') +
                     (arg_list or ())):
@@ -225,8 +225,8 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         return network_req.get_response(self.api)
 
     def _create_network_bulk(self, fmt, number, name,
-                             admin_status_up, **kwargs):
-        base_data = {'network': {'admin_state_up': admin_status_up,
+                             admin_state_up, **kwargs):
+        base_data = {'network': {'admin_state_up': admin_state_up,
                                  'tenant_id': self._tenant_id}}
         return self._create_bulk(fmt, number, 'network', base_data, **kwargs)
 
@@ -316,14 +316,14 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         return port_res
 
     def _create_port_bulk(self, fmt, number, net_id, name,
-                          admin_status_up, **kwargs):
+                          admin_state_up, **kwargs):
         base_data = {'port': {'network_id': net_id,
-                              'admin_state_up': admin_status_up,
+                              'admin_state_up': admin_state_up,
                               'tenant_id': self._tenant_id}}
         return self._create_bulk(fmt, number, 'port', base_data, **kwargs)
 
-    def _make_network(self, fmt, name, admin_status_up, **kwargs):
-        res = self._create_network(fmt, name, admin_status_up, **kwargs)
+    def _make_network(self, fmt, name, admin_state_up, **kwargs):
+        res = self._create_network(fmt, name, admin_state_up, **kwargs)
         # TODO(salvatore-orlando): do exception handling in this test module
         # in a uniform way (we do it differently for ports, subnets, and nets
         # Things can go wrong - raise HTTP exc with res code only
@@ -441,12 +441,12 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
 
     @contextlib.contextmanager
     def network(self, name='net1',
-                admin_status_up=True,
+                admin_state_up=True,
                 fmt=None,
                 do_delete=True,
                 **kwargs):
         network = self._make_network(fmt or self.fmt, name,
-                                     admin_status_up, **kwargs)
+                                     admin_state_up, **kwargs)
         try:
             yield network
         finally:
@@ -851,7 +851,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_delete_network_port_exists_owned_by_network(self):
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         network_id = network['network']['id']
         self._create_port(self.fmt, network_id, device_owner='network:dhcp')
@@ -991,7 +991,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         with mock.patch.object(quantum.db.db_base_plugin_v2.QuantumDbPluginV2,
                                '_generate_mac', new=fake_gen_mac):
             res = self._create_network(fmt=self.fmt, name='net1',
-                                       admin_status_up=True)
+                                       admin_state_up=True)
             network = self.deserialize(self.fmt, res)
             net_id = network['network']['id']
             res = self._create_port(self.fmt, net_id=net_id)
@@ -1047,7 +1047,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             with self.port(subnet=subnet) as port:
                 # Create new network
                 res = self._create_network(fmt=self.fmt, name='net2',
-                                           admin_status_up=True)
+                                           admin_state_up=True)
                 network2 = self.deserialize(self.fmt, res)
                 subnet2 = self._make_subnet(self.fmt, network2, "1.1.1.1",
                                             "1.1.1.0/24", ip_version=4)
@@ -1757,7 +1757,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
     def test_list_networks_with_parameters(self):
         with contextlib.nested(self.network(name='net1',
-                                            admin_status_up=False),
+                                            admin_state_up=False),
                                self.network(name='net2')) as (net1, net2):
             query_params = 'admin_state_up=False'
             self._test_list_resources('network', [net1],
@@ -1779,7 +1779,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
     def test_list_networks_with_parameters_invalid_values(self):
         with contextlib.nested(self.network(name='net1',
-                                            admin_status_up=False),
+                                            admin_state_up=False),
                                self.network(name='net2')) as (net1, net2):
             req = self.new_list_request('networks',
                                         params='admin_state_up=fake')
@@ -2002,7 +2002,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
@@ -2015,7 +2015,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         network_id = network['network']['id']
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
@@ -2043,7 +2043,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
@@ -2820,7 +2820,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         dns_nameservers = ['1.2.3.4']
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,
@@ -2836,7 +2836,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                         'nexthop': '1.2.3.4'}]
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,
@@ -2853,7 +2853,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                         'nexthop': '1.2.3.4'}]
         # Create new network
         res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_status_up=True)
+                                   admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4,

@@ -292,7 +292,7 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
 
 class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
-    def _create_network(self, fmt, name, admin_status_up, **kwargs):
+    def _create_network(self, fmt, name, admin_state_up, **kwargs):
         """ Override the routine for allowing the router:external attribute """
         # attributes containing a colon should be passed with
         # a double underscore
@@ -302,7 +302,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         arg_list = (l3.EXTERNAL,)
         return super(L3NatDBTestCase, self)._create_network(fmt,
                                                             name,
-                                                            admin_status_up,
+                                                            admin_state_up,
                                                             arg_list=arg_list,
                                                             **new_args)
 
@@ -380,10 +380,10 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         return self.deserialize(self.fmt, res)
 
     @contextlib.contextmanager
-    def router(self, name='router1', admin_status_up=True,
+    def router(self, name='router1', admin_state_up=True,
                fmt=None, tenant_id=_uuid(), set_context=False):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
-                                   admin_status_up, set_context)
+                                   admin_state_up, set_context)
         try:
             yield router
         finally:
@@ -395,7 +395,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         expected_value = [('name', name), ('tenant_id', tenant_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
-        with self.router(name='router1', admin_status_up=True,
+        with self.router(name='router1', admin_state_up=True,
                          tenant_id=tenant_id) as router:
             for k, v in expected_value:
                 self.assertEqual(router['router'][k], v)
@@ -938,7 +938,7 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         expected_value = [('name', name), ('tenant_id', tenant_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
-        with self.router(name='router1', admin_status_up=True,
+        with self.router(name='router1', admin_state_up=True,
                          tenant_id=tenant_id) as router:
             res = self._show('routers', router['router']['id'])
             for k, v in expected_value:

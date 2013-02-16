@@ -160,14 +160,14 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
     def new_update_request(self, resource, data, id, fmt=None):
         return self._req('PUT', resource, data, fmt, id=id)
 
-    def _create_vip(self, fmt, name, pool_id, protocol, port, admin_status_up,
+    def _create_vip(self, fmt, name, pool_id, protocol, port, admin_state_up,
                     expected_res_status=None, **kwargs):
         data = {'vip': {'name': name,
                         'subnet_id': self._subnet_id,
                         'pool_id': pool_id,
                         'protocol': protocol,
                         'port': port,
-                        'admin_state_up': admin_status_up,
+                        'admin_state_up': admin_state_up,
                         'tenant_id': self._tenant_id}}
         for arg in ('description', 'address',
                     'session_persistence', 'connection_limit'):
@@ -181,13 +181,13 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
         return vip_res
 
-    def _create_pool(self, fmt, name, lb_method, protocol, admin_status_up,
+    def _create_pool(self, fmt, name, lb_method, protocol, admin_state_up,
                      expected_res_status=None, **kwargs):
         data = {'pool': {'name': name,
                          'subnet_id': self._subnet_id,
                          'lb_method': lb_method,
                          'protocol': protocol,
-                         'admin_state_up': admin_status_up,
+                         'admin_state_up': admin_state_up,
                          'tenant_id': self._tenant_id}}
         for arg in ('description'):
             if arg in kwargs and kwargs[arg] is not None:
@@ -200,11 +200,11 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
         return pool_res
 
-    def _create_member(self, fmt, address, port, admin_status_up,
+    def _create_member(self, fmt, address, port, admin_state_up,
                        expected_res_status=None, **kwargs):
         data = {'member': {'address': address,
                            'port': port,
-                           'admin_state_up': admin_status_up,
+                           'admin_state_up': admin_state_up,
                            'tenant_id': self._tenant_id}}
         for arg in ('weight', 'pool_id'):
             if arg in kwargs and kwargs[arg] is not None:
@@ -218,13 +218,13 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
         return member_res
 
     def _create_health_monitor(self, fmt, type, delay, timeout, max_retries,
-                               admin_status_up, expected_res_status=None,
+                               admin_state_up, expected_res_status=None,
                                **kwargs):
         data = {'health_monitor': {'type': type,
                                    'delay': delay,
                                    'timeout': timeout,
                                    'max_retries': max_retries,
-                                   'admin_state_up': admin_status_up,
+                                   'admin_state_up': admin_state_up,
                                    'tenant_id': self._tenant_id}}
         for arg in ('http_method', 'path', 'expected_code'):
             if arg in kwargs and kwargs[arg] is not None:
@@ -271,7 +271,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
     @contextlib.contextmanager
     def vip(self, fmt=None, name='vip1', pool=None,
-            protocol='HTTP', port=80, admin_status_up=True, no_delete=False,
+            protocol='HTTP', port=80, admin_state_up=True, no_delete=False,
             address="172.16.1.123", **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -283,7 +283,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
                                        pool_id,
                                        protocol,
                                        port,
-                                       admin_status_up,
+                                       admin_state_up,
                                        address=address,
                                        **kwargs)
                 vip = self.deserialize(res)
@@ -299,7 +299,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
                                    pool_id,
                                    protocol,
                                    port,
-                                   admin_status_up,
+                                   admin_state_up,
                                    address=address,
                                    **kwargs)
             vip = self.deserialize(res)
@@ -311,7 +311,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
     @contextlib.contextmanager
     def pool(self, fmt=None, name='pool1', lb_method='ROUND_ROBIN',
-             protocol='HTTP', admin_status_up=True, no_delete=False,
+             protocol='HTTP', admin_state_up=True, no_delete=False,
              **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -319,7 +319,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
                                 name,
                                 lb_method,
                                 protocol,
-                                admin_status_up,
+                                admin_state_up,
                                 **kwargs)
         pool = self.deserialize(res)
         if res.status_int >= 400:
@@ -330,14 +330,14 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
 
     @contextlib.contextmanager
     def member(self, fmt=None, address='192.168.1.100',
-               port=80, admin_status_up=True, no_delete=False,
+               port=80, admin_state_up=True, no_delete=False,
                **kwargs):
         if not fmt:
             fmt = self.fmt
         res = self._create_member(fmt,
                                   address,
                                   port,
-                                  admin_status_up,
+                                  admin_state_up,
                                   **kwargs)
         member = self.deserialize(res)
         if res.status_int >= 400:
@@ -349,7 +349,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
     @contextlib.contextmanager
     def health_monitor(self, fmt=None, type='TCP',
                        delay=30, timeout=10, max_retries=3,
-                       admin_status_up=True,
+                       admin_state_up=True,
                        no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -358,7 +358,7 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
                                           delay,
                                           timeout,
                                           max_retries,
-                                          admin_status_up,
+                                          admin_state_up,
                                           **kwargs)
         health_monitor = self.deserialize(res)
         the_health_monitor = health_monitor['health_monitor']

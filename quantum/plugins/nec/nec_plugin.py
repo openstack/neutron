@@ -47,7 +47,7 @@ class OperationalStatus:
 
        ACTIVE: The resource is available.
        DOWN: The resource is not operational.  This might indicate
-             admin_status_up=False, or lack of OpenFlow info for the port.
+             admin_state_up=False, or lack of OpenFlow info for the port.
        BUILD: The plugin is creating the resource.
        ERROR: Some error occured.
     """

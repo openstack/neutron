@@ -16,7 +16,7 @@
      "_href": "/ws.v1/lswitch/%(ls_uuid)s"},
  "link_status_up": false,
  "_schema": "/ws.v1/schema/LogicalSwitchPortStatus",
- "admin_status_up": true,
+ "admin_status_enabled": true,
  "fabric_status_up": false,
  "type": "LogicalSwitchPortStatus"
 }

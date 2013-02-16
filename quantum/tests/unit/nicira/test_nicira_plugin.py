@@ -41,10 +41,10 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
     _plugin_name = ('%s.QuantumPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
 
-    def _create_network(self, fmt, name, admin_status_up,
+    def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, providernet_args=None, **kwargs):
         data = {'network': {'name': name,
-                            'admin_state_up': admin_status_up,
+                            'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
         attributes = kwargs
         if providernet_args:
