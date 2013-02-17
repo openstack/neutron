@@ -38,10 +38,6 @@ class NvpNoMorePortsException(NvpPluginException):
                 "Maximum number of ports reached")
 
 
-class NvpOutOfSyncException(NvpPluginException):
-    message = _("Quantum state has diverged from the networking backend!")
-
-
 class NvpNatRuleMismatch(NvpPluginException):
     message = _("While retrieving NAT rules, %(actual_rules)s were found "
                 "whereas rules in the (%(min_rules)s,%(max_rules)s) interval "

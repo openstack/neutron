@@ -187,7 +187,11 @@ def do_single_request(*args, **kwargs):
     """Issue a request to a specified cluster if specified via kwargs
        (cluster=<cluster>)."""
     cluster = kwargs["cluster"]
-    return cluster.api_client.request(*args)
+    try:
+        req = cluster.api_client.request(*args)
+    except NvpApiClient.ResourceNotFound:
+        raise exception.NotFound()
+    return req
 
 
 def do_multi_request(*args, **kwargs):
@@ -254,6 +258,8 @@ def get_lswitches(cluster, quantum_net_id):
                                                      cluster)
                 results.extend(extra_switches)
         return results
+    except NvpApiClient.ResourceNotFound:
+        raise exception.NetworkNotFound(net_id=quantum_net_id)
     except NvpApiClient.NvpApiException:
         # TODO(salvatore-olrando): Do a better exception handling
         # and re-raising

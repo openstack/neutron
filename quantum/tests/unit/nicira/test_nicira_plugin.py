@@ -21,6 +21,7 @@ import mock
 from oslo.config import cfg
 import webob.exc
 
+from quantum.common import constants
 import quantum.common.test_lib as test_lib
 from quantum import context
 from quantum.extensions import providernet as pnet
@@ -490,3 +491,105 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             res = req.get_response(self.ext_api)
             queue = self.deserialize('json', res)
             self.assertEqual(queue['qos_queue']['max'], 20)
+
+
+class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
+                                NiciraPluginV2TestCase):
+
+    def test_delete_network_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net1 = self.deserialize('json', res)
+        self.fc._fake_lswitch_dict.clear()
+        req = self.new_delete_request('networks', net1['network']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 204)
+
+    def test_list_networks_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        self.deserialize('json', res)
+        self.fc._fake_lswitch_dict.clear()
+        req = self.new_list_request('networks')
+        nets = self.deserialize('json', req.get_response(self.api))
+        self.assertEquals(nets['networks'][0]['status'],
+                          constants.NET_STATUS_ERROR)
+
+    def test_show_network_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net = self.deserialize('json', res)
+        self.fc._fake_lswitch_dict.clear()
+        req = self.new_show_request('networks', net['network']['id'])
+        net = self.deserialize('json', req.get_response(self.api))
+        self.assertEquals(net['network']['status'],
+                          constants.NET_STATUS_ERROR)
+
+    def test_delete_port_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net1 = self.deserialize('json', res)
+        res = self._create_port('json', net1['network']['id'])
+        port = self.deserialize('json', res)
+        self.fc._fake_lswitch_lport_dict.clear()
+        req = self.new_delete_request('ports', port['port']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 204)
+
+    def test_list_port_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net1 = self.deserialize('json', res)
+        res = self._create_port('json', net1['network']['id'])
+        self.deserialize('json', res)
+        self.fc._fake_lswitch_lport_dict.clear()
+        req = self.new_list_request('ports')
+        nets = self.deserialize('json', req.get_response(self.api))
+        self.assertEquals(nets['ports'][0]['status'],
+                          constants.PORT_STATUS_ERROR)
+
+    def test_show_port_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net1 = self.deserialize('json', res)
+        res = self._create_port('json', net1['network']['id'])
+        port = self.deserialize('json', res)
+        self.fc._fake_lswitch_lport_dict.clear()
+        req = self.new_show_request('ports', port['port']['id'])
+        net = self.deserialize('json', req.get_response(self.api))
+        self.assertEquals(net['port']['status'],
+                          constants.PORT_STATUS_ERROR)
+
+    def test_delete_port_and_network_not_in_nvp(self):
+        res = self._create_network('json', 'net1', True)
+        net1 = self.deserialize('json', res)
+        res = self._create_port('json', net1['network']['id'])
+        port = self.deserialize('json', res)
+        self.fc._fake_lswitch_dict.clear()
+        self.fc._fake_lswitch_lport_dict.clear()
+        req = self.new_delete_request('ports', port['port']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 204)
+        req = self.new_delete_request('networks', net1['network']['id'])
+        res = req.get_response(self.api)
+        self.assertEqual(res.status_int, 204)
+
+    def test_delete_router_not_in_nvp(self):
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        self.fc._fake_lrouter_dict.clear()
+        req = self.new_delete_request('routers', router['router']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 204)
+
+    def test_list_routers_not_in_nvp(self):
+        res = self._create_router('json', 'tenant')
+        self.deserialize('json', res)
+        self.fc._fake_lrouter_dict.clear()
+        req = self.new_list_request('routers')
+        routers = self.deserialize('json', req.get_response(self.ext_api))
+        self.assertEquals(routers['routers'][0]['status'],
+                          constants.NET_STATUS_ERROR)
+
+    def test_show_router_not_in_nvp(self):
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        self.fc._fake_lrouter_dict.clear()
+        req = self.new_show_request('routers', router['router']['id'])
+        router = self.deserialize('json', req.get_response(self.ext_api))
+        self.assertEquals(router['router']['status'],
+                          constants.NET_STATUS_ERROR)

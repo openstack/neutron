@@ -19,6 +19,7 @@ import urlparse
 
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
 
 
 LOG = logging.getLogger(__name__)
@@ -374,8 +375,7 @@ class FakeClient:
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:
                 return json.dumps(items[0])
-            raise Exception("show: resource %s:%s not found" %
-                            (resource_type, target_uuid))
+            raise NvpApiClient.ResourceNotFound()
 
     def handle_get(self, url):
         #TODO(salvatore-orlando): handle field selection
@@ -483,7 +483,10 @@ class FakeClient:
         if not response_file:
             raise Exception("resource not found")
         res_dict = getattr(self, '_fake_%s_dict' % res_type)
-        del res_dict[uuids[-1]]
+        try:
+            del res_dict[uuids[-1]]
+        except KeyError:
+            raise NvpApiClient.ResourceNotFound()
         return ""
 
     def fake_request(self, *args, **kwargs):
