@@ -42,6 +42,6 @@ class DBTestCase(testtools.TestCase):
             with mock.patch.object(db.LOG, 'warn') as mock_log:
                 mock_log.return_value = False
                 db.configure_db()
-                self.assertEquals(mock_log.call_count, 1)
+                self.assertEqual(mock_log.call_count, 1)
                 args = mock_log.call_args
                 self.assertNotEqual(args.find('sql_connection'), -1)

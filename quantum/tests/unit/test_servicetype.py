@@ -411,14 +411,14 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             data = self.deserialize(res)
             self.assertTrue('service_types' in data)
             # it must be 3 because we have the default service type too!
-            self.assertEquals(len(data['service_types']), 3)
+            self.assertEqual(len(data['service_types']), 3)
 
     def test_get_default_service_type(self):
         res = self._list_service_types()
         self.assertEqual(res.status_int, webexc.HTTPOk.code)
         data = self.deserialize(res)
         self.assertTrue('service_types' in data)
-        self.assertEquals(len(data['service_types']), 1)
+        self.assertEqual(len(data['service_types']), 1)
         def_svc_type = data['service_types'][0]
         self.assertEqual(def_svc_type['default'], True)
 
@@ -438,7 +438,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             ctx = context.Context('', '', is_admin=True)
             mgr.increase_service_type_refcount(ctx, svc_type_data['id'])
             res = self._delete_service_type(svc_type_data['id'], True)
-            self.assertEquals(res.status_int, webexc.HTTPConflict.code)
+            self.assertEqual(res.status_int, webexc.HTTPConflict.code)
             mgr.decrease_service_type_refcount(ctx, svc_type_data['id'])
 
     def test_create_dummy_increases_service_type_refcount(self):
@@ -446,20 +446,20 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
         svc_type_res = self._show_service_type(dummy['service_type'])
         svc_type_res = self.deserialize(svc_type_res)
         svc_type = svc_type_res[self.resource_name]
-        self.assertEquals(svc_type['num_instances'], 1)
+        self.assertEqual(svc_type['num_instances'], 1)
 
     def test_delete_dummy_decreases_service_type_refcount(self):
         dummy = self._create_dummy()
         svc_type_res = self._show_service_type(dummy['service_type'])
         svc_type_res = self.deserialize(svc_type_res)
         svc_type = svc_type_res[self.resource_name]
-        self.assertEquals(svc_type['num_instances'], 1)
+        self.assertEqual(svc_type['num_instances'], 1)
         self.api.delete(_get_path('dummys/%s' % str(dummy['id']),
                                   fmt=self.fmt))
         svc_type_res = self._show_service_type(dummy['service_type'])
         svc_type_res = self.deserialize(svc_type_res)
         svc_type = svc_type_res[self.resource_name]
-        self.assertEquals(svc_type['num_instances'], 0)
+        self.assertEqual(svc_type['num_instances'], 0)
 
 
 class ServiceTypeManagerTestCaseXML(ServiceTypeManagerTestCase):

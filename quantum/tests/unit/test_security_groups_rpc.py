@@ -71,7 +71,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -96,8 +96,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'source_ip_prefix': fake_prefix},
                             {'ethertype': 'IPv4', 'direction': 'egress'},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv4_egress(self):
@@ -120,7 +120,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -144,8 +144,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'port_range_min': 23,
                              'dest_ip_prefix': fake_prefix},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv4_source_group(self):
@@ -166,7 +166,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -194,8 +194,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'security_group_id': sg1_id},
                             {'ethertype': 'IPv4', 'direction': 'egress'},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
                 self._delete('ports', port_id2)
 
@@ -223,7 +223,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -249,8 +249,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'source_ip_prefix': fake_prefix},
                             {'ethertype': 'IPv6', 'direction': 'egress'},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_egress(self):
@@ -277,7 +277,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -303,8 +303,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'port_range_min': 23,
                              'dest_ip_prefix': fake_prefix},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_source_group(self):
@@ -329,7 +329,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEquals(res.status_int, 201)
+                self.assertEqual(res.status_int, 201)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -360,8 +360,8 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'security_group_id': sg1_id},
                             {'ethertype': 'IPv6', 'direction': 'egress'},
                             ]
-                self.assertEquals(port_rpc['security_group_rules'],
-                                  expected)
+                self.assertEqual(port_rpc['security_group_rules'],
+                                 expected)
                 self._delete('ports', port_id1)
                 self._delete('ports', port_id2)
 
@@ -534,12 +534,12 @@ class SecurityGroupAgentRpcApiTestCase(testtools.TestCase):
     def test_security_groups_rule_not_updated(self):
         self.notifier.security_groups_rule_updated(
             None, security_groups=[])
-        self.assertEquals(False, self.notifier.fanout_cast.called)
+        self.assertEqual(False, self.notifier.fanout_cast.called)
 
     def test_security_groups_member_not_updated(self):
         self.notifier.security_groups_member_updated(
             None, security_groups=[])
-        self.assertEquals(False, self.notifier.fanout_cast.called)
+        self.assertEqual(False, self.notifier.fanout_cast.called)
 
 #Note(nati) bn -> binary_name
 # id -> device_id
@@ -1159,8 +1159,8 @@ class SGNotificationTestMixin():
                                                   port['port']['id'])
                     res = self.deserialize(self.fmt,
                                            req.get_response(self.api))
-                    self.assertEquals(res['port'][ext_sg.SECURITYGROUPS][0],
-                                      security_group_id)
+                    self.assertEqual(res['port'][ext_sg.SECURITYGROUPS][0],
+                                     security_group_id)
                     self._delete('ports', port['port']['id'])
                     self.notifier.assert_has_calls(
                         [call.security_groups_member_updated(

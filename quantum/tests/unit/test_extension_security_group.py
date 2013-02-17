@@ -339,10 +339,10 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                           ethertype=ethertype) as rule:
 
                 # the lower case value will be return
-                self.assertEquals(rule['security_group_rule']['protocol'],
-                                  protocol.lower())
-                self.assertEquals(rule['security_group_rule']['ethertype'],
-                                  'IPv4')
+                self.assertEqual(rule['security_group_rule']['protocol'],
+                                 protocol.lower())
+                self.assertEqual(rule['security_group_rule']['ethertype'],
+                                 'IPv4')
 
     def test_get_security_group(self):
         name = 'webservers'
@@ -606,7 +606,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 ports = self.deserialize(self.fmt,
                                          res.get_response(self.api))
                 port = ports['ports'][0]
-                self.assertEquals(len(port[ext_sg.SECURITYGROUPS]), 1)
+                self.assertEqual(len(port[ext_sg.SECURITYGROUPS]), 1)
                 self._delete('ports', port['id'])
 
     def test_list_security_group_rules(self):

@@ -93,8 +93,8 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                         {'router': {'routes': routes}})
 
                     body = self._show('routers', r['router']['id'])
-                    self.assertEquals(body['router']['routes'],
-                                      routes)
+                    self.assertEqual(body['router']['routes'],
+                                     routes)
                     self._update('routers', r['router']['id'],
                                  {'router': {'routes': []}})
                     # clean-up
@@ -119,8 +119,8 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                         {'router': {'routes': routes}})
 
                     body = self._show('routers', r['router']['id'])
-                    self.assertEquals(body['router']['routes'],
-                                      routes)
+                    self.assertEqual(body['router']['routes'],
+                                     routes)
 
                     self._router_interface_action(
                         'remove',
@@ -422,7 +422,7 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 net_id = body['router']['external_gateway_info']['network_id']
-                self.assertEquals(net_id, s['subnet']['network_id'])
+                self.assertEqual(net_id, s['subnet']['network_id'])
                 port_res = self._list_ports('json',
                                             200,
                                             s['subnet']['network_id'],
@@ -439,15 +439,15 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                                 routes}})
 
                 body = self._show('routers', r['router']['id'])
-                self.assertEquals(body['router']['routes'],
-                                  routes)
+                self.assertEqual(body['router']['routes'],
+                                 routes)
 
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
-                self.assertEquals(gw_info, None)
+                self.assertEqual(gw_info, None)
 
     def test_router_list_with_sort(self):
         with contextlib.nested(self.router(name='router1'),

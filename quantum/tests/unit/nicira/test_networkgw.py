@@ -285,8 +285,8 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 # fetch port and confirm device_id
                 gw_port_id = connection_info['port_id']
                 port_body = self._show('ports', gw_port_id)
-                self.assertEquals(port_body['port']['device_id'],
-                                  gw[self.resource]['id'])
+                self.assertEqual(port_body['port']['device_id'],
+                                 gw[self.resource]['id'])
                 # Clean up - otherwise delete will fail
                 body = self._gateway_action('disconnect',
                                             gw[self.resource]['id'],
@@ -304,7 +304,7 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         keys = [('devices', devices), ('name', name)]
         with self._network_gateway(name=name, devices=devices) as gw:
             for k, v in keys:
-                self.assertEquals(gw[self.resource][k], v)
+                self.assertEqual(gw[self.resource][k], v)
 
     def _test_delete_network_gateway(self, exp_gw_count=0):
         name = 'test-gw'
@@ -338,8 +338,8 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             req = self.new_show_request(networkgw.COLLECTION_NAME,
                                         gw[self.resource]['id'])
             res = self.deserialize('json', req.get_response(self.ext_api))
-            self.assertEquals(res[self.resource]['name'],
-                              gw[self.resource]['name'])
+            self.assertEqual(res[self.resource]['name'],
+                             gw[self.resource]['name'])
 
     def test_list_network_gateways(self):
         with self._network_gateway(name='test-gw-1') as gw1:
@@ -347,11 +347,11 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 req = self.new_list_request(networkgw.COLLECTION_NAME)
                 res = self.deserialize('json', req.get_response(self.ext_api))
                 key = self.resource + 's'
-                self.assertEquals(len(res[key]), 2)
-                self.assertEquals(res[key][0]['name'],
-                                  gw1[self.resource]['name'])
-                self.assertEquals(res[key][1]['name'],
-                                  gw2[self.resource]['name'])
+                self.assertEqual(len(res[key]), 2)
+                self.assertEqual(res[key][0]['name'],
+                                 gw1[self.resource]['name'])
+                self.assertEqual(res[key][1]['name'],
+                                 gw2[self.resource]['name'])
 
     def test_connect_and_disconnect_network(self):
         self._test_connect_and_disconnect_network('flat')

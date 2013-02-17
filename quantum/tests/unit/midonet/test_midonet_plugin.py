@@ -120,8 +120,8 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
         with self.network(name='net1') as net1:
             req = self.new_list_request('networks')
             res = self.deserialize('json', req.get_response(self.api))
-            self.assertEquals(res['networks'][0]['name'],
-                              net1['network']['name'])
+            self.assertEqual(res['networks'][0]['name'],
+                             net1['network']['name'])
 
     def test_show_network(self):
         self._setup_bridge_mock()

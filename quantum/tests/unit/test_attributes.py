@@ -414,7 +414,7 @@ class TestAttributes(testtools.TestCase):
         for uuid in uuids:
             msg = attributes._validate_uuid_list(uuid)
             error = "'%s' is not a list" % uuid
-            self.assertEquals(msg, error)
+            self.assertEqual(msg, error)
 
         # check invalid uuid in a list
         invalid_uuid_lists = [[None],
@@ -428,7 +428,7 @@ class TestAttributes(testtools.TestCase):
         for uuid_list in invalid_uuid_lists:
             msg = attributes._validate_uuid_list(uuid_list)
             error = "'%s' is not a valid UUID" % uuid_list[0]
-            self.assertEquals(msg, error)
+            self.assertEqual(msg, error)
 
         # check duplicate items in a list
         duplicate_uuids = ['e5069610-744b-42a7-8bd8-ceac1a229cd4',
@@ -437,7 +437,7 @@ class TestAttributes(testtools.TestCase):
         msg = attributes._validate_uuid_list(duplicate_uuids)
         error = ("Duplicate items in the list: "
                  "'%s'" % ', '.join(duplicate_uuids))
-        self.assertEquals(msg, error)
+        self.assertEqual(msg, error)
 
         # check valid uuid lists
         valid_uuid_lists = [['e5069610-744b-42a7-8bd8-ceac1a229cd4'],
@@ -446,12 +446,12 @@ class TestAttributes(testtools.TestCase):
                              'f3eeab00-8367-4524-b662-55e64d4cacb5']]
         for uuid_list in valid_uuid_lists:
             msg = attributes._validate_uuid_list(uuid_list)
-            self.assertEquals(msg, None)
+            self.assertEqual(msg, None)
 
     def test_validate_dict_type(self):
         for value in (None, True, '1', []):
-            self.assertEquals(attributes._validate_dict(value),
-                              "'%s' is not a dictionary" % value)
+            self.assertEqual(attributes._validate_dict(value),
+                             "'%s' is not a dictionary" % value)
 
     def test_validate_dict_without_constraints(self):
         msg = attributes._validate_dict({})
@@ -529,8 +529,8 @@ class TestAttributes(testtools.TestCase):
 
     def test_validate_non_negative(self):
         for value in (-1, '-2'):
-            self.assertEquals(attributes._validate_non_negative(value),
-                              "'%s' should be non-negative" % value)
+            self.assertEqual(attributes._validate_non_negative(value),
+                             "'%s' should be non-negative" % value)
 
         for value in (0, 1, '2', True, False):
             msg = attributes._validate_non_negative(value)
@@ -632,16 +632,16 @@ class TestConvertToList(testtools.TestCase):
 
     def test_convert_to_empty_list(self):
         for item in (None, [], (), {}):
-            self.assertEquals(attributes.convert_to_list(item), [])
+            self.assertEqual(attributes.convert_to_list(item), [])
 
     def test_convert_to_list_string(self):
         for item in ('', 'foo'):
-            self.assertEquals(attributes.convert_to_list(item), [item])
+            self.assertEqual(attributes.convert_to_list(item), [item])
 
     def test_convert_to_list_iterable(self):
         for item in ([None], [1, 2, 3], (1, 2, 3), set([1, 2, 3]), ['foo']):
-            self.assertEquals(attributes.convert_to_list(item), list(item))
+            self.assertEqual(attributes.convert_to_list(item), list(item))
 
     def test_convert_to_list_non_iterable(self):
         for item in (True, False, 1, 1.2, object()):
-            self.assertEquals(attributes.convert_to_list(item), [item])
+            self.assertEqual(attributes.convert_to_list(item), [item])

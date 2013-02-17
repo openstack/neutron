@@ -748,8 +748,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lswitch_dict.clear()
         req = self.new_list_request('networks')
         nets = self.deserialize('json', req.get_response(self.api))
-        self.assertEquals(nets['networks'][0]['status'],
-                          constants.NET_STATUS_ERROR)
+        self.assertEqual(nets['networks'][0]['status'],
+                         constants.NET_STATUS_ERROR)
 
     def test_show_network_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -757,8 +757,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lswitch_dict.clear()
         req = self.new_show_request('networks', net['network']['id'])
         net = self.deserialize('json', req.get_response(self.api))
-        self.assertEquals(net['network']['status'],
-                          constants.NET_STATUS_ERROR)
+        self.assertEqual(net['network']['status'],
+                         constants.NET_STATUS_ERROR)
 
     def test_delete_port_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -778,8 +778,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lswitch_lport_dict.clear()
         req = self.new_list_request('ports')
         nets = self.deserialize('json', req.get_response(self.api))
-        self.assertEquals(nets['ports'][0]['status'],
-                          constants.PORT_STATUS_ERROR)
+        self.assertEqual(nets['ports'][0]['status'],
+                         constants.PORT_STATUS_ERROR)
 
     def test_show_port_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -789,8 +789,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lswitch_lport_dict.clear()
         req = self.new_show_request('ports', port['port']['id'])
         net = self.deserialize('json', req.get_response(self.api))
-        self.assertEquals(net['port']['status'],
-                          constants.PORT_STATUS_ERROR)
+        self.assertEqual(net['port']['status'],
+                         constants.PORT_STATUS_ERROR)
 
     def test_delete_port_and_network_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -820,8 +820,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lrouter_dict.clear()
         req = self.new_list_request('routers')
         routers = self.deserialize('json', req.get_response(self.ext_api))
-        self.assertEquals(routers['routers'][0]['status'],
-                          constants.NET_STATUS_ERROR)
+        self.assertEqual(routers['routers'][0]['status'],
+                         constants.NET_STATUS_ERROR)
 
     def test_show_router_not_in_nvp(self):
         res = self._create_router('json', 'tenant')
@@ -829,8 +829,8 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.fc._fake_lrouter_dict.clear()
         req = self.new_show_request('routers', router['router']['id'])
         router = self.deserialize('json', req.get_response(self.ext_api))
-        self.assertEquals(router['router']['status'],
-                          constants.NET_STATUS_ERROR)
+        self.assertEqual(router['router']['status'],
+                         constants.NET_STATUS_ERROR)
 
 
 class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
@@ -849,13 +849,13 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                 res = self.deserialize('json', req.get_response(self.ext_api))
                 # We expect the default gateway too
                 key = self.resource + 's'
-                self.assertEquals(len(res[key]), 3)
-                self.assertEquals(res[key][0]['default'],
-                                  True)
-                self.assertEquals(res[key][1]['name'],
-                                  gw1[self.resource]['name'])
-                self.assertEquals(res[key][2]['name'],
-                                  gw2[self.resource]['name'])
+                self.assertEqual(len(res[key]), 3)
+                self.assertEqual(res[key][0]['default'],
+                                 True)
+                self.assertEqual(res[key][1]['name'],
+                                 gw1[self.resource]['name'])
+                self.assertEqual(res[key][2]['name'],
+                                 gw2[self.resource]['name'])
 
     def test_delete_network_gateway(self):
         # The default gateway must still be there

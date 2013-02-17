@@ -3026,7 +3026,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEquals(res.status_int, 409)
+                self.assertEqual(res.status_int, 409)
 
     def test_show_subnet(self):
         with self.network() as network:

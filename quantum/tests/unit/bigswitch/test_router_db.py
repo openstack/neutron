@@ -174,7 +174,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                     body = self._show('routers', r['router']['id'])
                     net_id = (body['router']
                               ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s1['subnet']['network_id'])
+                    self.assertEqual(net_id, s1['subnet']['network_id'])
                     self._set_net_external(s2['subnet']['network_id'])
                     self._add_external_gateway_to_router(
                         r['router']['id'],
@@ -182,7 +182,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                     body = self._show('routers', r['router']['id'])
                     net_id = (body['router']
                               ['external_gateway_info']['network_id'])
-                    self.assertEquals(net_id, s2['subnet']['network_id'])
+                    self.assertEqual(net_id, s2['subnet']['network_id'])
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
                         s2['subnet']['network_id'])
@@ -265,7 +265,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                     self.assertTrue('port_id' in body)
                     r_port_id = body['port_id']
                     body = self._show('ports', r_port_id)
-                    self.assertEquals(body['port']['device_id'], r_id)
+                    self.assertEqual(body['port']['device_id'], r_id)
 
                     with self.subnet(cidr='10.0.20.0/24') as s1:
                         s1_id = s1['subnet']['id']
@@ -274,7 +274,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                         self.assertTrue('port_id' in body)
                         r1_port_id = body['port_id']
                         body = self._show('ports', r1_port_id)
-                        self.assertEquals(body['port']['device_id'], r1_id)
+                        self.assertEqual(body['port']['device_id'], r1_id)
 
                         with self.subnet(cidr='11.0.0.0/24') as public_sub:
                             public_net_id = public_sub['subnet']['network_id']
@@ -298,7 +298,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                                 floatingip = self.deserialize(fmt, res)
 
                                 result = plugin_obj._send_all_data()
-                                self.assertEquals(result[0], 200)
+                                self.assertEqual(result[0], 200)
 
                                 self._delete('floatingips',
                                              floatingip['floatingip']['id'])

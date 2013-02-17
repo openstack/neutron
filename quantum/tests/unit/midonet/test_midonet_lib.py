@@ -105,9 +105,9 @@ class MidonetChainManagerTestCase(MidonetLibTestCase):
 
         self.mock_api.assert_has_calls(mock.call.get_chains(
             {"tenant_id": tenant_id}))
-        self.assertEquals(len(chains), 2)
-        self.assertEquals(chains['in'], in_chain)
-        self.assertEquals(chains['out'], out_chain)
+        self.assertEqual(len(chains), 2)
+        self.assertEqual(chains['in'], in_chain)
+        self.assertEqual(chains['out'], out_chain)
 
     def test_create_router_chains(self):
         tenant_id = 'test_tenant'
@@ -130,9 +130,9 @@ class MidonetChainManagerTestCase(MidonetLibTestCase):
 
         self.mock_api.assert_has_calls(mock.call.get_chains(
             {"tenant_id": tenant_id}))
-        self.assertEquals(len(chains), 2)
-        self.assertEquals(chains['in'], in_chain)
-        self.assertEquals(chains['out'], out_chain)
+        self.assertEqual(len(chains), 2)
+        self.assertEqual(chains['in'], in_chain)
+        self.assertEqual(chains['out'], out_chain)
 
 
 class MidonetPortGroupManagerTestCase(MidonetLibTestCase):
@@ -176,7 +176,7 @@ class MidonetPortGroupManagerTestCase(MidonetLibTestCase):
 
         pg = self.mgr.get_for_sg(tenant_id, sg_id)
 
-        self.assertEquals(pg, pg_mock)
+        self.assertEqual(pg, pg_mock)
 
 
 class MidonetRuleManagerTestCase(MidonetLibTestCase):
