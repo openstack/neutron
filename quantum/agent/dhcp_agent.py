@@ -46,7 +46,7 @@ METADATA_PORT = 80
 
 class DhcpAgent(object):
     OPTS = [
-        cfg.IntOpt('resync_interval', default=30,
+        cfg.IntOpt('resync_interval', default=5,
                    help=_("Interval to resync.")),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
