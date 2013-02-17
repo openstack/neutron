@@ -1150,8 +1150,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return port_data
 
     def update_port(self, context, id, port):
-        self._enforce_set_auth(context, port,
-                               self.port_security_enabled_update)
+        if attr.is_attr_set(port['port'].get(psec.PORTSECURITY)):
+            self._enforce_set_auth(context, port,
+                                   self.port_security_enabled_update)
+        tenant_id = self._get_tenant_id_for_create(context, port)
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
@@ -1161,7 +1163,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, port)
             # copy values over
             ret_port.update(port['port'])
-            tenant_id = self._get_tenant_id_for_create(context, ret_port)
 
             # TODO(salvatore-orlando): We might need transaction management
             # but the change for metadata support should not be too disruptive
