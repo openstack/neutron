@@ -15,6 +15,7 @@
 
 import urlparse
 
+from oslo.config import cfg
 import routes as routes_mapper
 import webob
 import webob.dec
@@ -24,7 +25,6 @@ from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 

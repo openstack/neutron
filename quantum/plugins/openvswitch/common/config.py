@@ -14,8 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
+
 from quantum.agent.common import config
-from quantum.openstack.common import cfg
 
 
 DEFAULT_BRIDGE_MAPPINGS = []

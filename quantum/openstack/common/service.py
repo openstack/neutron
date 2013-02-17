@@ -28,8 +28,8 @@ import time
 
 import eventlet
 import logging as std_logging
+from oslo.config import cfg
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common import eventlet_backdoor
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils

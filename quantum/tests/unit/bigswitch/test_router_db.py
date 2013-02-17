@@ -21,12 +21,12 @@
 import os
 
 from mock import patch
+from oslo.config import cfg
 from webob import exc
 
 from quantum.common.test_lib import test_config
 from quantum.extensions import l3
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common.notifier import test_notifier
 from quantum.tests.unit import test_l3_plugin

@@ -18,13 +18,13 @@
 import socket
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
 from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.debug import commands
 from quantum.debug.debug_agent import DEVICE_OWNER_PROBE, QuantumDebugAgent
-from quantum.openstack.common import cfg
 
 
 class MyApp(object):

@@ -17,10 +17,11 @@
 
 import sys
 
+from oslo.config import cfg
+
 from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.debug.debug_agent import QuantumDebugAgent
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantumclient.common import exceptions as exc
 from quantumclient.common import utils

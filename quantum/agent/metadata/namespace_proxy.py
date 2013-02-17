@@ -22,11 +22,11 @@ import urlparse
 
 import eventlet
 import httplib2
+from oslo.config import cfg
 import webob
 
 from quantum.agent.linux import daemon
 from quantum.common import config
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 

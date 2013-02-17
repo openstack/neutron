@@ -17,15 +17,16 @@
 
 import inspect
 import logging
-import mock
 import os
+
+import mock
+from oslo.config import cfg
 import webtest
 
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import router
 from quantum.common import config
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.tests.unit import test_api_v2
 
 

@@ -24,11 +24,12 @@ import re
 import sys
 import time
 
+from oslo.config import cfg
+
 from quantum.agent import rpc as agent_rpc
 from quantum.common import config as logging_config
 from quantum.common import topics
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.hyperv.agent import utils

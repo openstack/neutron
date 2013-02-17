@@ -18,13 +18,14 @@
 
 from sqlalchemy.orm import exc
 
+from oslo.config import cfg
+
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
 from quantum.db import models_v2
 from quantum.db import securitygroups_db as sg_db
 from quantum.extensions import securitygroup as ext_sg
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.plugins.openvswitch.common import constants
 from quantum.plugins.openvswitch import ovs_models_v2

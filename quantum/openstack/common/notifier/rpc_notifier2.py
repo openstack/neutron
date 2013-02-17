@@ -15,7 +15,8 @@
 
 '''messaging based notification driver, with message envelopes'''
 
-from quantum.openstack.common import cfg
+from oslo.config import cfg
+
 from quantum.openstack.common import context as req_context
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import log as logging

@@ -18,6 +18,7 @@ import logging
 import os
 
 import mock
+from oslo.config import cfg
 import webob.exc
 
 import quantum.common.test_lib as test_lib
@@ -25,7 +26,6 @@ from quantum import context
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib

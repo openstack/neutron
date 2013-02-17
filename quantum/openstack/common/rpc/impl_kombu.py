@@ -28,8 +28,8 @@ import kombu
 import kombu.connection
 import kombu.entity
 import kombu.messaging
+from oslo.config import cfg
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import network_utils
 from quantum.openstack.common.rpc import amqp as rpc_amqp

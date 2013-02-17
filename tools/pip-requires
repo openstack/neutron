@@ -16,6 +16,7 @@ sqlalchemy==0.7.9
 WebOb>=1.2
 python-keystoneclient>=0.2.0
 alembic>=0.4.1
+http://tarballs.openstack.org/oslo-config/oslo-config-2013.1b3.tar.gz#egg=oslo-config
 
 # Cisco plugin dependencies
 python-novaclient

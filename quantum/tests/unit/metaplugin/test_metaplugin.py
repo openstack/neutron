@@ -19,6 +19,7 @@ import os
 
 import mock
 import mox
+from oslo.config import cfg
 import stubout
 import unittest2 as unittest
 
@@ -26,7 +27,6 @@ from quantum import context
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
-from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 from quantum.plugins.metaplugin.meta_quantum_plugin import FlavorNotFound
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2

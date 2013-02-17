@@ -25,6 +25,7 @@ try:
     import MySQLdb
 except ImportError:
     MySQLdb = None
+from oslo.config import cfg
 import sqlalchemy as sql
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DisconnectionError
@@ -32,7 +33,6 @@ from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.orm import sessionmaker
 
 from quantum.db import model_base
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

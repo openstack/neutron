@@ -21,6 +21,7 @@ import uuid
 
 import eventlet
 import netaddr
+from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
@@ -31,7 +32,6 @@ from quantum.agent import rpc as agent_rpc
 from quantum.common import exceptions
 from quantum.common import topics
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging

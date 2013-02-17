@@ -16,6 +16,7 @@
 #    under the License.
 # @author: Isaku Yamahata
 
+from oslo.config import cfg
 from ryu.app import client
 from ryu.app import rest_nw_id
 
@@ -29,7 +30,6 @@ from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import l3_rpc_base
 from quantum.db import models_v2
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.ryu.common import config

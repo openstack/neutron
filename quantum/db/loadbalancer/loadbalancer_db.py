@@ -15,6 +15,7 @@
 #    under the License.
 #
 
+from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -28,7 +29,6 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import loadbalancer
 from quantum.extensions.loadbalancer import LoadBalancerPluginBase
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants

@@ -15,12 +15,11 @@
 
 """Test of DB API"""
 
+import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
-import mock
-
 import quantum.db.api as db
-from quantum.openstack.common import cfg
 
 
 class DBTestCase(unittest.TestCase):

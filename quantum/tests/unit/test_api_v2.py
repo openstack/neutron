@@ -18,6 +18,7 @@
 import os
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 import webob
 from webob import exc
@@ -32,7 +33,6 @@ from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common.notifier import api as notifer_api
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import testlib_api

@@ -21,6 +21,7 @@ from mock import call
 import unittest2 as unittest
 
 import mox
+from oslo.config import cfg
 
 from quantum.agent import firewall as firewall_base
 from quantum.agent.linux import iptables_manager
@@ -29,7 +30,6 @@ from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum import context
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common.rpc import proxy
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_iptables_firewall as test_fw

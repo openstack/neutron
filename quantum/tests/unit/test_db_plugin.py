@@ -22,6 +22,7 @@ import os
 import random
 
 import mock
+from oslo.config import cfg
 import sqlalchemy as sa
 import unittest2
 import webob.exc
@@ -39,7 +40,6 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.manager import QuantumManager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import timeutils
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api

@@ -17,8 +17,9 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
+from oslo.config import cfg
+
 from quantum.agent.common import config
-from quantum.openstack.common import cfg
 
 DEFAULT_VLAN_RANGES = []
 DEFAULT_INTERFACE_MAPPINGS = []

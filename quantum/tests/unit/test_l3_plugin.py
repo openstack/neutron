@@ -24,6 +24,7 @@ import itertools
 import unittest2 as unittest
 
 import mock
+from oslo.config import cfg
 from webob import exc
 import webtest
 
@@ -40,7 +41,6 @@ from quantum.db import l3_rpc_agent_api
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common.notifier import test_notifier

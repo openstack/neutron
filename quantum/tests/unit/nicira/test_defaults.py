@@ -15,7 +15,8 @@
 
 import unittest2 as unittest
 
-from quantum.openstack.common import cfg
+from oslo.config import cfg
+
 from quantum.plugins.nicira.nicira_nvp_plugin.common import config
 
 

@@ -22,6 +22,7 @@ import logging
 import unittest2 as unittest
 
 import mock
+from oslo.config import cfg
 import webob.exc as webexc
 import webtest
 
@@ -32,7 +33,6 @@ from quantum.db import api as db_api
 from quantum.db import servicetype_db
 from quantum.extensions import servicetype
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.plugins.common import constants
 from quantum.tests.unit import dummy_plugin as dp
 from quantum.tests.unit import test_api_v2

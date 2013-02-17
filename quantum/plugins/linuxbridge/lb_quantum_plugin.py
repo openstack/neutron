@@ -15,6 +15,8 @@
 
 import sys
 
+from oslo.config import cfg
+
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
@@ -33,7 +35,6 @@ from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy

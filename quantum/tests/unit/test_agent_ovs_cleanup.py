@@ -18,12 +18,12 @@
 import contextlib
 import itertools
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent import ovs_cleanup_util as util
-from quantum.openstack.common import cfg
 from quantum.openstack.common import uuidutils
 
 

@@ -14,11 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
 import webob.dec
 import webob.exc
 
 from quantum import context
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 

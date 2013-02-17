@@ -22,8 +22,8 @@ import uuid
 
 import eventlet
 import greenlet
+from oslo.config import cfg
 
-from quantum.openstack.common import cfg
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils

@@ -18,9 +18,10 @@
 
 import os
 
+from oslo.config import cfg
+
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)

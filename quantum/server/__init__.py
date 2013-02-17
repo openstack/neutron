@@ -21,8 +21,9 @@
 
 import sys
 
+from oslo.config import cfg
+
 from quantum.common import config
-from quantum.openstack.common import cfg
 from quantum import service
 
 

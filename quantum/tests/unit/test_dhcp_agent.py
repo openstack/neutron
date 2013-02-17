@@ -21,13 +21,13 @@ import sys
 import uuid
 
 import mock
+from oslo.config import cfg
 import unittest2 as unittest
 
 from quantum.agent.common import config
 from quantum.agent import dhcp_agent
 from quantum.agent.linux import interface
 from quantum.common import exceptions
-from quantum.openstack.common import cfg
 from quantum.openstack.common import jsonutils
 
 

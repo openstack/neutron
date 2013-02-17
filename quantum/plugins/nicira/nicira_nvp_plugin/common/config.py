@@ -14,8 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.openstack.common import cfg
-
+from oslo.config import cfg
 
 core_opts = [
     cfg.BoolOpt('metadata_dhcp_host_route', default=False),

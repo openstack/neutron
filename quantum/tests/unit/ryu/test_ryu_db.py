@@ -18,8 +18,9 @@
 from contextlib import nested
 import operator
 
+from oslo.config import cfg
+
 from quantum.db import api as db
-from quantum.openstack.common import cfg
 # NOTE: this import is needed for correct plugin code work
 from quantum.plugins.ryu.common import config
 from quantum.plugins.ryu.db import api_v2 as db_api_v2

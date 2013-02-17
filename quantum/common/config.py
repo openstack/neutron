@@ -21,11 +21,11 @@ Routines for configuring Quantum
 
 import os
 
+from oslo.config import cfg
 from paste import deploy
 
 from quantum.api.v2 import attributes
 from quantum.common import utils
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.version import version_info as quantum_version
