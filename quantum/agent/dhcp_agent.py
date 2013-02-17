@@ -46,7 +46,7 @@ NS_PREFIX = 'qdhcp-'
 class DhcpAgent(object):
     OPTS = [
         cfg.StrOpt('root_helper', default='sudo'),
-        cfg.IntOpt('resync_interval', default=30),
+        cfg.IntOpt('resync_interval', default=5),
         cfg.StrOpt('dhcp_driver',
                    default='quantum.agent.linux.dhcp.Dnsmasq',
                    help="The driver used to manage the DHCP server."),
