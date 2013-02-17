@@ -41,7 +41,7 @@ def new_L3_setUp(self):
     cfg.CONF.set_default('allow_overlapping_ips', False)
     ext_mgr = L3TestExtensionManager()
     test_config['extension_manager'] = ext_mgr
-    super(test_l3_plugin.L3NatDBTestCase, self).setUp()
+    super(test_l3_plugin.L3NatTestCaseBase, self).setUp()
 
     # Set to None to reload the drivers
     notifier_api._drivers = None
