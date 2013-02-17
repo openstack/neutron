@@ -144,12 +144,39 @@ class TestOvsQuantumAgent(unittest.TestCase):
         details = dict(exists=port_exists)
         with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
                                return_value=details):
-            with mock.patch.object(self.agent, 'port_unbound') as func:
+            with mock.patch.object(self.agent, 'port_unbound') as port_unbound:
                 self.assertFalse(self.agent.treat_devices_removed([{}]))
-        self.assertEqual(func.called, not port_exists)
+        self.assertEqual(port_unbound.called, not port_exists)
 
     def test_treat_devices_removed_unbinds_port(self):
         self.mock_treat_devices_removed(False)
 
     def test_treat_devices_removed_ignores_missing_port(self):
         self.mock_treat_devices_removed(False)
+
+    def test_port_update(self):
+        port = {'id': 1,
+                'network_id': 1,
+                'admin_state_up': True}
+        with mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
+                               return_value='2'):
+            with mock.patch.object(self.agent, 'port_bound') as port_bound:
+                self.agent.port_update(mock.Mock(), port=port)
+                self.assertTrue(port_bound.called)
+
+            with mock.patch.object(self.agent, 'port_dead') as port_dead:
+                port['admin_state_up'] = False
+                self.agent.port_update(mock.Mock(), port=port)
+                self.assertTrue(port_dead.called)
+
+    def test_process_network_ports(self):
+        reply = {'current': set(['tap0']),
+                 'removed': set(['eth0']),
+                 'added': set(['eth1'])}
+        with mock.patch.object(self.agent, 'treat_devices_added',
+                               return_value=False) as device_added:
+            with mock.patch.object(self.agent, 'treat_devices_removed',
+                                   return_value=False) as device_removed:
+                self.assertFalse(self.agent.process_network_ports(reply))
+                self.assertTrue(device_added.called)
+                self.assertTrue(device_removed.called)
