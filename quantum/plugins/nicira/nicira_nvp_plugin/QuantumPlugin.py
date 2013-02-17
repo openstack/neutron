@@ -61,6 +61,8 @@ from quantum.plugins.nicira.nicira_nvp_plugin.nvp_plugin_version import (
     PLUGIN_VERSION)
 
 LOG = logging.getLogger("QuantumPlugin")
+NVP_FLOATINGIP_NAT_RULES_ORDER = 200
+NVP_EXTGW_NAT_RULES_ORDER = 255
 
 
 # Provider network extension - allowed network types for the NVP Plugin
@@ -470,7 +472,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 cluster, router_id,
                 ip_addresses[0].split('/')[0],
                 ip_addresses[0].split('/')[0],
-                source_ip_addresses=cidr)
+                order=NVP_EXTGW_NAT_RULES_ORDER,
+                match_criteria={'source_ip_addresses': cidr})
 
         LOG.debug(_("_nvp_create_ext_gw_port completed on external network "
                     "%(ext_net_id)s, attached to router:%(router_id)s. "
@@ -1501,7 +1504,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 subnet = self._get_subnet(context, subnet_id)
                 nvplib.create_lrouter_snat_rule(
                     cluster, router_id, snat_ip, snat_ip,
-                    source_ip_addresses=subnet['cidr'])
+                    order=NVP_EXTGW_NAT_RULES_ORDER,
+                    match_criteria={'source_ip_addresses': subnet['cidr']})
 
         LOG.debug(_("Add_router_interface completed for subnet:%(subnet_id)s "
                     "and router:%(router_id)s"),
@@ -1679,13 +1683,16 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 try:
                     # Create new NAT rules
                     nvplib.create_lrouter_dnat_rule(
-                        cluster, router_id, internal_ip, internal_ip,
-                        destination_ip_addresses=floating_ip)
+                        cluster, router_id, internal_ip,
+                        order=NVP_FLOATINGIP_NAT_RULES_ORDER,
+                        match_criteria={'destination_ip_addresses':
+                                        floating_ip})
                     # setup snat rule such that src ip of a IP packet when
                     #  using floating is the floating ip itself.
                     nvplib.create_lrouter_snat_rule(
                         cluster, router_id, floating_ip, floating_ip,
-                        source_ip_addresses=internal_ip)
+                        order=NVP_FLOATINGIP_NAT_RULES_ORDER,
+                        match_criteria={'source_ip_addresses': internal_ip})
                     # Add Floating IP address to router_port
                     nvplib.update_lrouter_port_ips(cluster,
                                                    router_id,

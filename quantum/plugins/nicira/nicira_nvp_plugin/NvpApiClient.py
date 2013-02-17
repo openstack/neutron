@@ -26,6 +26,17 @@ LOG = logging.getLogger("NVPApiHelper")
 LOG.setLevel(logging.INFO)
 
 
+def _find_nvp_version_in_headers(headers):
+    # be safe if headers is None - do not cause a failure
+    for (header_name, header_value) in (headers or ()):
+        try:
+            if header_name == 'server':
+                return header_value.split('/')[1]
+        except IndexError:
+            LOG.warning(_("Unable to fetch NVP version from response "
+                          "headers:%s"), headers)
+
+
 class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
     '''
     Helper class to do basic login, cookie management, and provide base
@@ -62,7 +73,10 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
         self._http_timeout = http_timeout
         self._retries = retries
         self._redirects = redirects
+        self._nvp_version = None
 
+    # NOTE(salvatore-orlando): This method is not used anymore. Login is now
+    # performed automatically inside the request eventlet if necessary.
     def login(self, user=None, password=None):
         '''Login to NVP controller.
 
@@ -130,7 +144,18 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
                        'status': response.status, 'body': response.body})
             return None
 
+        if not self._nvp_version:
+            self._nvp_version = _find_nvp_version_in_headers(response.headers)
+
         return response.body
+
+    def get_nvp_version(self):
+        if not self._nvp_version:
+            # generate a simple request (/ws.v1/log)
+            # this will cause nvp_version to be fetched
+            # don't bother about response
+            self.request('GET', '/ws.v1/log')
+        return self._nvp_version
 
     def fourZeroFour(self):
         raise ResourceNotFound()
