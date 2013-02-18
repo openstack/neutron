@@ -51,9 +51,14 @@ ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 
-@contextlib.contextmanager
-def dummy_context_func():
-    yield None
+def optional_ctx(obj, fallback):
+    if not obj:
+        return fallback()
+
+    @contextlib.contextmanager
+    def context_wrapper():
+        yield obj
+    return context_wrapper()
 
 
 def etcdir(*p):
@@ -70,8 +75,9 @@ def _fake_get_sorting_helper(self, request):
 
 class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
     fmt = 'json'
+    resource_prefix_map = {}
 
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, service_plugins=None):
         super(QuantumDbPluginV2TestCase, self).setUp()
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
@@ -95,6 +101,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
 
         if not plugin:
             plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
+
         # Create the default configurations
         args = ['--config-file', etcdir('quantum.conf.test')]
         # If test_config specifies some config-file, use it, as well
@@ -103,6 +110,12 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         config.parse(args=args)
         # Update the plugin
         cfg.CONF.set_override('core_plugin', plugin)
+        cfg.CONF.set_override(
+            'service_plugins',
+            [test_config.get(key, default)
+             for key, default in (service_plugins or {}).iteritems()]
+        )
+
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
@@ -111,7 +124,6 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         self.api = APIRouter()
         # Set the defualt port status
         self.port_create_status = 'ACTIVE'
-        super(QuantumDbPluginV2TestCase, self).setUp()
 
         def _is_native_bulk_supported():
             plugin_obj = QuantumManager.get_plugin()
@@ -162,15 +174,19 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
 
-    def _req(self, method, resource, data=None, fmt=None,
-             id=None, params=None, action=None):
+    def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
+             action=None, subresource=None, sub_id=None):
         fmt = fmt or self.fmt
-        if id and action:
-            path = '/%(resource)s/%(id)s/%(action)s.%(fmt)s' % locals()
-        elif id:
-            path = '/%(resource)s/%(id)s.%(fmt)s' % locals()
-        else:
-            path = '/%(resource)s.%(fmt)s' % locals()
+
+        path = '/%s.%s' % (
+            '/'.join(p for p in
+                     (resource, id, subresource, sub_id, action) if p),
+            fmt
+        )
+
+        prefix = self.resource_prefix_map.get(resource)
+        if prefix:
+            path = prefix + path
 
         content_type = 'application/%s' % fmt
         body = None
@@ -179,23 +195,51 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         return testlib_api.create_request(path, body, content_type, method,
                                           query_string=params)
 
-    def new_create_request(self, resource, data, fmt=None):
-        return self._req('POST', resource, data, fmt)
+    def new_create_request(self, resource, data, fmt=None, id=None,
+                           subresource=None):
+        return self._req('POST', resource, data, fmt, id=id,
+                         subresource=subresource)
 
-    def new_list_request(self, resource, fmt=None, params=None):
-        return self._req('GET', resource, None, fmt, params=params)
+    def new_list_request(self, resource, fmt=None, params=None,
+                         subresource=None):
+        return self._req(
+            'GET', resource, None, fmt, params=params, subresource=subresource
+        )
 
-    def new_show_request(self, resource, id, fmt=None):
-        return self._req('GET', resource, None, fmt, id=id)
+    def new_show_request(self, resource, id, fmt=None, subresource=None):
+        return self._req(
+            'GET', resource, None, fmt, id=id, subresource=subresource
+        )
 
-    def new_delete_request(self, resource, id, fmt=None):
-        return self._req('DELETE', resource, None, fmt, id=id)
+    def new_delete_request(self, resource, id, fmt=None, subresource=None,
+                           sub_id=None):
+        return self._req(
+            'DELETE',
+            resource,
+            None,
+            fmt,
+            id=id,
+            subresource=subresource,
+            sub_id=sub_id
+        )
 
-    def new_update_request(self, resource, data, id, fmt=None):
-        return self._req('PUT', resource, data, fmt, id=id)
+    def new_update_request(self, resource, data, id, fmt=None,
+                           subresource=None):
+        return self._req(
+            'PUT', resource, data, fmt, id=id, subresource=subresource
+        )
 
-    def new_action_request(self, resource, data, id, action, fmt=None):
-        return self._req('PUT', resource, data, fmt, id=id, action=action)
+    def new_action_request(self, resource, data, id, action, fmt=None,
+                           subresource=None):
+        return self._req(
+            'PUT',
+            resource,
+            data,
+            fmt,
+            id=id,
+            action=action,
+            subresource=subresource
+        )
 
     def deserialize(self, content_type, response):
         ctype = 'application/%s' % content_type
@@ -503,10 +547,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
                host_routes=None,
                shared=None,
                do_delete=True):
-        with (self.network() if not network
-              else dummy_context_func()) as network_to_use:
-            if network:
-                network_to_use = network
+        with optional_ctx(network, self.network) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
                                        gateway_ip,
@@ -526,10 +567,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
     @contextlib.contextmanager
     def port(self, subnet=None, fmt=None, no_delete=False,
              **kwargs):
-        with (self.subnet() if not subnet
-              else dummy_context_func()) as subnet_to_use:
-            if subnet:
-                subnet_to_use = subnet
+        with optional_ctx(subnet, self.subnet) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(fmt or self.fmt, net_id, **kwargs)
             try:
