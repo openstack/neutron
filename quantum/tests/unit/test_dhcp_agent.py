@@ -19,12 +19,15 @@ import socket
 import sys
 import uuid
 
+import eventlet
 import mock
 from oslo.config import cfg
 import unittest2 as unittest
 
 from quantum.agent.common import config
 from quantum.agent import dhcp_agent
+from quantum.agent.dhcp_agent import DhcpAgentWithStateReport
+from quantum.agent.linux import dhcp
 from quantum.agent.linux import interface
 from quantum.common import constants
 from quantum.common import exceptions
@@ -33,6 +36,7 @@ from quantum.openstack.common import jsonutils
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
+HOSTNAME = 'hostname'
 
 
 def etcdir(*p):
@@ -114,34 +118,65 @@ class TestDhcpAgent(unittest.TestCase):
         self.driver = mock.Mock(name='driver')
         self.driver_cls = self.driver_cls_p.start()
         self.driver_cls.return_value = self.driver
-        self.notification_p = mock.patch(
-            'quantum.agent.rpc.NotificationDispatcher')
-        self.notification = self.notification_p.start()
 
     def tearDown(self):
-        self.notification_p.stop()
         self.driver_cls_p.stop()
         cfg.CONF.reset()
 
-    def test_dhcp_agent_main(self):
+    def test_dhcp_agent_manager(self):
+        state_rpc_str = 'quantum.agent.rpc.PluginReportStateAPI'
+        lease_relay_str = 'quantum.agent.dhcp_agent.DhcpLeaseRelay'
+        with mock.patch.object(DhcpAgentWithStateReport,
+                               'sync_state',
+                               autospec=True) as mock_sync_state:
+            with mock.patch.object(DhcpAgentWithStateReport,
+                                   'periodic_resync',
+                                   autospec=True) as mock_periodic_resync:
+                with mock.patch(state_rpc_str) as state_rpc:
+                    with mock.patch(lease_relay_str) as mock_lease_relay:
+                        with mock.patch.object(sys, 'argv') as sys_argv:
+                            sys_argv.return_value = [
+                                'dhcp', '--config-file',
+                                etcdir('quantum.conf.test')]
+                            cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+                            config.register_agent_state_opts_helper(cfg.CONF)
+                            config.register_root_helper(cfg.CONF)
+                            cfg.CONF.register_opts(
+                                dhcp_agent.DeviceManager.OPTS)
+                            cfg.CONF.register_opts(
+                                dhcp_agent.DhcpLeaseRelay.OPTS)
+                            cfg.CONF.register_opts(dhcp.OPTS)
+                            cfg.CONF.register_opts(interface.OPTS)
+                            cfg.CONF(project='quantum')
+                            agent_mgr = DhcpAgentWithStateReport('testhost')
+                            eventlet.greenthread.sleep(1)
+                            agent_mgr.after_start()
+                            mock_sync_state.assert_called_once_with(agent_mgr)
+                            mock_periodic_resync.assert_called_once_with(
+                                agent_mgr)
+                            state_rpc.assert_has_calls(
+                                [mock.call(mock.ANY),
+                                 mock.call().report_state(mock.ANY, mock.ANY)])
+                            mock_lease_relay.assert_has_calls(
+                                [mock.call(mock.ANY),
+                                 mock.call().start()])
+
+    def test_dhcp_agent_main_agent_manager(self):
         logging_str = 'quantum.agent.common.config.setup_logging'
-        manager_str = 'quantum.agent.dhcp_agent.DeviceManager'
-        agent_str = 'quantum.agent.dhcp_agent.DhcpAgent'
+        launcher_str = 'quantum.openstack.common.service.ServiceLauncher'
         with mock.patch(logging_str):
-            with mock.patch(manager_str) as dev_mgr:
-                with mock.patch(agent_str) as dhcp:
-                    with mock.patch.object(sys, 'argv') as sys_argv:
-                        sys_argv.return_value = ['dhcp', '--config-file',
-                                                 etcdir('quantum.conf.test')]
-                        dhcp_agent.main()
-                        dev_mgr.assert_called_once(mock.ANY, 'sudo')
-                        dhcp.assert_has_calls([
-                            mock.call(mock.ANY),
-                            mock.call().run()])
+            with mock.patch.object(sys, 'argv') as sys_argv:
+                with mock.patch(launcher_str) as launcher:
+                    sys_argv.return_value = ['dhcp', '--config-file',
+                                             etcdir('quantum.conf.test')]
+                    dhcp_agent.main()
+                    launcher.assert_has_calls(
+                        [mock.call(), mock.call().launch_service(mock.ANY),
+                         mock.call().wait()])
 
     def test_run_completes_single_pass(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             attrs_to_mock = dict(
                 [(a, mock.DEFAULT) for a in
                  ['sync_state', 'lease_relay', 'periodic_resync']])
@@ -151,19 +186,18 @@ class TestDhcpAgent(unittest.TestCase):
                 mocks['periodic_resync'].assert_called_once_with()
                 mocks['lease_relay'].assert_has_mock_calls(
                     [mock.call.start()])
-                self.notification.assert_has_calls([mock.call.run_dispatch()])
 
     def test_ns_name(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             mock_net = mock.Mock(id='foo')
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             self.assertEqual(dhcp._ns_name(mock_net), 'qdhcp-foo')
 
     def test_ns_name_disabled_namespace(self):
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             cfg.CONF.set_override('use_namespaces', False)
             mock_net = mock.Mock(id='foo')
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             self.assertIsNone(dhcp._ns_name(mock_net))
 
     def test_call_driver(self):
@@ -185,7 +219,7 @@ class TestDhcpAgent(unittest.TestCase):
         self.driver.return_value.foo.side_effect = Exception
         with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
             with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
-                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
                 self.assertIsNone(dhcp.call_driver('foo', network))
                 self.assertTrue(dev_mgr.called)
                 self.driver.assert_called_once_with(cfg.CONF,
@@ -198,7 +232,7 @@ class TestDhcpAgent(unittest.TestCase):
 
     def test_update_lease(self):
         with mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi') as plug:
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             dhcp.update_lease('net_id', '192.168.1.1', 120)
             plug.assert_has_calls(
                 [mock.call().update_lease_expiration(
@@ -209,7 +243,7 @@ class TestDhcpAgent(unittest.TestCase):
             plug.return_value.update_lease_expiration.side_effect = Exception
 
             with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
-                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
                 dhcp.update_lease('net_id', '192.168.1.1', 120)
                 plug.assert_has_calls(
                     [mock.call().update_lease_expiration(
@@ -224,7 +258,7 @@ class TestDhcpAgent(unittest.TestCase):
             mock_plugin.get_active_networks.return_value = active_networks
             plug.return_value = mock_plugin
 
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
 
             attrs_to_mock = dict(
                 [(a, mock.DEFAULT) for a in
@@ -260,21 +294,21 @@ class TestDhcpAgent(unittest.TestCase):
             plug.return_value = mock_plugin
 
             with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
-                dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+                dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
                 dhcp.sync_state()
 
                 self.assertTrue(log.called)
                 self.assertTrue(dhcp.needs_resync)
 
     def test_periodic_resync(self):
-        dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         with mock.patch.object(dhcp_agent.eventlet, 'spawn') as spawn:
             dhcp.periodic_resync()
             spawn.assert_called_once_with(dhcp._periodic_resync_helper)
 
     def test_periodoc_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
-            dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             dhcp.needs_resync = True
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
@@ -293,9 +327,6 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
                               'quantum.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
-        self.notification_p = mock.patch(
-            'quantum.agent.rpc.NotificationDispatcher')
-        self.notification = self.notification_p.start()
 
         self.plugin_p = mock.patch('quantum.agent.dhcp_agent.DhcpPluginApi')
         plugin_cls = self.plugin_p.start()
@@ -307,7 +338,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache = mock.Mock()
         cache_cls.return_value = self.cache
 
-        self.dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+        self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
 
         self.call_driver = self.call_driver_p.start()
@@ -321,7 +352,6 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.call_driver_p.stop()
         self.cache_p.stop()
         self.plugin_p.stop()
-        self.notification_p.stop()
 
     def test_enable_dhcp_helper(self):
         self.plugin.get_network_info.return_value = fake_network
@@ -462,26 +492,26 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         payload = dict(network=dict(id=fake_network.id))
 
         with mock.patch.object(self.dhcp, 'enable_dhcp_helper') as enable:
-            self.dhcp.network_create_end(payload)
+            self.dhcp.network_create_end(None, payload)
             enable.assertCalledOnceWith(fake_network.id)
 
     def test_network_update_end_admin_state_up(self):
         payload = dict(network=dict(id=fake_network.id, admin_state_up=True))
         with mock.patch.object(self.dhcp, 'enable_dhcp_helper') as enable:
-            self.dhcp.network_update_end(payload)
+            self.dhcp.network_update_end(None, payload)
             enable.assertCalledOnceWith(fake_network.id)
 
     def test_network_update_end_admin_state_down(self):
         payload = dict(network=dict(id=fake_network.id, admin_state_up=False))
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
-            self.dhcp.network_update_end(payload)
+            self.dhcp.network_update_end(None, payload)
             disable.assertCalledOnceWith(fake_network.id)
 
     def test_network_delete_end(self):
         payload = dict(network_id=fake_network.id)
 
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
-            self.dhcp.network_delete_end(payload)
+            self.dhcp.network_delete_end(None, payload)
             disable.assertCalledOnceWith(fake_network.id)
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
@@ -523,13 +553,13 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.get_network_by_id.return_value = fake_network
         self.plugin.get_network_info.return_value = fake_network
 
-        self.dhcp.subnet_update_end(payload)
+        self.dhcp.subnet_update_end(None, payload)
 
         self.cache.assert_has_calls([mock.call.put(fake_network)])
         self.call_driver.assert_called_once_with('reload_allocations',
                                                  fake_network)
 
-    def test_subnet_update_end(self):
+    def test_subnet_update_end_restart(self):
         new_state = FakeModel(fake_network.id,
                               tenant_id=fake_network.tenant_id,
                               admin_state_up=True,
@@ -540,7 +570,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.get_network_by_id.return_value = fake_network
         self.plugin.get_network_info.return_value = new_state
 
-        self.dhcp.subnet_update_end(payload)
+        self.dhcp.subnet_update_end(None, payload)
 
         self.cache.assert_has_calls([mock.call.put(new_state)])
         self.call_driver.assert_called_once_with('restart',
@@ -558,7 +588,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.get_network_by_id.return_value = prev_state
         self.plugin.get_network_info.return_value = fake_network
 
-        self.dhcp.subnet_delete_end(payload)
+        self.dhcp.subnet_delete_end(None, payload)
 
         self.cache.assert_has_calls([
             mock.call.get_network_by_subnet_id(
@@ -571,7 +601,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
     def test_port_update_end(self):
         payload = dict(port=vars(fake_port2))
         self.cache.get_network_by_id.return_value = fake_network
-        self.dhcp.port_update_end(payload)
+        self.dhcp.port_update_end(None, payload)
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_port2.network_id),
              mock.call.put_port(mock.ANY)])
@@ -583,7 +613,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port2
 
-        self.dhcp.port_delete_end(payload)
+        self.dhcp.port_delete_end(None, payload)
 
         self.cache.assert_has_calls(
             [mock.call.get_port_by_id(fake_port2.id),
@@ -596,7 +626,7 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
         payload = dict(port_id='unknown')
         self.cache.get_port_by_id.return_value = None
 
-        self.dhcp.port_delete_end(payload)
+        self.dhcp.port_delete_end(None, payload)
 
         self.cache.assert_has_calls([mock.call.get_port_by_id('unknown')])
         self.assertEqual(self.call_driver.call_count, 0)

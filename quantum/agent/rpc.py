@@ -100,34 +100,3 @@ class PluginApi(proxy.RpcProxy):
         return self.call(context,
                          self.make_msg('tunnel_sync', tunnel_ip=tunnel_ip),
                          topic=self.topic)
-
-
-class NotificationDispatcher(object):
-    def __init__(self):
-        # Set the Queue size to 1 so that messages stay on server rather than
-        # being buffered in the process.
-        self.queue = eventlet.queue.Queue(1)
-        self.connection = rpc.create_connection(new=True)
-        topic = '%s.%s' % (rpc_notifier.CONF.notification_topics[0],
-                           api.CONF.default_notification_level.lower())
-        queue_name = 'notification_listener_%s' % uuidutils.generate_uuid()
-        self.connection.declare_topic_consumer(topic=topic,
-                                               queue_name=queue_name,
-                                               callback=self._add_to_queue)
-        self.connection.consume_in_thread()
-
-    def _add_to_queue(self, msg):
-        self.queue.put(msg)
-
-    def run_dispatch(self, handler):
-        while True:
-            msg = self.queue.get()
-            name = msg['event_type'].replace('.', '_')
-
-            try:
-                if hasattr(handler, name):
-                    getattr(handler, name)(msg['payload'])
-                else:
-                    LOG.debug(_('Unknown event_type: %s.'), msg['event_type'])
-            except Exception, e:
-                LOG.warn(_('Error processing message. Exception: %s'), e)

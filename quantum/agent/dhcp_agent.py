@@ -33,11 +33,15 @@ from quantum.common import constants
 from quantum.common import exceptions
 from quantum.common import topics
 from quantum import context
+from quantum import manager
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import proxy
+from quantum.openstack.common import service
 from quantum.openstack.common import uuidutils
+from quantum import service as quantum_service
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qdhcp-'
@@ -46,7 +50,7 @@ METADATA_DEFAULT_IP = '169.254.169.254/%d' % METADATA_DEFAULT_PREFIX
 METADATA_PORT = 80
 
 
-class DhcpAgent(object):
+class DhcpAgent(manager.Manager):
     OPTS = [
         cfg.IntOpt('resync_interval', default=5,
                    help=_("Interval to resync.")),
@@ -60,29 +64,34 @@ class DhcpAgent(object):
         cfg.BoolOpt('enable_metadata_network', default=False,
                     help=_("Allows for serving metadata requests from a "
                            "dedicate network. Requires "
-                           "enable isolated_metadata = True "))
+                           "enable isolated_metadata = True ")),
+        cfg.StrOpt('dhcp_agent_manager',
+                   default='quantum.agent.dhcp_agent.'
+                   'DhcpAgentWithStateReport',
+                   help=_("The Quantum DHCP agent manager.")),
     ]
 
-    def __init__(self, conf):
+    def __init__(self, host=None):
+        super(DhcpAgent, self).__init__(host=host)
         self.needs_resync = False
-        self.conf = conf
+        self.conf = cfg.CONF
         self.cache = NetworkCache()
-        self.root_helper = config.get_root_helper(conf)
-
-        self.dhcp_driver_cls = importutils.import_class(conf.dhcp_driver)
+        self.root_helper = config.get_root_helper(self.conf)
+        self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
         ctx = context.get_admin_context_without_session()
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, ctx)
-
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)
-        self.notifications = agent_rpc.NotificationDispatcher()
         self.lease_relay = DhcpLeaseRelay(self.update_lease)
+
+    def after_start(self):
+        self.run()
+        LOG.info(_("DHCP agent started"))
 
     def run(self):
         """Activate the DHCP agent."""
         self.sync_state()
         self.periodic_resync()
         self.lease_relay.start()
-        self.notifications.run_dispatch(self)
 
     def _ns_name(self, network):
         if self.conf.use_namespaces:
@@ -199,12 +208,12 @@ class DhcpAgent(object):
         else:
             self.disable_dhcp_helper(network.id)
 
-    def network_create_end(self, payload):
+    def network_create_end(self, context, payload):
         """Handle the network.create.end notification event."""
         network_id = payload['network']['id']
         self.enable_dhcp_helper(network_id)
 
-    def network_update_end(self, payload):
+    def network_update_end(self, context, payload):
         """Handle the network.update.end notification event."""
         network_id = payload['network']['id']
         if payload['network']['admin_state_up']:
@@ -212,11 +221,11 @@ class DhcpAgent(object):
         else:
             self.disable_dhcp_helper(network_id)
 
-    def network_delete_end(self, payload):
+    def network_delete_end(self, context, payload):
         """Handle the network.delete.end notification event."""
         self.disable_dhcp_helper(payload['network_id'])
 
-    def subnet_update_end(self, payload):
+    def subnet_update_end(self, context, payload):
         """Handle the subnet.update.end notification event."""
         network_id = payload['subnet']['network_id']
         self.refresh_dhcp_helper(network_id)
@@ -224,14 +233,14 @@ class DhcpAgent(object):
     # Use the update handler for the subnet create event.
     subnet_create_end = subnet_update_end
 
-    def subnet_delete_end(self, payload):
+    def subnet_delete_end(self, context, payload):
         """Handle the subnet.delete.end notification event."""
         subnet_id = payload['subnet_id']
         network = self.cache.get_network_by_subnet_id(subnet_id)
         if network:
             self.refresh_dhcp_helper(network.id)
 
-    def port_update_end(self, payload):
+    def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
         port = DictModel(payload['port'])
         network = self.cache.get_network_by_id(port.network_id)
@@ -242,7 +251,7 @@ class DhcpAgent(object):
     # Use the update handler for the port create event.
     port_create_end = port_update_end
 
-    def port_delete_end(self, payload):
+    def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
         port = self.cache.get_port_by_id(payload['port_id'])
         if port:
@@ -433,6 +442,19 @@ class NetworkCache(object):
             for port in network.ports:
                 if port.id == port_id:
                     return port
+
+    def get_state(self):
+        net_ids = self.get_network_ids()
+        num_nets = len(net_ids)
+        num_subnets = 0
+        num_ports = 0
+        for net_id in net_ids:
+            network = self.get_network_by_id(net_id)
+            num_subnets += len(network.subnets)
+            num_ports += len(network.ports)
+        return {'networks': num_nets,
+                'subnets': num_subnets,
+                'ports': num_ports}
 
 
 class DeviceManager(object):
@@ -626,9 +648,46 @@ class DhcpLeaseRelay(object):
         eventlet.spawn(eventlet.serve, listener, self._handler)
 
 
+class DhcpAgentWithStateReport(DhcpAgent):
+    def __init__(self, host=None):
+        super(DhcpAgentWithStateReport, self).__init__(host=host)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.agent_state = {
+            'binary': 'quantum-dhcp-agent',
+            'host': host,
+            'topic': topics.DHCP_AGENT,
+            'configurations': {
+                'dhcp_driver': cfg.CONF.dhcp_driver,
+                'use_namespaces': cfg.CONF.use_namespaces,
+                'dhcp_lease_time': cfg.CONF.dhcp_lease_time},
+            'start_flag': True,
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
+
+    def _report_state(self):
+        try:
+            self.agent_state.get('configurations').update(
+                self.cache.get_state())
+            ctx = context.get_admin_context_without_session()
+            self.state_rpc.report_state(ctx,
+                                        self.agent_state)
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
+            return
+        if self.agent_state.pop('start_flag', None):
+            self.run()
+
+    def after_start(self):
+        LOG.info(_("DHCP agent started"))
+
+
 def main():
     eventlet.monkey_patch()
     cfg.CONF.register_opts(DhcpAgent.OPTS)
+    config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
     cfg.CONF.register_opts(DeviceManager.OPTS)
     cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
@@ -636,6 +695,8 @@ def main():
     cfg.CONF.register_opts(interface.OPTS)
     cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
-
-    mgr = DhcpAgent(cfg.CONF)
-    mgr.run()
+    server = quantum_service.Service.create(
+        binary='quantum-dhcp-agent',
+        topic=topics.DHCP_AGENT,
+        report_interval=cfg.CONF.AGENT.report_interval)
+    service.launch(server).wait()
