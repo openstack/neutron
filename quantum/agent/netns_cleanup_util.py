@@ -53,7 +53,6 @@ def setup_conf():
     conf = cfg.CommonConfigOpts()
     conf.register_opts(opts)
     conf.register_opts(dhcp.OPTS)
-    config.setup_logging(conf)
     return conf
 
 
@@ -147,6 +146,7 @@ def main():
 
     conf = setup_conf()
     conf(sys.argv)
+    config.setup_logging(conf)
 
     # Identify namespaces that are candidates for deletion.
     candidates = [ns for ns in

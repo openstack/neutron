@@ -184,20 +184,21 @@ class TestNetnsCleanup(unittest.TestCase):
                 with mock.patch.multiple(util, **methods_to_mock) as mocks:
                     mocks['eligible_for_deletion'].return_value = True
                     mocks['setup_conf'].return_value = conf
-                    util.main()
+                    with mock.patch('quantum.common.config.setup_logging'):
+                        util.main()
 
-                    mocks['eligible_for_deletion'].assert_has_calls(
-                        [mock.call(conf, 'ns1', False),
-                         mock.call(conf, 'ns2', False)])
+                        mocks['eligible_for_deletion'].assert_has_calls(
+                            [mock.call(conf, 'ns1', False),
+                             mock.call(conf, 'ns2', False)])
 
-                    mocks['destroy_namespace'].assert_has_calls(
-                        [mock.call(conf, 'ns1', False),
-                         mock.call(conf, 'ns2', False)])
+                        mocks['destroy_namespace'].assert_has_calls(
+                            [mock.call(conf, 'ns1', False),
+                             mock.call(conf, 'ns2', False)])
 
-                    ip_wrap.assert_has_calls(
-                        [mock.call.get_namespaces('sudo')])
+                        ip_wrap.assert_has_calls(
+                            [mock.call.get_namespaces('sudo')])
 
-                    eventlet_sleep.assert_called_once_with(2)
+                        eventlet_sleep.assert_called_once_with(2)
 
     def test_main_no_candidates(self):
         namespaces = ['ns1', 'ns2']
@@ -216,15 +217,16 @@ class TestNetnsCleanup(unittest.TestCase):
                 with mock.patch.multiple(util, **methods_to_mock) as mocks:
                     mocks['eligible_for_deletion'].return_value = False
                     mocks['setup_conf'].return_value = conf
-                    util.main()
+                    with mock.patch('quantum.common.config.setup_logging'):
+                        util.main()
 
-                    ip_wrap.assert_has_calls(
-                        [mock.call.get_namespaces('sudo')])
+                        ip_wrap.assert_has_calls(
+                            [mock.call.get_namespaces('sudo')])
 
-                    mocks['eligible_for_deletion'].assert_has_calls(
-                        [mock.call(conf, 'ns1', False),
-                         mock.call(conf, 'ns2', False)])
+                        mocks['eligible_for_deletion'].assert_has_calls(
+                            [mock.call(conf, 'ns1', False),
+                             mock.call(conf, 'ns2', False)])
 
-                    self.assertFalse(mocks['destroy_namespace'].called)
+                        self.assertFalse(mocks['destroy_namespace'].called)
 
-                    self.assertFalse(eventlet_sleep.called)
+                        self.assertFalse(eventlet_sleep.called)
