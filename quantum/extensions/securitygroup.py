@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from abc import ABCMeta
 from abc import abstractmethod
 
 from quantum.api import extensions
@@ -315,16 +316,14 @@ class Securitygroup(extensions.ExtensionDescriptor):
 
 
 class SecurityGroupPluginBase(object):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def create_security_group(self, context, security_group):
         pass
 
     @abstractmethod
-    def delete_security_group(self, context, security_group):
-        pass
-
-    @abstractmethod
-    def update_security_group(self, context, security_group):
+    def delete_security_group(self, context, id):
         pass
 
     @abstractmethod
@@ -340,7 +339,7 @@ class SecurityGroupPluginBase(object):
         pass
 
     @abstractmethod
-    def delete_security_group_rule(self, context, sgrid):
+    def delete_security_group_rule(self, context, id):
         pass
 
     @abstractmethod
