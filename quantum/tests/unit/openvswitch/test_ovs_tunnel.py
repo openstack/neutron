@@ -64,6 +64,7 @@ class TunnelTest(unittest.TestCase):
     def setUp(self):
         cfg.CONF.set_override('rpc_backend',
                               'quantum.openstack.common.rpc.impl_fake')
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
         self.mox = mox.Mox()
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'

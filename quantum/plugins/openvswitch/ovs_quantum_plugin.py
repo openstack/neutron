@@ -30,6 +30,7 @@ from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum.db import agents_db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
@@ -71,7 +72,8 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self,
+                                          agents_db.AgentExtRpcCallback()])
 
     @classmethod
     def get_port_from_device(cls, device):
@@ -208,7 +210,9 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          l3_db.L3_NAT_db_mixin,
-                         sg_db_rpc.SecurityGroupServerRpcMixin):
+                         sg_db_rpc.SecurityGroupServerRpcMixin,
+                         agents_db.AgentDbMixin):
+
     """Implement the Quantum abstractions using Open vSwitch.
 
     Depending on whether tunneling is enabled, either a GRE tunnel or
@@ -231,7 +235,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # is qualified by class
     __native_bulk_support = True
     supported_extension_aliases = ["provider", "router",
-                                   "binding", "quotas", "security-group"]
+                                   "binding", "quotas", "security-group",
+                                   "agent"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"

@@ -24,6 +24,7 @@ from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.common import utils
+from quantum.db import agents_db
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
@@ -48,12 +49,13 @@ LOG = logging.getLogger(__name__)
 
 class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                               l3_rpc_base.L3RpcCallbackMixin,
-                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin
+                              ):
 
-    RPC_API_VERSION = '1.1'
-    # Device names start with "tap"
     # history
     #   1.1 Support Security Group RPC
+    RPC_API_VERSION = '1.1'
+    # Device names start with "tap"
     TAP_PREFIX_LEN = 3
 
     def create_rpc_dispatcher(self):
@@ -62,7 +64,8 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self,
+                                          agents_db.AgentExtRpcCallback()])
 
     @classmethod
     def get_port_from_device(cls, device):
@@ -170,7 +173,8 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           l3_db.L3_NAT_db_mixin,
-                          sg_db_rpc.SecurityGroupServerRpcMixin):
+                          sg_db_rpc.SecurityGroupServerRpcMixin,
+                          agents_db.AgentDbMixin):
     """Implement the Quantum abstractions using Linux bridging.
 
     A new VLAN is created for each network.  An agent is relied upon
@@ -193,7 +197,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     __native_bulk_support = True
 
     supported_extension_aliases = ["provider", "router", "binding", "quotas",
-                                   "security-group"]
+                                   "security-group", "agent"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"

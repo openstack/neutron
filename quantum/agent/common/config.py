@@ -29,11 +29,20 @@ ROOT_HELPER_OPTS = [
                help=_('Root helper application.')),
 ]
 
+AGENT_STATE_OPTS = [
+    cfg.IntOpt('report_interval', default=4,
+               help=_('Seconds between nodes reporting state to server')),
+]
+
 
 def register_root_helper(conf):
     # The first call is to ensure backward compatibility
     conf.register_opts(ROOT_HELPER_OPTS)
     conf.register_opts(ROOT_HELPER_OPTS, 'AGENT')
+
+
+def register_agent_state_opts_helper(conf):
+    conf.register_opts(AGENT_STATE_OPTS, 'AGENT')
 
 
 def get_root_helper(conf):

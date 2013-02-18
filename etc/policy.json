@@ -53,5 +53,10 @@
 
     "create_qos_queue:": "rule:admin_only",
     "get_qos_queue:": "rule:admin_only",
-    "get_qos_queues:": "rule:admin_only"
+    "get_qos_queues:": "rule:admin_only",
+
+    "update_agent": "rule:admin_only",
+    "delete_agent": "rule:admin_only",
+    "get_agent": "rule:admin_only",
+    "get_agents": "rule:admin_only"
 }

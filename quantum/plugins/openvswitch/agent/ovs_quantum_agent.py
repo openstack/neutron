@@ -32,10 +32,12 @@ from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
+from quantum.common import constants as q_const
 from quantum.common import topics
 from quantum.common import utils as q_utils
 from quantum import context
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config
 from quantum.extensions import securitygroup as ext_sg
@@ -176,7 +178,13 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.tunnel_count = 0
         if self.enable_tunneling:
             self.setup_tunnel_br(tun_br)
-
+        self.agent_state = {
+            'binary': 'quantum-openvswitch-agent',
+            'host': cfg.CONF.host,
+            'topic': q_const.L2_AGENT_TOPIC,
+            'configurations': bridge_mappings,
+            'agent_type': q_const.AGENT_TYPE_OVS,
+            'start_flag': True}
         self.setup_rpc(integ_br)
 
         # Security group agent supprot
@@ -184,11 +192,24 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                               self.plugin_rpc,
                                               root_helper)
 
+    def _report_state(self):
+        try:
+            # How many devices are likely used by a VM
+            ports = self.int_br.get_vif_port_set()
+            num_devices = len(ports)
+            self.agent_state.get('configurations')['devices'] = num_devices
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
+
     def setup_rpc(self, integ_br):
         mac = utils.get_interface_mac(integ_br)
         self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
@@ -202,6 +223,10 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in self.local_vlan_map.iteritems():

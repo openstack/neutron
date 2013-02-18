@@ -35,10 +35,12 @@ from quantum.agent.linux import utils
 from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
+from quantum.common import constants
 from quantum.common import topics
 from quantum.common import utils as q_utils
 from quantum import context
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import dispatcher
 # NOTE (e0ne): this import is needed for config init
 from quantum.plugins.linuxbridge.common import config
@@ -463,8 +465,26 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         self.polling_interval = polling_interval
         self.root_helper = root_helper
         self.setup_linux_bridge(interface_mappings)
+        self.agent_state = {
+            'binary': 'quantum-linuxbridge-agent',
+            'host': cfg.CONF.host,
+            'topic': constants.L2_AGENT_TOPIC,
+            'configurations': interface_mappings,
+            'agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
+            'start_flag': True}
+
         self.setup_rpc(interface_mappings.values())
         self.init_firewall()
+
+    def _report_state(self):
+        try:
+            devices = len(self.br_mgr.udev_get_tap_devices())
+            self.agent_state.get('configurations')['devices'] = devices
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception("Failed reporting state!")
 
     def setup_rpc(self, physical_interfaces):
         if physical_interfaces:
@@ -482,7 +502,7 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
         self.topic = topics.AGENT
         self.plugin_rpc = LinuxBridgePluginApi(topics.PLUGIN)
-
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Handle updates from service
@@ -496,6 +516,10 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
 
     def setup_linux_bridge(self, interface_mappings):
         self.br_mgr = LinuxBridgeManager(interface_mappings, self.root_helper)
