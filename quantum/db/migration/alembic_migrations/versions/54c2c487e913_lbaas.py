@@ -48,9 +48,8 @@ def upgrade(active_plugin=None, options=None):
         sa.Column(u'id', sa.String(36), nullable=False),
         sa.Column(u'name', sa.String(255), nullable=True),
         sa.Column(u'description', sa.String(255), nullable=True),
-        sa.Column(u'subnet_id', sa.String(36), nullable=False),
-        sa.Column(u'address', sa.String(64), nullable=True),
-        sa.Column(u'port', sa.Integer(), nullable=False),
+        sa.Column(u'port_id', sa.String(36), nullable=True),
+        sa.Column(u'protocol_port', sa.Integer(), nullable=False),
         sa.Column(u'protocol',
                   sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
                   nullable=False),
@@ -58,6 +57,7 @@ def upgrade(active_plugin=None, options=None):
         sa.Column(u'status', sa.String(16), nullable=False),
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),
         sa.Column(u'connection_limit', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ),
         sa.PrimaryKeyConstraint(u'id')
     )
     op.create_table(
@@ -130,7 +130,7 @@ def upgrade(active_plugin=None, options=None):
         sa.Column(u'id', sa.String(36), nullable=False),
         sa.Column(u'pool_id', sa.String(36), nullable=False),
         sa.Column(u'address', sa.String(64), nullable=False),
-        sa.Column(u'port', sa.Integer(), nullable=False),
+        sa.Column(u'protocol_port', sa.Integer(), nullable=False),
         sa.Column(u'weight', sa.Integer(), nullable=False),
         sa.Column(u'status', sa.String(16), nullable=False),
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),

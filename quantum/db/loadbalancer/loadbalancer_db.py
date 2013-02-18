@@ -29,6 +29,7 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import loadbalancer
 from quantum.extensions.loadbalancer import LoadBalancerPluginBase
+from quantum import manager
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
@@ -64,9 +65,8 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer vip."""
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
-    subnet_id = sa.Column(sa.String(36), nullable=False)
-    address = sa.Column(sa.String(64))
-    port = sa.Column(sa.Integer, nullable=False)
+    port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
+    protocol_port = sa.Column(sa.Integer, nullable=False)
     protocol = sa.Column(sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
                          nullable=False)
     pool_id = sa.Column(sa.String(36), nullable=False)
@@ -77,6 +77,7 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     connection_limit = sa.Column(sa.Integer)
+    port = orm.relationship(models_v2.Port)
 
 
 class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -84,7 +85,7 @@ class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         nullable=False)
     address = sa.Column(sa.String(64), nullable=False)
-    port = sa.Column(sa.Integer, nullable=False)
+    protocol_port = sa.Column(sa.Integer, nullable=False)
     weight = sa.Column(sa.Integer, nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
@@ -150,6 +151,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
     A class that wraps the implementation of the Quantum
     loadbalancer plugin database access interface using SQLAlchemy models.
     """
+
+    @property
+    def _core_plugin(self):
+        return manager.QuantumManager.get_plugin()
 
     # TODO(lcui):
     # A set of internal facility methods are borrowed from QuantumDbPluginV2
@@ -237,18 +242,22 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
     ########################################################
     # VIP DB access
     def _make_vip_dict(self, vip, fields=None):
+        fixed_ip = (vip.port.fixed_ips or [{}])[0]
+
         res = {'id': vip['id'],
                'tenant_id': vip['tenant_id'],
                'name': vip['name'],
                'description': vip['description'],
-               'subnet_id': vip['subnet_id'],
-               'address': vip['address'],
-               'port': vip['port'],
+               'subnet_id': fixed_ip.get('subnet_id'),
+               'address': fixed_ip.get('ip_address'),
+               'port_id': vip['port_id'],
+               'protocol_port': vip['protocol_port'],
                'protocol': vip['protocol'],
                'pool_id': vip['pool_id'],
                'connection_limit': vip['connection_limit'],
                'admin_state_up': vip['admin_state_up'],
                'status': vip['status']}
+
         if vip['session_persistence']:
             s_p = {
                 'type': vip['session_persistence']['type']
@@ -320,22 +329,38 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
             sess_qry = context.session.query(SessionPersistence)
             sess_qry.filter_by(vip_id=vip_id).delete()
 
+    def _create_port_for_vip(self, context, vip_db, subnet_id, ip_address):
+            # resolve subnet and create port
+            subnet = self._core_plugin.get_subnet(context, subnet_id)
+            fixed_ip = {'subnet_id': subnet['id']}
+            if ip_address and ip_address != attributes.ATTR_NOT_SPECIFIED:
+                fixed_ip['ip_address'] = ip_address
+
+            port_data = {
+                'tenant_id': vip_db.tenant_id,
+                'name': 'vip-' + vip_db.id,
+                'network_id': subnet['network_id'],
+                'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                'admin_state_up': False,
+                'device_id': '',
+                'device_owner': '',
+                'fixed_ips': [fixed_ip]
+            }
+
+            port = self._core_plugin.create_port(context, {'port': port_data})
+            vip_db.port_id = port['id']
+
     def create_vip(self, context, vip):
         v = vip['vip']
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
-            if v['address'] is attributes.ATTR_NOT_SPECIFIED:
-                address = None
-            else:
-                address = v['address']
             vip_db = Vip(id=uuidutils.generate_uuid(),
                          tenant_id=tenant_id,
                          name=v['name'],
                          description=v['description'],
-                         subnet_id=v['subnet_id'],
-                         address=address,
-                         port=v['port'],
+                         port_id=None,
+                         protocol_port=v['protocol_port'],
                          protocol=v['protocol'],
                          pool_id=v['pool_id'],
                          connection_limit=v['connection_limit'],
@@ -350,9 +375,16 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 vip_db.session_persistence = s_p
 
             context.session.add(vip_db)
-            self._update_pool_vip_info(context, v['pool_id'], vip_id)
+            context.session.flush()
 
-        vip_db = self._get_resource(context, Vip, vip_id)
+            self._create_port_for_vip(
+                context,
+                vip_db,
+                v['subnet_id'],
+                v.get('address')
+            )
+
+            self._update_pool_vip_info(context, v['pool_id'], vip_id)
         return self._make_vip_dict(vip_db)
 
     def update_vip(self, context, id, vip):
@@ -383,7 +415,11 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
             qry = context.session.query(Pool)
             for pool in qry.filter_by(vip_id=id).all():
                 pool.update({"vip_id": None})
+
             context.session.delete(vip)
+            if vip.port:  # this is a Quantum port
+                self._core_plugin.delete_port(context, vip.port.id)
+            context.session.flush()
 
     def get_vip(self, context, id, fields=None):
         vip = self._get_resource(context, Vip, id)
@@ -574,7 +610,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                'tenant_id': member['tenant_id'],
                'pool_id': member['pool_id'],
                'address': member['address'],
-               'port': member['port'],
+               'protocol_port': member['protocol_port'],
                'weight': member['weight'],
                'admin_state_up': member['admin_state_up'],
                'status': member['status']}
@@ -596,7 +632,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                                tenant_id=tenant_id,
                                pool_id=v['pool_id'],
                                address=v['address'],
-                               port=v['port'],
+                               protocol_port=v['protocol_port'],
                                weight=v['weight'],
                                admin_state_up=v['admin_state_up'],
                                status=constants.PENDING_CREATE)

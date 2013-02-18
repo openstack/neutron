@@ -93,7 +93,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
                         'description': 'descr_vip1',
                         'subnet_id': _uuid(),
                         'address': '127.0.0.1',
-                        'port': 80,
+                        'protocol_port': 80,
                         'protocol': 'HTTP',
                         'pool_id': _uuid(),
                         'session_persistence': {'type': 'HTTP_COOKIE'},
@@ -293,7 +293,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         member_id = _uuid()
         data = {'member': {'pool_id': _uuid(),
                            'address': '127.0.0.1',
-                           'port': 80,
+                           'protocol_port': 80,
                            'weight': 1,
                            'admin_state_up': True,
                            'tenant_id': _uuid()}}
