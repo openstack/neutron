@@ -22,7 +22,7 @@ from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import db_base_plugin_v2
-from quantum.db import l3_db
+from quantum.db import l3_gwmode_db
 from quantum.db import quota_db  # noqa
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
@@ -141,13 +141,14 @@ class VlanNetworkProvider(BaseNetworkProvider):
 
 
 class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
-                          l3_db.L3_NAT_db_mixin):
+                          l3_gwmode_db.L3_NAT_db_mixin):
 
     # This attribute specifies whether the plugin supports or not
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider", "router", "binding", "quotas"]
+    supported_extension_aliases = ["provider", "router", "ext-gw-mode",
+                                   "binding", "quotas"]
 
     def __init__(self, configfile=None):
         self._db = hyperv_db.HyperVPluginDB()

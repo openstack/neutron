@@ -25,6 +25,7 @@ from quantum.db import agents_db
 from quantum.db import agentschedulers_db
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
+from quantum.db import l3_gwmode_db
 from quantum.db import l3_rpc_base
 from quantum.db import quota_db  # noqa
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
@@ -59,6 +60,7 @@ class OperationalStatus:
 
 class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                   extraroute_db.ExtraRoute_db_mixin,
+                  l3_gwmode_db.L3_NAT_db_mixin,
                   sg_db_rpc.SecurityGroupServerRpcMixin,
                   agentschedulers_db.AgentSchedulerDbMixin):
     """NECPluginV2 controls an OpenFlow Controller.
@@ -73,10 +75,9 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     The port binding extension enables an external application relay
     information to and from the plugin.
     """
-    _supported_extension_aliases = ["router", "quotas", "binding",
-                                    "security-group", "extraroute",
-                                    "agent", "agent_scheduler",
-                                    ]
+    _supported_extension_aliases = ["router", "ext-gw-mode", "quotas",
+                                    "binding", "security-group",
+                                    "extraroute", "agent", "agent_scheduler"]
 
     @property
     def supported_extension_aliases(self):

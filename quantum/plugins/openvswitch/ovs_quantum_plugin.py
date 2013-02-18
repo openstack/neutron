@@ -38,6 +38,7 @@ from quantum.db import agentschedulers_db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
+from quantum.db import l3_gwmode_db
 from quantum.db import l3_rpc_base
 from quantum.db import portbindings_db
 from quantum.db import quota_db  # noqa
@@ -214,6 +215,7 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
+                         l3_gwmode_db.L3_NAT_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin,
                          agentschedulers_db.AgentSchedulerDbMixin,
                          portbindings_db.PortBindingMixin):
@@ -242,7 +244,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    _supported_extension_aliases = ["provider", "router",
+    _supported_extension_aliases = ["provider", "router", "ext-gw-mode",
                                     "binding", "quotas", "security-group",
                                     "agent", "extraroute", "agent_scheduler"]
 

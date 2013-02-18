@@ -92,6 +92,24 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         self.assertTrue(ri.ns_name().endswith(id))
 
+    def test_router_info_create_with_router(self):
+        id = _uuid()
+        ex_gw_port = {'id': _uuid(),
+                      'network_id': _uuid(),
+                      'fixed_ips': [{'ip_address': '19.4.4.4',
+                                     'subnet_id': _uuid()}],
+                      'subnet': {'cidr': '19.4.4.0/24',
+                                 'gateway_ip': '19.4.4.1'}}
+        router = {
+            'id': _uuid(),
+            'enable_snat': True,
+            'routes': [],
+            'gw_port': ex_gw_port}
+        ri = l3_agent.RouterInfo(id, self.conf.root_helper,
+                                 self.conf.use_namespaces, router)
+        self.assertTrue(ri.ns_name().endswith(id))
+        self.assertEqual(ri.router, router)
+
     def testAgentCreate(self):
         l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
@@ -104,17 +122,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
-        ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30'}]}
 
         if action == 'add':
             self.device_exists.return_value = False
-            agent.internal_network_added(ri, ex_gw_port, network_id,
+            agent.internal_network_added(ri, network_id,
                                          port_id, cidr, mac)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
         elif action == 'remove':
             self.device_exists.return_value = True
-            agent.internal_network_removed(ri, ex_gw_port, port_id, cidr)
+            agent.internal_network_removed(ri, port_id, cidr)
             self.assertEqual(self.mock_driver.unplug.call_count, 1)
         else:
             raise Exception("Invalid action %s" % action)
@@ -142,7 +159,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         if action == 'add':
             self.device_exists.return_value = False
-            agent.external_gateway_added(ri, ex_gw_port, internal_cidrs)
+            agent.external_gateway_added(ri, ex_gw_port,
+                                         interface_name, internal_cidrs)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             arping_cmd = ['arping', '-A', '-U',
@@ -158,7 +176,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         elif action == 'remove':
             self.device_exists.return_value = True
-            agent.external_gateway_removed(ri, ex_gw_port, internal_cidrs)
+            agent.external_gateway_removed(ri, ex_gw_port,
+                                           interface_name, internal_cidrs)
             self.assertEqual(self.mock_driver.unplug.call_count, 1)
         else:
             raise Exception("Invalid action %s" % action)
@@ -311,9 +330,28 @@ class TestBasicRouterOperations(base.BaseTestCase):
                     'via', '10.100.10.30']]
         self._check_agent_method_called(agent, expected, namespace)
 
-    def testProcessRouter(self):
+    def _verify_snat_rules(self, rules, router):
+        interfaces = router[l3_constants.INTERFACE_KEY]
+        source_cidrs = []
+        for interface in interfaces:
+            prefix = interface['subnet']['cidr'].split('/')[1]
+            source_cidr = "%s/%s" % (interface['fixed_ips'][0]['ip_address'],
+                                     prefix)
+            source_cidrs.append(source_cidr)
+        source_nat_ip = router['gw_port']['fixed_ips'][0]['ip_address']
+        interface_name = ('qg-%s' % router['gw_port']['id'])[:14]
+        expected_rules = [
+            '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
+            (interface_name, interface_name)]
+        for source_cidr in source_cidrs:
+            value_dict = {'source_cidr': source_cidr,
+                          'source_nat_ip': source_nat_ip}
+            expected_rules.append('-s %(source_cidr)s -j SNAT --to-source '
+                                  '%(source_nat_ip)s' % value_dict)
+        for r in rules:
+            self.assertIn(r.rule, expected_rules)
 
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+    def _prepare_router_data(self, enable_snat=True):
         router_id = _uuid()
         ex_gw_port = {'id': _uuid(),
                       'network_id': _uuid(),
@@ -330,19 +368,23 @@ class TestBasicRouterOperations(base.BaseTestCase):
                          'subnet': {'cidr': '35.4.4.0/24',
                                     'gateway_ip': '35.4.4.1'}}
 
+        router = {
+            'id': router_id,
+            l3_constants.INTERFACE_KEY: [internal_port],
+            'enable_snat': enable_snat,
+            'routes': [],
+            'gw_port': ex_gw_port}
+        return router
+
+    def testProcessRouter(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
         fake_floatingips1 = {'floatingips': [
             {'id': _uuid(),
              'floating_ip_address': '8.8.8.8',
              'fixed_ip_address': '7.7.7.7',
              'port_id': _uuid()}]}
-
-        router = {
-            'id': router_id,
-            l3_constants.FLOATINGIP_KEY: fake_floatingips1['floatingips'],
-            l3_constants.INTERFACE_KEY: [internal_port],
-            'routes': [],
-            'gw_port': ex_gw_port}
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         agent.process_router(ri)
 
@@ -361,6 +403,44 @@ class TestBasicRouterOperations(base.BaseTestCase):
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
         agent.process_router(ri)
+
+    def test_process_router_snat_disabled(self):
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Reprocess without NAT
+        router['enable_snat'] = False
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        nat_rules_delta = (set(orig_nat_rules) -
+                           set(ri.iptables_manager.ipv4['nat'].rules))
+        self.assertEqual(len(nat_rules_delta), 2)
+        self._verify_snat_rules(nat_rules_delta, router)
+
+    def test_process_router_snat_enabled(self):
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data(enable_snat=False)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Reprocess without NAT
+        router['enable_snat'] = True
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        nat_rules_delta = (set(ri.iptables_manager.ipv4['nat'].rules) -
+                           set(orig_nat_rules))
+        self.assertEqual(len(nat_rules_delta), 2)
+        self._verify_snat_rules(nat_rules_delta, router)
 
     def testRoutersWithAdminStateDown(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

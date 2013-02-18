@@ -342,10 +342,14 @@ class L3NatTestCaseMixin(object):
 
         return router_req.get_response(self.ext_api)
 
-    def _make_router(self, fmt, tenant_id, name=None,
-                     admin_state_up=None, set_context=False):
+    def _make_router(self, fmt, tenant_id, name=None, admin_state_up=None,
+                     external_gateway_info=None, set_context=False):
+        arg_list = (external_gateway_info and
+                    ('external_gateway_info', ) or None)
         res = self._create_router(fmt, tenant_id, name,
-                                  admin_state_up, set_context)
+                                  admin_state_up, set_context,
+                                  arg_list=arg_list,
+                                  external_gateway_info=external_gateway_info)
         return self.deserialize(fmt, res)
 
     def _add_external_gateway_to_router(self, router_id, network_id,
@@ -384,9 +388,11 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def router(self, name='router1', admin_state_up=True,
-               fmt=None, tenant_id=_uuid(), set_context=False):
+               fmt=None, tenant_id=_uuid(),
+               external_gateway_info=None, set_context=False):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
-                                   admin_state_up, set_context)
+                                   admin_state_up, external_gateway_info,
+                                   set_context)
         try:
             yield router
         finally:

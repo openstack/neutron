@@ -51,7 +51,8 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("Start initializing metaplugin"))
         self.supported_extension_aliases = \
             cfg.CONF.META.supported_extension_aliases.split(',')
-        self.supported_extension_aliases += ['flavor', 'router', 'extraroute']
+        self.supported_extension_aliases += ['flavor', 'router',
+                                             'ext-gw-mode', 'extraroute']
 
         # Ignore config option overapping
         def _is_opt_registered(opts, opt):
