@@ -398,11 +398,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             raise ext_sg.SecurityGroupRuleNotFound(id=id)
         return sgr
 
-    def delete_security_group_rule(self, context, sgrid):
+    def delete_security_group_rule(self, context, id):
         if (cfg.CONF.SECURITYGROUP.proxy_mode and not context.is_admin):
             raise ext_sg.SecurityGroupProxyModeNotAdmin()
         with context.session.begin(subtransactions=True):
-            rule = self._get_security_group_rule(context, sgrid)
+            rule = self._get_security_group_rule(context, id)
             context.session.delete(rule)
 
     def _extend_port_dict_security_group(self, context, port):
