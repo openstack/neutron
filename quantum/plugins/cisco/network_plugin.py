@@ -39,12 +39,12 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     Meta-Plugin with v2 API support for multiple sub-plugins.
     """
     supported_extension_aliases = ["Cisco Credential", "Cisco qos"]
-    _methods_to_delegate = ['create_network', 'create_network_bulk',
+    _methods_to_delegate = ['create_network',
                             'delete_network', 'update_network', 'get_network',
                             'get_networks',
-                            'create_port', 'create_port_bulk', 'delete_port',
+                            'create_port', 'delete_port',
                             'update_port', 'get_port', 'get_ports',
-                            'create_subnet', 'create_subnet_bulk',
+                            'create_subnet',
                             'delete_subnet', 'update_subnet',
                             'get_subnet', 'get_subnets', ]
     _master = True
@@ -73,6 +73,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         When the configured model class offers to manage the state of the
         logical resources, we delegate the core API calls directly to it.
+        Note: Bulking calls will be handled by this class, and turned into
+        non-bulking calls to be considered for delegation.
         """
         master = object.__getattribute__(self, "_master")
         methods = object.__getattribute__(self, "_methods_to_delegate")
