@@ -170,6 +170,9 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     associating ports with security groups.
     """
 
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     supported_extension_aliases = ["security-group"]
 
     def create_port(self, context, port):
@@ -208,9 +211,12 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         return super(SecurityGroupTestPlugin, self).create_network(context,
                                                                    network)
 
-    def get_ports(self, context, filters=None, fields=None):
+    def get_ports(self, context, filters=None, fields=None,
+                  sorts=[], limit=None, marker=None,
+                  page_reverse=False):
         quantum_lports = super(SecurityGroupTestPlugin, self).get_ports(
-            context, filters)
+            context, filters, sorts=sorts, limit=limit, marker=marker,
+            page_reverse=page_reverse)
         for quantum_lport in quantum_lports:
             self._extend_port_dict_security_group(context, quantum_lport)
         return quantum_lports
@@ -295,17 +301,54 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.assertEqual(res.status_int, 409)
 
     def test_list_security_groups(self):
-        name = 'webservers'
-        description = 'my webservers'
-        with self.security_group(name, description):
-            res = self.new_list_request('security-groups')
-            groups = self.deserialize(self.fmt, res.get_response(self.ext_api))
-            self.assertEqual(len(groups['security_groups']), 2)
-            for group in groups['security_groups']:
-                if group['name'] == 'default':
-                    self.assertEquals(len(group['security_group_rules']), 2)
-                else:
-                    self.assertEquals(len(group['security_group_rules']), 0)
+        with contextlib.nested(self.security_group(name='sg1',
+                                                   description='sg'),
+                               self.security_group(name='sg2',
+                                                   description='sg'),
+                               self.security_group(name='sg3',
+                                                   description='sg')
+                               ) as security_groups:
+            self._test_list_resources('security-group',
+                                      security_groups,
+                                      query_params='description=sg')
+
+    def test_list_security_groups_with_sort(self):
+        with contextlib.nested(self.security_group(name='sg1',
+                                                   description='sg'),
+                               self.security_group(name='sg2',
+                                                   description='sg'),
+                               self.security_group(name='sg3',
+                                                   description='sg')
+                               ) as (sg1, sg2, sg3):
+            self._test_list_with_sort('security-group',
+                                      (sg3, sg2, sg1),
+                                      [('name', 'desc')],
+                                      query_params='description=sg')
+
+    def test_list_security_groups_with_pagination(self):
+        with contextlib.nested(self.security_group(name='sg1',
+                                                   description='sg'),
+                               self.security_group(name='sg2',
+                                                   description='sg'),
+                               self.security_group(name='sg3',
+                                                   description='sg')
+                               ) as (sg1, sg2, sg3):
+            self._test_list_with_pagination('security-group',
+                                            (sg1, sg2, sg3),
+                                            ('name', 'asc'), 2, 2,
+                                            query_params='description=sg')
+
+    def test_list_security_groups_with_pagination_reverse(self):
+        with contextlib.nested(self.security_group(name='sg1',
+                                                   description='sg'),
+                               self.security_group(name='sg2',
+                                                   description='sg'),
+                               self.security_group(name='sg3',
+                                                   description='sg')
+                               ) as (sg1, sg2, sg3):
+            self._test_list_with_pagination_reverse(
+                'security-group', (sg1, sg2, sg3), ('name', 'asc'), 2, 2,
+                query_params='description=sg')
 
     def test_create_security_group_rule_ethertype_invalid_as_number(self):
         name = 'webservers'
@@ -672,6 +715,89 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 port = ports['ports'][0]
                 self.assertEquals(len(port[ext_sg.SECURITYGROUPS]), 1)
                 self._delete('ports', port['id'])
+
+    def test_list_security_group_rules(self):
+        with self.security_group(name='sg') as sg:
+            security_group_id = sg['security_group']['id']
+            with contextlib.nested(self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=22,
+                                                            port_range_max=22),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=23,
+                                                            port_range_max=23),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=24,
+                                                            port_range_max=24)
+                                   ) as (sgr1, sgr2, sgr3):
+                self._test_list_resources('security-group-rule',
+                                          [sgr1, sgr2, sgr3],
+                                          query_params="direction=egress")
+
+    def test_list_security_group_rules_with_sort(self):
+        with self.security_group(name='sg') as sg:
+            security_group_id = sg['security_group']['id']
+            with contextlib.nested(self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=22,
+                                                            port_range_max=22),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=23,
+                                                            port_range_max=23),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=24,
+                                                            port_range_max=24)
+                                   ) as (sgr1, sgr2, sgr3):
+                self._test_list_with_sort('security-group-rule',
+                                          (sgr3, sgr2, sgr1),
+                                          [('port_range_max', 'desc')],
+                                          query_params='direction=egress')
+
+    def test_list_security_group_rules_with_pagination(self):
+        with self.security_group(name='sg') as sg:
+            security_group_id = sg['security_group']['id']
+            with contextlib.nested(self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=22,
+                                                            port_range_max=22),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=23,
+                                                            port_range_max=23),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=24,
+                                                            port_range_max=24)
+                                   ) as (sgr1, sgr2, sgr3):
+                self._test_list_with_pagination(
+                    'security-group-rule', (sgr3, sgr2, sgr1),
+                    ('port_range_max', 'desc'), 2, 2,
+                    query_params='direction=egress')
+
+    def test_list_security_group_rules_with_pagination_reverse(self):
+        with self.security_group(name='sg') as sg:
+            security_group_id = sg['security_group']['id']
+            with contextlib.nested(self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=22,
+                                                            port_range_max=22),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=23,
+                                                            port_range_max=23),
+                                   self.security_group_rule(security_group_id,
+                                                            direction='egress',
+                                                            port_range_min=24,
+                                                            port_range_max=24)
+                                   ) as (sgr1, sgr2, sgr3):
+                self._test_list_with_pagination_reverse(
+                    'security-group-rule', (sgr3, sgr2, sgr1),
+                    ('port_range_max', 'desc'), 2, 2,
+                    query_params='direction=egress')
 
     def test_update_port_with_security_group(self):
         with self.network() as n:

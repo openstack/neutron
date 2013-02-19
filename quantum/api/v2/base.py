@@ -20,6 +20,7 @@ import webob.exc
 
 from oslo.config import cfg
 
+from quantum.api import api_common
 from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
@@ -42,41 +43,6 @@ FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
              }
 
 
-def _fields(request):
-    """
-    Extracts the list of fields to return
-    """
-    return [v for v in request.GET.getall('fields') if v]
-
-
-def _filters(request, attr_info):
-    """
-    Extracts the filters from the request string
-
-    Returns a dict of lists for the filters:
-
-    check=a&check=b&name=Bob&
-
-    becomes
-
-    {'check': [u'a', u'b'], 'name': [u'Bob']}
-    """
-    res = {}
-    for key, values in request.GET.dict_of_lists().iteritems():
-        if key == 'fields':
-            continue
-        values = [v for v in values if v]
-        key_attr_info = attr_info.get(key, {})
-        if 'convert_list_to' in key_attr_info:
-            values = key_attr_info['convert_list_to'](values)
-        elif 'convert_to' in key_attr_info:
-            convert_to = key_attr_info['convert_to']
-            values = [convert_to(v) for v in values]
-        if values:
-            res[key] = values
-    return res
-
-
 class Controller(object):
     LIST = 'list'
     SHOW = 'show'
@@ -85,7 +51,8 @@ class Controller(object):
     DELETE = 'delete'
 
     def __init__(self, plugin, collection, resource, attr_info,
-                 allow_bulk=False, member_actions=None, parent=None):
+                 allow_bulk=False, member_actions=None, parent=None,
+                 allow_pagination=False, allow_sorting=False):
         if member_actions is None:
             member_actions = []
         self._plugin = plugin
@@ -93,12 +60,26 @@ class Controller(object):
         self._resource = resource.replace('-', '_')
         self._attr_info = attr_info
         self._allow_bulk = allow_bulk
+        self._allow_pagination = allow_pagination
+        self._allow_sorting = allow_sorting
         self._native_bulk = self._is_native_bulk_supported()
+        self._native_pagination = self._is_native_pagination_supported()
+        self._native_sorting = self._is_native_sorting_supported()
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
         self._dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self._member_actions = member_actions
+        self._primary_key = self._get_primary_key()
+        if self._allow_pagination and self._native_pagination:
+            # Native pagination need native sorting support
+            if not self._native_sorting:
+                raise Exception(_("Native pagination depend on native "
+                                  "sorting"))
+            if not self._allow_sorting:
+                LOG.info(_("Allow sorting is enabled because native "
+                           "pagination requires native sorting"))
+                self._allow_sorting = True
 
         if parent:
             self._parent_id_name = '%s_id' % parent['member_name']
@@ -114,10 +95,26 @@ class Controller(object):
             self._plugin_handlers[action] = '%s%s_%s' % (action, parent_part,
                                                          self._resource)
 
+    def _get_primary_key(self, default_primary_key='id'):
+        for key, value in self._attr_info.iteritems():
+            if value.get('primary_key', False):
+                return key
+        return default_primary_key
+
     def _is_native_bulk_supported(self):
         native_bulk_attr_name = ("_%s__native_bulk_support"
                                  % self._plugin.__class__.__name__)
         return getattr(self._plugin, native_bulk_attr_name, False)
+
+    def _is_native_pagination_supported(self):
+        native_pagination_attr_name = ("_%s__native_pagination_support"
+                                       % self._plugin.__class__.__name__)
+        return getattr(self._plugin, native_pagination_attr_name, False)
+
+    def _is_native_sorting_supported(self):
+        native_sorting_attr_name = ("_%s__native_sorting_support"
+                                    % self._plugin.__class__.__name__)
+        return getattr(self._plugin, native_sorting_attr_name, False)
 
     def _is_visible(self, attr):
         attr_val = self._attr_info.get(attr)
@@ -155,18 +152,47 @@ class Controller(object):
         else:
             raise AttributeError
 
+    def _get_pagination_helper(self, request):
+        if self._allow_pagination and self._native_pagination:
+            return api_common.PaginationNativeHelper(request,
+                                                     self._primary_key)
+        elif self._allow_pagination:
+            return api_common.PaginationEmulatedHelper(request,
+                                                       self._primary_key)
+        return api_common.NoPaginationHelper(request, self._primary_key)
+
+    def _get_sorting_helper(self, request):
+        if self._allow_sorting and self._native_sorting:
+            return api_common.SortingNativeHelper(request, self._attr_info)
+        elif self._allow_sorting:
+            return api_common.SortingEmulatedHelper(request, self._attr_info)
+        return api_common.NoSortingHelper(request, self._attr_info)
+
     def _items(self, request, do_authz=False, parent_id=None):
         """Retrieves and formats a list of elements of the requested entity"""
         # NOTE(salvatore-orlando): The following ensures that fields which
         # are needed for authZ policy validation are not stripped away by the
         # plugin before returning.
-        original_fields, fields_to_add = self._do_field_list(_fields(request))
-        kwargs = {'filters': _filters(request, self._attr_info),
+        original_fields, fields_to_add = self._do_field_list(
+            api_common.list_args(request, 'fields'))
+        filters = api_common.get_filters(request, self._attr_info,
+                                         ['fields', 'sort_key', 'sort_dir',
+                                          'limit', 'marker', 'page_reverse'])
+        kwargs = {'filters': filters,
                   'fields': original_fields}
+        sorting_helper = self._get_sorting_helper(request)
+        pagination_helper = self._get_pagination_helper(request)
+        sorting_helper.update_args(kwargs)
+        sorting_helper.update_fields(original_fields, fields_to_add)
+        pagination_helper.update_args(kwargs)
+        pagination_helper.update_fields(original_fields, fields_to_add)
         if parent_id:
             kwargs[self._parent_id_name] = parent_id
         obj_getter = getattr(self._plugin, self._plugin_handlers[self.LIST])
         obj_list = obj_getter(request.context, **kwargs)
+        obj_list = sorting_helper.sort(obj_list)
+        obj_list = pagination_helper.paginate(obj_list)
+
         # Check authz
         if do_authz:
             # FIXME(salvatore-orlando): obj_getter might return references to
@@ -177,9 +203,15 @@ class Controller(object):
                                         self._plugin_handlers[self.SHOW],
                                         obj,
                                         plugin=self._plugin)]
-        return {self._collection: [self._view(obj,
-                                              fields_to_strip=fields_to_add)
-                                   for obj in obj_list]}
+        collection = {self._collection:
+                      [self._view(obj,
+                                  fields_to_strip=fields_to_add)
+                       for obj in obj_list]}
+        pagination_links = pagination_helper.get_links(obj_list)
+        if pagination_links:
+            collection[self._collection + "_links"] = pagination_links
+
+        return collection
 
     def _item(self, request, id, do_authz=False, field_list=None,
               parent_id=None):
@@ -212,7 +244,8 @@ class Controller(object):
             # NOTE(salvatore-orlando): The following ensures that fields
             # which are needed for authZ policy validation are not stripped
             # away by the plugin before returning.
-            field_list, added_fields = self._do_field_list(_fields(request))
+            field_list, added_fields = self._do_field_list(
+                api_common.list_args(request, "fields"))
             parent_id = kwargs.get(self._parent_id_name)
             return {self._resource:
                     self._view(self._item(request,
@@ -546,8 +579,11 @@ class Controller(object):
 
 
 def create_resource(collection, resource, plugin, params, allow_bulk=False,
-                    member_actions=None, parent=None):
+                    member_actions=None, parent=None, allow_pagination=False,
+                    allow_sorting=False):
     controller = Controller(plugin, collection, resource, params, allow_bulk,
-                            member_actions=member_actions, parent=parent)
+                            member_actions=member_actions, parent=parent,
+                            allow_pagination=allow_pagination,
+                            allow_sorting=allow_sorting)
 
     return wsgi_resource.Resource(controller, FAULT_MAP)

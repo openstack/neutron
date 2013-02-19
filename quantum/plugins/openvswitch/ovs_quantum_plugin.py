@@ -231,9 +231,12 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     """
 
     # This attribute specifies whether the plugin supports or not
-    # bulk operations. Name mangling is used in order to ensure it
-    # is qualified by class
+    # bulk/pagination/sorting operations. Name mangling is used in
+    # order to ensure it is qualified by class
     __native_bulk_support = True
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     supported_extension_aliases = ["provider", "router",
                                    "binding", "quotas", "security-group",
                                    "agent"]
@@ -523,12 +526,14 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
-    def get_networks(self, context, filters=None, fields=None):
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None,
+                     limit=None, marker=None, page_reverse=False):
         session = context.session
         with session.begin(subtransactions=True):
-            nets = super(OVSQuantumPluginV2, self).get_networks(context,
-                                                                filters,
-                                                                None)
+            nets = super(OVSQuantumPluginV2,
+                         self).get_networks(context, filters, None, sorts,
+                                            limit, marker, page_reverse)
             for net in nets:
                 self._extend_network_dict_provider(context, net)
                 self._extend_network_dict_l3(context, net)
@@ -574,10 +579,13 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_port_dict_binding(context, port)
         return self._fields(port, fields)
 
-    def get_ports(self, context, filters=None, fields=None):
+    def get_ports(self, context, filters=None, fields=None,
+                  sorts=None, limit=None, marker=None,
+                  page_reverse=False):
         with context.session.begin(subtransactions=True):
             ports = super(OVSQuantumPluginV2, self).get_ports(
-                context, filters, fields)
+                context, filters, fields, sorts, limit, marker,
+                page_reverse)
             #TODO(nati) filter by security group
             for port in ports:
                 self._extend_port_dict_security_group(context, port)

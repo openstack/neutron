@@ -83,6 +83,8 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('core_plugin', core_plugin)
         cfg.CONF.set_override('service_plugins', service_plugins)
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
+        cfg.CONF.set_override('allow_pagination', True)
+        cfg.CONF.set_override('allow_sorting', True)
         self.api = APIRouter()
 
         plugin = loadbalancerPlugin.LoadBalancerPlugin()
@@ -268,6 +270,86 @@ class LoadBalancerPluginDbTestCase(testlib_api.WebTestCase):
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         return self.deserialize(res)
+
+    def _test_list_with_sort(self, collection, items, sorts, query_params=''):
+        query_str = query_params
+        for key, direction in sorts:
+            query_str = query_str + "&sort_key=%s&sort_dir=%s" % (key,
+                                                                  direction)
+        req = self.new_list_request('%ss' % collection,
+                                    params=query_str)
+        api = self._api_for_resource('%ss' % collection)
+        res = self.deserialize(req.get_response(api))
+        collection = collection.replace('-', '_')
+        expected_res = [item[collection]['id'] for item in items]
+        self.assertListEqual([n['id'] for n in res["%ss" % collection]],
+                             expected_res)
+
+    def _test_list_with_pagination(self, collection, items, sort,
+                                   limit, expected_page_num, query_params=''):
+        if self.fmt == 'xml':
+            self.skipTest("Skip xml test for pagination")
+        query_str = query_params + '&' if query_params else ''
+        query_str = query_str + ("limit=%s&sort_key=%s&"
+                                 "sort_dir=%s") % (limit, sort[0], sort[1])
+        req = self.new_list_request("%ss" % collection, params=query_str)
+        items_res = []
+        page_num = 0
+        api = self._api_for_resource('%ss' % collection)
+        collection = collection.replace('-', '_')
+        while req:
+            page_num = page_num + 1
+            res = self.deserialize(req.get_response(api))
+            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            items_res = items_res + res["%ss" % collection]
+            req = None
+            if '%ss_links' % collection in res:
+                for link in res['%ss_links' % collection]:
+                    if link['rel'] == 'next':
+                        req = create_request(link['href'],
+                                             '', 'application/json')
+                        self.assertEqual(len(res["%ss" % collection]),
+                                         limit)
+        self.assertEqual(page_num, expected_page_num)
+        self.assertListEqual([n['id'] for n in items_res],
+                             [item[collection]['id'] for item in items])
+
+    def _test_list_with_pagination_reverse(self, collection, items, sort,
+                                           limit, expected_page_num,
+                                           query_params=''):
+        if self.fmt == 'xml':
+            self.skipTest("Skip xml test for pagination")
+        resources = '%ss' % collection
+        collection = collection.replace('-', '_')
+        api = self._api_for_resource(resources)
+        marker = items[-1][collection]['id']
+        query_str = query_params + '&' if query_params else ''
+        query_str = query_str + ("limit=%s&page_reverse=True&"
+                                 "sort_key=%s&sort_dir=%s&"
+                                 "marker=%s") % (limit, sort[0], sort[1],
+                                                 marker)
+        req = self.new_list_request(resources, params=query_str)
+        item_res = [items[-1][collection]]
+        page_num = 0
+        while req:
+            page_num = page_num + 1
+            res = self.deserialize(req.get_response(api))
+            self.assertLessEqual(len(res["%ss" % collection]), limit)
+            res["%ss" % collection].reverse()
+            item_res = item_res + res["%ss" % collection]
+            req = None
+            if '%ss_links' % collection in res:
+                for link in res['%ss_links' % collection]:
+                    if link['rel'] == 'previous':
+                        req = create_request(link['href'],
+                                             '', 'application/json')
+                        self.assertEqual(len(res["%ss" % collection]),
+                                         limit)
+        self.assertEqual(page_num, expected_page_num)
+        expected_res = [item[collection]['id'] for item in items]
+        expected_res.reverse()
+        self.assertListEqual([n['id'] for n in item_res],
+                             expected_res)
 
     @contextlib.contextmanager
     def vip(self, fmt=None, name='vip1', pool=None,
@@ -552,6 +634,32 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(res['vips'][0][k], v)
 
+    def test_list_vips_with_sort_emulated(self):
+        with contextlib.nested(self.vip(name='vip1', port=81),
+                               self.vip(name='vip2', port=82),
+                               self.vip(name='vip3', port=82)
+                               ) as (vip1, vip2, vip3):
+            self._test_list_with_sort('vip', (vip1, vip3, vip2),
+                                      [('port', 'asc'), ('name', 'desc')])
+
+    def test_list_vips_with_pagination_emulated(self):
+        with contextlib.nested(self.vip(name='vip1'),
+                               self.vip(name='vip2'),
+                               self.vip(name='vip3')
+                               ) as (vip1, vip2, vip3):
+            self._test_list_with_pagination('vip',
+                                            (vip1, vip2, vip3),
+                                            ('name', 'asc'), 2, 2)
+
+    def test_list_vips_with_pagination_reverse_emulated(self):
+        with contextlib.nested(self.vip(name='vip1'),
+                               self.vip(name='vip2'),
+                               self.vip(name='vip3')
+                               ) as (vip1, vip2, vip3):
+            self._test_list_with_pagination_reverse('vip',
+                                                    (vip1, vip2, vip3),
+                                                    ('name', 'asc'), 2, 2)
+
     def test_create_pool_with_invalid_values(self):
         name = 'pool3'
 
@@ -630,6 +738,32 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['pool'][k], v)
+
+    def test_list_pools_with_sort_emulated(self):
+        with contextlib.nested(self.pool(name='p1'),
+                               self.pool(name='p2'),
+                               self.pool(name='p3')
+                               ) as (p1, p2, p3):
+            self._test_list_with_sort('pool', (p3, p2, p1),
+                                      [('name', 'desc')])
+
+    def test_list_pools_with_pagination_emulated(self):
+        with contextlib.nested(self.pool(name='p1'),
+                               self.pool(name='p2'),
+                               self.pool(name='p3')
+                               ) as (p1, p2, p3):
+            self._test_list_with_pagination('pool',
+                                            (p1, p2, p3),
+                                            ('name', 'asc'), 2, 2)
+
+    def test_list_pools_with_pagination_reverse_emulated(self):
+        with contextlib.nested(self.pool(name='p1'),
+                               self.pool(name='p2'),
+                               self.pool(name='p3')
+                               ) as (p1, p2, p3):
+            self._test_list_with_pagination_reverse('pool',
+                                                    (p1, p2, p3),
+                                                    ('name', 'asc'), 2, 2)
 
     def test_create_member(self):
         with self.pool() as pool:
@@ -735,6 +869,44 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 for k, v in keys:
                     self.assertEqual(res['member'][k], v)
 
+    def test_list_members_with_sort_emulated(self):
+        with self.pool() as pool:
+            with contextlib.nested(self.member(pool_id=pool['pool']['id'],
+                                               port=81),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=82),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=83)
+                                   ) as (m1, m2, m3):
+                self._test_list_with_sort('member', (m3, m2, m1),
+                                          [('port', 'desc')])
+
+    def test_list_members_with_pagination_emulated(self):
+        with self.pool() as pool:
+            with contextlib.nested(self.member(pool_id=pool['pool']['id'],
+                                               port=81),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=82),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=83)
+                                   ) as (m1, m2, m3):
+                self._test_list_with_pagination('member',
+                                                (m1, m2, m3),
+                                                ('port', 'asc'), 2, 2)
+
+    def test_list_members_with_pagination_reverse_emulated(self):
+        with self.pool() as pool:
+            with contextlib.nested(self.member(pool_id=pool['pool']['id'],
+                                               port=81),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=82),
+                                   self.member(pool_id=pool['pool']['id'],
+                                               port=83)
+                                   ) as (m1, m2, m3):
+                self._test_list_with_pagination_reverse('member',
+                                                        (m1, m2, m3),
+                                                        ('port', 'asc'), 2, 2)
+
     def test_create_healthmonitor(self):
         keys = [('type', "TCP"),
                 ('tenant_id', self._tenant_id),
@@ -789,6 +961,32 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             res = self.deserialize(req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['health_monitor'][k], v)
+
+    def test_list_healthmonitors_with_sort_emulated(self):
+        with contextlib.nested(self.health_monitor(delay=30),
+                               self.health_monitor(delay=31),
+                               self.health_monitor(delay=32)
+                               ) as (m1, m2, m3):
+            self._test_list_with_sort('health_monitor', (m3, m2, m1),
+                                      [('delay', 'desc')])
+
+    def test_list_healthmonitors_with_pagination_emulated(self):
+        with contextlib.nested(self.health_monitor(delay=30),
+                               self.health_monitor(delay=31),
+                               self.health_monitor(delay=32)
+                               ) as (m1, m2, m3):
+            self._test_list_with_pagination('health_monitor',
+                                            (m1, m2, m3),
+                                            ('delay', 'asc'), 2, 2)
+
+    def test_list_healthmonitors_with_pagination_reverse_emulated(self):
+        with contextlib.nested(self.health_monitor(delay=30),
+                               self.health_monitor(delay=31),
+                               self.health_monitor(delay=32)
+                               ) as (m1, m2, m3):
+            self._test_list_with_pagination_reverse('health_monitor',
+                                                    (m1, m2, m3),
+                                                    ('delay', 'asc'), 2, 2)
 
     def test_get_pool_stats(self):
         keys = [("bytes_in", 0),

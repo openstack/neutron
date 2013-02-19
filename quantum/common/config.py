@@ -25,6 +25,7 @@ from oslo.config import cfg
 from paste import deploy
 
 from quantum.api.v2 import attributes
+from quantum.common import constants
 from quantum.common import utils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
@@ -56,6 +57,14 @@ core_opts = [
                help=_("How many times Quantum will retry MAC generation")),
     cfg.BoolOpt('allow_bulk', default=True,
                 help=_("Allow the usage of the bulk API")),
+    cfg.BoolOpt('allow_pagination', default=False,
+                help=_("Allow the usage of the pagination")),
+    cfg.BoolOpt('allow_sorting', default=False,
+                help=_("Allow the usage of the sorting")),
+    cfg.StrOpt('pagination_max_limit', default="-1",
+               help=_("The maximum number of items returned in a single "
+                      "response, value was 'infinite' or negative integer "
+                      "means no limit")),
     cfg.IntOpt('max_dns_nameservers', default=5,
                help=_("Maximum number of DNS nameservers")),
     cfg.IntOpt('max_subnet_host_routes', default=20,

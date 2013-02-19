@@ -138,10 +138,18 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         return self._make_security_group_dict(security_group_db)
 
-    def get_security_groups(self, context, filters=None, fields=None):
-        return self._get_collection(context, SecurityGroup,
+    def get_security_groups(self, context, filters=None, fields=None,
+                            sorts=None, limit=None,
+                            marker=None, page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'security_group', limit,
+                                          marker)
+        return self._get_collection(context,
+                                    SecurityGroup,
                                     self._make_security_group_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit, marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_security_groups_count(self, context, filters=None):
         return self._get_collection_count(context, SecurityGroup,
@@ -220,7 +228,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _get_port_security_group_bindings(self, context,
                                           filters=None, fields=None):
-        return self._get_collection(context, SecurityGroupPortBinding,
+        return self._get_collection(context,
+                                    SecurityGroupPortBinding,
                                     self._make_security_group_binding_dict,
                                     filters=filters, fields=fields)
 
@@ -373,10 +382,18 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             if rules:
                 raise ext_sg.SecurityGroupRuleExists(id=str(rules[0]['id']))
 
-    def get_security_group_rules(self, context, filters=None, fields=None):
-        return self._get_collection(context, SecurityGroupRule,
+    def get_security_group_rules(self, context, filters=None, fields=None,
+                                 sorts=None, limit=None, marker=None,
+                                 page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'security_group_rule',
+                                          limit, marker)
+        return self._get_collection(context,
+                                    SecurityGroupRule,
                                     self._make_security_group_rule_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts,
+                                    limit=limit, marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def get_security_group_rules_count(self, context, filters=None):
         return self._get_collection_count(context, SecurityGroupRule,

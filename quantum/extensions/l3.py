@@ -93,7 +93,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'routers': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'validate': {'type:string': None},
                  'is_visible': True, 'default': ''},
@@ -113,7 +114,8 @@ RESOURCE_ATTRIBUTE_MAP = {
     'floatingips': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
-               'is_visible': True},
+               'is_visible': True,
+               'primary_key': True},
         'floating_ip_address': {'allow_post': False, 'allow_put': False,
                                 'validate': {'type:ip_address_or_none': None},
                                 'is_visible': True},
@@ -201,10 +203,11 @@ class L3(extensions.ExtensionDescriptor):
 
             quota.QUOTAS.register_resource_by_name(resource_name)
 
-            controller = base.create_resource(collection_name,
-                                              resource_name,
-                                              plugin, params,
-                                              member_actions=member_actions)
+            controller = base.create_resource(
+                collection_name, resource_name, plugin, params,
+                member_actions=member_actions,
+                allow_pagination=cfg.CONF.allow_pagination,
+                allow_sorting=cfg.CONF.allow_sorting)
 
             ex = extensions.ResourceExtension(collection_name,
                                               controller,
@@ -245,7 +248,8 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_routers(self, context, filters=None, fields=None):
+    def get_routers(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None, page_reverse=False):
         pass
 
     @abstractmethod
@@ -273,7 +277,9 @@ class RouterPluginBase(object):
         pass
 
     @abstractmethod
-    def get_floatingips(self, context, filters=None, fields=None):
+    def get_floatingips(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
         pass
 
     def get_routers_count(self, context, filters=None):
