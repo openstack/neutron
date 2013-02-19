@@ -62,6 +62,9 @@ core_opts = [
                help=_("Maximum number of host routes per subnet")),
     cfg.IntOpt('dhcp_lease_duration', default=120,
                help=_("DHCP lease duration")),
+    cfg.BoolOpt('dhcp_agent_notification', default=True,
+                help=_("Allow sending resource operation"
+                       " notification to DHCP agent")),
     cfg.BoolOpt('allow_overlapping_ips', default=False,
                 help=_("Allow overlapping IP support in Quantum")),
     cfg.StrOpt('host', default=utils.get_hostname(),

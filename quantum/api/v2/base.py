@@ -18,6 +18,9 @@
 import netaddr
 import webob.exc
 
+from oslo.config import cfg
+
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions
@@ -94,6 +97,7 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
+        self._dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self._member_actions = member_actions
 
         if parent:
@@ -192,6 +196,10 @@ class Controller(object):
         if do_authz:
             policy.enforce(request.context, action, obj, plugin=self._plugin)
         return obj
+
+    def _send_dhcp_notification(self, context, data, methodname):
+        if cfg.CONF.dhcp_agent_notification:
+            self._dhcp_agent_notifier.notify(context, data, methodname)
 
     def index(self, request, **kwargs):
         """Returns a list of the requested entity"""
@@ -298,11 +306,15 @@ class Controller(object):
                                          **kwargs)
 
         def notify(create_result):
+            notifier_method = self._resource + '.create.end'
             notifier_api.notify(request.context,
                                 self._publisher_id,
-                                self._resource + '.create.end',
+                                notifier_method,
                                 notifier_api.CONF.default_notification_level,
                                 create_result)
+            self._send_dhcp_notification(request.context,
+                                         create_result,
+                                         notifier_method)
             return create_result
 
         kwargs = {self._parent_id_name: parent_id} if parent_id else {}
@@ -348,11 +360,16 @@ class Controller(object):
 
         obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id, **kwargs)
+        notifier_method = self._resource + '.delete.end'
         notifier_api.notify(request.context,
                             self._publisher_id,
-                            self._resource + '.delete.end',
+                            notifier_method,
                             notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
+        result = {self._resource: self._view(obj)}
+        self._send_dhcp_notification(request.context,
+                                     result,
+                                     notifier_method)
 
     def update(self, request, id, body=None, **kwargs):
         """Updates the specified entity's attributes"""
@@ -398,11 +415,15 @@ class Controller(object):
             kwargs[self._parent_id_name] = parent_id
         obj = obj_updater(request.context, id, **kwargs)
         result = {self._resource: self._view(obj)}
+        notifier_method = self._resource + '.update.end'
         notifier_api.notify(request.context,
                             self._publisher_id,
-                            self._resource + '.update.end',
+                            notifier_method,
                             notifier_api.CONF.default_notification_level,
                             result)
+        self._send_dhcp_notification(request.context,
+                                     result,
+                                     notifier_method)
         return result
 
     @staticmethod
