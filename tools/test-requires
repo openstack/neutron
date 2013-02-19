@@ -1,6 +1,7 @@
 Babel>=0.9.6
 cliff
-coverage
+coverage>=3.6
+discover
 distribute>=0.6.24
 fixtures>=0.3.12
 mock>=1.0b1
@@ -10,7 +11,9 @@ nosehtmloutput
 nosexcover
 openstack.nose_plugin
 pep8
+python-subunit
 sphinx>=1.1.2
+testrepository>=0.0.13
 testtools>=0.9.27
 webtest==1.3.3
 # Packages for the Cisco Plugin

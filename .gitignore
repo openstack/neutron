@@ -13,6 +13,8 @@ quantum/versioninfo
 run_tests.err.log
 run_tests.log
 setuptools*.egg/
+subunit.log
+.testrepository
 .tox/
 .venv/
 *.mo
