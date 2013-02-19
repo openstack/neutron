@@ -134,6 +134,8 @@ else:
         'quantum-debug = quantum.debug.shell:main',
         'quantum-ovs-cleanup = quantum.agent.ovs_cleanup_util:main',
         'quantum-db-manage = quantum.db.migration.cli:main',
+        ('quantum-check-nvp-config = '
+         'quantum.plugins.nicira.nicira_nvp_plugin.check_nvp_config:main'),
     ]
 
     ProjectScripts = [

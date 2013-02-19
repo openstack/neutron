@@ -122,6 +122,9 @@ class NVPCluster(object):
     def get_controller(self, idx):
         return self.controllers[idx]
 
+    def get_num_controllers(self):
+        return len(self.controllers)
+
     @property
     def name(self):
         return self._name

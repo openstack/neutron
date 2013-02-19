@@ -1331,3 +1331,39 @@ def delete_lqueue(cluster, id):
     except Exception:
         LOG.exception(_("Failed to delete logical queue"))
         raise exception.QuantumException()
+
+
+# -----------------------------------------------------------------------------
+# NVP API Calls for check_nvp_config utility
+# -----------------------------------------------------------------------------
+def check_cluster_connectivity(cluster):
+    """Make sure that we can issue a request to each of the cluster nodes"""
+    try:
+        resp = do_single_request(HTTP_GET, "/ws.v1/control-cluster",
+                                 cluster=cluster)
+    except Exception as e:
+        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
+        raise Exception(msg)
+    return json.loads(resp)
+
+
+def get_gateway_services(cluster):
+    try:
+        resp = do_single_request(HTTP_GET,
+                                 "/ws.v1/gateway-service?fields=uuid",
+                                 cluster=cluster)
+    except Exception as e:
+        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
+        raise Exception(msg)
+    return json.loads(resp)
+
+
+def get_transport_zones(cluster):
+    try:
+        resp = do_single_request(HTTP_GET,
+                                 "/ws.v1/transport-zone?fields=uuid",
+                                 cluster=cluster)
+    except Exception as e:
+        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
+        raise Exception(msg)
+    return json.loads(resp)
