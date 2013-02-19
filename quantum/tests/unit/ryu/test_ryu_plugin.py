@@ -15,6 +15,7 @@
 
 import mock
 
+from quantum.tests.unit.ryu import fake_ryu
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 
@@ -22,29 +23,8 @@ class RyuPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
     _plugin_name = 'quantum.plugins.ryu.ryu_quantum_plugin.RyuQuantumPluginV2'
 
-    def _patch_fake_ryu_client(self):
-        ryu_mod = mock.Mock()
-        ryu_app_mod = ryu_mod.app
-        ryu_app_client = ryu_app_mod.client
-        rest_nw_id = ryu_app_mod.rest_nw_id
-        rest_nw_id.NW_ID_EXTERNAL = '__NW_ID_EXTERNAL__'
-        rest_nw_id.NW_ID_RESERVED = '__NW_ID_RESERVED__'
-        rest_nw_id.NW_ID_VPORT_GRE = '__NW_ID_VPORT_GRE__'
-        rest_nw_id.NW_ID_UNKNOWN = '__NW_ID_UNKNOWN__'
-        rest_nw_id.RESERVED_NETWORK_IDS = [
-            rest_nw_id.NW_ID_EXTERNAL,
-            rest_nw_id.NW_ID_RESERVED,
-            rest_nw_id.NW_ID_VPORT_GRE,
-            rest_nw_id.NW_ID_UNKNOWN,
-        ]
-        return mock.patch.dict('sys.modules',
-                               {'ryu': ryu_mod,
-                                'ryu.app': ryu_app_mod,
-                                'ryu.app.client': ryu_app_client,
-                                'ryu.app.rest_nw_id': rest_nw_id})
-
     def setUp(self):
-        self.ryu_patcher = self._patch_fake_ryu_client()
+        self.ryu_patcher = fake_ryu.patch_fake_ryu_client()
         self.ryu_patcher.start()
         super(RyuPluginV2TestCase, self).setUp(self._plugin_name)
 
