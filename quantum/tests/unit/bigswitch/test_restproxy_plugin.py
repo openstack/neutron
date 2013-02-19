@@ -20,7 +20,9 @@ import os
 from mock import patch
 
 import quantum.common.test_lib as test_lib
+from quantum.extensions import portbindings
 from quantum.manager import QuantumManager
+from quantum.tests.unit import _test_extension_portbindings as test_bindings
 import quantum.tests.unit.test_db_plugin as test_plugin
 
 
@@ -87,9 +89,11 @@ class TestBigSwitchProxyV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 
 class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
-                                BigSwitchProxyPluginV2TestCase):
+                                BigSwitchProxyPluginV2TestCase,
+                                test_bindings.PortBindingsTestCase):
 
-    pass
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = False
 
 
 class TestBigSwitchProxyNetworksV2(test_plugin.TestNetworksV2,
