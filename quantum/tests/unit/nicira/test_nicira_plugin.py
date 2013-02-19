@@ -19,6 +19,7 @@ import os
 
 import mock
 from oslo.config import cfg
+import netaddr
 import webob.exc
 
 import quantum.common.test_lib as test_lib
@@ -82,6 +83,7 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         instance.return_value.get_nvp_version.return_value = "2.999"
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
+        cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
 
     def tearDown(self):
         self.fc.reset_all()
@@ -259,10 +261,120 @@ class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
 class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                               NiciraPluginV2TestCase):
 
-        def test_floatingip_with_assoc_fails(self):
-            self._test_floatingip_with_assoc_fails(
-                'quantum.plugins.nicira.nicira_nvp_plugin.'
-                'QuantumPlugin.NvpPluginV2')
+    def test_floatingip_with_assoc_fails(self):
+        self._test_floatingip_with_assoc_fails(
+            'quantum.plugins.nicira.nicira_nvp_plugin.'
+            'QuantumPlugin.NvpPluginV2')
+
+    def _nvp_metadata_setup(self):
+        cfg.CONF.set_override('enable_metadata_access_network', True, 'NVP')
+
+    def _nvp_metadata_teardown(self):
+        cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
+
+    def test_router_add_interface_subnet_with_metadata_access(self):
+        self._nvp_metadata_setup()
+        notifications = ['router.create.start',
+                         'router.create.end',
+                         'network.create.start',
+                         'network.create.end',
+                         'subnet.create.start',
+                         'subnet.create.end',
+                         'router.interface.create',
+                         'network.create.end',
+                         'router.interface.create',
+                         'router.interface.delete',
+                         'router.interface.delete',
+                         'network.delete.end']
+        self.test_router_add_interface_subnet(exp_notifications=notifications)
+        self._nvp_metadata_teardown()
+
+    def test_router_add_interface_port_with_metadata_access(self):
+        self._nvp_metadata_setup()
+        self.test_router_add_interface_port()
+        self._nvp_metadata_teardown()
+
+    def test_router_add_interface_dupsubnet_returns_400_with_metadata(self):
+        self._nvp_metadata_setup()
+        self.test_router_add_interface_dup_subnet1_returns_400()
+        self._nvp_metadata_teardown()
+
+    def test_router_add_interface_overlapped_cidr_returns_400_with(self):
+        self._nvp_metadata_setup()
+        self.test_router_add_interface_overlapped_cidr_returns_400()
+        self._nvp_metadata_teardown()
+
+    def test_router_remove_interface_inuse_returns_409_with_metadata(self):
+        self._nvp_metadata_setup()
+        self.test_router_remove_interface_inuse_returns_409()
+        self._nvp_metadata_teardown()
+
+    def test_router_remove_iface_wrong_sub_returns_409_with_metadata(self):
+        self._nvp_metadata_setup()
+        self.test_router_remove_interface_wrong_subnet_returns_409()
+        self._nvp_metadata_teardown()
+
+    def test_router_delete_with_metadata_access(self):
+        self._nvp_metadata_setup()
+        self.test_router_delete()
+        self._nvp_metadata_teardown()
+
+    def test_router_delete_with_port_existed_returns_409_with_metadata(self):
+        self._nvp_metadata_setup()
+        self.test_router_delete_with_port_existed_returns_409()
+        self._nvp_metadata_teardown()
+
+    def test_metadatata_network_created_with_router_interface_add(self):
+        self._nvp_metadata_setup()
+        with self.router() as r:
+            with self.subnet() as s:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+                r_ports = self._list('ports')['ports']
+                self.assertEqual(len(r_ports), 2)
+                ips = []
+                for port in r_ports:
+                    ips.extend([netaddr.IPAddress(fixed_ip['ip_address'])
+                                for fixed_ip in port['fixed_ips']])
+                meta_cidr = netaddr.IPNetwork('169.254.0.0/16')
+                self.assertTrue(any([ip in meta_cidr for ip in ips]))
+                # Needed to avoid 409
+                body = self._router_interface_action('remove',
+                                                     r['router']['id'],
+                                                     s['subnet']['id'],
+                                                     None)
+        self._nvp_metadata_teardown()
+
+    def test_metadatata_network_removed_with_router_interface_remove(self):
+        self._nvp_metadata_setup()
+        with self.router() as r:
+            with self.subnet() as s:
+                self._router_interface_action('add', r['router']['id'],
+                                              s['subnet']['id'], None)
+                subnets = self._list('subnets')['subnets']
+                self.assertEqual(len(subnets), 2)
+                meta_cidr = netaddr.IPNetwork('169.254.0.0/16')
+                for subnet in subnets:
+                    cidr = netaddr.IPNetwork(subnet['cidr'])
+                    if meta_cidr == cidr or meta_cidr in cidr.supernet(16):
+                        meta_sub_id = subnet['id']
+                        meta_net_id = subnet['network_id']
+                ports = self._list(
+                    'ports',
+                    query_params='network_id=%s' % meta_net_id)['ports']
+                self.assertEqual(len(ports), 1)
+                meta_port_id = ports[0]['id']
+                self._router_interface_action('remove', r['router']['id'],
+                                              s['subnet']['id'], None)
+                self._show('networks', meta_net_id,
+                           webob.exc.HTTPNotFound.code)
+                self._show('ports', meta_port_id,
+                           webob.exc.HTTPNotFound.code)
+                self._show('subnets', meta_sub_id,
+                           webob.exc.HTTPNotFound.code)
+        self._nvp_metadata_teardown()
 
 
 class NvpQoSTestExtensionManager(object):

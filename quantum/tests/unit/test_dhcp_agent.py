@@ -14,7 +14,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import os
 import socket
 import sys
@@ -27,6 +26,7 @@ import unittest2 as unittest
 from quantum.agent.common import config
 from quantum.agent import dhcp_agent
 from quantum.agent.linux import interface
+from quantum.common import constants
 from quantum.common import exceptions
 from quantum.openstack.common import jsonutils
 
@@ -54,13 +54,20 @@ fake_subnet1 = FakeModel('bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
 
 fake_subnet2 = FakeModel('dddddddd-dddd-dddd-dddddddddddd',
                          network_id='12345678-1234-5678-1234567890ab',
-                         enable_dhcp=False)
+                         cidr='172.9.9.0/24', enable_dhcp=False)
 
 fake_subnet3 = FakeModel('bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                          network_id='12345678-1234-5678-1234567890ab',
                          cidr='192.168.1.1/24', enable_dhcp=True)
 
+fake_meta_subnet = FakeModel('bbbbbbbb-1111-2222-bbbbbbbbbbbb',
+                             network_id='12345678-1234-5678-1234567890ab',
+                             cidr='169.254.169.252/30',
+                             gateway_ip='169.254.169.253', enable_dhcp=True)
+
 fake_fixed_ip = FakeModel('', subnet=fake_subnet1, ip_address='172.9.9.9')
+fake_meta_fixed_ip = FakeModel('', subnet=fake_meta_subnet,
+                               ip_address='169.254.169.254')
 
 fake_port1 = FakeModel('12345678-1234-aaaa-1234567890ab',
                        mac_address='aa:bb:cc:dd:ee:ff',
@@ -71,11 +78,24 @@ fake_port2 = FakeModel('12345678-1234-aaaa-123456789000',
                        mac_address='aa:bb:cc:dd:ee:99',
                        network_id='12345678-1234-5678-1234567890ab')
 
+fake_meta_port = FakeModel('12345678-1234-aaaa-1234567890ab',
+                           mac_address='aa:bb:cc:dd:ee:ff',
+                           network_id='12345678-1234-5678-1234567890ab',
+                           device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+                           device_id='forzanapoli',
+                           fixed_ips=[fake_meta_fixed_ip])
+
 fake_network = FakeModel('12345678-1234-5678-1234567890ab',
                          tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
                          admin_state_up=True,
                          subnets=[fake_subnet1, fake_subnet2],
                          ports=[fake_port1])
+
+fake_meta_network = FakeModel('12345678-1234-5678-1234567890ab',
+                              tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                              admin_state_up=True,
+                              subnets=[fake_meta_subnet],
+                              ports=[fake_meta_port])
 
 fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
                               tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -417,6 +437,27 @@ class TestDhcpAgentEventHandler(unittest.TestCase):
                 mock.call().disable()
             ])
 
+    def test_enable_isolated_metadata_proxy_with_metadata_network(self):
+        cfg.CONF.set_override('enable_metadata_network', True)
+        class_path = 'quantum.agent.linux.ip_lib.IPWrapper'
+        self.external_process_p.stop()
+        # Ensure the mock is restored if this test fail
+        try:
+            with mock.patch(class_path) as ip_wrapper:
+                self.dhcp.enable_isolated_metadata_proxy(fake_meta_network)
+                ip_wrapper.assert_has_calls([mock.call(
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                    mock.call().netns.execute(['quantum-ns-metadata-proxy',
+                                               mock.ANY,
+                                               '--router_id=forzanapoli',
+                                               mock.ANY,
+                                               mock.ANY])
+                ])
+        finally:
+            self.external_process_p.start()
+            cfg.CONF.set_override('enable_metadata_network', False)
+
     def test_network_create_end(self):
         payload = dict(network=dict(id=fake_network.id))
 
@@ -751,44 +792,61 @@ class TestDeviceManager(unittest.TestCase):
         self.device_exists = self.device_exists_p.start()
 
         self.dvr_cls_p = mock.patch('quantum.agent.linux.interface.NullDriver')
+        self.iproute_cls_p = mock.patch('quantum.agent.linux.'
+                                        'ip_lib.IpRouteCommand')
         driver_cls = self.dvr_cls_p.start()
+        iproute_cls = self.iproute_cls_p.start()
         self.mock_driver = mock.MagicMock()
         self.mock_driver.DEV_NAME_LEN = (
             interface.LinuxInterfaceDriver.DEV_NAME_LEN)
+        self.mock_iproute = mock.MagicMock()
         driver_cls.return_value = self.mock_driver
+        iproute_cls.return_value = self.mock_iproute
 
     def tearDown(self):
         self.dvr_cls_p.stop()
         self.device_exists_p.stop()
+        self.iproute_cls_p.stop()
         cfg.CONF.reset()
 
-    def _test_setup_helper(self, device_exists, reuse_existing=False):
+    def _test_setup_helper(self, device_exists, reuse_existing=False,
+                           metadata_access_network=False,
+                           net=None, port=None):
+        net = net or fake_network
+        port = port or fake_port1
         plugin = mock.Mock()
-        plugin.get_dhcp_port.return_value = fake_port1
+        plugin.get_dhcp_port.return_value = port or fake_port1
         self.device_exists.return_value = device_exists
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
 
         dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
-        interface_name = dh.setup(fake_network, reuse_existing)
+        interface_name = dh.setup(net, reuse_existing)
 
         self.assertEqual(interface_name, 'tap12345678-12')
 
         plugin.assert_has_calls([
-            mock.call.get_dhcp_port(fake_network.id, mock.ANY)])
+            mock.call.get_dhcp_port(net.id, mock.ANY)])
 
-        namespace = dhcp_agent.NS_PREFIX + fake_network.id
+        namespace = dhcp_agent.NS_PREFIX + net.id
 
+        if metadata_access_network:
+            expected_ips = ['169.254.169.254/30']
+        else:
+            expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
         expected = [mock.call.init_l3('tap12345678-12',
-                                      ['172.9.9.9/24', '169.254.169.254/16'],
+                                      expected_ips,
                                       namespace=namespace)]
 
         if not reuse_existing:
             expected.insert(0,
-                            mock.call.plug(fake_network.id,
-                                           fake_port1.id,
+                            mock.call.plug(net.id,
+                                           port.id,
                                            'tap12345678-12',
                                            'aa:bb:cc:dd:ee:ff',
                                            namespace=namespace))
+        if metadata_access_network:
+            self.mock_iproute.assert_has_calls(
+                [mock.call.add_gateway('169.254.169.253')])
 
         self.mock_driver.assert_has_calls(expected)
 
@@ -801,6 +859,11 @@ class TestDeviceManager(unittest.TestCase):
 
     def test_setup_device_exists_reuse(self):
         self._test_setup_helper(True, True)
+
+    def test_setup_with_metadata_access_network(self):
+        cfg.CONF.set_override('enable_metadata_network', True)
+        self._test_setup_helper(False, metadata_access_network=True,
+                                net=fake_meta_network, port=fake_meta_port)
 
     def test_destroy(self):
         fake_network = FakeModel('12345678-1234-5678-1234567890ab',

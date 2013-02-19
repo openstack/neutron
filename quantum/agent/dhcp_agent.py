@@ -29,6 +29,7 @@ from quantum.agent.linux import external_process
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent import rpc as agent_rpc
+from quantum.common import constants
 from quantum.common import exceptions
 from quantum.common import topics
 from quantum import context
@@ -40,7 +41,8 @@ from quantum.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qdhcp-'
-METADATA_DEFAULT_IP = '169.254.169.254/16'
+METADATA_DEFAULT_PREFIX = 16
+METADATA_DEFAULT_IP = '169.254.169.254/%d' % METADATA_DEFAULT_PREFIX
 METADATA_PORT = 80
 
 
@@ -54,7 +56,11 @@ class DhcpAgent(object):
         cfg.BoolOpt('use_namespaces', default=True,
                     help=_("Allow overlapping IP.")),
         cfg.BoolOpt('enable_isolated_metadata', default=False,
-                    help=_("Support Metadata requests on isolated networks."))
+                    help=_("Support Metadata requests on isolated networks.")),
+        cfg.BoolOpt('enable_metadata_network', default=False,
+                    help=_("Allows for serving metadata requests from a "
+                           "dedicate network. Requires "
+                           "enable isolated_metadata = True "))
     ]
 
     def __init__(self, conf):
@@ -245,13 +251,37 @@ class DhcpAgent(object):
             self.call_driver('reload_allocations', network)
 
     def enable_isolated_metadata_proxy(self, network):
+
+        # The proxy might work for either a single network
+        # or all the networks connected via a router
+        # to the one passed as a parameter
+        quantum_lookup_param = '--network_id=%s' % network.id
+        meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_IP)
+        has_metadata_subnet = any(netaddr.IPNetwork(s.cidr) in meta_cidr
+                                  for s in network.subnets)
+        if (self.conf.enable_metadata_network and has_metadata_subnet):
+            router_ports = [port for port in network.ports
+                            if (port.device_owner ==
+                                constants.DEVICE_OWNER_ROUTER_INTF)]
+            if router_ports:
+                # Multiple router ports should not be allowed
+                if len(router_ports) > 1:
+                    LOG.warning(_("%(port_num)d router ports found on the "
+                                  "metadata access network. Only the port "
+                                  "%(port_id)s, for router %(router_id)s "
+                                  "will be considered"),
+                                {'port_num': len(router_ports),
+                                 'port_id': router_ports[0].id,
+                                 'router_id': router_ports[0].device_id})
+                quantum_lookup_param = ('--router_id=%s' %
+                                        router_ports[0].device_id)
+
         def callback(pid_file):
             return ['quantum-ns-metadata-proxy',
                     '--pid_file=%s' % pid_file,
-                    '--network_id=%s' % network.id,
+                    quantum_lookup_param,
                     '--state_path=%s' % self.conf.state_path,
                     '--metadata_port=%d' % METADATA_PORT]
-
         pm = external_process.ProcessManager(
             self.conf,
             network.id,
@@ -480,7 +510,9 @@ class DeviceManager(object):
             ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
             ip_cidrs.append(ip_cidr)
 
-        if self.conf.enable_isolated_metadata and self.conf.use_namespaces:
+        if (self.conf.enable_isolated_metadata and
+            self.conf.use_namespaces and
+            not self.conf.enable_metadata_network):
             ip_cidrs.append(METADATA_DEFAULT_IP)
 
         self.driver.init_l3(interface_name, ip_cidrs,
@@ -491,6 +523,19 @@ class DeviceManager(object):
             device = ip_lib.IPDevice(interface_name,
                                      self.root_helper)
             device.route.pullup_route(interface_name)
+
+        if self.conf.enable_metadata_network:
+            meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_IP)
+            metadata_subnets = [s for s in network.subnets if
+                                netaddr.IPNetwork(s.cidr) in meta_cidr]
+            if metadata_subnets:
+                # Add a gateway so that packets can be routed back to VMs
+                device = ip_lib.IPDevice(interface_name,
+                                         self.root_helper,
+                                         namespace)
+                # Only 1 subnet on metadata access network
+                gateway_ip = metadata_subnets[0].gateway_ip
+                device.route.add_gateway(gateway_ip)
 
         return interface_name
 
