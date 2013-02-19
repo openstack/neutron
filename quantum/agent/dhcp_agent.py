@@ -481,8 +481,14 @@ class DeviceManager(object):
         self.root_helper = config.get_root_helper(conf)
         self.plugin = plugin
         if not conf.interface_driver:
-            LOG.error(_('You must specify an interface driver'))
-        self.driver = importutils.import_object(conf.interface_driver, conf)
+            raise SystemExit(_('You must specify an interface driver'))
+        try:
+            self.driver = importutils.import_object(conf.interface_driver,
+                                                    conf)
+        except:
+            msg = _("Error importing interface driver "
+                    "'%s'") % conf.interface_driver
+            raise SystemExit(msg)
 
     def get_interface_name(self, network, port=None):
         """Return interface(device) name for use by the DHCP process."""

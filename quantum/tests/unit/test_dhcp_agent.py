@@ -113,6 +113,8 @@ class TestDhcpAgent(unittest.TestCase):
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
+        cfg.CONF.set_override('interface_driver',
+                              'quantum.agent.linux.interface.NullDriver')
         self.driver_cls_p = mock.patch(
             'quantum.agent.dhcp_agent.importutils.import_class')
         self.driver = mock.Mock(name='driver')

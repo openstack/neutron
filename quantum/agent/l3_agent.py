@@ -154,15 +154,15 @@ class L3NATAgent(manager.Manager):
         self.router_info = {}
 
         if not self.conf.interface_driver:
-            LOG.error(_('An interface driver must be specified'))
-            sys.exit(1)
+            raise SystemExit(_('An interface driver must be specified'))
         try:
             self.driver = importutils.import_object(self.conf.interface_driver,
                                                     self.conf)
         except:
-            LOG.exception(_("Error importing interface driver '%s'"),
-                          self.conf.interface_driver)
-            sys.exit(1)
+            msg = _("Error importing interface driver "
+                    "'%s'") % self.conf.interface_driver
+            raise SystemExit(msg)
+
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.PLUGIN, host)
         self.fullsync = True
