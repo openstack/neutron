@@ -18,14 +18,14 @@
 """nvp_network_gw
 
 Revision ID: 363468ac592c
-Revises: 38335592a0dc
+Revises: 1c33fa3cd1a1
 Create Date: 2013-02-07 03:19:14.455372
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '363468ac592c'
-down_revision = '38335592a0dc'
+down_revision = '1c33fa3cd1a1'
 
 # Change to ['*'] if this migration applies to all plugins
 
