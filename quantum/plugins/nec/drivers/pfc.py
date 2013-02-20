@@ -14,20 +14,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Ryota MIBU
+# @author: Akihiro MOTOKI
 
+import re
+import uuid
+
+from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.common import ofc_client
 from quantum.plugins.nec import ofc_driver_base
 
 
-TENANTS_PATH = "/tenants"
-TENANT_PATH = "/tenants/%s"
-NETWORKS_PATH = "/tenants/%s/networks"
-NETWORK_PATH = "/tenants/%s/networks/%s"
-PORTS_PATH = "/tenants/%s/networks/%s/ports"
-PORT_PATH = "/tenants/%s/networks/%s/ports/%s"
+class PFCDriverBase(ofc_driver_base.OFCDriverBase):
+    """Base Class for PDC Drivers
 
+    PFCDriverBase provides methods to handle PFC resources through REST API.
+    This uses ofc resource path instead of ofc resource ID.
 
-class PFCDriver(ofc_driver_base.OFCDriverBase):
+    The class implements the API for PFC V4.0 or later.
+    """
 
     def __init__(self, conf_ofc):
         self.client = ofc_client.OFCClient(host=conf_ofc.host,
@@ -40,62 +44,107 @@ class PFCDriver(ofc_driver_base.OFCDriverBase):
     def filter_supported(cls):
         return False
 
-    def create_tenant(self, description, tenant_id=None):
-        body = {'description': description}
-        if tenant_id:
-            body.update({'id': tenant_id})
-        res = self.client.post(TENANTS_PATH, body=body)
-        ofc_tenant_id = res['id']
-        return ofc_tenant_id
+    def _generate_pfc_str(self, raw_str):
+        """Generate PFC acceptable String"""
+        return re.sub(r'[^0-9a-zA-Z]', '_', raw_str)
 
-    def update_tenant(self, ofc_tenant_id, description):
-        path = TENANT_PATH % ofc_tenant_id
-        body = {'description': description}
-        res = self.client.put(path, body=body)
+    def _generate_pfc_id(self, id_str):
+        """Generate ID on PFC
+
+        Currently, PFC ID must be less than 32.
+        Shorten UUID string length from 36 to 31 by follows:
+          * delete UUID Version and hyphen (see RFC4122)
+          * ensure str length
+        """
+        try:
+            # openstack.common.uuidutils.is_uuid_like() returns
+            # False for KeyStone tenant_id, so uuid.UUID is used
+            # directly here to accept tenant_id as UUID string
+            uuid_str = str(uuid.UUID(id_str)).replace('-', '')
+            uuid_no_version = uuid_str[:12] + uuid_str[13:]
+            return uuid_no_version[:31]
+        except:
+            return self._generate_pfc_str(id_str)[:31]
+
+    def _generate_pfc_description(self, desc):
+        """Generate Description on PFC
+
+        Currently, PFC Description must be less than 128.
+        """
+        return self._generate_pfc_str(desc)[:127]
+
+    def create_tenant(self, description, tenant_id=None):
+        ofc_tenant_id = self._generate_pfc_id(tenant_id)
+        body = {'id': ofc_tenant_id}
+        res = self.client.post('/tenants', body=body)
+        return '/tenants/' + ofc_tenant_id
 
     def delete_tenant(self, ofc_tenant_id):
-        path = TENANT_PATH % ofc_tenant_id
-        return self.client.delete(path)
+        return self.client.delete(ofc_tenant_id)
 
     def create_network(self, ofc_tenant_id, description, network_id=None):
-        path = NETWORKS_PATH % ofc_tenant_id
-        body = {'description': description}
-        if network_id:
-            body.update({'id': network_id})
+        path = "%s/networks" % ofc_tenant_id
+        pfc_desc = self._generate_pfc_description(description)
+        body = {'description': pfc_desc}
         res = self.client.post(path, body=body)
         ofc_network_id = res['id']
-        return ofc_network_id
+        return path + '/' + ofc_network_id
 
-    def update_network(self, ofc_tenant_id, ofc_network_id, description):
-        path = NETWORK_PATH % (ofc_tenant_id, ofc_network_id)
-        body = {'description': description}
-        return self.client.put(path, body=body)
+    def delete_network(self, ofc_network_id):
+        return self.client.delete(ofc_network_id)
 
-    def delete_network(self, ofc_tenant_id, ofc_network_id):
-        path = NETWORK_PATH % (ofc_tenant_id, ofc_network_id)
-        return self.client.delete(path)
-
-    def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
+    def create_port(self, ofc_network_id, portinfo,
                     port_id=None):
-        path = PORTS_PATH % (ofc_tenant_id, ofc_network_id)
+        path = "%s/ports" % ofc_network_id
         body = {'datapath_id': portinfo.datapath_id,
                 'port': str(portinfo.port_no),
                 'vid': str(portinfo.vlan_id)}
-        if port_id:
-            body.update({'id': port_id})
         res = self.client.post(path, body=body)
         ofc_port_id = res['id']
-        return ofc_port_id
+        return path + '/' + ofc_port_id
 
-    def update_port(self, ofc_tenant_id, ofc_network_id, portinfo, port_id):
-        path = PORT_PATH % (ofc_tenant_id, ofc_network_id, ofc_port_id)
-        body = {'datapath_id': portinfo.datapath_id,
-                'port': str(portinfo.port_no),
-                'vid': str(portinfo.vlan_id)}
-        res = self.client.put(path, body=body)
-        ofc_port_id = res['id']
-        return ofc_port_id
+    def delete_port(self, ofc_port_id):
+        return self.client.delete(ofc_port_id)
 
-    def delete_port(self, ofc_tenant_id, ofc_network_id, ofc_port_id):
-        path = PORT_PATH % (ofc_tenant_id, ofc_network_id, ofc_port_id)
-        return self.client.delete(path)
+    def convert_ofc_tenant_id(self, context, ofc_tenant_id):
+        # If ofc_tenant_id starts with '/', it is already new-style
+        if ofc_tenant_id[0] == '/':
+            return ofc_tenant_id
+        return '/tenants/%s' % ofc_tenant_id
+
+    def convert_ofc_network_id(self, context, ofc_network_id, tenant_id):
+        # If ofc_network_id starts with '/', it is already new-style
+        if ofc_network_id[0] == '/':
+            return ofc_network_id
+
+        ofc_tenant_id = ndb.get_ofc_id_lookup_both(
+            context.session, 'ofc_tenant', tenant_id)
+        ofc_tenant_id = self.convert_ofc_tenant_id(context, ofc_tenant_id)
+        params = dict(tenant=ofc_tenant_id, network=ofc_network_id)
+        return '%(tenant)s/networks/%(network)s' % params
+
+    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
+        # If ofc_port_id  starts with '/', it is already new-style
+        if ofc_port_id[0] == '/':
+            return ofc_port_id
+
+        ofc_network_id = ndb.get_ofc_id_lookup_both(
+            context.session, 'ofc_network', network_id)
+        ofc_network_id = self.convert_ofc_network_id(
+            context, ofc_network_id, tenant_id)
+        params = dict(network=ofc_network_id, port=ofc_port_id)
+        return '%(network)s/ports/%(port)s' % params
+
+
+class PFCV3Driver(PFCDriverBase):
+
+    def create_tenant(self, description, tenant_id):
+        ofc_tenant_id = self._generate_pfc_id(tenant_id)
+        return "/tenants/" + ofc_tenant_id
+
+    def delete_tenant(self, ofc_tenant_id):
+        pass
+
+
+class PFCV4Driver(PFCDriverBase):
+    pass

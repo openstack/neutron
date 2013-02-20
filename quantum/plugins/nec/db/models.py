@@ -21,6 +21,38 @@ from quantum.db import model_base
 from quantum.db import models_v2
 
 
+"""New mapping tables"""
+
+
+class OFCId(object):
+    """Resource ID on OpenFlow Controller"""
+    ofc_id = sa.Column(sa.String(255), unique=True, nullable=False)
+
+
+class QuantumId(object):
+    """Logical ID on Quantum"""
+    quantum_id = sa.Column(sa.String(36), primary_key=True)
+
+
+class OFCTenantMapping(model_base.BASEV2, QuantumId, OFCId):
+    """Represents a Tenant on OpenFlow Network/Controller."""
+
+
+class OFCNetworkMapping(model_base.BASEV2, QuantumId, OFCId):
+    """Represents a Network on OpenFlow Network/Controller."""
+
+
+class OFCPortMapping(model_base.BASEV2, QuantumId, OFCId):
+    """Represents a Port on OpenFlow Network/Controller."""
+
+
+class OFCFilterMapping(model_base.BASEV2, QuantumId, OFCId):
+    """Represents a Filter on OpenFlow Network/Controller."""
+
+
+"""Old mapping tables"""
+
+
 class HasQuantumId(object):
     """Logical ID on Quantum"""
     quantum_id = sa.Column(sa.String(36), nullable=False)

@@ -14,8 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Ryota MIBU
+# @author: Akihiro MOTOKI
 
 from quantum.openstack.common import uuidutils
+from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.common import ofc_client
 from quantum.plugins.nec import ofc_driver_base
 
@@ -30,8 +32,17 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
         self.client = ofc_client.OFCClient(host=conf_ofc.host,
                                            port=conf_ofc.port)
 
+    def _get_network_id(self, ofc_network_id):
+        # ofc_network_id : /networks/<network-id>
+        return ofc_network_id.split('/')[2]
+
+    def _get_tenant_id(self, tenant_id):
+        # Trema does not use tenant_id, but it returns
+        # /tenants/<tenant_id> format to keep consistency with PFC driver.
+        return '/tenants/' + tenant_id
+
     def create_tenant(self, description, tenant_id=None):
-        return tenant_id or uuidutils.generate_uuid()
+        return self._get_tenant_id(tenant_id or uuidutils.generate_uuid())
 
     def update_tenant(self, ofc_tenant_id, description):
         pass
@@ -43,25 +54,28 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
         ofc_network_id = network_id or uuidutils.generate_uuid()
         body = {'id': ofc_network_id, 'description': description}
         self.client.post(self.networks_path, body=body)
-        return ofc_network_id
+        return self.network_path % ofc_network_id
 
-    def update_network(self, ofc_tenant_id, ofc_network_id, description):
-        path = self.network_path % ofc_network_id
-        body = {'description': description}
-        return self.client.put(path, body=body)
+    def delete_network(self, ofc_network_id):
+        return self.client.delete(ofc_network_id)
 
-    def delete_network(self, ofc_tenant_id, ofc_network_id):
-        path = self.network_path % ofc_network_id
-        return self.client.delete(path)
+    def convert_ofc_tenant_id(self, context, ofc_tenant_id):
+        # If ofc_network_id starts with '/', it is already new-style
+        if ofc_tenant_id[0] == '/':
+            return ofc_tenant_id
+        return self._get_tenant_id(ofc_tenant_id)
 
-    def update_port(self, ofc_tenant_id, ofc_network_id, ofc_port_id,
-                    portinfo):
-        self.delete_port(ofc_tenant_id, ofc_network_id, ofc_port_id)
-        self.create_port(ofc_tenant_id, ofc_network_id, portinfo, ofc_port_id)
+    def convert_ofc_network_id(self, context, ofc_network_id, tenant_id):
+        # If ofc_network_id starts with '/', it is already new-style
+        if ofc_network_id[0] == '/':
+            return ofc_network_id
+        # Trema sliceable switch does not use tenant_id,
+        # so we can convert ofc_network_id from old id only
+        return self.network_path % ofc_network_id
 
 
 class TremaFilterDriver(object):
-    """Trema (Sliceable Switch) PacketFilter Driver"""
+    """Trema (Sliceable Switch) PacketFilter Driver Mixin"""
     filters_path = "/filters"
     filter_path = "/filters/%s"
 
@@ -69,7 +83,7 @@ class TremaFilterDriver(object):
     def filter_supported(cls):
         return True
 
-    def create_filter(self, ofc_tenant_id, ofc_network_id, filter_dict,
+    def create_filter(self, ofc_network_id, filter_dict,
                       portinfo=None, filter_id=None):
         if filter_dict['action'].upper() in ["ACCEPT", "ALLOW"]:
             ofc_action = "ALLOW"
@@ -77,7 +91,7 @@ class TremaFilterDriver(object):
             ofc_action = "DENY"
 
         body = {'priority': filter_dict['priority'],
-                'slice': ofc_network_id,
+                'slice': self._get_network_id(ofc_network_id),
                 'action': ofc_action}
         ofp_wildcards = ["dl_vlan", "dl_vlan_pcp", "nw_tos"]
 
@@ -147,11 +161,16 @@ class TremaFilterDriver(object):
         body['ofp_wildcards'] = ','.join(ofp_wildcards)
 
         self.client.post(self.filters_path, body=body)
-        return ofc_filter_id
+        return self.filter_path % ofc_filter_id
 
-    def delete_filter(self, ofc_tenant_id, ofc_network_id, ofc_filter_id):
-        path = self.filter_path % ofc_filter_id
-        return self.client.delete(path)
+    def delete_filter(self, ofc_filter_id):
+        return self.client.delete(ofc_filter_id)
+
+    def convert_ofc_filter_id(self, context, ofc_filter_id):
+        # If ofc_filter_id starts with '/', it is already new-style
+        if ofc_filter_id[0] == '/':
+            return ofc_filter_id
+        return self.filter_path % ofc_filter_id
 
 
 class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
@@ -160,23 +179,36 @@ class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
     TremaPortBaseDriver uses port base binding.
     Ports are identified by datapath_id, port_no and vlan_id.
     """
-    ports_path = "/networks/%s/ports"
-    port_path = "/networks/%s/ports/%s"
+    ports_path = "%(network)s/ports"
+    port_path = "%(network)s/ports/%(port)s"
 
-    def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
+    def create_port(self, ofc_network_id, portinfo,
                     port_id=None):
         ofc_port_id = port_id or uuidutils.generate_uuid()
-        path = self.ports_path % ofc_network_id
+        path = self.ports_path % {'network': ofc_network_id}
         body = {'id': ofc_port_id,
                 'datapath_id': portinfo.datapath_id,
                 'port': str(portinfo.port_no),
                 'vid': str(portinfo.vlan_id)}
         self.client.post(path, body=body)
-        return ofc_port_id
+        return self.port_path % {'network': ofc_network_id,
+                                 'port': ofc_port_id}
 
-    def delete_port(self, ofc_tenant_id, ofc_network_id, ofc_port_id):
-        path = self.port_path % (ofc_network_id, ofc_port_id)
-        return self.client.delete(path)
+    def delete_port(self, ofc_port_id):
+        return self.client.delete(ofc_port_id)
+
+    def convert_ofc_port_id(self, context, ofc_port_id,
+                            tenant_id, network_id):
+        # If ofc_port_id  starts with '/', it is already new-style
+        if ofc_port_id[0] == '/':
+            return ofc_port_id
+
+        ofc_network_id = ndb.get_ofc_id_lookup_both(
+            context.session, 'ofc_network', network_id)
+        ofc_network_id = self.convert_ofc_network_id(
+            context, ofc_network_id, tenant_id)
+        return self.port_path % {'network': ofc_network_id,
+                                 'port': ofc_port_id}
 
 
 class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
@@ -185,40 +217,54 @@ class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
     TremaPortBaseDriver uses port-mac base binding.
     Ports are identified by datapath_id, port_no, vlan_id and mac.
     """
-    ports_path = "/networks/%s/ports"
-    port_path = "/networks/%s/ports/%s"
-    attachments_path = "/networks/%s/ports/%s/attachments"
-    attachment_path = "/networks/%s/ports/%s/attachments/%s"
+    ports_path = "%(network)s/ports"
+    port_path = "%(network)s/ports/%(port)s"
+    attachments_path = "%(network)s/ports/%(port)s/attachments"
+    attachment_path = "%(network)s/ports/%(port)s/attachments/%(attachment)s"
 
-    def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
-                    port_id=None):
+    def create_port(self, ofc_network_id, portinfo, port_id=None):
         #NOTE: This Driver create slices with Port-MAC Based bindings on Trema
         #      Sliceable.  It's REST API requires Port Based binding before you
         #      define Port-MAC Based binding.
         ofc_port_id = port_id or uuidutils.generate_uuid()
         dummy_port_id = "dummy-%s" % ofc_port_id
 
-        path = self.ports_path % ofc_network_id
+        path = self.ports_path % {'network': ofc_network_id}
         body = {'id': dummy_port_id,
                 'datapath_id': portinfo.datapath_id,
                 'port': str(portinfo.port_no),
                 'vid': str(portinfo.vlan_id)}
         self.client.post(path, body=body)
 
-        path = self.attachments_path % (ofc_network_id, dummy_port_id)
+        path = self.attachments_path % {'network': ofc_network_id,
+                                        'port': dummy_port_id}
         body = {'id': ofc_port_id, 'mac': portinfo.mac}
         self.client.post(path, body=body)
 
-        path = self.port_path % (ofc_network_id, dummy_port_id)
+        path = self.port_path % {'network': ofc_network_id,
+                                 'port': dummy_port_id}
         self.client.delete(path)
 
-        return ofc_port_id
+        return self.attachment_path % {'network': ofc_network_id,
+                                       'port': dummy_port_id,
+                                       'attachment': ofc_port_id}
 
-    def delete_port(self, ofc_tenant_id, ofc_network_id, ofc_port_id):
-        dummy_port_id = "dummy-%s" % ofc_port_id
-        path = self.attachment_path % (ofc_network_id, dummy_port_id,
-                                       ofc_port_id)
-        return self.client.delete(path)
+    def delete_port(self, ofc_port_id):
+        return self.client.delete(ofc_port_id)
+
+    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
+        # If ofc_port_id  starts with '/', it is already new-style
+        if ofc_port_id[0] == '/':
+            return ofc_port_id
+
+        ofc_network_id = ndb.get_ofc_id_lookup_both(
+            context.session, 'ofc_network', network_id)
+        ofc_network_id = self.convert_ofc_network_id(
+            context, ofc_network_id, tenant_id)
+        dummy_port_id = 'dummy-%s' % ofc_port_id
+        return self.attachment_path % {'network': ofc_network_id,
+                                       'port': dummy_port_id,
+                                       'attachment': ofc_port_id}
 
 
 class TremaMACBaseDriver(TremaDriverBase):
@@ -227,21 +273,32 @@ class TremaMACBaseDriver(TremaDriverBase):
     TremaPortBaseDriver uses mac base binding.
     Ports are identified by mac.
     """
-    attachments_path = "/networks/%s/attachments"
-    attachment_path = "/networks/%s/attachments/%s"
+    attachments_path = "%(network)s/attachments"
+    attachment_path = "%(network)s/attachments/%(attachment)s"
 
     @classmethod
     def filter_supported(cls):
         return False
 
-    def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
-                    port_id=None):
+    def create_port(self, ofc_network_id, portinfo, port_id=None):
         ofc_port_id = port_id or uuidutils.generate_uuid()
-        path = self.attachments_path % ofc_network_id
+        path = self.attachments_path % {'network': ofc_network_id}
         body = {'id': ofc_port_id, 'mac': portinfo.mac}
         self.client.post(path, body=body)
-        return ofc_port_id
+        return self.attachment_path % {'network': ofc_network_id,
+                                       'attachment': ofc_port_id}
 
-    def delete_port(self, ofc_tenant_id, ofc_network_id, ofc_port_id):
-        path = self.attachment_path % (ofc_network_id, ofc_port_id)
-        return self.client.delete(path)
+    def delete_port(self, ofc_port_id):
+        return self.client.delete(ofc_port_id)
+
+    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
+        # If ofc_port_id  starts with '/', it is already new-style
+        if ofc_port_id[0] == '/':
+            return ofc_port_id
+
+        ofc_network_id = ndb.get_ofc_id_lookup_both(
+            context.session, 'ofc_network', network_id)
+        ofc_network_id = self.convert_ofc_network_id(
+            context, ofc_network_id, tenant_id)
+        return self.attachment_path % {'network': ofc_network_id,
+                                       'attachment': ofc_port_id}
