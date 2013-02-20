@@ -18,14 +18,14 @@
 """NEC plugin sharednet
 
 Revision ID: 3b54bf9e29f7
-Revises: 54c2c487e913
+Revises: 511471cc46b
 Create Date: 2013-02-17 09:21:48.287134
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '3b54bf9e29f7'
-down_revision = '54c2c487e913'
+down_revision = '511471cc46b'
 
 # Change to ['*'] if this migration applies to all plugins
 

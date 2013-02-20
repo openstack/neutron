@@ -18,14 +18,14 @@
 """Add agent management extension model support
 
 Revision ID: 511471cc46b
-Revises: 54c2c487e913
+Revises: 363468ac592c
 Create Date: 2013-02-18 05:09:32.523460
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '511471cc46b'
-down_revision = '54c2c487e913'
+down_revision = '363468ac592c'
 
 # Change to ['*'] if this migration applies to all plugins
 

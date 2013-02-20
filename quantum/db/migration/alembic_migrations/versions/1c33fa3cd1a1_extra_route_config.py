@@ -18,14 +18,14 @@
 """Support routring table configration on Router
 
 Revision ID: 1c33fa3cd1a1
-Revises: 1d76643bcec4
+Revises: 45680af419f9
 Create Date: 2013-01-17 14:35:09.386975
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '1c33fa3cd1a1'
-down_revision = '1d76643bcec4'
+down_revision = '45680af419f9'
 
 # Change to ['*'] if this migration applies to all plugins
 
