@@ -49,7 +49,7 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         env.update(addl_env)
     obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           preexec_fn=_subprocess_setup,
+                           preexec_fn=_subprocess_setup, close_fds=True,
                            env=env)
 
     _stdout, _stderr = (process_input and
