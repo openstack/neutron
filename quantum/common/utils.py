@@ -162,3 +162,24 @@ def compare_elements(a, b):
     if b is None:
         b = []
     return set(a) == set(b)
+
+
+def dict2str(dic):
+    return ','.join("%s=%s" % (key, val)
+                    for key, val in sorted(dic.iteritems()))
+
+
+def str2dict(string):
+    res_dict = {}
+    for keyvalue in string.split(',', 1):
+        (key, value) = keyvalue.split('=', 1)
+        res_dict[key] = value
+    return res_dict
+
+
+def diff_list_of_dict(old_list, new_list):
+    new_set = set([dict2str(l) for l in new_list])
+    old_set = set([dict2str(l) for l in old_list])
+    added = new_set - old_set
+    removed = old_set - new_set
+    return [str2dict(a) for a in added], [str2dict(r) for r in removed]

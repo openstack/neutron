@@ -28,7 +28,7 @@ from quantum.db import agents_db
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
-from quantum.db import l3_db
+from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
 # NOTE: quota_db cannot be removed, it is for db model
 from quantum.db import quota_db
@@ -172,7 +172,7 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 
 class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
-                          l3_db.L3_NAT_db_mixin,
+                          extraroute_db.ExtraRoute_db_mixin,
                           sg_db_rpc.SecurityGroupServerRpcMixin,
                           agents_db.AgentDbMixin):
     """Implement the Quantum abstractions using Linux bridging.
@@ -199,7 +199,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     __native_sorting_support = True
 
     supported_extension_aliases = ["provider", "router", "binding", "quotas",
-                                   "security-group", "agent"]
+                                   "security-group", "agent", "extraroute"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"

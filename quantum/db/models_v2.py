@@ -92,6 +92,19 @@ class IPAllocation(model_base.BASEV2):
     expiration = sa.Column(sa.DateTime, nullable=True)
 
 
+class Route(object):
+    """mixin of a route."""
+    destination = sa.Column(sa.String(64), nullable=False, primary_key=True)
+    nexthop = sa.Column(sa.String(64), nullable=False, primary_key=True)
+
+
+class SubnetRoute(model_base.BASEV2, Route):
+    subnet_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('subnets.id',
+                                        ondelete="CASCADE"),
+                          primary_key=True)
+
+
 class Port(model_base.BASEV2, HasId, HasTenant):
     """Represents a port on a quantum v2 network."""
     name = sa.Column(sa.String(255))
@@ -108,16 +121,6 @@ class Port(model_base.BASEV2, HasId, HasTenant):
 class DNSNameServer(model_base.BASEV2):
     """Internal representation of a DNS nameserver."""
     address = sa.Column(sa.String(128), nullable=False, primary_key=True)
-    subnet_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('subnets.id',
-                                        ondelete="CASCADE"),
-                          primary_key=True)
-
-
-class Route(model_base.BASEV2):
-    """Represents a route for a subnet or port."""
-    destination = sa.Column(sa.String(64), nullable=False, primary_key=True)
-    nexthop = sa.Column(sa.String(64), nullable=False, primary_key=True)
     subnet_id = sa.Column(sa.String(36),
                           sa.ForeignKey('subnets.id',
                                         ondelete="CASCADE"),
@@ -143,7 +146,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
                                        cascade='delete')
-    routes = orm.relationship(Route,
+    routes = orm.relationship(SubnetRoute,
                               backref='subnet',
                               cascade='delete')
     shared = sa.Column(sa.Boolean)

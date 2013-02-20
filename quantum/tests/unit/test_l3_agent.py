@@ -91,7 +91,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         self.assertTrue(ri.ns_name().endswith(id))
 
     def testAgentCreate(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
     def _test_internal_network_action(self, action):
         port_id = _uuid()
@@ -100,7 +100,6 @@ class TestBasicRouterOperations(unittest2.TestCase):
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        interface_name = agent.get_internal_device_name(port_id)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30'}]}
@@ -209,6 +208,105 @@ class TestBasicRouterOperations(unittest2.TestCase):
     def testAgentRemoveFloatingIP(self):
         self._test_floating_ip_action('remove')
 
+    def _check_agent_method_called(self, agent, calls, namespace):
+        if namespace:
+            self.mock_ip.netns.execute.assert_has_calls(
+                [mock.call(call, check_exit_code=False) for call in calls],
+                any_order=True)
+        else:
+            self.utils_exec.assert_has_calls([
+                mock.call(call, root_helper='sudo',
+                          check_exit_code=False) for call in calls],
+                any_order=True)
+
+    def _test_routing_table_update(self, namespace):
+        if not namespace:
+            self.conf.set_override('use_namespaces', False)
+
+        router_id = _uuid()
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        fake_route1 = {'destination': '135.207.0.0/16',
+                       'nexthop': '1.2.3.4'}
+        fake_route2 = {'destination': '135.207.111.111/32',
+                       'nexthop': '1.2.3.4'}
+
+        agent._update_routing_table(ri, 'replace', fake_route1)
+        expected = [['ip', 'route', 'replace', 'to', '135.207.0.0/16',
+                     'via', '1.2.3.4']]
+        self._check_agent_method_called(agent, expected, namespace)
+
+        agent._update_routing_table(ri, 'delete', fake_route1)
+        expected = [['ip', 'route', 'delete', 'to', '135.207.0.0/16',
+                     'via', '1.2.3.4']]
+        self._check_agent_method_called(agent, expected, namespace)
+
+        agent._update_routing_table(ri, 'replace', fake_route2)
+        expected = [['ip', 'route', 'replace', 'to', '135.207.111.111/32',
+                     'via', '1.2.3.4']]
+        self._check_agent_method_called(agent, expected, namespace)
+
+        agent._update_routing_table(ri, 'delete', fake_route2)
+        expected = [['ip', 'route', 'delete', 'to', '135.207.111.111/32',
+                     'via', '1.2.3.4']]
+        self._check_agent_method_called(agent, expected, namespace)
+
+    def testAgentRoutingTableUpdated(self):
+        self._test_routing_table_update(namespace=True)
+
+    def testAgentRoutingTableUpdatedNoNameSpace(self):
+        self._test_routing_table_update(namespace=False)
+
+    def testRoutesUpdated(self):
+        self._test_routes_updated(namespace=True)
+
+    def testRoutesUpdatedNoNamespace(self):
+        self._test_routes_updated(namespace=False)
+
+    def _test_routes_updated(self, namespace=True):
+        if not namespace:
+            self.conf.set_override('use_namespaces', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces)
+        ri.router = {}
+
+        fake_old_routes = []
+        fake_new_routes = [{'destination': "110.100.31.0/24",
+                            'nexthop': "10.100.10.30"},
+                           {'destination': "110.100.30.0/24",
+                            'nexthop': "10.100.10.30"}]
+        ri.routes = fake_old_routes
+        ri.router['routes'] = fake_new_routes
+        agent.routes_updated(ri)
+
+        expected = [['ip', 'route', 'replace', 'to', '110.100.30.0/24',
+                    'via', '10.100.10.30'],
+                    ['ip', 'route', 'replace', 'to', '110.100.31.0/24',
+                    'via', '10.100.10.30']]
+
+        self._check_agent_method_called(agent, expected, namespace)
+
+        fake_new_routes = [{'destination': "110.100.30.0/24",
+                            'nexthop': "10.100.10.30"}]
+        ri.router['routes'] = fake_new_routes
+        agent.routes_updated(ri)
+        expected = [['ip', 'route', 'delete', 'to', '110.100.31.0/24',
+                    'via', '10.100.10.30']]
+
+        self._check_agent_method_called(agent, expected, namespace)
+        fake_new_routes = []
+        ri.router['routes'] = fake_new_routes
+        agent.routes_updated(ri)
+
+        expected = [['ip', 'route', 'delete', 'to', '110.100.30.0/24',
+                    'via', '10.100.10.30']]
+        self._check_agent_method_called(agent, expected, namespace)
+
     def testProcessRouter(self):
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -233,10 +331,12 @@ class TestBasicRouterOperations(unittest2.TestCase):
              'floating_ip_address': '8.8.8.8',
              'fixed_ip_address': '7.7.7.7',
              'port_id': _uuid()}]}
+
         router = {
             'id': router_id,
             l3_constants.FLOATINGIP_KEY: fake_floatingips1['floatingips'],
             l3_constants.INTERFACE_KEY: [internal_port],
+            'routes': [],
             'gw_port': ex_gw_port}
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
@@ -245,6 +345,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         # remap floating IP to a new fixed ip
         fake_floatingips2 = copy.deepcopy(fake_floatingips1)
         fake_floatingips2['floatingips'][0]['fixed_ip_address'] = '7.7.7.8'
+
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips2['floatingips']
         agent.process_router(ri)
 
@@ -274,6 +375,7 @@ class TestBasicRouterOperations(unittest2.TestCase):
         routers = [
             {'id': _uuid(),
              'admin_state_up': True,
+             'routes': [],
              'external_gateway_info': {}}]
         agent._process_routers(routers)
 
