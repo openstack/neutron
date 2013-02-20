@@ -515,6 +515,8 @@ class Controller(object):
 
         Controller._populate_tenant_id(context, res_dict, is_create)
 
+        Controller._verify_attributes(res_dict, attr_info)
+
         if is_create:  # POST
             for attr, attr_vals in attr_info.iteritems():
                 if attr_vals['allow_post']:
@@ -554,6 +556,13 @@ class Controller(object):
                             "Reason: %(reason)s.") % msg_dict
                     raise webob.exc.HTTPBadRequest(msg)
         return body
+
+    @staticmethod
+    def _verify_attributes(res_dict, attr_info):
+        extra_keys = set(res_dict.keys()) - set(attr_info.keys())
+        if extra_keys:
+            msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
+            raise webob.exc.HTTPBadRequest(msg)
 
     def _validate_network_tenant_ownership(self, request, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded

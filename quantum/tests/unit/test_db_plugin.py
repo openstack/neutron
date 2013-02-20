@@ -1715,7 +1715,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         name = 'net1'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
                 ('status', 'ACTIVE'), ('shared', False)]
-        with self.network(name=name, arg_list=('test',), test=None) as net:
+        with self.network(name=name) as net:
             for k, v in keys:
                 self.assertEqual(net['network'][k], v)
 
