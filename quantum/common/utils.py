@@ -114,7 +114,7 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
                      env=None):
     return subprocess.Popen(args, shell=shell, stdin=stdin, stdout=stdout,
                             stderr=stderr, preexec_fn=_subprocess_setup,
-                            env=env)
+                            close_fds=True, env=env)
 
 
 def parse_mappings(mapping_list, unique_values=True):
