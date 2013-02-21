@@ -120,6 +120,12 @@ def parse_config():
              'default_interface_name':
              nvp_conf[cluster_name].default_interface_name})
     LOG.debug(_("Cluster options:%s"), clusters_options)
+
+    # If no api_extensions_path is provided set the following
+    if not cfg.CONF.api_extensions_path:
+        cfg.CONF.set_override(
+            'api_extensions_path',
+            'quantum/plugins/nicira/nicira_nvp_plugin/extensions')
     return cfg.CONF.NVP, clusters_options
 
 
