@@ -299,7 +299,8 @@ def create_lswitch(cluster, tenant_id, display_name,
                                                 DEF_TRANSPORT_TYPE)}
     lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
                    "transport_zones": [transport_zone_config],
-                   "tags": [{"tag": tenant_id, "scope": "os_tid"}]}
+                   "tags": [{"tag": tenant_id, "scope": "os_tid"},
+                            {"tag": QUANTUM_VERSION, "scope": "quantum"}]}
     if nvp_binding_type == 'bridge' and vlan_id:
         transport_zone_config["binding_config"] = {"vlan_translation":
                                                    [{"transport": vlan_id}]}
@@ -327,7 +328,8 @@ def update_lswitch(cluster, lswitch_id, display_name,
                    tenant_id=None, **kwargs):
     uri = _build_uri_path(LSWITCH_RESOURCE, resource_id=lswitch_id)
     lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
-                   "tags": [{"tag": tenant_id, "scope": "os_tid"}]}
+                   "tags": [{"tag": tenant_id, "scope": "os_tid"},
+                            {"tag": QUANTUM_VERSION, "scope": "quantum"}]}
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
     try:
@@ -355,7 +357,8 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         :raise NvpApiException: if there is a problem while communicating
         with the NVP controller
     """
-    tags = [{"tag": tenant_id, "scope": "os_tid"}]
+    tags = [{"tag": tenant_id, "scope": "os_tid"},
+            {"tag": QUANTUM_VERSION, "scope": "quantum"}]
     # NOTE(salvatore-orlando): This is a little confusing, but device_id in
     # NVP is actually the identifier a physical interface on the gateway
     # device, which in the Quantum API is referred as interface_name
@@ -390,8 +393,9 @@ def create_lrouter(cluster, tenant_id, display_name, nexthop):
         :raise NvpApiException: if there is a problem while communicating
         with the NVP controller
     """
-    tags = [{"tag": tenant_id, "scope": "os_tid"}]
     display_name = _check_and_truncate_name(display_name)
+    tags = [{"tag": tenant_id, "scope": "os_tid"},
+            {"tag": QUANTUM_VERSION, "scope": "quantum"}]
     lrouter_obj = {
         "display_name": display_name,
         "tags": tags,
@@ -753,7 +757,9 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
         display_name=_check_and_truncate_name(display_name),
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=quantum_port_id),
-              dict(scope='vm_id', tag=hashed_device_id)])
+              dict(scope='vm_id', tag=hashed_device_id),
+              dict(scope='quantum', tag=QUANTUM_VERSION)])
+
     _configure_extensions(lport_obj, mac_address, fixed_ips,
                           port_security_enabled, security_profiles,
                           queue_id)
@@ -786,7 +792,8 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
         display_name=display_name,
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=quantum_port_id),
-              dict(scope='vm_id', tag=hashed_device_id)],
+              dict(scope='vm_id', tag=hashed_device_id),
+              dict(scope='quantum', tag=QUANTUM_VERSION)],
     )
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
@@ -813,7 +820,9 @@ def create_router_lport(cluster, lrouter_uuid, tenant_id, quantum_port_id,
                         display_name, admin_status_enabled, ip_addresses):
     """Creates a logical port on the assigned logical router."""
     tags = [dict(scope='os_tid', tag=tenant_id),
-            dict(scope='q_port_id', tag=quantum_port_id)]
+            dict(scope='q_port_id', tag=quantum_port_id),
+            dict(scope='quantum', tag=QUANTUM_VERSION)]
+
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
@@ -847,7 +856,8 @@ def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
         tags=[dict(scope='os_tid', tag=tenant_id),
-              dict(scope='q_port_id', tag=quantum_port_id)],
+              dict(scope='q_port_id', tag=quantum_port_id),
+              dict(scope='quantum', tag=QUANTUM_VERSION)],
         ip_addresses=ip_addresses,
         type="LogicalRouterPortConfig"
     )
@@ -1062,27 +1072,11 @@ def mk_body(**kwargs):
     return json.dumps(kwargs, ensure_ascii=False)
 
 
-def set_tenant_id_tag(tenant_id, taglist=None):
-    """Convenience function to add tenant_id tag to taglist.
-
-    :param tenant_id: the tenant_id to set.
-    :param taglist: the taglist to append to (or None).
-    :returns: a new taglist that includes the old taglist with the new
-        tenant_id tag set.
-    """
-    new_taglist = []
-    if taglist:
-        new_taglist = [x for x in taglist if x['scope'] != TENANT_ID_SCOPE]
-    new_taglist.append(dict(scope=TENANT_ID_SCOPE, tag=tenant_id))
-    return new_taglist
-
-
 # -----------------------------------------------------------------------------
 # Security Group API Calls
 # -----------------------------------------------------------------------------
 def create_security_profile(cluster, tenant_id, security_profile):
     path = "/ws.v1/security-profile"
-    tags = set_tenant_id_tag(tenant_id)
     # Allow all dhcp responses and all ingress traffic
     hidden_rules = {'logical_port_egress_rules':
                     [{'ethertype': 'IPv4',
@@ -1093,6 +1087,8 @@ def create_security_profile(cluster, tenant_id, security_profile):
                     'logical_port_ingress_rules':
                     [{'ethertype': 'IPv4'},
                      {'ethertype': 'IPv6'}]}
+    tags = [dict(scope='os_tid', tag=tenant_id),
+            dict(scope='quantum', tag=QUANTUM_VERSION)]
     try:
         display_name = _check_and_truncate_name(security_profile.get('name'))
         body = mk_body(
