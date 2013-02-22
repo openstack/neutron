@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from quantum.common import constants
 from quantum.common import topics
+from quantum.common import utils
+from quantum import manager
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import proxy
 
@@ -40,11 +43,35 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         super(DhcpAgentNotifyAPI, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
-    def _notification(self, context, method, payload):
+    def _get_dhcp_agents(self, context, network_id):
+        plugin = manager.QuantumManager.get_plugin()
+        dhcp_agents = plugin.get_dhcp_agents_hosting_networks(
+            context, [network_id], active=True)
+        return [(dhcp_agent.host, dhcp_agent.topic) for
+                dhcp_agent in dhcp_agents]
+
+    def _notification_host(self, context, method, payload, host):
+        """Notify the agent on host"""
+        self.cast(
+            context, self.make_msg(method,
+                                   payload=payload),
+            topic='%s.%s' % (topics.DHCP_AGENT, host))
+
+    def _notification(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network"""
-        # By now, we have no scheduling feature, so we fanout
-        # to all of the DHCP agents
-        self._notification_fanout(context, method, payload)
+        plugin = manager.QuantumManager.get_plugin()
+        if (method != 'network_delete_end' and utils.is_extension_supported(
+                plugin, constants.AGENT_SCHEDULER_EXT_ALIAS)):
+            for (host, topic) in self._get_dhcp_agents(context, network_id):
+                self.cast(
+                    context, self.make_msg(method,
+                                           payload=payload),
+                    topic='%s.%s' % (topic, host))
+        else:
+            # besides the non-agentscheduler plugin,
+            # There is no way to query who is hosting the network
+            # when the network is deleted, so we need to fanout
+            self._notification_fanout(context, method, payload)
 
     def _notification_fanout(self, context, method, payload):
         """Fanout the payload to all dhcp agents"""
@@ -52,6 +79,19 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
             context, self.make_msg(method,
                                    payload=payload),
             topic=topics.DHCP_AGENT)
+
+    def network_removed_from_agent(self, context, network_id, host):
+        self._notification_host(context, 'network_delete_end',
+                                {'network_id': network_id}, host)
+
+    def network_added_to_agent(self, context, network_id, host):
+        self._notification_host(context, 'network_create_end',
+                                {'network': {'id': network_id}}, host)
+
+    def agent_updated(self, context, admin_state_up, host):
+        self._notification_host(context, 'agent_updated',
+                                {'admin_state_up': admin_state_up},
+                                host)
 
     def notify(self, context, data, methodname):
         # data is {'key' : 'value'} with only one key
@@ -61,10 +101,18 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         if obj_type not in self.VALID_RESOURCES:
             return
         obj_value = data[obj_type]
+        network_id = None
+        if obj_type == 'network' and 'id' in obj_value:
+            network_id = obj_value['id']
+        elif obj_type in ['port', 'subnet'] and 'network_id' in obj_value:
+            network_id = obj_value['network_id']
+        if not network_id:
+            return
         methodname = methodname.replace(".", "_")
         if methodname.endswith("_delete_end"):
             if 'id' in obj_value:
                 self._notification(context, methodname,
-                                   {obj_type + '_id': obj_value['id']})
+                                   {obj_type + '_id': obj_value['id']},
+                                   network_id)
         else:
-            self._notification(context, methodname, data)
+            self._notification(context, methodname, data, network_id)

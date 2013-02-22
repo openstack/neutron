@@ -25,7 +25,7 @@ class TestDhcpRpcCallackMixin(testtools.TestCase):
         super(TestDhcpRpcCallackMixin, self).setUp()
         self.plugin_p = mock.patch('quantum.manager.QuantumManager.get_plugin')
         get_plugin = self.plugin_p.start()
-        self.plugin = mock.Mock()
+        self.plugin = mock.MagicMock()
         get_plugin.return_value = self.plugin
         self.callbacks = dhcp_rpc_base.DhcpRpcCallbackMixin()
         self.log_p = mock.patch('quantum.db.dhcp_rpc_base.LOG')

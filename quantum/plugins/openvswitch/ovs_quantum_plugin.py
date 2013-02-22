@@ -25,12 +25,15 @@ import sys
 from oslo.config import cfg
 
 from quantum.agent import securitygroups_rpc as sg_rpc
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import agents_db
+from quantum.db import agentschedulers_db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
@@ -41,6 +44,7 @@ from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
@@ -211,7 +215,9 @@ class AgentNotifierApi(proxy.RpcProxy,
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin,
-                         agents_db.AgentDbMixin):
+                         agents_db.AgentDbMixin,
+                         agentschedulers_db.AgentSchedulerDbMixin):
+
     """Implement the Quantum abstractions using Open vSwitch.
 
     Depending on whether tunneling is enabled, either a GRE tunnel or
@@ -238,8 +244,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     supported_extension_aliases = ["provider", "router",
                                    "binding", "quotas", "security-group",
-                                   "agent",
-                                   "extraroute"]
+                                   "agent", "extraroute", "agent_scheduler"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
@@ -269,12 +274,18 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       "Agent terminated!"))
             sys.exit(1)
         self.setup_rpc()
+        self.network_scheduler = importutils.import_object(
+            cfg.CONF.network_scheduler_driver)
+        self.router_scheduler = importutils.import_object(
+            cfg.CONF.router_scheduler_driver)
 
     def setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
         self.conn = rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
+        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
         self.callbacks = OVSRpcCallbacks(self.notifier)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
@@ -486,6 +497,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
         LOG.debug(_("Created network: %s"), net['id'])
+        self.schedule_network(context, network['network'], net)
         return net
 
     def update_network(self, context, id, network):
@@ -569,6 +581,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             self.notifier.security_groups_member_updated(
                 context, port.get(ext_sg.SECURITYGROUPS))
+        net = self.get_network(context, port['network_id'])
+        self.schedule_network(context, None, net)
         return self._extend_port_dict_binding(context, port)
 
     def get_port(self, context, id, fields=None):
@@ -636,3 +650,20 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         self.notifier.security_groups_member_updated(
             context, port.get(ext_sg.SECURITYGROUPS))
+
+    def update_agent(self, context, id, agent):
+        original_agent = self.get_agent(context, id)
+        result = super(OVSQuantumPluginV2, self).update_agent(
+            context, id, agent)
+        agent_data = agent['agent']
+        if ('admin_state_up' in agent_data and
+            original_agent['admin_state_up'] != agent_data['admin_state_up']):
+            if original_agent['agent_type'] == q_const.AGENT_TYPE_DHCP:
+                self.dhcp_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+            elif original_agent['agent_type'] == q_const.AGENT_TYPE_L3:
+                self.l3_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+        return result

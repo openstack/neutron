@@ -93,7 +93,7 @@ class L3PluginApi(proxy.RpcProxy):
 
 class RouterInfo(object):
 
-    def __init__(self, router_id, root_helper, use_namespaces, router=None):
+    def __init__(self, router_id, root_helper, use_namespaces, router):
         self.router_id = router_id
         self.ex_gw_port = None
         self.internal_ports = []
@@ -227,7 +227,7 @@ class L3NATAgent(manager.Manager):
             else:
                 raise
 
-    def _router_added(self, router_id, router=None):
+    def _router_added(self, router_id, router):
         ri = RouterInfo(router_id, self.root_helper,
                         self.conf.use_namespaces, router)
         self.router_info[router_id] = ri
@@ -242,6 +242,10 @@ class L3NATAgent(manager.Manager):
 
     def _router_removed(self, router_id):
         ri = self.router_info[router_id]
+        ri.router['gw_port'] = None
+        ri.router[l3_constants.INTERFACE_KEY] = []
+        ri.router[l3_constants.FLOATINGIP_KEY] = []
+        self.process_router(ri)
         for c, r in self.metadata_filter_rules():
             ri.iptables_manager.ipv4['filter'].remove_rule(c, r)
         for c, r in self.metadata_nat_rules():
@@ -568,7 +572,13 @@ class L3NATAgent(manager.Manager):
                 LOG.debug(msg)
                 self.fullsync = True
 
-    def _process_routers(self, routers):
+    def router_removed_from_agent(self, context, payload):
+        self.router_deleted(context, payload['router_id'])
+
+    def router_added_to_agent(self, context, payload):
+        self.routers_updated(context, payload)
+
+    def _process_routers(self, routers, all_routers=False):
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
             LOG.error(_("The external network bridge '%s' does not exist"),
@@ -576,7 +586,17 @@ class L3NATAgent(manager.Manager):
             return
 
         target_ex_net_id = self._fetch_external_net_id()
-
+        # if routers are all the routers we have (They are from router sync on
+        # starting or when error occurs during running), we seek the
+        # routers which should be removed.
+        # If routers are from server side notification, we seek them
+        # from subset of incoming routers and ones we have now.
+        if all_routers:
+            prev_router_ids = set(self.router_info)
+        else:
+            prev_router_ids = set(self.router_info) & set(
+                [router['id'] for router in routers])
+        cur_router_ids = set()
         for r in routers:
             if not r['admin_state_up']:
                 continue
@@ -593,13 +613,15 @@ class L3NATAgent(manager.Manager):
 
             if ex_net_id and ex_net_id != target_ex_net_id:
                 continue
-
+            cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
-                self._router_added(r['id'])
-
+                self._router_added(r['id'], r)
             ri = self.router_info[r['id']]
             ri.router = r
             self.process_router(ri)
+        # identify and remove routers that no longer exist
+        for router_id in prev_router_ids - cur_router_ids:
+            self._router_removed(router_id)
 
     @periodic_task.periodic_task
     def _sync_routers_task(self, context):
@@ -613,8 +635,7 @@ class L3NATAgent(manager.Manager):
                         router_id = None
                     routers = self.plugin_rpc.get_routers(
                         context, router_id)
-                    self.router_info = {}
-                    self._process_routers(routers)
+                    self._process_routers(routers, all_routers=True)
                     self.fullsync = False
                 except Exception:
                     LOG.exception(_("Failed synchronizing routers"))
@@ -703,6 +724,11 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.agent_state.pop('start_flag', None)
         except Exception:
             LOG.exception(_("Failed reporting state!"))
+
+    def agent_updated(self, context, payload):
+        """Handle the agent_updated notification event."""
+        self.fullsync = True
+        LOG.info(_("agent_updated by server side %s!"), payload)
 
 
 def main():

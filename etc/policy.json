@@ -58,5 +58,14 @@
     "update_agent": "rule:admin_only",
     "delete_agent": "rule:admin_only",
     "get_agent": "rule:admin_only",
-    "get_agents": "rule:admin_only"
+    "get_agents": "rule:admin_only",
+
+    "create_dhcp-network": "rule:admin_only",
+    "delete_dhcp-network": "rule:admin_only",
+    "get_dhcp-networks": "rule:admin_only",
+    "create_l3-router": "rule:admin_only",
+    "delete_l3-router": "rule:admin_only",
+    "get_l3-routers": "rule:admin_only",
+    "get_dhcp-agents": "rule:admin_only",
+    "get_l3-agents": "rule:admin_only"
 }

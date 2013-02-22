@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.config import cfg
+
+from quantum.common import constants
+from quantum.common import utils
 from quantum import context as quantum_context
 from quantum import manager
 from quantum.openstack.common import jsonutils
@@ -34,10 +38,17 @@ class L3RpcCallbackMixin(object):
                  with their interfaces and floating_ips
         """
         router_id = kwargs.get('router_id')
-        # TODO(gongysh) we will use host in kwargs for multi host BP
+        host = kwargs.get('host')
         context = quantum_context.get_admin_context()
         plugin = manager.QuantumManager.get_plugin()
-        routers = plugin.get_sync_data(context, router_id)
+        if utils.is_extension_supported(
+            plugin, constants.AGENT_SCHEDULER_EXT_ALIAS):
+            if cfg.CONF.router_auto_schedule:
+                plugin.auto_schedule_routers(context, host, router_id)
+            routers = plugin.list_active_sync_routers_on_active_l3_agent(
+                context, host, router_id)
+        else:
+            routers = plugin.get_sync_data(context, router_id)
         LOG.debug(_("Routers returned to l3 agent:\n %s"),
                   jsonutils.dumps(routers, indent=5))
         return routers

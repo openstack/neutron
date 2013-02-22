@@ -29,6 +29,7 @@ from webob import exc
 import webtest
 
 from quantum.api import extensions
+from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.common import constants as l3_constants
@@ -37,7 +38,6 @@ from quantum.common.test_lib import test_config
 from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
-from quantum.db import l3_rpc_agent_api
 from quantum.db import models_v2
 from quantum.extensions import l3
 from quantum.manager import QuantumManager
@@ -307,24 +307,7 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         return super(TestL3NatPlugin, self).delete_port(context, id)
 
 
-class L3NatTestCaseBase(test_db_plugin.QuantumDbPluginV2TestCase):
-
-    def setUp(self):
-        test_config['plugin_name_v2'] = (
-            'quantum.tests.unit.test_l3_plugin.TestL3NatPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
-        ext_mgr = L3TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(L3NatTestCaseBase, self).setUp()
-
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
-    def tearDown(self):
-        test_notifier.NOTIFICATIONS = []
-        super(L3NatTestCaseBase, self).tearDown()
+class L3NatTestCaseMixin(object):
 
     def _create_network(self, fmt, name, admin_state_up, **kwargs):
         """ Override the routine for allowing the router:external attribute """
@@ -334,7 +317,7 @@ class L3NatTestCaseBase(test_db_plugin.QuantumDbPluginV2TestCase):
                                            kwargs),
                                        kwargs.values()))
         arg_list = new_args.pop('arg_list', ()) + (l3.EXTERNAL,)
-        return super(L3NatTestCaseBase, self)._create_network(
+        return super(L3NatTestCaseMixin, self)._create_network(
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 
     def _create_router(self, fmt, tenant_id, name=None,
@@ -503,6 +486,27 @@ class L3NatTestCaseBase(test_db_plugin.QuantumDbPluginV2TestCase):
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
                         public_sub['subnet']['network_id'])
+
+
+class L3NatTestCaseBase(L3NatTestCaseMixin,
+                        test_db_plugin.QuantumDbPluginV2TestCase):
+
+    def setUp(self):
+        test_config['plugin_name_v2'] = (
+            'quantum.tests.unit.test_l3_plugin.TestL3NatPlugin')
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        ext_mgr = L3TestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        super(L3NatTestCaseBase, self).setUp()
+
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+    def tearDown(self):
+        test_notifier.NOTIFICATIONS = []
+        super(L3NatTestCaseBase, self).tearDown()
 
 
 class L3NatDBTestCase(L3NatTestCaseBase):
@@ -1459,7 +1463,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
 
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
-            'quantum.db.l3_rpc_agent_api.L3AgentNotifyAPI')
+            'quantum.api.rpc.agentnotifiers.l3_rpc_agent_api.L3AgentNotifyAPI')
         oldNotify = l3_rpc_agent_api.L3AgentNotify
         try:
             with mock.patch(l3_rpc_agent_api_str) as notifyApi:

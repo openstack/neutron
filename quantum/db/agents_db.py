@@ -67,24 +67,30 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
             raise ext_agent.AgentNotFound(id=id)
         return agent
 
-    def _is_agent_down(self, heart_beat_time_str):
-        return timeutils.is_older_than(heart_beat_time_str,
+    @classmethod
+    def is_agent_down(cls, heart_beat_time):
+        return timeutils.is_older_than(heart_beat_time,
                                        cfg.CONF.agent_down_time)
+
+    def get_configuration_dict(self, agent_db):
+        try:
+            conf = jsonutils.loads(agent_db.configurations)
+        except Exception:
+            msg = _('Configuration for agent %(agent_type)s on host %(host)s'
+                    ' is invalid.')
+            LOG.warn(msg, {'agent_type': agent_db.agent_type,
+                           'host': agent_db.host})
+            conf = {}
+        return conf
 
     def _make_agent_dict(self, agent, fields=None):
         attr = ext_agent.RESOURCE_ATTRIBUTE_MAP.get(
             ext_agent.RESOURCE_NAME + 's')
         res = dict((k, agent[k]) for k in attr
                    if k not in ['alive', 'configurations'])
-        res['alive'] = not self._is_agent_down(res['heartbeat_timestamp'])
-        try:
-            res['configurations'] = jsonutils.loads(agent['configurations'])
-        except Exception:
-            msg = _('Configurations for agent %(agent_type)s on host %(host)s'
-                    ' are invalid.')
-            LOG.warn(msg, {'agent_type': res['agent_type'],
-                           'host': res['host']})
-            res['configurations'] = {}
+        res['alive'] = not AgentDbMixin.is_agent_down(
+            res['heartbeat_timestamp'])
+        res['configurations'] = self.get_configuration_dict(agent)
         return self._fields(res, fields)
 
     def delete_agent(self, context, id):
@@ -98,6 +104,10 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
             agent = self._get_agent(context, id)
             agent.update(agent_data)
         return self._make_agent_dict(agent)
+
+    def get_agents_db(self, context, filters=None):
+        query = self._get_collection_query(context, Agent, filters=filters)
+        return query.all()
 
     def get_agents(self, context, filters=None, fields=None):
         return self._get_collection(context, Agent,
