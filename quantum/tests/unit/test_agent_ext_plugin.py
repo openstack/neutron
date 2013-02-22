@@ -18,6 +18,7 @@
 import copy
 import time
 
+from oslo.config import cfg
 from webob import exc
 
 from quantum.common import constants
@@ -27,7 +28,6 @@ from quantum import context
 from quantum.db import agents_db
 from quantum.db import db_base_plugin_v2
 from quantum.extensions import agent
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_api_v2

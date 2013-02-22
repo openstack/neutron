@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
@@ -22,7 +23,6 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import agent as ext_agent
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils

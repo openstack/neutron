@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
 import testtools
 import webob.exc as webexc
 
@@ -29,7 +30,6 @@ from quantum.db import routerservicetype_db as rst_db
 from quantum.db import servicetype_db as st_db
 from quantum.extensions import routedserviceinsertion as rsi
 from quantum.extensions import routerservicetype as rst
-from quantum.openstack.common import cfg
 from quantum.plugins.common import constants
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import testlib_api

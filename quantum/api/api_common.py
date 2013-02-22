@@ -17,11 +17,11 @@
 
 import urllib
 
+from oslo.config import cfg
 from webob import exc
 
 from quantum.common import constants
 from quantum.common import exceptions
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 
 
