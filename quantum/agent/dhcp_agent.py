@@ -66,8 +66,7 @@ class DhcpAgent(manager.Manager):
                            "dedicate network. Requires "
                            "enable isolated_metadata = True ")),
         cfg.StrOpt('dhcp_agent_manager',
-                   default='quantum.agent.dhcp_agent.'
-                   'DhcpAgentWithStateReport',
+                   default='quantum.agent.dhcp_agent.DhcpAgent',
                    help=_("The Quantum DHCP agent manager.")),
     ]
 
