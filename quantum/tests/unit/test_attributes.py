@@ -19,9 +19,10 @@ import testtools
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
+from quantum.tests import base
 
 
-class TestAttributes(testtools.TestCase):
+class TestAttributes(base.BaseTestCase):
 
     def _construct_dict_and_constraints(self):
         """ Constructs a test dictionary and a definition of constraints.
@@ -537,7 +538,7 @@ class TestAttributes(testtools.TestCase):
             self.assertIsNone(msg)
 
 
-class TestConvertToBoolean(testtools.TestCase):
+class TestConvertToBoolean(base.BaseTestCase):
 
     def test_convert_to_boolean_bool(self):
         self.assertIs(attributes.convert_to_boolean(True), True)
@@ -562,7 +563,7 @@ class TestConvertToBoolean(testtools.TestCase):
                           '7')
 
 
-class TestConvertToInt(testtools.TestCase):
+class TestConvertToInt(base.BaseTestCase):
 
     def test_convert_to_int_int(self):
         self.assertEqual(attributes.convert_to_int(-1), -1)
@@ -596,7 +597,7 @@ class TestConvertToInt(testtools.TestCase):
                 value, attributes.convert_none_to_empty_list(value))
 
 
-class TestConvertKvp(testtools.TestCase):
+class TestConvertKvp(base.BaseTestCase):
 
     def test_convert_kvp_list_to_dict_succeeds_for_missing_values(self):
         result = attributes.convert_kvp_list_to_dict(['True'])
@@ -628,7 +629,7 @@ class TestConvertKvp(testtools.TestCase):
         self.assertEqual(['a', 'a=a'], result)
 
 
-class TestConvertToList(testtools.TestCase):
+class TestConvertToList(base.BaseTestCase):
 
     def test_convert_to_empty_list(self):
         for item in (None, [], (), {}):

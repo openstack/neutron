@@ -19,7 +19,6 @@ import copy
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.common import config as agent_config
 from quantum.agent import l3_agent
@@ -27,13 +26,14 @@ from quantum.agent.linux import interface
 from quantum.common import config as base_config
 from quantum.common import constants as l3_constants
 from quantum.openstack.common import uuidutils
+from quantum.tests import base
 
 
 _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
 
 
-class TestBasicRouterOperations(testtools.TestCase):
+class TestBasicRouterOperations(base.BaseTestCase):
 
     def setUp(self):
         super(TestBasicRouterOperations, self).setUp()

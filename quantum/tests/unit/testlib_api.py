@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import testtools
-
 from quantum.api.v2 import attributes
+from quantum.tests import base
 from quantum import wsgi
 
 
@@ -35,7 +34,7 @@ def create_request(path, body, content_type, method='GET',
     return req
 
 
-class WebTestCase(testtools.TestCase):
+class WebTestCase(base.BaseTestCase):
     fmt = 'json'
 
     def setUp(self):

@@ -16,7 +16,6 @@
 # @author: Ryota MIBU
 
 import mox
-import testtools
 
 from quantum import context
 from quantum.openstack.common import uuidutils
@@ -24,6 +23,7 @@ from quantum.plugins.nec.common import ofc_client
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import drivers
+from quantum.tests import base
 
 
 class TestConfig(object):
@@ -32,7 +32,7 @@ class TestConfig(object):
     port = 8888
 
 
-class TremaDriverTestBase(testtools.TestCase):
+class TremaDriverTestBase(base.BaseTestCase):
 
     driver_name = "trema"
 
@@ -245,7 +245,7 @@ def generate_random_ids(count=1):
         return [uuidutils.generate_uuid() for i in xrange(count)]
 
 
-class TremaIdConvertTest(testtools.TestCase):
+class TremaIdConvertTest(base.BaseTestCase):
     driver_name = 'trema'
 
     def setUp(self):
@@ -288,7 +288,7 @@ class TremaIdConvertTest(testtools.TestCase):
         self.assertEqual(ret, ofc_f_id)
 
 
-class TremaIdConvertTestBase(testtools.TestCase):
+class TremaIdConvertTestBase(base.BaseTestCase):
     def setUp(self):
         super(TremaIdConvertTestBase, self).setUp()
         self.mox = mox.Mox()

@@ -21,7 +21,6 @@ Unit Tests for hyperv quantum rpc
 """
 
 import mock
-import testtools
 
 from quantum.agent import rpc as agent_rpc
 from quantum.common import topics
@@ -29,9 +28,10 @@ from quantum.openstack.common import context
 from quantum.openstack.common import rpc
 from quantum.plugins.hyperv import agent_notifier_api as ana
 from quantum.plugins.hyperv.common import constants
+from quantum.tests import base
 
 
-class rpcHyperVApiTestCase(testtools.TestCase):
+class rpcHyperVApiTestCase(base.BaseTestCase):
 
     def _test_hyperv_quantum_api(
             self, rpcapi, topic, method, rpc_method, **kwargs):

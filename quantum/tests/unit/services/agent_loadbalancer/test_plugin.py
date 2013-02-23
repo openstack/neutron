@@ -18,12 +18,12 @@
 # @author: Mark McClain, DreamHost
 
 import mock
-import testtools
 
 from quantum import context
 from quantum import manager
 from quantum.plugins.common import constants
 from quantum.plugins.services.agent_loadbalancer import plugin
+from quantum.tests import base
 from quantum.tests.unit.db.loadbalancer import test_db_loadbalancer
 
 
@@ -171,7 +171,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
         )
 
 
-class TestLoadBalancerAgentApi(testtools.TestCase):
+class TestLoadBalancerAgentApi(base.BaseTestCase):
     def setUp(self):
         super(TestLoadBalancerAgentApi, self).setUp()
         self.addCleanup(mock.patch.stopall)

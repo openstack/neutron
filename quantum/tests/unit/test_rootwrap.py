@@ -17,14 +17,14 @@
 import os
 
 import mock
-import testtools
 
 from quantum.common import utils
 from quantum.rootwrap import filters
 from quantum.rootwrap import wrapper
+from quantum.tests import base
 
 
-class RootwrapTestCase(testtools.TestCase):
+class RootwrapTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(RootwrapTestCase, self).setUp()

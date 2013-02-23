@@ -20,7 +20,6 @@ import urlparse
 
 import mock
 from oslo.config import cfg
-import testtools
 from testtools import matchers
 import webob
 from webob import exc
@@ -29,7 +28,7 @@ import webtest
 from quantum.api import api_common
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
-from quantum.api.v2 import base
+from quantum.api.v2 import base as v2_base
 from quantum.api.v2 import router
 from quantum.common import config
 from quantum.common import constants
@@ -38,6 +37,7 @@ from quantum import context
 from quantum.manager import QuantumManager
 from quantum.openstack.common.notifier import api as notifer_api
 from quantum.openstack.common import uuidutils
+from quantum.tests import base
 from quantum.tests.unit import testlib_api
 from quantum import wsgi
 
@@ -68,7 +68,7 @@ def _get_path(resource, id=None, action=None, fmt=None):
     return path
 
 
-class ResourceIndexTestCase(testtools.TestCase):
+class ResourceIndexTestCase(base.BaseTestCase):
     def test_index_json(self):
         index = webtest.TestApp(router.Index({'foo': 'bar'}))
         res = index.get('')
@@ -93,7 +93,7 @@ class ResourceIndexTestCase(testtools.TestCase):
         self.assertTrue(link['rel'] == 'self')
 
 
-class APIv2TestBase(testtools.TestCase):
+class APIv2TestBase(base.BaseTestCase):
     def setUp(self):
         super(APIv2TestBase, self).setUp()
 
@@ -1105,7 +1105,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertEqual(res.status_int, 400)
 
 
-class SubresourceTest(testtools.TestCase):
+class SubresourceTest(base.BaseTestCase):
     def setUp(self):
         super(SubresourceTest, self).setUp()
 
@@ -1206,12 +1206,12 @@ class XMLV2TestCase(JSONV2TestCase):
     fmt = 'xml'
 
 
-class V2Views(testtools.TestCase):
+class V2Views(base.BaseTestCase):
     def _view(self, keys, collection, resource):
         data = dict((key, 'value') for key in keys)
         data['fake'] = 'value'
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[collection]
-        controller = base.Controller(None, collection, resource, attr_info)
+        controller = v2_base.Controller(None, collection, resource, attr_info)
         res = controller._view(data)
         self.assertTrue('fake' not in res)
         for key in keys:
@@ -1329,7 +1329,7 @@ class QuotaTest(APIv2TestBase):
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
 
 
-class ExtensionTestCase(testtools.TestCase):
+class ExtensionTestCase(base.BaseTestCase):
     def setUp(self):
         super(ExtensionTestCase, self).setUp()
         plugin = 'quantum.quantum_plugin_base_v2.QuantumPluginBaseV2'
@@ -1419,7 +1419,7 @@ class TestSubresourcePlugin():
             return
 
 
-class ListArgsTestCase(testtools.TestCase):
+class ListArgsTestCase(base.BaseTestCase):
     def test_list_args(self):
         path = '/?fields=4&foo=3&fields=2&bar=1'
         request = webob.Request.blank(path)
@@ -1433,7 +1433,7 @@ class ListArgsTestCase(testtools.TestCase):
         self.assertEqual([], api_common.list_args(request, 'fields'))
 
 
-class FiltersTestCase(testtools.TestCase):
+class FiltersTestCase(base.BaseTestCase):
     def test_all_skip_args(self):
         path = '/?fields=4&fields=3&fields=2&fields=1'
         request = webob.Request.blank(path)
@@ -1481,7 +1481,7 @@ class FiltersTestCase(testtools.TestCase):
         self.assertEqual(actual_val, expect_val)
 
 
-class CreateResourceTestCase(testtools.TestCase):
+class CreateResourceTestCase(base.BaseTestCase):
     def test_resource_creation(self):
-        resource = base.create_resource('fakes', 'fake', None, {})
+        resource = v2_base.create_resource('fakes', 'fake', None, {})
         self.assertIsInstance(resource, webob.dec.wsgify)

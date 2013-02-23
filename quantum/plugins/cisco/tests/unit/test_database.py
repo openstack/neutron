@@ -22,13 +22,12 @@ that tests the database api method calls
 
 import logging as LOG
 
-import testtools
-
 from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_constants as const
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db_v2 as nexus_db
+from quantum.tests import base
 
 
 LOG = logging.getLogger(__name__)
@@ -347,7 +346,7 @@ class QuantumDB(object):
             raise Exception("Failed to unplug interface: %s" % str(exc))
 
 
-class NexusDBTest(testtools.TestCase):
+class NexusDBTest(base.BaseTestCase):
     """Class conisting of nexus DB unit tests"""
     def setUp(self):
         super(NexusDBTest, self).setUp()
@@ -409,7 +408,7 @@ class NexusDBTest(testtools.TestCase):
             self.dbtest.delete_nexusportbinding(vlan_id)
 
 
-class L2networkDBTest(testtools.TestCase):
+class L2networkDBTest(base.BaseTestCase):
     """Class conisting of L2network DB unit tests"""
     def setUp(self):
         """Setup for tests"""
@@ -515,7 +514,7 @@ class L2networkDBTest(testtools.TestCase):
             self.dbtest.delete_vlan_binding(netid)
 
 
-class QuantumDBTest(testtools.TestCase):
+class QuantumDBTest(base.BaseTestCase):
     """Class conisting of Quantum DB unit tests"""
     def setUp(self):
         """Setup for tests"""

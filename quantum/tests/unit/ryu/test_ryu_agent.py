@@ -17,14 +17,13 @@ from contextlib import nested
 import httplib
 
 import mock
-from oslo.config import cfg
-import testtools
 
 from quantum.openstack.common import importutils
+from quantum.tests import base
 from quantum.tests.unit.ryu import fake_ryu
 
 
-class RyuAgentTestCase(testtools.TestCase):
+class RyuAgentTestCase(base.BaseTestCase):
 
     _AGENT_NAME = 'quantum.plugins.ryu.agent.ryu_quantum_agent'
 

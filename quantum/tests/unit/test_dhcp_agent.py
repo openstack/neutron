@@ -14,6 +14,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import os
 import socket
 import sys
@@ -32,6 +33,7 @@ from quantum.agent.linux import interface
 from quantum.common import constants
 from quantum.common import exceptions
 from quantum.openstack.common import jsonutils
+from quantum.tests import base
 
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
@@ -108,7 +110,7 @@ fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
                               ports=[])
 
 
-class TestDhcpAgent(testtools.TestCase):
+class TestDhcpAgent(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgent, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
@@ -323,7 +325,7 @@ class TestDhcpAgent(testtools.TestCase):
                 self.assertFalse(dhcp.needs_resync)
 
 
-class TestDhcpAgentEventHandler(testtools.TestCase):
+class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgentEventHandler, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
@@ -638,7 +640,7 @@ class TestDhcpAgentEventHandler(testtools.TestCase):
         self.assertEqual(self.call_driver.call_count, 0)
 
 
-class TestDhcpPluginApiProxy(testtools.TestCase):
+class TestDhcpPluginApiProxy(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpPluginApiProxy, self).setUp()
         self.proxy = dhcp_agent.DhcpPluginApi('foo', {})
@@ -707,7 +709,7 @@ class TestDhcpPluginApiProxy(testtools.TestCase):
                                               host='foo')
 
 
-class TestNetworkCache(testtools.TestCase):
+class TestNetworkCache(base.BaseTestCase):
     def test_put_network(self):
         nc = dhcp_agent.NetworkCache()
         nc.put(fake_network)
@@ -815,7 +817,7 @@ class TestNetworkCache(testtools.TestCase):
         self.assertEqual(nc.get_port_by_id(fake_port1.id), fake_port1)
 
 
-class TestDeviceManager(testtools.TestCase):
+class TestDeviceManager(base.BaseTestCase):
     def setUp(self):
         super(TestDeviceManager, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
@@ -1010,7 +1012,7 @@ class TestDeviceManager(testtools.TestCase):
                 self.assertEqual(dh.get_device_id(fake_network), expected)
 
 
-class TestDhcpLeaseRelay(testtools.TestCase):
+class TestDhcpLeaseRelay(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpLeaseRelay, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
@@ -1135,7 +1137,7 @@ class TestDhcpLeaseRelay(testtools.TestCase):
                                  relay._handler)])
 
 
-class TestDictModel(testtools.TestCase):
+class TestDictModel(base.BaseTestCase):
     def test_basic_dict(self):
         d = dict(a=1, b=2)
 

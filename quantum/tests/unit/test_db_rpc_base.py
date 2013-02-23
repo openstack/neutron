@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import mock
-import testtools
 
 from quantum.db import dhcp_rpc_base
+from quantum.tests import base
 
 
-class TestDhcpRpcCallackMixin(testtools.TestCase):
+class TestDhcpRpcCallackMixin(base.BaseTestCase):
 
     def setUp(self):
         super(TestDhcpRpcCallackMixin, self).setUp()

@@ -17,18 +17,18 @@
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent import netns_cleanup_util as util
+from quantum.tests import base
 
 
-class TestNullDelegate(testtools.TestCase):
+class TestNullDelegate(base.BaseTestCase):
     def test_getattribute(self):
         null_delegate = util.NullDelegate()
         self.assertIsNone(null_delegate.test())
 
 
-class TestNetnsCleanup(testtools.TestCase):
+class TestNetnsCleanup(base.BaseTestCase):
     def setUp(self):
         super(TestNetnsCleanup, self).setUp()
         self.addCleanup(cfg.CONF.reset)

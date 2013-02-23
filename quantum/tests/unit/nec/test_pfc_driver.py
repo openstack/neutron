@@ -19,7 +19,6 @@ import random
 import string
 
 import mox
-import testtools
 
 from quantum import context
 from quantum.openstack.common import uuidutils
@@ -27,6 +26,7 @@ from quantum.plugins.nec.common import ofc_client as ofc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import drivers
+from quantum.tests import base
 
 
 class TestConfig(object):
@@ -43,7 +43,7 @@ def _ofc(id):
     return "ofc-%s" % id
 
 
-class PFCDriverTestBase(testtools.TestCase):
+class PFCDriverTestBase(base.BaseTestCase):
 
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
@@ -192,7 +192,7 @@ class PFCV4DriverTest(PFCDriverTestBase):
     driver = 'pfc_v4'
 
 
-class PFCDriverStringTest(testtools.TestCase):
+class PFCDriverStringTest(base.BaseTestCase):
 
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
@@ -235,7 +235,7 @@ class PFCDriverStringTest(testtools.TestCase):
         self.assertEqual(exp_str, ret_str)
 
 
-class PFCIdConvertTest(testtools.TestCase):
+class PFCIdConvertTest(base.BaseTestCase):
     driver = 'quantum.plugins.nec.drivers.pfc.PFCDriverBase'
 
     def setUp(self):

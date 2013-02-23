@@ -19,14 +19,14 @@
 """
 Test vlans alloc/dealloc.
 """
-import testtools
 
 from quantum.db import api as db
 from quantum.openstack.common import context
 from quantum.plugins.brocade import vlanbm as vlan_bitmap
+from quantum.tests import base
 
 
-class TestVlanBitmap(testtools.TestCase):
+class TestVlanBitmap(base.BaseTestCase):
     """exercise Vlan bitmap ."""
 
     def setUp(self):

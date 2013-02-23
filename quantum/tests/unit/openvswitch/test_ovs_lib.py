@@ -16,13 +16,13 @@
 # @author: Dan Wendlandt, Nicira, Inc.
 
 import mox
-import testtools
 
 from quantum.agent.linux import ovs_lib, utils
 from quantum.openstack.common import uuidutils
+from quantum.tests import base
 
 
-class OVS_Lib_Test(testtools.TestCase):
+class OVS_Lib_Test(base.BaseTestCase):
     """
     A test suite to excercise the OVS libraries shared by Quantum agents.
     Note: these tests do not actually execute ovs-* utilities, and thus

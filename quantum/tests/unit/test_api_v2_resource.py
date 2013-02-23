@@ -19,17 +19,17 @@
 #
 
 import mock
-import testtools
 from webob import exc
 import webtest
 
 from quantum.api.v2 import resource as wsgi_resource
 from quantum.common import exceptions as q_exc
 from quantum import context
+from quantum.tests import base
 from quantum import wsgi
 
 
-class RequestTestCase(testtools.TestCase):
+class RequestTestCase(base.BaseTestCase):
     def setUp(self):
         super(RequestTestCase, self).setUp()
         self.req = wsgi_resource.Request({'foo': 'bar'})
@@ -99,7 +99,7 @@ class RequestTestCase(testtools.TestCase):
         self.assertTrue(self.req.context.is_admin)
 
 
-class ResourceTestCase(testtools.TestCase):
+class ResourceTestCase(base.BaseTestCase):
     def test_unmapped_quantum_error(self):
         controller = mock.MagicMock()
         controller.test.side_effect = q_exc.QuantumException()

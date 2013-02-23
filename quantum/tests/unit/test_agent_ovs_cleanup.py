@@ -19,15 +19,15 @@ import contextlib
 import itertools
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent import ovs_cleanup_util as util
 from quantum.openstack.common import uuidutils
+from quantum.tests import base
 
 
-class TestOVSCleanup(testtools.TestCase):
+class TestOVSCleanup(base.BaseTestCase):
     def setUp(self):
         super(TestOVSCleanup, self).setUp()
         self.addCleanup(cfg.CONF.reset)

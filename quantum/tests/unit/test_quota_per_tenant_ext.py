@@ -12,6 +12,7 @@ from quantum.db import api as db
 from quantum import manager
 from quantum.plugins.linuxbridge.db import l2network_db_v2
 from quantum import quota
+from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api

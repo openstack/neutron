@@ -22,9 +22,10 @@ import testtools
 
 from quantum.plugins.linuxbridge.agent import linuxbridge_quantum_agent
 from quantum.plugins.linuxbridge.common import constants as lconst
+from quantum.tests import base
 
 
-class TestLinuxBridge(testtools.TestCase):
+class TestLinuxBridge(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridge, self).setUp()
@@ -56,7 +57,7 @@ class TestLinuxBridge(testtools.TestCase):
         self.assertTrue(vlan_bridge_func.called)
 
 
-class TestLinuxBridgeAgent(testtools.TestCase):
+class TestLinuxBridgeAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridgeAgent, self).setUp()

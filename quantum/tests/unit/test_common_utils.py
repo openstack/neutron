@@ -15,9 +15,10 @@
 import testtools
 
 from quantum.common import utils
+from quantum.tests import base
 
 
-class TestParseMappings(testtools.TestCase):
+class TestParseMappings(base.BaseTestCase):
     def parse(self, mapping_list, unique_values=True):
         return utils.parse_mappings(mapping_list, unique_values)
 

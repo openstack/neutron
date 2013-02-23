@@ -21,12 +21,12 @@ import eventlet
 from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
-import testtools
 
 from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
     client_eventlet as nace,
     request_eventlet as nare,
 )
+from quantum.tests import base
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -40,7 +40,7 @@ def fetch(url):
     return urllib2.urlopen(url).read()
 
 
-class NvpApiRequestEventletTest(testtools.TestCase):
+class NvpApiRequestEventletTest(base.BaseTestCase):
 
     def setUp(self):
 

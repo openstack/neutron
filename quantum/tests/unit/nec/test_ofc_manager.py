@@ -15,17 +15,16 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import testtools
-
 from quantum import context
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
 from quantum.plugins.nec import ofc_manager
+from quantum.tests import base
 
 
-class OFCManagerTestBase(testtools.TestCase):
+class OFCManagerTestBase(base.BaseTestCase):
     """Class conisting of OFCManager unit tests"""
 
     def setUp(self):

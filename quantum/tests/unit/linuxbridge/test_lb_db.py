@@ -19,6 +19,7 @@ from testtools import matchers
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as lb_db
+from quantum.tests import base
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 PHYS_NET = 'physnet1'
@@ -30,7 +31,7 @@ UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
                        PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
 
 
-class NetworkStatesTest(testtools.TestCase):
+class NetworkStatesTest(base.BaseTestCase):
     def setUp(self):
         super(NetworkStatesTest, self).setUp()
         lb_db.initialize()

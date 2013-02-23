@@ -17,12 +17,12 @@
 
 import fixtures
 import mock
-import testtools
 
 from quantum.agent.linux import utils
+from quantum.tests import base
 
 
-class AgentUtilsExecuteTest(testtools.TestCase):
+class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
         self.root_helper = "echo"
@@ -63,7 +63,7 @@ class AgentUtilsExecuteTest(testtools.TestCase):
         self.assertEqual(result, "%s\n" % self.test_file)
 
 
-class AgentUtilsGetInterfaceMAC(testtools.TestCase):
+class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
     def test_get_interface_mac(self):
         expect_val = '01:02:03:04:05:06'
         with mock.patch('fcntl.ioctl') as ioctl:
@@ -74,7 +74,7 @@ class AgentUtilsGetInterfaceMAC(testtools.TestCase):
         self.assertEqual(actual_val, expect_val)
 
 
-class AgentUtilsReplaceFile(testtools.TestCase):
+class AgentUtilsReplaceFile(base.BaseTestCase):
     def test_replace_file(self):
         # make file to replace
         with mock.patch('tempfile.NamedTemporaryFile') as ntf:

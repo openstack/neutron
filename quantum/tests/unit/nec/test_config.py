@@ -15,12 +15,11 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import testtools
-
 from quantum.plugins.nec.common import config
+from quantum.tests import base
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual(-1, config.CONF.DATABASE.sql_max_retries)

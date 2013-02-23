@@ -21,8 +21,6 @@
 import __builtin__
 import os
 
-import testtools
-
 setattr(__builtin__, '_', lambda x: x)
 
 from oslo.config import cfg
@@ -34,3 +32,4 @@ cfg.CONF.state_path = absdir
 # An empty lock path forces lockutils.synchronized to use a temporary
 # location for lock files that will be cleaned up automatically.
 cfg.CONF.lock_path = ''
+cfg.CONF.use_stderr = False

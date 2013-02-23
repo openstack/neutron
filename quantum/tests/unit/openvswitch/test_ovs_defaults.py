@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import testtools
-
 from oslo.config import cfg
 
 #NOTE this import loads tests required options
 from quantum.plugins.openvswitch.common import config
+from quantum.tests import base
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)

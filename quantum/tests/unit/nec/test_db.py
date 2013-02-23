@@ -16,16 +16,16 @@
 # @author: Ryota MIBU
 
 import random
-import testtools
 
 from quantum.db import api as db_api
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
+from quantum.tests import base
 
 
-class NECPluginV2DBTestBase(testtools.TestCase):
+class NECPluginV2DBTestBase(base.BaseTestCase):
     """Class conisting of NECPluginV2 DB unit tests"""
 
     def setUp(self):

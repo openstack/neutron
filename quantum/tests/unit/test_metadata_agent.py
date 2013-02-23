@@ -23,6 +23,7 @@ import testtools
 import webob
 
 from quantum.agent.metadata import agent
+from quantum.tests import base
 
 
 class FakeConf(object):
@@ -37,7 +38,7 @@ class FakeConf(object):
     metadata_proxy_shared_secret = 'secret'
 
 
-class TestMetadataProxyHandler(testtools.TestCase):
+class TestMetadataProxyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestMetadataProxyHandler, self).setUp()
         self.qclient_p = mock.patch('quantumclient.v2_0.client.Client')
@@ -225,7 +226,7 @@ class TestMetadataProxyHandler(testtools.TestCase):
         )
 
 
-class TestUnixDomainHttpProtocol(testtools.TestCase):
+class TestUnixDomainHttpProtocol(base.BaseTestCase):
     def test_init_empty_client(self):
         u = agent.UnixDomainHttpProtocol(mock.Mock(), '', mock.Mock())
         self.assertEqual(u.client_address, ('<local>', 0))
@@ -235,7 +236,7 @@ class TestUnixDomainHttpProtocol(testtools.TestCase):
         self.assertEqual(u.client_address, 'foo')
 
 
-class TestUnixDomainWSGIServer(testtools.TestCase):
+class TestUnixDomainWSGIServer(base.BaseTestCase):
     def setUp(self):
         super(TestUnixDomainWSGIServer, self).setUp()
         self.eventlet_p = mock.patch.object(agent, 'eventlet')
@@ -274,7 +275,7 @@ class TestUnixDomainWSGIServer(testtools.TestCase):
             self.assertTrue(len(logging.mock_calls))
 
 
-class TestUnixDomainMetadataProxy(testtools.TestCase):
+class TestUnixDomainMetadataProxy(base.BaseTestCase):
     def setUp(self):
         super(TestUnixDomainMetadataProxy, self).setUp()
         self.cfg_p = mock.patch.object(agent, 'cfg')

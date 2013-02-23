@@ -18,12 +18,12 @@
 import fixtures
 import mock
 from oslo.config import cfg
-import testtools
 
 import quantum.db.api as db
+from quantum.tests import base
 
 
-class DBTestCase(testtools.TestCase):
+class DBTestCase(base.BaseTestCase):
     def setUp(self):
         super(DBTestCase, self).setUp()
         cfg.CONF.set_override('sql_max_retries', 1, 'DATABASE')

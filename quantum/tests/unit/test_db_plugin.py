@@ -43,6 +43,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
 from quantum.manager import QuantumManager
 from quantum.openstack.common import timeutils
+from quantum.tests import base
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api
 
@@ -80,6 +81,7 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def setUp(self, plugin=None, service_plugins=None):
         super(QuantumDbPluginV2TestCase, self).setUp()
+
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
         db._ENGINE = None
@@ -3431,7 +3433,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         self.assertEqual(res.status_int, 204)
 
 
-class DbModelTestCase(testtools.TestCase):
+class DbModelTestCase(base.BaseTestCase):
     """ DB model tests """
     def test_repr(self):
         """ testing the string representation of 'model' classes """

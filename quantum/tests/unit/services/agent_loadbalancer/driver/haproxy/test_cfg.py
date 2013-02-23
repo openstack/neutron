@@ -19,14 +19,14 @@
 
 import contextlib
 import mock
-import testtools
 
 from oslo.config import cfg as config
 
 from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import cfg
+from quantum.tests import base
 
 
-class TestHaproxyCfg(testtools.TestCase):
+class TestHaproxyCfg(base.BaseTestCase):
     def test_save_config(self):
         with contextlib.nested(
                 mock.patch('quantum.plugins.services.agent_loadbalancer.'

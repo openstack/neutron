@@ -23,7 +23,6 @@ import urllib2
 
 import fixtures
 import mock
-import testtools
 
 import quantum
 from quantum.common import exceptions
@@ -31,9 +30,10 @@ from quantum import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import policy as common_policy
 from quantum import policy
+from quantum.tests import base
 
 
-class PolicyFileTestCase(testtools.TestCase):
+class PolicyFileTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyFileTestCase, self).setUp()
         policy.reset()
@@ -66,7 +66,7 @@ class PolicyFileTestCase(testtools.TestCase):
                               self.target)
 
 
-class PolicyTestCase(testtools.TestCase):
+class PolicyTestCase(base.BaseTestCase):
     def setUp(self):
         super(PolicyTestCase, self).setUp()
         policy.reset()
@@ -160,7 +160,7 @@ class PolicyTestCase(testtools.TestCase):
         policy.enforce(admin_context, uppercase_action, self.target)
 
 
-class DefaultPolicyTestCase(testtools.TestCase):
+class DefaultPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(DefaultPolicyTestCase, self).setUp()
@@ -196,7 +196,7 @@ class DefaultPolicyTestCase(testtools.TestCase):
                           self.context, "example:noexist", {})
 
 
-class QuantumPolicyTestCase(testtools.TestCase):
+class QuantumPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(QuantumPolicyTestCase, self).setUp()

@@ -14,14 +14,14 @@
 # limitations under the License.
 
 import os
-import testtools
 
 from oslo.config import cfg
 
 from quantum.common import config
+from quantum.tests import base
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual('0.0.0.0', cfg.CONF.bind_host)

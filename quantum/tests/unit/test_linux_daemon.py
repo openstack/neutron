@@ -22,11 +22,12 @@ import mock
 import testtools
 
 from quantum.agent.linux import daemon
+from quantum.tests import base
 
 FAKE_FD = 8
 
 
-class TestPidfile(testtools.TestCase):
+class TestPidfile(base.BaseTestCase):
     def setUp(self):
         super(TestPidfile, self).setUp()
         self.os_p = mock.patch.object(daemon, 'os')
@@ -94,7 +95,7 @@ class TestPidfile(testtools.TestCase):
                 ['cat', '/proc/34/cmdline'], 'sudo')
 
 
-class TestDaemon(testtools.TestCase):
+class TestDaemon(base.BaseTestCase):
     def setUp(self):
         super(TestDaemon, self).setUp()
         self.os_p = mock.patch.object(daemon, 'os')

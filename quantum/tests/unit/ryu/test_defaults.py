@@ -16,13 +16,13 @@
 #    under the License.
 
 from oslo.config import cfg
-import testtools
 
 #NOTE this import loads tests required options
 from quantum.plugins.ryu.common import config
+from quantum.tests import base
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
     """Configuration file Tests"""
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)

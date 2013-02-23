@@ -17,12 +17,12 @@
 # @author: Mark McClain, DreamHost
 
 import mock
-import testtools
 
 from quantum.agent.linux import external_process as ep
+from quantum.tests import base
 
 
-class TestProcessManager(testtools.TestCase):
+class TestProcessManager(base.BaseTestCase):
     def setUp(self):
         super(TestProcessManager, self).setUp()
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')

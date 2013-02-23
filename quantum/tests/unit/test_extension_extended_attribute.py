@@ -20,7 +20,6 @@ Unit tests for extension extended attribute
 """
 
 from oslo.config import cfg
-import testtools
 import webob.exc as webexc
 
 import quantum
@@ -29,6 +28,7 @@ from quantum.common import config
 from quantum import manager
 from quantum.plugins.common import constants
 from quantum.plugins.openvswitch import ovs_quantum_plugin
+from quantum.tests import base
 from quantum.tests.unit.extensions import extendedattribute as extattr
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import testlib_api
@@ -66,7 +66,7 @@ class ExtensionExtendedAttributeTestPlugin(
         return self.objh[id]
 
 
-class ExtensionExtendedAttributeTestCase(testtools.TestCase):
+class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
     def setUp(self):
         super(ExtensionExtendedAttributeTestCase, self).setUp()
         plugin = (

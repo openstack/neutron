@@ -18,18 +18,18 @@
 # @author: Zhongyue Luo, Intel Corporation.
 #
 
-import testtools
 from testtools import matchers
 from webob import exc
 
 from quantum.api import api_common as common
+from quantum.tests import base
 
 
 class FakeController(common.QuantumController):
     _resource_name = 'fake'
 
 
-class APICommonTestCase(testtools.TestCase):
+class APICommonTestCase(base.BaseTestCase):
     def setUp(self):
         super(APICommonTestCase, self).setUp()
         self.controller = FakeController(None)

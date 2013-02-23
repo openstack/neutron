@@ -20,13 +20,13 @@
 import sys
 
 import mock
-import testtools
 
 from quantum.db import migration
 from quantum.db.migration import cli
+from quantum.tests import base
 
 
-class TestDbMigration(testtools.TestCase):
+class TestDbMigration(base.BaseTestCase):
     def test_should_run_plugin_in_list(self):
         self.assertTrue(migration.should_run('foo', ['foo', 'bar']))
         self.assertFalse(migration.should_run('foo', ['bar']))
@@ -35,7 +35,7 @@ class TestDbMigration(testtools.TestCase):
         self.assertTrue(migration.should_run('foo', ['*']))
 
 
-class TestCli(testtools.TestCase):
+class TestCli(base.BaseTestCase):
     def setUp(self):
         super(TestCli, self).setUp()
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')

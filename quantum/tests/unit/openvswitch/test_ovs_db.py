@@ -19,6 +19,7 @@ from testtools import matchers
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.plugins.openvswitch import ovs_db_v2
+from quantum.tests import base
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 PHYS_NET = 'physnet1'
@@ -34,7 +35,7 @@ TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 
 
-class VlanAllocationsTest(testtools.TestCase):
+class VlanAllocationsTest(base.BaseTestCase):
     def setUp(self):
         super(VlanAllocationsTest, self).setUp()
         ovs_db_v2.initialize()
@@ -178,7 +179,7 @@ class VlanAllocationsTest(testtools.TestCase):
         ovs_db_v2.sync_vlan_allocations({})
 
 
-class TunnelAllocationsTest(testtools.TestCase):
+class TunnelAllocationsTest(base.BaseTestCase):
     def setUp(self):
         super(TunnelAllocationsTest, self).setUp()
         ovs_db_v2.initialize()

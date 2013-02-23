@@ -18,13 +18,12 @@
 import mock
 import os
 
-import testtools
-
 from quantum.openstack.common import jsonutils as json
 import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
 from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
 from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.tests import base
 from quantum.tests.unit.nicira import fake_nvpapiclient
 from quantum.tests.unit import test_api_v2
 
@@ -32,7 +31,7 @@ NICIRA_PKG_PATH = nvp_plugin.__name__
 _uuid = test_api_v2._uuid
 
 
-class NvplibTestCase(testtools.TestCase):
+class NvplibTestCase(base.BaseTestCase):
 
     def setUp(self):
         # mock nvp api client
