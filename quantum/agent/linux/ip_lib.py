@@ -297,7 +297,7 @@ class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
     def add_gateway(self, gateway, metric=None):
-        args = ['add', 'default', 'via', gateway]
+        args = ['replace', 'default', 'via', gateway]
         if metric:
             args += ['metric', metric]
         args += ['dev', self.name]

@@ -548,7 +548,7 @@ class TestIpRouteCommand(TestIPCmdBase):
         metric = 100
         self.route_cmd.add_gateway(gateway, metric)
         self._assert_sudo([],
-                          ('add', 'default', 'via', gateway,
+                          ('replace', 'default', 'via', gateway,
                            'metric', metric,
                            'dev', self.parent.name))
 
