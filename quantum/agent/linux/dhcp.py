@@ -21,7 +21,6 @@ import re
 import socket
 import StringIO
 import sys
-import tempfile
 
 import netaddr
 from oslo.config import cfg
@@ -187,7 +186,7 @@ class DhcpLocalProcess(DhcpBase):
     def interface_name(self, value):
         interface_file_path = self.get_conf_file_name('interface',
                                                       ensure_conf_dir=True)
-        replace_file(interface_file_path, value)
+        utils.replace_file(interface_file_path, value)
 
     @abc.abstractmethod
     def spawn_process(self):
@@ -298,7 +297,7 @@ class Dnsmasq(DhcpLocalProcess):
                           (port.mac_address, name, alloc.ip_address))
 
         name = self.get_conf_file_name('host')
-        replace_file(name, buf.getvalue())
+        utils.replace_file(name, buf.getvalue())
         return name
 
     def _output_opts_file(self):
@@ -344,7 +343,7 @@ class Dnsmasq(DhcpLocalProcess):
                     options.append(self._format_option(i, 'router'))
 
         name = self.get_conf_file_name('opts')
-        replace_file(name, '\n'.join(options))
+        utils.replace_file(name, '\n'.join(options))
         return name
 
     def _make_subnet_interface_ip_map(self):
@@ -402,20 +401,3 @@ class Dnsmasq(DhcpLocalProcess):
             sock.connect(dhcp_relay_socket)
             sock.send(jsonutils.dumps(data))
             sock.close()
-
-
-def replace_file(file_name, data):
-    """Replaces the contents of file_name with data in a safe manner.
-
-    First write to a temp file and then rename. Since POSIX renames are
-    atomic, the file is unlikely to be corrupted by competing writes.
-
-    We create the tempfile on the same device to ensure that it can be renamed.
-    """
-
-    base_dir = os.path.dirname(os.path.abspath(file_name))
-    tmp_file = tempfile.NamedTemporaryFile('w+', dir=base_dir, delete=False)
-    tmp_file.write(data)
-    tmp_file.close()
-    os.chmod(tmp_file.name, 0644)
-    os.rename(tmp_file.name, file_name)

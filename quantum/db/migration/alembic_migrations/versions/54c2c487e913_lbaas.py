@@ -58,6 +58,7 @@ def upgrade(active_plugin=None, options=None):
         sa.Column(u'admin_state_up', sa.Boolean(), nullable=False),
         sa.Column(u'connection_limit', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ),
+        sa.UniqueConstraint('pool_id'),
         sa.PrimaryKeyConstraint(u'id')
     )
     op.create_table(

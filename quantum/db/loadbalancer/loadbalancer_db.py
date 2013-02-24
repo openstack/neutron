@@ -69,7 +69,7 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     protocol_port = sa.Column(sa.Integer, nullable=False)
     protocol = sa.Column(sa.Enum("HTTP", "HTTPS", "TCP", name="lb_protocols"),
                          nullable=False)
-    pool_id = sa.Column(sa.String(36), nullable=False)
+    pool_id = sa.Column(sa.String(36), nullable=False, unique=True)
     session_persistence = orm.relationship(SessionPersistence,
                                            uselist=False,
                                            backref="vips",
@@ -114,6 +114,7 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                cascade="all, delete-orphan")
     monitors = orm.relationship("PoolMonitorAssociation", backref="pools",
                                 cascade="all, delete-orphan")
+    vip = orm.relationship(Vip, backref='pool')
 
 
 class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -239,6 +240,12 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 raise
         return r
 
+    def assert_modification_allowed(self, obj):
+        status = getattr(obj, 'status', None)
+
+        if status == constants.PENDING_DELETE:
+            raise loadbalancer.StateInvalid(id=id, state=status)
+
     ########################################################
     # VIP DB access
     def _make_vip_dict(self, vip, fields=None):
@@ -269,11 +276,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
             res['session_persistence'] = s_p
 
         return self._fields(res, fields)
-
-    def _update_pool_vip_info(self, context, pool_id, vip_id):
-        pool_db = self._get_resource(context, Pool, pool_id)
-        with context.session.begin(subtransactions=True):
-            pool_db.update({'vip_id': vip_id})
 
     def _check_session_persistence_info(self, info):
         """ Performs sanity check on session persistence info.
@@ -355,6 +357,14 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
+            # validate that the pool has same tenant
+            if v['pool_id']:
+                pool = self._get_resource(context, Pool, v['pool_id'])
+                if pool['tenant_id'] != tenant_id:
+                    raise q_exc.NotAuthorized()
+            else:
+                pool = None
+
             vip_db = Vip(id=uuidutils.generate_uuid(),
                          tenant_id=tenant_id,
                          name=v['name'],
@@ -367,16 +377,18 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                          admin_state_up=v['admin_state_up'],
                          status=constants.PENDING_CREATE)
 
-            vip_id = vip_db['id']
             session_info = v['session_persistence']
 
             if session_info:
-                s_p = self._create_session_persistence_db(session_info, vip_id)
+                s_p = self._create_session_persistence_db(
+                    session_info,
+                    vip_db['id'])
                 vip_db.session_persistence = s_p
 
             context.session.add(vip_db)
             context.session.flush()
 
+            # create a port to reserve address for IPAM
             self._create_port_for_vip(
                 context,
                 vip_db,
@@ -384,7 +396,9 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 v.get('address')
             )
 
-            self._update_pool_vip_info(context, v['pool_id'], vip_id)
+            if pool:
+                pool['vip_id'] = vip_db['id']
+
         return self._make_vip_dict(vip_db)
 
     def update_vip(self, context, id, vip):
@@ -392,20 +406,36 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
         sess_persist = v.pop('session_persistence', None)
         with context.session.begin(subtransactions=True):
+            vip_db = self._get_resource(context, Vip, id)
+
+            self.assert_modification_allowed(vip_db)
+
             if sess_persist:
                 self._update_vip_session_persistence(context, id, sess_persist)
             else:
                 self._delete_session_persistence(context, id)
 
-            vip_db = self._get_resource(context, Vip, id)
-            old_pool_id = vip_db['pool_id']
             if v:
                 vip_db.update(v)
                 # If the pool_id is changed, we need to update
                 # the associated pools
                 if 'pool_id' in v:
-                    self._update_pool_vip_info(context, old_pool_id, None)
-                    self._update_pool_vip_info(context, v['pool_id'], id)
+                    new_pool = self._get_resource(context, Pool, v['pool_id'])
+                    self.assert_modification_allowed(new_pool)
+
+                    # check that the pool matches the tenant_id
+                    if new_pool['tenant_id'] != vip_db['tenant_id']:
+                        raise q_exc.NotAuthorized()
+
+                    if vip_db['pool_id']:
+                        old_pool = self._get_resource(
+                            context,
+                            Pool,
+                            vip_db['pool_id']
+                        )
+                        old_pool['vip_id'] = None
+
+                    new_pool['vip_id'] = vip_db['id']
 
         return self._make_vip_dict(vip_db)
 
@@ -432,7 +462,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
     ########################################################
     # Pool DB access
-    def _make_pool_dict(self, context, pool, fields=None):
+    def _make_pool_dict(self, pool, fields=None):
         res = {'id': pool['id'],
                'tenant_id': pool['tenant_id'],
                'name': pool['name'],
@@ -452,16 +482,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
             monitor['monitor_id'] for monitor in pool['monitors']]
 
         return self._fields(res, fields)
-
-    def _update_pool_member_info(self, context, pool_id, membersInfo):
-        with context.session.begin(subtransactions=True):
-            member_qry = context.session.query(Member)
-            for member_id in membersInfo:
-                try:
-                    member = member_qry.filter_by(id=member_id).one()
-                    member.update({'pool_id': pool_id})
-                except exc.NoResultFound:
-                    raise loadbalancer.MemberNotFound(member_id=member_id)
 
     def _create_pool_stats(self, context, pool_id):
         # This is internal method to add pool statistics. It won't
@@ -504,17 +524,17 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
             context.session.add(pool_db)
 
         pool_db = self._get_resource(context, Pool, pool_db['id'])
-        return self._make_pool_dict(context, pool_db)
+        return self._make_pool_dict(pool_db)
 
     def update_pool(self, context, id, pool):
-        v = pool['pool']
+        p = pool['pool']
 
         with context.session.begin(subtransactions=True):
             pool_db = self._get_resource(context, Pool, id)
-            if v:
-                pool_db.update(v)
+            if p:
+                pool_db.update(p)
 
-        return self._make_pool_dict(context, pool_db)
+        return self._make_pool_dict(pool_db)
 
     def delete_pool(self, context, id):
         # Check if the pool is in use
@@ -529,15 +549,15 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
     def get_pool(self, context, id, fields=None):
         pool = self._get_resource(context, Pool, id)
-        return self._make_pool_dict(context, pool, fields)
+        return self._make_pool_dict(pool, fields)
 
     def get_pools(self, context, filters=None, fields=None):
         collection = self._model_query(context, Pool)
         collection = self._apply_filters_to_query(collection, Pool, filters)
-        return [self._make_pool_dict(context, c, fields)
+        return [self._make_pool_dict(c, fields)
                 for c in collection.all()]
 
-    def get_stats(self, context, pool_id):
+    def stats(self, context, pool_id):
         with context.session.begin(subtransactions=True):
             pool_qry = context.session.query(Pool)
             try:
@@ -600,6 +620,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 raise loadbalancer.HealthMonitorNotFound(monitor_id=id)
 
     def get_pool_health_monitor(self, context, id, pool_id, fields=None):
+        # TODO(markmcclain) look into why pool_id is ignored
         healthmonitor = self._get_resource(context, HealthMonitor, id)
         return self._make_health_monitor_dict(healthmonitor, fields)
 
@@ -644,7 +665,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         v = member['member']
         with context.session.begin(subtransactions=True):
             member_db = self._get_resource(context, Member, id)
-            old_pool_id = member_db['pool_id']
             if v:
                 member_db.update(v)
 

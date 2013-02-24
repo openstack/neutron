@@ -70,3 +70,21 @@ class AgentUtilsGetInterfaceMAC(testtools.TestCase):
                                           '\x00' * 232])
             actual_val = utils.get_interface_mac('eth0')
         self.assertEqual(actual_val, expect_val)
+
+
+class AgentUtilsReplaceFile(testtools.TestCase):
+    def test_replace_file(self):
+        # make file to replace
+        with mock.patch('tempfile.NamedTemporaryFile') as ntf:
+            ntf.return_value.name = '/baz'
+            with mock.patch('os.chmod') as chmod:
+                with mock.patch('os.rename') as rename:
+                    utils.replace_file('/foo', 'bar')
+
+                    expected = [mock.call('w+', dir='/', delete=False),
+                                mock.call().write('bar'),
+                                mock.call().close()]
+
+                    ntf.assert_has_calls(expected)
+                    chmod.assert_called_once_with('/baz', 0644)
+                    rename.assert_called_once_with('/baz', '/foo')

@@ -1,0 +1,29 @@
+# quantum-rootwrap command filters for nodes on which quantum is
+# expected to control network
+#
+# This file should be owned by (and only-writeable by) the root user
+
+# format seems to be
+# cmd-name: filter-name, raw-command, user, args
+
+[Filters]
+
+# haproxy
+haproxy: CommandFilter, /usr/sbin/haproxy, root
+
+# lbaas-agent uses kill as well, that's handled by the generic KillFilter
+kill_haproxy_usr: KillFilter, root, /usr/sbin/haproxy, -9, -HUP
+
+# lbaas-agent uses cat
+cat: RegExpFilter, /bin/cat, root, cat, /proc/\d+/cmdline
+
+ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
+ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
+ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
+ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+
+# ip_lib
+ip: IpFilter, /sbin/ip, root
+ip_usr: IpFilter, /usr/sbin/ip, root
+ip_exec: IpNetnsExecFilter, /sbin/ip, root
+ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root

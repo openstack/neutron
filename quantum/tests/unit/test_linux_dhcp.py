@@ -138,22 +138,6 @@ class TestDhcpBase(testtools.TestCase):
     def test_base_abc_error(self):
         self.assertRaises(TypeError, dhcp.DhcpBase, None)
 
-    def test_replace_file(self):
-        # make file to replace
-        with mock.patch('tempfile.NamedTemporaryFile') as ntf:
-            ntf.return_value.name = '/baz'
-            with mock.patch('os.chmod') as chmod:
-                with mock.patch('os.rename') as rename:
-                    dhcp.replace_file('/foo', 'bar')
-
-                    expected = [mock.call('w+', dir='/', delete=False),
-                                mock.call().write('bar'),
-                                mock.call().close()]
-
-                    ntf.assert_has_calls(expected)
-                    chmod.assert_called_once_with('/baz', 0644)
-                    rename.assert_called_once_with('/baz', '/foo')
-
     def test_restart(self):
         class SubClass(dhcp.DhcpBase):
             def __init__(self):
@@ -212,7 +196,7 @@ class TestBase(testtools.TestCase):
         self.conf.set_override('state_path', '')
         self.conf.use_namespaces = True
 
-        self.replace_p = mock.patch('quantum.agent.linux.dhcp.replace_file')
+        self.replace_p = mock.patch('quantum.agent.linux.utils.replace_file')
         self.execute_p = mock.patch('quantum.agent.linux.utils.execute')
         self.addCleanup(self.execute_p.stop)
         self.safe = self.replace_p.start()
@@ -392,7 +376,7 @@ class TestDhcpLocalProcess(TestBase):
             self.assertEqual(lp.interface_name, 'tap0')
 
     def test_set_interface_name(self):
-        with mock.patch('quantum.agent.linux.dhcp.replace_file') as replace:
+        with mock.patch('quantum.agent.linux.utils.replace_file') as replace:
             lp = LocalChild(self.conf, FakeDualNetwork())
             with mock.patch.object(lp, 'get_conf_file_name') as conf_file:
                 conf_file.return_value = '/interface'
