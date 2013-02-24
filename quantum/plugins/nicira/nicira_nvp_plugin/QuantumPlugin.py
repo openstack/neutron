@@ -2005,25 +2005,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         group and we don't need to check if one exists.
         """
         s = security_group.get('security_group')
-        if cfg.CONF.SECURITYGROUP.proxy_mode:
-            if not context.is_admin:
-                raise ext_sg.SecurityGroupProxyModeNotAdmin()
-            elif not s.get('external_id'):
-                raise ext_sg.SecurityGroupProxyMode()
-        elif s.get('external_id'):
-            raise ext_sg.SecurityGroupNotProxyMode()
 
         tenant_id = self._get_tenant_id_for_create(context, s)
-        if not default_sg and not cfg.CONF.SECURITYGROUP.proxy_mode:
-            self._ensure_default_security_group(context, tenant_id,
-                                                security_group)
-        if s.get('external_id'):
-            filters = {'external_id': [s.get('external_id')]}
-            security_groups = super(NvpPluginV2, self).get_security_groups(
-                context, filters=filters)
-            if security_groups:
-                raise ext_sg.SecurityGroupAlreadyExists(
-                    name=s.get('name', ''), external_id=s.get('external_id'))
+        if not default_sg:
+            self._ensure_default_security_group(context, tenant_id)
+
         nvp_secgroup = nvplib.create_security_profile(self.default_cluster,
                                                       tenant_id, s)
         security_group['security_group']['id'] = nvp_secgroup['uuid']
@@ -2034,9 +2020,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         """Delete a security group
         :param security_group_id: security group rule to remove.
         """
-        if (cfg.CONF.SECURITYGROUP.proxy_mode and not context.is_admin):
-            raise ext_sg.SecurityGroupProxyModeNotAdmin()
-
         with context.session.begin(subtransactions=True):
             security_group = super(NvpPluginV2, self).get_security_group(
                 context, security_group_id)
@@ -2074,8 +2057,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             security_group_id = self._validate_security_group_rules(
                 context, security_group_rule)
 
-            # Check to make sure security group exists and retrieve
-            # security_group['id'] needed incase it only has an external_id
+            # Check to make sure security group exists
             security_group = super(NvpPluginV2, self).get_security_group(
                 context, security_group_id)
 
@@ -2098,9 +2080,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         """ Delete a security group rule
         :param sgrid: security group id to remove.
         """
-        if (cfg.CONF.SECURITYGROUP.proxy_mode and not context.is_admin):
-            raise ext_sg.SecurityGroupProxyModeNotAdmin()
-
         with context.session.begin(subtransactions=True):
             # determine security profile id
             security_group_rule = (

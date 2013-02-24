@@ -30,11 +30,6 @@ from quantum import quota
 
 
 # Security group Exceptions
-class SecurityGroupAlreadyExists(qexception.InUse):
-    # This can only happen if the external_id database is cleared
-    message = _("Security group %(name)s id %(external_id)s already exists")
-
-
 class SecurityGroupInvalidPortRange(qexception.InvalidInput):
     message = _("For TCP/UDP protocols, port_range_min must be "
                 "<= port_range_max")
@@ -100,22 +95,6 @@ class SecurityGroupRuleExists(qexception.InUse):
     message = _("Security group rule already exists. Group id is %(id)s.")
 
 
-class SecurityGroupProxyMode(qexception.InUse):
-    message = _("Did not recieve external id and in proxy mode")
-
-
-class SecurityGroupNotProxyMode(qexception.InUse):
-    message = _("Recieve external id and not in proxy mode")
-
-
-class SecurityGroupProxyModeNotAdmin(qexception.NotAuthorized):
-    message = _("In Proxy Mode and not from admin")
-
-
-class SecurityGroupInvalidExternalID(qexception.InvalidInput):
-    message = _("external_id wrong type %(data)s")
-
-
 def convert_protocol_to_case_insensitive(value):
     if value is None:
         return value
@@ -147,36 +126,22 @@ def convert_validate_port_value(port):
         raise SecurityGroupInvalidPortValue(port=port)
 
 
-def convert_to_uuid_or_int_list(value_list):
+def convert_to_uuid_list_or_none(value_list):
     if value_list is None:
         return
-    try:
-        return [sg_id if uuidutils.is_uuid_like(sg_id) else int(sg_id)
-                for sg_id in value_list]
-    except (ValueError, TypeError):
-        msg = _("'%s' is not an integer or uuid") % sg_id
-        raise qexception.InvalidInput(error_message=msg)
+    for sg_id in value_list:
+        if not uuidutils.is_uuid_like(sg_id):
+            msg = _("'%s' is not an integer or uuid") % sg_id
+            raise qexception.InvalidInput(error_message=msg)
+    return value_list
 
 
 def _validate_name_not_default(data, valid_values=None):
-    if not cfg.CONF.SECURITYGROUP.proxy_mode and data == "default":
+    if data == "default":
         raise SecurityGroupDefaultAlreadyExists()
 
 
-def _validate_external_id_and_mode(external_id, valid_values=None):
-    if not cfg.CONF.SECURITYGROUP.proxy_mode and not external_id:
-        return
-    elif not cfg.CONF.SECURITYGROUP.proxy_mode and external_id:
-        raise SecurityGroupNotProxyMode()
-    try:
-        int(external_id)
-    except (ValueError, TypeError):
-        raise SecurityGroupInvalidExternalID(data=external_id)
-    if cfg.CONF.SECURITYGROUP.proxy_mode and not external_id:
-        raise SecurityGroupProxyMode()
-
 attr.validators['type:name_not_default'] = _validate_name_not_default
-attr.validators['type:external_id_and_mode'] = _validate_external_id_and_mode
 
 sg_supported_protocols = [None, 'tcp', 'udp', 'icmp']
 sg_supported_ethertypes = ['IPv4', 'IPv6']
@@ -193,9 +158,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'validate': {'type:name_not_default': None}},
         'description': {'allow_post': True, 'allow_put': False,
                         'is_visible': True, 'default': ''},
-        'external_id': {'allow_post': True, 'allow_put': False,
-                        'is_visible': True, 'default': None,
-                        'validate': {'type:external_id_and_mode': None}},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'is_visible': True},
@@ -207,10 +169,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                'validate': {'type:uuid': None},
                'is_visible': True,
                'primary_key': True},
-        # external_id can be used to be backwards compatible with nova
-        'external_id': {'allow_post': True, 'allow_put': False,
-                        'is_visible': True, 'default': None,
-                        'validate': {'type:external_id_and_mode': None}},
         'security_group_id': {'allow_post': True, 'allow_put': False,
                               'is_visible': True, 'required_by_policy': True},
         'source_group_id': {'allow_post': True, 'allow_put': False,
@@ -246,7 +204,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {SECURITYGROUPS: {'allow_post': True,
                                'allow_put': True,
                                'is_visible': True,
-                               'convert_to': convert_to_uuid_or_int_list,
+                               'convert_to': convert_to_uuid_list_or_none,
                                'default': attr.ATTR_NOT_SPECIFIED}}}
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
@@ -259,11 +217,6 @@ security_group_quota_opts = [
                       '-1 for unlimited')),
 ]
 cfg.CONF.register_opts(security_group_quota_opts, 'QUOTAS')
-
-security_group_opts = [
-    cfg.StrOpt('proxy_mode', default=False)
-]
-cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 
 
 class Securitygroup(extensions.ExtensionDescriptor):

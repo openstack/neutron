@@ -54,15 +54,12 @@ def upgrade(active_plugin=None, options=None):
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('description', sa.String(length=255), nullable=True),
-        sa.Column('external_id', sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('external_id')
+        sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
         'securitygrouprules',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('external_id', sa.Integer(), nullable=True),
         sa.Column('security_group_id', sa.String(length=36), nullable=False),
         sa.Column('source_group_id', sa.String(length=36), nullable=True),
         sa.Column('direction',
