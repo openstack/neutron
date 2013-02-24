@@ -609,6 +609,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                      'ip_address': fixed['ip_address']})
             else:
                 fixed_ip_set.append({'subnet_id': subnet_id})
+        if len(fixed_ip_set) > cfg.CONF.max_fixed_ips_per_port:
+            msg = _('Exceeded maximim amount of fixed ips per port')
+            raise q_exc.InvalidInput(error_message=msg)
         return fixed_ip_set
 
     def _allocate_fixed_ips(self, context, network, fixed_ips):
@@ -635,6 +638,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                              new_ips):
         """Add or remove IPs from the port."""
         ips = []
+
+        # the new_ips contain all of the fixed_ips that are to be updated
+        if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
+            msg = _('Exceeded maximim amount of fixed ips per port')
+            raise q_exc.InvalidInput(error_message=msg)
 
         # Remove all of the intersecting elements
         for original_ip in original_ips[:]:
