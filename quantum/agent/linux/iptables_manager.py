@@ -37,6 +37,7 @@ LOG = logging.getLogger(__name__)
 #             (max_chain_name_length - len('-POSTROUTING') == 16)
 binary_name = os.path.basename(inspect.stack()[-1][1])[:16]
 cfg.CONF.set_default('lock_path', '$state_path/lock')
+MAX_CHAIN_LEN = 28
 
 
 class IptablesRule(object):
@@ -48,7 +49,7 @@ class IptablesRule(object):
     """
 
     def __init__(self, chain, rule, wrap=True, top=False):
-        self.chain = chain
+        self.chain = chain[:MAX_CHAIN_LEN]
         self.rule = rule
         self.wrap = wrap
         self.top = top
@@ -67,6 +68,7 @@ class IptablesRule(object):
             chain = '%s-%s' % (binary_name, self.chain)
         else:
             chain = self.chain
+        chain = chain[:MAX_CHAIN_LEN]
         return '-A %s %s' % (chain, self.rule)
 
 
@@ -90,6 +92,7 @@ class IptablesTable(object):
         end up named 'nova-compute-OUTPUT'.
 
         """
+        name = name[:MAX_CHAIN_LEN]
         if wrap:
             self.chains.add(name)
         else:
@@ -107,6 +110,7 @@ class IptablesTable(object):
         This removal "cascades". All rule in the chain are removed, as are
         all rules in other chains that jump to it.
         """
+        name = name[:MAX_CHAIN_LEN]
         chain_set = self._select_chain_set(wrap)
         if name not in chain_set:
             return
@@ -122,6 +126,7 @@ class IptablesTable(object):
         If the chain is not found, this is merely logged.
 
         """
+        name = name[:MAX_CHAIN_LEN]
         chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
@@ -159,7 +164,7 @@ class IptablesTable(object):
 
     def _wrap_target_chain(self, s):
         if s.startswith('$'):
-            return '%s-%s' % (binary_name, s[1:])
+            return ('%s-%s' % (binary_name, s[1:]))[:MAX_CHAIN_LEN]
         return s
 
     def remove_rule(self, chain, rule, wrap=True, top=False):
@@ -180,6 +185,7 @@ class IptablesTable(object):
 
     def empty_chain(self, chain, wrap=True):
         """Remove all rules from a chain."""
+        chain = chain[:MAX_CHAIN_LEN]
         chained_rules = [rule for rule in self.rules
                          if rule.chain == chain and rule.wrap == wrap]
         for rule in chained_rules:
