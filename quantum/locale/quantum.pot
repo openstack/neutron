@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.27"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.28"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-24 00:06+0000\n"
+"POT-Creation-Date: 2013-02-25 00:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2404,107 +2404,85 @@ msgstr ""
 msgid "Quota driver %s is needed."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:35
-#, python-format
-msgid "Security group %(name)s id %(external_id)s already exists"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:39
+#: quantum/extensions/securitygroup.py:34
 msgid "For TCP/UDP protocols, port_range_min must be <= port_range_max"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:44
+#: quantum/extensions/securitygroup.py:39
 #, python-format
 msgid "Invalid value for port %(port)s"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:48
+#: quantum/extensions/securitygroup.py:43
 #, python-format
 msgid "Security Group %(id)s in use."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:52
+#: quantum/extensions/securitygroup.py:47
 msgid "Removing default security group not allowed."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:56
+#: quantum/extensions/securitygroup.py:51
 msgid "Default security group already exists."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:60
+#: quantum/extensions/securitygroup.py:55
 #, python-format
 msgid ""
 "Security group rule protocol %(protocol)s not supported. Only protocol "
 "values %(values)s supported."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:65
+#: quantum/extensions/securitygroup.py:60
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:70
+#: quantum/extensions/securitygroup.py:65
 msgid "Only source_ip_prefix or source_group_id may be provided."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:75
+#: quantum/extensions/securitygroup.py:70
 msgid "Must also specifiy protocol if port range is given."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:79
+#: quantum/extensions/securitygroup.py:74
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:84
+#: quantum/extensions/securitygroup.py:79
 #, python-format
 msgid "Source group id %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:88
+#: quantum/extensions/securitygroup.py:83
 #, python-format
 msgid "Security group %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:92
+#: quantum/extensions/securitygroup.py:87
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:96
+#: quantum/extensions/securitygroup.py:91
 msgid "Duplicate Security Group Rule in POST."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:100
+#: quantum/extensions/securitygroup.py:95
 #, python-format
 msgid "Security group rule already exists. Group id is %(id)s."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:104
-msgid "Did not recieve external id and in proxy mode"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:108
-msgid "Recieve external id and not in proxy mode"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:112
-msgid "In Proxy Mode and not from admin"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:116
-#, python-format
-msgid "external_id wrong type %(data)s"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:157
+#: quantum/extensions/securitygroup.py:134
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:254
+#: quantum/extensions/securitygroup.py:212
 msgid "Number of security groups allowed per tenant,-1 for unlimited"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:258
+#: quantum/extensions/securitygroup.py:216
 msgid "Number of security rules allowed per tenant, -1 for unlimited"
 msgstr ""
 
@@ -6209,79 +6187,79 @@ msgid ""
 " NVP logical switch %(net)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1078
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1059
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1099
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1080
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1117
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1098
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1123
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1104
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1129
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1110
 #, python-format
 msgid "NVP Logical Router %s not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1132
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1113
 msgid "An error occurred while creating the NAT rule on the NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1235
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1216
 #, python-format
 msgid ""
 "An error occurred while removing NAT rule '%(nat_rule_uuid)s' for logical"
 " router '%(lrouter_uuid)s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1247
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1228
 #, python-format
 msgid "NAT rule %s not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1250
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1231
 #, python-format
 msgid "An error occured while retrieving NAT rule '%s'from NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1263
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1244
 #, python-format
 msgid "NVP Logical Router '%s' not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1266
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1247
 #, python-format
 msgid "An error occured while retrieving NAT rules for NVP logical router '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1290
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1271
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1295
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1276
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1320
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1301
 msgid "Failed to create logical queue"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1332
+#: quantum/plugins/nicira/nicira_nvp_plugin/nvplib.py:1313
 msgid "Failed to delete logical queue"
 msgstr ""
 
