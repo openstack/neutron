@@ -54,6 +54,7 @@ meta_plugin_config_path = 'etc/quantum/plugins/metaplugin'
 nec_plugin_config_path = 'etc/quantum/plugins/nec'
 hyperv_plugin_config_path = 'etc/quantum/plugins/hyperv'
 plumgrid_plugin_config_path = 'etc/quantum/plugins/plumgrid'
+midonet_plugin_config_path = 'etc/quantum/plugins/midonet'
 
 if sys.platform == 'win32':
     # Windows doesn't have an "/etc" directory equivalent
@@ -110,6 +111,8 @@ else:
             ['etc/quantum/plugins/hyperv/hyperv_quantum_plugin.ini']),
         (plumgrid_plugin_config_path,
             ['etc/quantum/plugins/plumgrid/plumgrid.ini']),
+        (midonet_plugin_config_path,
+            ['etc/quantum/plugins/midonet/midonet.ini']),
     ]
 
     ConsoleScripts = [
