@@ -40,9 +40,9 @@ from quantum.common import config as logging_config
 from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum import context as q_context
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log
 from quantum.openstack.common.rpc import dispatcher
-from quantum.extensions import securitygroup as ext_sg
 from quantum.plugins.ryu.common import config
 
 

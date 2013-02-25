@@ -25,8 +25,8 @@ import webob
 from webob import exc
 import webtest
 
-from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api import api_common
+from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.api.v2 import router

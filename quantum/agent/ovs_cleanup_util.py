@@ -17,8 +17,8 @@
 
 from oslo.config import cfg
 
-from quantum.agent import l3_agent
 from quantum.agent.common import config as agent_config
+from quantum.agent import l3_agent
 from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib

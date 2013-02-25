@@ -20,9 +20,10 @@
 
 from abc import abstractmethod
 
-from quantum import manager, quota
 from quantum.api import extensions
 from quantum.api.v2 import base
+from quantum import manager
+from quantum import quota
 
 
 # Attribute Map

@@ -21,8 +21,8 @@ import time
 from webob import exc
 
 from quantum.common import constants
-from quantum.common import topics
 from quantum.common.test_lib import test_config
+from quantum.common import topics
 from quantum import context
 from quantum.db import agents_db
 from quantum.db import db_base_plugin_v2

@@ -36,11 +36,11 @@ from quantum.common import constants as q_const
 from quantum.common import topics
 from quantum.common import utils as q_utils
 from quantum import context
+from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.openvswitch.common import config
-from quantum.extensions import securitygroup as ext_sg
 from quantum.plugins.openvswitch.common import constants
 
 

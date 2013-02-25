@@ -17,8 +17,8 @@ import contextlib
 
 import mock
 import unittest2 as unittest
-import webtest
 from webob import exc
+import webtest
 
 from quantum.api import extensions
 from quantum.api.extensions import PluginAwareExtensionManager

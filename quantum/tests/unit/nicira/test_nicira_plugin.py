@@ -18,8 +18,8 @@ import logging
 import os
 
 import mock
-from oslo.config import cfg
 import netaddr
+from oslo.config import cfg
 import webob.exc
 
 from quantum.common import constants
@@ -35,10 +35,10 @@ from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.nicira.test_networkgw as test_l2_gw
-from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_db_plugin as test_plugin
 import quantum.tests.unit.test_extension_portsecurity as psec
 import quantum.tests.unit.test_extension_security_group as ext_sg
+from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
 LOG = logging.getLogger(__name__)

@@ -19,8 +19,8 @@
 import re
 import uuid
 
-from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.common import ofc_client
+from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec import ofc_driver_base
 
 

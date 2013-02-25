@@ -17,8 +17,8 @@
 # @author: Akihiro MOTOKI
 
 from quantum.openstack.common import uuidutils
-from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.common import ofc_client
+from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec import ofc_driver_base
 
 
