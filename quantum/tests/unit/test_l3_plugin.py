@@ -293,8 +293,6 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             marker=marker, page_reverse=page_reverse)
         for net in nets:
             self._extend_network_dict_l3(context, net)
-        nets = self._filter_nets_l3(context, nets, filters)
-
         return [self._fields(net, fields) for net in nets]
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -1399,6 +1397,21 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 body = self._list('networks',
                                   query_params="%s=False" % l3.EXTERNAL)
                 self.assertEqual(len(body['networks']), 1)
+
+    def test_list_nets_external_pagination(self):
+        if self._skip_native_pagination:
+            self.skipTest("Skip test for not implemented pagination feature")
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net3')) as (n1, n3):
+            self._set_net_external(n1['network']['id'])
+            self._set_net_external(n3['network']['id'])
+            with self.network(name='net2') as n2:
+                self._test_list_with_pagination(
+                    'network', (n1, n3), ('name', 'asc'), 1, 3,
+                    query_params='router:external=True')
+                self._test_list_with_pagination(
+                    'network', (n2, ), ('name', 'asc'), 1, 2,
+                    query_params='router:external=False')
 
     def test_get_network_succeeds_without_filter(self):
         plugin = QuantumManager.get_plugin()

@@ -342,7 +342,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         nets = super(NECPluginV2, self).get_networks(context, filters, None)
         for net in nets:
             self._extend_network_dict_l3(context, net)
-        nets = self._filter_nets_l3(context, nets, filters)
         return [self._fields(net, fields) for net in nets]
 
     def _extend_port_dict_binding(self, context, port):
