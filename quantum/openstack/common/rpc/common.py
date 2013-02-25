@@ -49,8 +49,8 @@ deserialize_msg().
 The current message format (version 2.0) is very simple.  It is:
 
     {
-        'quantum.version': <RPC Envelope Version as a String>,
-        'quantum.message': <Application Message Payload, JSON encoded>
+        'oslo.version': <RPC Envelope Version as a String>,
+        'oslo.message': <Application Message Payload, JSON encoded>
     }
 
 Message format version '1.0' is just considered to be the messages we sent
@@ -66,8 +66,8 @@ to the messaging libraries as a dict.
 '''
 _RPC_ENVELOPE_VERSION = '2.0'
 
-_VERSION_KEY = 'quantum.version'
-_MESSAGE_KEY = 'quantum.message'
+_VERSION_KEY = 'oslo.version'
+_MESSAGE_KEY = 'oslo.message'
 
 
 # TODO(russellb) Turn this on after Grizzly.
@@ -123,6 +123,10 @@ class Timeout(RPCException):
     waiting for a response from the remote side.
     """
     message = _("Timeout while waiting on RPC response.")
+
+
+class DuplicateMessageError(RPCException):
+    message = _("Found duplicate message(%(msg_id)s). Skipping it.")
 
 
 class InvalidRPCConnectionReuse(RPCException):
