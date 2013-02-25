@@ -622,6 +622,11 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
         self._setup_port_mocks()
         super(TestMidonetPortsV2, self).test_update_port_update_ip()
 
+    def test_update_port_update_ip_address_only(self):
+        self._setup_port_mocks()
+        super(TestMidonetPortsV2,
+              self).test_update_port_update_ip_address_only()
+
     def test_update_port_update_ips(self):
         self._setup_port_mocks()
         super(TestMidonetPortsV2, self).test_update_port_update_ips()

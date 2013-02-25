@@ -639,12 +639,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         # Remove all of the intersecting elements
         for original_ip in original_ips[:]:
             for new_ip in new_ips[:]:
-                if 'ip_address' in new_ip:
-                    if (original_ip['ip_address'] == new_ip['ip_address']
-                            and
-                            original_ip['subnet_id'] == new_ip['subnet_id']):
-                        original_ips.remove(original_ip)
-                        new_ips.remove(new_ip)
+                if ('ip_address' in new_ip and
+                    original_ip['ip_address'] == new_ip['ip_address']):
+                    original_ips.remove(original_ip)
+                    new_ips.remove(new_ip)
 
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips)
