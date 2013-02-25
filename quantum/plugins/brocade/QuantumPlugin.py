@@ -58,7 +58,7 @@ NOS_DRIVER = 'quantum.plugins.brocade.nos.nosdriver.NOSdriver'
 
 SWITCH_OPTS = [cfg.StrOpt('address', default=''),
                cfg.StrOpt('username', default=''),
-               cfg.StrOpt('password', default=''),
+               cfg.StrOpt('password', default='', secret=True),
                cfg.StrOpt('ostype', default='NOS')
                ]
 
