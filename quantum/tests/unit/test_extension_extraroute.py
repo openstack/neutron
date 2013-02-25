@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 from oslo.config import cfg
 from webob import exc
 
@@ -447,3 +448,30 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
                 self.assertEquals(gw_info, None)
+
+    def test_router_list_with_sort(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_sort('router', (router3, router2, router1),
+                                      [('name', 'desc')])
+
+    def test_router_list_with_pagination(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_pagination('router',
+                                            (router1, router2, router3),
+                                            ('name', 'asc'), 2, 2)
+
+    def test_router_list_with_pagination_reverse(self):
+        with contextlib.nested(self.router(name='router1'),
+                               self.router(name='router2'),
+                               self.router(name='router3')
+                               ) as (router1, router2, router3):
+            self._test_list_with_pagination_reverse('router',
+                                                    (router1, router2,
+                                                     router3),
+                                                    ('name', 'asc'), 2, 2)

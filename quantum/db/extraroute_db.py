@@ -142,10 +142,13 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
                 context, id)
             return router
 
-    def get_routers(self, context, filters=None, fields=None):
+    def get_routers(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None,
+                    page_reverse=False):
         with context.session.begin(subtransactions=True):
             routers = super(ExtraRoute_db_mixin, self).get_routers(
-                context, filters, fields)
+                context, filters, fields, sorts=sorts, limit=limit,
+                marker=marker, page_reverse=page_reverse)
             for router in routers:
                 router['routes'] = self._get_extra_routes_by_router_id(
                     context, router['id'])
