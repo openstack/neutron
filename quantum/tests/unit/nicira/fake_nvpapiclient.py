@@ -245,10 +245,9 @@ class FakeClient:
         if not '_relations' in src or not src['_relations'].get(relation):
             return  # Item does not have relation
         relation_data = src['_relations'].get(relation)
-        dst_relations = dst.get('_relations')
-        if not dst_relations:
-            dst_relations = {}
+        dst_relations = dst.get('_relations', {})
         dst_relations[relation] = relation_data
+        dst['_relations'] = dst_relations
 
     def _fill_attachment(self, att_data, ls_uuid=None,
                          lr_uuid=None, lp_uuid=None):
@@ -266,7 +265,8 @@ class FakeClient:
             else:
                 new_data['%s_field' % field_name] = ""
 
-        for field in ['vif_uuid', 'peer_port_href', 'peer_port_uuid']:
+        for field in ['vif_uuid', 'peer_port_href', 'vlan_id',
+                      'peer_port_uuid', 'l3_gateway_service_uuid']:
             populate_field(field)
         return new_data
 
@@ -460,13 +460,11 @@ class FakeClient:
             if not is_attachment:
                 resource.update(json.loads(body))
             else:
-                relations = resource.get("_relations")
-                if not relations:
-                    relations = {}
-                relations['LogicalPortAttachment'] = json.loads(body)
-                resource['_relations'] = relations
+                relations = resource.get("_relations", {})
                 body_2 = json.loads(body)
                 resource['att_type'] = body_2['type']
+                relations['LogicalPortAttachment'] = body_2
+                resource['_relations'] = relations
                 if body_2['type'] == "PatchAttachment":
                     # We need to do a trick here
                     if self.LROUTER_RESOURCE in res_type:
@@ -486,6 +484,7 @@ class FakeClient:
                 elif body_2['type'] == "L3GatewayAttachment":
                     resource['attachment_gwsvc_uuid'] = (
                         body_2['l3_gateway_service_uuid'])
+                    resource['vlan_id'] = body_2.get('vlan_id')
                 elif body_2['type'] == "L2GatewayAttachment":
                     resource['attachment_gwsvc_uuid'] = (
                         body_2['l2_gateway_service_uuid'])

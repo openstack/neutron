@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import contextlib
-import logging
 import os
 
 import mock
@@ -26,6 +25,7 @@ import webob.exc
 from quantum.common import constants
 import quantum.common.test_lib as test_lib
 from quantum import context
+from quantum.extensions import l3
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
@@ -34,6 +34,7 @@ from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.nicira_nvp_plugin import QuantumPlugin
 from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.nicira.test_networkgw as test_l2_gw
 import quantum.tests.unit.test_db_plugin as test_plugin
@@ -42,7 +43,6 @@ import quantum.tests.unit.test_extension_security_group as ext_sg
 from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
-LOG = logging.getLogger(__name__)
 NICIRA_PKG_PATH = nvp_plugin.__name__
 NICIRA_EXT_PATH = "../../plugins/nicira/nicira_nvp_plugin/extensions"
 
@@ -260,6 +260,115 @@ class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
 
 class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                               NiciraPluginV2TestCase):
+
+    def _create_l3_ext_network(self, vlan_id=None):
+        name = 'l3_ext_net'
+        net_type = QuantumPlugin.NetworkTypes.L3_EXT
+        providernet_args = {pnet.NETWORK_TYPE: net_type,
+                            pnet.PHYSICAL_NETWORK: 'l3_gw_uuid'}
+        if vlan_id:
+            providernet_args[pnet.SEGMENTATION_ID] = vlan_id
+        return self.network(name=name,
+                            router__external=True,
+                            providernet_args=providernet_args,
+                            arg_list=(pnet.NETWORK_TYPE,
+                                      pnet.PHYSICAL_NETWORK,
+                                      pnet.SEGMENTATION_ID))
+
+    def _test_create_l3_ext_network(self, vlan_id=None):
+        name = 'l3_ext_net'
+        net_type = QuantumPlugin.NetworkTypes.L3_EXT
+        expected = [('subnets', []), ('name', name), ('admin_state_up', True),
+                    ('status', 'ACTIVE'), ('shared', False),
+                    (l3.EXTERNAL, True),
+                    (pnet.NETWORK_TYPE, net_type),
+                    (pnet.PHYSICAL_NETWORK, 'l3_gw_uuid'),
+                    (pnet.SEGMENTATION_ID, vlan_id)]
+        with self._create_l3_ext_network(vlan_id) as net:
+            for k, v in expected:
+                self.assertEqual(net['network'][k], v)
+
+    def _nvp_validate_ext_gw(self, router_id, l3_gw_uuid, vlan_id):
+        """ Verify data on fake NVP API client in order to validate
+        plugin did set them properly"""
+        ports = [port for port in self.fc._fake_lrouter_lport_dict.values()
+                 if (port['lr_uuid'] == router_id and
+                     port['att_type'] == "L3GatewayAttachment")]
+        self.assertEqual(len(ports), 1)
+        self.assertEqual(ports[0]['attachment_gwsvc_uuid'], l3_gw_uuid)
+        self.assertEqual(ports[0].get('vlan_id'), vlan_id)
+
+    def test_create_l3_ext_network_without_vlan(self):
+        self._test_create_l3_ext_network()
+
+    def _test_router_create_with_gwinfo_and_l3_ext_net(self, vlan_id=None):
+        with self._create_l3_ext_network(vlan_id) as net:
+            with self.subnet(network=net) as s:
+                data = {'router': {'tenant_id': 'whatever'}}
+                data['router']['name'] = 'router1'
+                data['router']['external_gateway_info'] = {
+                    'network_id': s['subnet']['network_id']}
+                router_req = self.new_create_request('routers', data,
+                                                     self.fmt)
+                try:
+                    res = router_req.get_response(self.ext_api)
+                    router = self.deserialize(self.fmt, res)
+                    self.assertEqual(
+                        s['subnet']['network_id'],
+                        (router['router']['external_gateway_info']
+                         ['network_id']))
+                    self._nvp_validate_ext_gw(router['router']['id'],
+                                              'l3_gw_uuid', vlan_id)
+                finally:
+                    self._delete('routers', router['router']['id'])
+
+    def test_router_create_with_gwinfo_and_l3_ext_net(self):
+        self._test_router_create_with_gwinfo_and_l3_ext_net()
+
+    def test_router_create_with_gwinfo_and_l3_ext_net_with_vlan(self):
+        self._test_router_create_with_gwinfo_and_l3_ext_net(444)
+
+    def _test_router_update_gateway_on_l3_ext_net(self, vlan_id=None):
+        with self.router() as r:
+            with self.subnet() as s1:
+                with self._create_l3_ext_network(vlan_id) as net:
+                    with self.subnet(network=net) as s2:
+                        self._set_net_external(s1['subnet']['network_id'])
+                        try:
+                            self._add_external_gateway_to_router(
+                                r['router']['id'],
+                                s1['subnet']['network_id'])
+                            body = self._show('routers', r['router']['id'])
+                            net_id = (body['router']
+                                      ['external_gateway_info']['network_id'])
+                            self.assertEqual(net_id,
+                                             s1['subnet']['network_id'])
+                            # Plug network with external mapping
+                            self._set_net_external(s2['subnet']['network_id'])
+                            self._add_external_gateway_to_router(
+                                r['router']['id'],
+                                s2['subnet']['network_id'])
+                            body = self._show('routers', r['router']['id'])
+                            net_id = (body['router']
+                                      ['external_gateway_info']['network_id'])
+                            self.assertEqual(net_id,
+                                             s2['subnet']['network_id'])
+                            self._nvp_validate_ext_gw(body['router']['id'],
+                                                      'l3_gw_uuid', vlan_id)
+                        finally:
+                            # Cleanup
+                            self._remove_external_gateway_from_router(
+                                r['router']['id'],
+                                s2['subnet']['network_id'])
+
+    def test_router_update_gateway_on_l3_ext_net(self):
+        self._test_router_update_gateway_on_l3_ext_net()
+
+    def test_router_update_gateway_on_l3_ext_net_with_vlan(self):
+        self._test_router_update_gateway_on_l3_ext_net(444)
+
+    def test_create_l3_ext_network_with_vlan(self):
+        self._test_create_l3_ext_network(666)
 
     def test_floatingip_with_assoc_fails(self):
         self._test_floatingip_with_assoc_fails(

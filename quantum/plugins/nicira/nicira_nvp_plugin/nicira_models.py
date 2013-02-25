@@ -33,22 +33,22 @@ class NvpNetworkBinding(model_base.BASEV2):
                         ForeignKey('networks.id', ondelete="CASCADE"),
                         primary_key=True)
     # 'flat', 'vlan', stt' or 'gre'
-    binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre',
+    binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
                                name='nvp_network_bindings_binding_type'),
                           nullable=False)
-    tz_uuid = Column(String(36))
+    phy_uuid = Column(String(36))
     vlan_id = Column(Integer)
 
-    def __init__(self, network_id, binding_type, tz_uuid, vlan_id):
+    def __init__(self, network_id, binding_type, phy_uuid, vlan_id):
         self.network_id = network_id
         self.binding_type = binding_type
-        self.tz_uuid = tz_uuid
+        self.phy_uuid = phy_uuid
         self.vlan_id = vlan_id
 
     def __repr__(self):
         return "<NetworkBinding(%s,%s,%s,%s)>" % (self.network_id,
                                                   self.binding_type,
-                                                  self.tz_uuid,
+                                                  self.phy_uuid,
                                                   self.vlan_id)
 
 

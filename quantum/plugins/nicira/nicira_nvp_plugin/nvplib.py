@@ -869,18 +869,22 @@ def find_router_gw_port(context, cluster, router_id):
     # TODO(salvatore-orlando): Consider storing it in Quantum DB
     results = query_lrouter_lports(
         cluster, router_id,
-        filters={'attachment_gwsvc_uuid': cluster.default_l3_gw_service_uuid})
-    if len(results):
-        # Return logical router port
-        return results[0]
+        relations="LogicalPortAttachment")
+    for lport in results:
+        if '_relations' in lport:
+            attachment = lport['_relations'].get('LogicalPortAttachment')
+            if attachment and attachment.get('type') == 'L3GatewayAttachment':
+                return lport
 
 
 def plug_router_port_attachment(cluster, router_id, port_id,
-                                attachment_uuid, nvp_attachment_type):
+                                attachment_uuid, nvp_attachment_type,
+                                attachment_vlan=None):
     """Attach a router port to the given attachment.
        Current attachment types:
        - PatchAttachment [-> logical switch port uuid]
        - L3GatewayAttachment [-> L3GatewayService uuid]
+       For the latter attachment type a VLAN ID can be specified as well
     """
     uri = _build_uri_path(LROUTERPORT_RESOURCE, port_id, router_id,
                           is_attachment=True)
@@ -890,6 +894,8 @@ def plug_router_port_attachment(cluster, router_id, port_id,
         attach_obj["peer_port_uuid"] = attachment_uuid
     elif nvp_attachment_type == "L3GatewayAttachment":
         attach_obj["l3_gateway_service_uuid"] = attachment_uuid
+        if attachment_vlan:
+            attach_obj['vlan_id'] = attachment_vlan
     else:
         raise Exception(_("Invalid NVP attachment type '%s'"),
                         nvp_attachment_type)

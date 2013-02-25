@@ -333,7 +333,7 @@ class L3NatTestCaseBase(test_db_plugin.QuantumDbPluginV2TestCase):
         new_args = dict(itertools.izip(map(lambda x: x.replace('__', ':'),
                                            kwargs),
                                        kwargs.values()))
-        arg_list = (l3.EXTERNAL,)
+        arg_list = new_args.pop('arg_list', ()) + (l3.EXTERNAL,)
         return super(L3NatTestCaseBase, self)._create_network(
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 

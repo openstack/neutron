@@ -78,6 +78,7 @@ NVP_EXTGW_NAT_RULES_ORDER = 255
 # Provider network extension - allowed network types for the NVP Plugin
 class NetworkTypes:
     """ Allowed provider network types for the NVP Plugin """
+    L3_EXT = 'l3_ext'
     STT = 'stt'
     GRE = 'gre'
     FLAT = 'flat'
@@ -330,6 +331,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _create_and_attach_router_port(self, cluster, context,
                                        router_id, port_data,
                                        attachment_type, attachment,
+                                       attachment_vlan=None,
                                        subnet_ids=None):
         # Use a fake IP address if gateway port is not 'real'
         ip_addresses = (port_data.get('fake_ext_gw') and
@@ -352,33 +354,43 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                "%(router_id)s"),
                                              {'port_id': port_data.get('id'),
                                               'router_id': router_id})
+        self._update_router_port_attachment(cluster, context, router_id,
+                                            port_data, attachment_type,
+                                            attachment, attachment_vlan,
+                                            lrouter_port['uuid'])
+        return lrouter_port
+
+    def _update_router_port_attachment(self, cluster, context,
+                                       router_id, port_data,
+                                       attachment_type, attachment,
+                                       attachment_vlan=None,
+                                       nvp_router_port_id=None):
+        if not nvp_router_port_id:
+            nvp_router_port_id = self._find_router_gw_port(context, port_data)
         try:
-            # Add a L3 gateway attachment
-            # TODO(Salvatore-Orlando): Allow per router specification of
-            # l3 gw service uuid as well as per-tenant specification
             nvplib.plug_router_port_attachment(cluster, router_id,
-                                               lrouter_port['uuid'],
+                                               nvp_router_port_id,
                                                attachment,
-                                               attachment_type)
+                                               attachment_type,
+                                               attachment_vlan)
             LOG.debug(_("Attached %(att)s to NVP router port %(port)s"),
-                      {'att': attachment, 'port': lrouter_port['uuid']})
+                      {'att': attachment, 'port': nvp_router_port_id})
         except NvpApiClient.NvpApiException:
             # Must remove NVP logical port
             nvplib.delete_router_lport(cluster, router_id,
-                                       lrouter_port['uuid'])
+                                       nvp_router_port_id)
             LOG.exception(_("Unable to plug attachment in NVP logical "
                             "router port %(r_port_id)s, associated with "
                             "Quantum %(q_port_id)s"),
-                          {'r_port_id': lrouter_port['uuid'],
+                          {'r_port_id': nvp_router_port_id,
                            'q_port_id': port_data.get('id')})
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to plug attachment in router port "
                            "%(r_port_id)s for quantum port id %(q_port_id)s "
                            "on router %(router_id)s") %
-                         {'r_port_id': lrouter_port['uuid'],
+                         {'r_port_id': nvp_router_port_id,
                           'q_port_id': port_data.get('id'),
                           'router_id': router_id}))
-        return lrouter_port
 
     def _get_port_by_device_id(self, context, device_id, device_owner):
         """ Retrieve ports associated with a specific device id.
@@ -596,6 +608,15 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    port_data['name'],
                                    True,
                                    ip_addresses)
+        ext_network = self.get_network(context, port_data['network_id'])
+        if ext_network.get(pnet.NETWORK_TYPE) == NetworkTypes.L3_EXT:
+            # Update attachment
+            self._update_router_port_attachment(
+                cluster, context, router_id, port_data,
+                "L3GatewayAttachment",
+                ext_network[pnet.PHYSICAL_NETWORK],
+                ext_network[pnet.SEGMENTATION_ID],
+                lr_port['uuid'])
         # Set the SNAT rule for each subnet (only first IP)
         for cidr in self._find_router_subnets_cidrs(context, router_id):
             nvplib.create_lrouter_snat_rule(
@@ -635,6 +656,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     cluster, router_id, "SourceNatRule",
                     max_num_expected=1, min_num_expected=1,
                     source_ip_addresses=cidr)
+            # Reset attachment
+            self._update_router_port_attachment(
+                cluster, context, router_id, port_data,
+                "L3GatewayAttachment",
+                self.default_cluster.default_l3_gw_service_uuid,
+                nvp_router_port_id=lr_port['uuid'])
 
         except NvpApiClient.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
@@ -780,6 +807,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 if binding:
                     raise q_exc.VlanIdInUse(vlan_id=segmentation_id,
                                             physical_network=physical_network)
+        elif network_type == NetworkTypes.L3_EXT:
+            if (segmentation_id_set and
+                (segmentation_id < 1 or segmentation_id > 4094)):
+                err_msg = _("%s out of range (1 to 4094)") % segmentation_id
         else:
             err_msg = _("%(net_type_param)s %(net_type_value)s not "
                         "supported") % {'net_type_param': pnet.NETWORK_TYPE,
@@ -796,10 +827,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                         network['id'])
             # With NVP plugin 'normal' overlay networks will have no binding
             # TODO(salvatore-orlando) make sure users can specify a distinct
-            # tz_uuid as 'provider network' for STT net type
+            # phy_uuid as 'provider network' for STT net type
             if binding:
                 network[pnet.NETWORK_TYPE] = binding.binding_type
-                network[pnet.PHYSICAL_NETWORK] = binding.tz_uuid
+                network[pnet.PHYSICAL_NETWORK] = binding.phy_uuid
                 network[pnet.SEGMENTATION_ID] = binding.vlan_id
 
     def _handle_lswitch_selection(self, cluster, network,
@@ -829,7 +860,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 cluster, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
                 network_binding.binding_type,
-                network_binding.tz_uuid,
+                network_binding.phy_uuid,
                 network_binding.vlan_id,
                 network.id)
             return selected_lswitch
@@ -907,7 +938,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     context.session, new_net['id'],
                     net_data.get(pnet.NETWORK_TYPE),
                     net_data.get(pnet.PHYSICAL_NETWORK),
-                    net_data.get(pnet.SEGMENTATION_ID))
+                    net_data.get(pnet.SEGMENTATION_ID, 0))
                 self._extend_network_dict_provider(context, new_net,
                                                    net_binding)
             self._extend_network_port_security_dict(context, new_net)
