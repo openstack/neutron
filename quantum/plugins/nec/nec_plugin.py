@@ -85,7 +85,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         self.ofc = ofc_manager.OFCManager()
 
         self.packet_filter_enabled = (config.OFC.enable_packet_filter and
-                                      self.ofc.driver.filter_supported)
+                                      self.ofc.driver.filter_supported())
         if self.packet_filter_enabled:
             self.supported_extension_aliases.append("PacketFilters")
 
