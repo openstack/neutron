@@ -29,8 +29,8 @@ from quantum.common import exceptions
 from quantum.db import db_base_plugin_v2
 from quantum.db import model_base
 from quantum.db import models_v2
-from quantum.openstack.common import uuidutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
 from quantum import policy
 

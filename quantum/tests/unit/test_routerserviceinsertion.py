@@ -21,9 +21,9 @@ import quantum
 from quantum.api import extensions
 from quantum.api.v2 import router
 from quantum.common import config
-from quantum.db.loadbalancer import loadbalancer_db as lb_db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
+from quantum.db.loadbalancer import loadbalancer_db as lb_db
 from quantum.db import routedserviceinsertion_db as rsi_db
 from quantum.db import routerservicetype_db as rst_db
 from quantum.db import servicetype_db as st_db

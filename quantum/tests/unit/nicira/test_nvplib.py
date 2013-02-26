@@ -21,10 +21,10 @@ import mock
 import unittest2 as unittest
 
 from quantum.openstack.common import jsonutils as json
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
-from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
+from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
+from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.tests.unit.nicira import fake_nvpapiclient
 from quantum.tests.unit import test_api_v2
 

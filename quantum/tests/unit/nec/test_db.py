@@ -18,8 +18,8 @@
 import random
 import unittest
 
-from quantum.openstack.common import uuidutils
 from quantum.db import api as db_api
+from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec.db import models as nmodels
