@@ -557,9 +557,10 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         LOG.debug(_("NECPluginV2.update_packet_filter() called, "
                     "id=%(id)s packet_filter=%(packet_filter)s ."),
                   {'id': id, 'packet_filter': packet_filter})
-        old_pf = super(NECPluginV2, self).get_packet_filter(context, id)
-        new_pf = super(NECPluginV2, self).update_packet_filter(context, id,
-                                                               packet_filter)
+        with context.session.begin(subtransactions=True):
+            old_pf = super(NECPluginV2, self).get_packet_filter(context, id)
+            new_pf = super(NECPluginV2, self).update_packet_filter(
+                context, id, packet_filter)
 
         changed = False
         exclude_items = ["id", "name", "tenant_id", "network_id", "status"]

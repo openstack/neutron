@@ -104,19 +104,19 @@ class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
             else:
                 params.update({key: pf.get(key)})
 
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             pf_entry = nmodels.PacketFilter(**params)
             context.session.add(pf_entry)
         return self._make_packet_filter_dict(pf_entry)
 
     def update_packet_filter(self, context, id, packet_filter):
         pf = packet_filter['packet_filter']
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             pf_entry = self._get_packet_filter(context, id)
             pf_entry.update(pf)
         return self._make_packet_filter_dict(pf_entry)
 
     def delete_packet_filter(self, context, id):
-        with context.session.begin():
+        with context.session.begin(subtransactions=True):
             packet_filter = self._get_packet_filter(context, id)
             context.session.delete(packet_filter)

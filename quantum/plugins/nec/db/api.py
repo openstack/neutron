@@ -108,8 +108,9 @@ def add_ofc_item(session, resource, quantum_id, ofc_id, old_style=False):
         else:
             params = dict(quantum_id=quantum_id, ofc_id=ofc_id)
         item = model(**params)
-        session.add(item)
-        session.flush()
+        with session.begin(subtransactions=True):
+            session.add(item)
+            session.flush()
     except Exception as exc:
         LOG.exception(exc)
         raise nexc.NECDBException
@@ -120,9 +121,9 @@ def del_ofc_item(session, resource, quantum_id, old_style=False,
                  warning=True):
     try:
         model = _get_resource_model(resource, old_style)
-        item = session.query(model).filter_by(quantum_id=quantum_id).one()
-        session.delete(item)
-        session.flush()
+        with session.begin(subtransactions=True):
+            item = session.query(model).filter_by(quantum_id=quantum_id).one()
+            session.delete(item)
         return True
     except sa.orm.exc.NoResultFound:
         if warning:
@@ -184,8 +185,8 @@ def add_portinfo(session, id, datapath_id='', port_no=0,
     try:
         portinfo = nmodels.PortInfo(id=id, datapath_id=datapath_id,
                                     port_no=port_no, vlan_id=vlan_id, mac=mac)
-        session.add(portinfo)
-        session.flush()
+        with session.begin(subtransactions=True):
+            session.add(portinfo)
     except Exception as exc:
         LOG.exception(exc)
         raise nexc.NECDBException
@@ -194,9 +195,9 @@ def add_portinfo(session, id, datapath_id='', port_no=0,
 
 def del_portinfo(session, id):
     try:
-        portinfo = session.query(nmodels.PortInfo).filter_by(id=id).one()
-        session.delete(portinfo)
-        session.flush()
+        with session.begin(subtransactions=True):
+            portinfo = session.query(nmodels.PortInfo).filter_by(id=id).one()
+            session.delete(portinfo)
     except sa.orm.exc.NoResultFound:
         LOG.warning(_("del_portinfo(): NotFound portinfo for "
                       "port_id: %s"), id)
