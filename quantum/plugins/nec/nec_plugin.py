@@ -89,6 +89,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         if self.packet_filter_enabled:
             self.supported_extension_aliases.append("PacketFilters")
 
+        # Set the plugin default extension path
+        # if no api_extensions_path is specified.
+        if not config.CONF.api_extensions_path:
+            config.CONF.set_override('api_extensions_path',
+                                     'quantum/plugins/nec/extensions')
+
         self.setup_rpc()
 
     def setup_rpc(self):
