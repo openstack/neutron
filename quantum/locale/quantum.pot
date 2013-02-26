@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.28"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.29"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-25 00:08+0000\n"
+"POT-Creation-Date: 2013-02-26 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -734,24 +734,24 @@ msgstr ""
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:128
+#: quantum/agent/linux/iptables_manager.py:133
 #, python-format
 msgid "Attempted to remove chain %s which does not exist"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:153
+#: quantum/agent/linux/iptables_manager.py:158
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:176
+#: quantum/agent/linux/iptables_manager.py:181
 #, python-format
 msgid ""
 "Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r "
 "%(top)r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:325
+#: quantum/agent/linux/iptables_manager.py:331
 msgid "IPTablesManager.apply completed with success"
 msgstr ""
 
@@ -2605,12 +2605,12 @@ msgstr ""
 msgid "Deprecated: %s"
 msgstr ""
 
-#: quantum/openstack/common/log.py:363
+#: quantum/openstack/common/log.py:358
 #, python-format
 msgid "syslog facility must be one of: %s"
 msgstr ""
 
-#: quantum/openstack/common/log.py:523
+#: quantum/openstack/common/log.py:518
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
@@ -2767,77 +2767,82 @@ msgid ""
 "following: [%(stack)s]."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:72
+#: quantum/openstack/common/rpc/amqp.py:74
 msgid "Pool creating new connection"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:197
+#: quantum/openstack/common/rpc/amqp.py:199
 #, python-format
 msgid "no calling threads waiting for msg_id : %s, message : %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:205
+#: quantum/openstack/common/rpc/amqp.py:207
 #, python-format
 msgid ""
 "Number of call waiters is greater than warning threshhold: %d. There "
 "could be a MulticallProxyWaiter leak."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:287
+#: quantum/openstack/common/rpc/amqp.py:290
 #, python-format
 msgid "unpacked context: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:370
+#: quantum/openstack/common/rpc/amqp.py:336
+#, python-format
+msgid "UNIQUE_ID is %s."
+msgstr ""
+
+#: quantum/openstack/common/rpc/amqp.py:405
 #, python-format
 msgid "received %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:376
+#: quantum/openstack/common/rpc/amqp.py:412
 #, python-format
 msgid "no method for message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:377
+#: quantum/openstack/common/rpc/amqp.py:413
 #, python-format
 msgid "No method for message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:403
-#: quantum/openstack/common/rpc/impl_zmq.py:277
+#: quantum/openstack/common/rpc/amqp.py:439
+#: quantum/openstack/common/rpc/impl_zmq.py:283
 #, python-format
 msgid "Expected exception during message handling (%s)"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:409
-#: quantum/openstack/common/rpc/impl_zmq.py:283
+#: quantum/openstack/common/rpc/amqp.py:445
+#: quantum/openstack/common/rpc/impl_zmq.py:289
 msgid "Exception during message handling"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:457
+#: quantum/openstack/common/rpc/amqp.py:495
 msgid "Timed out waiting for RPC response."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:541
+#: quantum/openstack/common/rpc/amqp.py:581
 #, python-format
 msgid "Making synchronous call on %s ..."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:544
+#: quantum/openstack/common/rpc/amqp.py:584
 #, python-format
 msgid "MSG_ID is %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:577
+#: quantum/openstack/common/rpc/amqp.py:618
 #, python-format
 msgid "Making asynchronous cast on %s..."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:585
+#: quantum/openstack/common/rpc/amqp.py:627
 msgid "Making asynchronous fanout cast..."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:610
+#: quantum/openstack/common/rpc/amqp.py:655
 #, python-format
 msgid "Sending %(event_type)s on %(topic)s"
 msgstr ""
@@ -2862,27 +2867,32 @@ msgid "Timeout while waiting on RPC response."
 msgstr ""
 
 #: quantum/openstack/common/rpc/common.py:129
-msgid "Invalid reuse of an RPC connection."
+#, python-format
+msgid "Found duplicate message(%(msg_id)s). Skipping it."
 msgstr ""
 
 #: quantum/openstack/common/rpc/common.py:133
+msgid "Invalid reuse of an RPC connection."
+msgstr ""
+
+#: quantum/openstack/common/rpc/common.py:137
 #, python-format
 msgid "Specified RPC version, %(version)s, not supported by this endpoint."
 msgstr ""
 
-#: quantum/openstack/common/rpc/common.py:138
+#: quantum/openstack/common/rpc/common.py:142
 #, python-format
 msgid ""
 "Specified RPC envelope version, %(version)s, not supported by this "
 "endpoint."
 msgstr ""
 
-#: quantum/openstack/common/rpc/common.py:262
+#: quantum/openstack/common/rpc/common.py:266
 #, python-format
 msgid "Failed to sanitize %(item)s. Key error %(err)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/common.py:284
+#: quantum/openstack/common/rpc/common.py:288
 #, python-format
 msgid "Returning exception %s to caller"
 msgstr ""
@@ -2892,49 +2902,49 @@ msgstr ""
 msgid "Failed to process message... skipping it."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:479
+#: quantum/openstack/common/rpc/impl_kombu.py:480
 #, python-format
 msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:501
+#: quantum/openstack/common/rpc/impl_kombu.py:502
 #, python-format
 msgid "Connected to AMQP server on %(hostname)s:%(port)d"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:538
+#: quantum/openstack/common/rpc/impl_kombu.py:539
 #, python-format
 msgid ""
 "Unable to connect to AMQP server on %(hostname)s:%(port)d after "
 "%(max_retries)d tries: %(err_str)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:554
+#: quantum/openstack/common/rpc/impl_kombu.py:555
 #, python-format
 msgid ""
 "AMQP server on %(hostname)s:%(port)d is unreachable: %(err_str)s. Trying "
 "again in %(sleep_time)d seconds."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:608
+#: quantum/openstack/common/rpc/impl_kombu.py:609
 #: quantum/openstack/common/rpc/impl_qpid.py:403
 #, python-format
 msgid "Failed to declare consumer for topic '%(topic)s': %(err_str)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:626
+#: quantum/openstack/common/rpc/impl_kombu.py:627
 #: quantum/openstack/common/rpc/impl_qpid.py:418
 #, python-format
 msgid "Timed out waiting for RPC response: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:630
+#: quantum/openstack/common/rpc/impl_kombu.py:631
 #: quantum/openstack/common/rpc/impl_qpid.py:422
 #, python-format
 msgid "Failed to consume message from queue: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_kombu.py:669
+#: quantum/openstack/common/rpc/impl_kombu.py:670
 #: quantum/openstack/common/rpc/impl_qpid.py:457
 #, python-format
 msgid "Failed to publish message to topic '%(topic)s': %(err_str)s"
@@ -2999,134 +3009,141 @@ msgstr ""
 msgid "You cannot send on this socket."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:265
+#: quantum/openstack/common/rpc/impl_zmq.py:271
 #, python-format
 msgid "Running func with context: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:297
+#: quantum/openstack/common/rpc/impl_zmq.py:303
 msgid "Sending reply"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:331
+#: quantum/openstack/common/rpc/impl_zmq.py:337
 msgid "RPC message did not include method."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:366
+#: quantum/openstack/common/rpc/impl_zmq.py:372
 msgid "Registering reactor"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:378
+#: quantum/openstack/common/rpc/impl_zmq.py:384
 msgid "In reactor registered"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:393
+#: quantum/openstack/common/rpc/impl_zmq.py:399
 msgid "Out reactor registered"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:397
+#: quantum/openstack/common/rpc/impl_zmq.py:403
 msgid "Consuming socket"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:438
+#: quantum/openstack/common/rpc/impl_zmq.py:443
 #, python-format
 msgid "CONSUMER GOT %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:447
+#: quantum/openstack/common/rpc/impl_zmq.py:455
 #, python-format
 msgid "Creating proxy for topic: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:471
+#: quantum/openstack/common/rpc/impl_zmq.py:479
 #, python-format
 msgid "ROUTER RELAY-OUT SUCCEEDED %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:480
+#: quantum/openstack/common/rpc/impl_zmq.py:488
 msgid "Topic socket file creation failed."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:485
+#: quantum/openstack/common/rpc/impl_zmq.py:493
 #, python-format
 msgid "ROUTER RELAY-OUT QUEUED %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:488
+#: quantum/openstack/common/rpc/impl_zmq.py:496
 #, python-format
 msgid "Local per-topic backlog buffer full for topic %(topic)s. Dropping message."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:506
+#: quantum/openstack/common/rpc/impl_zmq.py:514
 #, python-format
 msgid "Could not create IPC directory %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:516
+#: quantum/openstack/common/rpc/impl_zmq.py:524
 msgid "Could not create ZeroMQ receiver daemon. Socket may already be in use."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:536
+#: quantum/openstack/common/rpc/impl_zmq.py:559
 #, python-format
 msgid "CONSUMER RECEIVED DATA: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:538
+#: quantum/openstack/common/rpc/impl_zmq.py:561
 #, python-format
 msgid "ROUTER RELAY-OUT %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:564
-#, python-format
-msgid "Create Consumer for topic (%(topic)s)"
+#: quantum/openstack/common/rpc/impl_zmq.py:583
+msgid "ZMQ Envelope version unsupported or unknown."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:580
+#: quantum/openstack/common/rpc/impl_zmq.py:608
+msgid "Skipping topic registration. Already registered."
+msgstr ""
+
+#: quantum/openstack/common/rpc/impl_zmq.py:615
 #, python-format
 msgid "Consumer is a zmq.%s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:625
+#: quantum/openstack/common/rpc/impl_zmq.py:662
 msgid "Creating payload"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:638
+#: quantum/openstack/common/rpc/impl_zmq.py:675
 msgid "Creating queue socket for reply waiter"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:649
+#: quantum/openstack/common/rpc/impl_zmq.py:688
 msgid "Sending cast"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:653
+#: quantum/openstack/common/rpc/impl_zmq.py:691
 msgid "Cast sent; Waiting reply"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:656
+#: quantum/openstack/common/rpc/impl_zmq.py:694
 #, python-format
 msgid "Received message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:657
+#: quantum/openstack/common/rpc/impl_zmq.py:695
 msgid "Unpacking response"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:663
+#: quantum/openstack/common/rpc/impl_zmq.py:704
+msgid "Unsupported or unknown ZMQ envelope returned."
+msgstr ""
+
+#: quantum/openstack/common/rpc/impl_zmq.py:711
 msgid "RPC Message Invalid."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:687
+#: quantum/openstack/common/rpc/impl_zmq.py:735
 #: quantum/plugins/midonet/plugin.py:53
 #, python-format
 msgid "%(msg)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:690
+#: quantum/openstack/common/rpc/impl_zmq.py:738
 #, python-format
 msgid "Sending message(s) to: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:694
+#: quantum/openstack/common/rpc/impl_zmq.py:742
 msgid "No matchmaker results. Not casting."
 msgstr ""
 
