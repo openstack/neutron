@@ -274,19 +274,7 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
 
     def test_router_add_interface_subnet_with_metadata_access(self):
         self._nvp_metadata_setup()
-        notifications = ['router.create.start',
-                         'router.create.end',
-                         'network.create.start',
-                         'network.create.end',
-                         'subnet.create.start',
-                         'subnet.create.end',
-                         'router.interface.create',
-                         'network.create.end',
-                         'router.interface.create',
-                         'router.interface.delete',
-                         'router.interface.delete',
-                         'network.delete.end']
-        self.test_router_add_interface_subnet(exp_notifications=notifications)
+        self.test_router_add_interface_subnet()
         self._nvp_metadata_teardown()
 
     def test_router_add_interface_port_with_metadata_access(self):
