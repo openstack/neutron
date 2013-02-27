@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.29"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.30"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-26 00:06+0000\n"
+"POT-Creation-Date: 2013-02-27 00:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5132,144 +5132,144 @@ msgid ""
 "fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:138
+#: quantum/plugins/nec/nec_plugin.py:144
 msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:142
+#: quantum/plugins/nec/nec_plugin.py:148
 msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:146
+#: quantum/plugins/nec/nec_plugin.py:152
 msgid "activate_port_if_ready(): skip, no portinfo for this port."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:165
+#: quantum/plugins/nec/nec_plugin.py:171
 msgid "activate_port_if_ready(): skip, ofc_port already exists."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:171
+#: quantum/plugins/nec/nec_plugin.py:177
 #, python-format
 msgid "create_ofc_port() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:189
+#: quantum/plugins/nec/nec_plugin.py:195
 #, python-format
 msgid "delete_ofc_port() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:193
+#: quantum/plugins/nec/nec_plugin.py:199
 msgid "deactivate_port(): skip, ofc_port does not exist."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:213
+#: quantum/plugins/nec/nec_plugin.py:219
 #, python-format
 msgid "NECPluginV2.create_network() called, network=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:233
+#: quantum/plugins/nec/nec_plugin.py:239
 #, python-format
 msgid "create_network() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:249
+#: quantum/plugins/nec/nec_plugin.py:255
 #, python-format
 msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:300
+#: quantum/plugins/nec/nec_plugin.py:306
 #, python-format
 msgid "NECPluginV2.delete_network() called, id=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:315
+#: quantum/plugins/nec/nec_plugin.py:321
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:333
+#: quantum/plugins/nec/nec_plugin.py:339
 #, python-format
 msgid "delete_ofc_tenant() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:358
+#: quantum/plugins/nec/nec_plugin.py:364
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:385
+#: quantum/plugins/nec/nec_plugin.py:391
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:414
+#: quantum/plugins/nec/nec_plugin.py:420
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:478
+#: quantum/plugins/nec/nec_plugin.py:484
 msgid ""
 "_activate_packet_filter_if_ready(): skip, packet_filter.admin_state_up is"
 " False."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:482
+#: quantum/plugins/nec/nec_plugin.py:488
 msgid "_activate_packet_filter_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:486
+#: quantum/plugins/nec/nec_plugin.py:492
 msgid "_activate_packet_filter_if_ready(): skip, invalid in_port_id."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:490
+#: quantum/plugins/nec/nec_plugin.py:496
 msgid "_activate_packet_filter_if_ready(): skip, no portinfo for in_port."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:496
+#: quantum/plugins/nec/nec_plugin.py:502
 msgid ""
 "_activate_packet_filter_if_ready(): skip, ofc_packet_filter already "
 "exists."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:505
+#: quantum/plugins/nec/nec_plugin.py:511
 #, python-format
 msgid "create_ofc_packet_filter() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:518
+#: quantum/plugins/nec/nec_plugin.py:524
 msgid "_deactivate_packet_filter(): skip, ofc_packet_filter does not exist."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:524
+#: quantum/plugins/nec/nec_plugin.py:530
 #, python-format
 msgid "delete_ofc_packet_filter() failed due to %s"
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:535
+#: quantum/plugins/nec/nec_plugin.py:541
 #, python-format
 msgid "NECPluginV2.create_packet_filter() called, packet_filter=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:551
+#: quantum/plugins/nec/nec_plugin.py:557
 #, python-format
 msgid ""
 "NECPluginV2.update_packet_filter() called, id=%(id)s "
 "packet_filter=%(packet_filter)s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:574
+#: quantum/plugins/nec/nec_plugin.py:581
 #, python-format
 msgid "NECPluginV2.delete_packet_filter() called, id=%s ."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:620
+#: quantum/plugins/nec/nec_plugin.py:627
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
 "=> %(ret)s."
 msgstr ""
 
-#: quantum/plugins/nec/nec_plugin.py:651
+#: quantum/plugins/nec/nec_plugin.py:658
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
@@ -5366,27 +5366,27 @@ msgstr ""
 msgid "Failed to connect OFC : %s"
 msgstr ""
 
-#: quantum/plugins/nec/db/api.py:129
+#: quantum/plugins/nec/db/api.py:130
 #, python-format
 msgid "_del_ofc_item(): NotFound item (model=%(model)s, id=%(id)s) "
 msgstr ""
 
-#: quantum/plugins/nec/db/api.py:142
+#: quantum/plugins/nec/db/api.py:143
 #, python-format
 msgid "NotFound %(resource)s for quantum_id=%(id)s."
 msgstr ""
 
-#: quantum/plugins/nec/db/api.py:168
+#: quantum/plugins/nec/db/api.py:169
 #, python-format
 msgid "_del_ofc_item(): NotFound item (resource=%(resource)s, id=%(id)s) "
 msgstr ""
 
-#: quantum/plugins/nec/db/api.py:201
+#: quantum/plugins/nec/db/api.py:202
 #, python-format
 msgid "del_portinfo(): NotFound portinfo for port_id: %s"
 msgstr ""
 
-#: quantum/plugins/nec/db/api.py:207
+#: quantum/plugins/nec/db/api.py:208
 #: quantum/plugins/openvswitch/ovs_db_v2.py:309
 #, python-format
 msgid "get_port_with_securitygroups() called:port_id=%s"
