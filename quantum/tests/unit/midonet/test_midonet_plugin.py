@@ -750,3 +750,9 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
 
     def test_list_ports_with_sort_emulated(self):
         pass
+
+    def test_max_fixed_ips_exceeded(self):
+        pass
+
+    def test_update_max_fixed_ips_exceeded(self):
+        pass

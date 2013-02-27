@@ -1745,6 +1745,38 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertEqual(update_context._recycled_networks,
                                      set([subnet['subnet']['network_id']]))
 
+    def test_max_fixed_ips_exceeded(self):
+        with self.subnet(gateway_ip='10.0.0.3',
+                         cidr='10.0.0.0/24') as subnet:
+                kwargs = {"fixed_ips":
+                          [{'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']},
+                           {'subnet_id': subnet['subnet']['id']}]}
+                net_id = subnet['subnet']['network_id']
+                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                self.assertEqual(res.status_int, 400)
+
+    def test_update_max_fixed_ips_exceeded(self):
+        with self.subnet(gateway_ip='10.0.0.3',
+                         cidr='10.0.0.0/24') as subnet:
+            with self.port(subnet) as port:
+                data = {'port': {'fixed_ips':
+                                 [{'subnet_id': subnet['subnet']['id'],
+                                   'ip_address': '10.0.0.2'},
+                                  {'subnet_id': subnet['subnet']['id'],
+                                   'ip_address': '10.0.0.4'},
+                                  {'subnet_id': subnet['subnet']['id']},
+                                  {'subnet_id': subnet['subnet']['id']},
+                                  {'subnet_id': subnet['subnet']['id']},
+                                  {'subnet_id': subnet['subnet']['id']}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 400)
+
 
 class TestNetworksV2(QuantumDbPluginV2TestCase):
     # NOTE(cerberus): successful network update and delete are
