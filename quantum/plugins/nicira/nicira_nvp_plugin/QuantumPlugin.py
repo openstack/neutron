@@ -851,12 +851,13 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             main_ls = [ls for ls in lswitches if ls['uuid'] == network.id]
             tag_dict = dict((x['scope'], x['tag']) for x in main_ls[0]['tags'])
             if 'multi_lswitch' not in tag_dict:
+                tags = main_ls[0]['tags']
+                tags.append({'tag': 'True', 'scope': 'multi_lswitch'})
                 nvplib.update_lswitch(cluster,
                                       main_ls[0]['uuid'],
                                       main_ls[0]['display_name'],
                                       network['tenant_id'],
-                                      tags=[{'tag': 'True',
-                                             'scope': 'multi_lswitch'}])
+                                      tags=tags)
             selected_lswitch = nvplib.create_lswitch(
                 cluster, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
@@ -914,7 +915,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 target_cluster, tenant_id, net_data.get('name'),
                 nvp_binding_type,
                 net_data.get(pnet.PHYSICAL_NETWORK),
-                net_data.get(pnet.SEGMENTATION_ID))
+                net_data.get(pnet.SEGMENTATION_ID),
+                shared=net_data.get(attr.SHARED))
             net_data['id'] = lswitch['uuid']
 
         with context.session.begin(subtransactions=True):
@@ -1083,17 +1085,28 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             tenant_ids = tenant_ids or [context.tenant_id]
             tenant_filter = ''.join(filter_fmt % tid for tid in tenant_ids)
-
         lswitch_filters = "uuid,display_name,fabric_status,tags"
-        lswitch_url_path = (
+        lswitch_url_path_1 = (
             "/ws.v1/lswitch?fields=%s&relations=LogicalSwitchStatus%s"
             % (lswitch_filters, tenant_filter))
+        lswitch_url_path_2 = nvplib._build_uri_path(
+            nvplib.LSWITCH_RESOURCE,
+            fields=lswitch_filters,
+            relations='LogicalSwitchStatus',
+            filters={'tag': 'true', 'tag_scope': 'shared'})
         try:
             for c in self.clusters.itervalues():
                 res = nvplib.get_all_query_pages(
-                    lswitch_url_path, c)
+                    lswitch_url_path_1, c)
                 nvp_lswitches.update(dict(
                     (ls['uuid'], ls) for ls in res))
+                # Issue a second query for fetching shared networks.
+                # We cannot unfortunately use just a single query because tags
+                # cannot be or-ed
+                res_shared = nvplib.get_all_query_pages(
+                    lswitch_url_path_2, c)
+                nvp_lswitches.update(dict(
+                    (ls['uuid'], ls) for ls in res_shared))
         except Exception:
             err_msg = _("Unable to get logical switches")
             LOG.exception(err_msg)
