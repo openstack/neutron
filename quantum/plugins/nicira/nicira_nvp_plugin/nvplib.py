@@ -1239,7 +1239,7 @@ def query_nat_rules(cluster, router_id, fields="*", filters=None):
     uri = _build_uri_path(LROUTERNAT_RESOURCE, parent_resource_id=router_id,
                           fields=fields, filters=filters)
     try:
-        resp = do_single_request(HTTP_GET, uri, cluster=cluster)
+        result = get_all_query_pages(uri, cluster)
     except NvpApiClient.ResourceNotFound:
         LOG.exception(_("NVP Logical Router '%s' not found"), router_id)
         raise
@@ -1247,8 +1247,7 @@ def query_nat_rules(cluster, router_id, fields="*", filters=None):
         LOG.exception(_("An error occured while retrieving NAT rules for "
                         "NVP logical router '%s'"), router_id)
         raise
-    res = json.loads(resp)
-    return res["results"]
+    return result
 
 
 # NOTE(salvatore-orlando): The following FIXME applies in general to
