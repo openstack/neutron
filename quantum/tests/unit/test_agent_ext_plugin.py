@@ -62,28 +62,17 @@ class TestAgentPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     supported_extension_aliases = ["agent"]
 
 
-class AgentDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
-    fmt = 'json'
-
-    def setUp(self):
-        self.adminContext = context.get_admin_context()
-        test_config['plugin_name_v2'] = (
-            'quantum.tests.unit.test_agent_ext_plugin.TestAgentPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
-        ext_mgr = AgentTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(AgentDBTestCase, self).setUp()
+class AgentDBTestMixIn(object):
 
     def _list_agents(self, expected_res_status=None,
                      quantum_context=None,
                      query_string=None):
-        comp_res = self._list('agents',
-                              quantum_context=quantum_context,
-                              query_params=query_string)
+        agent_res = self._list('agents',
+                               quantum_context=quantum_context,
+                               query_params=query_string)
         if expected_res_status:
-            self.assertEqual(comp_res.status_int, expected_res_status)
-        return comp_res
+            self.assertEqual(agent_res.status_int, expected_res_status)
+        return agent_res
 
     def _register_agent_states(self):
         """Register two L3 agents and two DHCP agents."""
@@ -122,6 +111,21 @@ class AgentDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': dhcp_hostc})
         return [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
+
+
+class AgentDBTestCase(AgentDBTestMixIn,
+                      test_db_plugin.QuantumDbPluginV2TestCase):
+    fmt = 'json'
+
+    def setUp(self):
+        self.adminContext = context.get_admin_context()
+        test_config['plugin_name_v2'] = (
+            'quantum.tests.unit.test_agent_ext_plugin.TestAgentPlugin')
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        ext_mgr = AgentTestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        super(AgentDBTestCase, self).setUp()
 
     def test_create_agent(self):
         data = {'agent': {}}

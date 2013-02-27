@@ -320,7 +320,7 @@ class DhcpPluginApi(proxy.RpcProxy):
         super(DhcpPluginApi, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.context = context
-        self.host = socket.gethostname()
+        self.host = cfg.CONF.host
 
     def get_active_networks(self):
         """Make a remote process call to retrieve the active networks."""
@@ -684,6 +684,11 @@ class DhcpAgentWithStateReport(DhcpAgent):
             return
         if self.agent_state.pop('start_flag', None):
             self.run()
+
+    def agent_updated(self, context, payload):
+        """Handle the agent_updated notification event."""
+        self.needs_resync = True
+        LOG.info(_("agent_updated by server side %s!"), payload)
 
     def after_start(self):
         LOG.info(_("DHCP agent started"))

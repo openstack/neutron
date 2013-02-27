@@ -183,3 +183,8 @@ def diff_list_of_dict(old_list, new_list):
     added = new_set - old_set
     removed = old_set - new_set
     return [str2dict(a) for a in added], [str2dict(r) for r in removed]
+
+
+def is_extension_supported(plugin, ext_alias):
+    return ext_alias in getattr(
+        plugin, "supported_extension_aliases", [])

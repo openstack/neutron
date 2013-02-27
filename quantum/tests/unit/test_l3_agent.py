@@ -88,7 +88,7 @@ class TestBasicRouterOperations(testtools.TestCase):
     def testRouterInfoCreate(self):
         id = _uuid()
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces, None)
 
         self.assertTrue(ri.ns_name().endswith(id))
 
@@ -100,7 +100,7 @@ class TestBasicRouterOperations(testtools.TestCase):
         router_id = _uuid()
         network_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces, None)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
@@ -128,7 +128,7 @@ class TestBasicRouterOperations(testtools.TestCase):
     def _test_external_gateway_action(self, action):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces, None)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         internal_cidrs = ['100.0.1.0/24', '200.74.0.0/16']
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -172,7 +172,7 @@ class TestBasicRouterOperations(testtools.TestCase):
     def _test_floating_ip_action(self, action):
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces, None)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         floating_ip = '20.0.0.100'
         fixed_ip = '10.0.0.23'
@@ -227,7 +227,8 @@ class TestBasicRouterOperations(testtools.TestCase):
 
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces,
+                                 None)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         fake_route1 = {'destination': '135.207.0.0/16',
@@ -274,7 +275,8 @@ class TestBasicRouterOperations(testtools.TestCase):
         router_id = _uuid()
 
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces)
+                                 self.conf.use_namespaces,
+                                 None)
         ri.router = {}
 
         fake_old_routes = []

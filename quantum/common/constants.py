@@ -66,3 +66,5 @@ PAGINATION_INFINITE = 'infinite'
 
 SORT_DIRECTION_ASC = 'asc'
 SORT_DIRECTION_DESC = 'desc'
+
+AGENT_SCHEDULER_EXT_ALIAS = 'agent_scheduler'

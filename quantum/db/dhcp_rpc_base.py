@@ -13,9 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.config import cfg
 from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
+from quantum.common import constants
+from quantum.common import utils
 from quantum import manager
 from quantum.openstack.common import log as logging
 
@@ -31,14 +34,24 @@ class DhcpRpcCallbackMixin(object):
         host = kwargs.get('host')
         LOG.debug(_('Network list requested from %s'), host)
         plugin = manager.QuantumManager.get_plugin()
-        filters = dict(admin_state_up=[True])
-
-        return [net['id'] for net in
-                plugin.get_networks(context, filters=filters)]
+        if utils.is_extension_supported(
+            plugin, constants.AGENT_SCHEDULER_EXT_ALIAS):
+            if cfg.CONF.network_auto_schedule:
+                plugin.auto_schedule_networks(context, host)
+            nets = plugin.list_active_networks_on_active_dhcp_agent(
+                context, host)
+        else:
+            filters = dict(admin_state_up=[True])
+            nets = plugin.get_networks(context, filters=filters)
+        return [net['id'] for net in nets]
 
     def get_network_info(self, context, **kwargs):
         """Retrieve and return a extended information about a network."""
         network_id = kwargs.get('network_id')
+        host = kwargs.get('host')
+        LOG.debug(_('Network %(network_id)s requested from '
+                    '%(host)s'), {'network_id': network_id,
+                                  'host': host})
         plugin = manager.QuantumManager.get_plugin()
         network = plugin.get_network(context, network_id)
 
@@ -62,7 +75,9 @@ class DhcpRpcCallbackMixin(object):
         # a device id that combines host and network ids
 
         LOG.debug(_('Port %(device_id)s for %(network_id)s requested from '
-                    '%(host)s'), locals())
+                    '%(host)s'), {'device_id': device_id,
+                                  'network_id': network_id,
+                                  'host': host})
         plugin = manager.QuantumManager.get_plugin()
         retval = None
 
