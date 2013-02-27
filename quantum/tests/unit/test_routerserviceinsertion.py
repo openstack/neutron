@@ -19,8 +19,11 @@ import webob.exc as webexc
 
 import quantum
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum.api.v2 import router
 from quantum.common import config
+from quantum import context as q_context
+from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
 from quantum.db.loadbalancer import loadbalancer_db as lb_db
@@ -171,6 +174,10 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
 
         # Ensure 'stale' patched copies of the plugin are never returned
         quantum.manager.QuantumManager._instance = None
+
+        # Ensure the database is reset between tests
+        db._ENGINE = None
+        db._MAKER = None
         # Ensure existing ExtensionManager is not used
 
         ext_mgr = extensions.PluginAwareExtensionManager(
@@ -187,6 +194,48 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
 
         res = self._do_request('GET', _get_path('service-types'))
         self._service_type_id = res['service_types'][0]['id']
+
+        self._setup_core_resources()
+
+    # FIXME (markmcclain):  The test setup makes it difficult to add core
+    # via the api. In the interim we'll create directly using the plugin with
+    # the side effect of polluting the fixture database until tearDown.
+
+    def _setup_core_resources(self):
+        core_plugin = quantum.manager.QuantumManager.get_plugin()
+
+        self._network = core_plugin.create_network(
+            q_context.get_admin_context(),
+            {
+                'network':
+                {
+                    'tenant_id': self._tenant_id,
+                    'name': 'test net',
+                    'admin_state_up': True,
+                    'shared': False,
+                }
+            }
+        )
+
+        self._subnet = core_plugin.create_subnet(
+            q_context.get_admin_context(),
+            {
+                'subnet':
+                {
+                    'network_id': self._network['id'],
+                    'name': 'test subnet',
+                    'cidr': '192.168.1.0/24',
+                    'ip_version': 4,
+                    'gateway_ip': '192.168.1.1',
+                    'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
+                    'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
+                    'host_routes': attributes.ATTR_NOT_SPECIFIED,
+                    'enable_dhcp': True,
+                }
+            }
+        )
+
+        self._subnet_id = self._subnet['id']
 
     def _do_request(self, method, path, data=None, params=None, action=None):
         content_type = 'application/json'
@@ -267,7 +316,6 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
             'DELETE', _get_path('routers/{0}'.format(router['id'])))
 
     def _test_lb_setup(self):
-        self._subnet_id = _uuid()
         router = self._router_create(self._service_type_id)
         self._router_id = router['id']
 
@@ -337,10 +385,10 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
                 "tenant_id": self._tenant_id,
                 "name": "test",
                 "protocol": "HTTP",
-                "port": 80,
+                "protocol_port": 80,
                 "subnet_id": self._subnet_id,
                 "pool_id": self._pool_id,
-                "address": "192.168.1.101",
+                "address": "192.168.1.102",
                 "connection_limit": 100,
                 "admin_state_up": True,
                 "router_id": router_id
@@ -361,7 +409,6 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
 
     def _test_resource_create(self, res):
         getattr(self, "_test_{0}_setup".format(res))()
-        obj = getattr(self, "_{0}_create".format(res))()
         obj = getattr(self, "_{0}_create".format(res))(self._router_id)
         self.assertEqual(obj['router_id'], self._router_id)
 
@@ -389,12 +436,15 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
                 _get_path('lb/{0}s/{1}'.format(res, obj['id'])))
             self.assertEqual(updated[res][update_attr], update_value)
 
-    def _test_resource_delete(self, res):
+    def _test_resource_delete(self, res, with_router_id):
         getattr(self, "_test_{0}_setup".format(res))()
-        obj = getattr(self, "_{0}_create".format(res))()
-        self._do_request(
-            'DELETE', _get_path('lb/{0}s/{1}'.format(res, obj['id'])))
-        obj = getattr(self, "_{0}_create".format(res))(self._router_id)
+
+        func = getattr(self, "_{0}_create".format(res))
+
+        if with_router_id:
+            obj = func(self._router_id)
+        else:
+            obj = func()
         self._do_request(
             'DELETE', _get_path('lb/{0}s/{1}'.format(res, obj['id'])))
 
@@ -407,8 +457,11 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
     def test_pool_update_without_router_id(self):
         self._test_resource_update('pool', False, 'name', _uuid())
 
-    def test_pool_delete(self):
-        self._test_resource_delete('pool')
+    def test_pool_delete_with_router_id(self):
+        self._test_resource_delete('pool', True)
+
+    def test_pool_delete_without_router_id(self):
+        self._test_resource_delete('pool', False)
 
     def test_health_monitor_create(self):
         self._test_resource_create('health_monitor')
@@ -419,8 +472,11 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
     def test_health_monitor_update_without_router_id(self):
         self._test_resource_update('health_monitor', False, 'timeout', 2)
 
-    def test_health_monitor_delete(self):
-        self._test_resource_delete('health_monitor')
+    def test_health_monitor_delete_with_router_id(self):
+        self._test_resource_delete('health_monitor', True)
+
+    def test_health_monitor_delete_without_router_id(self):
+        self._test_resource_delete('health_monitor', False)
 
     def test_vip_create(self):
         self._test_resource_create('vip')
@@ -431,5 +487,8 @@ class RouterServiceInsertionTestCase(testtools.TestCase):
     def test_vip_update_without_router_id(self):
         self._test_resource_update('vip', False, 'name', _uuid())
 
-    def test_vip_delete(self):
-        self._test_resource_delete('vip')
+    def test_vip_delete_with_router_id(self):
+        self._test_resource_delete('vip', True)
+
+    def test_vip_delete_without_router_id(self):
+        self._test_resource_delete('vip', False)

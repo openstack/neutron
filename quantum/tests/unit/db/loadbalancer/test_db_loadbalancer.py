@@ -15,7 +15,9 @@
 
 import contextlib
 import logging
+import mock
 import os
+import testtools
 
 from oslo.config import cfg
 import webob.exc
@@ -25,6 +27,7 @@ from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
 from quantum.api.v2.router import APIRouter
 from quantum.common import config
+from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
 from quantum.db import api as db
 import quantum.extensions
@@ -79,16 +82,15 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
-    def _create_vip(self, fmt, name, pool_id, protocol, port, admin_state_up,
-                    expected_res_status=None, **kwargs):
+    def _create_vip(self, fmt, name, pool_id, protocol, protocol_port,
+                    admin_state_up, expected_res_status=None, **kwargs):
         data = {'vip': {'name': name,
-                        'subnet_id': self._subnet_id,
                         'pool_id': pool_id,
                         'protocol': protocol,
-                        'port': port,
+                        'protocol_port': protocol_port,
                         'admin_state_up': admin_state_up,
                         'tenant_id': self._tenant_id}}
-        for arg in ('description', 'address',
+        for arg in ('description', 'subnet_id', 'address',
                     'session_persistence', 'connection_limit'):
             if arg in kwargs and kwargs[arg] is not None:
                 data['vip'][arg] = kwargs[arg]
@@ -119,10 +121,10 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         return pool_res
 
-    def _create_member(self, fmt, address, port, admin_state_up,
+    def _create_member(self, fmt, address, protocol_port, admin_state_up,
                        expected_res_status=None, **kwargs):
         data = {'member': {'address': address,
-                           'port': port,
+                           'protocol_port': protocol_port,
                            'admin_state_up': admin_state_up,
                            'tenant_id': self._tenant_id}}
         for arg in ('weight', 'pool_id'):
@@ -164,44 +166,31 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             return self.ext_api
 
     @contextlib.contextmanager
-    def vip(self, fmt=None, name='vip1', pool=None,
-            protocol='HTTP', port=80, admin_state_up=True, no_delete=False,
-            address="172.16.1.123", **kwargs):
+    def vip(self, fmt=None, name='vip1', pool=None, subnet=None,
+            protocol='HTTP', protocol_port=80, admin_state_up=True,
+            no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
-        if not pool:
-            with self.pool() as pool:
-                pool_id = pool['pool']['id']
+
+        with test_db_plugin.optional_ctx(subnet, self.subnet) as tmp_subnet:
+            with test_db_plugin.optional_ctx(pool, self.pool) as tmp_pool:
+                pool_id = tmp_pool['pool']['id']
                 res = self._create_vip(fmt,
                                        name,
                                        pool_id,
                                        protocol,
-                                       port,
+                                       protocol_port,
                                        admin_state_up,
-                                       address=address,
+                                       subnet_id=tmp_subnet['subnet']['id'],
                                        **kwargs)
                 vip = self.deserialize(fmt or self.fmt, res)
                 if res.status_int >= 400:
                     raise webob.exc.HTTPClientError(code=res.status_int)
-                yield vip
-                if not no_delete:
-                    self._delete('vips', vip['vip']['id'])
-        else:
-            pool_id = pool['pool']['id']
-            res = self._create_vip(fmt,
-                                   name,
-                                   pool_id,
-                                   protocol,
-                                   port,
-                                   admin_state_up,
-                                   address=address,
-                                   **kwargs)
-            vip = self.deserialize(fmt or self.fmt, res)
-            if res.status_int >= 400:
-                raise webob.exc.HTTPClientError(code=res.status_int)
-            yield vip
-            if not no_delete:
-                self._delete('vips', vip['vip']['id'])
+                try:
+                    yield vip
+                finally:
+                    if not no_delete:
+                        self._delete('vips', vip['vip']['id'])
 
     @contextlib.contextmanager
     def pool(self, fmt=None, name='pool1', lb_method='ROUND_ROBIN',
@@ -218,27 +207,30 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         pool = self.deserialize(fmt or self.fmt, res)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
-        yield pool
-        if not no_delete:
-            self._delete('pools', pool['pool']['id'])
+        try:
+            yield pool
+        finally:
+            if not no_delete:
+                self._delete('pools', pool['pool']['id'])
 
     @contextlib.contextmanager
-    def member(self, fmt=None, address='192.168.1.100',
-               port=80, admin_state_up=True, no_delete=False,
-               **kwargs):
+    def member(self, fmt=None, address='192.168.1.100', protocol_port=80,
+               admin_state_up=True, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
         res = self._create_member(fmt,
                                   address,
-                                  port,
+                                  protocol_port,
                                   admin_state_up,
                                   **kwargs)
         member = self.deserialize(fmt or self.fmt, res)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
-        yield member
-        if not no_delete:
-            self._delete('members', member['member']['id'])
+        try:
+            yield member
+        finally:
+            if not no_delete:
+                self._delete('members', member['member']['id'])
 
     @contextlib.contextmanager
     def health_monitor(self, fmt=None, type='TCP',
@@ -270,99 +262,84 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         else:
             for arg in http_related_attributes:
                 self.assertIsNone(the_health_monitor.get(arg))
-        yield health_monitor
-        if not no_delete:
-            self._delete('health_monitors', the_health_monitor['id'])
+        try:
+            yield health_monitor
+        finally:
+            if not no_delete:
+                self._delete('health_monitors', the_health_monitor['id'])
 
 
 class TestLoadBalancer(LoadBalancerPluginDbTestCase):
-    def test_create_vip(self):
-        name = 'vip1'
-        keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
-                ('protocol', 'HTTP'),
-                ('connection_limit', -1),
-                ('admin_state_up', True),
-                ('status', 'PENDING_CREATE')]
+    def test_create_vip(self, **extras):
+        expected = {
+            'name': 'vip1',
+            'description': '',
+            'protocol_port': 80,
+            'protocol': 'HTTP',
+            'connection_limit': -1,
+            'admin_state_up': True,
+            'status': 'PENDING_CREATE',
+            'tenant_id': self._tenant_id,
+        }
 
-        with self.vip(name=name) as vip:
-            for k, v in keys:
-                self.assertEqual(vip['vip'][k], v)
+        expected.update(extras)
+
+        with self.subnet() as subnet:
+            expected['subnet_id'] = subnet['subnet']['id']
+            name = expected['name']
+
+            with self.vip(name=name, subnet=subnet, **extras) as vip:
+                for k in ('id', 'address', 'port_id', 'pool_id'):
+                    self.assertTrue(vip['vip'].get(k, None))
+
+                self.assertEqual(
+                    dict((k, v)
+                         for k, v in vip['vip'].items() if k in expected),
+                    expected
+                )
+            return vip
 
     def test_create_vip_with_invalid_values(self):
-        name = 'vip3'
+        invalid = {
+            'protocol': 'UNSUPPORTED',
+            'protocol_port': 'NOT_AN_INT',
+            'protocol_port': 1000500,
+            'subnet': {'subnet': {'id': 'invalid-subnet'}}
+        }
 
-        vip = self.vip(name=name, protocol='UNSUPPORTED')
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+        for param, value in invalid.items():
+            kwargs = {'name': 'the-vip', param: value}
+            with testtools.ExpectedException(webob.exc.HTTPClientError):
+                with self.vip(**kwargs):
+                    pass
 
-        vip = self.vip(name=name, port='NOT_AN_INT')
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+    def test_create_vip_with_address(self):
+        self.test_create_vip(address='10.0.0.7')
 
-        # 100500 is not a valid port number
-        vip = self.vip(name=name, port='100500')
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
-
-        # 192.168.130.130.130 is not a valid IP address
-        vip = self.vip(name=name, address='192.168.130.130.130')
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+    def test_create_vip_with_address_outside_subnet(self):
+        with testtools.ExpectedException(webob.exc.HTTPClientError):
+            self.test_create_vip(address='9.9.9.9')
 
     def test_create_vip_with_session_persistence(self):
-        name = 'vip2'
-        keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
-                ('protocol', 'HTTP'),
-                ('session_persistence', {'type': "HTTP_COOKIE"}),
-                ('connection_limit', -1),
-                ('admin_state_up', True),
-                ('status', 'PENDING_CREATE')]
-
-        with self.vip(name=name,
-                      session_persistence={'type': "HTTP_COOKIE"}) as vip:
-            for k, v in keys:
-                self.assertEqual(vip['vip'][k], v)
+        self.test_create_vip(session_persistence={'type': 'HTTP_COOKIE'})
 
     def test_create_vip_with_session_persistence_with_app_cookie(self):
-        name = 'vip7'
-        keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
-                ('protocol', 'HTTP'),
-                ('session_persistence', {'type': "APP_COOKIE",
-                                         'cookie_name': 'sessionId'}),
-                ('connection_limit', -1),
-                ('admin_state_up', True),
-                ('status', 'PENDING_CREATE')]
-
-        with self.vip(name=name,
-                      session_persistence={'type': "APP_COOKIE",
-                                           'cookie_name': 'sessionId'}) as vip:
-            for k, v in keys:
-                self.assertEqual(vip['vip'][k], v)
+        sp = {'type': 'APP_COOKIE', 'cookie_name': 'sessionId'}
+        self.test_create_vip(session_persistence=sp)
 
     def test_create_vip_with_session_persistence_unsupported_type(self):
-        name = 'vip5'
-
-        vip = self.vip(name=name, session_persistence={'type': "UNSUPPORTED"})
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+        with testtools.ExpectedException(webob.exc.HTTPClientError):
+            self.test_create_vip(session_persistence={'type': 'UNSUPPORTED'})
 
     def test_create_vip_with_unnecessary_cookie_name(self):
-        name = 'vip8'
-
-        s_p = {'type': "SOURCE_IP", 'cookie_name': 'sessionId'}
-        vip = self.vip(name=name, session_persistence=s_p)
-
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+        sp = {'type': "SOURCE_IP", 'cookie_name': 'sessionId'}
+        with testtools.ExpectedException(webob.exc.HTTPClientError):
+            self.test_create_vip(session_persistence=sp)
 
     def test_create_vip_with_session_persistence_without_cookie_name(self):
-        name = 'vip6'
-
-        vip = self.vip(name=name, session_persistence={'type': "APP_COOKIE"})
-        self.assertRaises(webob.exc.HTTPClientError, vip.__enter__)
+        sp = {'type': "APP_COOKIE"}
+        with testtools.ExpectedException(webob.exc.HTTPClientError):
+            self.test_create_vip(session_persistence=sp)
 
     def test_reset_session_persistence(self):
         name = 'vip4'
@@ -386,14 +363,14 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def test_update_vip(self):
         name = 'new_vip'
         keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
+                ('address', "10.0.0.2"),
+                ('protocol_port', 80),
                 ('connection_limit', 100),
                 ('admin_state_up', False),
                 ('status', 'PENDING_UPDATE')]
 
         with self.vip(name=name) as vip:
+            keys.append(('subnet_id', vip['vip']['subnet_id']))
             data = {'vip': {'name': name,
                             'connection_limit': 100,
                             'session_persistence':
@@ -416,14 +393,13 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def test_show_vip(self):
         name = "vip_show"
         keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
+                ('address', "10.0.0.10"),
+                ('protocol_port', 80),
                 ('protocol', 'HTTP'),
                 ('connection_limit', -1),
                 ('admin_state_up', True),
                 ('status', 'PENDING_CREATE')]
-        with self.vip(name=name) as vip:
+        with self.vip(name=name, address='10.0.0.10') as vip:
             req = self.new_show_request('vips',
                                         vip['vip']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
@@ -433,44 +409,52 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def test_list_vips(self):
         name = "vips_list"
         keys = [('name', name),
-                ('subnet_id', self._subnet_id),
-                ('address', "172.16.1.123"),
-                ('port', 80),
+                ('address', "10.0.0.2"),
+                ('protocol_port', 80),
                 ('protocol', 'HTTP'),
                 ('connection_limit', -1),
                 ('admin_state_up', True),
                 ('status', 'PENDING_CREATE')]
-        with self.vip(name=name):
+        with self.vip(name=name) as vip:
+            keys.append(('subnet_id', vip['vip']['subnet_id']))
             req = self.new_list_request('vips')
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(len(res), 1)
             for k, v in keys:
                 self.assertEqual(res['vips'][0][k], v)
 
     def test_list_vips_with_sort_emulated(self):
-        with contextlib.nested(self.vip(name='vip1', port=81),
-                               self.vip(name='vip2', port=82),
-                               self.vip(name='vip3', port=82)
-                               ) as (vip1, vip2, vip3):
-            self._test_list_with_sort('vip', (vip1, vip3, vip2),
-                                      [('port', 'asc'), ('name', 'desc')])
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.vip(name='vip1', subnet=subnet, protocol_port=81),
+                self.vip(name='vip2', subnet=subnet, protocol_port=82),
+                self.vip(name='vip3', subnet=subnet, protocol_port=82)
+            ) as (vip1, vip2, vip3):
+                self._test_list_with_sort(
+                    'vip',
+                    (vip1, vip3, vip2),
+                    [('protocol_port', 'asc'), ('name', 'desc')]
+                )
 
     def test_list_vips_with_pagination_emulated(self):
-        with contextlib.nested(self.vip(name='vip1'),
-                               self.vip(name='vip2'),
-                               self.vip(name='vip3')
-                               ) as (vip1, vip2, vip3):
-            self._test_list_with_pagination('vip',
-                                            (vip1, vip2, vip3),
-                                            ('name', 'asc'), 2, 2)
+        with self.subnet() as subnet:
+            with contextlib.nested(self.vip(name='vip1', subnet=subnet),
+                                   self.vip(name='vip2', subnet=subnet),
+                                   self.vip(name='vip3', subnet=subnet)
+                                   ) as (vip1, vip2, vip3):
+                self._test_list_with_pagination('vip',
+                                                (vip1, vip2, vip3),
+                                                ('name', 'asc'), 2, 2)
 
     def test_list_vips_with_pagination_reverse_emulated(self):
-        with contextlib.nested(self.vip(name='vip1'),
-                               self.vip(name='vip2'),
-                               self.vip(name='vip3')
-                               ) as (vip1, vip2, vip3):
-            self._test_list_with_pagination_reverse('vip',
-                                                    (vip1, vip2, vip3),
-                                                    ('name', 'asc'), 2, 2)
+        with self.subnet() as subnet:
+            with contextlib.nested(self.vip(name='vip1', subnet=subnet),
+                                   self.vip(name='vip2', subnet=subnet),
+                                   self.vip(name='vip3', subnet=subnet)
+                                   ) as (vip1, vip2, vip3):
+                self._test_list_with_pagination_reverse('vip',
+                                                        (vip1, vip2, vip3),
+                                                        ('name', 'asc'), 2, 2)
 
     def test_create_pool_with_invalid_values(self):
         name = 'pool3'
@@ -519,7 +503,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             self.assertEqual(len(pool_updated['pool']['members']), 1)
 
             keys = [('address', '192.168.1.100'),
-                    ('port', 80),
+                    ('protocol_port', 80),
                     ('weight', 1),
                     ('pool_id', pool_id),
                     ('admin_state_up', True),
@@ -584,10 +568,10 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             with self.member(address='192.168.1.100',
-                             port=80,
+                             protocol_port=80,
                              pool_id=pool_id) as member1:
                 with self.member(address='192.168.1.101',
-                                 port=80,
+                                 protocol_port=80,
                                  pool_id=pool_id) as member2:
                     req = self.new_show_request('pools',
                                                 pool_id,
@@ -606,7 +590,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             with self.pool(name="pool2") as pool2:
                 keys = [('address', "192.168.1.100"),
                         ('tenant_id', self._tenant_id),
-                        ('port', 80),
+                        ('protocol_port', 80),
                         ('weight', 10),
                         ('pool_id', pool2['pool']['id']),
                         ('admin_state_up', False),
@@ -686,7 +670,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool() as pool:
             keys = [('address', "192.168.1.100"),
                     ('tenant_id', self._tenant_id),
-                    ('port', 80),
+                    ('protocol_port', 80),
                     ('weight', 1),
                     ('pool_id', pool['pool']['id']),
                     ('admin_state_up', True),
@@ -705,40 +689,40 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def test_list_members_with_sort_emulated(self):
         with self.pool() as pool:
             with contextlib.nested(self.member(pool_id=pool['pool']['id'],
-                                               port=81),
+                                               protocol_port=81),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=82),
+                                               protocol_port=82),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=83)
+                                               protocol_port=83)
                                    ) as (m1, m2, m3):
                 self._test_list_with_sort('member', (m3, m2, m1),
-                                          [('port', 'desc')])
+                                          [('protocol_port', 'desc')])
 
     def test_list_members_with_pagination_emulated(self):
         with self.pool() as pool:
             with contextlib.nested(self.member(pool_id=pool['pool']['id'],
-                                               port=81),
+                                               protocol_port=81),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=82),
+                                               protocol_port=82),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=83)
+                                               protocol_port=83)
                                    ) as (m1, m2, m3):
-                self._test_list_with_pagination('member',
-                                                (m1, m2, m3),
-                                                ('port', 'asc'), 2, 2)
+                self._test_list_with_pagination(
+                    'member', (m1, m2, m3), ('protocol_port', 'asc'), 2, 2
+                )
 
     def test_list_members_with_pagination_reverse_emulated(self):
         with self.pool() as pool:
             with contextlib.nested(self.member(pool_id=pool['pool']['id'],
-                                               port=81),
+                                               protocol_port=81),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=82),
+                                               protocol_port=82),
                                    self.member(pool_id=pool['pool']['id'],
-                                               port=83)
+                                               protocol_port=83)
                                    ) as (m1, m2, m3):
-                self._test_list_with_pagination_reverse('member',
-                                                        (m1, m2, m3),
-                                                        ('port', 'asc'), 2, 2)
+                self._test_list_with_pagination_reverse(
+                    'member', (m1, m2, m3), ('protocol_port', 'asc'), 2, 2
+                )
 
     def test_create_healthmonitor(self):
         keys = [('type', "TCP"),
