@@ -633,16 +633,15 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 fip['floatingip']['router_id'], None,
                 expected_code=exc.HTTPConflict.code)
 
-    def test_router_add_interface_subnet(self, exp_notifications=None):
-        if not exp_notifications:
-            exp_notifications = ['router.create.start',
-                                 'router.create.end',
-                                 'network.create.start',
-                                 'network.create.end',
-                                 'subnet.create.start',
-                                 'subnet.create.end',
-                                 'router.interface.create',
-                                 'router.interface.delete']
+    def test_router_add_interface_subnet(self):
+        exp_notifications = ['router.create.start',
+                             'router.create.end',
+                             'network.create.start',
+                             'network.create.end',
+                             'subnet.create.start',
+                             'subnet.create.end',
+                             'router.interface.create',
+                             'router.interface.delete']
         with self.router() as r:
             with self.subnet() as s:
                 body = self._router_interface_action('add',

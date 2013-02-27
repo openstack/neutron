@@ -18,12 +18,13 @@
 # @author: Salvatore Orlando, VMware
 
 import netaddr
+from oslo.config import cfg
 
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.db import l3_db
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
@@ -81,14 +82,13 @@ class NvpMetadataAccess(object):
                                           {'subnet': subnet_data})
             self.add_router_interface(ctx_elevated, router_id,
                                       {'subnet_id': meta_sub['id']})
-            # We need to send a notification to the dhcp agent in order
-            # to start the metadata agent proxy
-            # Note: the publisher id is the same used in the api module
-            notifier_api.notify(context,
-                                notifier_api.publisher_id('network'),
-                                'network.create.end',
-                                notifier_api.CONF.default_notification_level,
-                                {'network': meta_net})
+            if cfg.CONF.dhcp_agent_notification:
+                # We need to send a notification to the dhcp agent in
+                # order to start the metadata agent proxy
+                dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+                dhcp_notifier.notify(ctx_elevated,
+                                     {'network': meta_net},
+                                     'network.create.end')
 
     def _destroy_metadata_access_network(self, context, router_id, ports):
 
@@ -105,15 +105,13 @@ class NvpMetadataAccess(object):
                     ctx_elevated, router_id, {'port_id': meta_port['id']})
                 # Remove network (this will remove the subnet too)
                 self.delete_network(ctx_elevated, meta_net_id)
-                # We need to send a notification to the dhcp agent in order
-                # to stop the metadata agent proxy
-                # Note: the publisher id is the same used in the api module
-                notifier_api.notify(
-                    context,
-                    notifier_api.publisher_id('network'),
-                    'network.delete.end',
-                    notifier_api.CONF.default_notification_level,
-                    {'network_id': meta_net_id})
+                if cfg.CONF.dhcp_agent_notification:
+                    # We need to send a notification to the dhcp agent in
+                    # order to stop the metadata agent proxy
+                    dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+                    dhcp_notifier.notify(ctx_elevated,
+                                         {'network': {'id': meta_net_id}},
+                                         'network.delete.end')
 
     def _handle_metadata_access_network(self, context, router_id):
         if not cfg.CONF.NVP.enable_metadata_access_network:
