@@ -27,6 +27,7 @@ from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
 
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
 from quantum.common import constants
@@ -34,6 +35,8 @@ from quantum import context as q_context
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum.db import agents_db
+from quantum.db import agentschedulers_db
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
@@ -47,6 +50,7 @@ from quantum.extensions import l3
 from quantum.extensions import portsecurity as psec
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import importutils
 from quantum.openstack.common import rpc
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (metadata_access
                                                              as nvp_meta)
@@ -200,7 +204,8 @@ class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self,
+                                          agents_db.AgentExtRpcCallback()])
 
 
 class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
@@ -210,7 +215,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   networkgw_db.NetworkGatewayMixin,
                   qos_db.NVPQoSDbMixin,
                   nvp_sec.NVPSecurityGroups,
-                  nvp_meta.NvpMetadataAccess):
+                  nvp_meta.NvpMetadataAccess,
+                  agents_db.AgentDbMixin,
+                  agentschedulers_db.AgentSchedulerDbMixin):
     """
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
@@ -282,6 +289,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self._extend_fault_map()
         # Set up RPC interface for DHCP agent
         self.setup_rpc()
+        self.network_scheduler = importutils.import_object(
+            cfg.CONF.network_scheduler_driver)
         # TODO(salvatore-orlando): Handle default gateways in multiple clusters
         self._ensure_default_network_gateway()
 
@@ -876,6 +885,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.dispatcher = NVPRpcCallbacks().create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
+        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 
@@ -943,6 +953,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                    net_binding)
             self._extend_network_port_security_dict(context, new_net)
             self._extend_network_dict_l3(context, new_net)
+        self.schedule_network(context, network['network'], new_net)
         return new_net
 
     def delete_network(self, context, id):
@@ -1328,6 +1339,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_port_port_security_dict(context, port_data)
             self._extend_port_dict_security_group(context, port_data)
             self._extend_port_qos_queue(context, port_data)
+        net = self.get_network(context, port_data['network_id'])
+        self.schedule_network(context, None, net)
         return port_data
 
     def update_port(self, context, id, port):
@@ -2166,3 +2179,15 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             return []
         return super(NvpPluginV2, self).get_qos_queues(context, filters,
                                                        fields)
+
+    def update_agent(self, context, id, agent):
+        original_agent = self.get_agent(context, id)
+        result = super(NvpPluginV2, self).update_agent(context, id, agent)
+        agent_data = agent['agent']
+        if ('admin_state_up' in agent_data and
+            original_agent['admin_state_up'] != agent_data['admin_state_up']):
+            if original_agent['agent_type'] == constants.AGENT_TYPE_DHCP:
+                self.dhcp_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+        return result
