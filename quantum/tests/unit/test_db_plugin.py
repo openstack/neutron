@@ -1167,6 +1167,27 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[0]['ip_address'], '10.0.0.10')
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
 
+    def test_update_port_update_ip_address_only(self):
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(len(ips), 1)
+                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
+                data = {'port': {'fixed_ips': [{'subnet_id':
+                                                subnet['subnet']['id'],
+                                                'ip_address': "10.0.0.10"},
+                                               {'ip_address': "10.0.0.2"}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEqual(len(ips), 2)
+                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self.assertEqual(ips[1]['ip_address'], '10.0.0.10')
+                self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
+
     def test_update_port_update_ips(self):
         """Update IP and generate new IP on port.
 
