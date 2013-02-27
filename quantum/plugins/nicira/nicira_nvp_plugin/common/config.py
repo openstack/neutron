@@ -16,6 +16,8 @@
 
 from oslo.config import cfg
 
+from quantum import scheduler
+
 core_opts = [
     cfg.BoolOpt('metadata_dhcp_host_route', default=False),
 ]
@@ -74,6 +76,7 @@ cluster_opts = [
 # Register the configuration options
 cfg.CONF.register_opts(core_opts)
 cfg.CONF.register_opts(nvp_opts, "NVP")
+cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 
 
 class ClusterConfigOptions(cfg.ConfigOpts):
