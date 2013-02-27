@@ -71,6 +71,7 @@ from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 
 LOG = logging.getLogger("QuantumPlugin")
+NVP_NOSNAT_RULES_ORDER = 10
 NVP_FLOATINGIP_NAT_RULES_ORDER = 200
 NVP_EXTGW_NAT_RULES_ORDER = 255
 
@@ -1698,7 +1699,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             cluster, context, router_id, port,
             "PatchAttachment", ls_port['uuid'],
             subnet_ids=[subnet_id])
-
+        subnet = self._get_subnet(context, subnet_id)
         # If there is an external gateway we need to configure the SNAT rule.
         # Fetch router from DB
         router = self._get_router(context, router_id)
@@ -1708,11 +1709,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # In that case we will consider only the first one
             if gw_port.get('fixed_ips'):
                 snat_ip = gw_port['fixed_ips'][0]['ip_address']
-                subnet = self._get_subnet(context, subnet_id)
                 nvplib.create_lrouter_snat_rule(
                     cluster, router_id, snat_ip, snat_ip,
                     order=NVP_EXTGW_NAT_RULES_ORDER,
                     match_criteria={'source_ip_addresses': subnet['cidr']})
+        nvplib.create_lrouter_nosnat_rule(
+            cluster, router_id,
+            order=NVP_NOSNAT_RULES_ORDER,
+            match_criteria={'destination_ip_addresses': subnet['cidr']})
 
         # Ensure the NVP logical router has a connection to a 'metadata access'
         # network (with a proxy listening on its DHCP port), by creating it
@@ -1792,6 +1796,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     cluster, router_id, "SourceNatRule",
                     max_num_expected=1, min_num_expected=1,
                     source_ip_addresses=subnet['cidr'])
+            # Relax the minimum expected number as the nosnat rules
+            # do not exist in 2.x deployments
+            nvplib.delete_nat_rules_by_match(
+                cluster, router_id, "NoSourceNatRule",
+                max_num_expected=1, min_num_expected=0,
+                destination_ip_addresses=subnet['cidr'])
             nvplib.delete_router_lport(cluster, router_id, lrouter_port_id)
         except NvpApiClient.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
