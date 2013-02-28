@@ -36,8 +36,19 @@ LOG = logging.getLogger(__name__)
 #             so we limit it to 16 characters.
 #             (max_chain_name_length - len('-POSTROUTING') == 16)
 binary_name = os.path.basename(inspect.stack()[-1][1])[:16]
+# A length of a chain name must be less than or equal to 11 characters.
+# <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11
+MAX_CHAIN_LEN_WRAP = 11
+MAX_CHAIN_LEN_NOWRAP = 28
+
 cfg.CONF.set_default('lock_path', '$state_path/lock')
-MAX_CHAIN_LEN = 28
+
+
+def get_chain_name(chain_name, wrap=True):
+    if wrap:
+        return chain_name[:MAX_CHAIN_LEN_WRAP]
+    else:
+        return chain_name[:MAX_CHAIN_LEN_NOWRAP]
 
 
 class IptablesRule(object):
@@ -49,7 +60,7 @@ class IptablesRule(object):
     """
 
     def __init__(self, chain, rule, wrap=True, top=False):
-        self.chain = chain[:MAX_CHAIN_LEN]
+        self.chain = get_chain_name(chain, wrap)
         self.rule = rule
         self.wrap = wrap
         self.top = top
@@ -68,7 +79,6 @@ class IptablesRule(object):
             chain = '%s-%s' % (binary_name, self.chain)
         else:
             chain = self.chain
-        chain = chain[:MAX_CHAIN_LEN]
         return '-A %s %s' % (chain, self.rule)
 
 
@@ -92,7 +102,7 @@ class IptablesTable(object):
         end up named 'nova-compute-OUTPUT'.
 
         """
-        name = name[:MAX_CHAIN_LEN]
+        name = get_chain_name(name, wrap)
         if wrap:
             self.chains.add(name)
         else:
@@ -110,7 +120,7 @@ class IptablesTable(object):
         This removal "cascades". All rule in the chain are removed, as are
         all rules in other chains that jump to it.
         """
-        name = name[:MAX_CHAIN_LEN]
+        name = get_chain_name(name, wrap)
         chain_set = self._select_chain_set(wrap)
         if name not in chain_set:
             return
@@ -126,7 +136,7 @@ class IptablesTable(object):
         If the chain is not found, this is merely logged.
 
         """
-        name = name[:MAX_CHAIN_LEN]
+        name = get_chain_name(name, wrap)
         chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
@@ -154,6 +164,7 @@ class IptablesTable(object):
         is applied correctly.
 
         """
+        chain = get_chain_name(chain, wrap)
         if wrap and chain not in self.chains:
             raise LookupError(_('Unknown chain: %r') % chain)
 
@@ -164,7 +175,7 @@ class IptablesTable(object):
 
     def _wrap_target_chain(self, s):
         if s.startswith('$'):
-            return ('%s-%s' % (binary_name, s[1:]))[:MAX_CHAIN_LEN]
+            return ('%s-%s' % (binary_name, s[1:]))
         return s
 
     def remove_rule(self, chain, rule, wrap=True, top=False):
@@ -175,6 +186,7 @@ class IptablesTable(object):
         CLI tool.
 
         """
+        chain = get_chain_name(chain, wrap)
         try:
             self.rules.remove(IptablesRule(chain, rule, wrap, top))
         except ValueError:
@@ -185,7 +197,7 @@ class IptablesTable(object):
 
     def empty_chain(self, chain, wrap=True):
         """Remove all rules from a chain."""
-        chain = chain[:MAX_CHAIN_LEN]
+        chain = get_chain_name(chain, wrap)
         chained_rules = [rule for rule in self.rules
                          if rule.chain == chain and rule.wrap == wrap]
         for rule in chained_rules:
