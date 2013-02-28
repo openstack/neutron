@@ -388,8 +388,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         query = query.filter_by(network_id=network_id, ip_address=ip_address)
 
         try:
-            fixed_ip = query.one()
-            fixed_ip.expiration = expiration
+            with context.session.begin(subtransactions=True):
+                fixed_ip = query.one()
+                fixed_ip.expiration = expiration
         except exc.NoResultFound:
             LOG.debug("No fixed IP found that matches the network %s and "
                       "ip address %s.", network_id, ip_address)
