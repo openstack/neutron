@@ -17,6 +17,7 @@ from contextlib import nested
 import httplib
 
 import mock
+from oslo.config import cfg
 import testtools
 
 from quantum.openstack.common import importutils
@@ -494,7 +495,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('quantum.openstack.common.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -511,7 +512,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('quantum.openstack.common.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -530,7 +531,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('quantum.openstack.common.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -568,7 +569,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
                      'OVS.ovsdb_port': 16634,
                      'AGENT.root_helper': 'helper'}
         with nested(
-            mock.patch('quantum.openstack.common.cfg.CONF', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.logging_config'),
             mock.patch(self._AGENT_NAME + '._get_tunnel_ip',
                        return_value='10.0.0.1'),

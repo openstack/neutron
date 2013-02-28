@@ -18,11 +18,12 @@
 
 from abc import abstractmethod
 
+from oslo.config import cfg
+
 from quantum.api import extensions
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum import quota
 
 RESOURCE_NAME = "network-gateway"

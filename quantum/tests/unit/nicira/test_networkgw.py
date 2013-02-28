@@ -16,6 +16,7 @@
 import contextlib
 
 import mock
+from oslo.config import cfg
 import testtools
 from webob import exc
 import webtest
@@ -28,7 +29,6 @@ from quantum import context
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum import manager
-from quantum.openstack.common import cfg
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_networkgw
                                                                  as networkgw)
 from quantum.plugins.nicira.nicira_nvp_plugin import nicira_networkgw_db

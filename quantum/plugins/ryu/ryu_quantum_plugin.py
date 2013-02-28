@@ -33,7 +33,6 @@ from quantum.db import l3_rpc_base
 from quantum.db import models_v2
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import securitygroup as ext_sg
-from quantum.openstack.common import cfg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
