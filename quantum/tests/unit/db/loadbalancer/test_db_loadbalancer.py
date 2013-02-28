@@ -34,7 +34,9 @@ import quantum.extensions
 from quantum.extensions import loadbalancer
 from quantum.manager import QuantumManager
 from quantum.plugins.common import constants
-from quantum.plugins.services.loadbalancer import loadbalancerPlugin
+from quantum.plugins.services.agent_loadbalancer import (
+    plugin as loadbalancer_plugin
+)
 from quantum.tests.unit import test_db_plugin
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api
@@ -46,8 +48,7 @@ LOG = logging.getLogger(__name__)
 
 DB_CORE_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 DB_LB_PLUGIN_KLASS = (
-    "quantum.plugins.services.loadbalancer."
-    "loadbalancerPlugin.LoadBalancerPlugin"
+    "quantum.plugins.services.agent_loadbalancer.plugin.LoadBalancerPlugin"
 )
 ROOTDIR = os.path.dirname(__file__) + '../../../..'
 ETCDIR = os.path.join(ROOTDIR, 'etc')
@@ -74,7 +75,7 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         self._subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
 
-        plugin = loadbalancerPlugin.LoadBalancerPlugin()
+        plugin = loadbalancer_plugin.LoadBalancerPlugin()
         ext_mgr = PluginAwareExtensionManager(
             extensions_path,
             {constants.LOADBALANCER: plugin}

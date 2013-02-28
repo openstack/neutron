@@ -22,6 +22,7 @@ import os
 import shlex
 import socket
 import struct
+import tempfile
 
 from eventlet.green import subprocess
 
@@ -71,3 +72,20 @@ def get_interface_mac(interface):
                        struct.pack('256s', interface[:DEVICE_NAME_LEN]))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]
+
+
+def replace_file(file_name, data):
+    """Replaces the contents of file_name with data in a safe manner.
+
+    First write to a temp file and then rename. Since POSIX renames are
+    atomic, the file is unlikely to be corrupted by competing writes.
+
+    We create the tempfile on the same device to ensure that it can be renamed.
+    """
+
+    base_dir = os.path.dirname(os.path.abspath(file_name))
+    tmp_file = tempfile.NamedTemporaryFile('w+', dir=base_dir, delete=False)
+    tmp_file.write(data)
+    tmp_file.close()
+    os.chmod(tmp_file.name, 0644)
+    os.rename(tmp_file.name, file_name)
