@@ -35,6 +35,18 @@ BALANCE_MAP = {
     constants.LB_METHOD_SOURCE_IP: 'source'
 }
 
+STATS_MAP = {
+    constants.STATS_CURRENT_CONNECTIONS: 'qcur',
+    constants.STATS_MAX_CONNECTIONS: 'qmax',
+    constants.STATS_CURRENT_SESSIONS: 'scur',
+    constants.STATS_MAX_SESSIONS: 'smax',
+    constants.STATS_TOTAL_SESSIONS: 'stot',
+    constants.STATS_IN_BYTES: 'bin',
+    constants.STATS_OUT_BYTES: 'bout',
+    constants.STATS_CONNECTION_ERRORS: 'econ',
+    constants.STATS_RESPONSE_ERRORS: 'eresp'
+}
+
 ACTIVE = qconstants.ACTIVE
 
 

@@ -129,3 +129,53 @@ class TestHaproxyNSDriver(testtools.TestCase):
             ])
 
             self.assertTrue(self.driver.exists('pool_id'))
+
+    def test_get_stats(self):
+        raw_stats = ('# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,'
+                     'dreq,dresp,ereq,econ,eresp,wretr,wredis,status,weight,'
+                     'act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,'
+                     'sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,'
+                     'check_status,check_code,check_duration,hrsp_1xx,'
+                     'hrsp_2xx,hrsp_3xx,hrsp_4xx,hrsp_5xx,hrsp_other,hanafail,'
+                     'req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,\n'
+                     '8e271901-69ed-403e-a59b-f53cf77ef208,BACKEND,1,2,3,4,0,'
+                     '10,7764,2365,0,0,,0,0,0,0,UP,1,1,0,,0,103780,0,,1,2,0,,0'
+                     ',,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,\n\n')
+        raw_stats_empty = ('# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,'
+                           'bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,'
+                           'status,weight,act,bck,chkfail,chkdown,lastchg,'
+                           'downtime,qlimit,pid,iid,sid,throttle,lbtot,'
+                           'tracked,type,rate,rate_lim,rate_max,check_status,'
+                           'check_code,check_duration,hrsp_1xx,hrsp_2xx,'
+                           'hrsp_3xx,hrsp_4xx,hrsp_5xx,hrsp_other,hanafail,'
+                           'req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,'
+                           '\n')
+        with contextlib.nested(
+                mock.patch.object(self.driver, '_get_state_file_path'),
+                mock.patch('socket.socket'),
+                mock.patch('os.path.exists'),
+        ) as (gsp, socket, path_exists):
+            gsp.side_effect = lambda x, y: '/pool/' + y
+            path_exists.return_value = True
+            socket.return_value = socket
+            socket.recv.return_value = raw_stats
+
+            exp_stats = {'CONNECTION_ERRORS': '0',
+                         'CURRENT_CONNECTIONS': '1',
+                         'CURRENT_SESSIONS': '3',
+                         'IN_BYTES': '7764',
+                         'MAX_CONNECTIONS': '2',
+                         'MAX_SESSIONS': '4',
+                         'OUT_BYTES': '2365',
+                         'RESPONSE_ERRORS': '0',
+                         'TOTAL_SESSIONS': '10'}
+            stats = self.driver.get_stats('pool_id')
+            self.assertEqual(exp_stats, stats)
+
+            socket.recv.return_value = raw_stats_empty
+            self.assertEqual({}, self.driver.get_stats('pool_id'))
+
+            path_exists.return_value = False
+            socket.reset_mock()
+            self.assertEqual({}, self.driver.get_stats('pool_id'))
+            self.assertFalse(socket.called)
