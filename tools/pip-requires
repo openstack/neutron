@@ -10,7 +10,7 @@ httplib2
 iso8601>=0.1.4
 kombu==1.0.4
 netaddr
-python-quantumclient>=2.0
+python-quantumclient>=2.1.2
 pyudev
 sqlalchemy==0.7.9
 WebOb>=1.2
