@@ -106,7 +106,40 @@ class HaproxyNSDriver(object):
         return False
 
     def get_stats(self, pool_id):
-        pass
+        socket_path = self._get_state_file_path(pool_id, 'sock')
+        if os.path.exists(socket_path):
+            try:
+                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                s.connect(socket_path)
+                s.send('show stat -1 2 -1\n')
+                raw_stats = ''
+                chunk_size = 1024
+                while True:
+                    chunk = s.recv(chunk_size)
+                    raw_stats += chunk
+                    if len(chunk) < chunk_size:
+                        break
+
+                return self._parse_stats(raw_stats)
+            except socket.error, e:
+                LOG.warn(_('Error while connecting to stats socket: %s') % e)
+                return {}
+        else:
+            LOG.warn(_('Stats socket not found for pool %s') % pool_id)
+            return {}
+
+    def _parse_stats(self, raw_stats):
+        stat_lines = raw_stats.splitlines()
+        if len(stat_lines) < 2:
+            return {}
+        stat_names = [line.strip('# ') for line in stat_lines[0].split(',')]
+        stat_values = [line.strip() for line in stat_lines[1].split(',')]
+        stats = dict(zip(stat_names, stat_values))
+        unified_stats = {}
+        for stat in hacfg.STATS_MAP:
+            unified_stats[stat] = stats.get(hacfg.STATS_MAP[stat], '')
+
+        return unified_stats
 
     def remove_orphans(self, known_pool_ids):
         raise NotImplementedError()
