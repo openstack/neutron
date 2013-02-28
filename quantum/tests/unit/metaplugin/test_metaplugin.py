@@ -63,6 +63,8 @@ def setup_metaplugin_conf():
     cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
     #TODO(nati) remove this after subnet quota change is merged
     cfg.CONF.set_override('max_dns_nameservers', 10)
+    cfg.CONF.set_override('rpc_backend',
+                          'quantum.openstack.common.rpc.impl_fake')
 
 
 class MetaQuantumPluginV2Test(testtools.TestCase):
