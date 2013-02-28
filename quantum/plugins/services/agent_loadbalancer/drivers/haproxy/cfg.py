@@ -117,13 +117,18 @@ def _build_backend(config):
     server_addon, health_opts = _get_server_health_option(config)
     opts.extend(health_opts)
 
+    # add session persistence (if available)
+    persist_opts = _get_session_persistence(config)
+    opts.extend(persist_opts)
+
     # add the members
-    opts.extend(
-        (('server %(id)s %(address)s:%(protocol_port)s '
-         'weight %(weight)s') % member) + server_addon
-        for member in config['members']
-        if (member['status'] == ACTIVE and member['admin_state_up'])
-    )
+    for member in config['members']:
+        if member['status'] == ACTIVE and member['admin_state_up']:
+            server = (('server %(id)s %(address)s:%(protocol_port)s '
+                       'weight %(weight)s') % member) + server_addon
+            if _has_http_cookie_persistence(config):
+                server += ' cookie %d' % config['members'].index(member)
+            opts.append(server)
 
     return itertools.chain(
         ['backend %s' % config['pool']['id']],
@@ -161,6 +166,31 @@ def _get_server_health_option(config):
         opts.append('option ssl-hello-chk')
 
     return server_addon, opts
+
+
+def _get_session_persistence(config):
+    persistence = config['vip'].get('session_persistence')
+    if not persistence:
+        return []
+
+    opts = []
+    if persistence['type'] == constants.SESSION_PERSISTENCE_SOURCE_IP:
+        opts.append('stick-table type ip size 10k')
+        opts.append('stick on src')
+    elif persistence['type'] == constants.SESSION_PERSISTENCE_HTTP_COOKIE:
+        opts.append('cookie SRV insert indirect nocache')
+    elif (persistence['type'] == constants.SESSION_PERSISTENCE_APP_COOKIE and
+          persistence.get('cookie_name')):
+        opts.append('appsession %s len 56 timeout 3h' %
+                    persistence['cookie_name'])
+
+    return opts
+
+
+def _has_http_cookie_persistence(config):
+    return (config['vip'].get('session_persistence') and
+            config['vip']['session_persistence']['type'] ==
+            constants.SESSION_PERSISTENCE_HTTP_COOKIE)
 
 
 def _expand_expected_codes(codes):
