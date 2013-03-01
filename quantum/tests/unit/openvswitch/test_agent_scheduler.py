@@ -20,6 +20,7 @@ import mock
 from webob import exc
 
 from quantum.api import extensions
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.common import constants
 from quantum import context
 from quantum.db import agents_db
@@ -28,7 +29,6 @@ from quantum.db import l3_rpc_base
 from quantum.extensions import agentscheduler
 from quantum import manager
 from quantum.openstack.common import uuidutils
-from quantum.plugins.openvswitch.ovs_quantum_plugin import OVSQuantumPluginV2
 from quantum.tests.unit import test_agent_ext_plugin
 from quantum.tests.unit.testlib_api import create_request
 from quantum.tests.unit import test_db_plugin as test_plugin
@@ -183,27 +183,20 @@ class AgentSchedulerTestMixIn(object):
                 return agent['id']
 
 
-class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
-                             test_agent_ext_plugin.AgentDBTestMixIn,
-                             AgentSchedulerTestMixIn,
-                             test_plugin.QuantumDbPluginV2TestCase):
+class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
+                                test_agent_ext_plugin.AgentDBTestMixIn,
+                                AgentSchedulerTestMixIn,
+                                test_plugin.QuantumDbPluginV2TestCase):
     fmt = 'json'
+    plugin_str = ('quantum.plugins.openvswitch.'
+                  'ovs_quantum_plugin.OVSQuantumPluginV2')
 
     def setUp(self):
-        plugin = ('quantum.plugins.openvswitch.'
-                  'ovs_quantum_plugin.OVSQuantumPluginV2')
-        self.dhcp_notifier_cls_p = mock.patch(
-            'quantum.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
-            'DhcpAgentNotifyAPI')
-        self.dhcp_notifier = mock.Mock(name='dhcp_notifier')
-        self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
-        self.dhcp_notifier_cls.return_value = self.dhcp_notifier
-        super(AgentSchedulerTestCase, self).setUp(plugin)
+        super(OvsAgentSchedulerTestCase, self).setUp(self.plugin_str)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
         self.agentscheduler_dbMinxin = manager.QuantumManager.get_plugin()
-        self.addCleanup(self.dhcp_notifier_cls_p.stop)
 
     def test_report_states(self):
         self._register_agent_states()
@@ -215,7 +208,7 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         with self.network() as net:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 net['network']['id'])
-        self.assertEqual(1, len(dhcp_agents['agents']))
+        self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_auto_schedule_with_disabled(self):
         with contextlib.nested(self.network(),
@@ -328,15 +321,15 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                },
             'agent_type': constants.AGENT_TYPE_DHCP}
         self._register_one_agent_state(dhcp_hosta)
-        with self.network() as net1:
+        with self.port() as port1:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
-                net1['network']['id'])
+                port1['port']['network_id'])
         self.assertEqual(1, len(dhcp_agents['agents']))
         agents = self._list_agents()
         self._disable_agent(agents['agents'][0]['id'])
-        with self.network() as net2:
+        with self.port() as port2:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
-                net2['network']['id'])
+                port2['port']['network_id'])
         self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_scheduler_with_down_agent(self):
@@ -352,18 +345,19 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         is_agent_down_str = 'quantum.db.agents_db.AgentDbMixin.is_agent_down'
         with mock.patch(is_agent_down_str) as mock_is_agent_down:
             mock_is_agent_down.return_value = False
-            with self.network() as net:
+            with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
-                    net['network']['id'])
+                    port['port']['network_id'])
             self.assertEqual(1, len(dhcp_agents['agents']))
         with mock.patch(is_agent_down_str) as mock_is_agent_down:
             mock_is_agent_down.return_value = True
-            with self.network() as net:
+            with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
-                    net['network']['id'])
+                    port['port']['network_id'])
             self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_scheduler_with_hosted_network(self):
+        plugin = manager.QuantumManager.get_plugin()
         dhcp_hosta = {
             'binary': 'quantum-dhcp-agent',
             'host': DHCP_HOSTA,
@@ -373,20 +367,26 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                },
             'agent_type': constants.AGENT_TYPE_DHCP}
         self._register_one_agent_state(dhcp_hosta)
-        agents = self._list_agents()
-        with self.network() as net1:
+        with self.port() as port1:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
-                net1['network']['id'])
+                port1['port']['network_id'])
             self.assertEqual(1, len(dhcp_agents['agents']))
-        with mock.patch.object(OVSQuantumPluginV2,
+        with mock.patch.object(plugin,
                                'get_dhcp_agents_hosting_networks',
                                autospec=True) as mock_hosting_agents:
 
-            mock_hosting_agents.return_value = agents['agents']
-            with self.network(do_delete=False) as net2:
+            mock_hosting_agents.return_value = plugin.get_agents_db(
+                self.adminContext)
+            with self.network('test', do_delete=False) as net1:
+                pass
+            with self.subnet(network=net1,
+                             cidr='10.0.1.0/24',
+                             do_delete=False) as subnet1:
+                pass
+            with self.port(subnet=subnet1, no_delete=True) as port2:
                 pass
         dhcp_agents = self._list_dhcp_agents_hosting_network(
-            net2['network']['id'])
+            port2['port']['network_id'])
         self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_policy(self):
@@ -440,12 +440,12 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self._register_one_agent_state(dhcp_hosta)
         hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                       DHCP_HOSTA)
-        with self.network() as net1:
+        with self.port() as port1:
             num_before_remove = len(
                 self._list_networks_hosted_by_dhcp_agent(
                     hosta_id)['networks'])
             self._remove_network_from_dhcp_agent(hosta_id,
-                                                 net1['network']['id'])
+                                                 port1['port']['network_id'])
             num_after_remove = len(
                 self._list_networks_hosted_by_dhcp_agent(
                     hosta_id)['networks'])
@@ -731,20 +731,119 @@ class AgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 admin_context=False)
 
 
-class L3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
-                              test_agent_ext_plugin.AgentDBTestMixIn,
-                              AgentSchedulerTestMixIn,
-                              test_plugin.QuantumDbPluginV2TestCase):
-    def setUp(self):
-        plugin = ('quantum.plugins.openvswitch.'
+class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
+                                   test_agent_ext_plugin.AgentDBTestMixIn,
+                                   AgentSchedulerTestMixIn,
+                                   test_plugin.QuantumDbPluginV2TestCase):
+    plugin_str = ('quantum.plugins.openvswitch.'
                   'ovs_quantum_plugin.OVSQuantumPluginV2')
+
+    def setUp(self):
+        self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.dhcp_notifier_cls_p = mock.patch(
+            'quantum.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
+            'DhcpAgentNotifyAPI')
+        self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
+        self.dhcp_notifier_cls.return_value = self.dhcp_notifier
+        super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+        self.adminContext = context.get_admin_context()
+        self.addCleanup(self.dhcp_notifier_cls_p.stop)
+
+    def test_network_add_to_dhcp_agent_notification(self):
+        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
+            with self.network() as net1:
+                network_id = net1['network']['id']
+                self._register_agent_states()
+                hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                              DHCP_HOSTA)
+                self._add_network_to_dhcp_agent(hosta_id,
+                                                network_id)
+            mock_dhcp.assert_called_with(
+                mock.ANY,
+                self.dhcp_notifier.make_msg(
+                    'network_create_end',
+                    payload={'network': {'id': network_id}}),
+                topic='dhcp_agent.' + DHCP_HOSTA)
+
+    def test_network_remove_from_dhcp_agent_notification(self):
+        with self.network(do_delete=False) as net1:
+            network_id = net1['network']['id']
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            self._add_network_to_dhcp_agent(hosta_id,
+                                            network_id)
+        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
+            self._remove_network_from_dhcp_agent(hosta_id,
+                                                 network_id)
+            mock_dhcp.assert_called_with(
+                mock.ANY,
+                self.dhcp_notifier.make_msg(
+                    'network_delete_end',
+                    payload={'network_id': network_id}),
+                topic='dhcp_agent.' + DHCP_HOSTA)
+
+    def test_agent_updated_dhcp_agent_notification(self):
+        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            self._disable_agent(hosta_id, admin_state_up=False)
+            mock_dhcp.assert_called_with(
+                mock.ANY, self.dhcp_notifier.make_msg(
+                    'agent_updated',
+                    payload={'admin_state_up': False}),
+                topic='dhcp_agent.' + DHCP_HOSTA)
+
+    def test_network_port_create_notification(self):
+        dhcp_hosta = {
+            'binary': 'quantum-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'topic': 'dhcp_agent',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        self._register_one_agent_state(dhcp_hosta)
+        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
+            with self.network(do_delete=False) as net1:
+                with self.subnet(network=net1,
+                                 do_delete=False) as subnet1:
+                    with self.port(subnet=subnet1, no_delete=True) as port:
+                        network_id = port['port']['network_id']
+            expected_calls = [
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'network_create_end',
+                        payload={'network': {'id': network_id}}),
+                    topic='dhcp_agent.' + DHCP_HOSTA),
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'port_create_end',
+                        payload={'port': port['port']}),
+                    topic='dhcp_agent.' + DHCP_HOSTA)]
+            self.assertEqual(mock_dhcp.call_args_list, expected_calls)
+
+
+class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
+                                 test_agent_ext_plugin.AgentDBTestMixIn,
+                                 AgentSchedulerTestMixIn,
+                                 test_plugin.QuantumDbPluginV2TestCase):
+    plugin_str = ('quantum.plugins.openvswitch.'
+                  'ovs_quantum_plugin.OVSQuantumPluginV2')
+
+    def setUp(self):
         self.dhcp_notifier_cls_p = mock.patch(
             'quantum.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
             'DhcpAgentNotifyAPI')
         self.dhcp_notifier = mock.Mock(name='dhcp_notifier')
         self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
         self.dhcp_notifier_cls.return_value = self.dhcp_notifier
-        super(L3AgentNotifierTestCase, self).setUp(plugin)
+        super(OvsL3AgentNotifierTestCase, self).setUp(self.plugin_str)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
@@ -799,5 +898,5 @@ class L3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 topic='l3_agent.hosta')
 
 
-class AgentSchedulerTestCaseXML(AgentSchedulerTestCase):
+class OvsAgentSchedulerTestCaseXML(OvsAgentSchedulerTestCase):
     fmt = 'xml'

@@ -62,6 +62,19 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         plugin = manager.QuantumManager.get_plugin()
         if (method != 'network_delete_end' and utils.is_extension_supported(
                 plugin, constants.AGENT_SCHEDULER_EXT_ALIAS)):
+            if method == 'port_create_end':
+                # we don't schedule when we create network
+                # because we want to give admin a chance to
+                # schedule network manually by API
+                adminContext = (context if context.is_admin else
+                                context.elevated())
+                network = plugin.get_network(adminContext, network_id)
+                chosen_agent = plugin.schedule_network(adminContext, network)
+                if chosen_agent:
+                    self._notification_host(
+                        context, 'network_create_end',
+                        {'network': {'id': network_id}},
+                        chosen_agent['host'])
             for (host, topic) in self._get_dhcp_agents(context, network_id):
                 self.cast(
                     context, self.make_msg(method,

@@ -497,7 +497,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
         LOG.debug(_("Created network: %s"), net['id'])
-        self.schedule_network(context, network['network'], net)
         return net
 
     def update_network(self, context, id, network):
@@ -578,8 +577,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             self.notifier.security_groups_member_updated(
                 context, port.get(ext_sg.SECURITYGROUPS))
-        net = self.get_network(context, port['network_id'])
-        self.schedule_network(context, None, net)
         return self._extend_port_dict_binding(context, port)
 
     def get_port(self, context, id, fields=None):

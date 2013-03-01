@@ -35,7 +35,7 @@ class ChanceScheduler(object):
     More sophisticated scheduler (similar to filter scheduler in nova?)
     can be introduced later."""
 
-    def schedule(self, plugin, context, request_network, network):
+    def schedule(self, plugin, context, network):
         """Schedule the network to an active DHCP agent if there
         is no active DHCP agent hosting it.
         """
@@ -47,21 +47,21 @@ class ChanceScheduler(object):
             if dhcp_agents:
                 LOG.debug(_('Network %s is hosted already'),
                           network['id'])
-                return False
+                return
             enabled_dhcp_agents = plugin.get_agents_db(
                 context, filters={
                     'agent_type': [constants.AGENT_TYPE_DHCP],
                     'admin_state_up': [True]})
             if not enabled_dhcp_agents:
                 LOG.warn(_('No enabled DHCP agents'))
-                return False
+                return
             active_dhcp_agents = [enabled_dhcp_agent for enabled_dhcp_agent in
                                   enabled_dhcp_agents if not
                                   agents_db.AgentDbMixin.is_agent_down(
                                   enabled_dhcp_agent['heartbeat_timestamp'])]
             if not active_dhcp_agents:
                 LOG.warn(_('No active DHCP agents'))
-                return False
+                return
             chosen_agent = random.choice(active_dhcp_agents)
             binding = agentschedulers_db.NetworkDhcpAgentBinding()
             binding.dhcp_agent = chosen_agent
@@ -71,7 +71,7 @@ class ChanceScheduler(object):
                         'DHCP agent %(agent_id)s'),
                       {'network_id': network['id'],
                        'agent_id': chosen_agent['id']})
-        return True
+        return chosen_agent
 
     def auto_schedule_networks(self, plugin, context, host):
         """Schedule non-hosted networks to the DHCP agent on
