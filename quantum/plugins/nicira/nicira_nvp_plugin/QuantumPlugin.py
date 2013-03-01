@@ -1086,9 +1086,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._extend_network_dict_l3(context, net)
                 self._extend_network_qos_queue(context, net)
 
-            quantum_lswitches = self._filter_nets_l3(context,
-                                                     quantum_lswitches,
-                                                     filters)
             tenant_ids = filters and filters.get('tenant_id') or None
         filter_fmt = "&tag=%s&tag_scope=os_tid"
         if context.is_admin and not tenant_ids:

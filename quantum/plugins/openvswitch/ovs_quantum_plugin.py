@@ -550,9 +550,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._extend_network_dict_provider(context, net)
                 self._extend_network_dict_l3(context, net)
 
-            # TODO(rkukura): Filter on extended provider attributes.
-            nets = self._filter_nets_l3(context, nets, filters)
-
         return [self._fields(net, fields) for net in nets]
 
     def _extend_port_dict_binding(self, context, port):

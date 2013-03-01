@@ -186,7 +186,6 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                             None)
         for net in nets:
             self._extend_network_dict_l3(context, net)
-        nets = self._filter_nets_l3(context, nets, filters)
 
         return [self._fields(net, fields) for net in nets]
 

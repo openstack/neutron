@@ -92,6 +92,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                   *conditions)
         return conditions
 
+    def _network_result_filter_hook(self, query, filters):
+        vals = filters and filters.get('router:external', [])
+        if not vals:
+            return query
+        if vals[0]:
+            return query.filter((ExternalNetwork.network_id != expr.null()))
+        return query.filter((ExternalNetwork.network_id == expr.null()))
+
     # TODO(salvatore-orlando): Perform this operation without explicitly
     # referring to db_base_plugin_v2, as plugins that do not extend from it
     # might exist in the future
@@ -99,7 +107,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         models_v2.Network,
         "external_net",
         _network_model_hook,
-        _network_filter_hook)
+        _network_filter_hook,
+        _network_result_filter_hook)
 
     def _get_router(self, context, id):
         try:

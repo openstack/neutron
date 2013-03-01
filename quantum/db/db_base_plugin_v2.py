@@ -118,7 +118,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return query
 
     @classmethod
-    def register_model_query_hook(cls, model, name, query_hook, filter_hook):
+    def register_model_query_hook(cls, model, name, query_hook, filter_hook,
+                                  result_filters=None):
         """ register an hook to be invoked when a query is executed.
 
         Add the hooks to the _model_query_hooks dict. Models are the keys
@@ -138,7 +139,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # add key to dict
             model_hooks = {}
             cls._model_query_hooks[model] = model_hooks
-        model_hooks[name] = {'query': query_hook, 'filter': filter_hook}
+        model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
+                             'result_filters': result_filters}
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
@@ -208,6 +210,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 column = getattr(model, key, None)
                 if column:
                     query = query.filter(column.in_(value))
+            for _name, hooks in self._model_query_hooks.get(model,
+                                                            {}).iteritems():
+                result_filter = hooks.get('result_filters', None)
+                if result_filter:
+                    query = result_filter(self, query, filters)
         return query
 
     def _get_collection_query(self, context, model, filters=None,
