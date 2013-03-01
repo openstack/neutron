@@ -1245,7 +1245,8 @@ class NotificationTest(APIv2TestBase):
             if opname == 'create':
                 initial_input[resource]['tenant_id'] = _uuid()
                 res = self.api.post_json(
-                    _get_path('networks'), initial_input, expected_errors)
+                    _get_path('networks'),
+                    initial_input, expect_errors=expected_errors)
             if opname == 'update':
                 res = self.api.put_json(
                     _get_path('networks', id=_uuid()),
