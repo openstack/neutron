@@ -15,21 +15,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
 
-from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum.db import agents_db
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import agentscheduler
 from quantum.openstack.common import log as logging
-from quantum.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
@@ -57,7 +53,8 @@ class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
                                           ondelete='CASCADE'))
 
 
-class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase):
+class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
+                            agents_db.AgentDbMixin):
     """Mixin class to add agent scheduler extension to db_plugin_base_v2."""
 
     dhcp_agent_notifier = None
@@ -362,3 +359,22 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase):
         """
         for router in routers:
             self.schedule_router(context, router)
+
+    def update_agent(self, context, id, agent):
+        original_agent = self.get_agent(context, id)
+        result = super(AgentSchedulerDbMixin, self).update_agent(
+            context, id, agent)
+        agent_data = agent['agent']
+        if ('admin_state_up' in agent_data and
+            original_agent['admin_state_up'] != agent_data['admin_state_up']):
+            if (original_agent['agent_type'] == constants.AGENT_TYPE_DHCP and
+                self.dhcp_agent_notifier):
+                self.dhcp_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+            elif (original_agent['agent_type'] == constants.AGENT_TYPE_L3 and
+                  self.l3_agent_notifier):
+                self.l3_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+        return result

@@ -20,6 +20,7 @@
 from oslo.config import cfg
 
 from quantum.agent.common import config
+from quantum import scheduler
 
 DEFAULT_VLAN_RANGES = []
 DEFAULT_INTERFACE_MAPPINGS = []
@@ -51,5 +52,6 @@ agent_opts = [
 cfg.CONF.register_opts(vlan_opts, "VLANS")
 cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
 cfg.CONF.register_opts(agent_opts, "AGENT")
+cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 config.register_agent_state_opts_helper(cfg.CONF)
 config.register_root_helper(cfg.CONF)
