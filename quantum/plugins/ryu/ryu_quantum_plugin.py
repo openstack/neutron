@@ -198,11 +198,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._process_port_create_security_group(
                 context, port['id'], sgids)
             self._extend_port_dict_security_group(context, port)
-        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
-            self.notifier.security_groups_provider_updated(context)
-        else:
-            self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)
         self.iface_client.create_network_id(port['id'], port['network_id'])
         return port
 
@@ -218,8 +214,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             super(RyuQuantumPluginV2, self).delete_port(context, id)
 
-        self.notifier.security_groups_member_updated(
-            context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)
 
     def update_port(self, context, id, port):
         deleted = port['port'].get('deleted', False)
