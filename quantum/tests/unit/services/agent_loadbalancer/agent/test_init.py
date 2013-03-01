@@ -43,12 +43,14 @@ class TestLbaasService(testtools.TestCase):
             self.assertTrue(mock_start.called)
 
     def test_main(self):
+        logging_str = 'quantum.agent.common.config.setup_logging'
         with contextlib.nested(
+            mock.patch(logging_str),
             mock.patch.object(agent.service, 'launch'),
             mock.patch.object(agent, 'eventlet'),
             mock.patch('sys.argv'),
             mock.patch.object(agent.manager, 'LbaasAgentManager')
-        ) as (mock_launch, mock_eventlet, sys_argv, mgr_cls):
+        ) as (mock_logging, mock_launch, mock_eventlet, sys_argv, mgr_cls):
             agent.main()
 
             self.assertTrue(mock_eventlet.monkey_patch.called)
