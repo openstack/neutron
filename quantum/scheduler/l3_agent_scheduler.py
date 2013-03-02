@@ -124,18 +124,18 @@ class ChanceScheduler(object):
                             ' by L3 agent %(agent_id)s'),
                           {'router_id': sync_router['id'],
                            'agent_id': l3_agents[0]['id']})
-                return False
+                return
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
                 LOG.warn(_('No active L3 agents'))
-                return False
+                return
             candidates = plugin.get_l3_agent_candidates(sync_router,
                                                         active_l3_agents)
             if not candidates:
                 LOG.warn(_('No L3 agents can host the router %s'),
                          sync_router['id'])
-                return False
+                return
 
             chosen_agent = random.choice(candidates)
             binding = agentschedulers_db.RouterL3AgentBinding()
@@ -146,4 +146,4 @@ class ChanceScheduler(object):
                         'L3 agent %(agent_id)s'),
                       {'router_id': sync_router['id'],
                        'agent_id': chosen_agent['id']})
-            return True
+            return chosen_agent

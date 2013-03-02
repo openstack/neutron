@@ -956,7 +956,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                    net_binding)
             self._extend_network_port_security_dict(context, new_net)
             self._extend_network_dict_l3(context, new_net)
-        self.schedule_network(context, network['network'], new_net)
+        self.schedule_network(context, new_net)
         return new_net
 
     def delete_network(self, context, id):
@@ -1351,7 +1351,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_port_dict_security_group(context, port_data)
             self._extend_port_qos_queue(context, port_data)
         net = self.get_network(context, port_data['network_id'])
-        self.schedule_network(context, None, net)
+        self.schedule_network(context, net)
         return port_data
 
     def update_port(self, context, id, port):

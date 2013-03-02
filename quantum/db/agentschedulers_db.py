@@ -292,12 +292,13 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase):
             else:
                 return {'agents': []}
 
-    def schedule_network(self, context, request_network, created_network):
+    def schedule_network(self, context, created_network):
         if self.network_scheduler:
-            result = self.network_scheduler.schedule(
-                self, context, request_network, created_network)
-            if not result:
+            chosen_agent = self.network_scheduler.schedule(
+                self, context, created_network)
+            if not chosen_agent:
                 LOG.warn(_('Fail scheduling network %s'), created_network)
+            return chosen_agent
 
     def auto_schedule_networks(self, context, host):
         if self.network_scheduler:
