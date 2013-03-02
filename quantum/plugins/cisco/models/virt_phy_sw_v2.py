@@ -52,7 +52,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     _plugins = {}
     _inventory = {}
     _methods_to_delegate = ['get_network', 'get_networks',
-                            'create_port_bulk', 'update_port',
+                            'create_port_bulk',
                             'get_port', 'get_ports',
                             'create_subnet', 'create_subnet_bulk',
                             'delete_subnet', 'update_subnet',
@@ -304,6 +304,25 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin"""
         pass
 
+    def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
+                                     instance_id):
+        net_dict = self.get_network(context, net_id)
+        net_name = net_dict['name']
+
+        vlan_id = self._get_segmentation_id(net_id)
+        host = self._get_instance_host(tenant_id, instance_id)
+
+        # Trunk segmentation id for only this host
+        vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
+        n_args = [tenant_id, net_name, net_id,
+                  vlan_name, vlan_id, host, instance_id]
+        nexus_output = self._invoke_plugin_per_device(
+            const.NEXUS_PLUGIN,
+            'create_network',
+            n_args)
+
+        return nexus_output
+
     def create_port(self, context, port):
         """
         Perform this operation in the context of the configured device
@@ -315,27 +334,20 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
-            net_id = port['port']['network_id']
+
             instance_id = port['port']['device_id']
-            tenant_id = port['port']['tenant_id']
+            device_owner = port['port']['device_owner']
 
-            net_dict = self.get_network(context, net_id)
-            net_name = net_dict['name']
-
-            vlan_id = self._get_segmentation_id(net_id)
-            host = ''
             if hasattr(conf, 'TEST'):
                 host = conf.TEST['host']
-            else:
-                host = self._get_instance_host(tenant_id, instance_id)
+            elif device_owner == 'network:dhcp':
+                return ovs_output[0]
+            elif instance_id:
+                net_id = port['port']['network_id']
+                tenant_id = port['port']['tenant_id']
+                self._invoke_nexus_for_net_create(
+                    context, tenant_id, net_id, instance_id)
 
-            # Trunk segmentation id for only this host
-            vlan_name = conf.VLAN_NAME_PREFIX + str(vlan_id)
-            n_args = [tenant_id, net_name, net_id,
-                      vlan_name, vlan_id, host, instance_id]
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          'create_network',
-                                                          n_args)
             return ovs_output[0]
         except:
             # TODO (asomya): Check if we need to perform any rollback here
@@ -350,8 +362,35 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def update_port(self, context, id, port):
-        """For this model this method will be delegated to vswitch plugin"""
-        pass
+        """
+        Perform this operation in the context of the configured device
+        plugins.
+        """
+        LOG.debug(_("update_port() called"))
+        try:
+            # Get port
+            old_port = self.get_port(context, id)
+            # Check old port device_id
+            old_device = old_port['device_id']
+            # Update port with vswitch plugin
+            args = [context, id, port]
+            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                        self._func_name(),
+                                                        args)
+            net_id = old_port['network_id']
+            instance_id = ''
+            if 'device_id' in port['port']:
+                instance_id = port['port']['device_id']
+
+            # Check if there's a new device_id
+            if instance_id and not old_device:
+                tenant_id = old_port['tenant_id']
+                self._invoke_nexus_for_net_create(
+                    context, tenant_id, net_id, instance_id)
+
+            return ovs_output[0]
+        except:
+            raise
 
     def delete_port(self, context, id):
         """
