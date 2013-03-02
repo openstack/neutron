@@ -41,6 +41,16 @@ class IptablesManagerStateFulTestCase(testtools.TestCase):
         self.assertEqual(iptables_manager.binary_name,
                          os.path.basename(inspect.stack()[-1][1])[:16])
 
+    def test_get_chanin_name(self):
+        name = '0123456789' * 5
+        # 28 chars is the maximum length of iptables chain name.
+        self.assertEqual(iptables_manager.get_chain_name(name, wrap=False),
+                         name[:28])
+        # 11 chars is the maximum length of chain name of iptable_manager
+        # if binary_name is prepended.
+        self.assertEqual(iptables_manager.get_chain_name(name, wrap=True),
+                         name[:11])
+
     def test_add_and_remove_chain(self):
         bn = iptables_manager.binary_name
         self.iptables.execute(['iptables-save', '-t', 'filter'],

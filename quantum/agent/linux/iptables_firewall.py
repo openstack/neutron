@@ -274,8 +274,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return []
 
     def _port_chain_name(self, port, direction):
-        return '%s%s' % (CHAIN_NAME_PREFIX[direction],
-                         port['device'][3:])
+        return iptables_manager.get_chain_name(
+            '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device'][3:]))
 
     def filter_defer_apply_on(self):
         self.iptables.defer_apply_on()
@@ -288,8 +288,8 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
     OVS_HYBRID_TAP_PREFIX = 'tap'
 
     def _port_chain_name(self, port, direction):
-        return '%s%s' % (CHAIN_NAME_PREFIX[direction],
-                         port['device'])
+        return iptables_manager.get_chain_name(
+            '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
 
     def _get_device_name(self, port):
         return (self.OVS_HYBRID_TAP_PREFIX + port['device'])[:LINUX_DEV_LEN]
