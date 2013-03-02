@@ -52,6 +52,7 @@ import socket
 
 from oslo.config import cfg
 
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.common import constants as const
 from quantum.common import exceptions
 from quantum.common import rpc as q_rpc
@@ -328,6 +329,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         if sync_data:
             self._send_all_data()
 
+        self._dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         LOG.debug(_("QuantumRestProxyV2: initialization done"))
 
     def create_network(self, context, network):
@@ -1113,10 +1115,15 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
             nexthop = fixed_ip['ip_address']
             subnet['host_routes'] = [{'destination': destination,
                                       'nexthop': nexthop}]
-            self.update_subnet(context, subnet_id, {'subnet': subnet})
-            LOG.debug(_("Adding host route: "))
-            LOG.debug(_("destination:%s nexthop:%s"), (destination,
-                                                       nexthop))
+            updated_subnet = self.update_subnet(context,
+                                                subnet_id,
+                                                {'subnet': subnet})
+            payload = {'subnet': updated_subnet}
+            self._dhcp_agent_notifier.notify(context, payload,
+                                             'subnet.update.end')
+            LOG.debug("Adding host route: ")
+            LOG.debug("destination:%s nexthop:%s" % (destination,
+                                                     nexthop))
 
     def _get_network_with_floatingips(self, network):
         admin_context = qcontext.get_admin_context()
