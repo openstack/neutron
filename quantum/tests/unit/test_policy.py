@@ -16,12 +16,12 @@
 """Test of Policy Engine For Quantum"""
 
 import contextlib
-import os.path
+import os
 import shutil
 import StringIO
-import tempfile
 import urllib2
 
+import fixtures
 import mock
 import testtools
 
@@ -40,42 +40,30 @@ class PolicyFileTestCase(testtools.TestCase):
         self.addCleanup(policy.reset)
         self.context = context.Context('fake', 'fake')
         self.target = {}
-
-    @contextlib.contextmanager
-    def _tempdir(self, **kwargs):
-        tmpdir = tempfile.mkdtemp(**kwargs)
-        try:
-            yield tmpdir
-        finally:
-            try:
-                shutil.rmtree(tmpdir)
-            except OSError, e:
-                #TODO: fail test on raise
-                pass
+        self.tempdir = self.useFixture(fixtures.TempDir())
 
     def test_modified_policy_reloads(self):
-        with self._tempdir() as tmpdir:
-            def fake_find_config_file(_1, _2):
-                return os.path.join(tmpdir, 'policy')
+        def fake_find_config_file(_1, _2):
+            return self.tempdir.join('policy')
 
-            with mock.patch.object(quantum.common.utils,
-                                   'find_config_file',
-                                   new=fake_find_config_file):
-                tmpfilename = os.path.join(tmpdir, 'policy')
-                action = "example:test"
-                with open(tmpfilename, "w") as policyfile:
-                    policyfile.write("""{"example:test": ""}""")
-                policy.enforce(self.context, action, self.target)
-                with open(tmpfilename, "w") as policyfile:
-                    policyfile.write("""{"example:test": "!"}""")
-                # NOTE(vish): reset stored policy cache so we don't have to
-                # sleep(1)
-                policy._POLICY_CACHE = {}
-                self.assertRaises(exceptions.PolicyNotAuthorized,
-                                  policy.enforce,
-                                  self.context,
-                                  action,
-                                  self.target)
+        with mock.patch.object(quantum.common.utils,
+                               'find_config_file',
+                               new=fake_find_config_file):
+            tmpfilename = fake_find_config_file(None, None)
+            action = "example:test"
+            with open(tmpfilename, "w") as policyfile:
+                policyfile.write("""{"example:test": ""}""")
+            policy.enforce(self.context, action, self.target)
+            with open(tmpfilename, "w") as policyfile:
+                policyfile.write("""{"example:test": "!"}""")
+            # NOTE(vish): reset stored policy cache so we don't have to
+            # sleep(1)
+            policy._POLICY_CACHE = {}
+            self.assertRaises(exceptions.PolicyNotAuthorized,
+                              policy.enforce,
+                              self.context,
+                              action,
+                              self.target)
 
 
 class PolicyTestCase(testtools.TestCase):

@@ -15,6 +15,7 @@
 #    under the License.
 # @author: Dan Wendlandt, Nicira, Inc.
 
+import fixtures
 import mock
 import testtools
 
@@ -25,7 +26,8 @@ class AgentUtilsExecuteTest(testtools.TestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
         self.root_helper = "echo"
-        self.test_file = "/tmp/test_execute.tmp"
+        self.test_file = self.useFixture(
+            fixtures.TempDir()).join("test_execute.tmp")
         open(self.test_file, 'w').close()
 
     def test_without_helper(self):
