@@ -20,6 +20,7 @@ from oslo.config import cfg
 from quantum.agent.common import config
 # import rpc config options
 from quantum.openstack.common import rpc
+from quantum import scheduler
 
 
 ovs_opts = [
@@ -54,7 +55,9 @@ ofc_opts = [
 cfg.CONF.register_opts(ovs_opts, "OVS")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 cfg.CONF.register_opts(ofc_opts, "OFC")
+config.register_agent_state_opts_helper(cfg.CONF)
 config.register_root_helper(cfg.CONF)
+cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 
 # shortcuts
 CONF = cfg.CONF

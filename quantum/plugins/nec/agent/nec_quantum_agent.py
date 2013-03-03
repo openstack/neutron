@@ -32,10 +32,12 @@ from quantum.agent.linux import ovs_lib
 from quantum.agent import rpc as agent_rpc
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import config as logging_config
+from quantum.common import constants as q_const
 from quantum.common import topics
 from quantum import context as q_context
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import dispatcher
 from quantum.openstack.common.rpc import proxy
 from quantum.plugins.nec.common import config
@@ -124,8 +126,18 @@ class NECQuantumAgent(object):
         '''
         self.int_br = ovs_lib.OVSBridge(integ_br, root_helper)
         self.polling_interval = polling_interval
+        self.cur_ports = []
 
         self.datapath_id = "0x%s" % self.int_br.get_datapath_id()
+
+        self.agent_state = {
+            'binary': 'quantum-nec-agent',
+            'host': config.CONF.host,
+            'topic': q_const.L2_AGENT_TOPIC,
+            'configurations': {},
+            'agent_type': q_const.AGENT_TYPE_NEC,
+            'start_flag': True}
+
         self.setup_rpc()
 
     def setup_rpc(self):
@@ -137,6 +149,7 @@ class NECQuantumAgent(object):
         self.context = q_context.get_admin_context_without_session()
 
         self.plugin_rpc = NECPluginApi(topics.PLUGIN)
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         self.sg_agent = SecurityGroupAgentRpc(self.context)
 
         # RPC network init
@@ -154,6 +167,22 @@ class NECQuantumAgent(object):
                                                      self.topic,
                                                      consumers)
 
+        report_interval = config.CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
+
+    def _report_state(self):
+        try:
+            # How many devices are likely used by a VM
+            num_devices = len(self.cur_ports)
+            self.agent_state['configurations']['devices'] = num_devices
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
+
     def _vif_port_to_port_info(self, vif_port):
         return dict(id=vif_port.vif_id, port_no=vif_port.ofport,
                     mac=vif_port.vif_mac)
@@ -167,7 +196,6 @@ class NECQuantumAgent(object):
 
     def daemon_loop(self):
         """Main processing loop for NEC Plugin Agent."""
-        old_ports = []
         while True:
             new_ports = []
 
@@ -175,12 +203,12 @@ class NECQuantumAgent(object):
             for vif_port in self.int_br.get_vif_ports():
                 port_id = vif_port.vif_id
                 new_ports.append(port_id)
-                if port_id not in old_ports:
+                if port_id not in self.cur_ports:
                     port_info = self._vif_port_to_port_info(vif_port)
                     port_added.append(port_info)
 
             port_removed = []
-            for port_id in old_ports:
+            for port_id in self.cur_ports:
                 if port_id not in new_ports:
                     port_removed.append(port_id)
 
@@ -192,7 +220,7 @@ class NECQuantumAgent(object):
             else:
                 LOG.debug(_("No port changed."))
 
-            old_ports = new_ports
+            self.cur_ports = new_ports
             time.sleep(self.polling_interval)
 
 

@@ -18,9 +18,12 @@ from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 
+PLUGIN_NAME = 'quantum.plugins.nec.nec_plugin.NECPluginV2'
+
+
 class NecPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
-    _plugin_name = 'quantum.plugins.nec.nec_plugin.NECPluginV2'
+    _plugin_name = PLUGIN_NAME
 
     def setUp(self):
         super(NecPluginV2TestCase, self).setUp(self._plugin_name)

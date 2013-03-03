@@ -17,11 +17,15 @@
 # @author: Akihiro MOTOKI
 
 from quantum.agent import securitygroups_rpc as sg_rpc
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum import context
+from quantum.db import agents_db
+from quantum.db import agentschedulers_db
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
@@ -30,6 +34,7 @@ from quantum.db import quota_db
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
@@ -60,7 +65,8 @@ class OperationalStatus:
 
 class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                   extraroute_db.ExtraRoute_db_mixin,
-                  sg_db_rpc.SecurityGroupServerRpcMixin):
+                  sg_db_rpc.SecurityGroupServerRpcMixin,
+                  agentschedulers_db.AgentSchedulerDbMixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Quantum NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -75,7 +81,9 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     """
 
     supported_extension_aliases = ["router", "quotas", "binding",
-                                   "security-group", "extraroute"]
+                                   "security-group", "extraroute",
+                                   "agent", "agent_scheduler",
+                                   ]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -97,17 +105,24 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
 
         self.setup_rpc()
 
+        self.network_scheduler = importutils.import_object(
+            config.CONF.network_scheduler_driver)
+        self.router_scheduler = importutils.import_object(
+            config.CONF.router_scheduler_driver)
+
     def setup_rpc(self):
         self.topic = topics.PLUGIN
         self.conn = rpc.create_connection(new=True)
         self.notifier = NECPluginV2AgentNotifierApi(topics.AGENT)
+        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
-        self.callback_nec = NECPluginV2RPCCallbacks(self)
-        self.callback_dhcp = DhcpRpcCallback()
-        self.callback_l3 = L3RpcCallback()
+        # NOTE: callback_sg is referred to from the sg unit test.
         self.callback_sg = SecurityGroupServerRpcCallback()
-        callbacks = [self.callback_nec, self.callback_dhcp,
-                     self.callback_l3, self.callback_sg]
+        callbacks = [NECPluginV2RPCCallbacks(self),
+                     DhcpRpcCallback(), L3RpcCallback(),
+                     self.callback_sg,
+                     agents_db.AgentExtRpcCallback()]
         self.dispatcher = q_rpc.PluginRpcDispatcher(callbacks)
         self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
         # Consume from all consumers in a thread
