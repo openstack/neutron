@@ -215,7 +215,6 @@ class AgentNotifierApi(proxy.RpcProxy,
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin,
-                         agents_db.AgentDbMixin,
                          agentschedulers_db.AgentSchedulerDbMixin):
 
     """Implement the Quantum abstractions using Open vSwitch.
@@ -644,20 +643,3 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         self.notifier.security_groups_member_updated(
             context, port.get(ext_sg.SECURITYGROUPS))
-
-    def update_agent(self, context, id, agent):
-        original_agent = self.get_agent(context, id)
-        result = super(OVSQuantumPluginV2, self).update_agent(
-            context, id, agent)
-        agent_data = agent['agent']
-        if ('admin_state_up' in agent_data and
-            original_agent['admin_state_up'] != agent_data['admin_state_up']):
-            if original_agent['agent_type'] == q_const.AGENT_TYPE_DHCP:
-                self.dhcp_agent_notifier.agent_updated(
-                    context, agent_data['admin_state_up'],
-                    original_agent['host'])
-            elif original_agent['agent_type'] == q_const.AGENT_TYPE_L3:
-                self.l3_agent_notifier.agent_updated(
-                    context, agent_data['admin_state_up'],
-                    original_agent['host'])
-        return result

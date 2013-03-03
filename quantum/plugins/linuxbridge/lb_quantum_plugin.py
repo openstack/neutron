@@ -18,6 +18,8 @@ import sys
 from oslo.config import cfg
 
 from quantum.agent import securitygroups_rpc as sg_rpc
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
 from quantum.api.v2 import attributes
 from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
@@ -25,6 +27,7 @@ from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.common import utils
 from quantum.db import agents_db
+from quantum.db import agentschedulers_db
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
@@ -36,6 +39,7 @@ from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
@@ -174,7 +178,7 @@ class AgentNotifierApi(proxy.RpcProxy,
 class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           extraroute_db.ExtraRoute_db_mixin,
                           sg_db_rpc.SecurityGroupServerRpcMixin,
-                          agents_db.AgentDbMixin):
+                          agentschedulers_db.AgentSchedulerDbMixin):
     """Implement the Quantum abstractions using Linux bridging.
 
     A new VLAN is created for each network.  An agent is relied upon
@@ -199,7 +203,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     __native_sorting_support = True
 
     supported_extension_aliases = ["provider", "router", "binding", "quotas",
-                                   "security-group", "agent", "extraroute"]
+                                   "security-group", "agent", "extraroute",
+                                   "agent_scheduler"]
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
@@ -219,6 +224,10 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       self.tenant_network_type)
             sys.exit(1)
         self._setup_rpc()
+        self.network_scheduler = importutils.import_object(
+            cfg.CONF.network_scheduler_driver)
+        self.router_scheduler = importutils.import_object(
+            cfg.CONF.router_scheduler_driver)
         LOG.debug(_("Linux Bridge Plugin initialization complete"))
 
     def _setup_rpc(self):
@@ -232,6 +241,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
         self.notifier = AgentNotifierApi(topics.AGENT)
+        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
     def _parse_network_vlan_ranges(self):
         self.network_vlan_ranges = {}

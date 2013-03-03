@@ -217,7 +217,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   qos_db.NVPQoSDbMixin,
                   nvp_sec.NVPSecurityGroups,
                   nvp_meta.NvpMetadataAccess,
-                  agents_db.AgentDbMixin,
                   agentschedulers_db.AgentSchedulerDbMixin):
     """
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
@@ -2198,15 +2197,3 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             return []
         return super(NvpPluginV2, self).get_qos_queues(context, filters,
                                                        fields)
-
-    def update_agent(self, context, id, agent):
-        original_agent = self.get_agent(context, id)
-        result = super(NvpPluginV2, self).update_agent(context, id, agent)
-        agent_data = agent['agent']
-        if ('admin_state_up' in agent_data and
-            original_agent['admin_state_up'] != agent_data['admin_state_up']):
-            if original_agent['agent_type'] == constants.AGENT_TYPE_DHCP:
-                self.dhcp_agent_notifier.agent_updated(
-                    context, agent_data['admin_state_up'],
-                    original_agent['host'])
-        return result
