@@ -123,10 +123,15 @@ class LoadBalancerCallbacks(object):
         if not port_id:
             return
 
-        port = self.plugin._core_plugin.get_port(
-            context,
-            port_id
-        )
+        try:
+            port = self.plugin._core_plugin.get_port(
+                context,
+                port_id
+            )
+        except q_exc.PortNotFound:
+            msg = _('Unable to find port %s to plug.')
+            LOG.debug(msg, port_id)
+            return
 
         port['admin_state_up'] = True
         port['device_owner'] = 'quantum:' + constants.LOADBALANCER
@@ -142,10 +147,16 @@ class LoadBalancerCallbacks(object):
         if not port_id:
             return
 
-        port = self.plugin._core_plugin.get_port(
-            context,
-            port_id
-        )
+        try:
+            port = self.plugin._core_plugin.get_port(
+                context,
+                port_id
+            )
+        except q_exc.PortNotFound:
+            msg = _('Unable to find port %s to unplug.  This can occur when '
+                    'the Vip has been deleted first.')
+            LOG.debug(msg, port_id)
+            return
 
         port['admin_state_up'] = False
         port['device_owner'] = ''
