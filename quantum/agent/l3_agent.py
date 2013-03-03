@@ -144,7 +144,7 @@ class L3NATAgent(manager.Manager):
                    help=_("UUID of external network for routers implemented "
                           "by the agents.")),
         cfg.StrOpt('l3_agent_manager',
-                   default='quantum.agent.l3_agent.L3NATAgentWithStateReport',
+                   default='quantum.agent.l3_agent.L3NATAgent',
                    help=_("The Quantum L3 Agent manager.")),
     ]
 
