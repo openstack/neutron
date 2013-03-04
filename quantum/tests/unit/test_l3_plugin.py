@@ -791,6 +791,23 @@ class L3NatDBTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                     r['router']['id'],
                     n['network']['id'], expected_code=exc.HTTPBadRequest.code)
 
+    def test_delete_unused_router_interface(self):
+        with self.network() as n:
+            with self.router() as r:
+                with self.subnet(network=n) as s:
+                    res = self._create_port('json',
+                                            s['subnet']['network_id'])
+                    p = self.deserialize('json', res)
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                # The subnet here is deleted, and the port should have no IP
+                self._delete('ports', p['port']['id'])
+                # Verify the port has been deleted
+                self._show('ports', p['port']['id'],
+                           expected_code=exc.HTTPNotFound.code)
+
     def test_router_delete_inuse_interface(self):
         with self.router() as r:
             with self.subnet() as s:
