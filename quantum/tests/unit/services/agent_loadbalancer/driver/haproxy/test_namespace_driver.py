@@ -20,6 +20,7 @@ import contextlib
 import mock
 import testtools
 
+from quantum.common import exceptions
 from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
     namespace_driver
 )
@@ -179,3 +180,70 @@ class TestHaproxyNSDriver(testtools.TestCase):
             socket.reset_mock()
             self.assertEqual({}, self.driver.get_stats('pool_id'))
             self.assertFalse(socket.called)
+
+    def test_plug(self):
+        test_port = {'id': 'port_id',
+                     'network_id': 'net_id',
+                     'mac_address': 'mac_addr',
+                     'fixed_ips': [{'ip_address': '10.0.0.2',
+                                    'subnet': {'cidr': 'cidr'}}]}
+        with contextlib.nested(
+                mock.patch('quantum.agent.linux.ip_lib.device_exists'),
+                mock.patch('netaddr.IPNetwork'),
+        ) as (dev_exists, ip_net):
+            self.vif_driver.get_device_name.return_value = 'test_interface'
+            dev_exists.return_value = False
+            ip_net.return_value = ip_net
+            ip_net.prefixlen = 24
+
+            self.driver._plug('test_ns', test_port)
+            self.vip_plug_callback.assert_called_once_with('plug', test_port)
+            self.assertTrue(dev_exists.called)
+            self.vif_driver.plug.assert_called_once_with('net_id', 'port_id',
+                                                         'test_interface',
+                                                         'mac_addr',
+                                                         namespace='test_ns')
+            self.vif_driver.init_l3.assert_called_once_with('test_interface',
+                                                            ['10.0.0.2/24'],
+                                                            namespace=
+                                                            'test_ns')
+
+            dev_exists.return_value = True
+            self.assertRaises(exceptions.PreexistingDeviceFailure,
+                              self.driver._plug, 'test_ns', test_port, False)
+
+    def test_unplug(self):
+        self.vif_driver.get_device_name.return_value = 'test_interface'
+
+        self.driver._unplug('test_ns', 'port_id')
+        self.vip_plug_callback.assert_called_once_with('unplug',
+                                                       {'id': 'port_id'})
+        self.vif_driver.unplug('test_interface', namespace='test_ns')
+
+    def test_kill_pids_in_file(self):
+        with contextlib.nested(
+                mock.patch('os.path.exists'),
+                mock.patch('__builtin__.open')
+        ) as (path_exists, mock_open):
+            file_mock = mock.MagicMock()
+            mock_open.return_value = file_mock
+            file_mock.__enter__.return_value = file_mock
+            file_mock.__iter__.return_value = iter(['123'])
+            ns_wrapper = mock.Mock()
+
+            path_exists.return_value = False
+            namespace_driver.kill_pids_in_file(ns_wrapper, 'test_path')
+            path_exists.assert_called_once_with('test_path')
+            self.assertFalse(mock_open.called)
+
+            path_exists.return_value = True
+            ns_wrapper.netns.execute.side_effect = RuntimeError
+            namespace_driver.kill_pids_in_file(ns_wrapper, 'test_path')
+            ns_wrapper.netns.execute.assert_called_once_with(['kill', '-9',
+                                                              '123'])
+
+    def test_get_state_file_path(self):
+        with mock.patch('os.makedirs') as mkdir:
+            path = self.driver._get_state_file_path('pool_id', 'conf')
+            self.assertEqual('/the/path/pool_id/conf', path)
+            mkdir.assert_called_once_with('/the/path/pool_id', 0755)
