@@ -65,9 +65,6 @@ class DhcpAgent(manager.Manager):
                     help=_("Allows for serving metadata requests from a "
                            "dedicate network. Requires "
                            "enable isolated_metadata = True ")),
-        cfg.StrOpt('dhcp_agent_manager',
-                   default='quantum.agent.dhcp_agent.DhcpAgent',
-                   help=_("The Quantum DHCP agent manager.")),
     ]
 
     def __init__(self, host=None):
@@ -669,8 +666,8 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'agent_type': constants.AGENT_TYPE_DHCP}
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
-            heartbeat.start(interval=report_interval)
+            self.heartbeat = loopingcall.LoopingCall(self._report_state)
+            self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
         try:
@@ -679,6 +676,13 @@ class DhcpAgentWithStateReport(DhcpAgent):
             ctx = context.get_admin_context_without_session()
             self.state_rpc.report_state(ctx,
                                         self.agent_state)
+        except AttributeError:
+            # This means the server does not support report_state
+            LOG.warn(_("Quantum server does not support state report."
+                       " State report for this agent will be disabled."))
+            self.heartbeat.stop()
+            self.run()
+            return
         except Exception:
             LOG.exception(_("Failed reporting state!"))
             return
@@ -708,5 +712,6 @@ def main():
     server = quantum_service.Service.create(
         binary='quantum-dhcp-agent',
         topic=topics.DHCP_AGENT,
-        report_interval=cfg.CONF.AGENT.report_interval)
+        report_interval=cfg.CONF.AGENT.report_interval,
+        manager='quantum.agent.dhcp_agent.DhcpAgentWithStateReport')
     service.launch(server).wait()

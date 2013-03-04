@@ -143,9 +143,6 @@ class L3NATAgent(manager.Manager):
         cfg.StrOpt('gateway_external_network_id', default='',
                    help=_("UUID of external network for routers implemented "
                           "by the agents.")),
-        cfg.StrOpt('l3_agent_manager',
-                   default='quantum.agent.l3_agent.L3NATAgent',
-                   help=_("The Quantum L3 Agent manager.")),
     ]
 
     def __init__(self, host, conf=None):
@@ -696,8 +693,8 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'agent_type': l3_constants.AGENT_TYPE_L3}
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
-            heartbeat.start(interval=report_interval)
+            self.heartbeat = loopingcall.LoopingCall(self._report_state)
+            self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
         num_ex_gw_ports = 0
@@ -722,6 +719,12 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
+        except AttributeError:
+            # This means the server does not support report_state
+            LOG.warn(_("Quantum server does not support state report."
+                       " State report for this agent will be disabled."))
+            self.heartbeat.stop()
+            return
         except Exception:
             LOG.exception(_("Failed reporting state!"))
 
@@ -744,5 +747,6 @@ def main():
     server = quantum_service.Service.create(
         binary='quantum-l3-agent',
         topic=topics.L3_AGENT,
-        report_interval=cfg.CONF.AGENT.report_interval)
+        report_interval=cfg.CONF.AGENT.report_interval,
+        manager='quantum.agent.l3_agent.L3NATAgentWithStateReport')
     service.launch(server).wait()
