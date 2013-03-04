@@ -18,6 +18,8 @@
 
 import itertools
 
+from oslo.config import cfg
+
 from quantum.agent.linux import utils
 from quantum.plugins.common import constants as qconstants
 from quantum.plugins.services.agent_loadbalancer import constants
@@ -64,7 +66,7 @@ def _build_global(config, socket_path=None):
     opts = [
         'daemon',
         'user nobody',
-        'group nogroup',
+        'group %s' % cfg.CONF.user_group,
         'log /dev/log local0',
         'log /dev/log local1 notice'
     ]

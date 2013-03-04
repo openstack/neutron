@@ -44,7 +44,12 @@ OPTS = [
     cfg.StrOpt(
         'interface_driver',
         help=_('The driver used to manage the virtual interface')
-    )
+    ),
+    cfg.StrOpt(
+        'user_group',
+        default='nogroup',
+        help=_('The user group'),
+    ),
 ]
 
 
