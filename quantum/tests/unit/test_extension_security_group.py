@@ -68,7 +68,7 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def _build_security_group_rule(self, security_group_id, direction,
                                    protocol, port_range_min, port_range_max,
-                                   source_ip_prefix=None, source_group_id=None,
+                                   remote_ip_prefix=None, remote_group_id=None,
                                    tenant_id='test_tenant',
                                    ethertype='IPv4'):
 
@@ -80,11 +80,11 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                         'port_range_max': port_range_max,
                                         'tenant_id': tenant_id,
                                         'ethertype': ethertype}}
-        if source_ip_prefix:
-            data['security_group_rule']['source_ip_prefix'] = source_ip_prefix
+        if remote_ip_prefix:
+            data['security_group_rule']['remote_ip_prefix'] = remote_ip_prefix
 
-        if source_group_id:
-            data['security_group_rule']['source_group_id'] = source_group_id
+        if remote_group_id:
+            data['security_group_rule']['remote_group_id'] = remote_group_id
 
         return data
 
@@ -129,7 +129,7 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                     'd1db38eb087',
                             direction='ingress', protocol='tcp',
                             port_range_min='22', port_range_max='22',
-                            source_ip_prefix=None, source_group_id=None,
+                            remote_ip_prefix=None, remote_group_id=None,
                             fmt=None, no_delete=False, ethertype='IPv4'):
         if not fmt:
             fmt = self.fmt
@@ -137,8 +137,8 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                                direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_ip_prefix,
-                                               source_group_id,
+                                               remote_ip_prefix,
+                                               remote_group_id,
                                                ethertype=ethertype)
         security_group_rule = self._make_security_group_rule(self.fmt, rule)
         try:
@@ -327,7 +327,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             direction = "ingress"
-            source_ip_prefix = "10.0.0.0/24"
+            remote_ip_prefix = "10.0.0.0/24"
             protocol = 'TCP'
             port_range_min = 22
             port_range_max = 22
@@ -335,7 +335,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group_rule(security_group_id, direction,
                                           protocol, port_range_min,
                                           port_range_max,
-                                          source_ip_prefix,
+                                          remote_ip_prefix,
                                           ethertype=ethertype) as rule:
 
                 # the lower case value will be return
@@ -348,15 +348,15 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
-            source_group_id = sg['security_group']['id']
-            res = self.new_show_request('security-groups', source_group_id)
+            remote_group_id = sg['security_group']['id']
+            res = self.new_show_request('security-groups', remote_group_id)
             security_group_id = sg['security_group']['id']
             direction = "ingress"
-            source_ip_prefix = "10.0.0.0/24"
+            remote_ip_prefix = "10.0.0.0/24"
             protocol = 'tcp'
             port_range_min = 22
             port_range_max = 22
-            keys = [('source_ip_prefix', source_ip_prefix),
+            keys = [('remote_ip_prefix', remote_ip_prefix),
                     ('security_group_id', security_group_id),
                     ('direction', direction),
                     ('protocol', protocol),
@@ -365,13 +365,13 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group_rule(security_group_id, direction,
                                           protocol, port_range_min,
                                           port_range_max,
-                                          source_ip_prefix):
+                                          remote_ip_prefix):
 
                 group = self.deserialize(
                     self.fmt, res.get_response(self.ext_api))
                 sg_rule = group['security_group']['security_group_rules']
                 self.assertEqual(group['security_group']['id'],
-                                 source_group_id)
+                                 remote_group_id)
                 self.assertEqual(len(sg_rule), 1)
                 for k, v, in keys:
                     self.assertEqual(sg_rule[0][k], v)
@@ -380,8 +380,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description, no_delete=True) as sg:
-            source_group_id = sg['security_group']['id']
-            self._delete('security-groups', source_group_id, 204)
+            remote_group_id = sg['security_group']['id']
+            self._delete('security-groups', remote_group_id, 204)
 
     def test_delete_default_security_group_fail(self):
         with self.network():
@@ -405,17 +405,17 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.assertEqual(rule['port_range_min'], None)
                 self.assertEqual(rule['protocol'], None)
 
-    def test_create_security_group_rule_source_ip_prefix(self):
+    def test_create_security_group_rule_remote_ip_prefix(self):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             direction = "ingress"
-            source_ip_prefix = "10.0.0.0/24"
+            remote_ip_prefix = "10.0.0.0/24"
             protocol = 'tcp'
             port_range_min = 22
             port_range_max = 22
-            keys = [('source_ip_prefix', source_ip_prefix),
+            keys = [('remote_ip_prefix', remote_ip_prefix),
                     ('security_group_id', security_group_id),
                     ('direction', direction),
                     ('protocol', protocol),
@@ -424,7 +424,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group_rule(security_group_id, direction,
                                           protocol, port_range_min,
                                           port_range_max,
-                                          source_ip_prefix) as rule:
+                                          remote_ip_prefix) as rule:
                 for k, v, in keys:
                     self.assertEqual(rule['security_group_rule'][k], v)
 
@@ -435,11 +435,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group(name, description) as sg2:
                 security_group_id = sg['security_group']['id']
                 direction = "ingress"
-                source_group_id = sg2['security_group']['id']
+                remote_group_id = sg2['security_group']['id']
                 protocol = 'tcp'
                 port_range_min = 22
                 port_range_max = 22
-                keys = [('source_group_id', source_group_id),
+                keys = [('remote_group_id', remote_group_id),
                         ('security_group_id', security_group_id),
                         ('direction', direction),
                         ('protocol', protocol),
@@ -448,7 +448,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 with self.security_group_rule(security_group_id, direction,
                                               protocol, port_range_min,
                                               port_range_max,
-                                              source_group_id=source_group_id
+                                              remote_group_id=remote_group_id
                                               ) as rule:
                     for k, v, in keys:
                         self.assertEqual(rule['security_group_rule'][k], v)
@@ -456,16 +456,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_source_group_ip_and_ip_prefix(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
-        source_ip_prefix = "10.0.0.0/24"
+        remote_ip_prefix = "10.0.0.0/24"
         protocol = 'tcp'
         port_range_min = 22
         port_range_max = 22
-        source_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        remote_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
         rule = self._build_security_group_rule(security_group_id, direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_ip_prefix,
-                                               source_group_id)
+                                               remote_ip_prefix,
+                                               remote_group_id)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, 400)
@@ -473,14 +473,14 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_bad_security_group_id(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
-        source_ip_prefix = "10.0.0.0/24"
+        remote_ip_prefix = "10.0.0.0/24"
         protocol = 'tcp'
         port_range_min = 22
         port_range_max = 22
         rule = self._build_security_group_rule(security_group_id, direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_ip_prefix)
+                                               remote_ip_prefix)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, 404)
@@ -499,7 +499,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, 404)
 
-    def test_create_security_group_rule_bad_tenant_source_group_id(self):
+    def test_create_security_group_rule_bad_tenant_remote_group_id(self):
         with self.security_group() as sg:
             res = self._create_security_group(self.fmt, 'webservers',
                                               'webservers',
@@ -512,7 +512,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                      'port_range_min': '22',
                      'port_range_max': '22',
                      'tenant_id': 'bad_tenant',
-                     'source_group_id': sg['security_group']['id']}}
+                     'remote_group_id': sg['security_group']['id']}}
 
             res = self._create_security_group_rule(self.fmt, rule,
                                                    tenant_id='bad_tenant',
@@ -540,12 +540,12 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 404)
 
-    def test_create_security_group_rule_bad_source_group_id(self):
+    def test_create_security_group_rule_bad_remote_group_id(self):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
-            source_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
+            remote_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
             direction = "ingress"
             protocol = 'tcp'
             port_range_min = 22
@@ -553,7 +553,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         rule = self._build_security_group_rule(security_group_id, direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_group_id=source_group_id)
+                                               remote_group_id=remote_group_id)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, 404)
@@ -941,16 +941,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_with_invalid_ethertype(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
-        source_ip_prefix = "10.0.0.0/24"
+        remote_ip_prefix = "10.0.0.0/24"
         protocol = 'tcp'
         port_range_min = 22
         port_range_max = 22
-        source_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        remote_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
         rule = self._build_security_group_rule(security_group_id, direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_ip_prefix,
-                                               source_group_id,
+                                               remote_ip_prefix,
+                                               remote_group_id,
                                                ethertype='IPv5')
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
@@ -959,16 +959,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_with_invalid_protocol(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
-        source_ip_prefix = "10.0.0.0/24"
+        remote_ip_prefix = "10.0.0.0/24"
         protocol = 'tcp/ip'
         port_range_min = 22
         port_range_max = 22
-        source_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
+        remote_group_id = "9cd70774-cc67-4a87-9b39-7d1db38eb087"
         rule = self._build_security_group_rule(security_group_id, direction,
                                                protocol, port_range_min,
                                                port_range_max,
-                                               source_ip_prefix,
-                                               source_group_id)
+                                               remote_ip_prefix,
+                                               remote_group_id)
         res = self._create_security_group_rule(self.fmt, rule)
         self.deserialize(self.fmt, res)
         self.assertEqual(res.status_int, 400)

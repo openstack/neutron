@@ -220,8 +220,8 @@ class RuleManager:
         rule_id = rule['id']
         ethertype = rule['ethertype']
         security_group_id = rule['security_group_id']
-        source_group_id = rule['source_group_id']
-        source_ip_prefix = rule['source_ip_prefix']  # watch out. not validated
+        remote_group_id = rule['remote_group_id']
+        remote_ip_prefix = rule['remote_ip_prefix']  # watch out. not validated
         tenant_id = rule['tenant_id']
         port_range_min = rule['port_range_min']
         external_id = rule['external_id']
@@ -234,10 +234,10 @@ class RuleManager:
         port_group_id = None
 
         # handle source
-        if not source_ip_prefix is None:
-            nw_src_address, nw_src_length = source_ip_prefix.split('/')
-        elif not source_group_id is None:  # security group as a srouce
-            source_pg = self.pg_manager.get_for_sg(tenant_id, source_group_id)
+        if not remote_ip_prefix is None:
+            nw_src_address, nw_src_length = remote_ip_prefix.split('/')
+        elif not remote_group_id is None:  # security group as a srouce
+            source_pg = self.pg_manager.get_for_sg(tenant_id, remote_group_id)
             port_group_id = source_pg.get_id()
         else:
             raise Exception(_("Don't know what to do with rule=%r"), rule)

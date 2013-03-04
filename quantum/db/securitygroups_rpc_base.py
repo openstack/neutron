@@ -111,8 +111,8 @@ class SecurityGroupServerRpcCallbackMixin(object):
     def security_group_rules_for_devices(self, context, **kwargs):
         """ return security group rules for each port
 
-        also convert source_group_id rule
-        to source_ip_prefix rule
+        also convert remote_group_id rule
+        to source_ip_prefix and dest_ip_prefix rule
 
         :params devices: list of devices
         :returns: port correspond to the devices with security group rules
@@ -144,12 +144,12 @@ class SecurityGroupServerRpcCallbackMixin(object):
         query = query.filter(sg_binding_port.in_(ports.keys()))
         return query.all()
 
-    def _select_ips_for_source_group(self, context, source_group_ids):
+    def _select_ips_for_remote_group(self, context, remote_group_ids):
         ips_by_group = {}
-        if not source_group_ids:
+        if not remote_group_ids:
             return ips_by_group
-        for source_group_id in source_group_ids:
-            ips_by_group[source_group_id] = []
+        for remote_group_id in remote_group_ids:
+            ips_by_group[remote_group_id] = []
 
         ip_port = models_v2.IPAllocation.port_id
         sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
@@ -159,20 +159,20 @@ class SecurityGroupServerRpcCallbackMixin(object):
                                       models_v2.IPAllocation.ip_address)
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
-        query = query.filter(sg_binding_sgid.in_(source_group_ids))
+        query = query.filter(sg_binding_sgid.in_(remote_group_ids))
         ip_in_db = query.all()
         for security_group_id, ip_address in ip_in_db:
             ips_by_group[security_group_id].append(ip_address)
         return ips_by_group
 
-    def _select_source_group_ids(self, ports):
-        source_group_ids = []
+    def _select_remote_group_ids(self, ports):
+        remote_group_ids = []
         for port in ports.values():
             for rule in port.get('security_group_rules'):
-                source_group_id = rule.get('source_group_id')
-                if source_group_id:
-                    source_group_ids.append(source_group_id)
-        return source_group_ids
+                remote_group_id = rule.get('remote_group_id')
+                if remote_group_id:
+                    remote_group_ids.append(remote_group_id)
+        return remote_group_ids
 
     def _select_network_ids(self, ports):
         return set((port['network_id'] for port in ports.values()))
@@ -195,22 +195,22 @@ class SecurityGroupServerRpcCallbackMixin(object):
             ips[port['network_id']].append(ip)
         return ips
 
-    def _convert_source_group_id_to_ip_prefix(self, context, ports):
-        source_group_ids = self._select_source_group_ids(ports)
-        ips = self._select_ips_for_source_group(context, source_group_ids)
+    def _convert_remote_group_id_to_ip_prefix(self, context, ports):
+        remote_group_ids = self._select_remote_group_ids(ports)
+        ips = self._select_ips_for_remote_group(context, remote_group_ids)
         for port in ports.values():
             updated_rule = []
             for rule in port.get('security_group_rules'):
-                source_group_id = rule.get('source_group_id')
+                remote_group_id = rule.get('remote_group_id')
                 direction = rule.get('direction')
                 direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
-                if not source_group_id:
+                if not remote_group_id:
                     updated_rule.append(rule)
                     continue
 
-                port['security_group_source_groups'].append(source_group_id)
+                port['security_group_source_groups'].append(remote_group_id)
                 base_rule = rule
-                for ip in ips[source_group_id]:
+                for ip in ips[remote_group_id]:
                     if ip in port.get('fixed_ips', []):
                         continue
                     ip_rule = base_rule.copy()
@@ -290,12 +290,13 @@ class SecurityGroupServerRpcCallbackMixin(object):
                 'ethertype': rule_in_db['ethertype'],
             }
             for key in ('protocol', 'port_range_min', 'port_range_max',
-                        'source_ip_prefix', 'source_group_id'):
+                        'remote_ip_prefix', 'remote_group_id'):
                 if rule_in_db.get(key):
-                    if key == 'source_ip_prefix' and direction == 'egress':
-                        rule_dict['dest_ip_prefix'] = rule_in_db[key]
+                    if key == 'remote_ip_prefix':
+                        direction_ip_prefix = DIRECTION_IP_PREFIX[direction]
+                        rule_dict[direction_ip_prefix] = rule_in_db[key]
                         continue
                     rule_dict[key] = rule_in_db[key]
             port['security_group_rules'].append(rule_dict)
         self._apply_provider_rule(context, ports)
-        return self._convert_source_group_id_to_ip_prefix(context, ports)
+        return self._convert_remote_group_id_to_ip_prefix(context, ports)
