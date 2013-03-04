@@ -455,19 +455,6 @@ class NetworkCache(object):
 
 class DeviceManager(object):
     OPTS = [
-        cfg.StrOpt('admin_user',
-                   help=_("Admin username")),
-        cfg.StrOpt('admin_password',
-                   help=_("Admin password"),
-                   secret=True),
-        cfg.StrOpt('admin_tenant_name',
-                   help=_("Admin tenant name")),
-        cfg.StrOpt('auth_url',
-                   help=_("Authentication URL")),
-        cfg.StrOpt('auth_strategy', default='keystone',
-                   help=_("The type of authentication to use")),
-        cfg.StrOpt('auth_region',
-                   help=_("Authentication region")),
         cfg.StrOpt('interface_driver',
                    help=_("The driver used to manage the virtual interface."))
     ]

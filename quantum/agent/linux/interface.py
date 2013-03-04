@@ -42,7 +42,20 @@ OPTS = [
     cfg.StrOpt('network_device_mtu',
                help=_('MTU setting for device.')),
     cfg.StrOpt('meta_flavor_driver_mappings',
-               help=_('Mapping between flavor and LinuxInterfaceDriver'))
+               help=_('Mapping between flavor and LinuxInterfaceDriver')),
+    cfg.StrOpt('admin_user',
+               help=_("Admin username")),
+    cfg.StrOpt('admin_password',
+               help=_("Admin password"),
+               secret=True),
+    cfg.StrOpt('admin_tenant_name',
+               help=_("Admin tenant name")),
+    cfg.StrOpt('auth_url',
+               help=_("Authentication URL")),
+    cfg.StrOpt('auth_strategy', default='keystone',
+               help=_("The type of authentication to use")),
+    cfg.StrOpt('auth_region',
+               help=_("Authentication region")),
 ]
 
 

@@ -37,19 +37,6 @@ class QuantumDebugAgent():
 
     OPTS = [
         # Needed for drivers
-        cfg.StrOpt('admin_user',
-                   help=_("Admin user")),
-        cfg.StrOpt('admin_password',
-                   help=_("Admin password"),
-                   secret=True),
-        cfg.StrOpt('admin_tenant_name',
-                   help=_("Admin tenant name")),
-        cfg.StrOpt('auth_url',
-                   help=_("Authentication URL")),
-        cfg.StrOpt('auth_strategy', default='keystone',
-                   help=_("The type of authentication to use")),
-        cfg.StrOpt('auth_region',
-                   help=_("Authentication region")),
         cfg.BoolOpt('use_namespaces', default=True,
                     help=_("Use Linux network namespaces")),
         cfg.StrOpt('interface_driver',
