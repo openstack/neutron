@@ -24,6 +24,7 @@ import webob
 
 from quantum.agent.metadata import agent
 from quantum.tests import base
+from quantum.common import utils
 
 
 class FakeConf(object):
@@ -354,11 +355,12 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
             with mock.patch('eventlet.monkey_patch') as eventlet:
                 with mock.patch.object(agent, 'config') as config:
                     with mock.patch.object(agent, 'cfg') as cfg:
-                        agent.main()
+                        with mock.patch.object(utils, 'cfg') as utils_cfg:
+                            agent.main()
 
-                        self.assertTrue(eventlet.called)
-                        self.assertTrue(config.setup_logging.called)
-                        proxy.assert_has_calls([
-                            mock.call(cfg.CONF),
-                            mock.call().run()]
-                        )
+                            self.assertTrue(eventlet.called)
+                            self.assertTrue(config.setup_logging.called)
+                            proxy.assert_has_calls([
+                                mock.call(cfg.CONF),
+                                mock.call().run()]
+                            )

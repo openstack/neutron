@@ -21,6 +21,7 @@
 
 """Utilities and helper functions."""
 
+import logging as std_logging
 import os
 import signal
 import socket
@@ -188,3 +189,7 @@ def diff_list_of_dict(old_list, new_list):
 def is_extension_supported(plugin, ext_alias):
     return ext_alias in getattr(
         plugin, "supported_extension_aliases", [])
+
+
+def log_opt_values(log):
+    cfg.CONF.log_opt_values(log, std_logging.DEBUG)

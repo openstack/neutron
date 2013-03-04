@@ -254,10 +254,14 @@ class L3NATAgent(manager.Manager):
 
     def _spawn_metadata_proxy(self, router_info):
         def callback(pid_file):
-            return ['quantum-ns-metadata-proxy',
-                    '--pid_file=%s' % pid_file,
-                    '--router_id=%s' % router_info.router_id,
-                    '--state_path=%s' % self.conf.state_path]
+            proxy_cmd = ['quantum-ns-metadata-proxy',
+                         '--pid_file=%s' % pid_file,
+                         '--router_id=%s' % router_info.router_id,
+                         '--state_path=%s' % self.conf.state_path]
+            proxy_cmd.extend(config.get_log_args(
+                cfg.CONF, 'quantum-ns-metadata-proxy%s.log' %
+                router_info.router_id))
+            return proxy_cmd
 
         pm = external_process.ProcessManager(
             self.conf,
@@ -742,7 +746,7 @@ def main():
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
-    conf()
+    conf(project='quantum')
     config.setup_logging(conf)
     server = quantum_service.Service.create(
         binary='quantum-l3-agent',

@@ -27,6 +27,7 @@ import webob
 
 from quantum.agent.linux import daemon
 from quantum.common import config
+from quantum.common import utils
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 
@@ -151,9 +152,10 @@ def main():
     ]
 
     cfg.CONF.register_cli_opts(opts)
-    cfg.CONF(project='quantum')
+    # Don't get the default configuration file
+    cfg.CONF(project='quantum', default_config_files=[])
     config.setup_logging(cfg.CONF)
-
+    utils.log_opt_values(LOG)
     proxy = ProxyDaemon(cfg.CONF.pid_file,
                         cfg.CONF.metadata_port,
                         network_id=cfg.CONF.network_id,

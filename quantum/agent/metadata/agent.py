@@ -29,6 +29,7 @@ from quantumclient.v2_0 import client
 import webob
 
 from quantum.common import config
+from quantum.common import utils
 from quantum.openstack.common import log as logging
 from quantum import wsgi
 
@@ -221,6 +222,6 @@ def main():
     cfg.CONF.register_opts(MetadataProxyHandler.OPTS)
     cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
-
+    utils.log_opt_values(LOG)
     proxy = UnixDomainMetadataProxy(cfg.CONF)
     proxy.run()

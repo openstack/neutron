@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 from oslo.config import cfg
 
 from quantum.common import config
@@ -33,6 +35,27 @@ AGENT_STATE_OPTS = [
     cfg.IntOpt('report_interval', default=4,
                help=_('Seconds between nodes reporting state to server')),
 ]
+
+
+def get_log_args(conf, log_file_name):
+    cmd_args = []
+    if conf.debug:
+        cmd_args.append('--debug')
+    if conf.verbose:
+        cmd_args.append('--verbose')
+    if (conf.log_dir or conf.log_file):
+        cmd_args.append('--log-file=%s' % log_file_name)
+    log_dir = None
+    if conf.log_dir and conf.log_file:
+        log_dir = os.path.dirname(
+            os.path.join(conf.log_dir, conf.log_file))
+    elif conf.log_dir:
+        log_dir = conf.log_dir
+    elif conf.log_file:
+        log_dir = os.path.dirname(conf.log_file)
+    if log_dir:
+        cmd_args.append('--log-dir=%s' % log_dir)
+    return cmd_args
 
 
 def register_root_helper(conf):

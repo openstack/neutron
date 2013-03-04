@@ -282,11 +282,15 @@ class DhcpAgent(manager.Manager):
                                         router_ports[0].device_id)
 
         def callback(pid_file):
-            return ['quantum-ns-metadata-proxy',
-                    '--pid_file=%s' % pid_file,
-                    quantum_lookup_param,
-                    '--state_path=%s' % self.conf.state_path,
-                    '--metadata_port=%d' % METADATA_PORT]
+            proxy_cmd = ['quantum-ns-metadata-proxy',
+                         '--pid_file=%s' % pid_file,
+                         quantum_lookup_param,
+                         '--state_path=%s' % self.conf.state_path,
+                         '--metadata_port=%d' % METADATA_PORT]
+            proxy_cmd.extend(config.get_log_args(
+                cfg.CONF, 'quantum-ns-metadata-proxy%s.log' % network.id))
+            return proxy_cmd
+
         pm = external_process.ProcessManager(
             self.conf,
             network.id,

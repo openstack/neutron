@@ -325,6 +325,55 @@ class TestDhcpAgent(base.BaseTestCase):
                 self.assertFalse(dhcp.needs_resync)
 
 
+class TestLogArgs(base.BaseTestCase):
+
+    def test_log_args_without_log_dir_and_file(self):
+        conf_dict = {'debug': True,
+                     'verbose': False,
+                     'log_dir': None,
+                     'log_file': None}
+        conf = dhcp_agent.DictModel(conf_dict)
+        expected_args = ['--debug']
+        args = config.get_log_args(conf, 'log_file_name')
+        self.assertEqual(expected_args, args)
+
+    def test_log_args_without_log_file(self):
+        conf_dict = {'debug': True,
+                     'verbose': True,
+                     'log_dir': '/etc/tests',
+                     'log_file': None}
+        conf = dhcp_agent.DictModel(conf_dict)
+        expected_args = ['--debug', '--verbose',
+                         '--log-file=log_file_name',
+                         '--log-dir=/etc/tests']
+        args = config.get_log_args(conf, 'log_file_name')
+        self.assertEqual(expected_args, args)
+
+    def test_log_args_with_log_dir_and_file(self):
+        conf_dict = {'debug': True,
+                     'verbose': False,
+                     'log_dir': '/etc/tests',
+                     'log_file': 'tests/filelog'}
+        conf = dhcp_agent.DictModel(conf_dict)
+        expected_args = ['--debug',
+                         '--log-file=log_file_name',
+                         '--log-dir=/etc/tests/tests']
+        args = config.get_log_args(conf, 'log_file_name')
+        self.assertEqual(expected_args, args)
+
+    def test_log_args_without_log_dir(self):
+        conf_dict = {'debug': True,
+                     'verbose': False,
+                     'log_file': 'tests/filelog',
+                     'log_dir': None}
+        conf = dhcp_agent.DictModel(conf_dict)
+        expected_args = ['--debug',
+                         '--log-file=log_file_name',
+                         '--log-dir=tests']
+        args = config.get_log_args(conf, 'log_file_name')
+        self.assertEqual(expected_args, args)
+
+
 class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgentEventHandler, self).setUp()
@@ -359,6 +408,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver_p.stop()
         self.cache_p.stop()
         self.plugin_p.stop()
+        cfg.CONF.reset()
         super(TestDhcpAgentEventHandler, self).tearDown()
 
     def test_enable_dhcp_helper(self):
@@ -477,6 +527,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):
         cfg.CONF.set_override('enable_metadata_network', True)
+        cfg.CONF.set_override('debug', True)
+        cfg.CONF.set_override('log_file', 'test.log')
         class_path = 'quantum.agent.linux.ip_lib.IPWrapper'
         self.external_process_p.stop()
         # Ensure the mock is restored if this test fail
@@ -486,15 +538,18 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 ip_wrapper.assert_has_calls([mock.call(
                     'sudo',
                     'qdhcp-12345678-1234-5678-1234567890ab'),
-                    mock.call().netns.execute(['quantum-ns-metadata-proxy',
-                                               mock.ANY,
-                                               '--router_id=forzanapoli',
-                                               mock.ANY,
-                                               mock.ANY])
+                    mock.call().netns.execute([
+                        'quantum-ns-metadata-proxy',
+                        mock.ANY,
+                        '--router_id=forzanapoli',
+                        mock.ANY,
+                        mock.ANY,
+                        '--debug',
+                        ('--log-file=quantum-ns-metadata-proxy%s.log' %
+                         fake_meta_network.id)])
                 ])
         finally:
             self.external_process_p.start()
-            cfg.CONF.set_override('enable_metadata_network', False)
 
     def test_network_create_end(self):
         payload = dict(network=dict(id=fake_network.id))

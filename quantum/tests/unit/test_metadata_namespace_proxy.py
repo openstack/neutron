@@ -24,6 +24,7 @@ import webob
 
 from quantum.agent.metadata import namespace_proxy as ns_proxy
 from quantum.tests import base
+from quantum.common import utils
 
 
 class FakeConf(object):
@@ -256,37 +257,43 @@ class TestProxyDaemon(base.BaseTestCase):
             with mock.patch('eventlet.monkey_patch') as eventlet:
                 with mock.patch.object(ns_proxy, 'config') as config:
                     with mock.patch.object(ns_proxy, 'cfg') as cfg:
-                        cfg.CONF.router_id = 'router_id'
-                        cfg.CONF.network_id = None
-                        cfg.CONF.metadata_port = 9697
-                        cfg.CONF.pid_file = 'pidfile'
-                        cfg.CONF.daemonize = True
-                        ns_proxy.main()
+                        with mock.patch.object(utils, 'cfg') as utils_cfg:
+                            cfg.CONF.router_id = 'router_id'
+                            cfg.CONF.network_id = None
+                            cfg.CONF.metadata_port = 9697
+                            cfg.CONF.pid_file = 'pidfile'
+                            cfg.CONF.daemonize = True
+                            utils_cfg.CONF.log_opt_values.return_value = None
+                            ns_proxy.main()
 
-                        self.assertTrue(eventlet.called)
-                        self.assertTrue(config.setup_logging.called)
-                        daemon.assert_has_calls([
-                            mock.call('pidfile', 9697, router_id='router_id',
-                                      network_id=None),
-                            mock.call().start()]
-                        )
+                            self.assertTrue(eventlet.called)
+                            self.assertTrue(config.setup_logging.called)
+                            daemon.assert_has_calls([
+                                mock.call('pidfile', 9697,
+                                          router_id='router_id',
+                                          network_id=None),
+                                mock.call().start()]
+                            )
 
     def test_main_dont_fork(self):
         with mock.patch.object(ns_proxy, 'ProxyDaemon') as daemon:
             with mock.patch('eventlet.monkey_patch') as eventlet:
                 with mock.patch.object(ns_proxy, 'config') as config:
                     with mock.patch.object(ns_proxy, 'cfg') as cfg:
-                        cfg.CONF.router_id = 'router_id'
-                        cfg.CONF.network_id = None
-                        cfg.CONF.metadata_port = 9697
-                        cfg.CONF.pid_file = 'pidfile'
-                        cfg.CONF.daemonize = False
-                        ns_proxy.main()
+                        with mock.patch.object(utils, 'cfg') as utils_cfg:
+                            cfg.CONF.router_id = 'router_id'
+                            cfg.CONF.network_id = None
+                            cfg.CONF.metadata_port = 9697
+                            cfg.CONF.pid_file = 'pidfile'
+                            cfg.CONF.daemonize = False
+                            utils_cfg.CONF.log_opt_values.return_value = None
+                            ns_proxy.main()
 
-                        self.assertTrue(eventlet.called)
-                        self.assertTrue(config.setup_logging.called)
-                        daemon.assert_has_calls([
-                            mock.call('pidfile', 9697, router_id='router_id',
-                                      network_id=None),
-                            mock.call().run()]
-                        )
+                            self.assertTrue(eventlet.called)
+                            self.assertTrue(config.setup_logging.called)
+                            daemon.assert_has_calls([
+                                mock.call('pidfile', 9697,
+                                          router_id='router_id',
+                                          network_id=None),
+                                mock.call().run()]
+                            )
