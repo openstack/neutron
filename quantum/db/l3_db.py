@@ -740,8 +740,17 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if port_db['device_owner'] in [DEVICE_OWNER_ROUTER_INTF,
                                        DEVICE_OWNER_ROUTER_GW,
                                        DEVICE_OWNER_FLOATINGIP]:
-            raise l3.L3PortInUse(port_id=port_id,
-                                 device_owner=port_db['device_owner'])
+            # Raise port in use only if the port has IP addresses
+            # Otherwise it's a stale port that can be removed
+            fixed_ips = port_db['fixed_ips'].all()
+            if fixed_ips:
+                raise l3.L3PortInUse(port_id=port_id,
+                                     device_owner=port_db['device_owner'])
+            else:
+                LOG.debug(_("Port %(port_id)s has owner %(port_owner)s, but "
+                            "no IP address, so it can be deleted"),
+                          {'port_id': port_db['id'],
+                           'port_owner': port_db['device_owner']})
 
     def disassociate_floatingips(self, context, port_id):
         with context.session.begin(subtransactions=True):
