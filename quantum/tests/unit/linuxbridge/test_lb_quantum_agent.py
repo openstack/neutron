@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+
 import mock
 from oslo.config import cfg
 import testtools
@@ -52,3 +54,59 @@ class TestLinuxBridge(testtools.TestCase):
             result = self.linux_bridge.ensure_physical_in_bridge(
                 'network_id', 'physnet1', 7)
         self.assertTrue(vlan_bridge_func.called)
+
+
+class TestLinuxBridgeAgent(testtools.TestCase):
+
+    def setUp(self):
+        super(TestLinuxBridgeAgent, self).setUp()
+        self.lbmgr_patcher = mock.patch('quantum.plugins.linuxbridge.agent.'
+                                        'linuxbridge_quantum_agent.'
+                                        'LinuxBridgeManager')
+        self.lbmgr_mock = self.lbmgr_patcher.start()
+        self.addCleanup(self.lbmgr_patcher.stop)
+
+    def test_update_devices_failed(self):
+        lbmgr_instance = self.lbmgr_mock.return_value
+        lbmgr_instance.update_devices.side_effect = RuntimeError
+        agent = linuxbridge_quantum_agent.LinuxBridgeQuantumAgentRPC({},
+                                                                     0,
+                                                                     None)
+        raise_exception = [0]
+
+        def info_mock(msg):
+            if raise_exception[0] < 2:
+                raise_exception[0] += 1
+            else:
+                raise RuntimeError()
+
+        with mock.patch.object(linuxbridge_quantum_agent.LOG, 'info') as log:
+            log.side_effect = info_mock
+            with testtools.ExpectedException(RuntimeError):
+                agent.daemon_loop()
+            self.assertEqual(3, log.call_count)
+
+    def test_process_network_devices_failed(self):
+        device_info = {'current': [1, 2, 3]}
+        lbmgr_instance = self.lbmgr_mock.return_value
+        lbmgr_instance.update_devices.return_value = device_info
+        agent = linuxbridge_quantum_agent.LinuxBridgeQuantumAgentRPC({},
+                                                                     0,
+                                                                     None)
+        raise_exception = [0]
+
+        def info_mock(msg):
+            if raise_exception[0] < 2:
+                raise_exception[0] += 1
+            else:
+                raise RuntimeError()
+
+        with contextlib.nested(
+            mock.patch.object(linuxbridge_quantum_agent.LOG, 'info'),
+            mock.patch.object(agent, 'process_network_devices')
+        ) as (log, process_network_devices):
+            log.side_effect = info_mock
+            process_network_devices.side_effect = RuntimeError
+            with testtools.ExpectedException(RuntimeError):
+                agent.daemon_loop()
+            self.assertEqual(3, log.call_count)

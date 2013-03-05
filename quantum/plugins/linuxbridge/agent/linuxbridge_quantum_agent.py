@@ -601,16 +601,24 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 LOG.info(_("Agent out of sync with plugin!"))
                 devices.clear()
                 sync = False
-
-            device_info = self.br_mgr.update_devices(devices)
-
-            # notify plugin about device deltas
-            if device_info:
-                LOG.debug(_("Agent loop has new devices!"))
-                # If treat devices fails - indicates must resync with plugin
-                sync = self.process_network_devices(device_info)
-                devices = device_info['current']
-
+            device_info = {}
+            try:
+                device_info = self.br_mgr.update_devices(devices)
+            except Exception:
+                LOG.exception(_("Update devices failed"))
+                sync = True
+            try:
+                # notify plugin about device deltas
+                if device_info:
+                    LOG.debug(_("Agent loop has new devices!"))
+                    # If treat devices fails - indicates must resync with
+                    # plugin
+                    sync = self.process_network_devices(device_info)
+                    devices = device_info['current']
+            except Exception:
+                LOG.exception(_("Error in agent loop. Devices info: %s"),
+                              device_info)
+                sync = True
             # sleep till end of polling interval
             elapsed = (time.time() - start)
             if (elapsed < self.polling_interval):
