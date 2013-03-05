@@ -121,6 +121,7 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver_cls_p = mock.patch(
             'quantum.agent.dhcp_agent.importutils.import_class')
         self.driver = mock.Mock(name='driver')
+        self.driver.existing_dhcp_networks.return_value = []
         self.driver_cls = self.driver_cls_p.start()
         self.driver_cls.return_value = self.driver
 
@@ -323,6 +324,34 @@ class TestDhcpAgent(base.BaseTestCase):
                 sync_state.assert_called_once_with()
                 sleep.assert_called_once_with(dhcp.conf.resync_interval)
                 self.assertFalse(dhcp.needs_resync)
+
+    def test_populate_cache_on_start_without_active_networks_support(self):
+        # emul dhcp driver that doesn't support retrieving of active networks
+        self.driver.existing_dhcp_networks.side_effect = NotImplementedError
+
+        with mock.patch.object(dhcp_agent.LOG, 'debug') as log:
+            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+
+            self.driver.existing_dhcp_networks.assert_called_once_with(
+                dhcp.conf,
+                cfg.CONF.root_helper
+            )
+
+            self.assertFalse(dhcp.cache.get_network_ids())
+            self.assertTrue(log.called)
+
+    def test_populate_cache_on_start(self):
+        networks = ['aaa', 'bbb']
+        self.driver.existing_dhcp_networks.return_value = networks
+
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+
+        self.driver.existing_dhcp_networks.assert_called_once_with(
+            dhcp.conf,
+            cfg.CONF.root_helper
+        )
+
+        self.assertEquals(set(networks), set(dhcp.cache.get_network_ids()))
 
 
 class TestLogArgs(base.BaseTestCase):

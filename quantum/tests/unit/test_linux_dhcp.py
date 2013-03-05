@@ -135,6 +135,11 @@ class FakeV4NoGatewayNetwork:
 
 
 class TestDhcpBase(base.BaseTestCase):
+    def test_existing_dhcp_networks_abstract_error(self):
+        self.assertRaises(NotImplementedError,
+                          dhcp.DhcpBase.existing_dhcp_networks,
+                          None, None)
+
     def test_base_abc_error(self):
         self.assertRaises(TypeError, dhcp.DhcpBase, None)
 
@@ -630,3 +635,40 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
     def test_lease_relay_script_add_socket_missing(self):
         self._test_lease_relay_script_helper('add', 120, False)
+
+    def test_remove_config_files(self):
+        net = FakeV4Network()
+        path = '/opt/data/quantum/dhcp'
+        self.conf.dhcp_confs = path
+
+        with mock.patch('shutil.rmtree') as rmtree:
+            lp = LocalChild(self.conf, net)
+            lp._remove_config_files()
+
+            rmtree.assert_called_once_with(os.path.join(path, net.id),
+                                           ignore_errors=True)
+
+    def test_existing_dhcp_networks(self):
+        path = '/opt/data/quantum/dhcp'
+        self.conf.dhcp_confs = path
+
+        cases = {
+            # network_uuid --> is_dhcp_alive?
+            'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': True,
+            'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb': False,
+            'not_uuid_like_name': True
+        }
+
+        def active_fake(self, instance, cls):
+            return cases[instance.network.id]
+
+        with mock.patch('os.listdir') as mock_listdir:
+            with mock.patch.object(dhcp.Dnsmasq, 'active') as mock_active:
+                mock_active.__get__ = active_fake
+                mock_listdir.return_value = cases.keys()
+
+                result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf, 'sudo')
+
+                mock_listdir.assert_called_once_with(path)
+                self.assertEquals(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
+                                  result)
