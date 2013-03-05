@@ -17,7 +17,9 @@
 
 import mock
 from mock import call
+from oslo.config import cfg
 
+from quantum.agent.common import config as a_cfg
 from quantum.agent.linux.iptables_firewall import IptablesFirewallDriver
 from quantum.tests.unit import test_api_v2
 from quantum.tests import base
@@ -32,6 +34,7 @@ FAKE_IP = {'IPv4': '10.0.0.1',
 class IptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
         super(IptablesFirewallTestCase, self).setUp()
+        cfg.CONF.register_opts(a_cfg.ROOT_HELPER_OPTS, 'AGENT')
         self.utils_exec_p = mock.patch(
             'quantum.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
