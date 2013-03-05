@@ -61,7 +61,7 @@ def upgrade(active_plugin=None, options=None):
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('security_group_id', sa.String(length=36), nullable=False),
-        sa.Column('source_group_id', sa.String(length=36), nullable=True),
+        sa.Column('remote_group_id', sa.String(length=36), nullable=True),
         sa.Column('direction',
                   sa.Enum('ingress', 'egress',
                           name='securitygrouprules_direction'),
@@ -70,10 +70,10 @@ def upgrade(active_plugin=None, options=None):
         sa.Column('protocol', sa.String(length=40), nullable=True),
         sa.Column('port_range_min', sa.Integer(), nullable=True),
         sa.Column('port_range_max', sa.Integer(), nullable=True),
-        sa.Column('source_ip_prefix', sa.String(length=255), nullable=True),
+        sa.Column('remote_ip_prefix', sa.String(length=255), nullable=True),
         sa.ForeignKeyConstraint(['security_group_id'], ['securitygroups.id'],
                                 ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['source_group_id'], ['securitygroups.id'],
+        sa.ForeignKeyConstraint(['remote_group_id'], ['securitygroups.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )

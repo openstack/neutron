@@ -37,17 +37,19 @@ class FirewallDriver(object):
       the rule may contain security_group_id,
           protocol, port_min, port_max
           source_ip_prefix, source_port_min,
-          source_port_max, dest_ip_prefix,
+          source_port_max, dest_ip_prefix, and
+          remote_group_id
       Note: source_group_ip in REST API should be converted by this rule
       if direction is ingress:
-        source_group_ip will be a soruce_prefix_ip
+        remote_group_ip will be a source_ip_prefix
       if direction is egress:
-        source_group_ip will be a dest_prefix_ip
-      Note: source_group_id in REST API should be converted by this rule
+        remote_group_ip will be a dest_ip_prefix
+      Note: remote_group_id in REST API should be converted by this rule
       if direction is ingress:
-        source_group_id will be a list of soruce_prefix_ip
+        remote_group_id will be a list of source_ip_prefix
       if direction is egress:
-        source_group_id will be a list of dest_prefix_ip
+        remote_group_id will be a list of dest_ip_prefix
+      remote_group_id will also remaining membership update management
     """
 
     __metaclass__ = abc.ABCMeta

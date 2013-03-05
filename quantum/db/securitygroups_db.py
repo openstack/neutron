@@ -53,7 +53,7 @@ class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
                                                 ondelete="CASCADE"),
                                   nullable=False)
 
-    source_group_id = sa.Column(sa.String(36),
+    remote_group_id = sa.Column(sa.String(36),
                                 sa.ForeignKey("securitygroups.id",
                                               ondelete="CASCADE"),
                                 nullable=True)
@@ -64,7 +64,7 @@ class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
     protocol = sa.Column(sa.String(40))
     port_range_min = sa.Column(sa.Integer)
     port_range_max = sa.Column(sa.Integer)
-    source_ip_prefix = sa.Column(sa.String(255))
+    remote_ip_prefix = sa.Column(sa.String(255))
     security_group = orm.relationship(
         SecurityGroup,
         backref=orm.backref('rules', cascade='all,delete'),
@@ -72,7 +72,7 @@ class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
     source_group = orm.relationship(
         SecurityGroup,
         backref=orm.backref('source_rules', cascade='all,delete'),
-        primaryjoin="SecurityGroup.id==SecurityGroupRule.source_group_id")
+        primaryjoin="SecurityGroup.id==SecurityGroupRule.remote_group_id")
 
 
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
@@ -234,12 +234,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     id=uuidutils.generate_uuid(), tenant_id=tenant_id,
                     security_group_id=rule['security_group_id'],
                     direction=rule['direction'],
-                    source_group_id=rule.get('source_group_id'),
+                    remote_group_id=rule.get('remote_group_id'),
                     ethertype=rule['ethertype'],
                     protocol=rule['protocol'],
                     port_range_min=rule['port_range_min'],
                     port_range_max=rule['port_range_max'],
-                    source_ip_prefix=rule.get('source_ip_prefix'))
+                    remote_ip_prefix=rule.get('remote_ip_prefix'))
                 context.session.add(db)
             ret.append(self._make_security_group_rule_dict(db))
         return ret
@@ -251,7 +251,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _validate_security_group_rules(self, context, security_group_rule):
         """Check that rules being installed all belong to the same security
-        group, source_group_id/security_group_id belong to the same tenant,
+        group, remote_group_id/security_group_id belong to the same tenant,
         and rules are valid.
         """
         new_rules = set()
@@ -271,15 +271,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             else:
                 raise ext_sg.SecurityGroupInvalidPortRange()
 
-            if rule['source_ip_prefix'] and rule['source_group_id']:
-                raise ext_sg.SecurityGroupSourceGroupAndIpPrefix()
+            if rule['remote_ip_prefix'] and rule['remote_group_id']:
+                raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
 
             if rule['tenant_id'] not in tenant_ids:
                 tenant_ids.add(rule['tenant_id'])
-            source_group_id = rule.get('source_group_id')
-            # Check that source_group_id exists for tenant
-            if source_group_id:
-                self.get_security_group(context, source_group_id,
+            remote_group_id = rule.get('remote_group_id')
+            # Check that remote_group_id exists for tenant
+            if remote_group_id:
+                self.get_security_group(context, remote_group_id,
                                         tenant_id=rule['tenant_id'])
         if len(new_rules) > 1:
             raise ext_sg.SecurityGroupNotSingleGroupRules()
@@ -303,8 +303,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'protocol': security_group_rule['protocol'],
                'port_range_min': security_group_rule['port_range_min'],
                'port_range_max': security_group_rule['port_range_max'],
-               'source_ip_prefix': security_group_rule['source_ip_prefix'],
-               'source_group_id': security_group_rule['source_group_id']}
+               'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
+               'remote_group_id': security_group_rule['remote_group_id']}
 
         return self._fields(res, fields)
 
@@ -315,8 +315,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'direction': [sgr['direction']]}
 
         include_if_present = ['protocol', 'port_range_max', 'port_range_min',
-                              'ethertype', 'source_ip_prefix',
-                              'source_group_id']
+                              'ethertype', 'remote_ip_prefix',
+                              'remote_group_id']
         for key in include_if_present:
             value = sgr.get(key)
             if value:

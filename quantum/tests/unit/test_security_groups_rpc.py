@@ -161,7 +161,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 rule1 = self._build_security_group_rule(
                     sg1_id,
                     'ingress', 'tcp', '24',
-                    '25', source_group_id=sg2['security_group']['id'])
+                    '25', remote_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
@@ -190,7 +190,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'source_ip_prefix': u'10.0.0.3/32',
                              'protocol': u'tcp', 'ethertype': u'IPv4',
                              'port_range_max': 25, 'port_range_min': 24,
-                             'source_group_id': sg2_id,
+                             'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
                             {'ethertype': 'IPv4', 'direction': 'egress'},
                             ]
@@ -324,7 +324,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                     'ingress', 'tcp', '24',
                     '25',
                     ethertype='IPv6',
-                    source_group_id=sg2['security_group']['id'])
+                    remote_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
@@ -356,7 +356,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'source_ip_prefix': 'fe80::3/128',
                              'protocol': 'tcp', 'ethertype': 'IPv6',
                              'port_range_max': 25, 'port_range_min': 24,
-                             'source_group_id': sg2_id,
+                             'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
                             {'ethertype': 'IPv6', 'direction': 'egress'},
                             ]
@@ -414,7 +414,7 @@ class SecurityGroupAgentRpcTestCase(testtools.TestCase):
                             'security_group_source_groups': ['fake_sgid2'],
                             'security_group_rules': [{'security_group_id':
                                                       'fake_sgid1',
-                                                      'source_group_id':
+                                                      'remote_group_id':
                                                       'fake_sgid2'}]}
         fake_devices = {'fake_device': self.fake_device}
         self.firewall.ports = fake_devices
@@ -1126,14 +1126,14 @@ class SGNotificationTestMixin():
             with self.security_group(name, description) as sg2:
                 security_group_id = sg['security_group']['id']
                 direction = "ingress"
-                source_group_id = sg2['security_group']['id']
+                remote_group_id = sg2['security_group']['id']
                 protocol = 'tcp'
                 port_range_min = 88
                 port_range_max = 88
                 with self.security_group_rule(security_group_id, direction,
                                               protocol, port_range_min,
                                               port_range_max,
-                                              source_group_id=source_group_id
+                                              remote_group_id=remote_group_id
                                               ):
                     pass
             self.notifier.assert_has_calls(

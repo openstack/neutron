@@ -194,7 +194,7 @@ class MidonetRuleManagerTestCase(MidonetLibTestCase):
         return {"tenant_id": tenant_id, "security_group_id": sg_id,
                 "rule_id": rule_id, "direction": direction,
                 "protocol": protocol,
-                "source_ip_prefix": src_ip, "source_group_id": src_group_id,
+                "remote_ip_prefix": src_ip, "remote_group_id": src_group_id,
                 "port_range_min": port_min, "port_range_max": port_max,
                 "ethertype": ethertype, "id": rule_id, "external_id": None}
 

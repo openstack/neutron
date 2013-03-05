@@ -61,8 +61,8 @@ class SecurityGroupRulesNotSingleTenant(qexception.InvalidInput):
                 " not allowed")
 
 
-class SecurityGroupSourceGroupAndIpPrefix(qexception.InvalidInput):
-    message = _("Only source_ip_prefix or source_group_id may "
+class SecurityGroupRemoteGroupAndRemoteIpPrefix(qexception.InvalidInput):
+    message = _("Only remote_ip_prefix or remote_group_id may "
                 "be provided.")
 
 
@@ -73,10 +73,6 @@ class SecurityGroupProtocolRequiredWithPorts(qexception.InvalidInput):
 class SecurityGroupNotSingleGroupRules(qexception.InvalidInput):
     message = _("Only allowed to update rules for "
                 "one security profile at a time")
-
-
-class SecurityGroupSourceGroupNotFound(qexception.NotFound):
-    message = _("Source group id %(id)s does not exist")
 
 
 class SecurityGroupNotFound(qexception.NotFound):
@@ -171,7 +167,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'primary_key': True},
         'security_group_id': {'allow_post': True, 'allow_put': False,
                               'is_visible': True, 'required_by_policy': True},
-        'source_group_id': {'allow_post': True, 'allow_put': False,
+        'remote_group_id': {'allow_post': True, 'allow_put': False,
                             'default': None, 'is_visible': True},
         'direction': {'allow_post': True, 'allow_put': True,
                       'is_visible': True,
@@ -190,7 +186,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True, 'default': 'IPv4',
                       'convert_to': convert_ethertype_to_case_insensitive,
                       'validate': {'type:values': sg_supported_ethertypes}},
-        'source_ip_prefix': {'allow_post': True, 'allow_put': False,
+        'remote_ip_prefix': {'allow_post': True, 'allow_put': False,
                              'default': None, 'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,

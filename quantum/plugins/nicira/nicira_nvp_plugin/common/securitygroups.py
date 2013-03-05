@@ -28,8 +28,8 @@ class NVPSecurityGroups(object):
     def _convert_to_nvp_rule(self, rule, with_id=False):
         """Converts Quantum API security group rule to NVP API."""
         nvp_rule = {}
-        params = ['source_ip_prefix', 'protocol',
-                  'source_group_id', 'port_range_min',
+        params = ['remote_ip_prefix', 'protocol',
+                  'remote_group_id', 'port_range_min',
                   'port_range_max', 'ethertype']
         if with_id:
             params.append('id')
@@ -40,10 +40,10 @@ class NVPSecurityGroups(object):
                 nvp_rule[param] = value
             elif not value:
                 pass
-            elif param == 'source_ip_prefix':
-                nvp_rule['ip_prefix'] = rule['source_ip_prefix']
-            elif param == 'source_group_id':
-                nvp_rule['profile_uuid'] = rule['source_group_id']
+            elif param == 'remote_ip_prefix':
+                nvp_rule['ip_prefix'] = rule['remote_ip_prefix']
+            elif param == 'remote_group_id':
+                nvp_rule['profile_uuid'] = rule['remote_group_id']
             elif param == 'protocol':
                 nvp_rule['protocol'] = protocol_num_look_up[rule['protocol']]
             else:
@@ -65,7 +65,7 @@ class NVPSecurityGroups(object):
                                              with_id=False):
         """Query quantum db for security group rules.
         """
-        fields = ['source_ip_prefix', 'source_group_id', 'protocol',
+        fields = ['remote_ip_prefix', 'remote_group_id', 'protocol',
                   'port_range_min', 'port_range_max', 'protocol', 'ethertype']
         if with_id:
             fields.append('id')
@@ -80,11 +80,11 @@ class NVPSecurityGroups(object):
                  'logical_port_egress_rules': ingress_rules}
         return self._convert_to_nvp_rules(rules, with_id)
 
-    def _get_profile_uuid(self, context, source_group_id):
+    def _get_profile_uuid(self, context, remote_group_id):
         """Return profile id from novas group id. """
-        security_group = self.get_security_group(context, source_group_id)
+        security_group = self.get_security_group(context, remote_group_id)
         if not security_group:
-            raise ext_sg.SecurityGroupNotFound(id=source_group_id)
+            raise ext_sg.SecurityGroupNotFound(id=remote_group_id)
         return security_group['id']
 
     def _merge_security_group_rules_with_current(self, context, new_rules,
@@ -95,8 +95,8 @@ class NVPSecurityGroups(object):
             rule = new_rule['security_group_rule']
             rule['security_group_id'] = security_group_id
             if rule.get('souce_group_id'):
-                rule['source_group_id'] = self._get_profile_uuid(
-                    context, rule['source_group_id'])
+                rule['remote_group_id'] = self._get_profile_uuid(
+                    context, rule['remote_group_id'])
             if rule['direction'] == 'ingress':
                 merged_rules['logical_port_egress_rules'].append(
                     self._convert_to_nvp_rule(rule))
