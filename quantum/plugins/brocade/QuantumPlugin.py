@@ -30,10 +30,13 @@ Implentation of Brocade Quantum Plugin.
 from oslo.config import cfg
 
 from quantum.agent import securitygroups_rpc as sg_rpc
+from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.common import utils
 from quantum.db import agents_db
+from quantum.db import agentschedulers_db
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
@@ -50,6 +53,7 @@ from quantum.openstack.common.rpc import proxy
 from quantum.plugins.brocade.db import models as brocade_db
 from quantum.plugins.brocade import vlanbm as vbm
 from quantum import policy
+from quantum import scheduler
 
 
 LOG = logging.getLogger(__name__)
@@ -68,6 +72,7 @@ PHYSICAL_INTERFACE_OPTS = [cfg.StrOpt('physical_interface', default='eth0')
 
 cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
 cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
+cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 
 
 class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
@@ -194,7 +199,7 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       sg_db_rpc.SecurityGroupServerRpcMixin,
-                      agents_db.AgentDbMixin):
+                      agentschedulers_db.AgentSchedulerDbMixin):
     """BrocadePluginV2 is a Quantum plugin.
 
     Provides L2 Virtual Network functionality using VDX. Upper
@@ -207,7 +212,8 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         and db configuration.
         """
 
-        self.supported_extension_aliases = ["binding", "security-group"]
+        self.supported_extension_aliases = ["binding", "security-group",
+                                            "agent", "agent_scheduler"]
         self.binding_view = "extension:port_binding:view"
         self.binding_set = "extension:port_binding:set"
 
@@ -218,6 +224,10 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.ctxt.session = db.get_session()
         self._vlan_bitmap = vbm.VlanBitmap(self.ctxt)
         self._setup_rpc()
+        self.network_scheduler = importutils.import_object(
+            cfg.CONF.network_scheduler_driver)
+        self.router_scheduler = importutils.import_object(
+            cfg.CONF.router_scheduler_driver)
         self.brocade_init()
 
     def brocade_init(self):
@@ -242,6 +252,8 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
         self.notifier = AgentNotifierApi(topics.AGENT)
+        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
     def create_network(self, context, network):
         """This call to create network translates to creation of
