@@ -30,7 +30,8 @@ LINK_SAMPLE = [
     '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN \\'
     'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00',
     '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP '
-    'qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff',
+    'qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff'
+    '\    alias openvswitch',
     '3: br-int: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN '
     '\    link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff',
     '4: gw-ddc717df-49: <BROADCAST,MULTICAST> mtu 1500 qdisc noop '
@@ -426,6 +427,10 @@ class TestIpLinkCommand(TestIPCmdBase):
         self._assert_sudo([], ('set', 'eth0', 'name', 'tap1'))
         self.assertEqual(self.parent.name, 'tap1')
 
+    def test_set_alias(self):
+        self.link_cmd.set_alias('openvswitch')
+        self._assert_sudo([], ('set', 'eth0', 'alias', 'openvswitch'))
+
     def test_delete(self):
         self.link_cmd.delete()
         self._assert_sudo([], ('delete', 'eth0'))
@@ -446,6 +451,10 @@ class TestIpLinkCommand(TestIPCmdBase):
         self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
         self.assertEqual(self.link_cmd.qlen, 1000)
 
+    def test_alias_property(self):
+        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
+        self.assertEqual(self.link_cmd.alias, 'openvswitch')
+
     def test_state_property(self):
         self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
         self.assertEqual(self.link_cmd.state, 'UP')
@@ -456,7 +465,8 @@ class TestIpLinkCommand(TestIPCmdBase):
                     'state': 'UP',
                     'qdisc': 'mq',
                     'brd': 'ff:ff:ff:ff:ff:ff',
-                    'link/ether': 'cc:dd:ee:ff:ab:cd'}
+                    'link/ether': 'cc:dd:ee:ff:ab:cd',
+                    'alias': 'openvswitch'}
         self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
         self.assertEqual(self.link_cmd.attributes, expected)
         self._assert_call('o', ('show', 'eth0'))
