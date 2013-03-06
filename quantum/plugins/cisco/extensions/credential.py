@@ -25,8 +25,8 @@ from quantum.api import extensions
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_exceptions as exception
 from quantum.plugins.cisco.common import cisco_faults as faults
-(from quantum.plugins.cisco.extensions import _credential_view as
-    credential_view)
+from quantum.plugins.cisco.extensions import (_credential_view as
+                                              credential_view)
 from quantum import wsgi
 
 
