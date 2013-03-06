@@ -1049,31 +1049,38 @@ def set_tenant_id_tag(tenant_id, taglist=None):
 def create_security_profile(cluster, tenant_id, security_profile):
     path = "/ws.v1/security-profile"
     tags = set_tenant_id_tag(tenant_id)
-    # Allow all dhcp responses in
-    dhcp = {'logical_port_egress_rules': [{'ethertype': 'IPv4',
-                                           'protocol': 17,
-                                           'port_range_min': 68,
-                                           'port_range_max': 68,
-                                           'ip_prefix': '0.0.0.0/0'}],
-            'logical_port_ingress_rules': []}
+    # Allow all dhcp responses and all ingress traffic
+    hidden_rules = {'logical_port_egress_rules':
+                    [{'ethertype': 'IPv4',
+                      'protocol': constants.UDP_PROTOCOL,
+                      'port_range_min': constants.DHCP_RESPONSE_PORT,
+                      'port_range_max': constants.DHCP_RESPONSE_PORT,
+                      'ip_prefix': '0.0.0.0/0'}],
+                    'logical_port_ingress_rules':
+                    [{'ethertype': 'IPv4'},
+                     {'ethertype': 'IPv6'}]}
     try:
         display_name = _check_and_truncate_name(security_profile.get('name'))
         body = mk_body(
             tags=tags, display_name=display_name,
-            logical_port_ingress_rules=dhcp['logical_port_ingress_rules'],
-            logical_port_egress_rules=dhcp['logical_port_egress_rules'])
+            logical_port_ingress_rules=(
+                hidden_rules['logical_port_ingress_rules']),
+            logical_port_egress_rules=hidden_rules['logical_port_egress_rules']
+        )
         rsp = do_request(HTTP_POST, path, body, cluster=cluster)
     except NvpApiClient.NvpApiException as e:
         LOG.error(format_exception("Unknown", e, locals()))
         raise exception.QuantumException()
     if security_profile.get('name') == 'default':
         # If security group is default allow ip traffic between
-        # members of the same security profile.
+        # members of the same security profile is allowed and ingress traffic
+        # from the switch
         rules = {'logical_port_egress_rules': [{'ethertype': 'IPv4',
                                                 'profile_uuid': rsp['uuid']},
                                                {'ethertype': 'IPv6',
                                                 'profile_uuid': rsp['uuid']}],
-                 'logical_port_ingress_rules': []}
+                 'logical_port_ingress_rules': [{'ethertype': 'IPv4'},
+                                                {'ethertype': 'IPv6'}]}
 
         update_security_group_rules(cluster, rsp['uuid'], rules)
     LOG.debug(_("Created Security Profile: %s"), rsp)
@@ -1089,6 +1096,10 @@ def update_security_group_rules(cluster, spid, rules):
          'port_range_min': constants.DHCP_RESPONSE_PORT,
          'port_range_max': constants.DHCP_RESPONSE_PORT,
          'ip_prefix': '0.0.0.0/0'})
+    # If there are no ingress rules add bunk rule to drop all ingress traffic
+    if not len(rules['logical_port_ingress_rules']):
+        rules['logical_port_ingress_rules'].append(
+            {'ethertype': 'IPv4', 'ip_prefix': '127.0.0.1/32'})
     try:
         body = mk_body(
             logical_port_ingress_rules=rules['logical_port_ingress_rules'],
