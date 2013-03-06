@@ -33,6 +33,7 @@ from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.common import utils
+from quantum.db import agents_db
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
@@ -86,7 +87,8 @@ class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self,
+                                          agents_db.AgentExtRpcCallback()])
 
     @classmethod
     def get_port_from_device(cls, device):
@@ -191,8 +193,8 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 
 class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
-                      l3_db.L3_NAT_db_mixin,
-                      sg_db_rpc.SecurityGroupServerRpcMixin):
+                      sg_db_rpc.SecurityGroupServerRpcMixin,
+                      agents_db.AgentDbMixin):
     """BrocadePluginV2 is a Quantum plugin.
 
     Provides L2 Virtual Network functionality using VDX. Upper
