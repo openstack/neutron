@@ -1312,12 +1312,12 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         msg = (_("Router Port %(lport_id)s not found on router "
                  "%(lrouter_id)s") % locals())
         LOG.exception(msg)
-        raise nvp_exc.NvpPluginException(err_desc=msg)
+        raise nvp_exc.NvpPluginException(err_msg=msg)
     except NvpApiClient.NvpApiException as e:
         msg = _("An exception occurred while updating IP addresses on a "
                 "router logical port:%s") % str(e)
         LOG.exception(msg)
-        raise nvp_exc.NvpPluginException(err_desc=msg)
+        raise nvp_exc.NvpPluginException(err_msg=msg)
 
 
 # TODO(salvatore-orlando): Also handle changes in minor versions
