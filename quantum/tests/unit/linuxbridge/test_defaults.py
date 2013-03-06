@@ -23,10 +23,6 @@ from quantum.plugins.linuxbridge.common import config
 class ConfigurationTest(testtools.TestCase):
 
     def test_defaults(self):
-        self.assertEqual(-1,
-                         cfg.CONF.DATABASE.sql_max_retries)
-        self.assertEqual(2,
-                         cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2,
                          cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo',
