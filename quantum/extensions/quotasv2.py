@@ -35,13 +35,6 @@ EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
 
-for quota_resource in QUOTAS.resources.iterkeys():
-    attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
-    attr_dict[quota_resource] = {'allow_post': False,
-                                 'allow_put': True,
-                                 'convert_to': int,
-                                 'is_visible': True}
-
 
 class QuotaSetsController(wsgi.Controller):
 
@@ -49,10 +42,23 @@ class QuotaSetsController(wsgi.Controller):
         self._resource_name = RESOURCE_NAME
         self._plugin = plugin
         self._driver = importutils.import_class(DB_QUOTA_DRIVER)
+        self._update_extended_attributes = True
+
+    def _update_attributes(self):
+        for quota_resource in QUOTAS.resources.iterkeys():
+            attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
+            attr_dict[quota_resource] = {'allow_post': False,
+                                         'allow_put': True,
+                                         'convert_to': int,
+                                         'is_visible': True}
+        self._update_extended_attributes = False
 
     def _get_body(self, request):
         body = self._deserialize(request.body,
                                  request.best_match_content_type())
+        if self._update_extended_attributes is True:
+            self._update_attributes()
+
         attr_info = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
         req_body = base.Controller.prepare_request_body(
             request.context, body, False, self._resource_name, attr_info)

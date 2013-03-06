@@ -139,6 +139,20 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         quota = self.deserialize(res)
         self.assertEqual(100, quota['quota']['network'])
 
+    def test_update_attributes(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id + '2',
+                                                  is_admin=True)}
+        quotas = {'quota': {'extra1': 100}}
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env)
+        self.assertEqual(200, res.status_int)
+        env2 = {'quantum.context': context.Context('', tenant_id)}
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env2)
+        quota = self.deserialize(res)
+        self.assertEqual(100, quota['quota']['extra1'])
+
     def test_delete_quotas_with_admin(self):
         tenant_id = 'tenant_id1'
         env = {'quantum.context': context.Context('', tenant_id + '2',
