@@ -103,7 +103,7 @@ function run_pep8 {
   PEP8_EXCLUDE="vcsversion.py,*.pyc,openstack"
   # we now turn off pep8 1.3 E125 check to avoid make change to 
   # openstack-common . 
-  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125 --repeat --show-source"
+  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125,E711,E712 --repeat --show-source"
   PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py"
   ${wrapper} pep8 $PEP8_OPTIONS $PEP8_INCLUDE
 }
