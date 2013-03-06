@@ -852,7 +852,6 @@ class TestDeviceManager(base.BaseTestCase):
         super(TestDeviceManager, self).tearDown()
 
     def _test_setup_helper(self, device_exists, reuse_existing=False,
-                           metadata_access_network=False,
                            net=None, port=None):
         net = net or fake_network
         port = port or fake_port1
@@ -871,10 +870,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         namespace = dhcp_agent.NS_PREFIX + net.id
 
-        if metadata_access_network:
-            expected_ips = ['169.254.169.254/30']
-        else:
-            expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
+        expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
         expected = [mock.call.init_l3('tap12345678-12',
                                       expected_ips,
                                       namespace=namespace)]
@@ -886,10 +882,6 @@ class TestDeviceManager(base.BaseTestCase):
                                            'tap12345678-12',
                                            'aa:bb:cc:dd:ee:ff',
                                            namespace=namespace))
-        if metadata_access_network:
-            self.mock_iproute.assert_has_calls(
-                [mock.call.add_gateway('169.254.169.253')])
-
         self.mock_driver.assert_has_calls(expected)
 
     def test_setup(self):
@@ -901,11 +893,6 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_setup_device_exists_reuse(self):
         self._test_setup_helper(True, True)
-
-    def test_setup_with_metadata_access_network(self):
-        cfg.CONF.set_override('enable_metadata_network', True)
-        self._test_setup_helper(False, metadata_access_network=True,
-                                net=fake_meta_network, port=fake_meta_port)
 
     def test_destroy(self):
         fake_network = FakeModel('12345678-1234-5678-1234567890ab',

@@ -522,8 +522,7 @@ class DeviceManager(object):
             ip_cidrs.append(ip_cidr)
 
         if (self.conf.enable_isolated_metadata and
-            self.conf.use_namespaces and
-            not self.conf.enable_metadata_network):
+            self.conf.use_namespaces):
             ip_cidrs.append(METADATA_DEFAULT_IP)
 
         self.driver.init_l3(interface_name, ip_cidrs,
