@@ -452,6 +452,18 @@ class JSONDeserializer(TextDeserializer):
         return {'body': self._from_json(datastring)}
 
 
+class ProtectedXMLParser(etree.XMLParser):
+    def __init__(self, *args, **kwargs):
+        etree.XMLParser.__init__(self, *args, **kwargs)
+        self._parser.StartDoctypeDeclHandler = self.start_doctype_decl
+
+    def start_doctype_decl(self, name, sysid, pubid, internal):
+        raise ValueError(_("Inline DTD forbidden"))
+
+    def doctype(self, name, pubid, system):
+        raise ValueError(_("Inline DTD forbidden"))
+
+
 class XMLDeserializer(TextDeserializer):
 
     def __init__(self, metadata=None):
@@ -493,12 +505,17 @@ class XMLDeserializer(TextDeserializer):
             node.remove(link)
         return link_list and {link_key: link_list} or {}
 
+    def _parseXML(self, text):
+        parser = ProtectedXMLParser()
+        parser.feed(text)
+        return parser.close()
+
     def _from_xml(self, datastring):
         if datastring is None:
             return None
         plurals = set(self.metadata.get('plurals', {}))
         try:
-            node = etree.fromstring(datastring)
+            node = self._parseXML(datastring)
             root_tag = self._get_key(node.tag)
             # Deserialize link node was needed by unit test for verifying
             # the request's response

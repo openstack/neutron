@@ -175,6 +175,27 @@ class XMLDeserializerTest(testtools.TestCase):
         self.assertRaises(
             exception.MalformedRequestBody, deserializer.default, data_string)
 
+    def test_entity_expansion(self):
+        def killer_body():
+            return (("""<!DOCTYPE x [
+                    <!ENTITY a "%(a)s">
+                    <!ENTITY b "%(b)s">
+                    <!ENTITY c "%(c)s">]>
+                <foo>
+                    <bar>
+                        <v1>%(d)s</v1>
+                    </bar>
+                </foo>""") % {
+                'a': 'A' * 10,
+                'b': '&a;' * 10,
+                'c': '&b;' * 10,
+                'd': '&c;' * 9999,
+            }).strip()
+
+        deserializer = wsgi.XMLDeserializer()
+        self.assertRaises(
+            ValueError, deserializer.default, killer_body())
+
 
 class JSONDeserializerTest(testtools.TestCase):
     def test_default_raise_Maiformed_Exception(self):
