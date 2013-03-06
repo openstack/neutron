@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.36"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.37"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-05 00:06+0000\n"
+"POT-Creation-Date: 2013-03-06 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -434,7 +434,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:282 quantum/db/l3_db.py:923
+#: quantum/agent/l3_agent.py:282 quantum/db/l3_db.py:932
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -704,17 +704,12 @@ msgstr ""
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:278
-#, python-format
-msgid "No port for this device %s"
-msgstr ""
-
-#: quantum/agent/linux/interface.py:296
+#: quantum/agent/linux/interface.py:303
 #, python-format
 msgid "Driver location: %s"
 msgstr ""
 
-#: quantum/agent/linux/ip_lib.py:394
+#: quantum/agent/linux/ip_lib.py:401
 msgid "No namespace defined for parent"
 msgstr ""
 
@@ -2088,7 +2083,14 @@ msgstr ""
 msgid "Floating IP association failed"
 msgstr ""
 
-#: quantum/db/l3_db.py:759
+#: quantum/db/l3_db.py:750
+#, python-format
+msgid ""
+"Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
+"be deleted"
+msgstr ""
+
+#: quantum/db/l3_db.py:768
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
@@ -2509,7 +2511,7 @@ msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr ""
 
 #: quantum/extensions/securitygroup.py:65
-msgid "Only source_ip_prefix or source_group_id may be provided."
+msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr ""
 
 #: quantum/extensions/securitygroup.py:70
@@ -2522,38 +2524,33 @@ msgstr ""
 
 #: quantum/extensions/securitygroup.py:79
 #, python-format
-msgid "Source group id %(id)s does not exist"
+msgid "Security group %(id)s does not exist"
 msgstr ""
 
 #: quantum/extensions/securitygroup.py:83
 #, python-format
-msgid "Security group %(id)s does not exist"
-msgstr ""
-
-#: quantum/extensions/securitygroup.py:87
-#, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:91
+#: quantum/extensions/securitygroup.py:87
 msgid "Duplicate Security Group Rule in POST."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:95
+#: quantum/extensions/securitygroup.py:91
 #, python-format
 msgid "Security group rule already exists. Group id is %(id)s."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:134
+#: quantum/extensions/securitygroup.py:130
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:212
+#: quantum/extensions/securitygroup.py:208
 msgid "Number of security groups allowed per tenant,-1 for unlimited"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:216
+#: quantum/extensions/securitygroup.py:212
 msgid "Number of security rules allowed per tenant, -1 for unlimited"
 msgstr ""
 
@@ -4258,7 +4255,7 @@ msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:327
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:609
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:613
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:700
 msgid "Agent loop has new devices!"
 msgstr ""
@@ -4274,7 +4271,7 @@ msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:354
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:644
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:652
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:766
 msgid "Agent initialized successfully, now running... "
 msgstr ""
@@ -4591,19 +4588,28 @@ msgstr ""
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr ""
 
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:608
+msgid "Update devices failed"
+msgstr ""
+
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:619
+#, python-format
+msgid "Error in agent loop. Devices info: %s"
+msgstr ""
+
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:627
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:715
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:270
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:634
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:642
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:637
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:645
 #, python-format
 msgid "Interface mappings: %s"
 msgstr ""
