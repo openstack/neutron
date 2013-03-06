@@ -15,12 +15,11 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import testtools
-
 from quantum.plugins.nec.common import config
+from quantum.tests import base
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual('br-int', config.CONF.OVS.integration_bridge)

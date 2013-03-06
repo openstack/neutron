@@ -17,7 +17,6 @@
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.common import config
 from quantum.agent.dhcp_agent import DeviceManager
@@ -25,6 +24,7 @@ from quantum.agent.linux import interface
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.extensions.flavor import (FLAVOR_NETWORK)
+from quantum.tests import base
 
 
 class BaseChild(interface.LinuxInterfaceDriver):
@@ -57,7 +57,7 @@ class FakePort:
     network_id = network.id
 
 
-class TestBase(testtools.TestCase):
+class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
         root_helper_opt = [

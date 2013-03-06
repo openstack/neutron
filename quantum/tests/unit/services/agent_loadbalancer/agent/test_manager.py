@@ -19,12 +19,12 @@
 import contextlib
 
 import mock
-import testtools
 
 from quantum.plugins.services.agent_loadbalancer.agent import manager
+from quantum.tests import base
 
 
-class TestLogicalDeviceCache(testtools.TestCase):
+class TestLogicalDeviceCache(base.BaseTestCase):
     def setUp(self):
         super(TestLogicalDeviceCache, self).setUp()
         self.cache = manager.LogicalDeviceCache()
@@ -131,7 +131,7 @@ class TestLogicalDeviceCache(testtools.TestCase):
         self.assertEqual(self.cache.get_pool_ids(), ['pool_id'])
 
 
-class TestManager(testtools.TestCase):
+class TestManager(base.BaseTestCase):
     def setUp(self):
         super(TestManager, self).setUp()
         self.addCleanup(mock.patch.stopall)

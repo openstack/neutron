@@ -8,14 +8,12 @@
 # System
 import httplib
 
-# Third party
-import testtools
-
 # Local
 import quantum.plugins.nicira.nicira_nvp_plugin.api_client.common as naco
+from quantum.tests import base
 
 
-class NvpApiCommonTest(testtools.TestCase):
+class NvpApiCommonTest(base.BaseTestCase):
 
     def test_conn_str(self):
         conn = httplib.HTTPSConnection('localhost', 4242, timeout=0)

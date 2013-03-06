@@ -24,12 +24,12 @@ import sys
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.plugins.hyperv.agent import hyperv_quantum_agent
+from quantum.tests import base
 
 
-class TestHyperVQuantumAgent(testtools.TestCase):
+class TestHyperVQuantumAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestHyperVQuantumAgent, self).setUp()

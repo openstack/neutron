@@ -19,12 +19,12 @@ import socket
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.debug import commands
 from quantum.debug.debug_agent import DEVICE_OWNER_PROBE, QuantumDebugAgent
+from quantum.tests import base
 
 
 class MyApp(object):
@@ -32,7 +32,7 @@ class MyApp(object):
         self.stdout = _stdout
 
 
-class TestDebugCommands(testtools.TestCase):
+class TestDebugCommands(base.BaseTestCase):
     def setUp(self):
         super(TestDebugCommands, self).setUp()
         cfg.CONF.register_opts(interface.OPTS)

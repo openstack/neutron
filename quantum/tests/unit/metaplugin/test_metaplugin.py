@@ -30,6 +30,7 @@ from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import uuidutils
 from quantum.plugins.metaplugin.meta_quantum_plugin import FlavorNotFound
 from quantum.plugins.metaplugin.meta_quantum_plugin import MetaPluginV2
+from quantum.tests import base
 
 CONF_FILE = ""
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
@@ -67,7 +68,7 @@ def setup_metaplugin_conf():
                           'quantum.openstack.common.rpc.impl_fake')
 
 
-class MetaQuantumPluginV2Test(testtools.TestCase):
+class MetaQuantumPluginV2Test(base.BaseTestCase):
     """Class conisting of MetaQuantumPluginV2 unit tests"""
 
     def setUp(self):

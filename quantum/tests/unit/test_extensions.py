@@ -18,7 +18,6 @@
 import os
 
 import routes
-import testtools
 import webob
 import webtest
 
@@ -28,6 +27,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
+from quantum.tests import base
 from quantum.tests.unit import extension_stubs as ext_stubs
 import quantum.tests.unit.extensions
 from quantum.tests.unit import testlib_api
@@ -65,7 +65,7 @@ class FakePluginWithExtension(db_base_plugin_v2.QuantumDbPluginV2):
         self._log("method_to_support_foxnsox_extension", context)
 
 
-class ResourceExtensionTest(testtools.TestCase):
+class ResourceExtensionTest(base.BaseTestCase):
 
     class ResourceExtensionController(wsgi.Controller):
 
@@ -308,7 +308,7 @@ class ResourceExtensionTest(testtools.TestCase):
         self.assertEqual(404, response.status_int)
 
 
-class ActionExtensionTest(testtools.TestCase):
+class ActionExtensionTest(base.BaseTestCase):
 
     def setUp(self):
         super(ActionExtensionTest, self).setUp()
@@ -355,7 +355,7 @@ class ActionExtensionTest(testtools.TestCase):
         self.assertEqual(404, response.status_int)
 
 
-class RequestExtensionTest(testtools.TestCase):
+class RequestExtensionTest(base.BaseTestCase):
 
     def test_headers_can_be_extended(self):
         def extend_headers(req, res):
@@ -422,7 +422,7 @@ class RequestExtensionTest(testtools.TestCase):
         return _setup_extensions_test_app(manager)
 
 
-class ExtensionManagerTest(testtools.TestCase):
+class ExtensionManagerTest(base.BaseTestCase):
 
     def test_invalid_extensions_are_not_registered(self):
 
@@ -442,7 +442,7 @@ class ExtensionManagerTest(testtools.TestCase):
         self.assertFalse('invalid_extension' in ext_mgr.extensions)
 
 
-class PluginAwareExtensionManagerTest(testtools.TestCase):
+class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
     def test_unsupported_extensions_are_not_loaded(self):
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1", "e3"])

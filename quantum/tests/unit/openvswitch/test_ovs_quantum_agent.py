@@ -19,13 +19,14 @@ from oslo.config import cfg
 import testtools
 
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
+from quantum.tests import base
 
 
 NOTIFIER = ('quantum.plugins.openvswitch.'
             'ovs_quantum_plugin.AgentNotifierApi')
 
 
-class CreateAgentConfigMap(testtools.TestCase):
+class CreateAgentConfigMap(base.BaseTestCase):
 
     def test_create_agent_config_map_succeeds(self):
         self.assertTrue(ovs_quantum_agent.create_agent_config_map(cfg.CONF))
@@ -38,7 +39,7 @@ class CreateAgentConfigMap(testtools.TestCase):
             ovs_quantum_agent.create_agent_config_map(cfg.CONF)
 
 
-class TestOvsQuantumAgent(testtools.TestCase):
+class TestOvsQuantumAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestOvsQuantumAgent, self).setUp()

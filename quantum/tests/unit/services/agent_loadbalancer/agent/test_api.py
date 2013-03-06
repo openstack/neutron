@@ -17,12 +17,12 @@
 # @author: Mark McClain, DreamHost
 
 import mock
-import testtools
 
 from quantum.plugins.services.agent_loadbalancer.agent import api
+from quantum.tests import base
 
 
-class TestApiCache(testtools.TestCase):
+class TestApiCache(base.BaseTestCase):
     def setUp(self):
         super(TestApiCache, self).setUp()
         self.addCleanup(mock.patch.stopall)

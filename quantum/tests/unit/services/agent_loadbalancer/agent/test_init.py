@@ -22,9 +22,10 @@ from oslo.config import cfg
 import testtools
 
 from quantum.plugins.services.agent_loadbalancer import agent
+from quantum.tests import base
 
 
-class TestLbaasService(testtools.TestCase):
+class TestLbaasService(base.BaseTestCase):
     def setUp(self):
         super(TestLbaasService, self).setUp()
         self.addCleanup(cfg.CONF.reset)

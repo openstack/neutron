@@ -17,10 +17,10 @@
 
 import mock
 from mock import call
-import testtools
 
 from quantum.agent.linux.iptables_firewall import IptablesFirewallDriver
 from quantum.tests.unit import test_api_v2
+from quantum.tests import base
 
 _uuid = test_api_v2._uuid
 FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
@@ -29,7 +29,7 @@ FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
 
 
-class IptablesFirewallTestCase(testtools.TestCase):
+class IptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
         super(IptablesFirewallTestCase, self).setUp()
         self.utils_exec_p = mock.patch(

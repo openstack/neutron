@@ -21,12 +21,12 @@ import inspect
 import os
 
 import mox
-import testtools
 
 from quantum.agent.linux import iptables_manager
+from quantum.tests import base
 
 
-class IptablesManagerStateFulTestCase(testtools.TestCase):
+class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateFulTestCase, self).setUp()
@@ -294,7 +294,7 @@ class IptablesManagerStateFulTestCase(testtools.TestCase):
         self.mox.VerifyAll()
 
 
-class IptablesManagerStateLessTestCase(testtools.TestCase):
+class IptablesManagerStateLessTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateLessTestCase, self).setUp()

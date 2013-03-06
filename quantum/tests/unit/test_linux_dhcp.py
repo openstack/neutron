@@ -20,11 +20,11 @@ import socket
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
 from quantum.openstack.common import jsonutils
+from quantum.tests import base
 
 
 class FakeIPAllocation:
@@ -134,7 +134,7 @@ class FakeV4NoGatewayNetwork:
     ports = [FakePort1()]
 
 
-class TestDhcpBase(testtools.TestCase):
+class TestDhcpBase(base.BaseTestCase):
     def test_base_abc_error(self):
         self.assertRaises(TypeError, dhcp.DhcpBase, None)
 
@@ -179,7 +179,7 @@ class LocalChild(dhcp.DhcpLocalProcess):
         self.called.append('spawn')
 
 
-class TestBase(testtools.TestCase):
+class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
         root = os.path.dirname(os.path.dirname(__file__))

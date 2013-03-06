@@ -17,13 +17,13 @@
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.agent import rpc
 from quantum.openstack.common import context
+from quantum.tests import base
 
 
-class AgentRPCPluginApi(testtools.TestCase):
+class AgentRPCPluginApi(base.BaseTestCase):
     def _test_rpc_call(self, method):
         agent = rpc.PluginApi('fake_topic')
         ctxt = context.RequestContext('fake_user', 'fake_project')
@@ -47,7 +47,7 @@ class AgentRPCPluginApi(testtools.TestCase):
         self._test_rpc_call('tunnel_sync')
 
 
-class AgentRPCMethods(testtools.TestCase):
+class AgentRPCMethods(base.BaseTestCase):
     def test_create_consumers(self):
         dispatcher = mock.Mock()
         expected = [

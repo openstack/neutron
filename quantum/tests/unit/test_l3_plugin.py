@@ -45,6 +45,7 @@ from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common.notifier import test_notifier
 from quantum.openstack.common import uuidutils
+from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
 from quantum.tests.unit import test_extensions

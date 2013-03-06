@@ -22,7 +22,6 @@ import logging
 import os.path
 
 import routes
-import testtools
 import webob
 from webtest import TestApp
 
@@ -42,6 +41,7 @@ from quantum.openstack.common import jsonutils
 from quantum.plugins.cisco.db import api as db
 from quantum.plugins.cisco import l2network_plugin
 from quantum.plugins.cisco.l2network_plugin import L2Network
+from quantum.tests import base
 from quantum.tests.unit.extension_stubs import StubBaseAppController
 from quantum import wsgi
 
@@ -150,7 +150,7 @@ class ExtensionsTestApp(wsgi.Router):
         self._delete_network(net_id)
 
 
-class QosExtensionTest(testtools.TestCase):
+class QosExtensionTest(base.BaseTestCase):
 
     def setUp(self):
 
@@ -406,7 +406,7 @@ class QosExtensionTest(testtools.TestCase):
         db.clear_db()
 
 
-class CredentialExtensionTest(testtools.TestCase):
+class CredentialExtensionTest(base.BaseTestCase):
 
     def setUp(self):
 

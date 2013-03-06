@@ -34,6 +34,7 @@ from quantum.db import servicetype_db as st_db
 from quantum.extensions import routedserviceinsertion as rsi
 from quantum.extensions import routerservicetype as rst
 from quantum.plugins.common import constants
+from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import testlib_api
 from quantum import wsgi
@@ -154,7 +155,7 @@ class RouterServiceInsertionTestPlugin(
         pass
 
 
-class RouterServiceInsertionTestCase(testtools.TestCase):
+class RouterServiceInsertionTestCase(base.BaseTestCase):
     def setUp(self):
         super(RouterServiceInsertionTestCase, self).setUp()
         plugin = (

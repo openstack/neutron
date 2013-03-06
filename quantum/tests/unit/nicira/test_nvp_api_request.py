@@ -10,7 +10,7 @@ eventlet.monkey_patch()
 import logging
 import urllib2
 
-import testtools
+from quantum.tests import base
 
 logging.basicConfig(level=logging.DEBUG)
 lg = logging.getLogger("test_nvp_api_request")
@@ -22,6 +22,6 @@ def fetch(url):
     return urllib2.urlopen(url).read()
 
 
-class NvpApiRequestTest(testtools.TestCase):
+class NvpApiRequestTest(base.BaseTestCase):
 
     pass

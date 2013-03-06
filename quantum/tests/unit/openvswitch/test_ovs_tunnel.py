@@ -18,7 +18,6 @@
 
 import mox
 from oslo.config import cfg
-import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
@@ -27,6 +26,7 @@ from quantum.agent import rpc
 from quantum.openstack.common import log
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.plugins.openvswitch.common import constants
+from quantum.tests import base
 
 
 # Useful global dummy variables.
@@ -59,7 +59,7 @@ class DummyVlanBinding:
         self.vlan_id = vlan_id
 
 
-class TunnelTest(testtools.TestCase):
+class TunnelTest(base.BaseTestCase):
 
     def setUp(self):
         super(TunnelTest, self).setUp()

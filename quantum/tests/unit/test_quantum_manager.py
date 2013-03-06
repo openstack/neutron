@@ -19,7 +19,6 @@ import os
 import types
 
 import fixtures
-import testtools
 
 from oslo.config import cfg
 
@@ -28,6 +27,7 @@ from quantum.common.test_lib import test_config
 from quantum.manager import QuantumManager
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
+from quantum.tests import base
 from quantum.tests.unit import dummy_plugin
 
 
@@ -41,7 +41,7 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class QuantumManagerTestCase(testtools.TestCase):
+class QuantumManagerTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(QuantumManagerTestCase, self).setUp()

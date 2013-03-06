@@ -16,12 +16,12 @@
 #    under the License.
 
 import mock
-import testtools
 
 from quantum import context
+from quantum.tests import base
 
 
-class TestQuantumContext(testtools.TestCase):
+class TestQuantumContext(base.BaseTestCase):
 
     def setUp(self):
         super(TestQuantumContext, self).setUp()

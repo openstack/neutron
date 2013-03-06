@@ -18,15 +18,15 @@
 
 import contextlib
 import mock
-import testtools
 
 from quantum.common import exceptions
 from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
     namespace_driver
 )
+from quantum.tests import base
 
 
-class TestHaproxyNSDriver(testtools.TestCase):
+class TestHaproxyNSDriver(base.BaseTestCase):
     def setUp(self):
         super(TestHaproxyNSDriver, self).setUp()
 

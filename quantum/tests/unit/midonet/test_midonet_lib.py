@@ -19,15 +19,15 @@
 # @author: Ryu Ishimoto, Midokura Japan KK
 # @author: Tomoe Sugihara, Midokura Japan KK
 
-import testtools
 import uuid
 
 import mock
 
 from quantum.plugins.midonet import midonet_lib
+from quantum.tests import base
 
 
-class MidonetLibTestCase(testtools.TestCase):
+class MidonetLibTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(MidonetLibTestCase, self).setUp()

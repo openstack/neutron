@@ -32,6 +32,7 @@ from quantum import manager
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_networkgw
                                                                  as networkgw)
 from quantum.plugins.nicira.nicira_nvp_plugin import nicira_networkgw_db
+from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
 from quantum.tests.unit import test_extensions
@@ -53,7 +54,7 @@ class TestExtensionManager(object):
         return []
 
 
-class NetworkGatewayExtensionTestCase(testtools.TestCase):
+class NetworkGatewayExtensionTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(NetworkGatewayExtensionTestCase, self).setUp()

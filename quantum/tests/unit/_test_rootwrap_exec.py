@@ -18,16 +18,16 @@
 import os
 
 import fixtures
-import testtools
 
 from quantum.agent.linux import utils
 from quantum.openstack.common import log as logging
+from quantum.tests import base
 
 
 LOG = logging.getLogger(__name__)
 
 
-class RootwrapTestExec(testtools.TestCase):
+class RootwrapTestExec(base.BaseTestCase):
     """Simple unit test to test the basic rootwrap mechanism
 
     Essentially hello-world.  Just run a command as root and check that

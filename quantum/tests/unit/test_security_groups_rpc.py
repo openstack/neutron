@@ -21,7 +21,6 @@ import mock
 from mock import call
 import mox
 from oslo.config import cfg
-import testtools
 
 from quantum.agent import firewall as firewall_base
 from quantum.agent.linux import iptables_manager
@@ -31,6 +30,7 @@ from quantum import context
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common.rpc import proxy
+from quantum.tests import base
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_iptables_firewall as test_fw
 
@@ -370,7 +370,7 @@ class SGServerRpcCallBackMixinTestCaseXML(SGServerRpcCallBackMixinTestCase):
     fmt = 'xml'
 
 
-class SGAgentRpcCallBackMixinTestCase(testtools.TestCase):
+class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
     def setUp(self):
         super(SGAgentRpcCallBackMixinTestCase, self).setUp()
         self.rpc = sg_rpc.SecurityGroupAgentRpcCallbackMixin()
@@ -394,7 +394,7 @@ class SGAgentRpcCallBackMixinTestCase(testtools.TestCase):
             [call.security_groups_provider_updated()])
 
 
-class SecurityGroupAgentRpcTestCase(testtools.TestCase):
+class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
     def setUp(self):
         super(SecurityGroupAgentRpcTestCase, self).setUp()
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
@@ -479,7 +479,7 @@ class FakeSGRpcApi(agent_rpc.PluginApi,
     pass
 
 
-class SecurityGroupServerRpcApiTestCase(testtools.TestCase):
+class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
     def setUp(self):
         super(SecurityGroupServerRpcApiTestCase, self).setUp()
         self.rpc = FakeSGRpcApi('fake_topic')
@@ -502,7 +502,7 @@ class FakeSGNotifierAPI(proxy.RpcProxy,
     pass
 
 
-class SecurityGroupAgentRpcApiTestCase(testtools.TestCase):
+class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
     def setUp(self):
         super(SecurityGroupAgentRpcApiTestCase, self).setUp()
         self.notifier = FakeSGNotifierAPI(topic='fake',
@@ -945,7 +945,7 @@ IPTABLES_FILTER_V6_EMPTY = """:%(bn)s-(%(chains)s) - [0:0]
 FIREWALL_BASE_PACKAGE = 'quantum.agent.linux.iptables_firewall.'
 
 
-class TestSecurityGroupAgentWithIptables(testtools.TestCase):
+class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     FIREWALL_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
     PHYSDEV_INGRESS = 'physdev-out'
     PHYSDEV_EGRESS = 'physdev-in'

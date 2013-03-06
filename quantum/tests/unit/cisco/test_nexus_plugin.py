@@ -14,13 +14,13 @@
 # limitations under the License.
 
 import mock
-import testtools
 
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
+from quantum.tests import base
 
 
 NEXUS_IP_ADDRESS = '1.1.1.1'
@@ -34,7 +34,7 @@ NEXUS_DRIVER = ('quantum.plugins.cisco.tests.unit.v2.nexus.'
                 'fake_nexus_driver.CiscoNEXUSFakeDriver')
 
 
-class TestCiscoNexusPlugin(testtools.TestCase):
+class TestCiscoNexusPlugin(base.BaseTestCase):
 
     def setUp(self):
         """

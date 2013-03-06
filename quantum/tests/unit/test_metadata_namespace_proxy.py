@@ -23,6 +23,7 @@ import testtools
 import webob
 
 from quantum.agent.metadata import namespace_proxy as ns_proxy
+from quantum.tests import base
 
 
 class FakeConf(object):
@@ -37,7 +38,7 @@ class FakeConf(object):
     metadata_proxy_shared_secret = 'secret'
 
 
-class TestUnixDomainHttpConnection(testtools.TestCase):
+class TestUnixDomainHttpConnection(base.BaseTestCase):
     def test_connect(self):
         with mock.patch.object(ns_proxy, 'cfg') as cfg:
             cfg.CONF.metadata_proxy_socket = '/the/path'
@@ -55,7 +56,7 @@ class TestUnixDomainHttpConnection(testtools.TestCase):
                 self.assertEqual(conn.timeout, 3)
 
 
-class TestNetworkMetadataProxyHandler(testtools.TestCase):
+class TestNetworkMetadataProxyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestNetworkMetadataProxyHandler, self).setUp()
         self.log_p = mock.patch.object(ns_proxy, 'LOG')
@@ -231,7 +232,7 @@ class TestNetworkMetadataProxyHandler(testtools.TestCase):
             )
 
 
-class TestProxyDaemon(testtools.TestCase):
+class TestProxyDaemon(base.BaseTestCase):
     def test_init(self):
         with mock.patch('quantum.agent.linux.daemon.Pidfile') as pf:
             pd = ns_proxy.ProxyDaemon('pidfile', 9697, 'net_id', 'router_id')
