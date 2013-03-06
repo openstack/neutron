@@ -170,7 +170,7 @@ def parse_clusters_opts(clusters_opts, concurrent_connections,
                     "'nvp_controller_connection' is specified in the "
                     "[CLUSTER:%s] section") % c_opts['name']
             LOG.exception(msg)
-            raise nvp_exc.NvpPluginException(err_desc=msg)
+            raise nvp_exc.NvpPluginException(err_msg=msg)
 
         api_providers = [(x['ip'], x['port'], True)
                          for x in cluster.controllers]
@@ -278,7 +278,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     "[CLUSTER:<cluster_name>] section is specified in "
                     "the NVP Plugin configuration file.")
             LOG.error(msg)
-            raise nvp_exc.NvpPluginException(err_desc=msg)
+            raise nvp_exc.NvpPluginException(err_msg=msg)
 
         self.clusters, self.default_cluster = parse_clusters_opts(
             self.clusters_opts, self.nvp_opts.concurrent_connections,
@@ -357,12 +357,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         except NvpApiClient.NvpApiException:
             LOG.exception(_("Unable to create port on NVP logical router %s"),
                           router_id)
-            raise nvp_exc.NvpPluginException(_("Unable to create logical "
-                                               "router port for quantum port "
-                                               "id %(port_id)s on router "
-                                               "%(router_id)s"),
-                                             {'port_id': port_data.get('id'),
-                                              'router_id': router_id})
+            raise nvp_exc.NvpPluginException(
+                err_msg=_("Unable to create logical router port for quantum "
+                          "port id %(port_id)s on router %(router_id)s") %
+                {'port_id': port_data.get('id'), 'router_id': router_id})
         self._update_router_port_attachment(cluster, context, router_id,
                                             port_data, attachment_type,
                                             attachment, attachment_vlan,
@@ -443,7 +441,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             err_desc = _(("An exception occured while selecting logical "
                           "switch for the port"))
             LOG.exception(err_desc)
-            raise nvp_exc.NvpPluginException(err_desc=err_desc)
+            raise nvp_exc.NvpPluginException(err_msg=err_desc)
 
     def _nvp_create_port_helper(self, cluster, ls_uuid, port_data,
                                 do_port_security=True):
@@ -2013,10 +2011,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                   devices)
             nvp_uuid = nvp_res.get('uuid')
         except Exception:
-            raise nvp_exc.NvpPluginException(_("Create_l2_gw_service did not "
-                                               "return an uuid for the newly "
-                                               "created resource:%s") %
-                                             nvp_res)
+            raise nvp_exc.NvpPluginException(
+                err_msg=_("Create_l2_gw_service did not "
+                          "return an uuid for the newly "
+                          "created resource:%s") % nvp_res)
         gw_data['id'] = nvp_uuid
         return super(NvpPluginV2, self).create_network_gateway(context,
                                                                network_gateway)
