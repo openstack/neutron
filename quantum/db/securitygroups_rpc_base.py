@@ -224,21 +224,6 @@ class SecurityGroupServerRpcCallbackMixin(object):
             port['security_group_rules'] = updated_rule
         return ports
 
-    def _add_default_egress_rule(self, port, ethertype, ips):
-        """ Adding default egress rule which allows all egress traffic. """
-        egress_rule = [r for r in port['security_group_rules']
-                       if (r['direction'] == 'egress' and
-                           r['ethertype'] == ethertype)]
-        if len(egress_rule) > 0:
-            return
-        for ip in port['fixed_ips']:
-            version = netaddr.IPAddress(ip).version
-            if "IPv%s" % version == ethertype:
-                default_egress_rule = {'direction': 'egress',
-                                       'ethertype': ethertype}
-                port['security_group_rules'].append(default_egress_rule)
-                return
-
     def _add_ingress_dhcp_rule(self, port, ips):
         dhcp_ips = ips.get(port['network_id'])
         for dhcp_ip in dhcp_ips:
@@ -273,8 +258,6 @@ class SecurityGroupServerRpcCallbackMixin(object):
         network_ids = self._select_network_ids(ports)
         ips = self._select_dhcp_ips_for_network_ids(context, network_ids)
         for port in ports.values():
-            self._add_default_egress_rule(port, q_const.IPv4, ips)
-            self._add_default_egress_rule(port, q_const.IPv6, ips)
             self._add_ingress_ra_rule(port, ips)
             self._add_ingress_dhcp_rule(port, ips)
 

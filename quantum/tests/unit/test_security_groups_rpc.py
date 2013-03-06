@@ -84,7 +84,11 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'ingress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'ingress',
                              'protocol': 'tcp', 'ethertype': 'IPv4',
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
@@ -94,7 +98,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'port_range_max': 23, 'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'source_ip_prefix': fake_prefix},
-                            {'ethertype': 'IPv4', 'direction': 'egress'},
                             ]
                 self.assertEqual(port_rpc['security_group_rules'],
                                  expected)
@@ -133,7 +136,11 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress',
                              'protocol': 'tcp', 'ethertype': 'IPv4',
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
@@ -186,13 +193,20 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': u'ingress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg2_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg2_id},
+                            {'direction': u'ingress',
                              'source_ip_prefix': u'10.0.0.3/32',
                              'protocol': u'tcp', 'ethertype': u'IPv4',
                              'port_range_max': 25, 'port_range_min': 24,
                              'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
-                            {'ethertype': 'IPv4', 'direction': 'egress'},
                             ]
                 self.assertEqual(port_rpc['security_group_rules'],
                                  expected)
@@ -237,7 +251,11 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'ingress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'ingress',
                              'protocol': 'tcp', 'ethertype': 'IPv6',
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
@@ -247,7 +265,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                              'port_range_max': 23, 'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'source_ip_prefix': fake_prefix},
-                            {'ethertype': 'IPv6', 'direction': 'egress'},
                             ]
                 self.assertEqual(port_rpc['security_group_rules'],
                                  expected)
@@ -292,7 +309,11 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress',
                              'protocol': 'tcp', 'ethertype': 'IPv6',
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
@@ -352,13 +373,20 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'ingress',
+                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg1_id},
+                            {'direction': 'egress', 'ethertype': 'IPv4',
+                             'security_group_id': sg2_id},
+                            {'direction': 'egress', 'ethertype': 'IPv6',
+                             'security_group_id': sg2_id},
+                            {'direction': 'ingress',
                              'source_ip_prefix': 'fe80::3/128',
                              'protocol': 'tcp', 'ethertype': 'IPv6',
                              'port_range_max': 25, 'port_range_min': 24,
                              'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
-                            {'ethertype': 'IPv6', 'direction': 'egress'},
                             ]
                 self.assertEqual(port_rpc['security_group_rules'],
                                  expected)
