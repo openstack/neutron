@@ -113,7 +113,8 @@ class NvpMetadataAccess(object):
                                          {'network': {'id': meta_net_id}},
                                          'network.delete.end')
 
-    def _handle_metadata_access_network(self, context, router_id):
+    def _handle_metadata_access_network(self, context, router_id,
+                                        do_create=True):
         if not cfg.CONF.NVP.enable_metadata_access_network:
             LOG.debug(_("Metadata access network is disabled"))
             return
@@ -128,13 +129,16 @@ class NvpMetadataAccess(object):
                          'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
         with ctx_elevated.session.begin(subtransactions=True):
             ports = self.get_ports(ctx_elevated, filters=device_filter)
+            # Filter out ports without an IP (those are 'stale' router ports)
+            ports = [port for port in ports if port['fixed_ips']]
             try:
                 if ports:
-                    if not self._find_metadata_port(ctx_elevated, ports):
+                    if (do_create and
+                        not self._find_metadata_port(ctx_elevated, ports)):
                         self._create_metadata_access_network(context,
                                                              router_id)
                     elif len(ports) == 1:
-                        # The only port left if the metadata port
+                        # The only port left is the metadata port
                         self._destroy_metadata_access_network(context,
                                                               router_id,
                                                               ports)
