@@ -132,6 +132,11 @@ def parse_config():
         cfg.CONF.set_override(
             'api_extensions_path',
             'quantum/plugins/nicira/nicira_nvp_plugin/extensions')
+    if (cfg.CONF.NVP.enable_metadata_access_network and
+        not cfg.CONF.allow_overlapping_ips):
+        LOG.warn(_("Overlapping IPs must be enabled in order to setup "
+                   "the metadata access network. Metadata access in "
+                   "routed mode will not work with this configuration"))
     return cfg.CONF.NVP, clusters_options
 
 

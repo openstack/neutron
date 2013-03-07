@@ -117,6 +117,10 @@ class NvpMetadataAccess(object):
         if not cfg.CONF.NVP.enable_metadata_access_network:
             LOG.debug(_("Metadata access network is disabled"))
             return
+        if not cfg.CONF.allow_overlapping_ips:
+            LOG.warn(_("Overlapping IPs must be enabled in order to setup "
+                       "the metadata access network"))
+            return
         # As we'll use a different device_owner for metadata interface
         # this query will return only 'real' router interfaces
         ctx_elevated = context.elevated()
