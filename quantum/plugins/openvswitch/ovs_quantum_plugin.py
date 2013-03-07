@@ -569,13 +569,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._process_port_create_security_group(
                 context, port['id'], sgids)
             self._extend_port_dict_security_group(context, port)
-        #Note(nati): In order to allow dhcp packets,
-        # changes for dhcp ip should be notifified
-        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
-            self.notifier.security_groups_provider_updated(context)
-        else:
-            self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)
         return self._extend_port_dict_binding(context, port)
 
     def get_port(self, context, id, fields=None):
@@ -641,5 +635,4 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             super(OVSQuantumPluginV2, self).delete_port(context, id)
 
-        self.notifier.security_groups_member_updated(
-            context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)

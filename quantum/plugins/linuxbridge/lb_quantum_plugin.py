@@ -506,11 +506,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._process_port_create_security_group(
                 context, port['id'], sgids)
             self._extend_port_dict_security_group(context, port)
-        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
-            self.notifier.security_groups_provider_updated(context)
-        else:
-            self.notifier.security_groups_member_updated(
-                context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)
         return self._extend_port_dict_binding(context, port)
 
     def update_port(self, context, id, port):
@@ -548,8 +544,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             super(LinuxBridgePluginV2, self).delete_port(context, id)
 
-        self.notifier.security_groups_member_updated(
-            context, port.get(ext_sg.SECURITYGROUPS))
+        self.notify_security_groups_member_updated(context, port)
 
     def _notify_port_updated(self, context, port):
         binding = db.get_network_binding(context.session,

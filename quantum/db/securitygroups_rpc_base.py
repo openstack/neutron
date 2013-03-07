@@ -96,10 +96,27 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             not utils.compare_elements(
                 original_port.get(ext_sg.SECURITYGROUPS),
                 updated_port.get(ext_sg.SECURITYGROUPS))):
-            self.notifier.security_groups_member_updated(
-                context, updated_port.get(ext_sg.SECURITYGROUPS))
+            self.notify_security_groups_member_updated(
+                context, updated_port)
             need_notify = True
         return need_notify
+
+    def notify_security_groups_member_updated(self, context, port):
+        """ notify update event of security group members
+
+        The agent setups the iptables rule to allow
+        ingress packet from the dhcp server (as a part of provider rules),
+        so we need to notify an update of dhcp server ip
+        address to the plugin agent.
+        security_groups_provider_updated() just notifies that an event
+        occurs and the plugin agent fetches the update provider
+        rule in the other RPC call (security_group_rules_for_devices).
+        """
+        if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
+            self.notifier.security_groups_provider_updated(context)
+        else:
+            self.notifier.security_groups_member_updated(
+                context, port.get(ext_sg.SECURITYGROUPS))
 
 
 class SecurityGroupServerRpcCallbackMixin(object):
