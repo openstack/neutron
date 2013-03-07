@@ -23,6 +23,7 @@ from quantum.api.v2 import attributes
 from quantum.extensions import securitygroup as ext_sg
 from quantum import manager
 from quantum.plugins.ryu.db import api_v2 as api_db_v2
+from quantum.tests.unit.ryu import fake_ryu
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 
@@ -40,6 +41,7 @@ class RyuSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
         test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
         self.addCleanup(mock.patch.stopall)
+        self.fake_ryu = fake_ryu.patch_fake_ryu_client().start()
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

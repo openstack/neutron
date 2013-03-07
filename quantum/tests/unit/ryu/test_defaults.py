@@ -26,8 +26,6 @@ class ConfigurationTest(base.BaseTestCase):
     """Configuration file Tests"""
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
-        self.assertEqual(-1, cfg.CONF.DATABASE.sql_max_retries)
-        self.assertEqual(2, cfg.CONF.DATABASE.reconnect_interval)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
         self.assertEqual('127.0.0.1:8080', cfg.CONF.OVS.openflow_rest_api)
