@@ -929,10 +929,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         for port in ports:
             fixed_ips = port.get('fixed_ips', [])
             if len(fixed_ips) > 1:
-                LOG.error(_("Ignoring multiple IPs on router port %s"),
-                          port['id'])
+                LOG.info(_("Ignoring multiple IPs on router port %s"),
+                         port['id'])
                 continue
-            # Empty fixed_ips should not happen
+            elif not fixed_ips:
+                # Skip ports without IPs, which can occur if a subnet
+                # attached to a router is deleted
+                LOG.info(_("Skipping port %s as no IP is configure on it"),
+                         port['id'])
+                continue
             fixed_ip = fixed_ips[0]
             my_ports = subnet_id_ports_dict.get(fixed_ip['subnet_id'], [])
             my_ports.append(port)
