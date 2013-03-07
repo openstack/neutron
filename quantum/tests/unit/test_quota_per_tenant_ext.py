@@ -213,3 +213,106 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
 class QuotaExtensionTestCaseXML(QuotaExtensionTestCase):
     fmt = 'xml'
+
+
+class QuotaExtensionCfgTestCase(testlib_api.WebTestCase):
+    fmt = 'json'
+
+    def setUp(self):
+        super(QuotaExtensionCfgTestCase, self).setUp()
+        db._ENGINE = None
+        db._MAKER = None
+        # Ensure 'stale' patched copies of the plugin are never returned
+        manager.QuantumManager._instance = None
+
+        # Ensure existing ExtensionManager is not used
+        extensions.PluginAwareExtensionManager._instance = None
+
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
+
+        # Create the default configurations
+        args = ['--config-file', test_extensions.etcdir('quantum.conf.test')]
+        config.parse(args=args)
+
+        # Update the plugin and extensions path
+        cfg.CONF.set_override('core_plugin', TARGET_PLUGIN)
+        cfg.CONF.set_override(
+            'quota_items',
+            ['network', 'subnet', 'port', 'extra1'],
+            group='QUOTAS')
+        quota.QUOTAS = quota.QuotaEngine()
+        quota.register_resources_from_config()
+        self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
+        self.plugin = self._plugin_patcher.start()
+        self.plugin.return_value.supported_extension_aliases = ['quotas']
+        # QUOTAS will regester the items in conf when starting
+        # extra1 here is added later, so have to do it manually
+        quota.QUOTAS.register_resource_by_name('extra1')
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        l2network_db_v2.initialize()
+        app = config.load_paste_app('extensions_test_app')
+        ext_middleware = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        self.api = webtest.TestApp(ext_middleware)
+        super(QuotaExtensionCfgTestCase, self).setUp()
+
+    def tearDown(self):
+        self._plugin_patcher.stop()
+        self.api = None
+        self.plugin = None
+        db._ENGINE = None
+        db._MAKER = None
+        cfg.CONF.reset()
+
+        # Restore the global RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
+        super(QuotaExtensionCfgTestCase, self).tearDown()
+
+    def test_quotas_default_values(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id)}
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env)
+        quota = self.deserialize(res)
+        self.assertEqual(10, quota['quota']['network'])
+        self.assertEqual(10, quota['quota']['subnet'])
+        self.assertEqual(50, quota['quota']['port'])
+        self.assertEqual(-1, quota['quota']['extra1'])
+
+    def test_show_quotas_with_admin(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id + '2',
+                                                  is_admin=True)}
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env)
+        self.assertEqual(200, res.status_int)
+
+    def test_show_quotas_without_admin_forbidden(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id + '2',
+                                                  is_admin=False)}
+        res = self.api.get(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           extra_environ=env, expect_errors=True)
+        self.assertEqual(403, res.status_int)
+
+    def test_update_quotas_forbidden(self):
+        tenant_id = 'tenant_id1'
+        quotas = {'quota': {'network': 100}}
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas),
+                           expect_errors=True)
+        self.assertEqual(403, res.status_int)
+
+    def test_delete_quotas_forbidden(self):
+        tenant_id = 'tenant_id1'
+        env = {'quantum.context': context.Context('', tenant_id,
+                                                  is_admin=False)}
+        res = self.api.delete(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                              extra_environ=env, expect_errors=True)
+        self.assertEqual(403, res.status_int)
+
+
+class QuotaExtensionCfgTestCaseXML(QuotaExtensionCfgTestCase):
+    fmt = 'xml'

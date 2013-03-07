@@ -41,7 +41,7 @@ class QuotaSetsController(wsgi.Controller):
     def __init__(self, plugin):
         self._resource_name = RESOURCE_NAME
         self._plugin = plugin
-        self._driver = importutils.import_class(DB_QUOTA_DRIVER)
+        self._driver = importutils.import_class(cfg.CONF.QUOTAS.quota_driver)
         self._update_extended_attributes = True
 
     def _update_attributes(self):
@@ -56,7 +56,7 @@ class QuotaSetsController(wsgi.Controller):
     def _get_body(self, request):
         body = self._deserialize(request.body,
                                  request.best_match_content_type())
-        if self._update_extended_attributes is True:
+        if self._update_extended_attributes:
             self._update_attributes()
 
         attr_info = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
@@ -69,7 +69,7 @@ class QuotaSetsController(wsgi.Controller):
             request.context, QUOTAS.resources, tenant_id)
 
     def create(self, request, body=None):
-        raise NotImplementedError()
+        raise webob.exc.HTTPNotImplemented()
 
     def index(self, request):
         context = request.context
@@ -127,7 +127,7 @@ class Quotasv2(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
-        return "Quotas for each tenant"
+        return "Quota management support"
 
     @classmethod
     def get_alias(cls):
@@ -135,8 +135,10 @@ class Quotasv2(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return ("Expose functions for cloud admin to update quotas"
-                "for each tenant")
+        description = 'Expose functions for quotas management'
+        if cfg.CONF.QUOTAS.quota_driver == DB_QUOTA_DRIVER:
+            description += ' per tenant'
+        return description
 
     @classmethod
     def get_namespace(cls):
@@ -160,8 +162,3 @@ class Quotasv2(extensions.ExtensionDescriptor):
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}
-
-    def check_env(self):
-        if cfg.CONF.QUOTAS.quota_driver != DB_QUOTA_DRIVER:
-            msg = _('Quota driver %s is needed.') % DB_QUOTA_DRIVER
-            raise exceptions.InvalidExtenstionEnv(reason=msg)

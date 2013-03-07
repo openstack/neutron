@@ -17,6 +17,7 @@
 """Quotas for instances, volumes, and floating ips."""
 
 from oslo.config import cfg
+import webob
 
 from quantum.common import exceptions
 from quantum.openstack.common import importutils
@@ -123,6 +124,26 @@ class ConfDriver(object):
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs), quotas=quotas,
                                        usages={})
+
+    @staticmethod
+    def get_tenant_quotas(context, resources, tenant_id):
+        quotas = {}
+        sub_resources = dict((k, v) for k, v in resources.items())
+        for resource in sub_resources.values():
+            quotas[resource.name] = resource.default
+        return quotas
+
+    @staticmethod
+    def get_all_quotas(context, resources):
+        return []
+
+    @staticmethod
+    def delete_tenant_quota(context, tenant_id):
+        raise webob.exc.HTTPForbidden()
+
+    @staticmethod
+    def update_quota_limit(context, tenant_id, resource, limit):
+        raise webob.exc.HTTPForbidden()
 
 
 class BaseResource(object):
