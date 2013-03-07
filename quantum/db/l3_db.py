@@ -626,50 +626,39 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             msg = _("Network %s is not a valid external network") % f_net_id
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
-        try:
-            with context.session.begin(subtransactions=True):
-                # This external port is never exposed to the tenant.
-                # it is used purely for internal system and admin use when
-                # managing floating IPs.
-                external_port = self.create_port(context.elevated(), {
-                    'port':
-                    {'tenant_id': '',  # tenant intentionally not set
-                     'network_id': f_net_id,
-                     'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                     'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                     'admin_state_up': True,
-                     'device_id': fip_id,
-                     'device_owner': DEVICE_OWNER_FLOATINGIP,
-                     'name': ''}})
-                # Ensure IP addresses are allocated on external port
-                if not external_port['fixed_ips']:
-                    msg = _("Unable to find any IP address on external "
-                            "network")
-                    raise q_exc.BadRequest(resource='floatingip', msg=msg)
+        with context.session.begin(subtransactions=True):
+            # This external port is never exposed to the tenant.
+            # it is used purely for internal system and admin use when
+            # managing floating IPs.
+            external_port = self.create_port(context.elevated(), {
+                'port':
+                {'tenant_id': '',  # tenant intentionally not set
+                 'network_id': f_net_id,
+                 'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                 'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                 'admin_state_up': True,
+                 'device_id': fip_id,
+                 'device_owner': DEVICE_OWNER_FLOATINGIP,
+                 'name': ''}})
+            # Ensure IP addresses are allocated on external port
+            if not external_port['fixed_ips']:
+                raise q_exc.ExternalIpAddressExhausted(net_id=f_net_id)
 
-                floating_fixed_ip = external_port['fixed_ips'][0]
-                floating_ip_address = floating_fixed_ip['ip_address']
-                floatingip_db = FloatingIP(
-                    id=fip_id,
-                    tenant_id=tenant_id,
-                    floating_network_id=fip['floating_network_id'],
-                    floating_ip_address=floating_ip_address,
-                    floating_port_id=external_port['id'])
-                fip['tenant_id'] = tenant_id
-                # Update association with internal port
-                # and define external IP address
-                self._update_fip_assoc(context, fip,
-                                       floatingip_db, external_port)
-                context.session.add(floatingip_db)
-        # TODO(salvatore-orlando): Avoid broad catch
-        # Maybe by introducing base class for L3 exceptions
-        except q_exc.BadRequest:
-            LOG.exception(_("Unable to create Floating ip due to a "
-                            "malformed request"))
-            raise
-        except Exception:
-            LOG.exception(_("Floating IP association failed"))
-            raise
+            floating_fixed_ip = external_port['fixed_ips'][0]
+            floating_ip_address = floating_fixed_ip['ip_address']
+            floatingip_db = FloatingIP(
+                id=fip_id,
+                tenant_id=tenant_id,
+                floating_network_id=fip['floating_network_id'],
+                floating_ip_address=floating_ip_address,
+                floating_port_id=external_port['id'])
+            fip['tenant_id'] = tenant_id
+            # Update association with internal port
+            # and define external IP address
+            self._update_fip_assoc(context, fip,
+                                   floatingip_db, external_port)
+            context.session.add(floatingip_db)
+
         router_id = floatingip_db['router_id']
         if router_id:
             routers = self.get_sync_data(context.elevated(), [router_id])

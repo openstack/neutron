@@ -249,6 +249,11 @@ class InvalidExtensionEnv(BadRequest):
     message = _("Invalid extension environment: %(reason)s")
 
 
+class ExternalIpAddressExhausted(BadRequest):
+    message = _("Unable to find any IP address on external "
+                "network %(net_id)s.")
+
+
 class TooManyExternalNetworks(QuantumException):
     message = _("More than one external network exists")
 
