@@ -484,7 +484,7 @@ class ExtensionManager(object):
         if hasattr(extension, 'check_env'):
             try:
                 extension.check_env()
-            except exceptions.InvalidExtenstionEnv as ex:
+            except exceptions.InvalidExtensionEnv as ex:
                 LOG.warn(_("Exception loading extension: %s"), unicode(ex))
                 return False
         return True

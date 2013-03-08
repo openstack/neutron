@@ -242,7 +242,7 @@ class InvalidSharedSetting(Conflict):
                 "%(network)s. Multiple tenants are using it")
 
 
-class InvalidExtenstionEnv(BadRequest):
+class InvalidExtensionEnv(BadRequest):
     message = _("Invalid extension environment: %(reason)s")
 
 

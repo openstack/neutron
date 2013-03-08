@@ -31,7 +31,7 @@ class PortSecurityAndIPRequiredForSecurityGroups(qexception.InvalidInput):
                 " address in order to use security groups.")
 
 
-class PortSecurityBindingNotFound(qexception.InvalidExtenstionEnv):
+class PortSecurityBindingNotFound(qexception.InvalidExtensionEnv):
     message = _("Port does not have port security binding.")
 
 PORTSECURITY = 'port_security_enabled'
