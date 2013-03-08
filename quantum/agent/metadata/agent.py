@@ -66,14 +66,16 @@ class MetadataProxyHandler(object):
     def __init__(self, conf):
         self.conf = conf
 
-        self.qclient = client.Client(
+    def _get_quantum_client(self):
+        qclient = client.Client(
             username=self.conf.admin_user,
             password=self.conf.admin_password,
             tenant_name=self.conf.admin_tenant_name,
             auth_url=self.conf.auth_url,
             auth_strategy=self.conf.auth_strategy,
-            region_name=self.conf.auth_region
+            region_name=self.conf.auth_region,
         )
+        return qclient
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
@@ -93,6 +95,8 @@ class MetadataProxyHandler(object):
             return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
 
     def _get_instance_id(self, req):
+        qclient = self._get_quantum_client()
+
         remote_address = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-Quantum-Network-ID')
         router_id = req.headers.get('X-Quantum-Router-ID')
@@ -100,13 +104,13 @@ class MetadataProxyHandler(object):
         if network_id:
             networks = [network_id]
         else:
-            internal_ports = self.qclient.list_ports(
+            internal_ports = qclient.list_ports(
                 device_id=router_id,
                 device_owner=DEVICE_OWNER_ROUTER_INTF)['ports']
 
             networks = [p['network_id'] for p in internal_ports]
 
-        ports = self.qclient.list_ports(
+        ports = qclient.list_ports(
             network_id=networks,
             fixed_ips=['ip_address=%s' % remote_address])['ports']
 
