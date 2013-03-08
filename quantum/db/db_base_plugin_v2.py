@@ -46,7 +46,7 @@ AGENT_OWNER_PREFIX = 'network:'
 # finds out that all existing IP Allocations are associated with ports
 # with these owners, it will allow subnet deletion to proceed with the
 # IP allocations being cleaned up by cascade.
-AUTO_DELETE_PORT_OWNERS = ['network:dhcp', 'network:router_interface']
+AUTO_DELETE_PORT_OWNERS = ['network:dhcp']
 
 
 class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):

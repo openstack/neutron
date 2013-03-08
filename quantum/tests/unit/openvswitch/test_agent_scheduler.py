@@ -602,6 +602,16 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 router1['router']['id'])
             l3_agents_2 = self._list_l3_agents_hosting_router(
                 router2['router']['id'])
+            # safe cleanup
+            self._router_interface_action('remove',
+                                          router1['router']['id'],
+                                          subnet1['subnet']['id'],
+                                          None)
+            self._router_interface_action('remove',
+                                          router2['router']['id'],
+                                          subnet2['subnet']['id'],
+                                          None)
+
         # L3 agent will host only the compatible router.
         self.assertEqual(1, num_hosta_routers)
         self.assertEqual(1, len(l3_agents_1['agents']))

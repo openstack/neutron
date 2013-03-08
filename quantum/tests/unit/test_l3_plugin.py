@@ -969,23 +969,6 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                     r['router']['id'],
                     n['network']['id'], expected_code=exc.HTTPBadRequest.code)
 
-    def test_delete_unused_router_interface(self):
-        with self.network() as n:
-            with self.router() as r:
-                with self.subnet(network=n) as s:
-                    res = self._create_port(self.fmt,
-                                            s['subnet']['network_id'])
-                    p = self.deserialize(self.fmt, res)
-                    self._router_interface_action('add',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
-                # The subnet here is deleted, and the port should have no IP
-                self._delete('ports', p['port']['id'])
-                # Verify the port has been deleted
-                self._show('ports', p['port']['id'],
-                           expected_code=exc.HTTPNotFound.code)
-
     def test_router_remove_interface_inuse_returns_409(self):
         with self.router() as r:
             with self.subnet() as s:
@@ -1634,6 +1617,22 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                              fip['floatingip']['port_id'])
             self.assertTrue(floatingips[0]['fixed_ip_address'] is not None)
             self.assertTrue(floatingips[0]['router_id'] is not None)
+
+    def test_router_delete_subnet_inuse_returns_409(self):
+        with self.router() as r:
+            with self.subnet() as s:
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
+                # subnet cannot be delete as it's attached to a router
+                self._delete('subnets', s['subnet']['id'],
+                             expected_code=exc.HTTPConflict.code)
+                # remove interface so test can exit without errors
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
 
 
 class L3NatDBTestCaseXML(L3NatDBTestCase):
