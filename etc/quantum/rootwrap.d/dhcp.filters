@@ -25,6 +25,14 @@ ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
 ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
 ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
 
+# metadata proxy
+metadata_proxy: CommandFilter, /usr/bin/quantum-ns-metadata-proxy, root
+# If installed from source (say, by devstack), the prefix will be
+# /usr/local instead of /usr/bin.
+metadata_proxy_local: CommandFilter, /usr/local/bin/quantum-ns-metadata-proxy, root
+kill_metadata7: KillFilter, root, /usr/bin/python2.7, -9
+kill_metadata6: KillFilter, root, /usr/bin/python2.6, -9
+
 # ip_lib
 ip: IpFilter, /sbin/ip, root
 ip_usr: IpFilter, /usr/sbin/ip, root
