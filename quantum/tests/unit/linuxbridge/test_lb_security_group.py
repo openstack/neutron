@@ -16,7 +16,6 @@
 #    under the License.
 
 import mock
-from mock import call
 
 from quantum.api.v2 import attributes
 from quantum.extensions import securitygroup as ext_sg
@@ -37,6 +36,7 @@ class LinuxBridgeSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self, plugin=None):
+        test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_IPTABLES_DRIVER)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

@@ -16,6 +16,8 @@
 from quantum.extensions import portbindings
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
+from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
+
 
 PLUGIN_NAME = ('quantum.plugins.linuxbridge.'
                'lb_quantum_plugin.LinuxBridgePluginV2')
@@ -39,12 +41,13 @@ class TestLinuxBridgeV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
-class TestLinuxBridgePortsV2(test_plugin.TestPortsV2,
-                             LinuxBridgePluginV2TestCase,
-                             test_bindings.PortBindingsTestCase):
+class TestLinuxBridgeNetworksV2(test_plugin.TestNetworksV2,
+                                LinuxBridgePluginV2TestCase):
+    pass
 
-    VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
-    HAS_PORT_FILTER = True
+
+class TestLinuxBridgePortsV2(test_plugin.TestPortsV2,
+                             LinuxBridgePluginV2TestCase):
 
     def test_update_port_status_build(self):
         with self.port() as port:
@@ -52,6 +55,17 @@ class TestLinuxBridgePortsV2(test_plugin.TestPortsV2,
             self.assertEqual(self.port_create_status, 'DOWN')
 
 
-class TestLinuxBridgeNetworksV2(test_plugin.TestNetworksV2,
-                                LinuxBridgePluginV2TestCase):
-    pass
+class TestLinuxBridgePortBinding(LinuxBridgePluginV2TestCase,
+                                 test_bindings.PortBindingsTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
+    HAS_PORT_FILTER = True
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_IPTABLES_DRIVER
+
+    def setUp(self):
+        test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        super(TestLinuxBridgePortBinding, self).setUp()
+
+
+class TestLinuxBridgePortBindingNoSG(TestLinuxBridgePortBinding):
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
