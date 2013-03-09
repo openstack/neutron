@@ -1764,6 +1764,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port = self._get_port(context, port_id)
             if port.get('fixed_ips'):
                 subnet_id = port['fixed_ips'][0]['subnet_id']
+            if not (port['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_INTF and
+                    port['device_id'] == router_id):
+                raise l3.RouterInterfaceNotFound(router_id=router_id,
+                                                 port_id=port_id)
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
             subnet = self._get_subnet(context, subnet_id)
@@ -1776,6 +1780,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 if p['fixed_ips'][0]['subnet_id'] == subnet_id:
                     port_id = p['id']
                     break
+            else:
+                raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
+                                                          subnet_id=subnet_id)
         results = nvplib.query_lswitch_lports(
             cluster, '*', relations="LogicalPortAttachment",
             filters={'tag': port_id, 'tag_scope': 'q_port_id'})
