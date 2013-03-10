@@ -84,17 +84,9 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
 
         self.addCleanup(self.patch_obj.stop)
 
-    def test_a_create_network(self):
+    def test_create_networks(self):
         """
-        Tests creation of two new Virtual Network.
-        Tests deletion of one Virtual Network.
-        This would result the following -
-        The Nexus device should have only one network
-        vlan configured on it's plugin configured
-        interfaces.
-        If running this test individually, run
-        test_nexus_clear_vlan after this test to clean
-        up the second vlan created by this test.
+        Tests creation of two new Virtual Networks.
         """
         tenant_id = self.tenant_id
         net_name = self.net_name
@@ -125,14 +117,15 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
                          self.second_vlan_name)
         self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.second_vlan_id)
 
-    def test_b_nexus_delete_port(self):
+    def test_nexus_delete_port(self):
         """
-        Test to clean up second vlan of nexus device
-        created by test_create_delete_network. This
-        test will fail if it is run individually.
+        Test deletion of a vlan.
         """
+        self._cisco_nexus_plugin.create_network(
+            self.tenant_id, self.net_name, self.net_id, self.vlan_name,
+            self.vlan_id, self._hostname, INSTANCE)
+
         expected_instance_id = self._cisco_nexus_plugin.delete_port(
-            INSTANCE, self.second_vlan_id
-        )
+            INSTANCE, self.vlan_id)
 
         self.assertEqual(expected_instance_id, INSTANCE)

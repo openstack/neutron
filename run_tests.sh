@@ -1,19 +1,30 @@
 #!/bin/bash
 
+set -eu
+
 function usage {
   echo "Usage: $0 [OPTION]..."
   echo "Run Quantum's test suite(s)"
   echo ""
-  echo "  -V, --virtual-env        Always use virtualenv.  Install automatically if not present"
-  echo "  -N, --no-virtual-env     Don't use virtualenv.  Run tests in local environment"
-  echo "  -c, --coverage           Generate coverage report"
-  echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
-  echo "  -u, --update             Update the virtual environment with any newer package versions"
-  echo "  -p, --pep8               Just run pep8"
-  echo "  -P, --no-pep8            Don't run pep8"
-  echo "  -l, --pylint             Just run pylint"
-  echo "  -v, --verbose            Run verbose pylint analysis"
-  echo "  -h, --help               Print this usage message"
+  echo "  -V, --virtual-env           Always use virtualenv.  Install automatically if not present"
+  echo "  -N, --no-virtual-env        Don't use virtualenv.  Run tests in local environment"
+  echo "  -s, --no-site-packages      Isolate the virtualenv from the global Python environment"
+  echo "  -r, --recreate-db           Recreate the test database (deprecated, as this is now the default)."
+  echo "  -n, --no-recreate-db        Don't recreate the test database."
+  echo "  -f, --force                 Force a clean re-build of the virtual environment. Useful when dependencies have been added."
+  echo "  -u, --update                Update the virtual environment with any newer package versions"
+  echo "  -p, --pep8                  Just run PEP8 and HACKING compliance check"
+  echo "  -P, --no-pep8               Don't run static code checks"
+  echo "  -c, --coverage              Generate coverage report"
+  echo "  -d, --debug                 Run tests with testtools instead of testr. This allows you to use the debugger."
+  echo "  -h, --help                  Print this usage message"
+  echo "  --hide-elapsed              Don't print the elapsed time for each test along with slow test list"
+  echo "  --virtual-env-path <path>   Location of the virtualenv directory"
+  echo "                               Default: \$(pwd)"
+  echo "  --virtual-env-name <name>   Name of the virtualenv directory"
+  echo "                               Default: .venv"
+  echo "  --tools-path <dir>          Location of the tools directory"
+  echo "                               Default: \$(pwd)"
   echo ""
   echo "Note: with no options specified, the script will try to run the tests in a virtual environment,"
   echo "      If no virtualenv is found, the script will ask if you would like to create one.  If you "
@@ -21,103 +32,147 @@ function usage {
   exit
 }
 
-function process_option {
-  case "$1" in
-    -h|--help) usage;;
-    -V|--virtual-env) let always_venv=1; let never_venv=0;;
-    -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
-    -f|--force) let force=1;;
-    -u|--update) update=1;;
-    -p|--pep8) let just_pep8=1;;
-    -P|--no-pep8) no_pep8=1;;
-    -l|--pylint) let just_pylint=1; let never_venv=1; let always_venv=0;;
-    -c|--coverage) coverage=1;;
-    -v|--verbose) verbose=1;;
-    -*) noseopts="$noseopts $1";;
-    *) noseargs="$noseargs $1"
-  esac
+function process_options {
+  i=1
+  while [ $i -le $# ]; do
+    case "${!i}" in
+      -h|--help) usage;;
+      -V|--virtual-env) always_venv=1; never_venv=0;;
+      -N|--no-virtual-env) always_venv=0; never_venv=1;;
+      -s|--no-site-packages) no_site_packages=1;;
+      -r|--recreate-db) recreate_db=1;;
+      -n|--no-recreate-db) recreate_db=0;;
+      -f|--force) force=1;;
+      -u|--update) update=1;;
+      -p|--pep8) just_pep8=1;;
+      -P|--no-pep8) no_pep8=1;;
+      -c|--coverage) coverage=1;;
+      -d|--debug) debug=1;;
+      --virtual-env-path)
+        (( i++ ))
+        venv_path=${!i}
+        ;;
+      --virtual-env-name)
+        (( i++ ))
+        venv_dir=${!i}
+        ;;
+      --tools-path)
+        (( i++ ))
+        tools_path=${!i}
+        ;;
+      -*) testropts="$testropts ${!i}";;
+      *) testrargs="$testrargs ${!i}"
+    esac
+    (( i++ ))
+  done
 }
 
-venv=.venv
+tool_path=${tools_path:-$(pwd)}
+venv_path=${venv_path:-$(pwd)}
+venv_dir=${venv_name:-.venv}
 with_venv=tools/with_venv.sh
 always_venv=0
 never_venv=0
+force=0
+no_site_packages=0
+installvenvopts=
+testrargs=
+testropts=
+wrapper=""
 just_pep8=0
 no_pep8=0
-just_pylint=0
-force=0
-noseargs=
-wrapper=""
 coverage=0
-verbose=0
+debug=0
+recreate_db=1
 update=0
 
-for arg in "$@"; do
-  process_option $arg
-done
+LANG=en_US.UTF-8
+LANGUAGE=en_US:en
+LC_ALL=C
 
-# If enabled, tell nose to collect coverage data
-if [ $coverage -eq 1 ]; then
-    noseopts="$noseopts --with-coverage --cover-package=quantum"
+process_options $@
+# Make our paths available to other scripts we call
+export venv_path
+export venv_dir
+export venv_name
+export tools_dir
+export venv=${venv_path}/${venv_dir}
+
+if [ $no_site_packages -eq 1 ]; then
+  installvenvopts="--no-site-packages"
 fi
 
+function init_testr {
+  if [ ! -d .testrepository ]; then
+    ${wrapper} testr init
+  fi
+}
+
 function run_tests {
-  # Just run the test suites in current environment
-  ${wrapper} rm -f ./$PLUGIN_DIR/tests.sqlite
-  if [ $verbose -eq 1 ]; then
-    ${wrapper} $NOSETESTS
-  else
-    ${wrapper} $NOSETESTS 2> run_tests.log
-  fi
-  # If we get some short import error right away, print the error log directly
-  RESULT=$?
-  if [ "$RESULT" -ne "0" ];
-  then
-    ERRSIZE=`wc -l run_tests.log | awk '{print \$1}'`
-    if [ $verbose -eq 0 -a "$ERRSIZE" -lt "40" ];
-    then
-        cat run_tests.log
+  # Cleanup *pyc
+  ${wrapper} find . -type f -name "*.pyc" -delete
+
+  if [ $debug -eq 1 ]; then
+    if [ "$testropts" = "" ] && [ "$testrargs" = "" ]; then
+      # Default to running all tests if specific test is not
+      # provided.
+      testrargs="discover ./quantum/tests"
     fi
+    ${wrapper} python -m testtools.run $testropts $testrargs
+
+    # Short circuit because all of the testr and coverage stuff
+    # below does not make sense when running testtools.run for
+    # debugging purposes.
+    return $?
   fi
+
+  if [ $coverage -eq 1 ]; then
+    TESTRTESTS="$TESTRTESTS --coverage"
+  else
+    TESTRTESTS="$TESTRTESTS --slowest"
+  fi
+
+  # Just run the test suites in current environment
+  set +e
+  testrargs=`echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/'`
+  TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testropts $testrargs'"
+  echo "Running \`${wrapper} $TESTRTESTS\`"
+  bash -c "${wrapper} $TESTRTESTS | ${wrapper} subunit2pyunit"
+  RESULT=$?
+  set -e
+
+  copy_subunit_log
+
+  if [ $coverage -eq 1 ]; then
+    echo "Generating coverage report in covhtml/"
+    # Don't compute coverage for common code, which is tested elsewhere
+    ${wrapper} coverage combine
+    ${wrapper} coverage html --include='quantum/*' --omit='quantum/openstack/common/*' -d covhtml -i
+  fi
+
   return $RESULT
 }
 
-function run_pylint {
-  echo "Running pylint ..."
-  PYLINT_OPTIONS="--rcfile=.pylintrc --output-format=parseable"
-  PYLINT_INCLUDE="quantum"
-  OLD_PYTHONPATH=$PYTHONPATH
-  export PYTHONPATH=$PYTHONPATH:.quantum:./client/lib/quantum:./common/lib/quantum
-
-  BASE_CMD="pylint $PYLINT_OPTIONS $PYLINT_INCLUDE"
-  [ $verbose -eq 1 ] && $BASE_CMD || msg_count=`$BASE_CMD | grep 'quantum/' | wc -l`
-  if [ $verbose -eq 0 ]; then
-    echo "Pylint messages count: " $msg_count
-  fi
-  export PYTHONPATH=$OLD_PYTHONPATH
+function copy_subunit_log {
+  LOGNAME=`cat .testrepository/next-stream`
+  LOGNAME=$(($LOGNAME - 1))
+  LOGNAME=".testrepository/${LOGNAME}"
+  cp $LOGNAME subunit.log
 }
 
 function run_pep8 {
   echo "Running pep8 ..."
 
   PEP8_EXCLUDE="vcsversion.py,*.pyc,openstack"
-  # we now turn off pep8 1.3 E125 check to avoid make change to 
-  # openstack-common . 
-  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125,E711,E712 --repeat --show-source"
+  # we now turn off pep8 1.3 E125 check to avoid make change to
+  # openstack-common .
+  PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --ignore=E125,E711,E712 --repeat --show"
   PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py"
   ${wrapper} pep8 $PEP8_OPTIONS $PEP8_INCLUDE
 }
 
-NOSETESTS="python ./$PLUGIN_DIR/run_tests.py $noseopts $noseargs"
 
-if [ -n "$PLUGIN_DIR" ]
-then
-    if ! [ -f ./$PLUGIN_DIR/run_tests.py ]
-    then
-        echo "Could not find run_tests.py in plugin directory $PLUGIN_DIR"
-        exit 1
-    fi
-fi
+TESTRTESTS="python setup.py testr"
 
 if [ $never_venv -eq 0 ]
 then
@@ -127,22 +182,22 @@ then
     rm -rf ${venv}
   fi
   if [ $update -eq 1 ]; then
-    echo "Updating virtualenv..."
-    python tools/install_venv.py
+      echo "Updating virtualenv..."
+      python tools/install_venv.py $installvenvopts
   fi
   if [ -e ${venv} ]; then
     wrapper="${with_venv}"
   else
     if [ $always_venv -eq 1 ]; then
       # Automatically install the virtualenv
-      python tools/install_venv.py
+      python tools/install_venv.py $installvenvopts
       wrapper="${with_venv}"
     else
       echo -e "No virtual environment found...create one? (Y/n) \c"
       read use_ve
       if [ "x$use_ve" = "xY" -o "x$use_ve" = "x" -o "x$use_ve" = "xy" ]; then
         # Install the virtualenv and run the test suite in it
-        python tools/install_venv.py
+        python tools/install_venv.py $installvenvopts
         wrapper=${with_venv}
       fi
     fi
@@ -158,23 +213,20 @@ if [ $just_pep8 -eq 1 ]; then
     run_pep8
     exit
 fi
-if [ $just_pylint -eq 1 ]; then
-    run_pylint
-    exit
+
+if [ $recreate_db -eq 1 ]; then
+    rm -f tests.sqlite
 fi
 
-RV=0
-if [ $no_pep8 -eq 1 ]; then
-    run_tests
-    RV=$?
-else
-    run_tests && run_pep8 || RV=1
+init_testr
+run_tests
+
+# NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
+# not when we're running tests individually. To handle this, we need to
+# distinguish between options (testropts), which begin with a '-', and
+# arguments (testrargs).
+if [ -z "$testrargs" ]; then
+  if [ $no_pep8 -eq 0 ]; then
+    run_pep8
+  fi
 fi
-
-
-if [ $coverage -eq 1 ]; then
-    echo "Generating coverage report in covhtml/"
-    ${wrapper} coverage html -d covhtml -i
-fi
-
-exit $RV

@@ -645,6 +645,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                              'subnet.create.end',
                              'router.interface.create',
                              'router.interface.delete']
+        test_notifier.NOTIFICATIONS = []
         with self.router() as r:
             with self.subnet() as s:
                 body = self._router_interface_action('add',
@@ -666,8 +667,8 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                   expected_code=exc.HTTPNotFound.code)
 
                 self.assertEqual(
-                    set(n['event_type'] for n in test_notifier.NOTIFICATIONS),
-                    set(exp_notifications))
+                    set(exp_notifications),
+                    set(n['event_type'] for n in test_notifier.NOTIFICATIONS))
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
         with mock.patch('quantum.context.Context.to_dict') as tdict:
