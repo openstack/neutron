@@ -250,13 +250,13 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                         constants.PENDING_UPDATE
                     )
 
-    def t2est_delete_vip(self):
+    def test_delete_vip(self):
         with self.subnet() as subnet:
             with self.pool(subnet=subnet) as pool:
                 with self.vip(pool=pool, subnet=subnet, no_delete=True) as vip:
                     self.mock_api.reset_mock()
                     ctx = context.get_admin_context()
-                    self.plugin_instance.delete_vip(context, vip['vip']['id'])
+                    self.plugin_instance.delete_vip(ctx, vip['vip']['id'])
                     self.mock_api.destroy_pool.assert_called_once_with(
                         mock.ANY,
                         vip['vip']['pool_id']

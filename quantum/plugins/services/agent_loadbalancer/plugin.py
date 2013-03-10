@@ -267,7 +267,6 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
         vip = self.get_vip(context, id)
         super(LoadBalancerPlugin, self).delete_vip(context, id)
         self.agent_rpc.destroy_pool(context, vip['pool_id'])
-        pass
 
     def create_pool(self, context, pool):
         p = super(LoadBalancerPlugin, self).create_pool(context, pool)
