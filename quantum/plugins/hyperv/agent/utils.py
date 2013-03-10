@@ -37,12 +37,6 @@ LOG = logging.getLogger(__name__)
 class HyperVException(q_exc.QuantumException):
     message = _('HyperVException: %(msg)s')
 
-SET_ACCESS_MODE = 0
-VLAN_ID_ADD = 1
-VLAN_ID_REMOVE = 2
-ENDPOINT_MODE_ACCESS = 2
-ENDPOINT_MODE_TRUNK = 5
-
 WMI_JOB_STATE_RUNNING = 4
 WMI_JOB_STATE_COMPLETED = 7
 
@@ -208,63 +202,12 @@ class HyperVUtils(object):
                 if ext_port:
                     return vswitch_port
 
-    def _set_vswitch_external_port_vlan_id(self, vswitch_name, action,
-                                           vlan_id=None):
-        vswitch = self._get_vswitch(vswitch_name)
-        ext_port = self._get_vswitch_external_port(vswitch)
-        if not ext_port:
-            return
-
-        vlan_endpoint = ext_port.associators(
-            wmi_association_class='Msvm_BindsTo')[0]
-        vlan_endpoint_settings = vlan_endpoint.associators(
-            wmi_association_class='Msvm_NetworkElementSettingData')[0]
-
-        mode = ENDPOINT_MODE_TRUNK
-        trunked_vlans = vlan_endpoint_settings.TrunkedVLANList
-        new_trunked_vlans = trunked_vlans
-        if action == VLAN_ID_ADD:
-            if vlan_id not in trunked_vlans:
-                new_trunked_vlans += (vlan_id,)
-        elif action == VLAN_ID_REMOVE:
-            if vlan_id in trunked_vlans:
-                new_trunked_vlans = [
-                    v for v in trunked_vlans if v != vlan_id
-                ]
-        elif action == SET_ACCESS_MODE:
-            mode = ENDPOINT_MODE_ACCESS
-            new_trunked_vlans = ()
-
-        if vlan_endpoint.DesiredEndpointMode != mode:
-            vlan_endpoint.DesiredEndpointMode = mode
-            vlan_endpoint.put()
-
-        if len(trunked_vlans) != len(new_trunked_vlans):
-            vlan_endpoint_settings.TrunkedVLANList = new_trunked_vlans
-            vlan_endpoint_settings.put()
-
     def set_vswitch_port_vlan_id(self, vlan_id, switch_port_name):
         vlan_endpoint_settings = self._conn.Msvm_VLANEndpointSettingData(
             ElementName=switch_port_name)[0]
         if vlan_endpoint_settings.AccessVLAN != vlan_id:
             vlan_endpoint_settings.AccessVLAN = vlan_id
             vlan_endpoint_settings.put()
-
-    def set_vswitch_mode_access(self, vswitch_name):
-        LOG.info(_('Setting vswitch %s in access mode (flat)'), vswitch_name)
-        self._set_vswitch_external_port_vlan_id(vswitch_name, SET_ACCESS_MODE)
-
-    def add_vlan_id_to_vswitch(self, vlan_id, vswitch_name):
-        LOG.info(_('Adding VLAN %s to vswitch %s'),
-                 vlan_id, vswitch_name)
-        self._set_vswitch_external_port_vlan_id(vswitch_name, VLAN_ID_ADD,
-                                                vlan_id)
-
-    def remove_vlan_id_from_vswitch(self, vlan_id, vswitch_name):
-        LOG.info(_('Removing VLAN %s from vswitch %s'),
-                 vlan_id, vswitch_name)
-        self._set_vswitch_external_port_vlan_id(vswitch_name, VLAN_ID_REMOVE,
-                                                vlan_id)
 
     def _get_switch_port_path_by_name(self, switch_port_name):
         vswitch = self._conn.Msvm_SwitchPort(ElementName=switch_port_name)
