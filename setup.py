@@ -55,6 +55,7 @@ nec_plugin_config_path = 'etc/quantum/plugins/nec'
 hyperv_plugin_config_path = 'etc/quantum/plugins/hyperv'
 plumgrid_plugin_config_path = 'etc/quantum/plugins/plumgrid'
 midonet_plugin_config_path = 'etc/quantum/plugins/midonet'
+mlnx_plugin_config_path = 'etc/quantum/plugins/mlnx'
 
 if sys.platform == 'win32':
     # Windows doesn't have an "/etc" directory equivalent
@@ -111,6 +112,8 @@ else:
             ['etc/quantum/plugins/plumgrid/plumgrid.ini']),
         (midonet_plugin_config_path,
             ['etc/quantum/plugins/midonet/midonet.ini']),
+        (mlnx_plugin_config_path,
+            ['etc/quantum/plugins/mlnx/mlnx_conf.ini']),
     ]
 
     ConsoleScripts = [
@@ -139,6 +142,8 @@ else:
          'quantum.plugins.services.agent_loadbalancer.agent:main'),
         ('quantum-check-nvp-config = '
          'quantum.plugins.nicira.check_nvp_config:main'),
+        ('quantum-mlnx-agent ='
+        'quantum.plugins.mlnx.agent.eswitch_quantum_agent:main'),
     ]
 
     ProjectScripts = [
