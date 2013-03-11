@@ -20,6 +20,7 @@ from sqlalchemy import orm
 
 class QuantumBase(object):
     """Base class for Quantum Models."""
+    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
