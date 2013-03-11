@@ -508,17 +508,18 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         "external networks. Port %s will be down."),
                       port_data['network_id'])
             return
-
-        port = nicira_db.get_nvp_port_id(context.session, port_data['id'])
-        if port is None:
-            raise q_exc.PortNotFound(port_id=port_data['id'])
+        nvp_port_id = self._nvp_get_port_id(context, self.default_cluster,
+                                            port_data)
+        if not nvp_port_id:
+            LOG.debug(_("Port '%s' was already deleted on NVP platform"), id)
+            return
         # TODO(bgh): if this is a bridged network and the lswitch we just got
         # back will have zero ports after the delete we should garbage collect
         # the lswitch.
         try:
             nvplib.delete_port(self.default_cluster,
                                port_data['network_id'],
-                               port)
+                               nvp_port_id)
             LOG.debug(_("_nvp_delete_port completed for port %(port_id)s "
                         "on network %(net_id)s"),
                       {'port_id': port_data['id'],
@@ -530,8 +531,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _nvp_delete_router_port(self, context, port_data):
         # Delete logical router port
         lrouter_id = port_data['device_id']
-        nvp_port_id = nicira_db.get_nvp_port_id(context.session,
-                                                port_data['id'])
+        nvp_port_id = self._nvp_get_port_id(context, self.default_cluster,
+                                            port_data)
         if not nvp_port_id:
             raise q_exc.PortNotFound(port_id=port_data['id'])
 
@@ -737,6 +738,31 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # As we do not create ports for floating IPs in NVP,
         # this is a no-op driver
         pass
+
+    def _nvp_get_port_id(self, context, cluster, quantum_port):
+        """ Return the NVP port uuid for a given quantum port.
+        First, look up the Quantum database. If not found, execute
+        a query on NVP platform as the mapping might be missing because
+        the port was created before upgrading to grizzly. """
+        nvp_port_id = nicira_db.get_nvp_port_id(context.session,
+                                                quantum_port['id'])
+        if nvp_port_id:
+            return nvp_port_id
+        # Perform a query to NVP and then update the DB
+        try:
+            nvp_port = nvplib.get_port_by_quantum_tag(
+                cluster,
+                quantum_port['network_id'],
+                quantum_port['id'])
+            if nvp_port:
+                nicira_db.add_quantum_nvp_port_mapping(
+                    context.session,
+                    quantum_port['id'],
+                    nvp_port['uuid'])
+                return nvp_port['uuid']
+        except:
+            LOG.exception(_("Unable to find NVP uuid for Quantum port %s"),
+                          quantum_port['id'])
 
     def _extend_fault_map(self):
         """ Extends the Quantum Fault Map
@@ -969,8 +995,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                        'device_owner': ['network:router_interface']}
         router_iface_ports = self.get_ports(context, filters=port_filter)
         for port in router_iface_ports:
-            nvp_port_id = nicira_db.get_nvp_port_id(context.session,
-                                                    port['id'])
+            nvp_port_id = self._nvp_get_port_id(
+                context, self.default_cluster, port)
             if nvp_port_id:
                 port['nvp_port_id'] = nvp_port_id
             else:
@@ -1408,7 +1434,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._extend_port_port_security_dict(context, ret_port)
             self._extend_port_dict_security_group(context, ret_port)
             LOG.debug(_("Update port request: %s"), port)
-            nvp_port_id = nicira_db.get_nvp_port_id(context.session, id)
+            nvp_port_id = self._nvp_get_port_id(
+                context, self.default_cluster, ret_port)
             nvplib.update_port(self.default_cluster,
                                ret_port['network_id'],
                                nvp_port_id, id, tenant_id,
@@ -1483,20 +1510,26 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if self._network_is_external(context,
                                          quantum_db_port['network_id']):
                 return quantum_db_port
-
-            nvp_id = nicira_db.get_nvp_port_id(context.session, id)
-            #TODO: pass the appropriate cluster here
-            try:
-                port = nvplib.get_logical_port_status(
-                    self.default_cluster, quantum_db_port['network_id'],
-                    nvp_id)
-                quantum_db_port["admin_state_up"] = (
-                    port["admin_status_enabled"])
-                if port["fabric_status_up"]:
-                    quantum_db_port["status"] = constants.PORT_STATUS_ACTIVE
-                else:
-                    quantum_db_port["status"] = constants.PORT_STATUS_DOWN
-            except q_exc.NotFound:
+            nvp_id = self._nvp_get_port_id(context, self.default_cluster,
+                                           quantum_db_port)
+            # If there's no nvp IP do not bother going to NVP and put
+            # the port in error state
+            if nvp_id:
+                #TODO: pass the appropriate cluster here
+                try:
+                    port = nvplib.get_logical_port_status(
+                        self.default_cluster, quantum_db_port['network_id'],
+                        nvp_id)
+                    quantum_db_port["admin_state_up"] = (
+                        port["admin_status_enabled"])
+                    if port["fabric_status_up"]:
+                        quantum_db_port["status"] = (
+                            constants.PORT_STATUS_ACTIVE)
+                    else:
+                        quantum_db_port["status"] = constants.PORT_STATUS_DOWN
+                except q_exc.NotFound:
+                    quantum_db_port["status"] = constants.PORT_STATUS_ERROR
+            else:
                 quantum_db_port["status"] = constants.PORT_STATUS_ERROR
         return quantum_db_port
 

@@ -677,6 +677,36 @@ def get_port_by_display_name(clusters, lswitch, display_name):
     raise exception.PortNotFound(port_id=display_name, net_id=lswitch)
 
 
+def get_port_by_quantum_tag(cluster, lswitch_uuid, quantum_port_id):
+    """Return the NVP UUID of the logical port with tag q_port_id
+    equal to quantum_port_id or None if the port is not Found.
+    """
+    uri = _build_uri_path(LSWITCHPORT_RESOURCE,
+                          parent_resource_id=lswitch_uuid,
+                          fields='uuid',
+                          filters={'tag': quantum_port_id,
+                                   'tag_scope': 'q_port_id'})
+    LOG.debug(_("Looking for port with q_port_id tag '%(quantum_port_id)s' "
+                "on: '%(lswitch_uuid)s'") %
+              {'quantum_port_id': quantum_port_id,
+               'lswitch_uuid': lswitch_uuid})
+    try:
+        res_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
+    except Exception:
+        LOG.exception(_("An exception occurred while querying NVP ports"))
+        raise
+    res = json.loads(res_obj)
+    num_results = len(res["results"])
+    if num_results >= 1:
+        if num_results > 1:
+            LOG.warn(_("Found '%(num_ports)d' ports with "
+                       "q_port_id tag: '%(quantum_port_id)s'. "
+                       "Only 1 was expected.") %
+                     {'num_ports': num_results,
+                      'quantum_port_id': quantum_port_id})
+        return res["results"][0]
+
+
 def get_port(cluster, network, port, relations=None):
     LOG.info(_("get_port() %(network)s %(port)s"), locals())
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port + "?"
