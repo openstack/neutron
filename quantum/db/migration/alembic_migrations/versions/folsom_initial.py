@@ -57,6 +57,7 @@ down_revision = None
 from alembic import op
 import sqlalchemy as sa
 
+from quantum.db.migration.alembic_migrations import common_ext_ops
 # NOTE: This is a special migration that creates a Folsom compatible database.
 
 
@@ -65,10 +66,10 @@ def upgrade(active_plugin=None, options=None):
     upgrade_base()
 
     if active_plugin in L3_CAPABLE:
-        upgrade_l3()
+        common_ext_ops.upgrade_l3()
 
     if active_plugin in FOLSOM_QUOTA:
-        upgrade_quota(options)
+        common_ext_ops.upgrade_quota(options)
 
     if active_plugin == PLUGINS['lbr']:
         upgrade_linuxbridge()
@@ -183,58 +184,6 @@ def upgrade_base():
                                 ['ipallocationpools.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('allocation_pool_id', 'first_ip', 'last_ip')
-    )
-
-
-def upgrade_l3():
-    op.create_table(
-        'routers',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('name', sa.String(length=255), nullable=True),
-        sa.Column('status', sa.String(length=16), nullable=True),
-        sa.Column('admin_state_up', sa.Boolean(), nullable=True),
-        sa.Column('gw_port_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['gw_port_id'], ['ports.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-
-    op.create_table(
-        'externalnetworks',
-        sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('network_id')
-    )
-
-    op.create_table(
-        'floatingips',
-        sa.Column('tenant_id', sa.String(length=255), nullable=True),
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('floating_ip_address', sa.String(length=64), nullable=False),
-        sa.Column('floating_network_id', sa.String(length=36), nullable=False),
-        sa.Column('floating_port_id', sa.String(length=36), nullable=False),
-        sa.Column('fixed_port_id', sa.String(length=36), nullable=True),
-        sa.Column('fixed_ip_address', sa.String(length=64), nullable=True),
-        sa.Column('router_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['fixed_port_id'], ['ports.id'], ),
-        sa.ForeignKeyConstraint(['floating_port_id'], ['ports.id'], ),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-
-
-def upgrade_quota(options=None):
-    if not (options or {}).get('folsom_quota_db_enabled'):
-        return
-
-    op.create_table(
-        'quotas',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('tenant_id', sa.String(255), index=True),
-        sa.Column('resource', sa.String(255)),
-        sa.Column('limit', sa.Integer()),
-        sa.PrimaryKeyConstraint('id')
     )
 
 
@@ -493,10 +442,10 @@ def downgrade(active_plugin=None, options=None):
         downgrade_ryu()
 
     if active_plugin in FOLSOM_QUOTA:
-        downgrade_quota(options)
+        common_ext_ops.downgrade_quota(options)
 
     if active_plugin in L3_CAPABLE:
-        downgrade_l3()
+        common_ext_ops.downgrade_l3()
 
     downgrade_base()
 
@@ -512,15 +461,6 @@ def downgrade_base():
         'subnets',
         'networks'
     )
-
-
-def downgrade_l3():
-    drop_tables('floatingips', 'routers', 'externalnetworks')
-
-
-def downgrade_quota(options=None):
-    if (options or {}).get('folsom_quota_db_enabled'):
-        drop_tables('quotas')
 
 
 def downgrade_linuxbridge():

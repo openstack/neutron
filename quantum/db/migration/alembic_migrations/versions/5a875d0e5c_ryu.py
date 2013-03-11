@@ -22,7 +22,7 @@ This retroactively provides migration support for
 https://review.openstack.org/#/c/11204/
 
 Revision ID: 5a875d0e5c
-Revises: folsom
+Revises: 2c4af419145b
 Create Date: 2012-12-18 12:32:04.482477
 
 """
@@ -30,7 +30,7 @@ Create Date: 2012-12-18 12:32:04.482477
 
 # revision identifiers, used by Alembic.
 revision = '5a875d0e5c'
-down_revision = 'folsom'
+down_revision = '2c4af419145b'
 
 # Change to ['*'] if this migration applies to all plugins
 
