@@ -28,7 +28,7 @@ migration from Folsom or later.
 If you are a deployer or developer and want to migrate from Folsom to Grizzly
 or later you must first add version tracking to the database:
 
-$ quantum-db-manage -config-file /path/to/quantum.conf \
+$ quantum-db-manage --config-file /path/to/quantum.conf \
  --config-file /path/to/plugin/config.ini stamp folsom
 
 You can then upgrade to the latest database version via:
