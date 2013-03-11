@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.41"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.42"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-10 00:05+0000\n"
+"POT-Creation-Date: 2013-03-11 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -260,7 +260,7 @@ msgid ""
 "enable isolated_metadata = True "
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:84 quantum/agent/dhcp_agent.py:684
+#: quantum/agent/dhcp_agent.py:84 quantum/agent/dhcp_agent.py:688
 msgid "DHCP agent started"
 msgstr ""
 
@@ -293,65 +293,65 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:459 quantum/agent/l3_agent.py:123
+#: quantum/agent/dhcp_agent.py:463 quantum/agent/l3_agent.py:123
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:467
+#: quantum/agent/dhcp_agent.py:471
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:472 quantum/agent/l3_agent.py:162
+#: quantum/agent/dhcp_agent.py:476 quantum/agent/l3_agent.py:162
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:510 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:514 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:590
+#: quantum/agent/dhcp_agent.py:594
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:620
+#: quantum/agent/dhcp_agent.py:624
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:626
+#: quantum/agent/dhcp_agent.py:630
 msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:627
+#: quantum/agent/dhcp_agent.py:631
 #, python-format
 msgid "Exception value: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:628
+#: quantum/agent/dhcp_agent.py:632
 #, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:630
+#: quantum/agent/dhcp_agent.py:634
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:667 quantum/agent/l3_agent.py:724
+#: quantum/agent/dhcp_agent.py:671 quantum/agent/l3_agent.py:728
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:673 quantum/agent/l3_agent.py:729
+#: quantum/agent/dhcp_agent.py:677 quantum/agent/l3_agent.py:733
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:681 quantum/agent/l3_agent.py:734
+#: quantum/agent/dhcp_agent.py:685 quantum/agent/l3_agent.py:738
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -399,49 +399,49 @@ msgid ""
 "than one external network."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:280
+#: quantum/agent/l3_agent.py:284
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:282 quantum/db/l3_db.py:932
+#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:932
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:387
+#: quantum/agent/l3_agent.py:391
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:555
+#: quantum/agent/l3_agent.py:559
 #, python-format
 msgid "Failed dealing with router '%s' deletion RPC message"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:568
+#: quantum/agent/l3_agent.py:572
 msgid "Failed dealing with routers update RPC message"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:581
+#: quantum/agent/l3_agent.py:585
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:638
+#: quantum/agent/l3_agent.py:642
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:642
+#: quantum/agent/l3_agent.py:646
 msgid "L3 agent started"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:662
+#: quantum/agent/l3_agent.py:666
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:670
+#: quantum/agent/l3_agent.py:674
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
@@ -540,19 +540,19 @@ msgstr ""
 msgid "Update port filter for %s"
 msgstr ""
 
-#: quantum/agent/common/config.py:29
+#: quantum/agent/common/config.py:31
 msgid "Root helper application."
 msgstr ""
 
-#: quantum/agent/common/config.py:34
+#: quantum/agent/common/config.py:36
 msgid "Seconds between nodes reporting state to server"
 msgstr ""
 
-#: quantum/agent/common/config.py:55
+#: quantum/agent/common/config.py:78
 msgid "DEFAULT.root_helper is deprecated!"
 msgstr ""
 
-#: quantum/agent/common/config.py:65
+#: quantum/agent/common/config.py:88
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
@@ -667,27 +667,27 @@ msgstr ""
 msgid "Admin username"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:49 quantum/agent/metadata/agent.py:45
+#: quantum/agent/linux/interface.py:49 quantum/agent/metadata/agent.py:46
 #: quantum/plugins/metaplugin/common/config.py:40
 msgid "Admin password"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:52 quantum/agent/metadata/agent.py:48
+#: quantum/agent/linux/interface.py:52 quantum/agent/metadata/agent.py:49
 #: quantum/plugins/metaplugin/common/config.py:43
 msgid "Admin tenant name"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:54 quantum/agent/metadata/agent.py:50
+#: quantum/agent/linux/interface.py:54 quantum/agent/metadata/agent.py:51
 #: quantum/plugins/metaplugin/common/config.py:45
 msgid "Authentication URL"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:56 quantum/agent/metadata/agent.py:52
+#: quantum/agent/linux/interface.py:56 quantum/agent/metadata/agent.py:53
 #: quantum/common/config.py:49 quantum/plugins/metaplugin/common/config.py:47
 msgid "The type of authentication to use"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:58 quantum/agent/metadata/agent.py:54
+#: quantum/agent/linux/interface.py:58 quantum/agent/metadata/agent.py:55
 #: quantum/plugins/metaplugin/common/config.py:49
 msgid "Authentication region"
 msgstr ""
@@ -806,69 +806,69 @@ msgid ""
 "Stderr: %(stderr)r"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:43
+#: quantum/agent/metadata/agent.py:44
 #: quantum/plugins/metaplugin/common/config.py:38
 msgid "Admin user"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:56
+#: quantum/agent/metadata/agent.py:57
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:59
+#: quantum/agent/metadata/agent.py:60
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:62
+#: quantum/agent/metadata/agent.py:63
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:83
-#: quantum/agent/metadata/namespace_proxy.py:74
+#: quantum/agent/metadata/agent.py:84
+#: quantum/agent/metadata/namespace_proxy.py:75
 #, python-format
 msgid "Request: %s"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:92
-#: quantum/agent/metadata/namespace_proxy.py:80
+#: quantum/agent/metadata/agent.py:93
+#: quantum/agent/metadata/namespace_proxy.py:81
 msgid "Unexpected error."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:93
-#: quantum/agent/metadata/namespace_proxy.py:81
+#: quantum/agent/metadata/agent.py:94
+#: quantum/agent/metadata/namespace_proxy.py:82
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:142
+#: quantum/agent/metadata/agent.py:143
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:151
-#: quantum/agent/metadata/namespace_proxy.py:115
+#: quantum/agent/metadata/agent.py:152
+#: quantum/agent/metadata/namespace_proxy.py:116
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:157
-#: quantum/agent/metadata/namespace_proxy.py:121
+#: quantum/agent/metadata/agent.py:158
+#: quantum/agent/metadata/namespace_proxy.py:122
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:195
+#: quantum/agent/metadata/agent.py:196
 msgid "Location for Metadata Proxy UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/metadata/namespace_proxy.py:35
+#: quantum/agent/metadata/namespace_proxy.py:36
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/metadata/namespace_proxy.py:69
+#: quantum/agent/metadata/namespace_proxy.py:70
 msgid "network_id and router_id are None. One must be provided."
 msgstr ""
 
-#: quantum/agent/metadata/namespace_proxy.py:149
+#: quantum/agent/metadata/namespace_proxy.py:150
 msgid "TCP Port to listen for metadata server requests."
 msgstr ""
 
@@ -1607,32 +1607,32 @@ msgstr ""
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
 msgstr ""
 
-#: quantum/common/utils.py:50
+#: quantum/common/utils.py:51
 #, python-format
 msgid "Reloading cached file %s"
 msgstr ""
 
-#: quantum/common/utils.py:134
+#: quantum/common/utils.py:135
 #, python-format
 msgid "Invalid mapping: '%s'"
 msgstr ""
 
-#: quantum/common/utils.py:137
+#: quantum/common/utils.py:138
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr ""
 
-#: quantum/common/utils.py:140
+#: quantum/common/utils.py:141
 #, python-format
 msgid "Missing value in mapping: '%s'"
 msgstr ""
 
-#: quantum/common/utils.py:142
+#: quantum/common/utils.py:143
 #, python-format
 msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
-#: quantum/common/utils.py:145
+#: quantum/common/utils.py:146
 #, python-format
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
