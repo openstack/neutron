@@ -152,10 +152,9 @@ class HyperVQuantumAgent(object):
 
         vswitch_name = self._get_vswitch_name(network_type, physical_network)
 
-        if network_type == constants.TYPE_VLAN:
-            self._utils.add_vlan_id_to_vswitch(segmentation_id, vswitch_name)
-        elif network_type == constants.TYPE_FLAT:
-            self._utils.set_vswitch_mode_access(vswitch_name)
+        if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+            #Nothing to do
+            pass
         elif network_type == constants.TYPE_LOCAL:
             #TODO (alexpilotti): Check that the switch type is private
             #or create it if not existing
@@ -174,17 +173,6 @@ class HyperVQuantumAgent(object):
 
     def _reclaim_local_network(self, net_uuid):
         LOG.info(_("Reclaiming local network %s"), net_uuid)
-        map = self._network_vswitch_map[net_uuid]
-
-        if map['network_type'] == constants.TYPE_VLAN:
-            LOG.info(_("Reclaiming VLAN ID %s "), map['vlan_id'])
-            self._utils.remove_vlan_id_from_vswitch(
-                map['vlan_id'], map['vswitch_name'])
-        else:
-            raise utils.HyperVException(_("Cannot reclaim unsupported "
-                                          "network type %s for network %s"),
-                                        map['network_type'], net_uuid)
-
         del self._network_vswitch_map[net_uuid]
 
     def _port_bound(self, port_id,
