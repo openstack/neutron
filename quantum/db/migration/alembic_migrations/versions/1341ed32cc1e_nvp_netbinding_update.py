@@ -18,14 +18,14 @@
 """nvp_net_binding
 
 Revision ID: 1341ed32cc1e
-Revises: 3b54bf9e29f7
+Revises: 4692d074d587
 Create Date: 2013-02-26 01:28:29.182195
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '1341ed32cc1e'
-down_revision = '3b54bf9e29f7'
+down_revision = '4692d074d587'
 
 # Change to ['*'] if this migration applies to all plugins
 
