@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.42"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.43"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-11 00:06+0000\n"
+"POT-Creation-Date: 2013-03-12 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4192,104 +4192,94 @@ msgstr ""
 msgid "Provisioning network %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:164
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:163
 #, python-format
 msgid "Cannot provision unknown network type %s for network %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:176
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:175
 #, python-format
 msgid "Reclaiming local network %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:180
-#, python-format
-msgid "Reclaiming VLAN ID %s "
-msgstr ""
-
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:184
-#, python-format
-msgid "Cannot reclaim unsupported network type %s for network %s"
-msgstr ""
-
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:195
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:183
 #, python-format
 msgid "Binding port %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:208
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:196
 #, python-format
 msgid "Binding VLAN ID %s to switch port %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:220
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:208
 #, python-format
 msgid "Unsupported network type %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:225
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:213
 #, python-format
 msgid "Network %s is not avalailable on this agent"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:229
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:217
 #, python-format
 msgid "Unbinding port %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:255
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:243
 #, python-format
 msgid "No port %s defined on agent."
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:260
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:248
 #, python-format
 msgid "Adding port %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:267
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:255
 #, python-format
 msgid "Unable to get port details for device %s: %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:273
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:261
 #, python-format
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:288
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:276
 #, python-format
 msgid "Removing port %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:294
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:282
 #, python-format
 msgid "Removing port failed for device %s: %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:319
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:307
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:601
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:687
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:327
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:315
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:613
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:700
 msgid "Agent loop has new devices!"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:332
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:320
 #, python-format
 msgid "Error in agent event loop: %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:340
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:328
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:354
+#: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:342
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:652
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:766
 msgid "Agent initialized successfully, now running... "
@@ -4300,75 +4290,60 @@ msgstr ""
 msgid "HyperVException: %(msg)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:82
+#: quantum/plugins/hyperv/agent/utils.py:76
 #, python-format
 msgid "Vnic not found: %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:118
+#: quantum/plugins/hyperv/agent/utils.py:112
 #, python-format
 msgid "Job failed with error %d"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:133
+#: quantum/plugins/hyperv/agent/utils.py:127
 #, python-format
 msgid ""
 "WMI job failed with status %(job_state)d. Error details: %(err_sum_desc)s"
 " - %(err_desc)s - Error code: %(err_code)d"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:140
+#: quantum/plugins/hyperv/agent/utils.py:134
 #, python-format
 msgid "WMI job failed with status %(job_state)d. Error details: %(error)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:144
+#: quantum/plugins/hyperv/agent/utils.py:138
 #, python-format
 msgid "WMI job failed with status %(job_state)d. No error description available"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:149
+#: quantum/plugins/hyperv/agent/utils.py:143
 #, python-format
 msgid "WMI job succeeded: %(desc)s, Elapsed=%(elap)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:163
+#: quantum/plugins/hyperv/agent/utils.py:157
 #, python-format
 msgid "Failed creating port for %s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:180
+#: quantum/plugins/hyperv/agent/utils.py:174
 #, python-format
 msgid ""
 "Failed to disconnect port %(switch_port_name)s from switch "
 "%(vswitch_name)s with error %(ret_val)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:188
+#: quantum/plugins/hyperv/agent/utils.py:182
 #, python-format
 msgid ""
 "Failed to delete port %(switch_port_name)s from switch %(vswitch_name)s "
 "with error %(ret_val)s"
 msgstr ""
 
-#: quantum/plugins/hyperv/agent/utils.py:195
+#: quantum/plugins/hyperv/agent/utils.py:189
 #, python-format
 msgid "VSwitch not found: %s"
-msgstr ""
-
-#: quantum/plugins/hyperv/agent/utils.py:254
-#, python-format
-msgid "Setting vswitch %s in access mode (flat)"
-msgstr ""
-
-#: quantum/plugins/hyperv/agent/utils.py:258
-#, python-format
-msgid "Adding VLAN %s to vswitch %s"
-msgstr ""
-
-#: quantum/plugins/hyperv/agent/utils.py:264
-#, python-format
-msgid "Removing VLAN %s from vswitch %s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/lb_quantum_plugin.py:130
