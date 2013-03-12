@@ -12,7 +12,7 @@ kombu==1.0.4
 netaddr
 python-quantumclient>=2.2.0,<3.0.0
 pyudev
-sqlalchemy==0.7.9
+sqlalchemy>=0.7.8,<=0.7.99
 WebOb>=1.2
 python-keystoneclient>=0.2.0
 alembic>=0.4.1
