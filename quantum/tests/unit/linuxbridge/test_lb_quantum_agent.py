@@ -61,6 +61,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridgeAgent, self).setUp()
+        cfg.CONF.set_override('rpc_backend',
+                              'quantum.openstack.common.rpc.impl_fake')
         self.lbmgr_patcher = mock.patch('quantum.plugins.linuxbridge.agent.'
                                         'linuxbridge_quantum_agent.'
                                         'LinuxBridgeManager')
