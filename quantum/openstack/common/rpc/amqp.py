@@ -32,18 +32,19 @@ import uuid
 
 from eventlet import greenpool
 from eventlet import pools
-from eventlet import semaphore
 from eventlet import queue
-
+from eventlet import semaphore
 # TODO(pekowsk): Remove import cfg and below comment in Havana.
 # This import should no longer be needed when the amqp_rpc_single_reply_queue
 # option is removed.
 from oslo.config import cfg
+
 from quantum.openstack.common import excutils
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import local
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.rpc import common as rpc_common
+
 
 # TODO(pekowski): Remove this option in Havana.
 amqp_opts = [
