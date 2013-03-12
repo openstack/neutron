@@ -18,6 +18,7 @@
 import abc
 import os
 import re
+import shutil
 import socket
 import StringIO
 import sys
@@ -29,6 +30,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 
@@ -92,6 +94,12 @@ class DhcpBase(object):
     def reload_allocations(self):
         """Force the DHCP server to reload the assignment database."""
 
+    @classmethod
+    def existing_dhcp_networks(cls, conf, root_helper):
+        """Return a list of existing networks ids (ones we have configs for)"""
+
+        raise NotImplementedError
+
 
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
@@ -133,6 +141,13 @@ class DhcpLocalProcess(DhcpBase):
                         'command'), {'net_id': self.network.id, 'pid': pid})
         else:
             LOG.debug(_('No DHCP started for %s'), self.network.id)
+
+        self._remove_config_files()
+
+    def _remove_config_files(self):
+        confs_dir = os.path.abspath(os.path.normpath(self.conf.dhcp_confs))
+        conf_dir = os.path.join(confs_dir, self.network.id)
+        shutil.rmtree(conf_dir, ignore_errors=True)
 
     def get_conf_file_name(self, kind, ensure_conf_dir=False):
         """Returns the file name for a given kind of config file."""
@@ -205,6 +220,22 @@ class Dnsmasq(DhcpLocalProcess):
 
     QUANTUM_NETWORK_ID_KEY = 'QUANTUM_NETWORK_ID'
     QUANTUM_RELAY_SOCKET_PATH_KEY = 'QUANTUM_RELAY_SOCKET_PATH'
+
+    @classmethod
+    def existing_dhcp_networks(cls, conf, root_helper):
+        """Return a list of existing networks ids (ones we have configs for)"""
+
+        confs_dir = os.path.abspath(os.path.normpath(conf.dhcp_confs))
+
+        class FakeNetwork:
+            def __init__(self, net_id):
+                self.id = net_id
+
+        return [
+            c for c in os.listdir(confs_dir)
+            if (uuidutils.is_uuid_like(c) and
+                cls(conf, FakeNetwork(c), root_helper).active)
+        ]
 
     def spawn_process(self):
         """Spawns a Dnsmasq process for the network."""

@@ -79,6 +79,28 @@ class DhcpAgent(manager.Manager):
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)
         self.lease_relay = DhcpLeaseRelay(self.update_lease)
 
+        self._populate_networks_cache()
+
+    def _populate_networks_cache(self):
+        """Populate the networks cache when the DHCP-agent starts"""
+
+        try:
+            existing_networks = self.dhcp_driver_cls.existing_dhcp_networks(
+                self.conf,
+                self.root_helper
+            )
+
+            for net_id in existing_networks:
+                net = DictModel({"id": net_id, "subnets": [], "ports": []})
+                self.cache.put(net)
+        except NotImplementedError:
+            # just go ahead with an empty networks cache
+            LOG.debug(
+                _("The '%s' DHCP-driver does not support retrieving of a "
+                  "list of existing networks"),
+                self.conf.dhcp_driver
+            )
+
     def after_start(self):
         self.run()
         LOG.info(_("DHCP agent started"))
