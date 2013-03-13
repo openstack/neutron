@@ -177,3 +177,30 @@ class NvplibL2GatewayTestCase(NvplibTestCase):
         self.assertIn('LogicalPortAttachment', resp_obj)
         self.assertEqual(resp_obj['LogicalPortAttachment']['type'],
                          'L2GatewayAttachment')
+
+
+class TestNvpLibLogicalPorts(NvplibTestCase):
+
+    def test_get_port_by_tag(self):
+        tenant_id = 'pippo'
+        quantum_port_id = 'whatever'
+        lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id,
+                                        'fake-switch')
+        lport = nvplib.create_lport(self.fake_cluster, lswitch['uuid'],
+                                    tenant_id, quantum_port_id,
+                                    'name', 'device_id', True)
+        lport2 = nvplib.get_port_by_quantum_tag(self.fake_cluster,
+                                                lswitch['uuid'],
+                                                quantum_port_id)
+        self.assertIsNotNone(lport2)
+        self.assertEqual(lport['uuid'], lport2['uuid'])
+
+    def test_get_port_by_tag_not_found_returns_None(self):
+        tenant_id = 'pippo'
+        quantum_port_id = 'whatever'
+        lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id,
+                                        'fake-switch')
+        lport = nvplib.get_port_by_quantum_tag(self.fake_cluster,
+                                               lswitch['uuid'],
+                                               quantum_port_id)
+        self.assertIsNone(lport)
