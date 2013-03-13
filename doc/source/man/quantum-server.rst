@@ -8,7 +8,7 @@ Quantum Server
 
 :Author: openstack@lists.launchpad.net
 :Date:   2012-04-05
-:Copyright: OpenStack LLC
+:Copyright: OpenStack Foundation
 :Version: 2012.1
 :Manual section: 1
 :Manual group: cloud computing
