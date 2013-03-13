@@ -27,7 +27,7 @@ if sys.platform == 'win32':
 
 Name = 'quantum'
 Url = "https://launchpad.net/quantum"
-Version = setup.get_version(Name, '2013.1')
+Version = setup.get_version(Name, '2013.2')
 License = 'Apache License 2.0'
 Author = 'OpenStack'
 AuthorEmail = 'openstack-dev@lists.openstack.org'
