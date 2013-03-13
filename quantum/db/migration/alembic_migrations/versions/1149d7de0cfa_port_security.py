@@ -62,6 +62,14 @@ def upgrade(active_plugin=None, options=None):
                     sa.PrimaryKeyConstraint('port_id'))
     ### end Alembic commands ###
 
+    # Copy network and port ids over to network|port(securitybindings) table
+    # and set port_security_enabled to false as ip address pairs were not
+    # configured in NVP originally.
+    op.execute("INSERT INTO networksecuritybindings SELECT id as "
+               "network_id, False as port_security_enabled from networks")
+    op.execute("INSERT INTO portsecuritybindings SELECT id as port_id, "
+               "False as port_security_enabled from ports")
+
 
 def downgrade(active_plugin=None, options=None):
     if not migration.should_run(active_plugin, migration_for_plugins):
