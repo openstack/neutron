@@ -29,11 +29,18 @@ from neutron.common import utils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+
+
 # NOTE(vish): Iptables supports chain names of up to 28 characters,  and we
 #             add up to 12 characters to binary_name which is used as a prefix,
 #             so we limit it to 16 characters.
 #             (max_chain_name_length - len('-POSTROUTING') == 16)
-binary_name = os.path.basename(inspect.stack()[-1][1])[:16]
+def get_binary_name():
+    """Grab the name of the binary we're running in."""
+    return os.path.basename(inspect.stack()[-1][1])[:16]
+
+binary_name = get_binary_name()
+
 # A length of a chain name must be less than or equal to 11 characters.
 # <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11
 MAX_CHAIN_LEN_WRAP = 11
@@ -83,8 +90,10 @@ class IptablesTable(object):
 
     def __init__(self):
         self.rules = []
+        self.remove_rules = []
         self.chains = set()
         self.unwrapped_chains = set()
+        self.remove_chains = set()
 
     def add_chain(self, name, wrap=True):
         """Adds a named chain to the table.
@@ -141,13 +150,29 @@ class IptablesTable(object):
             return
 
         chain_set.remove(name)
-        self.rules = filter(lambda r: r.chain != name, self.rules)
-        if wrap:
-            jump_snippet = '-j %s-%s' % (binary_name, name)
-        else:
-            jump_snippet = '-j %s' % (name,)
 
-        self.rules = filter(lambda r: jump_snippet not in r.rule, self.rules)
+        if not wrap:
+            # non-wrapped chains and rules need to be dealt with specially,
+            # so we keep a list of them to be iterated over in apply()
+            self.remove_chains.add(name)
+
+            # first, add rules to remove that have a matching chain name
+            self.remove_rules += [r for r in self.rules if r.chain == name]
+
+        # next, remove rules from list that have a matching chain name
+        self.rules = [r for r in self.rules if r.chain != name]
+
+        if not wrap:
+            jump_snippet = '-j %s' % name
+            # next, add rules to remove that have a matching jump chain
+            self.remove_rules += [r for r in self.rules
+                                  if jump_snippet in r.rule]
+        else:
+            jump_snippet = '-j %s-%s' % (binary_name, name)
+
+        # finally, remove rules from list that have a matching jump chain
+        self.rules = [r for r in self.rules
+                      if jump_snippet not in r.rule]
 
     def add_rule(self, chain, rule, wrap=True, top=False):
         """Add a rule to the table.
@@ -185,6 +210,8 @@ class IptablesTable(object):
         chain = get_chain_name(chain, wrap)
         try:
             self.rules.remove(IptablesRule(chain, rule, wrap, top))
+            if not wrap:
+                self.remove_rules.append(IptablesRule(chain, rule, wrap, top))
         except ValueError:
             LOG.warn(_('Tried to remove rule that was not there:'
                        ' %(chain)r %(rule)r %(wrap)r %(top)r'),
@@ -321,35 +348,40 @@ class IptablesManager(object):
             s += [('ip6tables', self.ipv6)]
 
         for cmd, tables in s:
-            for table in tables:
-                args = ['%s-save' % cmd, '-t', table]
-                if self.namespace:
-                    args = ['ip', 'netns', 'exec', self.namespace] + args
-                current_table = (self.execute(args,
-                                 root_helper=self.root_helper))
-                current_lines = current_table.split('\n')
-                new_filter = self._modify_rules(current_lines,
-                                                tables[table])
-                args = ['%s-restore' % (cmd)]
-                if self.namespace:
-                    args = ['ip', 'netns', 'exec', self.namespace] + args
-                self.execute(args,
-                             process_input='\n'.join(new_filter),
-                             root_helper=self.root_helper)
+            args = ['%s-save' % (cmd,), '-c']
+            if self.namespace:
+                args = ['ip', 'netns', 'exec', self.namespace] + args
+            all_tables = self.execute(args, root_helper=self.root_helper)
+            all_lines = all_tables.split('\n')
+            for table_name, table in tables.iteritems():
+                start, end = self._find_table(all_lines, table_name)
+                all_lines[start:end] = self._modify_rules(
+                    all_lines[start:end], table, table_name)
+
+            args = ['%s-restore' % (cmd,), '-c']
+            if self.namespace:
+                args = ['ip', 'netns', 'exec', self.namespace] + args
+            self.execute(args, process_input='\n'.join(all_lines),
+                         root_helper=self.root_helper)
         LOG.debug(_("IPTablesManager.apply completed with success"))
 
-    def _modify_rules(self, current_lines, table, binary=None):
-        unwrapped_chains = table.unwrapped_chains
-        chains = table.chains
-        rules = table.rules
+    def _find_table(self, lines, table_name):
+        if len(lines) < 3:
+            # length only <2 when fake iptables
+            return (0, 0)
+        try:
+            start = lines.index('*%s' % table_name) - 1
+        except ValueError:
+            # Couldn't find table_name
+            LOG.debug(_('Unable to find table %s'), table_name)
+            return (0, 0)
+        end = lines[start:].index('COMMIT') + start + 2
+        return (start, end)
 
-        # Remove any trace of our rules
-        new_filter = filter(lambda line: binary_name
-                            not in line, current_lines)
-
+    def _find_rules_index(self, lines):
         seen_chains = False
         rules_index = 0
-        for rules_index, rule in enumerate(new_filter):
+        for rules_index, rule in enumerate(lines):
             if not seen_chains:
                 if rule.startswith(':'):
                     seen_chains = True
@@ -357,38 +389,173 @@ class IptablesManager(object):
                 if not rule.startswith(':'):
                     break
 
+        if not seen_chains:
+            rules_index = 2
+
+        return rules_index
+
+    def _modify_rules(self, current_lines, table, table_name):
+        unwrapped_chains = table.unwrapped_chains
+        chains = table.chains
+        remove_chains = table.remove_chains
+        rules = table.rules
+        remove_rules = table.remove_rules
+
+        if not current_lines:
+            fake_table = ['# Generated by iptables_manager',
+                          '*' + table_name, 'COMMIT',
+                          '# Completed by iptables_manager']
+            current_lines = fake_table
+
+        # Fill old_filter with any chains or rules we might have added,
+        # they could have a [packet:byte] count we want to preserve.
+        # Fill new_filter with any chains or rules without our name in them.
+        old_filter, new_filter = [], []
+        for line in current_lines:
+            (old_filter if binary_name in line else
+             new_filter).append(line.strip())
+
+        rules_index = self._find_rules_index(new_filter)
+
+        all_chains = [':%s' % name for name in unwrapped_chains]
+        all_chains += [':%s-%s' % (binary_name, name) for name in chains]
+
+        # Iterate through all the chains, trying to find an existing
+        # match.
+        our_chains = []
+        for chain in all_chains:
+            chain_str = str(chain).strip()
+
+            orig_filter = [s for s in old_filter if chain_str in s.strip()]
+            dup_filter = [s for s in new_filter if chain_str in s.strip()]
+            new_filter = [s for s in new_filter if chain_str not in s.strip()]
+
+            # if no old or duplicates, use original chain
+            if orig_filter:
+                # grab the last entry, if there is one
+                old = orig_filter[-1]
+                chain_str = str(old).strip()
+            elif dup_filter:
+                # grab the last entry, if there is one
+                dup = dup_filter[-1]
+                chain_str = str(dup).strip()
+            else:
+                # add-on the [packet:bytes]
+                chain_str += ' - [0:0]'
+
+            our_chains += [chain_str]
+
+        # Iterate through all the rules, trying to find an existing
+        # match.
         our_rules = []
+        bot_rules = []
         for rule in rules:
-            rule_str = str(rule)
+            rule_str = str(rule).strip()
+            # Further down, we weed out duplicates from the bottom of the
+            # list, so here we remove the dupes ahead of time.
+
+            orig_filter = [s for s in old_filter if rule_str in s.strip()]
+            dup_filter = [s for s in new_filter if rule_str in s.strip()]
+            new_filter = [s for s in new_filter if rule_str not in s.strip()]
+
+            # if no old or duplicates, use original rule
+            if orig_filter:
+                # grab the last entry, if there is one
+                old = orig_filter[-1]
+                rule_str = str(old).strip()
+            elif dup_filter:
+                # grab the last entry, if there is one
+                dup = dup_filter[-1]
+                rule_str = str(dup).strip()
+                # backup one index so we write the array correctly
+                rules_index -= 1
+            else:
+                # add-on the [packet:bytes]
+                rule_str = '[0:0] ' + rule_str
+
             if rule.top:
                 # rule.top == True means we want this rule to be at the top.
-                # Further down, we weed out duplicates from the bottom of the
-                # list, so here we remove the dupes ahead of time.
-                new_filter = filter(lambda s: s.strip() != rule_str.strip(),
-                                    new_filter)
-            our_rules += [rule_str]
+                our_rules += [rule_str]
+            else:
+                bot_rules += [rule_str]
+
+        our_rules += bot_rules
 
         new_filter[rules_index:rules_index] = our_rules
+        new_filter[rules_index:rules_index] = our_chains
 
-        new_filter[rules_index:rules_index] = [':%s - [0:0]' % (name)
-                                               for name in unwrapped_chains]
-        new_filter[rules_index:rules_index] = [':%s-%s - [0:0]' %
-                                               (binary_name, name)
-                                               for name in chains]
-
-        seen_lines = set()
-
-        def _weed_out_duplicates(line):
+        def _strip_packets_bytes(line):
+            # strip any [packet:byte] counts at start or end of lines
+            if line.startswith(':'):
+                # it's a chain, for example, ":neutron-billing - [0:0]"
+                line = line.split(':')[1]
+                line = line.split(' - [', 1)[0]
+            elif line.startswith('['):
+                # it's a rule, for example, "[0:0] -A neutron-billing..."
+                line = line.split('] ', 1)[1]
             line = line.strip()
-            if line in seen_lines:
-                return False
-            else:
-                seen_lines.add(line)
-                return True
+            return line
 
-        # We filter duplicates, letting the *last* occurrence take
-        # precedence.
+        seen_chains = set()
+
+        def _weed_out_duplicate_chains(line):
+            # ignore [packet:byte] counts at end of lines
+            if line.startswith(':'):
+                line = _strip_packets_bytes(line)
+                if line in seen_chains:
+                    return False
+                else:
+                    seen_chains.add(line)
+
+            # Leave it alone
+            return True
+
+        seen_rules = set()
+
+        def _weed_out_duplicate_rules(line):
+            if line.startswith('['):
+                line = _strip_packets_bytes(line)
+                if line in seen_rules:
+                    return False
+                else:
+                    seen_rules.add(line)
+
+            # Leave it alone
+            return True
+
+        def _weed_out_removes(line):
+            # We need to find exact matches here
+            if line.startswith(':'):
+                line = _strip_packets_bytes(line)
+                for chain in remove_chains:
+                    if chain == line:
+                        remove_chains.remove(chain)
+                        return False
+            elif line.startswith('['):
+                line = _strip_packets_bytes(line)
+                for rule in remove_rules:
+                    rule_str = _strip_packets_bytes(str(rule))
+                    if rule_str == line:
+                        remove_rules.remove(rule)
+                        return False
+
+            # Leave it alone
+            return True
+
+        # We filter duplicates.  Go throught the chains and rules, letting
+        # the *last* occurrence take precendence since it could have a
+        # non-zero [packet:byte] count we want to preserve.  We also filter
+        # out anything in the "remove" list.
         new_filter.reverse()
-        new_filter = filter(_weed_out_duplicates, new_filter)
+        new_filter = [line for line in new_filter
+                      if _weed_out_duplicate_chains(line) and
+                      _weed_out_duplicate_rules(line) and
+                      _weed_out_removes(line)]
         new_filter.reverse()
+
+        # flush lists, just in case we didn't find something
+        remove_chains.clear()
+        for rule in remove_rules:
+            remove_rules.remove(rule)
+
         return new_filter
