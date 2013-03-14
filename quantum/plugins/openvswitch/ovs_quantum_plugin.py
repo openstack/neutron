@@ -344,9 +344,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
-    def _enforce_set_auth(self, context, resource, action):
-        policy.enforce(context, action, resource)
-
     def _extend_network_dict_provider(self, context, network):
         if self._check_view_auth(context, network, self.network_view):
             binding = ovs_db_v2.get_network_binding(context.session,
@@ -377,9 +374,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return (None, None, None)
-
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
 
         if not network_type_set:
             msg = _("provider:network_type required")
@@ -454,9 +448,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return
-
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
 
         msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)

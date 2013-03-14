@@ -133,9 +133,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
-    def _enforce_set_auth(self, context, resource, action):
-        policy.enforce(context, action, resource)
-
     def _update_resource_status(self, context, resource, id, status):
         """Update status of specified resource."""
         request = {}

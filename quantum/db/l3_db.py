@@ -36,7 +36,6 @@ from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common import uuidutils
 from quantum import policy
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -770,11 +769,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                             "extension:router:view",
                             network)
 
-    def _enforce_l3_set_auth(self, context, network):
-        return policy.enforce(context,
-                              "extension:router:set",
-                              network)
-
     def _network_is_external(self, context, net_id):
         try:
             context.session.query(ExternalNetwork).filter_by(
@@ -795,8 +789,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if not external_set:
             return
 
-        self._enforce_l3_set_auth(context, net_data)
-
         if external:
             # expects to be called within a plugin's session
             context.session.add(ExternalNetwork(network_id=net_id))
@@ -807,7 +799,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if not attributes.is_attr_set(new_value):
             return
 
-        self._enforce_l3_set_auth(context, net_data)
         existing_value = self._network_is_external(context, net_id)
 
         if existing_value == new_value:
