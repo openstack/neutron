@@ -2208,10 +2208,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                        sgrid)
 
     def create_qos_queue(self, context, qos_queue, check_policy=True):
-        if check_policy:
-            self._enforce_set_auth(context, qos_queue,
-                                   ext_qos.qos_queue_create)
         q = qos_queue.get('qos_queue')
+        if check_policy:
+            self._enforce_set_auth(context, q, ext_qos.qos_queue_create)
         self._validate_qos_queue(context, q)
         q['id'] = nvplib.create_lqueue(self.default_cluster,
                                        self._nvp_lqueue(q))
@@ -2229,8 +2228,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return super(NvpPluginV2, self).delete_qos_queue(context, id)
 
     def get_qos_queue(self, context, id, fields=None):
-        if not self._check_view_auth(context, {'qos_queue': None},
-                                     ext_qos.qos_queue_get):
+        if not self._check_view_auth(context, {}, ext_qos.qos_queue_get):
             # don't want the user to find out that they guessed the right id
             # so  we raise not found if the policy.json file doesn't allow them
             raise ext_qos.QueueNotFound(id=id)
