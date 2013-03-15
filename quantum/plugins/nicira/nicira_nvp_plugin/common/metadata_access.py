@@ -25,8 +25,8 @@ from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.db import l3_db
+from quantum.db import models_v2
 from quantum.openstack.common import log as logging
-from quantum.openstack.common.notifier import api as notifier_api
 from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
                                                              as nvp_exc)
 from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
@@ -37,6 +37,7 @@ LOG = logging.getLogger(__name__)
 METADATA_DEFAULT_PREFIX = 30
 METADATA_SUBNET_CIDR = '169.254.169.252/%d' % METADATA_DEFAULT_PREFIX
 METADATA_GATEWAY_IP = '169.254.169.253'
+METADATA_DHCP_ROUTE = '169.254.169.254/32'
 
 
 class NvpMetadataAccess(object):
@@ -108,7 +109,7 @@ class NvpMetadataAccess(object):
 
     def _handle_metadata_access_network(self, context, router_id,
                                         do_create=True):
-        if not cfg.CONF.NVP.enable_metadata_access_network:
+        if cfg.CONF.NVP.metadata_mode != "access_network":
             LOG.debug(_("Metadata access network is disabled"))
             return
         if not cfg.CONF.allow_overlapping_ips:
@@ -147,3 +148,36 @@ class NvpMetadataAccess(object):
                 LOG.exception(_("An error occurred while operating on the "
                                 "metadata access network for router:'%s'"),
                               router_id)
+
+    def _ensure_metadata_host_route(self, context, fixed_ip_data,
+                                    is_delete=False):
+        subnet = self._get_subnet(context, fixed_ip_data['subnet_id'])
+        # If subnet does not have a gateway do not create metadata route. This
+        # is done via the enable_isolated_metadata option if desired.
+        if not subnet.get('gateway_ip'):
+            return
+        metadata_routes = [r for r in subnet.routes
+                           if r['destination'] == METADATA_DHCP_ROUTE]
+
+        if metadata_routes:
+            # We should have only a single metadata route at any time
+            # because the route logic forbids two routes with the same
+            # destination. Update next hop with the provided IP address
+            if not is_delete:
+                metadata_routes[0].nexthop = fixed_ip_data['ip_address']
+            else:
+                context.session.delete(metadata_routes[0])
+        else:
+            # add the metadata route
+            route = models_v2.SubnetRoute(subnet_id=subnet.id,
+                                          destination=METADATA_DHCP_ROUTE,
+                                          nexthop=fixed_ip_data['ip_address'])
+            context.session.add(route)
+        return cfg.CONF.dhcp_agent_notification
+
+    def _send_subnet_update_end(self, context, subnet_id):
+        updated_subnet = self.get_subnet(context, subnet_id)
+        dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        dhcp_notifier.notify(context,
+                             {'subnet': updated_subnet},
+                             'subnet.update.end')
