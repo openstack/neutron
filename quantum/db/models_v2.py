@@ -145,10 +145,10 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     enable_dhcp = sa.Column(sa.Boolean())
     dns_nameservers = orm.relationship(DNSNameServer,
                                        backref='subnet',
-                                       cascade='delete')
+                                       cascade='all, delete, delete-orphan')
     routes = orm.relationship(SubnetRoute,
                               backref='subnet',
-                              cascade='delete')
+                              cascade='all, delete, delete-orphan')
     shared = sa.Column(sa.Boolean)
 
 
