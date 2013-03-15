@@ -117,7 +117,6 @@ def setup_logging(conf):
     product_name = "quantum"
     logging.setup(product_name)
     log_root = logging.getLogger(product_name).logger
-    log_root.propagate = 0
     LOG.info(_("Logging enabled!"))
 
 
