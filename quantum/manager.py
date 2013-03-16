@@ -20,6 +20,7 @@ from oslo.config import cfg
 
 from quantum.common.exceptions import ClassNotFound
 from quantum.openstack.common import importutils
+from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import periodic_task
 from quantum.plugins.common import constants
@@ -131,9 +132,16 @@ class QuantumManager(object):
                        "desc": plugin_inst.get_plugin_description()})
 
     @classmethod
-    def get_instance(cls):
+    @lockutils.synchronized("qmlock", "qml-")
+    def _create_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
+
+    @classmethod
+    def get_instance(cls):
+        # double checked locking
+        if cls._instance is None:
+            cls._create_instance()
         return cls._instance
 
     @classmethod
