@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.46"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.47"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-15 00:06+0000\n"
+"POT-Creation-Date: 2013-03-16 00:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1348,16 +1348,16 @@ msgstr ""
 msgid "Base MAC: %s"
 msgstr ""
 
-#: quantum/common/config.py:121
+#: quantum/common/config.py:120
 msgid "Logging enabled!"
 msgstr ""
 
-#: quantum/common/config.py:135
+#: quantum/common/config.py:134
 #, python-format
 msgid "Config paste file: %s"
 msgstr ""
 
-#: quantum/common/config.py:140
+#: quantum/common/config.py:139
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
