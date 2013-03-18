@@ -408,6 +408,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         super(TestDhcpAgentEventHandler, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
         cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
+        cfg.CONF.register_opts(dhcp.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
         config.register_root_helper(cfg.CONF)
