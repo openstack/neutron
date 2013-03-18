@@ -127,12 +127,7 @@ class DhcpLocalProcess(DhcpBase):
 
         if self.active:
             cmd = ['kill', '-9', pid]
-            if self.namespace:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
-                ip_wrapper.netns.execute(cmd)
-            else:
-                utils.execute(cmd, self.root_helper)
-
+            utils.execute(cmd, self.root_helper)
             if not retain_port:
                 self.device_delegate.destroy(self.network, self.interface_name)
 
@@ -307,12 +302,7 @@ class Dnsmasq(DhcpLocalProcess):
         self._output_hosts_file()
         self._output_opts_file()
         cmd = ['kill', '-HUP', self.pid]
-
-        if self.namespace:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
-            ip_wrapper.netns.execute(cmd)
-        else:
-            utils.execute(cmd, self.root_helper)
+        utils.execute(cmd, self.root_helper)
         LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
 
     def _output_hosts_file(self):
