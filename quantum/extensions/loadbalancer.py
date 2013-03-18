@@ -57,6 +57,11 @@ class PoolStatsNotFound(qexception.NotFound):
     message = _("Statistics of Pool %(pool_id)s could not be found")
 
 
+class ProtocolMismatch(qexception.BadRequest):
+    message = _("Protocol %(vip_proto)s does not match "
+                "pool protocol %(pool_proto)s")
+
+
 RESOURCE_ATTRIBUTE_MAP = {
     'vips': {
         'id': {'allow_post': False, 'allow_put': False,
