@@ -31,11 +31,6 @@ from quantum.plugins.openvswitch import ovs_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    """Establish database connection and load models"""
-    db.configure_db()
-
-
 def create_vlanids():
     """Prepopulates the vlan_bindings table"""
     LOG.debug(_("create_vlanids() called"))

@@ -35,6 +35,7 @@ from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.plugins.openvswitch import ovs_db_v2 as odb
 from quantum import quantum_plugin_base_v2
+from quantum.db import api as db_api
 
 
 LOG = logging.getLogger(__name__)
@@ -64,8 +65,6 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         configured, and load the inventories those device plugins for which the
         inventory is configured
         """
-        cdb.initialize()
-        cred.Store.initialize()
         for key in conf.PLUGINS[const.PLUGINS].keys():
             plugin_obj = conf.PLUGINS[const.PLUGINS][key]
             self._plugins[key] = importutils.import_object(plugin_obj)
@@ -77,12 +76,21 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 LOG.debug(_("Loaded device inventory %s\n"),
                           conf.PLUGINS[const.INVENTORY][key])
 
-        if hasattr(self._plugins[const.VSWITCH_PLUGIN],
-                   "supported_extension_aliases"):
+        if ((const.VSWITCH_PLUGIN in self._plugins) and
+            hasattr(self._plugins[const.VSWITCH_PLUGIN],
+                    "supported_extension_aliases")):
             self.supported_extension_aliases.extend(
                 self._plugins[const.VSWITCH_PLUGIN].
                 supported_extension_aliases)
 
+        # At this point, all the database models should have been loaded. It's
+        # possible that configure_db() may have been called by one of the
+        # plugins loaded in above. Otherwise, this call is to make sure that
+        # the database is initialized
+        db_api.configure_db()
+
+        # Initialize credential store after database initialization
+        cred.Store.initialize()
         LOG.debug(_("%(module)s.%(name)s init done"),
                   {'module': __name__,
                    'name': self.__class__.__name__})
