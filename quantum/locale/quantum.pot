@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.49"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.50"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-18 00:06+0000\n"
+"POT-Creation-Date: 2013-03-19 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,46 +32,46 @@ msgstr ""
 msgid "read_deleted can only be one of 'no', 'yes' or 'only', not %r"
 msgstr ""
 
-#: quantum/manager.py:76
+#: quantum/manager.py:77
 msgid "Quantum core_plugin not configured!"
 msgstr ""
 
-#: quantum/manager.py:85 quantum/plugins/metaplugin/meta_quantum_plugin.py:114
+#: quantum/manager.py:86 quantum/plugins/metaplugin/meta_quantum_plugin.py:114
 #, python-format
 msgid "Plugin location: %s"
 msgstr ""
 
-#: quantum/manager.py:88 quantum/manager.py:111
+#: quantum/manager.py:89 quantum/manager.py:112
 #, python-format
 msgid "Loading Plugin: %s"
 msgstr ""
 
-#: quantum/manager.py:91 quantum/manager.py:114
+#: quantum/manager.py:92 quantum/manager.py:115
 msgid "Error loading plugin"
 msgstr ""
 
-#: quantum/manager.py:92
+#: quantum/manager.py:93
 msgid ""
 "Plugin not found.  You can install a plugin with: pip install <plugin-"
 "name>\n"
 "Example: pip install quantum-sample-plugin"
 msgstr ""
 
-#: quantum/manager.py:106
+#: quantum/manager.py:107
 #, python-format
 msgid "Loading service plugins: %s"
 msgstr ""
 
-#: quantum/manager.py:115
+#: quantum/manager.py:116
 msgid "Plugin not found."
 msgstr ""
 
-#: quantum/manager.py:122
+#: quantum/manager.py:123
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
 
-#: quantum/manager.py:128
+#: quantum/manager.py:129
 #, python-format
 msgid "Successfully loaded %(type)s plugin. Description: %(desc)s"
 msgstr ""
@@ -2477,6 +2477,11 @@ msgstr ""
 #: quantum/extensions/loadbalancer.py:57
 #, python-format
 msgid "Statistics of Pool %(pool_id)s could not be found"
+msgstr ""
+
+#: quantum/extensions/loadbalancer.py:61
+#, python-format
+msgid "Protocol %(vip_proto)s does not match pool protocol %(pool_proto)s"
 msgstr ""
 
 #: quantum/extensions/portsecurity.py:25
