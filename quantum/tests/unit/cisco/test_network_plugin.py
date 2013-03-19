@@ -32,12 +32,7 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     _plugin_name = 'quantum.plugins.cisco.network_plugin.PluginV2'
 
     def setUp(self):
-        def new_init():
-            db.configure_db()
-
-        with mock.patch.object(network_db_v2,
-                               'initialize', new=new_init):
-            super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
+        super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
         self.port_create_status = 'DOWN'
 
     def _get_plugin_ref(self):

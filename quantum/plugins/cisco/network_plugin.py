@@ -66,7 +66,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self.supported_extension_aliases.extend(
                 self._model.supported_extension_aliases)
 
-        super(PluginV2, self).__init__()
         LOG.debug(_("Plugin initialization complete"))
 
     def __getattribute__(self, name):

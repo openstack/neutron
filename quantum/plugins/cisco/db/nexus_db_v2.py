@@ -29,11 +29,6 @@ from quantum.plugins.cisco.db import nexus_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    """Establish database connection and load models"""
-    db.configure_db()
-
-
 def get_all_nexusport_bindings():
     """Lists all the nexusport bindings"""
     LOG.debug(_("get_all_nexusport_bindings() called"))
