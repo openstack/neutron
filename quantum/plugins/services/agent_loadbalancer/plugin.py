@@ -49,15 +49,15 @@ class LoadBalancerCallbacks(object):
 
     def get_ready_devices(self, context, host=None):
         with context.session.begin(subtransactions=True):
-            qry = context.session.query(
-                loadbalancer_db.Vip, loadbalancer_db.Pool
-            )
+            qry = (context.session.query(loadbalancer_db.Pool.id).
+                   join(loadbalancer_db.Vip))
+
             qry = qry.filter(loadbalancer_db.Vip.status.in_(ACTIVE_PENDING))
             qry = qry.filter(loadbalancer_db.Pool.status.in_(ACTIVE_PENDING))
             up = True  # makes pep8 and sqlalchemy happy
             qry = qry.filter(loadbalancer_db.Vip.admin_state_up == up)
             qry = qry.filter(loadbalancer_db.Pool.admin_state_up == up)
-            return [p.id for v, p in qry.all()]
+            return [id for id, in qry.all()]
 
     def get_logical_device(self, context, pool_id=None, activate=True,
                            **kwargs):
