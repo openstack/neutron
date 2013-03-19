@@ -12,8 +12,6 @@
 
     "extension:router:view": "rule:regular_user",
     "extension:router:set": "rule:admin_only",
-    "extension:router:add_router_interface": "rule:admin_or_owner",
-    "extension:router:remove_router_interface": "rule:admin_or_owner",
 
     "extension:port_binding:view": "rule:admin_only",
     "extension:port_binding:set": "rule:admin_only",

@@ -141,13 +141,25 @@ class Controller(object):
     def __getattr__(self, name):
         if name in self._member_actions:
             def _handle_action(request, id, **kwargs):
-                if 'body' in kwargs:
-                    body = kwargs.pop('body')
-                    return getattr(self._plugin, name)(request.context, id,
-                                                       body, **kwargs)
-                else:
-                    return getattr(self._plugin, name)(request.context, id,
-                                                       **kwargs)
+                arg_list = [request.context, id]
+                # Fetch the resource and verify if the user can access it
+                try:
+                    resource = self._item(request, id, True)
+                except exceptions.PolicyNotAuthorized:
+                    raise webob.exc.HTTPNotFound()
+                body = kwargs.pop('body', None)
+                # Explicit comparison with None to distinguish from {}
+                if body is not None:
+                    arg_list.append(body)
+                # TODO(salvatore-orlando): bp/make-authz-ortogonal
+                # The body of the action request should be included
+                # in the info passed to the policy engine
+                # Enforce policy, if any, for this action
+                # It is ok to raise a 403 because accessibility to the
+                # object was checked earlier in this method
+                policy.enforce(request.context, name, resource,
+                               plugin=self._plugin)
+                return getattr(self._plugin, name)(*arg_list, **kwargs)
             return _handle_action
         else:
             raise AttributeError

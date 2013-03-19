@@ -174,6 +174,9 @@ def check(context, action, target, plugin=None):
     :return: Returns True if access is permitted else False.
     """
     init()
+    # Compare with None to distinguish case in which target is {}
+    if target is None:
+        target = {}
     real_target = _build_target(action, target, plugin, context)
     match_rule = _build_match_rule(action, real_target)
     credentials = context.to_dict()
@@ -196,6 +199,9 @@ def enforce(context, action, target, plugin=None):
     """
 
     init()
+    # Compare with None to distinguish case in which target is {}
+    if target is None:
+        target = {}
     real_target = _build_target(action, target, plugin, context)
     match_rule = _build_match_rule(action, real_target)
     credentials = context.to_dict()
