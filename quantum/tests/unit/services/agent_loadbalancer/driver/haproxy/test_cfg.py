@@ -50,7 +50,8 @@ class TestHaproxyCfg(base.BaseTestCase):
                                             '\n'.join(test_config))
 
     def test_build_global(self):
-        config.CONF.register_opt(config.StrOpt('user_group'))
+        if not hasattr(config.CONF, 'user_group'):
+            config.CONF.register_opt(config.StrOpt('user_group'))
         config.CONF.set_override('user_group', 'test_group')
         expected_opts = ['global',
                          '\tdaemon',
