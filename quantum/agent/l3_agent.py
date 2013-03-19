@@ -117,14 +117,7 @@ class L3NATAgent(object):
 
         self.polling_interval = conf.polling_interval
 
-        self.qclient = client.Client(
-            username=self.conf.admin_user,
-            password=self.conf.admin_password,
-            tenant_name=self.conf.admin_tenant_name,
-            auth_url=self.conf.auth_url,
-            auth_strategy=self.conf.auth_strategy,
-            region_name=self.conf.auth_region
-        )
+        self.qclient = None
 
         if self.conf.use_namespaces:
             self._destroy_router_namespaces(self.conf.router_id)
@@ -168,16 +161,31 @@ class L3NATAgent(object):
             ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
+    def client_create(self):
+        self.qclient = client.Client(
+            username=self.conf.admin_user,
+            password=self.conf.admin_password,
+            tenant_name=self.conf.admin_tenant_name,
+            auth_url=self.conf.auth_url,
+            auth_strategy=self.conf.auth_strategy,
+            region_name=self.conf.auth_region
+        )
+        LOG.debug(_("Client session established!"))
+
     def daemon_loop(self):
         #TODO(danwent): this simple diff logic does not handle if
         # details of a router port (e.g., IP, mac) are changed behind
         # our back.  Will fix this properly with update notifications.
 
         while True:
+            if not self.qclient:
+                self.client_create()
+
             try:
                 self.do_single_loop()
             except:
                 LOG.exception("Error running l3_nat daemon_loop")
+                self.qclient = None
 
             time.sleep(self.polling_interval)
 

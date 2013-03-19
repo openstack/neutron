@@ -179,6 +179,7 @@ class TestBasicRouterOperations(unittest.TestCase):
     def testProcessRouter(self):
 
         agent = l3_agent.L3NATAgent(self.conf)
+        agent.client_create()
         router_id = _uuid()
         ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
                                  self.conf.use_namespaces)
@@ -231,6 +232,7 @@ class TestBasicRouterOperations(unittest.TestCase):
 
     def testSingleLoopRouterRemoval(self):
         agent = l3_agent.L3NATAgent(self.conf)
+        agent.client_create()
 
         self.client_inst.list_ports.return_value = {'ports': []}
 
