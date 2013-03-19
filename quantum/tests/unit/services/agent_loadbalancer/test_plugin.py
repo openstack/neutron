@@ -21,6 +21,8 @@ import mock
 
 from quantum import context
 from quantum import manager
+from quantum.db.loadbalancer import loadbalancer_db as ldb
+from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
 from quantum.plugins.services.agent_loadbalancer import plugin
 from quantum.tests import base
@@ -49,6 +51,54 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                 context.get_admin_context(),
             )
             self.assertEqual(ready, [vip['vip']['pool_id']])
+
+    def test_get_ready_devices_multiple_vips_and_pools(self):
+        ctx = context.get_admin_context()
+
+        # add 3 pools and 2 vips directly to DB
+        # to create 2 "ready" devices and one pool without vip
+        pools = []
+        for i in xrange(0, 3):
+            pools.append(ldb.Pool(id=uuidutils.generate_uuid(),
+                                  subnet_id=self._subnet_id,
+                                  protocol="HTTP",
+                                  lb_method="ROUND_ROBIN",
+                                  status=constants.ACTIVE,
+                                  admin_state_up=True))
+            ctx.session.add(pools[i])
+
+        vip0 = ldb.Vip(id=uuidutils.generate_uuid(),
+                       protocol_port=80,
+                       protocol="HTTP",
+                       pool_id=pools[0].id,
+                       status=constants.ACTIVE,
+                       admin_state_up=True,
+                       connection_limit=3)
+        ctx.session.add(vip0)
+        pools[0].vip_id = vip0.id
+
+        vip1 = ldb.Vip(id=uuidutils.generate_uuid(),
+                       protocol_port=80,
+                       protocol="HTTP",
+                       pool_id=pools[1].id,
+                       status=constants.ACTIVE,
+                       admin_state_up=True,
+                       connection_limit=3)
+        ctx.session.add(vip1)
+        pools[1].vip_id = vip1.id
+
+        ctx.session.flush()
+
+        self.assertEqual(ctx.session.query(ldb.Pool).count(), 3)
+        self.assertEqual(ctx.session.query(ldb.Vip).count(), 2)
+        ready = self.callbacks.get_ready_devices(ctx)
+        self.assertEqual(len(ready), 2)
+        self.assertIn(pools[0].id, ready)
+        self.assertIn(pools[1].id, ready)
+        self.assertNotIn(pools[2].id, ready)
+        # cleanup
+        ctx.session.query(ldb.Pool).delete()
+        ctx.session.query(ldb.Vip).delete()
 
     def test_get_ready_devices_inactive_vip(self):
         with self.vip() as vip:
