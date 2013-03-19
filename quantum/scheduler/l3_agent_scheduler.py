@@ -96,7 +96,7 @@ class ChanceScheduler(object):
             router_ids = list(set(router_ids) - set(to_removed_ids))
             if not router_ids:
                 LOG.warn(_('No routers compatible with L3 agent configuration'
-                           ' on host %s', host))
+                           ' on host %s'), host)
                 return False
 
             # binding
