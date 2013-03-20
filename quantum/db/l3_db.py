@@ -126,7 +126,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                'tenant_id': router['tenant_id'],
                'admin_state_up': router['admin_state_up'],
                'status': router['status'],
-               'external_gateway_info': None}
+               'external_gateway_info': None,
+               'gw_port_id': router['gw_port_id']}
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
             res['external_gateway_info'] = {'network_id': nw_id}
@@ -846,20 +847,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                            if it is None, all of routers will be queried.
         @return: a list of dicted routers with dicted gw_port populated if any
         """
-        router_query = context.session.query(Router)
-        if router_ids:
-            if 1 == len(router_ids):
-                router_query = router_query.filter(Router.id == router_ids[0])
-            else:
-                router_query = router_query.filter(Router.id.in_(router_ids))
+        filters = {'id': router_ids} if router_ids else {}
         if active is not None:
-            router_query = router_query.filter(Router.admin_state_up == active)
-        routers = router_query.all()
+            filters['admin_state_up'] = [active]
+        router_dicts = self.get_routers(context, filters=filters)
         gw_port_ids = []
-        if not routers:
+        if not router_dicts:
             return []
-        for router in routers:
-            gw_port_id = router.gw_port_id
+        for router_dict in router_dicts:
+            gw_port_id = router_dict['gw_port_id']
             if gw_port_id:
                 gw_port_ids.append(gw_port_id)
         gw_ports = []
@@ -868,15 +864,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         gw_port_id_gw_port_dict = {}
         for gw_port in gw_ports:
             gw_port_id_gw_port_dict[gw_port['id']] = gw_port
-        router_id_gw_port_id_dict = {}
-        for router in routers:
-            router_id_gw_port_id_dict[router.id] = router.gw_port_id
-        routers_list = [self._make_router_dict(c, None) for c in routers]
-        for router in routers_list:
-            gw_port_id = router_id_gw_port_id_dict[router['id']]
+        for router_dict in router_dicts:
+            gw_port_id = router_dict['gw_port_id']
             if gw_port_id:
-                router['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
-        return routers_list
+                router_dict['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
+        return router_dicts
 
     def _get_sync_floating_ips(self, context, router_ids):
         """Query floating_ips that relate to list of router_ids."""
