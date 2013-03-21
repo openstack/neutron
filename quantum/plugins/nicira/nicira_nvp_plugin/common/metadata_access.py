@@ -51,19 +51,16 @@ class NvpMetadataAccess(object):
 
     def _create_metadata_access_network(self, context, router_id):
         # This will still ensure atomicity on Quantum DB
-        # context.elevated() creates a deep-copy context
-        ctx_elevated = context.elevated()
-        with ctx_elevated.session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             # Add network
             # Network name is likely to be truncated on NVP
-
-            net_data = {'name': ('meta-%s' % router_id)[:40],
+            net_data = {'name': 'meta-%s' % router_id,
                         'tenant_id': '',  # intentionally not set
                         'admin_state_up': True,
                         'port_security_enabled': False,
                         'shared': False,
                         'status': constants.NET_STATUS_ACTIVE}
-            meta_net = self.create_network(ctx_elevated,
+            meta_net = self.create_network(context,
                                            {'network': net_data})
             # Add subnet
             subnet_data = {'network_id': meta_net['id'],
@@ -78,38 +75,34 @@ class NvpMetadataAccess(object):
                            'gateway_ip': METADATA_GATEWAY_IP,
                            'dns_nameservers': [],
                            'host_routes': []}
-            meta_sub = self.create_subnet(ctx_elevated,
+            meta_sub = self.create_subnet(context,
                                           {'subnet': subnet_data})
-            self.add_router_interface(ctx_elevated, router_id,
+            self.add_router_interface(context, router_id,
                                       {'subnet_id': meta_sub['id']})
             if cfg.CONF.dhcp_agent_notification:
                 # We need to send a notification to the dhcp agent in
                 # order to start the metadata agent proxy
                 dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-                dhcp_notifier.notify(ctx_elevated,
-                                     {'network': meta_net},
+                dhcp_notifier.notify(context, {'network': meta_net},
                                      'network.create.end')
 
     def _destroy_metadata_access_network(self, context, router_id, ports):
-
-        # context.elevated() creates a deep-copy context
-        ctx_elevated = context.elevated()
         # This will still ensure atomicity on Quantum DB
-        with ctx_elevated.session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             if ports:
-                meta_port = self._find_metadata_port(ctx_elevated, ports)
+                meta_port = self._find_metadata_port(context, ports)
                 if not meta_port:
                     return
                 meta_net_id = meta_port['network_id']
                 self.remove_router_interface(
-                    ctx_elevated, router_id, {'port_id': meta_port['id']})
+                    context, router_id, {'port_id': meta_port['id']})
                 # Remove network (this will remove the subnet too)
-                self.delete_network(ctx_elevated, meta_net_id)
+                self.delete_network(context, meta_net_id)
                 if cfg.CONF.dhcp_agent_notification:
                     # We need to send a notification to the dhcp agent in
                     # order to stop the metadata agent proxy
                     dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-                    dhcp_notifier.notify(ctx_elevated,
+                    dhcp_notifier.notify(context,
                                          {'network': {'id': meta_net_id}},
                                          'network.delete.end')
 
