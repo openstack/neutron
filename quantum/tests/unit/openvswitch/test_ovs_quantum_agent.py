@@ -23,6 +23,7 @@ import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
+from quantum.openstack.common.rpc import common as rpc_common
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.tests import base
 
@@ -235,6 +236,30 @@ class TestOvsQuantumAgent(base.BaseTestCase):
                                    physical_network="physnet")
             updup_fn.assert_called_with(self.agent.context,
                                         "123", self.agent.agent_id)
+
+    def test_port_update_plugin_rpc_failed(self):
+        port = {'id': 1,
+                'network_id': 1,
+                'admin_state_up': True}
+        with contextlib.nested(
+            mock.patch.object(ovs_quantum_agent.LOG, 'error'),
+            mock.patch.object(self.agent.int_br, "get_vif_port_by_id"),
+            mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
+            mock.patch.object(self.agent, 'port_bound'),
+            mock.patch.object(self.agent.plugin_rpc, 'update_device_down'),
+            mock.patch.object(self.agent, 'port_dead')
+        ) as (log, _, device_up, _, device_down, _):
+            device_up.side_effect = rpc_common.Timeout
+            self.agent.port_update(mock.Mock(), port=port)
+            self.assertTrue(device_up.called)
+            self.assertEqual(log.call_count, 1)
+
+            log.reset_mock()
+            port['admin_state_up'] = False
+            device_down.side_effect = rpc_common.Timeout
+            self.agent.port_update(mock.Mock(), port=port)
+            self.assertTrue(device_down.called)
+            self.assertEqual(log.call_count, 1)
 
     def test_setup_physical_bridges(self):
         with contextlib.nested(

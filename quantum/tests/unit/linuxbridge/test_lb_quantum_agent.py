@@ -23,6 +23,7 @@ import testtools
 
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
+from quantum.openstack.common.rpc import common as rpc_common
 from quantum.plugins.linuxbridge.agent import linuxbridge_quantum_agent
 from quantum.plugins.linuxbridge.common import constants as lconst
 from quantum.tests import base
@@ -574,3 +575,37 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 "tap123",
                 self.lb_rpc.agent.agent_id
             )
+
+    def test_port_update_plugin_rpc_failed(self):
+        with contextlib.nested(
+                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                                  "get_tap_device_name"),
+                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                                  "udev_get_tap_devices"),
+                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                                  "get_bridge_name"),
+                mock.patch.object(self.lb_rpc.agent.br_mgr,
+                                  "remove_interface"),
+                mock.patch.object(self.lb_rpc.agent.br_mgr, "add_interface"),
+                mock.patch.object(self.lb_rpc.sg_agent,
+                                  "refresh_firewall", create=True),
+                mock.patch.object(self.lb_rpc.agent,
+                                  "plugin_rpc", create=True),
+                mock.patch.object(linuxbridge_quantum_agent.LOG, 'error'),
+        ) as (get_tap_fn, udev_fn, _, _, _, _, plugin_rpc, log):
+            get_tap_fn.return_value = "tap123"
+            udev_fn.return_value = ["tap123", "tap124"]
+            port = {"admin_state_up": True,
+                    "id": "1234-5678",
+                    "network_id": "123-123"}
+            plugin_rpc.update_device_up.side_effect = rpc_common.Timeout
+            self.lb_rpc.port_update(mock.Mock(), port=port)
+            self.assertTrue(plugin_rpc.update_device_up.called)
+            self.assertEqual(log.call_count, 1)
+
+            log.reset_mock()
+            port["admin_state_up"] = False
+            plugin_rpc.update_device_down.side_effect = rpc_common.Timeout
+            self.lb_rpc.port_update(mock.Mock(), port=port)
+            self.assertTrue(plugin_rpc.update_device_down.called)
+            self.assertEqual(log.call_count, 1)

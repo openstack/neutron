@@ -41,6 +41,7 @@ from quantum.common import utils as q_utils
 from quantum import context
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall
+from quantum.openstack.common.rpc import common as rpc_common
 from quantum.openstack.common.rpc import dispatcher
 from quantum.plugins.linuxbridge.common import config  # noqa
 from quantum.plugins.linuxbridge.common import constants as lconst
@@ -437,35 +438,38 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         if 'security_groups' in port:
             self.sg_agent.refresh_firewall()
-
-        if port['admin_state_up']:
-            network_type = kwargs.get('network_type')
-            if network_type:
-                segmentation_id = kwargs.get('segmentation_id')
+        try:
+            if port['admin_state_up']:
+                network_type = kwargs.get('network_type')
+                if network_type:
+                    segmentation_id = kwargs.get('segmentation_id')
+                else:
+                    # compatibility with pre-Havana RPC vlan_id encoding
+                    vlan_id = kwargs.get('vlan_id')
+                    (network_type,
+                     segmentation_id) = lconst.interpret_vlan_id(vlan_id)
+                physical_network = kwargs.get('physical_network')
+                # create the networking for the port
+                self.agent.br_mgr.add_interface(port['network_id'],
+                                                network_type,
+                                                physical_network,
+                                                segmentation_id,
+                                                port['id'])
+                # update plugin about port status
+                self.agent.plugin_rpc.update_device_up(self.context,
+                                                       tap_device_name,
+                                                       self.agent.agent_id)
             else:
-                # compatibility with pre-Havana RPC vlan_id encoding
-                vlan_id = kwargs.get('vlan_id')
-                (network_type,
-                 segmentation_id) = lconst.interpret_vlan_id(vlan_id)
-            physical_network = kwargs.get('physical_network')
-            # create the networking for the port
-            self.agent.br_mgr.add_interface(port['network_id'],
-                                            network_type,
-                                            physical_network,
-                                            segmentation_id,
-                                            port['id'])
-            # update plugin about port status
-            self.agent.plugin_rpc.update_device_up(self.context,
-                                                   tap_device_name,
-                                                   self.agent.agent_id)
-        else:
-            bridge_name = self.agent.br_mgr.get_bridge_name(
-                port['network_id'])
-            self.agent.br_mgr.remove_interface(bridge_name, tap_device_name)
-            # update plugin about port status
-            self.agent.plugin_rpc.update_device_down(self.context,
-                                                     tap_device_name,
-                                                     self.agent.agent_id)
+                bridge_name = self.agent.br_mgr.get_bridge_name(
+                    port['network_id'])
+                self.agent.br_mgr.remove_interface(bridge_name,
+                                                   tap_device_name)
+                # update plugin about port status
+                self.agent.plugin_rpc.update_device_down(self.context,
+                                                         tap_device_name,
+                                                         self.agent.agent_id)
+        except rpc_common.Timeout:
+            LOG.error(_("RPC timeout while updating port %s"), port['id'])
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
