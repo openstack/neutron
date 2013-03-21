@@ -41,8 +41,6 @@ binary_name = os.path.basename(inspect.stack()[-1][1])[:16]
 MAX_CHAIN_LEN_WRAP = 11
 MAX_CHAIN_LEN_NOWRAP = 28
 
-cfg.CONF.set_default('lock_path', '$state_path/lock')
-
 
 def get_chain_name(chain_name, wrap=True):
     if wrap:
