@@ -15,6 +15,12 @@
 
     "extension:port_binding:view": "rule:admin_only",
     "extension:port_binding:set": "rule:admin_only",
+    "get_port:binding:host_id": "rule:admin_only",
+    "get_port:binding:vif_type": "rule:admin_only",
+    "get_port:binding:profile": "rule:admin_only",
+    "get_port:binding:capabilities": "rule:admin_only",
+    "create_port:binding:host_id": "rule:admin_only",
+    "update_port:binding:host_id": "rule:admin_only",
 
     "subnets:private:read": "rule:admin_or_owner",
     "subnets:private:write": "rule:admin_or_owner",

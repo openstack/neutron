@@ -38,6 +38,7 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
+from quantum.db import portbindings_db
 from quantum.db import quota_db  # noqa
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
@@ -214,7 +215,8 @@ class AgentNotifierApi(proxy.RpcProxy,
 class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin,
-                         agentschedulers_db.AgentSchedulerDbMixin):
+                         agentschedulers_db.AgentSchedulerDbMixin,
+                         portbindings_db.PortBindingMixin):
 
     """Implement the Quantum abstractions using Open vSwitch.
 
@@ -254,10 +256,13 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     network_view = "extension:provider_network:view"
     network_set = "extension:provider_network:set"
-    binding_view = "extension:port_binding:view"
-    binding_set = "extension:port_binding:set"
 
     def __init__(self, configfile=None):
+        self.extra_binding_dict = {
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+            portbindings.CAPABILITIES: {
+                portbindings.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}}
         ovs_db_v2.initialize()
         self._parse_network_vlan_ranges()
         ovs_db_v2.sync_vlan_allocations(self.network_vlan_ranges)
@@ -530,44 +535,39 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
-    def _extend_port_dict_binding(self, context, port):
-        if self._check_view_auth(context, port, self.binding_view):
-            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
-            port[portbindings.CAPABILITIES] = {
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}
-        return port
-
     def create_port(self, context, port):
         # Set port status as 'DOWN'. This will be updated by agent
         port['port']['status'] = q_const.PORT_STATUS_DOWN
+        port_data = port['port']
         session = context.session
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             port = super(OVSQuantumPluginV2, self).create_port(context, port)
+            self._process_portbindings_create_and_update(context,
+                                                         port_data, port)
             self._process_port_create_security_group(context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
-        return self._extend_port_dict_binding(context, port)
+        return self._check_portbindings_view_auth(context, port)
 
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
             port = super(OVSQuantumPluginV2, self).get_port(context,
-                                                            id, fields)
-            self._extend_port_dict_binding(context, port)
-        return self._fields(port, fields)
+                                                            id,
+                                                            fields)
+        return self._check_portbindings_view_auth(context, port)
 
     def get_ports(self, context, filters=None, fields=None,
-                  sorts=None, limit=None, marker=None,
-                  page_reverse=False):
+                  sorts=None, limit=None, marker=None, page_reverse=False):
+        res_ports = []
         with context.session.begin(subtransactions=True):
-            ports = super(OVSQuantumPluginV2, self).get_ports(
-                context, filters, fields, sorts, limit, marker,
-                page_reverse)
-            #TODO(nati) filter by security group
+            ports = super(OVSQuantumPluginV2,
+                          self).get_ports(context, filters, fields, sorts,
+                                          limit, marker, page_reverse)
             for port in ports:
-                self._extend_port_dict_binding(context, port)
-        return [self._fields(port, fields) for port in ports]
+                self._check_portbindings_view_auth(context, port)
+                res_ports.append(port)
+        return res_ports
 
     def update_port(self, context, id, port):
         session = context.session
@@ -579,6 +579,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
+            self._process_portbindings_create_and_update(context,
+                                                         port['port'],
+                                                         updated_port)
         need_port_update_notify |= self.is_security_group_member_updated(
             context, original_port, updated_port)
         if original_port['admin_state_up'] != updated_port['admin_state_up']:
@@ -591,7 +594,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
-        return self._extend_port_dict_binding(context, updated_port)
+        return self._check_portbindings_view_auth(context, updated_port)
 
     def delete_port(self, context, id, l3_port_check=True):
 

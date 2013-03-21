@@ -67,3 +67,9 @@ class TestOpenvswitchPortBinding(OpenvswitchPluginV2TestCase,
 class TestOpenvswitchPortBindingNoSG(TestOpenvswitchPortBinding):
     HAS_PORT_FILTER = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
+
+
+class TestOpenvswitchPortBindingHost(
+    OpenvswitchPluginV2TestCase,
+    test_bindings.PortBindingsHostTestCaseMixin):
+    pass
