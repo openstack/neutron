@@ -186,16 +186,18 @@ class SerializerTest(base.BaseTestCase):
         """
         content_type = 'application/xml'
         data_string = (
-            '<servers xmlns="fake">'
+            '<servers>'
+            '<server name="s1">'
             '<test test="a">passed</test>'
+            '</server>'
             '</servers>'
         )
 
-        metadata = {'plurals': ['servers', 'test'], 'xmlns': 'fake'}
+        metadata = {'plurals': {'servers': 'server'}, 'xmlns': 'fake'}
         serializer = wsgi.Serializer(
             default_xmlns="fake", metadata=metadata)
         result = serializer.deserialize(data_string, content_type)
-        expected = {'body': {'servers': ['passed']}}
+        expected = {'body': {'servers': [{'name': 's1', 'test': 'passed'}]}}
 
         self.assertEqual(expected, result)
 
