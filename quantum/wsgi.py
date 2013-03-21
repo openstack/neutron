@@ -583,7 +583,7 @@ class XMLDeserializer(TextDeserializer):
                     attr == constants.XSI_ATTR or
                     attr == constants.TYPE_ATTR):
                     continue
-                result[self._get_key(attr)] = node.get[attr]
+                result[self._get_key(attr)] = node.get(attr)
             children = list(node)
             for child in children:
                 result[self._get_key(child.tag)] = self._from_xml_node(
