@@ -28,6 +28,7 @@ from quantum.db import dhcp_rpc_base
 from quantum.db import l3_rpc_base
 from quantum.extensions import agentscheduler
 from quantum import manager
+from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_agent_ext_plugin
 from quantum.tests.unit.testlib_api import create_request
@@ -167,7 +168,8 @@ class AgentSchedulerTestMixIn(object):
     def _register_one_agent_state(self, agent_state):
         callback = agents_db.AgentExtRpcCallback()
         callback.report_state(self.adminContext,
-                              agent_state={'agent_state': agent_state})
+                              agent_state={'agent_state': agent_state},
+                              time=timeutils.strtime())
 
     def _disable_agent(self, agent_id, admin_state_up=False):
         new_agent = {}

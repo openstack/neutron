@@ -29,6 +29,7 @@ from quantum.db import agents_db
 from quantum.db import db_base_plugin_v2
 from quantum.extensions import agent
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
@@ -103,13 +104,17 @@ class AgentDBTestMixIn(object):
         dhcp_hostc['host'] = DHCP_HOSTC
         callback = agents_db.AgentExtRpcCallback()
         callback.report_state(self.adminContext,
-                              agent_state={'agent_state': l3_hosta})
+                              agent_state={'agent_state': l3_hosta},
+                              time=timeutils.strtime())
         callback.report_state(self.adminContext,
-                              agent_state={'agent_state': l3_hostb})
+                              agent_state={'agent_state': l3_hostb},
+                              time=timeutils.strtime())
         callback.report_state(self.adminContext,
-                              agent_state={'agent_state': dhcp_hosta})
+                              agent_state={'agent_state': dhcp_hosta},
+                              time=timeutils.strtime())
         callback.report_state(self.adminContext,
-                              agent_state={'agent_state': dhcp_hostc})
+                              agent_state={'agent_state': dhcp_hostc},
+                              time=timeutils.strtime())
         return [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
 
 
