@@ -221,7 +221,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                  'admin_state_up': True,
                  'name': ''}})
 
-            if not len(gw_port['fixed_ips']):
+            if not gw_port['fixed_ips']:
                 self.delete_port(context.elevated(), gw_port['id'],
                                  l3_port_check=False)
                 msg = (_('No IPs available for external network %s') %
@@ -550,7 +550,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)
         else:
             ips = [ip['ip_address'] for ip in internal_port['fixed_ips']]
-            if len(ips) == 0:
+            if not ips:
                 msg = (_('Cannot add floating IP to port %s that has'
                          'no fixed IP addresses') % internal_port['id'])
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)

@@ -91,7 +91,7 @@ class DhcpRpcCallbackMixin(object):
         try:
             filters = dict(network_id=[network_id], device_id=[device_id])
             ports = plugin.get_ports(context, filters=filters)
-            if len(ports):
+            if ports:
                 # Ensure that fixed_ips cover all dhcp_enabled subnets.
                 port = ports[0]
                 for fixed_ip in port['fixed_ips']:
@@ -144,7 +144,7 @@ class DhcpRpcCallbackMixin(object):
         filters = dict(network_id=[network_id], device_id=[device_id])
         ports = plugin.get_ports(context, filters=filters)
 
-        if len(ports):
+        if ports:
             plugin.delete_port(context, ports[0]['id'])
 
     def release_port_fixed_ip(self, context, **kwargs):
@@ -160,7 +160,7 @@ class DhcpRpcCallbackMixin(object):
         filters = dict(network_id=[network_id], device_id=[device_id])
         ports = plugin.get_ports(context, filters=filters)
 
-        if len(ports):
+        if ports:
             port = ports[0]
 
             fixed_ips = port.get('fixed_ips', [])

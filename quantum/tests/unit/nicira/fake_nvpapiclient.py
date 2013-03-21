@@ -437,7 +437,7 @@ class FakeClient:
               self.SECPROF_RESOURCE in res_type or
               'gatewayservice' in res_type):
             LOG.debug("UUIDS:%s", uuids)
-            if len(uuids) > 0:
+            if uuids:
                 return self._show(res_type, response_file, uuids[0],
                                   relations=relations)
             else:
@@ -461,7 +461,7 @@ class FakeClient:
             if val_func:
                 val_func(body_json)
             args = [body]
-            if len(uuids):
+            if uuids:
                 args.append(uuids[0])
             response = response_template % add_resource(*args)
             return response
