@@ -22,6 +22,7 @@ import testtools
 from oslo.config import cfg
 import webob.exc
 
+from quantum import context
 from quantum.api.extensions import ExtensionMiddleware
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.api.v2 import attributes
@@ -30,6 +31,7 @@ from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum.common.test_lib import test_config
 from quantum.db import api as db
+from quantum.db.loadbalancer import loadbalancer_db as ldb
 import quantum.extensions
 from quantum.extensions import loadbalancer
 from quantum.manager import QuantumManager
@@ -75,10 +77,10 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
         self._subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
 
-        plugin = loadbalancer_plugin.LoadBalancerPlugin()
+        self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
         ext_mgr = PluginAwareExtensionManager(
             extensions_path,
-            {constants.LOADBALANCER: plugin}
+            {constants.LOADBALANCER: self.plugin}
         )
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
@@ -299,6 +301,75 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     expected
                 )
             return vip
+
+    def test_create_vip_twice_for_same_pool(self):
+        """ Test loadbalancer db plugin via extension and directly """
+        with self.subnet() as subnet:
+            with self.pool(name="pool1") as pool:
+                with self.vip(name='vip1', subnet=subnet, pool=pool) as vip:
+                    vip_data = {
+                        'name': 'vip1',
+                        'pool_id': pool['pool']['id'],
+                        'description': '',
+                        'protocol_port': 80,
+                        'protocol': 'HTTP',
+                        'connection_limit': -1,
+                        'admin_state_up': True,
+                        'status': 'PENDING_CREATE',
+                        'tenant_id': self._tenant_id,
+                        'session_persistence': ''
+                    }
+                    self.assertRaises(loadbalancer.VipExists,
+                                      self.plugin.create_vip,
+                                      context.get_admin_context(),
+                                      {'vip': vip_data})
+
+    def test_update_vip_raises_vip_exists(self):
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.pool(name="pool1"),
+                self.pool(name="pool2")
+            ) as (pool1, pool2):
+                with contextlib.nested(
+                    self.vip(name='vip1', subnet=subnet, pool=pool1),
+                    self.vip(name='vip2', subnet=subnet, pool=pool2)
+                ) as (vip1, vip2):
+                    vip_data = {
+                        'id': vip2['vip']['id'],
+                        'name': 'vip1',
+                        'pool_id': pool1['pool']['id'],
+                    }
+                    self.assertRaises(loadbalancer.VipExists,
+                                      self.plugin.update_vip,
+                                      context.get_admin_context(),
+                                      vip2['vip']['id'],
+                                      {'vip': vip_data})
+
+    def test_update_vip_change_pool(self):
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.pool(name="pool1"),
+                self.pool(name="pool2")
+            ) as (pool1, pool2):
+                with self.vip(name='vip1', subnet=subnet, pool=pool1) as vip:
+                    # change vip from pool1 to pool2
+                    vip_data = {
+                        'id': vip['vip']['id'],
+                        'name': 'vip1',
+                        'pool_id': pool2['pool']['id'],
+                    }
+                    ctx = context.get_admin_context()
+                    self.plugin.update_vip(ctx,
+                                           vip['vip']['id'],
+                                           {'vip': vip_data})
+                    db_pool2 = (ctx.session.query(ldb.Pool).
+                                filter_by(id=pool2['pool']['id']).one())
+                    db_pool1 = (ctx.session.query(ldb.Pool).
+                                filter_by(id=pool1['pool']['id']).one())
+                    # check that pool1.vip became None
+                    self.assertIsNone(db_pool1.vip)
+                    # and pool2 got vip
+                    self.assertEqual(db_pool2.vip.id, vip['vip']['id'])
 
     def test_create_vip_with_invalid_values(self):
         invalid = {
