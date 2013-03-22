@@ -37,6 +37,7 @@ from quantum import manager
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
+from quantum.openstack.common import lockutils
 from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import proxy
 from quantum.openstack.common import service
@@ -226,11 +227,13 @@ class DhcpAgent(manager.Manager):
         else:
             self.disable_dhcp_helper(network.id)
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def network_create_end(self, context, payload):
         """Handle the network.create.end notification event."""
         network_id = payload['network']['id']
         self.enable_dhcp_helper(network_id)
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def network_update_end(self, context, payload):
         """Handle the network.update.end notification event."""
         network_id = payload['network']['id']
@@ -239,10 +242,12 @@ class DhcpAgent(manager.Manager):
         else:
             self.disable_dhcp_helper(network_id)
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def network_delete_end(self, context, payload):
         """Handle the network.delete.end notification event."""
         self.disable_dhcp_helper(payload['network_id'])
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def subnet_update_end(self, context, payload):
         """Handle the subnet.update.end notification event."""
         network_id = payload['subnet']['network_id']
@@ -251,6 +256,7 @@ class DhcpAgent(manager.Manager):
     # Use the update handler for the subnet create event.
     subnet_create_end = subnet_update_end
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def subnet_delete_end(self, context, payload):
         """Handle the subnet.delete.end notification event."""
         subnet_id = payload['subnet_id']
@@ -258,6 +264,7 @@ class DhcpAgent(manager.Manager):
         if network:
             self.refresh_dhcp_helper(network.id)
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
         port = DictModel(payload['port'])
@@ -269,6 +276,7 @@ class DhcpAgent(manager.Manager):
     # Use the update handler for the port create event.
     port_create_end = port_update_end
 
+    @lockutils.synchronized('agent', 'dhcp-')
     def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
         port = self.cache.get_port_by_id(payload['port_id'])

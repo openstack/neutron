@@ -34,6 +34,7 @@ migration_for_plugins = [
     'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
     'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2',
     'quantum.plugins.nec.nec_plugin.NECPluginV2',
+    'quantum.plugins.brocade.QuantumPlugin.BrocadePluginV2',
 ]
 
 from alembic import op

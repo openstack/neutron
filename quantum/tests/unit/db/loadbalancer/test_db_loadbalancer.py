@@ -342,6 +342,19 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with testtools.ExpectedException(webob.exc.HTTPClientError):
             self.test_create_vip(session_persistence=sp)
 
+    def test_create_vip_with_protocol_mismatch(self):
+        with self.pool(protocol='TCP') as pool:
+            with testtools.ExpectedException(webob.exc.HTTPClientError):
+                self.test_create_vip(pool=pool, protocol='HTTP')
+
+    def test_update_vip_with_protocol_mismatch(self):
+        with self.pool(protocol='TCP') as pool:
+            with self.vip(protocol='HTTP') as vip:
+                data = {'vip': {'pool_id': pool['pool']['id']}}
+                req = self.new_update_request('vips', data, vip['vip']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 400)
+
     def test_reset_session_persistence(self):
         name = 'vip4'
         session_persistence = {'type': "HTTP_COOKIE"}

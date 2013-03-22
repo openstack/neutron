@@ -357,11 +357,16 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
-            # validate that the pool has same tenant
             if v['pool_id']:
                 pool = self._get_resource(context, Pool, v['pool_id'])
+                # validate that the pool has same tenant
                 if pool['tenant_id'] != tenant_id:
                     raise q_exc.NotAuthorized()
+                # validate that the pool has same protocol
+                if pool['protocol'] != v['protocol']:
+                    raise loadbalancer.ProtocolMismatch(
+                        vip_proto=v['protocol'],
+                        pool_proto=pool['protocol'])
             else:
                 pool = None
 
@@ -426,6 +431,11 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                     # check that the pool matches the tenant_id
                     if new_pool['tenant_id'] != vip_db['tenant_id']:
                         raise q_exc.NotAuthorized()
+                    # validate that the pool has same protocol
+                    if new_pool['protocol'] != vip_db['protocol']:
+                        raise loadbalancer.ProtocolMismatch(
+                            vip_proto=vip_db['protocol'],
+                            pool_proto=new_pool['protocol'])
 
                     if vip_db['pool_id']:
                         old_pool = self._get_resource(
