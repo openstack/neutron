@@ -18,13 +18,18 @@
 """
 Utility methods for working with WSGI servers
 """
+import errno
+import os
 import socket
+import ssl
 import sys
+import time
 from xml.etree import ElementTree as etree
 from xml.parsers import expat
 
 import eventlet.wsgi
 eventlet.patcher.monkey_patch(all=False, socket=True)
+from oslo.config import cfg
 import routes.middleware
 import webob.dec
 import webob.exc
@@ -34,6 +39,38 @@ from quantum.common import exceptions as exception
 from quantum import context
 from quantum.openstack.common import jsonutils
 from quantum.openstack.common import log as logging
+
+socket_opts = [
+    cfg.IntOpt('backlog',
+               default=4096,
+               help=_("Number of backlog requests to configure "
+                      "the socket with")),
+    cfg.IntOpt('tcp_keepidle',
+               default=600,
+               help=_("Sets the value of TCP_KEEPIDLE in seconds for each "
+                      "server socket. Not supported on OS X.")),
+    cfg.IntOpt('retry_until_window',
+               default=30,
+               help=_("Number of seconds to keep retrying to listen")),
+    cfg.BoolOpt('use_ssl',
+                default=False,
+                help=_('Enable SSL on the API server')),
+    cfg.StrOpt('ssl_ca_file',
+               default=None,
+               help=_("CA certificate file to use to verify "
+                      "connecting clients")),
+    cfg.StrOpt('ssl_cert_file',
+               default=None,
+               help=_("Certificate file to use when starting "
+                      "the server securely")),
+    cfg.StrOpt('ssl_key_file',
+               default=None,
+               help=_("Private key file to use when starting "
+                      "the server securely")),
+]
+
+CONF = cfg.CONF
+CONF.register_opts(socket_opts)
 
 LOG = logging.getLogger(__name__)
 
@@ -51,30 +88,92 @@ class Server(object):
         self.pool = eventlet.GreenPool(threads)
         self.name = name
 
-    def start(self, application, port, host='0.0.0.0', backlog=128):
-        """Run a WSGI server with the given application."""
-        self._host = host
-        self._port = port
-
+    def _get_socket(self, host, port, backlog):
+        bind_addr = (host, port)
         # TODO(dims): eventlet's green dns/socket module does not actually
         # support IPv6 in getaddrinfo(). We need to get around this in the
         # future or monitor upstream for a fix
         try:
-            info = socket.getaddrinfo(self._host,
-                                      self._port,
+            info = socket.getaddrinfo(bind_addr[0],
+                                      bind_addr[1],
                                       socket.AF_UNSPEC,
                                       socket.SOCK_STREAM)[0]
             family = info[0]
             bind_addr = info[-1]
-
-            self._socket = eventlet.listen(bind_addr,
-                                           family=family,
-                                           backlog=backlog)
         except:
             LOG.exception(_("Unable to listen on %(host)s:%(port)s") %
                           {'host': host, 'port': port})
             sys.exit(1)
 
+        if CONF.use_ssl:
+            if not os.path.exists(CONF.ssl_cert_file):
+                raise RuntimeError(_("Unable to find ssl_cert_file "
+                                     ": %s") % CONF.ssl_cert_file)
+
+            if not os.path.exists(CONF.ssl_key_file):
+                raise RuntimeError(_("Unable to find "
+                                     "ssl_key_file : %s") % CONF.ssl_key_file)
+
+            # ssl_ca_file is optional
+            if CONF.ssl_ca_file and not os.path.exists(CONF.ssl_ca_file):
+                raise RuntimeError(_("Unable to find ssl_ca_file "
+                                     ": %s") % CONF.ssl_ca_file)
+
+        def wrap_ssl(sock):
+            ssl_kwargs = {
+                'server_side': True,
+                'certfile': CONF.ssl_cert_file,
+                'keyfile': CONF.ssl_key_file,
+                'cert_reqs': ssl.CERT_NONE,
+            }
+
+            if CONF.ssl_ca_file:
+                ssl_kwargs['ca_certs'] = CONF.ssl_ca_file
+                ssl_kwargs['cert_reqs'] = ssl.CERT_REQUIRED
+
+            return ssl.wrap_socket(sock, **ssl_kwargs)
+
+        sock = None
+        retry_until = time.time() + CONF.retry_until_window
+        while not sock and time.time() < retry_until:
+            try:
+                sock = eventlet.listen(bind_addr,
+                                       backlog=backlog,
+                                       family=family)
+                if CONF.use_ssl:
+                    sock = wrap_ssl(sock)
+
+            except socket.error as err:
+                if err.errno != errno.EADDRINUSE:
+                    raise
+                eventlet.sleep(0.1)
+        if not sock:
+            raise RuntimeError(_("Could not bind to %(host)s:%(port)s "
+                               "after trying for %(time)d seconds") %
+                               {'host': host,
+                                'port': port,
+                                'time': CONF.retry_until_window})
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # sockets can hang around forever without keepalive
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+
+        # This option isn't available in the OS X version of eventlet
+        if hasattr(socket, 'TCP_KEEPIDLE'):
+            sock.setsockopt(socket.IPPROTO_TCP,
+                            socket.TCP_KEEPIDLE,
+                            CONF.tcp_keepidle)
+
+        return sock
+
+    def start(self, application, port, host='0.0.0.0'):
+        """Run a WSGI server with the given application."""
+        self._host = host
+        self._port = port
+        backlog = CONF.backlog
+
+        self._socket = self._get_socket(self._host,
+                                        self._port,
+                                        backlog=backlog)
         self._server = self.pool.spawn(self._run, application, self._socket)
 
     @property

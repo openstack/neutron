@@ -15,10 +15,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import socket
+import urllib2
 
 import mock
 import testtools
+from oslo.config import cfg
 import webob
 import webob.exc
 
@@ -27,6 +30,11 @@ from quantum.common import constants
 from quantum.common import exceptions as exception
 from quantum.tests import base
 from quantum import wsgi
+
+CONF = cfg.CONF
+
+TEST_VAR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                               '..', 'var'))
 
 
 class TestWSGIServer(base.BaseTestCase):
@@ -74,7 +82,7 @@ class TestWSGIServer(base.BaseTestCase):
                     mock_listen.assert_called_once_with(
                         ('fe80::204:acff:fe96:da87%eth0', 1234, 0, 2),
                         family=socket.AF_INET6,
-                        backlog=128
+                        backlog=cfg.CONF.backlog
                     )
 
                     mock_pool.spawn.assert_has_calls([
@@ -83,6 +91,25 @@ class TestWSGIServer(base.BaseTestCase):
                             None,
                             mock_listen.return_value)
                     ])
+
+    def test_app(self):
+        greetings = 'Hello, World!!!'
+
+        def hello_world(env, start_response):
+            if env['PATH_INFO'] != '/':
+                start_response('404 Not Found',
+                               [('Content-Type', 'text/plain')])
+                return ['Not Found\r\n']
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [greetings]
+
+        server = wsgi.Server("test_app")
+        server.start(hello_world, 0, host="127.0.0.1")
+
+        response = urllib2.urlopen('http://127.0.0.1:%d/' % server.port)
+        self.assertEquals(greetings, response.read())
+
+        server.stop()
 
 
 class SerializerTest(base.BaseTestCase):
@@ -1016,3 +1043,49 @@ class XMLDictSerializerTest(base.BaseTestCase):
         result = serializer(data)
         result = result.replace('\n', '').replace(' ', '')
         self.assertEqual(expected, result)
+
+
+class TestWSGIServerWithSSL(base.BaseTestCase):
+    """WSGI server tests."""
+
+    def test_app_using_ssl(self):
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file",
+                         os.path.join(TEST_VAR_DIR, 'certificate.crt'))
+        CONF.set_default("ssl_key_file",
+                         os.path.join(TEST_VAR_DIR, 'privatekey.key'))
+
+        greetings = 'Hello, World!!!'
+
+        @webob.dec.wsgify
+        def hello_world(req):
+            return greetings
+
+        server = wsgi.Server("test_app")
+        server.start(hello_world, 0, host="127.0.0.1")
+
+        response = urllib2.urlopen('https://127.0.0.1:%d/' % server.port)
+        self.assertEquals(greetings, response.read())
+
+        server.stop()
+
+    def test_app_using_ipv6_and_ssl(self):
+        CONF.set_default('use_ssl', True)
+        CONF.set_default("ssl_cert_file",
+                         os.path.join(TEST_VAR_DIR, 'certificate.crt'))
+        CONF.set_default("ssl_key_file",
+                         os.path.join(TEST_VAR_DIR, 'privatekey.key'))
+
+        greetings = 'Hello, World!!!'
+
+        @webob.dec.wsgify
+        def hello_world(req):
+            return greetings
+
+        server = wsgi.Server("test_app")
+        server.start(hello_world, 0, host="::1")
+
+        response = urllib2.urlopen('https://[::1]:%d/' % server.port)
+        self.assertEquals(greetings, response.read())
+
+        server.stop()
