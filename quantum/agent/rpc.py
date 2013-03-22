@@ -24,6 +24,7 @@ from quantum.openstack.common.notifier import api
 from quantum.openstack.common.notifier import rpc_notifier
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
+from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
 
 
@@ -57,10 +58,11 @@ class PluginReportStateAPI(proxy.RpcProxy):
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
     def report_state(self, context, agent_state):
-        return self.call(context,
+        return self.cast(context,
                          self.make_msg('report_state',
                                        agent_state={'agent_state':
-                                                    agent_state}),
+                                                    agent_state},
+                                       time=timeutils.utcnow()),
                          topic=self.topic)
 
 

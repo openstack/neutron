@@ -159,9 +159,15 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
 class AgentExtRpcCallback(object):
     """Processes the rpc report in plugin implementations."""
     RPC_API_VERSION = '1.0'
+    START_TIME = timeutils.utcnow()
 
     def report_state(self, context, **kwargs):
         """Report state from agent to server. """
+        time = kwargs['time']
+        time = timeutils.parse_strtime(time)
+        if self.START_TIME > time:
+            LOG.debug(_("Message with invalid timestamp received"))
+            return
         agent_state = kwargs['agent_state']['agent_state']
         plugin = manager.QuantumManager.get_plugin()
         plugin.create_or_update_agent(context, agent_state)
