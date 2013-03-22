@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.52"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.53"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-21 00:06+0000\n"
+"POT-Creation-Date: 2013-03-22 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -748,24 +748,24 @@ msgstr ""
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:143
+#: quantum/agent/linux/iptables_manager.py:141
 #, python-format
 msgid "Attempted to remove chain %s which does not exist"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:169
+#: quantum/agent/linux/iptables_manager.py:167
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:193
+#: quantum/agent/linux/iptables_manager.py:191
 #, python-format
 msgid ""
 "Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r "
 "%(top)r"
 msgstr ""
 
-#: quantum/agent/linux/iptables_manager.py:343
+#: quantum/agent/linux/iptables_manager.py:341
 msgid "IPTablesManager.apply completed with success"
 msgstr ""
 
@@ -6687,24 +6687,24 @@ msgid ""
 "the (%(min_rules)s,%(max_rules)s) interval were expected"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:119
+#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:112
 msgid "Metadata access network is disabled"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:122
+#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:115
 msgid ""
 "Overlapping IPs must be enabled in order to setup the metadata access "
 "network"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:146
+#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:139
 #, python-format
 msgid ""
 "No router interface found for router '%s'. No metadata access network "
 "should be created or destroyed"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:154
+#: quantum/plugins/nicira/nicira_nvp_plugin/common/metadata_access.py:147
 #, python-format
 msgid ""
 "An error occurred while operating on the metadata access network for "
