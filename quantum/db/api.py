@@ -62,6 +62,10 @@ database_opts = [
     cfg.BoolOpt('sql_dbpool_enable',
                 default=False,
                 help=_("Enable the use of eventlet's db_pool for MySQL")),
+    cfg.IntOpt('sqlalchemy_pool_size',
+               default=5,
+               help=_("Maximum number of SQL connections to keep open in a "
+                      "QueuePool in SQLAlchemy")),
 ]
 
 cfg.CONF.register_opts(database_opts, "DATABASE")
@@ -122,6 +126,7 @@ def configure_db():
             'pool_recycle': 3600,
             'echo': False,
             'convert_unicode': True,
+            'pool_size': cfg.CONF.DATABASE.sqlalchemy_pool_size,
         }
 
         if 'mysql' in connection_dict.drivername:
