@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.53"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.54"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-22 00:06+0000\n"
+"POT-Creation-Date: 2013-03-23 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -238,127 +238,127 @@ msgstr ""
 msgid "Could not deserialize data"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:56
+#: quantum/agent/dhcp_agent.py:57
 msgid "Interval to resync."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:59 quantum/agent/netns_cleanup_util.py:62
+#: quantum/agent/dhcp_agent.py:60 quantum/agent/netns_cleanup_util.py:62
 msgid "The driver used to manage the DHCP server."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:61 quantum/agent/l3_agent.py:135
+#: quantum/agent/dhcp_agent.py:62 quantum/agent/l3_agent.py:135
 msgid "Allow overlapping IP."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:63
+#: quantum/agent/dhcp_agent.py:64
 msgid "Support Metadata requests on isolated networks."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:65
+#: quantum/agent/dhcp_agent.py:66
 msgid ""
 "Allows for serving metadata requests from a dedicate network. Requires "
 "enable isolated_metadata = True "
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:99
+#: quantum/agent/dhcp_agent.py:100
 #, python-format
 msgid ""
 "The '%s' DHCP-driver does not support retrieving of a list of existing "
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:106 quantum/agent/dhcp_agent.py:710
+#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:718
 msgid "DHCP agent started"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:133
+#: quantum/agent/dhcp_agent.py:134
 #, python-format
 msgid "Unable to %s dhcp."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:141
+#: quantum/agent/dhcp_agent.py:142
 msgid "Unable to update lease"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:145
+#: quantum/agent/dhcp_agent.py:146
 msgid "Synchronizing state"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:157
+#: quantum/agent/dhcp_agent.py:158
 msgid "Unable to sync network state."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:177 quantum/agent/dhcp_agent.py:214
+#: quantum/agent/dhcp_agent.py:178 quantum/agent/dhcp_agent.py:215
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:296
+#: quantum/agent/dhcp_agent.py:304
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:485 quantum/agent/l3_agent.py:123
+#: quantum/agent/dhcp_agent.py:493 quantum/agent/l3_agent.py:123
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:493
+#: quantum/agent/dhcp_agent.py:501
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:498 quantum/agent/l3_agent.py:162
+#: quantum/agent/dhcp_agent.py:506 quantum/agent/l3_agent.py:162
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:536 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:544 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:616
+#: quantum/agent/dhcp_agent.py:624
 msgid "Location to DHCP lease relay UNIX domain socket"
-msgstr ""
-
-#: quantum/agent/dhcp_agent.py:646
-#, python-format
-msgid "Network ID %s is not a valid UUID"
-msgstr ""
-
-#: quantum/agent/dhcp_agent.py:652
-msgid "Unable to parse lease relay msg to dict."
-msgstr ""
-
-#: quantum/agent/dhcp_agent.py:653
-#, python-format
-msgid "Exception value: %s"
 msgstr ""
 
 #: quantum/agent/dhcp_agent.py:654
 #, python-format
+msgid "Network ID %s is not a valid UUID"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:660
+msgid "Unable to parse lease relay msg to dict."
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:661
+#, python-format
+msgid "Exception value: %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:662
+#, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:656
+#: quantum/agent/dhcp_agent.py:664
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:693 quantum/agent/l3_agent.py:728
+#: quantum/agent/dhcp_agent.py:701 quantum/agent/l3_agent.py:728
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:699 quantum/agent/l3_agent.py:733
+#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:733
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:738
+#: quantum/agent/dhcp_agent.py:715 quantum/agent/l3_agent.py:738
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -1653,6 +1653,10 @@ msgstr ""
 msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
 msgstr ""
 
+#: quantum/db/agents_db.py:169
+msgid "Message with invalid timestamp received"
+msgstr ""
+
 #: quantum/db/agentschedulers_db.py:297
 #, python-format
 msgid "Fail scheduling network %s"
@@ -1686,38 +1690,44 @@ msgstr ""
 msgid "Enable the use of eventlet's db_pool for MySQL"
 msgstr ""
 
-#: quantum/db/api.py:89
+#: quantum/db/api.py:67
+msgid ""
+"Maximum number of SQL connections to keep open in a QueuePool in "
+"SQLAlchemy"
+msgstr ""
+
+#: quantum/db/api.py:93
 #, python-format
 msgid "Got mysql server has gone away: %s"
 msgstr ""
 
-#: quantum/db/api.py:90
+#: quantum/db/api.py:94
 msgid "Database server went away"
 msgstr ""
 
-#: quantum/db/api.py:116
+#: quantum/db/api.py:120
 #, python-format
 msgid ""
 "Option 'sql_connection' not specified in any config file - using default "
 "value '%s'"
 msgstr ""
 
-#: quantum/db/api.py:143
+#: quantum/db/api.py:148
 msgid "Eventlet connection pooling will not work without python-mysqldb!"
 msgstr ""
 
-#: quantum/db/api.py:190
+#: quantum/db/api.py:195
 msgid "Database connection lost, exit..."
 msgstr ""
 
-#: quantum/db/api.py:193
+#: quantum/db/api.py:198
 #, python-format
 msgid ""
 "Unable to connect to database, %(remaining)s attempts left. Retrying in "
 "%(reconnect_interval)s seconds"
 msgstr ""
 
-#: quantum/db/api.py:208
+#: quantum/db/api.py:213
 #, python-format
 msgid "Database registration exception: %s"
 msgstr ""
