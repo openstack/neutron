@@ -85,7 +85,7 @@ def _validate_servicetype_ref(data, valid_values=None):
 def _validate_service_defs(data, valid_values=None):
     """ Validate the list of service definitions. """
     try:
-        if len(data) == 0:
+        if not data:
             return _("No service type definition was provided. At least a "
                      "service type definition must be provided")
         f_name = _validate_service_defs.__name__
@@ -137,7 +137,7 @@ def _validate_service_defs(data, valid_values=None):
                         return msg
                     del svc_def_copy[DRIVER_ATTR]
                 # Anything left - it should be an error
-                if len(svc_def_copy):
+                if svc_def_copy:
                     msg = (_("Unparseable attributes found in "
                              "service definition %s") % svc_def)
                     LOG.error(_("%(f_name)s: %(msg)s"), locals())

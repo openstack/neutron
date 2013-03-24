@@ -354,7 +354,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         # delete unnessary ofc_tenant
         filters = dict(tenant_id=[tenant_id])
         nets = super(NECPluginV2, self).get_networks(context, filters=filters)
-        if len(nets) == 0:
+        if not nets:
             try:
                 self.ofc.delete_ofc_tenant(context, tenant_id)
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:

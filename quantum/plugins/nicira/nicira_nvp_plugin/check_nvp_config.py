@@ -95,7 +95,7 @@ def main(argv):
     print "NVP Default Cluster Name %s" % nvp_opts.default_cluster_name
 
     print "-----------Cluster Options--------------------"
-    if not len(clusters_opts):
+    if not clusters_opts:
         print "No NVP Clusters detected in nvp.ini!"
         exit(1)
     clusters, default_cluster = QuantumPlugin.parse_clusters_opts(

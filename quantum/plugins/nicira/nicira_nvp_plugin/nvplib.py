@@ -137,7 +137,7 @@ def _build_uri_path(resource,
         params.extend(['%s=%s' % (k, v) for (k, v) in filters.iteritems()])
     uri_path = "%s/%s" % (URI_PREFIX, res_path)
     non_empty_params = [x for x in params if x is not None]
-    if len(non_empty_params):
+    if non_empty_params:
         query_string = '&'.join(non_empty_params)
         if query_string:
             uri_path += "?%s" % query_string
@@ -1127,7 +1127,7 @@ def update_security_group_rules(cluster, spid, rules):
          'port_range_max': constants.DHCP_RESPONSE_PORT,
          'ip_prefix': '0.0.0.0/0'})
     # If there are no ingress rules add bunk rule to drop all ingress traffic
-    if not len(rules['logical_port_ingress_rules']):
+    if not rules['logical_port_ingress_rules']:
         rules['logical_port_ingress_rules'].append(
             {'ethertype': 'IPv4', 'ip_prefix': '127.0.0.1/32'})
     try:

@@ -1048,7 +1048,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             except q_exc.NetworkNotFound:
                 continue
             pairs.append((c, lswitches))
-        if len(pairs) == 0:
+        if not pairs:
             raise q_exc.NetworkNotFound(net_id=netw_id)
         LOG.debug(_("Returning pairs for network: %s"), pairs)
         return pairs
@@ -1172,7 +1172,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # do not make the case in which switches are found in NVP
         # but not in Quantum catastrophic.
-        if len(nvp_lswitches):
+        if nvp_lswitches:
             LOG.warning(_("Found %s logical switches not bound "
                         "to Quantum networks. Quantum and NVP are "
                         "potentially out of sync"), len(nvp_lswitches))
@@ -1304,7 +1304,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             lports.append(quantum_lport)
         # do not make the case in which ports are found in NVP
         # but not in Quantum catastrophic.
-        if len(nvp_lports):
+        if nvp_lports:
             LOG.warning(_("Found %s logical ports not bound "
                           "to Quantum ports. Quantum and NVP are "
                           "potentially out of sync"), len(nvp_lports))
@@ -1561,7 +1561,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         msg = (_("Network '%s' is not a valid external "
                                  "network") % network_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
-                    if len(ext_net.subnets):
+                    if ext_net.subnets:
                         ext_subnet = ext_net.subnets[0]
                         nexthop = ext_subnet.gateway_ip
             cluster = self._find_target_cluster(router)
@@ -1610,7 +1610,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         msg = (_("Network '%s' is not a valid external "
                                  "network") % network_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
-                    if len(ext_net.subnets):
+                    if ext_net.subnets:
                         ext_subnet = ext_net.subnets[0]
                         nexthop = ext_subnet.gateway_ip
             cluster = self._find_target_cluster(router)
@@ -1721,7 +1721,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # do not make the case in which routers are found in NVP
         # but not in Quantum catastrophic.
-        if len(nvp_lrouters):
+        if nvp_lrouters:
             LOG.warning(_("Found %s logical routers not bound "
                           "to Quantum routers. Quantum and NVP are "
                           "potentially out of sync"), len(nvp_lrouters))
@@ -1748,7 +1748,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         results = nvplib.query_lswitch_lports(
             cluster, '*',
             filters={'tag': port_id, 'tag_scope': 'q_port_id'})
-        if len(results):
+        if results:
             ls_port = results[0]
         else:
             raise nvp_exc.NvpPluginException(
@@ -1825,7 +1825,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             cluster, '*', relations="LogicalPortAttachment",
             filters={'tag': port_id, 'tag_scope': 'q_port_id'})
         lrouter_port_id = None
-        if len(results):
+        if results:
             lport = results[0]
             attachment_data = lport['_relations'].get('LogicalPortAttachment')
             lrouter_port_id = (attachment_data and

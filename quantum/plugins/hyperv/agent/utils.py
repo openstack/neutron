@@ -72,7 +72,7 @@ class HyperVUtils(object):
     def _get_vnic_settings(self, vnic_name):
         vnic_settings = self._conn.Msvm_SyntheticEthernetPortSettingData(
             ElementName=vnic_name)
-        if not len(vnic_settings):
+        if not vnic_settings:
             raise HyperVException(msg=_('Vnic not found: %s') % vnic_name)
         return vnic_settings[0]
 
@@ -185,7 +185,7 @@ class HyperVUtils(object):
 
     def _get_vswitch(self, vswitch_name):
         vswitch = self._conn.Msvm_VirtualSwitch(ElementName=vswitch_name)
-        if not len(vswitch):
+        if not vswitch:
             raise HyperVException(msg=_('VSwitch not found: %s') %
                                   vswitch_name)
         return vswitch[0]
@@ -196,7 +196,7 @@ class HyperVUtils(object):
         for vswitch_port in vswitch_ports:
             lan_endpoints = vswitch_port.associators(
                 wmi_result_class='Msvm_SwitchLanEndpoint')
-            if len(lan_endpoints):
+            if lan_endpoints:
                 ext_port = lan_endpoints[0].associators(
                     wmi_result_class='Msvm_ExternalEthernetPort')
                 if ext_port:
