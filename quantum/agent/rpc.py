@@ -62,7 +62,7 @@ class PluginReportStateAPI(proxy.RpcProxy):
                          self.make_msg('report_state',
                                        agent_state={'agent_state':
                                                     agent_state},
-                                       time=timeutils.utcnow()),
+                                       time=timeutils.strtime()),
                          topic=self.topic)
 
 
