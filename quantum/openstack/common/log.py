@@ -29,6 +29,7 @@ It also allows setting of formatting information through conf.
 
 """
 
+import ConfigParser
 import cStringIO
 import inspect
 import itertools
@@ -87,11 +88,11 @@ logging_cli_opts = [
                metavar='PATH',
                deprecated_name='logfile',
                help='(Optional) Name of log file to output to. '
-                    'If not set, logging will go to stdout.'),
+                    'If no default is set, logging will go to stdout.'),
     cfg.StrOpt('log-dir',
                deprecated_name='logdir',
-               help='(Optional) The directory to keep log files in '
-                    '(will be prepended to --log-file)'),
+               help='(Optional) The base directory used for relative '
+                    '--log-file paths'),
     cfg.BoolOpt('use-syslog',
                 default=False,
                 help='Use syslog for logging.'),
@@ -323,10 +324,30 @@ def _create_logging_excepthook(product_name):
     return logging_excepthook
 
 
+class LogConfigError(Exception):
+
+    message = _('Error loading logging config %(log_config)s: %(err_msg)s')
+
+    def __init__(self, log_config, err_msg):
+        self.log_config = log_config
+        self.err_msg = err_msg
+
+    def __str__(self):
+        return self.message % dict(log_config=self.log_config,
+                                   err_msg=self.err_msg)
+
+
+def _load_log_config(log_config):
+    try:
+        logging.config.fileConfig(log_config)
+    except ConfigParser.Error, exc:
+        raise LogConfigError(log_config, str(exc))
+
+
 def setup(product_name):
     """Setup logging."""
     if CONF.log_config:
-        logging.config.fileConfig(CONF.log_config)
+        _load_log_config(CONF.log_config)
     else:
         _setup_logging_from_conf()
     sys.excepthook = _create_logging_excepthook(product_name)
