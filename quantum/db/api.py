@@ -142,8 +142,16 @@ def configure_db():
                     'max_size': cfg.CONF.DATABASE.sql_max_pool_size,
                     'max_idle': cfg.CONF.DATABASE.sql_idle_timeout
                 }
-                creator = db_pool.ConnectionPool(MySQLdb, **pool_args)
-                engine_args['creator'] = creator.create
+                pool = db_pool.ConnectionPool(MySQLdb, **pool_args)
+
+                def creator():
+                    conn = pool.create()
+                    # NOTE(belliott) eventlet >= 0.10 returns a tuple
+                    if isinstance(conn, tuple):
+                        _1, _2, conn = conn
+                    return conn
+
+                engine_args['creator'] = creator
             if (MySQLdb is None and cfg.CONF.DATABASE.sql_dbpool_enable):
                 LOG.warn(_("Eventlet connection pooling will not work without "
                            "python-mysqldb!"))
