@@ -218,8 +218,9 @@ class L3NATAgent(manager.Manager):
         except rpc_common.RemoteError as e:
             if e.exc_type == 'TooManyExternalNetworks':
                 msg = _(
-                    "The 'gateway_external_network_id' must be configured"
-                    " if Quantum has more than one external network.")
+                    "The 'gateway_external_network_id' option must be "
+                    "configured for this agent as Quantum has more than "
+                    "one external network.")
                 raise Exception(msg)
             else:
                 raise
