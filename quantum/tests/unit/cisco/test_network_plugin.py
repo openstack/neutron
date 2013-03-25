@@ -32,8 +32,15 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     _plugin_name = 'quantum.plugins.cisco.network_plugin.PluginV2'
 
     def setUp(self):
+        # Use a mock netconf client
+        mock_ncclient = mock.Mock()
+        self.patch_obj = mock.patch.dict('sys.modules',
+                                         {'ncclient': mock_ncclient})
+        self.patch_obj.start()
+
         super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
         self.port_create_status = 'DOWN'
+        self.addCleanup(self.patch_obj.stop)
 
     def _get_plugin_ref(self):
         plugin_obj = QuantumManager.get_plugin()
