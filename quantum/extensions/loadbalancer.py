@@ -33,6 +33,10 @@ class VipNotFound(qexception.NotFound):
     message = _("Vip %(vip_id)s could not be found")
 
 
+class VipExists(qexception.QuantumException):
+    message = _("Another Vip already exists for pool %(pool_id)s")
+
+
 class PoolNotFound(qexception.NotFound):
     message = _("Pool %(pool_id)s could not be found")
 

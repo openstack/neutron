@@ -17,6 +17,7 @@
 
 from oslo.config import cfg
 import sqlalchemy as sa
+from sqlalchemy import exc as sa_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
@@ -390,8 +391,11 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                     vip_db['id'])
                 vip_db.session_persistence = s_p
 
-            context.session.add(vip_db)
-            context.session.flush()
+            try:
+                context.session.add(vip_db)
+                context.session.flush()
+            except sa_exc.IntegrityError:
+                raise loadbalancer.VipExists(pool_id=v['pool_id'])
 
             # create a port to reserve address for IPAM
             self._create_port_for_vip(
@@ -421,31 +425,38 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                 self._delete_session_persistence(context, id)
 
             if v:
-                vip_db.update(v)
-                # If the pool_id is changed, we need to update
-                # the associated pools
-                if 'pool_id' in v:
-                    new_pool = self._get_resource(context, Pool, v['pool_id'])
-                    self.assert_modification_allowed(new_pool)
+                try:
+                    # in case new pool already has a vip
+                    # update will raise integrity error at first query
+                    old_pool_id = vip_db['pool_id']
+                    vip_db.update(v)
+                    # If the pool_id is changed, we need to update
+                    # the associated pools
+                    if 'pool_id' in v:
+                        new_pool = self._get_resource(context, Pool,
+                                                      v['pool_id'])
+                        self.assert_modification_allowed(new_pool)
 
-                    # check that the pool matches the tenant_id
-                    if new_pool['tenant_id'] != vip_db['tenant_id']:
-                        raise q_exc.NotAuthorized()
-                    # validate that the pool has same protocol
-                    if new_pool['protocol'] != vip_db['protocol']:
-                        raise loadbalancer.ProtocolMismatch(
-                            vip_proto=vip_db['protocol'],
-                            pool_proto=new_pool['protocol'])
+                        # check that the pool matches the tenant_id
+                        if new_pool['tenant_id'] != vip_db['tenant_id']:
+                            raise q_exc.NotAuthorized()
+                        # validate that the pool has same protocol
+                        if new_pool['protocol'] != vip_db['protocol']:
+                            raise loadbalancer.ProtocolMismatch(
+                                vip_proto=vip_db['protocol'],
+                                pool_proto=new_pool['protocol'])
 
-                    if vip_db['pool_id']:
-                        old_pool = self._get_resource(
-                            context,
-                            Pool,
-                            vip_db['pool_id']
-                        )
-                        old_pool['vip_id'] = None
+                        if old_pool_id:
+                            old_pool = self._get_resource(
+                                context,
+                                Pool,
+                                old_pool_id
+                            )
+                            old_pool['vip_id'] = None
 
-                    new_pool['vip_id'] = vip_db['id']
+                        new_pool['vip_id'] = vip_db['id']
+                except sa_exc.IntegrityError:
+                    raise loadbalancer.VipExists(pool_id=v['pool_id'])
 
         return self._make_vip_dict(vip_db)
 
