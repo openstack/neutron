@@ -21,7 +21,10 @@ import os
 
 import fixtures
 from oslo.config import cfg
+import stubout
 import testtools
+
+from quantum.openstack.common import exception
 
 CONF = cfg.CONF
 TRUE_STRING = ['True', '1']
@@ -53,6 +56,8 @@ class BaseTestCase(testtools.TestCase):
         if os.environ.get('OS_STDERR_NOCAPTURE') not in TRUE_STRING:
             stderr = self.useFixture(fixtures.StringStream('stderr')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+        self.stubs = stubout.StubOutForTesting()
+        self.stubs.Set(exception, '_FATAL_EXCEPTION_FORMAT_ERRORS', True)
 
     def config(self, **kw):
         """
