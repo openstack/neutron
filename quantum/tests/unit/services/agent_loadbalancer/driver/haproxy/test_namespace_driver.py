@@ -101,7 +101,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
 
             self.driver.destroy('pool_id')
 
-            kill.assert_called_once_with(ip_wrap(), '/pool/pid')
+            kill.assert_called_once_with('sudo', '/pool/pid')
             unplug.assert_called_once_with('qlbaas-pool_id', 'port_id')
             isdir.called_once_with('/pool')
             rmtree.assert_called_once_with('/pool')
@@ -222,25 +222,26 @@ class TestHaproxyNSDriver(base.BaseTestCase):
 
     def test_kill_pids_in_file(self):
         with contextlib.nested(
-                mock.patch('os.path.exists'),
-                mock.patch('__builtin__.open')
-        ) as (path_exists, mock_open):
+            mock.patch('os.path.exists'),
+            mock.patch('__builtin__.open'),
+            mock.patch('quantum.agent.linux.utils.execute')
+        ) as (path_exists, mock_open, mock_execute):
             file_mock = mock.MagicMock()
             mock_open.return_value = file_mock
             file_mock.__enter__.return_value = file_mock
             file_mock.__iter__.return_value = iter(['123'])
-            ns_wrapper = mock.Mock()
 
             path_exists.return_value = False
-            namespace_driver.kill_pids_in_file(ns_wrapper, 'test_path')
+            namespace_driver.kill_pids_in_file('sudo', 'test_path')
             path_exists.assert_called_once_with('test_path')
             self.assertFalse(mock_open.called)
+            self.assertFalse(mock_execute.called)
 
             path_exists.return_value = True
-            ns_wrapper.netns.execute.side_effect = RuntimeError
-            namespace_driver.kill_pids_in_file(ns_wrapper, 'test_path')
-            ns_wrapper.netns.execute.assert_called_once_with(['kill', '-9',
-                                                              '123'])
+            mock_execute.side_effect = RuntimeError
+            namespace_driver.kill_pids_in_file('sudo', 'test_path')
+            mock_execute.assert_called_once_with(
+                ['kill', '-9', '123'], 'sudo')
 
     def test_get_state_file_path(self):
         with mock.patch('os.makedirs') as mkdir:

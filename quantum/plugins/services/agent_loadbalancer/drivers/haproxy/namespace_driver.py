@@ -22,6 +22,7 @@ import socket
 import netaddr
 
 from quantum.agent.linux import ip_lib
+from quantum.agent.linux import utils
 from quantum.common import exceptions
 from quantum.openstack.common import log as logging
 from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
@@ -79,7 +80,7 @@ class HaproxyNSDriver(object):
         sock_path = self._get_state_file_path(pool_id, 'sock')
 
         # kill the process
-        kill_pids_in_file(ns, pid_path)
+        kill_pids_in_file(self.root_helper, pid_path)
 
         # unplug the ports
         if pool_id in self.pool_to_port_id:
@@ -199,15 +200,13 @@ def get_ns_name(namespace_id):
     return NS_PREFIX + namespace_id
 
 
-def kill_pids_in_file(namespace_wrapper, pid_path):
+def kill_pids_in_file(root_helper, pid_path):
     if os.path.exists(pid_path):
         with open(pid_path, 'r') as pids:
             for pid in pids:
                 pid = pid.strip()
                 try:
-                    namespace_wrapper.netns.execute(
-                        ['kill', '-9', pid.strip()]
-                    )
+                    utils.execute(['kill', '-9', pid], root_helper)
                 except RuntimeError:
                     LOG.exception(
                         _('Unable to kill haproxy process: %s'),

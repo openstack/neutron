@@ -62,12 +62,7 @@ class ProcessManager(object):
 
         if self.active:
             cmd = ['kill', '-9', pid]
-            if self.namespace:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
-                ip_wrapper.netns.execute(cmd)
-            else:
-                utils.execute(cmd, self.root_helper)
-
+            utils.execute(cmd, self.root_helper)
         elif pid:
             LOG.debug(_('Process for %(uuid)s pid %(pid)d is stale, ignoring '
                         'command'), {'uuid': self.uuid, 'pid': pid})

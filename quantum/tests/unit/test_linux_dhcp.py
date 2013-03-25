@@ -328,9 +328,8 @@ class TestDhcpLocalProcess(TestBase):
             lp.disable(retain_port=True)
 
         self.assertFalse(delegate.called)
-        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
-                                             check_exit_code=True)
+        exp_args = ['kill', '-9', 5]
+        self.execute.assert_called_once_with(exp_args, 'sudo')
 
     def test_disable(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
@@ -346,9 +345,8 @@ class TestDhcpLocalProcess(TestBase):
             lp.disable()
 
         delegate.assert_has_calls([mock.call.destroy(network, 'tap0')])
-        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-9', 5]
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
-                                             check_exit_code=True)
+        exp_args = ['kill', '-9', 5]
+        self.execute.assert_called_once_with(exp_args, 'sudo')
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:
@@ -538,7 +536,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
                                                             fake_v6_cidr,
                                                             fake_v6)
 
-        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'kill', '-HUP', 5]
+        exp_args = ['kill', '-HUP', 5]
 
         with mock.patch('os.path.isdir') as isdir:
             isdir.return_value = True
@@ -555,8 +553,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
-                                             check_exit_code=True)
+        self.execute.assert_called_once_with(exp_args, 'sudo')
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('quantum.agent.linux.ip_lib.IPDevice') as ip_dev:

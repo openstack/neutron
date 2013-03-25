@@ -95,12 +95,10 @@ class TestProcessManager(base.BaseTestCase):
 
                 manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
 
-                with mock.patch.object(ep, 'ip_lib') as ip_lib:
+                with mock.patch.object(ep, 'utils') as utils:
                     manager.disable()
-                    ip_lib.assert_has_calls([
-                        mock.call.IPWrapper('sudo', 'ns'),
-                        mock.call.IPWrapper().netns.execute(['kill', '-9', 4])]
-                    )
+                    utils.assert_has_calls(
+                        mock.call.execute(['kill', '-9', 4], 'sudo'))
 
     def test_disable_not_active(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
