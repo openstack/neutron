@@ -614,6 +614,24 @@ class JSONDictSerializerTest(base.BaseTestCase):
 
         self.assertEqual(result, expected_json)
 
+    def test_json_with_utf8(self):
+        input_dict = dict(servers=dict(a=(2, '\xe7\xbd\x91\xe7\xbb\x9c')))
+        expected_json = '{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
+        serializer = wsgi.JSONDictSerializer()
+        result = serializer.serialize(input_dict)
+        result = result.replace('\n', '').replace(' ', '')
+
+        self.assertEqual(result, expected_json)
+
+    def test_json_with_unicode(self):
+        input_dict = dict(servers=dict(a=(2, u'\u7f51\u7edc')))
+        expected_json = '{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
+        serializer = wsgi.JSONDictSerializer()
+        result = serializer.serialize(input_dict)
+        result = result.replace('\n', '').replace(' ', '')
+
+        self.assertEqual(result, expected_json)
+
 
 class TextDeserializerTest(base.BaseTestCase):
 
@@ -654,6 +672,20 @@ class JSONDeserializerTest(base.BaseTestCase):
         self.assertRaises(
             exception.MalformedRequestBody, deserializer.default, data_string)
 
+    def test_json_with_utf8(self):
+        data = '{"a": "\xe7\xbd\x91\xe7\xbb\x9c"}'
+        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
+        deserializer = wsgi.JSONDeserializer()
+        self.assertEqual(
+            deserializer.deserialize(data), as_dict)
+
+    def test_json_with_unicode(self):
+        data = '{"a": "\u7f51\u7edc"}'
+        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
+        deserializer = wsgi.JSONDeserializer()
+        self.assertEqual(
+            deserializer.deserialize(data), as_dict)
+
 
 class XMLDeserializerTest(base.BaseTestCase):
     def test_xml_empty(self):
@@ -680,6 +712,14 @@ class XMLDeserializerTest(base.BaseTestCase):
 
         self.assertRaises(
             exception.MalformedRequestBody, deserializer.default, data_string)
+
+    def test_xml_with_utf8(self):
+        xml = '<a>\xe7\xbd\x91\xe7\xbb\x9c</a>'
+        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
+        deserializer = wsgi.XMLDeserializer()
+
+        self.assertEqual(
+            deserializer.deserialize(xml), as_dict)
 
 
 class RequestHeadersDeserializerTest(base.BaseTestCase):
@@ -1039,6 +1079,34 @@ class XMLDictSerializerTest(base.BaseTestCase):
             'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
             'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
             '<a><2>3</2></a></servers>'
+        )
+        result = serializer(data)
+        result = result.replace('\n', '').replace(' ', '')
+        self.assertEqual(expected, result)
+
+    def test_xml_with_utf8(self):
+        data = {'servers': '\xe7\xbd\x91\xe7\xbb\x9c'}
+        serializer = wsgi.XMLDictSerializer()
+        expected = (
+            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
+            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
+            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
+            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+            '\xe7\xbd\x91\xe7\xbb\x9c</servers>'
+        )
+        result = serializer(data)
+        result = result.replace('\n', '').replace(' ', '')
+        self.assertEqual(expected, result)
+
+    def test_xml_with_unicode(self):
+        data = {'servers': u'\u7f51\u7edc'}
+        serializer = wsgi.XMLDictSerializer()
+        expected = (
+            '<?xmlversion=\'1.0\'encoding=\'UTF-8\'?>'
+            '<serversxmlns="http://openstack.org/quantum/api/v2.0"'
+            'xmlns:quantum="http://openstack.org/quantum/api/v2.0"'
+            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+            '\xe7\xbd\x91\xe7\xbb\x9c</servers>'
         )
         result = serializer(data)
         result = result.replace('\n', '').replace(' ', '')

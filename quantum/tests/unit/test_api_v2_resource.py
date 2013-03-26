@@ -100,27 +100,81 @@ class RequestTestCase(base.BaseTestCase):
 
 
 class ResourceTestCase(base.BaseTestCase):
-    def test_unmapped_quantum_error(self):
+    def test_unmapped_quantum_error_with_json(self):
+        msg = u'\u7f51\u7edc'
+
+        class TestException(q_exc.QuantumException):
+            message = msg
+        expected_res = {'body': {'QuantumError': msg}}
         controller = mock.MagicMock()
-        controller.test.side_effect = q_exc.QuantumException()
+        controller.test.side_effect = TestException()
 
         resource = webtest.TestApp(wsgi_resource.Resource(controller))
 
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'json'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
+                         expected_res)
 
-    def test_mapped_quantum_error(self):
+    def test_unmapped_quantum_error_with_xml(self):
+        msg = u'\u7f51\u7edc'
+
+        class TestException(q_exc.QuantumException):
+            message = msg
+        expected_res = {'body': {'QuantumError': msg}}
         controller = mock.MagicMock()
-        controller.test.side_effect = q_exc.QuantumException()
+        controller.test.side_effect = TestException()
 
-        faults = {q_exc.QuantumException: exc.HTTPGatewayTimeout}
+        resource = webtest.TestApp(wsgi_resource.Resource(controller))
+
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'xml'})}
+        res = resource.get('', extra_environ=environ, expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(wsgi.XMLDeserializer().deserialize(res.body),
+                         expected_res)
+
+    def test_mapped_quantum_error_with_json(self):
+        msg = u'\u7f51\u7edc'
+
+        class TestException(q_exc.QuantumException):
+            message = msg
+        expected_res = {'body': {'QuantumError': msg}}
+        controller = mock.MagicMock()
+        controller.test.side_effect = TestException()
+
+        faults = {TestException: exc.HTTPGatewayTimeout}
         resource = webtest.TestApp(wsgi_resource.Resource(controller,
                                                           faults=faults))
 
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'json'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
+        self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
+                         expected_res)
+
+    def test_mapped_quantum_error_with_xml(self):
+        msg = u'\u7f51\u7edc'
+
+        class TestException(q_exc.QuantumException):
+            message = msg
+        expected_res = {'body': {'QuantumError': msg}}
+        controller = mock.MagicMock()
+        controller.test.side_effect = TestException()
+
+        faults = {TestException: exc.HTTPGatewayTimeout}
+        resource = webtest.TestApp(wsgi_resource.Resource(controller,
+                                                          faults=faults))
+
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'xml'})}
+        res = resource.get('', extra_environ=environ, expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
+        self.assertEqual(wsgi.XMLDeserializer().deserialize(res.body),
+                         expected_res)
 
     def test_http_error(self):
         controller = mock.MagicMock()
@@ -132,15 +186,37 @@ class ResourceTestCase(base.BaseTestCase):
         res = resource.get('', extra_environ=environ, expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPGatewayTimeout.code)
 
-    def test_unhandled_error(self):
+    def test_unhandled_error_with_json(self):
+        expected_res = {'body': {'QuantumError':
+                                 _('Request Failed: internal server error '
+                                   'while processing your request.')}}
         controller = mock.MagicMock()
         controller.test.side_effect = Exception()
 
         resource = webtest.TestApp(wsgi_resource.Resource(controller))
 
-        environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'json'})}
         res = resource.get('', extra_environ=environ, expect_errors=True)
         self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(wsgi.JSONDeserializer().deserialize(res.body),
+                         expected_res)
+
+    def test_unhandled_error_with_xml(self):
+        expected_res = {'body': {'QuantumError':
+                                 _('Request Failed: internal server error '
+                                   'while processing your request.')}}
+        controller = mock.MagicMock()
+        controller.test.side_effect = Exception()
+
+        resource = webtest.TestApp(wsgi_resource.Resource(controller))
+
+        environ = {'wsgiorg.routing_args': (None, {'action': 'test',
+                                                   'format': 'xml'})}
+        res = resource.get('', extra_environ=environ, expect_errors=True)
+        self.assertEqual(res.status_int, exc.HTTPInternalServerError.code)
+        self.assertEqual(wsgi.XMLDeserializer().deserialize(res.body),
+                         expected_res)
 
     def test_status_200(self):
         controller = mock.MagicMock()
