@@ -1953,7 +1953,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             try:
                 port_qry.filter_by(fixed_port_id=fip['port_id']).one()
                 raise l3.FloatingIPPortAlreadyAssociated(
-                    port_id=fip['port_id'])
+                    port_id=fip['port_id'],
+                    fip_id=floatingip_db['id'],
+                    floating_ip_address=floatingip_db['floating_ip_address'],
+                    fixed_ip=floatingip_db['fixed_ip_address'],
+                    net_id=floatingip_db['floating_network_id'])
             except sa_exc.NoResultFound:
                 pass
             port_id, internal_ip, router_id = self.get_assoc_data(
