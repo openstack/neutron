@@ -88,7 +88,7 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
         instance.return_value.get_nvp_version.return_value = "2.999"
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
-        cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
+        cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
 
@@ -423,10 +423,10 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
             'QuantumPlugin.NvpPluginV2')
 
     def _nvp_metadata_setup(self):
-        cfg.CONF.set_override('enable_metadata_access_network', True, 'NVP')
+        cfg.CONF.set_override('metadata_mode', 'access_network', 'NVP')
 
     def _nvp_metadata_teardown(self):
-        cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')
+        cfg.CONF.set_override('metadata_mode', None, 'NVP')
 
     def test_create_router_name_exceeds_40_chars(self):
         name = 'this_is_a_router_whose_name_is_longer_than_40_chars'
@@ -525,6 +525,23 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                 self._show('subnets', meta_sub_id,
                            webob.exc.HTTPNotFound.code)
         self._nvp_metadata_teardown()
+
+    def test_metadata_dhcp_host_route(self):
+        cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NVP')
+        subnets = self._list('subnets')['subnets']
+        with self.subnet() as s:
+            with self.port(subnet=s, device_id='1234',
+                           device_owner='network:dhcp') as p:
+                subnets = self._list('subnets')['subnets']
+                self.assertEqual(len(subnets), 1)
+                self.assertEquals(subnets[0]['host_routes'][0]['nexthop'],
+                                  '10.0.0.2')
+                self.assertEquals(subnets[0]['host_routes'][0]['destination'],
+                                  '169.254.169.254/32')
+
+            subnets = self._list('subnets')['subnets']
+            # Test that route is deleted after dhcp port is removed
+            self.assertEquals(len(subnets[0]['host_routes']), 0)
 
 
 class NvpQoSTestExtensionManager(object):

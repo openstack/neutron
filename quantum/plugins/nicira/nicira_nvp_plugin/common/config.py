@@ -36,9 +36,14 @@ nvp_opts = [
                       "(default -1 meaning do not time out)")),
     cfg.StrOpt('default_cluster_name',
                help=_("Default cluster name")),
-    cfg.BoolOpt('enable_metadata_access_network', default=True,
-                help=_("Enables dedicated connection to the metadata proxy "
-                       "for metadata server access via Quantum router")),
+    cfg.StrOpt('metadata_mode', default='access_network',
+               help=_("If set to access_network this enables a dedicated "
+                      "connection to the metadata proxy for metadata server "
+                      "access via Quantum router. If set to dhcp_host_route "
+                      "this enables host route injection via the dhcp agent. "
+                      "This option is only useful if running on a host that "
+                      "does not support namespaces otherwise access_network "
+                      "should be used.")),
 ]
 
 cluster_opts = [
