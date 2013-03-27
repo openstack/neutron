@@ -318,7 +318,7 @@ class DhcpAgent(manager.Manager):
                          '--state_path=%s' % self.conf.state_path,
                          '--metadata_port=%d' % METADATA_PORT]
             proxy_cmd.extend(config.get_log_args(
-                cfg.CONF, 'quantum-ns-metadata-proxy%s.log' % network.id))
+                cfg.CONF, 'quantum-ns-metadata-proxy-%s.log' % network.id))
             return proxy_cmd
 
         pm = external_process.ProcessManager(

@@ -260,7 +260,7 @@ class L3NATAgent(manager.Manager):
                          '--router_id=%s' % router_info.router_id,
                          '--state_path=%s' % self.conf.state_path]
             proxy_cmd.extend(config.get_log_args(
-                cfg.CONF, 'quantum-ns-metadata-proxy%s.log' %
+                cfg.CONF, 'quantum-ns-metadata-proxy-%s.log' %
                 router_info.router_id))
             return proxy_cmd
 

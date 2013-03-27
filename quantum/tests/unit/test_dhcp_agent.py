@@ -575,7 +575,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                         mock.ANY,
                         mock.ANY,
                         '--debug',
-                        ('--log-file=quantum-ns-metadata-proxy%s.log' %
+                        ('--log-file=quantum-ns-metadata-proxy-%s.log' %
                          fake_meta_network.id)])
                 ])
         finally:
