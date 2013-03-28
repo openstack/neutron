@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.58"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.59"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-27 00:06+0000\n"
+"POT-Creation-Date: 2013-03-28 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1666,68 +1666,68 @@ msgstr ""
 msgid "The SQLAlchemy connection string used to connect to the database"
 msgstr ""
 
-#: quantum/db/api.py:47
+#: quantum/db/api.py:48
 msgid "Database reconnection retry times"
 msgstr ""
 
-#: quantum/db/api.py:49
+#: quantum/db/api.py:50
 msgid "Database reconnection interval in seconds"
 msgstr ""
 
-#: quantum/db/api.py:52
+#: quantum/db/api.py:53
 msgid "Minimum number of SQL connections to keep open in a pool"
 msgstr ""
 
-#: quantum/db/api.py:56
+#: quantum/db/api.py:57
 msgid "Maximum number of SQL connections to keep open in a pool"
 msgstr ""
 
-#: quantum/db/api.py:60
+#: quantum/db/api.py:61
 msgid "Timeout in seconds before idle sql connections are reaped"
 msgstr ""
 
-#: quantum/db/api.py:64
+#: quantum/db/api.py:65
 msgid "Enable the use of eventlet's db_pool for MySQL"
 msgstr ""
 
-#: quantum/db/api.py:67
+#: quantum/db/api.py:68
 msgid ""
 "Maximum number of SQL connections to keep open in a QueuePool in "
 "SQLAlchemy"
 msgstr ""
 
-#: quantum/db/api.py:93
+#: quantum/db/api.py:94
 #, python-format
 msgid "Got mysql server has gone away: %s"
 msgstr ""
 
-#: quantum/db/api.py:94
+#: quantum/db/api.py:95
 msgid "Database server went away"
 msgstr ""
 
-#: quantum/db/api.py:120
+#: quantum/db/api.py:121
 #, python-format
 msgid ""
 "Option 'sql_connection' not specified in any config file - using default "
 "value '%s'"
 msgstr ""
 
-#: quantum/db/api.py:156
+#: quantum/db/api.py:157
 msgid "Eventlet connection pooling will not work without python-mysqldb!"
 msgstr ""
 
-#: quantum/db/api.py:203
+#: quantum/db/api.py:204
 msgid "Database connection lost, exit..."
 msgstr ""
 
-#: quantum/db/api.py:206
+#: quantum/db/api.py:207
 #, python-format
 msgid ""
 "Unable to connect to database, %(remaining)s attempts left. Retrying in "
 "%(reconnect_interval)s seconds"
 msgstr ""
 
-#: quantum/db/api.py:221
+#: quantum/db/api.py:222
 #, python-format
 msgid "Database registration exception: %s"
 msgstr ""
