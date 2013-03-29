@@ -75,9 +75,9 @@ CMD_VLAN_INT_SNIPPET = """
                   <trunk>
                     <allowed>
                       <vlan>
-                        <__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
-                          <allow-vlans>%s</allow-vlans>
-                        </__XML__BLK_Cmd_switchport_trunk_allowed_allow-vlans>
+                        <add>
+                          <add_vlans>%s</add_vlans>
+                        </add>
                       </vlan>
                     </allowed>
                   </trunk>
