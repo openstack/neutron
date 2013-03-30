@@ -19,8 +19,6 @@
 #
 """
 
-import sys
-
 import eventlet
 from eventlet import semaphore
 import netaddr
@@ -258,7 +256,8 @@ class L3NATAgent(manager.Manager):
             proxy_cmd = ['quantum-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
                          '--router_id=%s' % router_info.router_id,
-                         '--state_path=%s' % self.conf.state_path]
+                         '--state_path=%s' % self.conf.state_path,
+                         '--metadata_port=%s' % self.conf.metadata_port]
             proxy_cmd.extend(config.get_log_args(
                 cfg.CONF, 'quantum-ns-metadata-proxy-%s.log' %
                 router_info.router_id))
