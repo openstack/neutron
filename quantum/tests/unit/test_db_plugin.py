@@ -2258,6 +2258,22 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
             res = req.get_response(self.api)
             self.assertEqual(400, res.status_int)
 
+    def test_list_shared_networks_with_non_admin_user(self):
+        with contextlib.nested(self.network(shared=False,
+                                            name='net1',
+                                            tenant_id='tenant1'),
+                               self.network(shared=True,
+                                            name='net2',
+                                            tenant_id='another_tenant'),
+                               self.network(shared=False,
+                                            name='net3',
+                                            tenant_id='another_tenant')
+                               ) as (net1, net2, net3):
+            ctx = context.Context(user_id='non_admin',
+                                  tenant_id='tenant1',
+                                  is_admin=False)
+            self._test_list_resources('network', (net1, net2), ctx)
+
     def test_show_network(self):
         with self.network(name='net1') as net:
             req = self.new_show_request('networks', net['network']['id'])

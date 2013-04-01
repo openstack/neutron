@@ -183,6 +183,9 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
     def test_list_networks_with_parameters_invalid_values(self):
         pass
 
+    def test_list_shared_networks_with_non_admin_user(self):
+        pass
+
     def test_show_network_with_subnet(self):
         pass
 

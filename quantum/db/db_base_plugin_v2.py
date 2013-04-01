@@ -98,7 +98,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         if not context.is_admin and hasattr(model, 'tenant_id'):
             if hasattr(model, 'shared'):
                 query_filter = ((model.tenant_id == context.tenant_id) |
-                                (model.shared))
+                                (model.shared == True))
             else:
                 query_filter = (model.tenant_id == context.tenant_id)
         # Execute query hooks registered from mixins and plugins
