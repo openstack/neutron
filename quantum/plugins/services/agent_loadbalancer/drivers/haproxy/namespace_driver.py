@@ -178,6 +178,13 @@ class HaproxyNSDriver(object):
         ]
         self.vif_driver.init_l3(interface_name, cidrs, namespace=namespace)
 
+        gw_ip = port['fixed_ips'][0]['subnet'].get('gateway_ip')
+        if gw_ip:
+            cmd = ['route', 'add', 'default', 'gw', gw_ip]
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=namespace)
+            ip_wrapper.netns.execute(cmd, check_exit_code=False)
+
     def _unplug(self, namespace, port_id):
         port_stub = {'id': port_id}
         self.vip_plug_callback('unplug', port_stub)
