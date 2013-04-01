@@ -683,7 +683,21 @@ class NECPluginV2RPCCallbacks(object):
                              mac=p.get('mac', ''))
             self.plugin.activate_port_if_ready(rpc_context, port)
         for id in kwargs.get('port_removed', []):
+            portinfo = ndb.get_portinfo(session, id)
+            if not portinfo:
+                LOG.debug(_("update_ports(): ignore port_removed message "
+                            "due to portinfo for port_id=%s was not "
+                            "registered"), id)
+                continue
+            if portinfo.datapath_id is not datapath_id:
+                LOG.debug(_("update_ports(): ignore port_removed message "
+                            "received from different host "
+                            "(registered_datapath_id=%(registered)s, "
+                            "received_datapath_id=%(received)s)."),
+                          {'registered': portinfo.datapath_id,
+                           'received': datapath_id})
+                continue
             port = self.plugin.get_port(rpc_context, id)
-            if port and ndb.get_portinfo(session, id):
+            if port:
                 ndb.del_portinfo(session, id)
                 self.plugin.deactivate_port(rpc_context, port)
