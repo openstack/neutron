@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.62"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.63"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-31 00:03+0000\n"
+"POT-Creation-Date: 2013-04-01 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -296,7 +296,7 @@ msgstr ""
 msgid "The driver used to manage the DHCP server."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:62 quantum/agent/l3_agent.py:135
+#: quantum/agent/dhcp_agent.py:62 quantum/agent/l3_agent.py:133
 msgid "Allow overlapping IP."
 msgstr ""
 
@@ -350,7 +350,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:493 quantum/agent/l3_agent.py:123
+#: quantum/agent/dhcp_agent.py:493 quantum/agent/l3_agent.py:121
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
@@ -359,7 +359,7 @@ msgstr ""
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:506 quantum/agent/l3_agent.py:162
+#: quantum/agent/dhcp_agent.py:506 quantum/agent/l3_agent.py:160
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
@@ -396,109 +396,109 @@ msgstr ""
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:701 quantum/agent/l3_agent.py:729
+#: quantum/agent/dhcp_agent.py:701 quantum/agent/l3_agent.py:728
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:734
+#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:733
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:715 quantum/agent/l3_agent.py:739
+#: quantum/agent/dhcp_agent.py:715 quantum/agent/l3_agent.py:738
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:120 quantum/debug/debug_agent.py:48
+#: quantum/agent/l3_agent.py:118 quantum/debug/debug_agent.py:48
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:127
+#: quantum/agent/l3_agent.py:125
 msgid "TCP Port used by Quantum metadata namespace proxy."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:131
+#: quantum/agent/l3_agent.py:129
 msgid ""
 "Send this many gratuitous ARPs for HA setup, set it below or equal to 0 "
 "to disable this feature."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:137
+#: quantum/agent/l3_agent.py:135
 msgid ""
 "If namespaces is disabled, the l3 agent can only confgure a router that "
 "has the matching router ID."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:142
+#: quantum/agent/l3_agent.py:140
 msgid "Agent should implement routers with no gateway"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:144
+#: quantum/agent/l3_agent.py:142
 msgid "UUID of external network for routers implemented by the agents."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:157
+#: quantum/agent/l3_agent.py:155
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:191
+#: quantum/agent/l3_agent.py:189
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:220
+#: quantum/agent/l3_agent.py:218
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Quantum has more than one external network."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:285
+#: quantum/agent/l3_agent.py:284
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:287 quantum/db/l3_db.py:932
+#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:932
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:392
+#: quantum/agent/l3_agent.py:391
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:560
+#: quantum/agent/l3_agent.py:559
 #, python-format
 msgid "Failed dealing with router '%s' deletion RPC message"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:573
+#: quantum/agent/l3_agent.py:572
 msgid "Failed dealing with routers update RPC message"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:586
+#: quantum/agent/l3_agent.py:585
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:643
+#: quantum/agent/l3_agent.py:642
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:647
+#: quantum/agent/l3_agent.py:646
 msgid "L3 agent started"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:667
+#: quantum/agent/l3_agent.py:666
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:675
+#: quantum/agent/l3_agent.py:674
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
