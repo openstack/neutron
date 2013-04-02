@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.63"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.64"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-01 00:06+0000\n"
+"POT-Creation-Date: 2013-04-02 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5429,6 +5429,21 @@ msgstr ""
 #: quantum/plugins/nec/nec_plugin.py:671
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
+msgstr ""
+
+#: quantum/plugins/nec/nec_plugin.py:688
+#, python-format
+msgid ""
+"update_ports(): ignore port_removed message due to portinfo for "
+"port_id=%s was not registered"
+msgstr ""
+
+#: quantum/plugins/nec/nec_plugin.py:693
+#, python-format
+msgid ""
+"update_ports(): ignore port_removed message received from different host "
+"(registered_datapath_id=%(registered)s, "
+"received_datapath_id=%(received)s)."
 msgstr ""
 
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:55
