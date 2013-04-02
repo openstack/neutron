@@ -83,7 +83,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
         except (exceptions.QuantumException,
                 netaddr.AddrFormatError) as e:
             LOG.exception(_('%s failed'), action)
-            body = serializer.serialize({'QuantumError': str(e)})
+            body = serializer.serialize({'QuantumError': e})
             kwargs = {'body': body, 'content_type': content_type}
             for fault in faults:
                 if isinstance(e, fault):
@@ -91,7 +91,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             raise webob.exc.HTTPInternalServerError(**kwargs)
         except webob.exc.HTTPException as e:
             LOG.exception(_('%s failed'), action)
-            e.body = serializer.serialize({'QuantumError': str(e)})
+            e.body = serializer.serialize({'QuantumError': e})
             e.content_type = content_type
             raise
         except Exception as e:

@@ -334,7 +334,9 @@ class JSONDictSerializer(DictSerializer):
     """Default JSON request body serialization"""
 
     def default(self, data):
-        return jsonutils.dumps(data)
+        def sanitizer(obj):
+            return unicode(obj)
+        return jsonutils.dumps(data, default=sanitizer)
 
 
 class XMLDictSerializer(DictSerializer):
@@ -467,7 +469,10 @@ class XMLDictSerializer(DictSerializer):
             LOG.debug(_("Data %(data)s type is %(type)s"),
                       {'data': data,
                        'type': type(data)})
-            result.text = str(data)
+            if isinstance(data, str):
+                result.text = unicode(data, 'utf-8')
+            else:
+                result.text = unicode(data)
         return result
 
     def _create_link_nodes(self, xml_doc, links):
