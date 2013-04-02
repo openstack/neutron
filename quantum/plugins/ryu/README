@@ -3,8 +3,8 @@ This directory includes quantum plugin for Ryu Network Operating System.
 
 # -- Installation
 
-For how to install/set up this plugin with Ryu and Open Stack, please refer to
-http://www.osrg.net/ryu/using_with_openstack.html
+For how to install/set up this plugin with Ryu and OpenStack, please refer to
+https://github.com/osrg/ryu/wiki/OpenStack
 
 # -- Ryu General
 
