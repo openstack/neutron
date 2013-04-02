@@ -205,6 +205,17 @@ class TestIpWrapper(base.BaseTestCase):
                                              'peer', 'name', 'tap1'),
                                              'sudo', None)
 
+    def test_add_veth_with_namespaces(self):
+        ns2 = 'ns2'
+        with mock.patch.object(ip_lib.IPWrapper, 'ensure_namespace') as en:
+            ip_lib.IPWrapper('sudo').add_veth('tap0', 'tap1', namespace2=ns2)
+            en.assert_has_calls([mock.call(ns2)])
+        self.execute.assert_called_once_with('', 'link',
+                                             ('add', 'tap0', 'type', 'veth',
+                                              'peer', 'name', 'tap1',
+                                              'netns', ns2),
+                                             'sudo', None)
+
     def test_get_device(self):
         dev = ip_lib.IPWrapper('sudo', 'ns').device('eth0')
         self.assertEqual(dev.root_helper, 'sudo')

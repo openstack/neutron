@@ -90,12 +90,19 @@ class IPWrapper(SubProcessBase):
         self._as_root('', 'tuntap', ('add', name, 'mode', mode))
         return IPDevice(name, self.root_helper, self.namespace)
 
-    def add_veth(self, name1, name2):
-        self._as_root('', 'link',
-                      ('add', name1, 'type', 'veth', 'peer', 'name', name2))
+    def add_veth(self, name1, name2, namespace2=None):
+        args = ['add', name1, 'type', 'veth', 'peer', 'name', name2]
+
+        if namespace2 is None:
+            namespace2 = self.namespace
+        else:
+            self.ensure_namespace(namespace2)
+            args += ['netns', namespace2]
+
+        self._as_root('', 'link', tuple(args))
 
         return (IPDevice(name1, self.root_helper, self.namespace),
-                IPDevice(name2, self.root_helper, self.namespace))
+                IPDevice(name2, self.root_helper, namespace2))
 
     def ensure_namespace(self, name):
         if not self.netns.exists(name):
