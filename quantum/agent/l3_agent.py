@@ -416,8 +416,14 @@ class L3NATAgent(manager.Manager):
 
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if ex_gw_port['subnet']['gateway_ip']:
-            ip = ip_lib.IPWrapper(self.root_helper, ri.ns_name())
-            ip.route.add_gateway(gw_ip)
+            cmd = ['route', 'add', 'default', 'gw', gw_ip]
+            if self.conf.use_namespaces:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                              namespace=ri.ns_name())
+                ip_wrapper.netns.execute(cmd, check_exit_code=False)
+            else:
+                utils.execute(cmd, check_exit_code=False,
+                              root_helper=self.root_helper)
 
         for (c, r) in self.external_gateway_nat_rules(ex_gw_ip,
                                                       internal_cidrs,
@@ -639,9 +645,19 @@ class L3NATAgent(manager.Manager):
     def after_start(self):
         LOG.info(_("L3 agent started"))
 
-    def routes_updated(self, ri):
-        ip = ip_lib.IPWrapper(self.conf.root_helper, ri.ns_name())
+    def _update_routing_table(self, ri, operation, route):
+        cmd = ['ip', 'route', operation, 'to', route['destination'],
+               'via', route['nexthop']]
+        #TODO(nati) move this code to iplib
+        if self.conf.use_namespaces:
+            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                          namespace=ri.ns_name())
+            ip_wrapper.netns.execute(cmd, check_exit_code=False)
+        else:
+            utils.execute(cmd, check_exit_code=False,
+                          root_helper=self.conf.root_helper)
 
+    def routes_updated(self, ri):
         new_routes = ri.router['routes']
         old_routes = ri.routes
         adds, removes = common_utils.diff_list_of_dict(old_routes,
@@ -652,11 +668,11 @@ class L3NATAgent(manager.Manager):
             for del_route in removes:
                 if route['destination'] == del_route['destination']:
                     removes.remove(del_route)
-
-            ip.route.add(route['destination'], route['nexthop'])
+            #replace success even if there is no existing route
+            self._update_routing_table(ri, 'replace', route)
         for route in removes:
             LOG.debug(_("Removed route entry is '%s'"), route)
-            ip.route.delete(route['destination'], route['nexthop'])
+            self._update_routing_table(ri, 'delete', route)
         ri.routes = new_routes
 
 

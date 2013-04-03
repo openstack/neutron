@@ -549,54 +549,25 @@ class TestIpAddrCommand(TestIPCmdBase):
 class TestIpRouteCommand(TestIPCmdBase):
     def setUp(self):
         super(TestIpRouteCommand, self).setUp()
+        self.parent.name = 'eth0'
         self.command = 'route'
         self.route_cmd = ip_lib.IpRouteCommand(self.parent)
 
-    def test_add(self):
-        dst = '10.0.1.0/24'
-        nexthop = '192.168.1.1'
-
-        self.route_cmd.add(dst, nexthop)
-        self._assert_sudo([], ('replace', 'to', dst, 'via', nexthop))
-
-    def test_delete(self):
-        dst = '10.0.1.0/24'
-        nexthop = '192.168.1.1'
-
-        self.route_cmd.delete(dst, nexthop)
-        self._assert_sudo([], ('delete', 'to', dst, 'via', nexthop))
-
     def test_add_gateway(self):
-        gw = '10.0.1.1'
-
-        self.route_cmd.add_gateway(gw)
-        self._assert_sudo([], ('replace', 'default', 'via', gw))
-
-    def test_delete_gateway(self):
-        gw = '10.0.1.1'
-
-        self.route_cmd.delete_gateway(gw)
-        self._assert_sudo([], ('delete', 'default', 'via', gw))
-
-    def test_add_gateway_with_metric_dev(self):
         gateway = '192.168.45.100'
         metric = 100
-        dev = 'eth0'
-
-        self.route_cmd.add_gateway(gateway, metric, dev)
+        self.route_cmd.add_gateway(gateway, metric)
         self._assert_sudo([],
                           ('replace', 'default', 'via', gateway,
                            'metric', metric,
-                           'dev', dev))
+                           'dev', self.parent.name))
 
-    def test_delete_gateway_with_dev(self):
+    def test_del_gateway(self):
         gateway = '192.168.45.100'
-        dev = 'eth0'
-
-        self.route_cmd.delete_gateway(gateway, dev)
+        self.route_cmd.delete_gateway(gateway)
         self._assert_sudo([],
-                          ('delete', 'default', 'via', gateway,
-                           'dev', dev))
+                          ('del', 'default', 'via', gateway,
+                           'dev', self.parent.name))
 
     def test_get_gateway(self):
         test_cases = [{'sample': GATEWAY_SAMPLE1,
@@ -641,59 +612,6 @@ class TestIpRouteCommand(TestIPCmdBase):
         self.route_cmd.pullup_route('tap1d7888a7-10')
         # Check two calls - device get and subnet get
         self.assertEqual(len(self.parent._run.mock_calls), 2)
-
-
-class TestIpRouteDeviceCommand(TestIPCmdBase):
-    def setUp(self):
-        super(TestIpRouteDeviceCommand, self).setUp()
-        self.parent.name = 'eth0'
-        self.command = 'route'
-        self.route_cmd = ip_lib.IpRouteDeviceCommand(self.parent)
-
-        route_p = mock.patch.object(self.route_cmd, '_route')
-        self._route = route_p.start()
-
-    def test_add_gateway(self):
-        gw = '10.0.0.1'
-        metric = 100
-
-        self.route_cmd.add_gateway(gw, metric)
-        self._route.add_gateway.assert_called_once_with(gw, metric,
-                                                        self.route_cmd.name)
-
-    def test_delete_gateway(self):
-        gw = '10.0.0.1'
-
-        self.route_cmd.delete_gateway(gw)
-        self._route.delete_gateway.assert_called_once_with(gw,
-                                                           self.route_cmd.name)
-
-    def test_get_gateway(self):
-        scope = 'scope'
-        filters = []
-
-        self.route_cmd.get_gateway(scope, filters)
-        self._route.get_gateway.assert_called_once_with(scope, filters,
-                                                        self.route_cmd.name)
-
-    def test_add(self):
-        dst = '8.8.8.8'
-        via = '10.0.1.4'
-
-        self.route_cmd.add(dst, via)
-        self._route.add.assert_called_once_with(dst, via, self.route_cmd.name)
-
-    def test_delete(self):
-        dst = '8.8.8.8'
-        via = '10.0.1.4'
-
-        self.route_cmd.delete(dst, via)
-        self._route.delete.assert_called_once_with(dst, via,
-                                                   self.route_cmd.name)
-
-    def test_pullup_route(self):
-        self.route_cmd.pullup_route()
-        self._route.pullup_route.assert_called_once_with(self.route_cmd.name)
 
 
 class TestIpNetnsCommand(TestIPCmdBase):

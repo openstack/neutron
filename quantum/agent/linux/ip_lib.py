@@ -63,7 +63,6 @@ class IPWrapper(SubProcessBase):
         super(IPWrapper, self).__init__(root_helper=root_helper,
                                         namespace=namespace)
         self.netns = IpNetnsCommand(self)
-        self.route = IpRouteCommand(self)
 
     def device(self, name):
         return IPDevice(name, self.root_helper, self.namespace)
@@ -135,7 +134,7 @@ class IPDevice(SubProcessBase):
         self.name = name
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
-        self.route = IpRouteDeviceCommand(self)
+        self.route = IpRouteCommand(self)
 
     def __eq__(self, other):
         return (other is not None and self.name == other.name
@@ -301,37 +300,35 @@ class IpAddrCommand(IpDeviceCommandBase):
         return retval
 
 
-class IpRouteCommand(IpCommandBase):
+class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
-    def add_gateway(self, gw, metric=None, dev=None):
-        """Adds a default gateway or replaces an existing one."""
-
-        args = ['replace', 'default', 'via', gw]
+    def add_gateway(self, gateway, metric=None):
+        args = ['replace', 'default', 'via', gateway]
         if metric:
             args += ['metric', metric]
-        if dev:
-            args += ['dev', dev]
-
+        args += ['dev', self.name]
         self._as_root(*args)
 
-    def delete_gateway(self, gw, dev=None):
-        args = ['delete', 'default', 'via', gw]
-        if dev:
-            args += ['dev', dev]
+    def delete_gateway(self, gateway):
+        self._as_root('del',
+                      'default',
+                      'via',
+                      gateway,
+                      'dev',
+                      self.name)
 
-        self._as_root(*args)
+    def get_gateway(self, scope=None, filters=None):
+        if filters is None:
+            filters = []
 
-    def get_gateway(self, scope=None, filters=None, dev=None):
-        args = ['list']
-        if dev:
-            args += ['dev', self.name]
+        retval = None
+
         if scope:
-            args += ['scope', scope]
-        if filters:
-            args += filters
+            filters += ['scope', scope]
 
-        route_list_lines = self._run(*args).split('\n')
+        route_list_lines = self._run('list', 'dev', self.name,
+                                     *filters).split('\n')
         default_route_line = next((x.strip() for x in
                                    route_list_lines if
                                    x.strip().startswith('default')), None)
@@ -344,7 +341,7 @@ class IpRouteCommand(IpCommandBase):
             if parts_has_metric:
                 retval.update(metric=int(parts[metric_index]))
 
-            return retval
+        return retval
 
     def pullup_route(self, interface_name):
         """
@@ -385,49 +382,6 @@ class IpRouteCommand(IpCommandBase):
                 else:
                     self._as_root('append', subnet, 'proto', 'kernel',
                                   'dev', device)
-
-    def add(self, destination, nexthop, dev=None):
-        """Adds a new route or replaces an existing one."""
-
-        args = ['replace', 'to', destination, 'via', nexthop]
-        if dev:
-            args += ['dev', dev]
-
-        self._as_root(*args)
-
-    def delete(self, destination, nexthop, dev=None):
-        args = ['delete', 'to', destination, 'via', nexthop]
-        if dev:
-            args += ['dev', dev]
-
-        self._as_root(*args)
-
-
-class IpRouteDeviceCommand(IpDeviceCommandBase):
-    """Wrapper for ip route actions which are bound to a specific device"""
-
-    def __init__(self, parent):
-        super(IpRouteDeviceCommand, self).__init__(parent)
-
-        self._route = IpRouteCommand(parent)
-
-    def add_gateway(self, gw, metric=None):
-        return self._route.add_gateway(gw, metric, self.name)
-
-    def delete_gateway(self, gw):
-        return self._route.delete_gateway(gw, self.name)
-
-    def get_gateway(self, scope=None, filters=None):
-        return self._route.get_gateway(scope, filters, self.name)
-
-    def pullup_route(self):
-        return self._route.pullup_route(self.name)
-
-    def add(self, destination, nexthop):
-        return self._route.add(destination, nexthop, self.name)
-
-    def delete(self, destination, nexthop):
-        return self._route.delete(destination, nexthop, self.name)
 
 
 class IpNetnsCommand(IpCommandBase):
