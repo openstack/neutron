@@ -566,7 +566,7 @@ class DeviceManager(object):
         if namespace is None:
             device = ip_lib.IPDevice(interface_name,
                                      self.root_helper)
-            device.route.pullup_route(interface_name)
+            device.route.pullup_route()
 
         if self.conf.enable_metadata_network:
             meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_IP)
