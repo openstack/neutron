@@ -24,6 +24,7 @@ UPDATE = 'update'
 
 AGENT = 'q-agent-notifier'
 PLUGIN = 'q-plugin'
+L3PLUGIN = 'q-l3-plugin'
 DHCP = 'q-dhcp-notifer'
 FIREWALL_PLUGIN = 'q-firewall-plugin'
 METERING_PLUGIN = 'q-metering-plugin'

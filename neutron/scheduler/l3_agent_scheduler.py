@@ -22,7 +22,7 @@ from sqlalchemy.sql import exists
 
 from neutron.common import constants
 from neutron.db import agents_db
-from neutron.db import agentschedulers_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.openstack.common import log as logging
 
@@ -81,7 +81,7 @@ class ChanceScheduler(object):
                 #TODO(gongysh) consider the disabled agent's router
                 stmt = ~exists().where(
                     l3_db.Router.id ==
-                    agentschedulers_db.RouterL3AgentBinding.router_id)
+                    l3_agentschedulers_db.RouterL3AgentBinding.router_id)
                 unscheduled_router_ids = [router_id_[0] for router_id_ in
                                           context.session.query(
                                               l3_db.Router.id).filter(stmt)]
@@ -106,7 +106,7 @@ class ChanceScheduler(object):
 
             # binding
             for router_id in router_ids:
-                binding = agentschedulers_db.RouterL3AgentBinding()
+                binding = l3_agentschedulers_db.RouterL3AgentBinding()
                 binding.l3_agent = l3_agent
                 binding.router_id = router_id
                 binding.default = True
@@ -144,7 +144,7 @@ class ChanceScheduler(object):
                 return
 
             chosen_agent = random.choice(candidates)
-            binding = agentschedulers_db.RouterL3AgentBinding()
+            binding = l3_agentschedulers_db.RouterL3AgentBinding()
             binding.l3_agent = chosen_agent
             binding.router_id = sync_router['id']
             context.session.add(binding)

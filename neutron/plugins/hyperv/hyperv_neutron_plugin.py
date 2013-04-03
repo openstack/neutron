@@ -22,6 +22,7 @@ from neutron.api.v2 import attributes
 from neutron.common import exceptions as q_exc
 from neutron.common import topics
 from neutron.db import db_base_plugin_v2
+from neutron.db import external_net_db
 from neutron.db import l3_gwmode_db
 from neutron.db import portbindings_base
 from neutron.db import quota_db  # noqa
@@ -29,6 +30,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
+from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.hyperv import agent_notifier_api
 from neutron.plugins.hyperv.common import constants
@@ -142,6 +144,7 @@ class VlanNetworkProvider(BaseNetworkProvider):
 
 
 class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
+                          external_net_db.External_net_db_mixin,
                           l3_gwmode_db.L3_NAT_db_mixin,
                           portbindings_base.PortBindingBaseMixin):
 
@@ -149,8 +152,8 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     # bulk operations. Name mangling is used in order to ensure it
     # is qualified by class
     __native_bulk_support = True
-    supported_extension_aliases = ["provider", "router", "ext-gw-mode",
-                                   "binding", "quotas"]
+    supported_extension_aliases = ["provider", "external-net", "router",
+                                   "ext-gw-mode", "binding", "quotas"]
 
     def __init__(self, configfile=None):
         self._db = hyperv_db.HyperVPluginDB()
@@ -181,14 +184,15 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _setup_rpc(self):
         # RPC support
-        self.topic = topics.PLUGIN
+        self.service_topics = {svc_constants.CORE: topics.PLUGIN,
+                               svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = rpc.create_connection(new=True)
         self.notifier = agent_notifier_api.AgentNotifierApi(
             topics.AGENT)
         self.callbacks = rpc_callbacks.HyperVRpcCallbacks(self.notifier)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
-                                  fanout=False)
+        for svc_topic in self.service_topics.values():
+            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 

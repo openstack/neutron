@@ -25,6 +25,7 @@ from neutron.common import constants
 from neutron.common import exceptions as ntn_exc
 import neutron.common.test_lib as test_lib
 from neutron import context
+from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
 from neutron.extensions import multiprovidernet as mpnet
@@ -73,6 +74,13 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
+        # Fix to allow the router:external attribute and any other
+        # attributes containing a colon to be passed with
+        # a double underscore instead
+        kwargs = dict((k.replace('__', ':'), v) for k, v in kwargs.items())
+        if external_net.EXTERNAL in kwargs:
+            arg_list = (external_net.EXTERNAL, ) + (arg_list or ())
+
         attrs = kwargs
         if providernet_args:
             attrs.update(providernet_args)
@@ -427,7 +435,7 @@ class TestNiciraL3ExtensionManager(object):
         return []
 
 
-class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
+class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
                               NiciraPluginV2TestCase):
 
     def _restore_l3_attribute_map(self):
@@ -465,7 +473,7 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
         net_type = NeutronPlugin.NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
                     ('status', 'ACTIVE'), ('shared', False),
-                    (l3.EXTERNAL, True),
+                    (external_net.EXTERNAL, True),
                     (pnet.NETWORK_TYPE, net_type),
                     (pnet.PHYSICAL_NETWORK, 'l3_gw_uuid'),
                     (pnet.SEGMENTATION_ID, vlan_id)]
@@ -1137,14 +1145,16 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
 
 
 class NiciraExtGwModeTestCase(NiciraPluginV2TestCase,
-                              test_ext_gw_mode.ExtGwModeTestCase):
+                              test_ext_gw_mode.ExtGwModeIntTestCase):
     pass
 
 
 class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
-                                test_l3_plugin.L3NatTestCaseBase):
+                                test_l3_plugin.L3NatTestCaseMixin):
 
     def setUp(self):
+        ext_mgr = test_l3_plugin.L3TestExtensionManager()
+        test_lib.test_config['extension_manager'] = ext_mgr
         super(NiciraNeutronNVPOutOfSync, self).setUp()
 
     def test_delete_network_not_in_nvp(self):
@@ -1246,7 +1256,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         net_id = net['network']['id']
         if external:
             self._update('networks', net_id,
-                         {'network': {l3.EXTERNAL: True}})
+                         {'network': {external_net.EXTERNAL: True}})
         sub_res = self._create_subnet('json', net_id, cidr)
         sub = self.deserialize('json', sub_res)
         return net_id, sub['subnet']['id']

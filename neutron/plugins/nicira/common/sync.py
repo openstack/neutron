@@ -18,6 +18,7 @@ import random
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron import context
+from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.openstack.common import jsonutils
@@ -363,9 +364,9 @@ class NvpSynchronizer():
         if not ext_networks:
             ext_networks = [net['id'] for net in context.session.query(
                 models_v2.Network).join(
-                    l3_db.ExternalNetwork,
+                    external_net_db.ExternalNetwork,
                     (models_v2.Network.id ==
-                     l3_db.ExternalNetwork.network_id))]
+                     external_net_db.ExternalNetwork.network_id))]
         if neutron_port_data['network_id'] in ext_networks:
             with context.session.begin(subtransactions=True):
                 neutron_port_data['status'] = constants.PORT_STATUS_ACTIVE
@@ -430,9 +431,9 @@ class NvpSynchronizer():
             # this query
             ext_nets = [net['id'] for net in ctx.session.query(
                 models_v2.Network).join(
-                    l3_db.ExternalNetwork,
+                    external_net_db.ExternalNetwork,
                     (models_v2.Network.id ==
-                     l3_db.ExternalNetwork.network_id))]
+                     external_net_db.ExternalNetwork.network_id))]
             for port in self._plugin._get_collection_query(
                 ctx, models_v2.Port, filters=filters):
                 lswitchport = neutron_port_mappings.get(port['id'])

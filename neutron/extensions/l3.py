@@ -27,6 +27,7 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import exceptions as qexception
 from neutron import manager
+from neutron.plugins.common import constants
 from neutron import quota
 
 
@@ -75,11 +76,6 @@ class FloatingIPPortAlreadyAssociated(qexception.InUse):
 class L3PortInUse(qexception.InUse):
     message = _("Port %(port_id)s has owner %(device_owner)s and therefore"
                 " cannot be deleted directly via the port API.")
-
-
-class ExternalNetworkInUse(qexception.InUse):
-    message = _("External network %(net_id)s cannot be updated to be made "
-                "non-external, since it has existing gateway ports")
 
 
 class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
@@ -140,16 +136,6 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
 }
 
-EXTERNAL = 'router:external'
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {EXTERNAL: {'allow_post': True,
-                            'allow_put': True,
-                            'default': attr.ATTR_NOT_SPECIFIED,
-                            'is_visible': True,
-                            'convert_to': attr.convert_to_boolean,
-                            'enforce_policy': True,
-                            'required_by_policy': True}}}
-
 l3_quota_opts = [
     cfg.IntOpt('quota_router',
                default=10,
@@ -193,7 +179,8 @@ class L3(extensions.ExtensionDescriptor):
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         attr.PLURALS.update(dict(my_plurals))
         exts = []
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins()[
+            constants.L3_ROUTER_NAT]
         for resource_name in ['router', 'floatingip']:
             collection_name = resource_name + "s"
             params = RESOURCE_ATTRIBUTE_MAP.get(collection_name, dict())
@@ -225,8 +212,7 @@ class L3(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return dict(EXTENDED_ATTRIBUTES_2_0.items() +
-                        RESOURCE_ATTRIBUTE_MAP.items())
+            return RESOURCE_ATTRIBUTE_MAP
         else:
             return {}
 

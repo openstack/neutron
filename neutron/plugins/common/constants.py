@@ -22,6 +22,8 @@ LOADBALANCER = "LOADBALANCER"
 FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
+L3_ROUTER_NAT = "L3_ROUTER_NAT"
+
 
 #maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
@@ -30,10 +32,12 @@ EXT_TO_SERVICE_MAPPING = {
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
+    'router': L3_ROUTER_NAT
 }
 
 # TODO(salvatore-orlando): Move these (or derive them) from conf file
-ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING]
+ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING,
+                    L3_ROUTER_NAT]
 
 COMMON_PREFIXES = {
     CORE: "",
@@ -42,6 +46,7 @@ COMMON_PREFIXES = {
     FIREWALL: "/fw",
     VPN: "/vpn",
     METERING: "/metering",
+    L3_ROUTER_NAT: "",
 }
 
 # Service operation status constants

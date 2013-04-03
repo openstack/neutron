@@ -39,7 +39,9 @@ from neutron.db import agentschedulers_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
+from neutron.db import external_net_db
 from neutron.db import extraroute_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -52,6 +54,7 @@ from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
 from neutron.plugins.brocade.db import models as brocade_db
 from neutron.plugins.brocade import vlanbm as vbm
+from neutron.plugins.common import constants as svc_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -203,9 +206,10 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 
 class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                      external_net_db.External_net_db_mixin,
                       extraroute_db.ExtraRoute_db_mixin,
                       sg_db_rpc.SecurityGroupServerRpcMixin,
-                      agentschedulers_db.L3AgentSchedulerDbMixin,
+                      l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                       agentschedulers_db.DhcpAgentSchedulerDbMixin,
                       portbindings_base.PortBindingBaseMixin):
     """BrocadePluginV2 is a Neutron plugin.
@@ -222,8 +226,9 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
 
         self.supported_extension_aliases = ["binding", "security-group",
-                                            "router", "extraroute",
-                                            "agent", "l3_agent_scheduler",
+                                            "external-net", "router",
+                                            "extraroute", "agent",
+                                            "l3_agent_scheduler",
                                             "dhcp_agent_scheduler"]
 
         self.physical_interface = (cfg.CONF.PHYSICAL_INTERFACE.
@@ -254,14 +259,15 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _setup_rpc(self):
         # RPC support
-        self.topic = topics.PLUGIN
+        self.service_topics = {svc_constants.CORE: topics.PLUGIN,
+                               svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.rpc_context = context.RequestContext('neutron', 'neutron',
                                                   is_admin=False)
         self.conn = rpc.create_connection(new=True)
         self.callbacks = BridgeRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
-                                  fanout=False)
+        for svc_topic in self.service_topics.values():
+            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
         self.notifier = AgentNotifierApi(topics.AGENT)

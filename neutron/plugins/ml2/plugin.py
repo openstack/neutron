@@ -17,7 +17,6 @@ from oslo.config import cfg
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
-from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
@@ -25,8 +24,7 @@ from neutron.common import topics
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
-from neutron.db import extraroute_db
-from neutron.db import l3_gwmode_db
+from neutron.db import external_net_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -34,10 +32,12 @@ from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron import manager
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log
 from neutron.openstack.common import rpc as c_rpc
+from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
@@ -55,12 +55,11 @@ TYPE_MULTI_SEGMENT = 'multi-segment'
 
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
-                extraroute_db.ExtraRoute_db_mixin,
-                l3_gwmode_db.L3_NAT_db_mixin,
+                external_net_db.External_net_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
-                agentschedulers_db.L3AgentSchedulerDbMixin,
                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
                 addr_pair_db.AllowedAddressPairsMixin):
+
     """Implement the Neutron L2 abstractions using modules.
 
     Ml2Plugin is a Neutron plugin based on separately extensible sets
@@ -78,10 +77,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_sorting_support = True
 
     # List of supported extensions
-    _supported_extension_aliases = ["provider", "router", "extraroute",
-                                    "binding", "quotas", "security-group",
-                                    "agent", "l3_agent_scheduler",
-                                    "dhcp_agent_scheduler", "ext-gw-mode",
+    _supported_extension_aliases = ["provider", "external-net", "binding",
+                                    "quotas", "security-group", "agent",
+                                    "dhcp_agent_scheduler",
                                     "multi-provider", "allowed-address-pairs"]
 
     @property
@@ -106,9 +104,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
-        self.router_scheduler = importutils.import_object(
-            cfg.CONF.router_scheduler_driver
-        )
 
         LOG.info(_("Modular L2 Plugin initialization complete"))
 
@@ -116,9 +111,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        )
-        self.agent_notifiers[const.AGENT_TYPE_L3] = (
-            l3_rpc_agent_api.L3AgentNotify
         )
         self.callbacks = rpc.RpcCallbacks(self.notifier, self.type_manager)
         self.topic = topics.PLUGIN
@@ -514,12 +506,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_port
 
     def delete_port(self, context, id, l3_port_check=True):
-        if l3_port_check:
-            self.prevent_l3_port_deletion(context, id)
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if l3plugin and l3_port_check:
+            l3plugin.prevent_l3_port_deletion(context, id)
 
         session = context.session
         with session.begin(subtransactions=True):
-            self.disassociate_floatingips(context, id)
+            if l3plugin:
+                l3plugin.disassociate_floatingips(context, id)
             port = self.get_port(context, id)
             network = self.get_network(context, port['network_id'])
             mech_context = driver_context.PortContext(self, context, port,

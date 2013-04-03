@@ -27,6 +27,7 @@ from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.common import config
 from neutron import context
 from neutron.db import agentschedulers_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db.vpn import vpn_db
 from neutron import extensions
 from neutron.extensions import vpnaas
@@ -46,8 +47,8 @@ ROOTDIR = os.path.normpath(os.path.join(
 extensions_path = ':'.join(extensions.__path__)
 
 
-class TestVpnCorePlugin(test_l3_plugin.TestL3NatPlugin,
-                        agentschedulers_db.L3AgentSchedulerDbMixin,
+class TestVpnCorePlugin(test_l3_plugin.TestL3NatIntPlugin,
+                        l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                         agentschedulers_db.DhcpAgentSchedulerDbMixin):
     def __init__(self, configfile=None):
         super(TestVpnCorePlugin, self).__init__()

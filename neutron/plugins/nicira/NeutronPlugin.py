@@ -37,6 +37,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
+from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
@@ -46,6 +47,7 @@ from neutron.db import portsecurity_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import allowedaddresspairs as addr_pair
+from neutron.extensions import external_net as ext_net_extn
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.extensions import multiprovidernet as mpnet
@@ -117,6 +119,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                   db_base_plugin_v2.NeutronDbPluginV2,
                   dhcpmeta_modes.DhcpMetadataAccess,
                   dist_rtr.DistributedRouter_mixin,
+                  external_net_db.External_net_db_mixin,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
                   mac_db.MacLearningDbMixin,
@@ -146,6 +149,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    "port-security",
                                    "provider",
                                    "quotas",
+                                   "external-net",
                                    "router",
                                    "security-group"]
 
@@ -965,7 +969,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                           "network %s"), net_data.get('name', '<unknown>'))
         transport_zone_config = self._convert_to_nvp_transport_zones(
             self.cluster, net_data)
-        external = net_data.get(l3.EXTERNAL)
+        external = net_data.get(ext_net_extn.EXTERNAL)
         if (not attr.is_attr_set(external) or
             attr.is_attr_set(external) and not external):
             lswitch = nvplib.create_lswitch(
@@ -1213,7 +1217,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # being updated or not
             old_mac_learning_state = ret_port.get(mac_ext.MAC_LEARNING)
             # copy values over - except fixed_ips as
-            # they've alreaby been processed
+            # they've already been processed
             port['port'].pop('fixed_ips', None)
             ret_port.update(port['port'])
             tenant_id = self._get_tenant_id_for_create(context, ret_port)

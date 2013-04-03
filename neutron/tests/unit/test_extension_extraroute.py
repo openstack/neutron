@@ -51,32 +51,20 @@ class ExtraRouteTestExtensionManager(object):
         return []
 
 
-# This plugin class is just for testing
-class TestExtraRoutePlugin(test_l3.TestL3NatPlugin,
-                           extraroute_db.ExtraRoute_db_mixin):
+# This plugin class is for tests with plugin that integrates L3.
+class TestExtraRouteIntPlugin(test_l3.TestL3NatIntPlugin,
+                              extraroute_db.ExtraRoute_db_mixin):
+    supported_extension_aliases = ["external-net", "router", "extraroute"]
+
+
+# A fake l3 service plugin class with extra route capability for
+# plugins that delegate away L3 routing functionality
+class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
+                                       extraroute_db.ExtraRoute_db_mixin):
     supported_extension_aliases = ["router", "extraroute"]
 
 
-class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
-
-    def setUp(self, plugin=None):
-        if not plugin:
-            plugin = ('neutron.tests.unit.test_extension_extraroute.'
-                      'TestExtraRoutePlugin')
-        test_config['plugin_name_v2'] = plugin
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
-        cfg.CONF.set_default('max_routes', 3)
-        ext_mgr = ExtraRouteTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        #L3NatDBTestCase will overwrite plugin_name_v2,
-        #so we don't need to setUp on the class here
-        super(test_l3.L3NatTestCaseBase, self).setUp()
-
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
+class ExtraRouteDBTestCaseBase(object):
     def _routes_update_prepare(self, router_id, subnet_id,
                                port_id, routes, skip_add=False):
         if not skip_add:
@@ -442,5 +430,57 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                                     ('name', 'asc'), 2, 2)
 
 
-class ExtraRouteDBTestCaseXML(ExtraRouteDBTestCase):
+class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
+                              ExtraRouteDBTestCaseBase):
+
+    def setUp(self, plugin=None):
+        if not plugin:
+            plugin = ('neutron.tests.unit.test_extension_extraroute.'
+                      'TestExtraRouteIntPlugin')
+        test_config['plugin_name_v2'] = plugin
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        cfg.CONF.set_default('max_routes', 3)
+        ext_mgr = ExtraRouteTestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        # L3NatDBIntTestCase will overwrite plugin_name_v2,
+        # so we don't need to setUp on the class here
+        super(test_l3.L3BaseForIntTests, self).setUp()
+
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+
+class ExtraRouteDBIntTestCaseXML(ExtraRouteDBIntTestCase):
+    fmt = 'xml'
+
+
+class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
+                              ExtraRouteDBTestCaseBase):
+    def setUp(self):
+        # the plugin without L3 support
+        test_config['plugin_name_v2'] = (
+            'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin')
+        # the L3 service plugin
+        l3_plugin = ('neutron.tests.unit.test_extension_extraroute.'
+                     'TestExtraRouteL3NatServicePlugin')
+        service_plugins = {'l3_plugin_name': l3_plugin}
+
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        cfg.CONF.set_default('max_routes', 3)
+        ext_mgr = ExtraRouteTestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        # L3NatDBSepTestCase will overwrite plugin_name_v2,
+        # so we don't need to setUp on the class here
+        super(test_l3.L3BaseForSepTests, self).setUp(
+            service_plugins=service_plugins)
+
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+
+class ExtraRouteDBSepTestCaseXML(ExtraRouteDBSepTestCase):
     fmt = 'xml'

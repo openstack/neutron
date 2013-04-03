@@ -52,8 +52,8 @@ class RouterServiceInsertionTestPlugin(
     db_base_plugin_v2.NeutronDbPluginV2):
 
     supported_extension_aliases = [
-        "router", "router-service-type", "routed-service-insertion",
-        "service-type", "lbaas"
+        "router", "router-service-type",
+        "routed-service-insertion", "service-type", "lbaas"
     ]
 
     def create_router(self, context, router):

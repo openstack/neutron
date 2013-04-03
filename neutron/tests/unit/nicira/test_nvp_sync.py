@@ -288,10 +288,15 @@ class NvpSyncTestCase(base.BaseTestCase):
                 '--config-file', get_fake_conf('nvp.ini.test')]
         config.parse(args=args)
         self._plugin = NeutronPlugin.NvpPluginV2()
+        mock_nm_get_plugin = mock.patch('neutron.manager.NeutronManager.'
+                                        'get_plugin')
+        self.mock_nm_get_plugin = mock_nm_get_plugin.start()
+        self.mock_nm_get_plugin.return_value = self._plugin
         super(NvpSyncTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(patch_sync.stop)
         self.addCleanup(mock_nvpapi.stop)
+        self.addCleanup(mock_nm_get_plugin.stop)
 
     def tearDown(self):
         cfg.CONF.reset()

@@ -63,8 +63,10 @@ from neutron import context as qcontext
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
+from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import l3_db
+from neutron.extensions import external_net
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -428,11 +430,12 @@ class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 
 class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
+                         external_net_db.External_net_db_mixin,
                          routerrule_db.RouterRule_db_mixin,
                          extradhcpopt_db.ExtraDhcpOptMixin):
 
-    supported_extension_aliases = ["router", "binding", "router_rules",
-                                   "extra_dhcp_opt"]
+    supported_extension_aliases = ["external-net", "router", "binding",
+                                   "router_rules", "extra_dhcp_opt"]
 
     def __init__(self, server_timeout=None):
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
@@ -1192,8 +1195,8 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
                 break
         else:
             network['gateway'] = ''
-        network[l3.EXTERNAL] = self._network_is_external(context,
-                                                         network['id'])
+        network[external_net.EXTERNAL] = self._network_is_external(
+            context, network['id'])
 
         return network
 

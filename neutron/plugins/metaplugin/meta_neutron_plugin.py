@@ -20,6 +20,7 @@ from oslo.config import cfg
 from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
+from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
@@ -45,14 +46,16 @@ class FaildToAddFlavorBinding(exc.NeutronException):
 
 
 class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                   external_net_db.External_net_db_mixin,
                    extraroute_db.ExtraRoute_db_mixin):
 
     def __init__(self, configfile=None):
         LOG.debug(_("Start initializing metaplugin"))
         self.supported_extension_aliases = \
             cfg.CONF.META.supported_extension_aliases.split(',')
-        self.supported_extension_aliases += ['flavor', 'router',
-                                             'ext-gw-mode', 'extraroute']
+        self.supported_extension_aliases += ['flavor', 'external-net',
+                                             'router', 'ext-gw-mode',
+                                             'extraroute']
 
         # Ignore config option overapping
         def _is_opt_registered(opts, opt):

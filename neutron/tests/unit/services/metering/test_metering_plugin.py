@@ -20,7 +20,7 @@ from neutron.api.v2 import attributes as attr
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import agents_db
-from neutron.db import agentschedulers_db
+from neutron.db import l3_agentschedulers_db
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
 from neutron.openstack.common import uuidutils
@@ -68,7 +68,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
     def setUp(self):
         service_plugins = {'metering_plugin_name': DB_METERING_PLUGIN_KLASS}
         test_config['plugin_name_v2'] = ('neutron.tests.unit.test_l3_plugin.'
-                                         'TestL3NatPlugin')
+                                         'TestL3NatIntPlugin')
         ext_mgr = MeteringTestExtensionManager()
         test_config['extension_manager'] = ext_mgr
         super(TestMeteringPlugin, self).setUp(service_plugins=service_plugins)
@@ -249,8 +249,8 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                                                         topic=self.topic)
 
 
-class TestRoutePlugin(agentschedulers_db.L3AgentSchedulerDbMixin,
-                      test_l3_plugin.TestL3NatPlugin):
+class TestRouteIntPlugin(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
+                         test_l3_plugin.TestL3NatIntPlugin):
     supported_extension_aliases = ["router", "l3_agent_scheduler"]
 
 
@@ -268,7 +268,7 @@ class TestMeteringPluginL3AgentScheduler(
         service_plugins = {'metering_plugin_name': DB_METERING_PLUGIN_KLASS}
 
         plugin_str = ('neutron.tests.unit.services.metering.'
-                      'test_metering_plugin.TestRoutePlugin')
+                      'test_metering_plugin.TestRouteIntPlugin')
         test_config['plugin_name_v2'] = plugin_str
 
         ext_mgr = MeteringTestExtensionManager()

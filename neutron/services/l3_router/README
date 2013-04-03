@@ -1,0 +1,30 @@
+This service plugin implements the L3 routing functionality (resources router
+and floatingip) that in earlier releases before Havana was provided by core
+plugins (openvswitch, linuxbridge, ... etc).
+
+Core plugins can now choose not to implement L3 routing functionality and
+instead delegate that to the L3 routing service plugin.
+
+The required changes to a core plugin are in that case:
+- Do not inherit 'l3_db.L3_NAT_db_mixin' (or its descendants like extraroute)
+  anymore.
+- Remove "router" from 'supported_extension_aliases'.
+- Modify any 'self' references to members in L3_NAT_db_mixin to instead use
+  'manager.NeutronManager.get_service_plugins().get(constants.L3_ROUTER_NAT)'
+  For example,
+     self.prevent_l3_port_deletion(...)
+  becomes something like
+     plugin = manager.NeutronManager.get_service_plugins().get(
+         constants.L3_ROUTER_NAT)
+     if plugin:
+         plugin.prevent_l3_port_deletion(...)
+
+If the core plugin has relied on the L3Agent the following must also be changed:
+- Do not inherit 'l3_rpc_base.L3RpcCallbackMixin' in any '*RpcCallbacks' class.
+- Do not be a consumer of the topics.L3PLUGIN topic for RPC.
+
+To use the L3 routing service plugin, add
+'neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'
+to 'service_plugins' in '/etc/neutron/neutron.conf'.
+That is,
+service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin

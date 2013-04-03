@@ -20,11 +20,13 @@ from neutron.tests.unit.openvswitch import test_agent_scheduler
 class MlnxAgentSchedulerTestCase(
     test_agent_scheduler.OvsAgentSchedulerTestCase):
     plugin_str = test_mlnx_plugin.PLUGIN_NAME
+    l3_plugin = None
 
 
 class MlnxL3AgentNotifierTestCase(
     test_agent_scheduler.OvsL3AgentNotifierTestCase):
     plugin_str = test_mlnx_plugin.PLUGIN_NAME
+    l3_plugin = None
 
 
 class MlnxDhcpAgentNotifierTestCase(

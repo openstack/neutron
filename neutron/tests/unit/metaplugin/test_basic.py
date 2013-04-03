@@ -72,6 +72,6 @@ class TestMetaSubnetsV2(test_plugin.TestSubnetsV2,
         pass
 
 
-class TestMetaL3NatDBTestCase(test_l3_plugin.L3NatDBTestCase,
+class TestMetaL3NatDBTestCase(test_l3_plugin.L3NatDBIntTestCase,
                               MetaPluginV2DBTestCase):
     pass

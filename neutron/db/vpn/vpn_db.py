@@ -23,9 +23,9 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as n_constants
-from neutron.db import agentschedulers_db as agent_db
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import l3_agentschedulers_db as l3_agent_db
 from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -597,11 +597,11 @@ class VPNPluginRpcDbMixin():
         query = query.join(IKEPolicy)
         query = query.join(IPsecPolicy)
         query = query.join(IPsecPeerCidr)
-        query = query.join(agent_db.RouterL3AgentBinding,
-                           agent_db.RouterL3AgentBinding.router_id ==
+        query = query.join(l3_agent_db.RouterL3AgentBinding,
+                           l3_agent_db.RouterL3AgentBinding.router_id ==
                            VPNService.router_id)
         query = query.filter(
-            agent_db.RouterL3AgentBinding.l3_agent_id == agent.id)
+            l3_agent_db.RouterL3AgentBinding.l3_agent_id == agent.id)
         return query
 
     def update_status_by_agent(self, context, service_status_info_list):

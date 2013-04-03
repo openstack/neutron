@@ -19,6 +19,7 @@ from neutron.common import utils
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.rpc import proxy
+from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -46,7 +47,8 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
                             operation, data):
         """Notify changed routers to hosting l3 agents."""
         adminContext = context.is_admin and context or context.elevated()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
         for router_id in router_ids:
             l3_agents = plugin.get_l3_agents_hosting_routers(
                 adminContext, [router_id],
@@ -66,9 +68,14 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
 
     def _notification(self, context, method, router_ids, operation, data):
         """Notify all the agents that are hosting the routers."""
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if not plugin:
+            LOG.error(_('No plugin for L3 routing registered. Cannot notify '
+                        'agents with the message %s'), method)
+            return
         if utils.is_extension_supported(
-            plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
+                plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             adminContext = (context.is_admin and
                             context or context.elevated())
             plugin.schedule_routers(adminContext, router_ids)

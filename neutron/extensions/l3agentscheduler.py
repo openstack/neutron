@@ -17,6 +17,8 @@
 
 from abc import abstractmethod
 
+import webob.exc
+
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
@@ -24,8 +26,14 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.extensions import agent
 from neutron import manager
+from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants as service_constants
 from neutron import policy
 from neutron import wsgi
+
+
+LOG = logging.getLogger(__name__)
+
 
 L3_ROUTER = 'l3-router'
 L3_ROUTERS = L3_ROUTER + 's'
@@ -34,8 +42,18 @@ L3_AGENTS = L3_AGENT + 's'
 
 
 class RouterSchedulerController(wsgi.Controller):
+    def get_plugin(self):
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if not plugin:
+            LOG.error(_('No plugin for L3 routing registered to handle '
+                        'router scheduling'))
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
+        return plugin
+
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = self.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % L3_ROUTERS,
                        {})
@@ -43,7 +61,7 @@ class RouterSchedulerController(wsgi.Controller):
             request.context, kwargs['agent_id'])
 
     def create(self, request, body, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = self.get_plugin()
         policy.enforce(request.context,
                        "create_%s" % L3_ROUTER,
                        {})
@@ -53,7 +71,7 @@ class RouterSchedulerController(wsgi.Controller):
             body['router_id'])
 
     def delete(self, request, id, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = self.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % L3_ROUTER,
                        {})
@@ -62,8 +80,19 @@ class RouterSchedulerController(wsgi.Controller):
 
 
 class L3AgentsHostingRouterController(wsgi.Controller):
+    def get_plugin(self):
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if not plugin:
+            LOG.error(_('No plugin for L3 routing registered to handle '
+                        'router scheduling'))
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
+        return plugin
+
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
         policy.enforce(request.context,
                        "get_%s" % L3_AGENTS,
                        {})

@@ -32,7 +32,7 @@ PLUGIN_NAME = ('neutron.plugins.embrane.plugins.embrane_fake_plugin.'
 sys.modules["heleosapi"] = mock.Mock()
 
 
-class TestEmbraneL3NatDBTestCase(router_test.L3NatDBTestCase):
+class TestEmbraneL3NatDBTestCase(router_test.L3NatDBIntTestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self):
@@ -42,5 +42,5 @@ class TestEmbraneL3NatDBTestCase(router_test.L3NatDBTestCase):
         super(TestEmbraneL3NatDBTestCase, self).setUp()
 
 
-class ExtraRouteDBTestCase(extraroute_test.ExtraRouteDBTestCase):
+class ExtraRouteDBTestCase(extraroute_test.ExtraRouteDBIntTestCase):
     _plugin_name = PLUGIN_NAME

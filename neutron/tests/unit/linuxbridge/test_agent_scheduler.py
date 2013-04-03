@@ -20,11 +20,13 @@ from neutron.tests.unit.openvswitch import test_agent_scheduler
 class LbAgentSchedulerTestCase(
     test_agent_scheduler.OvsAgentSchedulerTestCase):
     plugin_str = test_linuxbridge_plugin.PLUGIN_NAME
+    l3_plugin = None
 
 
 class LbL3AgentNotifierTestCase(
     test_agent_scheduler.OvsL3AgentNotifierTestCase):
     plugin_str = test_linuxbridge_plugin.PLUGIN_NAME
+    l3_plugin = None
 
 
 class LbDhcpAgentNotifierTestCase(

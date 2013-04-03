@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
+from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.openstack.common import log as logging
 from neutronclient.common import exceptions
@@ -29,8 +30,9 @@ LOG = logging.getLogger(__name__)
 
 
 class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                    external_net_db.External_net_db_mixin,
                     l3_db.L3_NAT_db_mixin):
-    supported_extension_aliases = ["router"]
+    supported_extension_aliases = ["external-net", "router"]
 
     def __init__(self, configfile=None):
         db.configure_db()

@@ -59,6 +59,11 @@ class CommonDbMixin(object):
     # from this class should be invoked
     _model_query_hooks = {}
 
+    # This dictionary will store methods for extending attributes of
+    # api resources. Mixins can use this dict for adding their own methods
+    # TODO(salvatore-orlando): Avoid using class-level variables
+    _dict_extend_functions = {}
+
     @classmethod
     def register_model_query_hook(cls, model, name, query_hook, filter_hook,
                                   result_filters=None):
@@ -217,11 +222,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
-
-    # This dictionary will store methods for extending attributes of
-    # api resources. Mixins can use this dict for adding their own methods
-    # TODO(salvatore-orlando): Avoid using class-level variables
-    _dict_extend_functions = {}
 
     def __init__(self):
         # NOTE(jkoelker) This is an incomplete implementation. Subclasses

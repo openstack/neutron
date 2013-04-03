@@ -27,6 +27,7 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
+from neutron.db import external_net_db
 from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import portbindings_db
@@ -38,6 +39,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
@@ -50,6 +52,7 @@ LOG = logging.getLogger(__name__)
 
 
 class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                  external_net_db.External_net_db_mixin,
                   nec_router.RouterMixin,
                   sg_db_rpc.SecurityGroupServerRpcMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
@@ -71,6 +74,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     _supported_extension_aliases = ["agent",
                                     "binding",
                                     "dhcp_agent_scheduler",
+                                    "external-net",
                                     "ext-gw-mode",
                                     "extraroute",
                                     "l3_agent_scheduler",
@@ -127,7 +131,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         }
 
     def setup_rpc(self):
-        self.topic = topics.PLUGIN
+        self.service_topics = {svc_constants.CORE: topics.PLUGIN,
+                               svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = rpc.create_connection(new=True)
         self.notifier = NECPluginV2AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
@@ -145,7 +150,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                      self.callback_sg,
                      agents_db.AgentExtRpcCallback()]
         self.dispatcher = q_rpc.PluginRpcDispatcher(callbacks)
-        self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
+        for svc_topic in self.service_topics.values():
+            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 

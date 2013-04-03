@@ -169,6 +169,18 @@ class ExtensionDescriptor(object):
             if extended_attrs:
                 attrs.update(extended_attrs)
 
+    def get_alias_namespace_compatibility_map(self):
+        """Returns mappings between extension aliases and XML namespaces.
+
+        The mappings are XML namespaces that should, for backward compatibility
+        reasons, be added to the XML serialization of extended attributes.
+        This allows an established extended attribute to be provided by
+        another extension than the original one while keeping its old alias
+        in the name.
+        :return: A dictionary of extension_aliases and namespace strings.
+        """
+        return {}
+
 
 class ActionExtensionController(wsgi.Controller):
 
@@ -468,6 +480,13 @@ class ExtensionManager(object):
                 except AttributeError:
                     LOG.exception(_("Error fetching extended attributes for "
                                     "extension '%s'"), ext.get_name())
+                try:
+                    comp_map = ext.get_alias_namespace_compatibility_map()
+                    attributes.EXT_NSES_BC.update(comp_map)
+                except AttributeError:
+                    LOG.info(_("Extension '%s' provides no backward "
+                               "compatibility map for extended attributes"),
+                             ext.get_name())
                 processed_exts.add(ext_name)
                 del exts_to_process[ext_name]
             if len(processed_exts) == processed_ext_count:

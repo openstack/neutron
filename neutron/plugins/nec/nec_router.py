@@ -19,9 +19,9 @@
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as q_exc
-from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
@@ -260,7 +260,7 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
         l3.ROUTERS, [extend_router_dict_provider])
 
 
-class L3AgentSchedulerDbMixin(agentschedulers_db.L3AgentSchedulerDbMixin):
+class L3AgentSchedulerDbMixin(l3_agentschedulers_db.L3AgentSchedulerDbMixin):
 
     def auto_schedule_routers(self, context, host, router_ids):
         router_ids = rdb.get_routers_by_provider(

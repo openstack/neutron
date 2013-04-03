@@ -21,7 +21,7 @@ from neutron.tests.unit.nec import test_nec_plugin
 from neutron.tests.unit import test_extension_extraroute as test_ext_route
 
 
-class NecRouterL3AgentTestCase(test_ext_route.ExtraRouteDBTestCase):
+class NecRouterL3AgentTestCase(test_ext_route.ExtraRouteDBIntTestCase):
 
     _plugin_name = test_nec_plugin.PLUGIN_NAME
 

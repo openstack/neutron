@@ -20,7 +20,6 @@
 
 import contextlib
 import copy
-import itertools
 
 import mock
 from oslo.config import cfg
@@ -34,15 +33,19 @@ from neutron.common import constants as l3_constants
 from neutron.common import exceptions as q_exc
 from neutron.common.test_lib import test_config
 from neutron import context
+from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
+from neutron.db import external_net_db
 from neutron.db import l3_db
-from neutron.db import models_v2
+from neutron.db import model_base
+from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as service_constants
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
@@ -105,9 +108,8 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
         instances = self.plugin.return_value
         instances._RouterPluginBase__native_pagination_support = True
         instances._RouterPluginBase__native_sorting_support = True
-        # Instantiate mock plugin and enable the 'router' extension
-        NeutronManager.get_plugin().supported_extension_aliases = (
-            ["router"])
+        # Enable the 'router' extension
+        instances.supported_extension_aliases = ["router"]
         ext_mgr = L3TestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
@@ -253,20 +255,18 @@ class L3NatExtensionTestCaseXML(L3NatExtensionTestCase):
     fmt = 'xml'
 
 
-# This plugin class is just for testing
-class TestL3NatPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                      l3_db.L3_NAT_db_mixin):
+# This base plugin class is for tests.
+class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
+                          external_net_db.External_net_db_mixin):
 
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["router"]
-
     def create_network(self, context, network):
         session = context.session
         with session.begin(subtransactions=True):
-            net = super(TestL3NatPlugin, self).create_network(context,
-                                                              network)
+            net = super(TestL3NatBasePlugin, self).create_network(context,
+                                                                  network)
             self._process_l3_create(context, net, network['network'])
         return net
 
@@ -274,30 +274,55 @@ class TestL3NatPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            net = super(TestL3NatPlugin, self).update_network(context, id,
-                                                              network)
+            net = super(TestL3NatBasePlugin, self).update_network(context, id,
+                                                                  network)
             self._process_l3_update(context, net, network['network'])
         return net
 
     def delete_port(self, context, id, l3_port_check=True):
-        if l3_port_check:
-            self.prevent_l3_port_deletion(context, id)
-        self.disassociate_floatingips(context, id)
-        return super(TestL3NatPlugin, self).delete_port(context, id)
+        plugin = NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        if plugin:
+            if l3_port_check:
+                plugin.prevent_l3_port_deletion(context, id)
+            plugin.disassociate_floatingips(context, id)
+        return super(TestL3NatBasePlugin, self).delete_port(context, id)
+
+
+# This plugin class is for tests with plugin that integrates L3.
+class TestL3NatIntPlugin(TestL3NatBasePlugin,
+                         l3_db.L3_NAT_db_mixin):
+
+    supported_extension_aliases = ["external-net", "router"]
+
+
+# This plugin class is for tests with plugin not supporting L3.
+class TestNoL3NatPlugin(TestL3NatBasePlugin):
+
+    __native_pagination_support = True
+    __native_sorting_support = True
+
+    supported_extension_aliases = ["external-net"]
+
+
+# A L3 routing service plugin class for tests with plugins that
+# delegate away L3 routing functionality
+class TestL3NatServicePlugin(db_base_plugin_v2.CommonDbMixin,
+                             l3_db.L3_NAT_db_mixin):
+
+    supported_extension_aliases = ["router"]
+
+    def __init__(self):
+        qdbapi.register_models(base=model_base.BASEV2)
+
+    def get_plugin_type(self):
+        return service_constants.L3_ROUTER_NAT
+
+    def get_plugin_description(self):
+        return "L3 Routing Service Plugin for testing"
 
 
 class L3NatTestCaseMixin(object):
-
-    def _create_network(self, fmt, name, admin_state_up, **kwargs):
-        """Override the routine for allowing the router:external attribute."""
-        # attributes containing a colon should be passed with
-        # a double underscore
-        new_args = dict(itertools.izip(map(lambda x: x.replace('__', ':'),
-                                           kwargs),
-                                       kwargs.values()))
-        arg_list = new_args.pop('arg_list', ()) + (l3.EXTERNAL,)
-        return super(L3NatTestCaseMixin, self)._create_network(
-            fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 
     def _create_router(self, fmt, tenant_id, name=None,
                        admin_state_up=None, set_context=False,
@@ -380,7 +405,7 @@ class L3NatTestCaseMixin(object):
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
-                     {'network': {l3.EXTERNAL: True}})
+                     {'network': {external_net.EXTERNAL: True}})
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False):
@@ -480,30 +505,7 @@ class L3NatTestCaseMixin(object):
                         public_sub['subnet']['network_id'])
 
 
-class L3NatTestCaseBase(L3NatTestCaseMixin,
-                        test_db_plugin.NeutronDbPluginV2TestCase):
-
-    def setUp(self, plugin=None, ext_mgr=None,
-              service_plugins=None):
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_l3_plugin.TestL3NatPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
-        ext_mgr = ext_mgr or L3TestExtensionManager()
-        super(L3NatTestCaseBase, self).setUp(
-            plugin=plugin, ext_mgr=ext_mgr,
-            service_plugins=service_plugins)
-
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
-    def tearDown(self):
-        test_notifier.NOTIFICATIONS = []
-        super(L3NatTestCaseBase, self).tearDown()
-
-
-class L3NatDBTestCase(L3NatTestCaseBase):
+class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_create(self):
         name = 'router1'
@@ -1119,7 +1121,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                     r['router']['id'],
                     s1['subnet']['network_id'])
                 self._update('networks', s1['subnet']['network_id'],
-                             {'network': {'router:external': False}},
+                             {'network': {external_net.EXTERNAL: False}},
                              expected_code=exc.HTTPConflict.code)
                 self._remove_external_gateway_from_router(
                     r['router']['id'],
@@ -1135,7 +1137,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                         r['router']['id'],
                         s1['subnet']['network_id'])
                     self._update('networks', testnet['network']['id'],
-                                 {'network': {'router:external': False}})
+                                 {'network': {external_net.EXTERNAL: False}})
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
                         s1['subnet']['network_id'])
@@ -1486,91 +1488,6 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                     break
         self.assertTrue(found)
 
-    def test_list_nets_external(self):
-        with self.network() as n1:
-            self._set_net_external(n1['network']['id'])
-            with self.network():
-                body = self._list('networks')
-                self.assertEqual(len(body['networks']), 2)
-
-                body = self._list('networks',
-                                  query_params="%s=True" % l3.EXTERNAL)
-                self.assertEqual(len(body['networks']), 1)
-
-                body = self._list('networks',
-                                  query_params="%s=False" % l3.EXTERNAL)
-                self.assertEqual(len(body['networks']), 1)
-
-    def test_list_nets_external_pagination(self):
-        if self._skip_native_pagination:
-            self.skipTest("Skip test for not implemented pagination feature")
-        with contextlib.nested(self.network(name='net1'),
-                               self.network(name='net3')) as (n1, n3):
-            self._set_net_external(n1['network']['id'])
-            self._set_net_external(n3['network']['id'])
-            with self.network(name='net2') as n2:
-                self._test_list_with_pagination(
-                    'network', (n1, n3), ('name', 'asc'), 1, 3,
-                    query_params='router:external=True')
-                self._test_list_with_pagination(
-                    'network', (n2, ), ('name', 'asc'), 1, 2,
-                    query_params='router:external=False')
-
-    def test_get_network_succeeds_without_filter(self):
-        plugin = NeutronManager.get_plugin()
-        ctx = context.Context(None, None, is_admin=True)
-        result = plugin.get_networks(ctx, filters=None)
-        self.assertEqual(result, [])
-
-    def test_network_filter_hook_admin_context(self):
-        plugin = NeutronManager.get_plugin()
-        ctx = context.Context(None, None, is_admin=True)
-        model = models_v2.Network
-        conditions = plugin._network_filter_hook(ctx, model, [])
-        self.assertEqual(conditions, [])
-
-    def test_network_filter_hook_nonadmin_context(self):
-        plugin = NeutronManager.get_plugin()
-        ctx = context.Context('edinson', 'cavani')
-        model = models_v2.Network
-        txt = "externalnetworks.network_id IS NOT NULL"
-        conditions = plugin._network_filter_hook(ctx, model, [])
-        self.assertEqual(conditions.__str__(), txt)
-        # Try to concatenate confitions
-        conditions = plugin._network_filter_hook(ctx, model, conditions)
-        self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt))
-
-    def test_create_port_external_network_non_admin_fails(self):
-        with self.network(router__external=True) as ext_net:
-            with self.subnet(network=ext_net) as ext_subnet:
-                with testlib_api.ExpectedException(
-                        exc.HTTPClientError) as ctx_manager:
-                    with self.port(subnet=ext_subnet,
-                                   set_context='True',
-                                   tenant_id='noadmin'):
-                        pass
-                self.assertEqual(ctx_manager.exception.code, 403)
-
-    def test_create_port_external_network_admin_suceeds(self):
-        with self.network(router__external=True) as ext_net:
-            with self.subnet(network=ext_net) as ext_subnet:
-                    with self.port(subnet=ext_subnet) as port:
-                        self.assertEqual(port['port']['network_id'],
-                                         ext_net['network']['id'])
-
-    def test_create_external_network_non_admin_fails(self):
-        with testlib_api.ExpectedException(exc.HTTPClientError) as ctx_manager:
-            with self.network(router__external=True,
-                              set_context='True',
-                              tenant_id='noadmin'):
-                pass
-        self.assertEqual(ctx_manager.exception.code, 403)
-
-    def test_create_external_network_admin_suceeds(self):
-        with self.network(router__external=True) as ext_net:
-            self.assertEqual(ext_net['network'][l3.EXTERNAL],
-                             True)
-
     def test_router_delete_subnet_inuse_returns_409(self):
         with self.router() as r:
             with self.subnet() as s:
@@ -1588,12 +1505,9 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                               None)
 
 
-class L3AgentDbTestCase(L3NatTestCaseBase):
-    """Unit tests for methods called by the L3 agent."""
+class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
-    def setUp(self):
-        self.plugin = TestL3NatPlugin()
-        super(L3AgentDbTestCase, self).setUp()
+    """Unit tests for methods called by the L3 agent."""
 
     def test_l3_agent_routers_query_interfaces(self):
         with self.router() as r:
@@ -1633,7 +1547,7 @@ class L3AgentDbTestCase(L3NatTestCaseBase):
                                       {'ip_address': '9.0.1.5',
                                        'subnet_id': subnet['subnet']['id']}]}}
                     ctx = context.get_admin_context()
-                    self.plugin.update_port(ctx, p['port']['id'], port)
+                    self.core_plugin.update_port(ctx, p['port']['id'], port)
                     routers = self.plugin.get_sync_data(ctx, None)
                     self.assertEqual(1, len(routers))
                     interfaces = routers[0].get(l3_constants.INTERFACE_KEY, [])
@@ -1677,7 +1591,8 @@ class L3AgentDbTestCase(L3NatTestCaseBase):
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
             'neutron.api.rpc.agentnotifiers.l3_rpc_agent_api.L3AgentNotifyAPI')
-        plugin = NeutronManager.get_plugin()
+        plugin = NeutronManager.get_service_plugins()[
+            service_constants.L3_ROUTER_NAT]
         oldNotify = plugin.l3_rpc_notifier
         try:
             with mock.patch(l3_rpc_agent_api_str) as notifyApi:
@@ -1736,5 +1651,95 @@ class L3AgentDbTestCase(L3NatTestCaseBase):
         self._test_notify_op_agent(self._test_floatingips_op_agent)
 
 
-class L3NatDBTestCaseXML(L3NatDBTestCase):
+class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
+
+    def setUp(self, plugin=None, ext_mgr=None):
+        test_config['plugin_name_v2'] = (
+            'neutron.tests.unit.test_l3_plugin.TestL3NatIntPlugin')
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        ext_mgr = ext_mgr or L3TestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        super(L3BaseForIntTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+    def tearDown(self):
+        test_notifier.NOTIFICATIONS = []
+        del test_config['extension_manager']
+        super(L3BaseForIntTests, self).tearDown()
+
+
+class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
+
+    def setUp(self):
+        # the plugin without L3 support
+        test_config['plugin_name_v2'] = (
+            'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin')
+        # the L3 service plugin
+        l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
+                     'TestL3NatServicePlugin')
+        service_plugins = {'l3_plugin_name': l3_plugin}
+
+        # for these tests we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        ext_mgr = L3TestExtensionManager()
+        test_config['extension_manager'] = ext_mgr
+        super(L3BaseForSepTests, self).setUp(service_plugins=service_plugins)
+
+        # Set to None to reload the drivers
+        notifier_api._drivers = None
+        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+
+    def tearDown(self):
+        test_notifier.NOTIFICATIONS = []
+        del test_config['extension_manager']
+        super(L3BaseForSepTests, self).tearDown()
+
+
+class L3AgentDbIntTestCase(L3BaseForIntTests, L3AgentDbTestCaseBase):
+
+    """Unit tests for methods called by the L3 agent for
+    the case where core plugin implements L3 routing.
+    """
+
+    def setUp(self):
+        self.core_plugin = TestL3NatIntPlugin()
+        # core plugin is also plugin providing L3 routing
+        self.plugin = self.core_plugin
+        super(L3AgentDbIntTestCase, self).setUp()
+
+
+class L3AgentDbSepTestCase(L3BaseForSepTests, L3AgentDbTestCaseBase):
+
+    """Unit tests for methods called by the L3 agent for the
+    case where separate service plugin implements L3 routing.
+    """
+
+    def setUp(self):
+        self.core_plugin = TestNoL3NatPlugin()
+        # core plugin is also plugin providing L3 routing
+        self.plugin = TestL3NatServicePlugin()
+        super(L3AgentDbSepTestCase, self).setUp()
+
+
+class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase):
+
+    """Unit tests for core plugin with L3 routing integrated."""
+    pass
+
+
+class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase):
+
+    """Unit tests for a separate L3 routing service plugin."""
+    pass
+
+
+class L3NatDBIntTestCaseXML(L3NatDBIntTestCase):
+    fmt = 'xml'
+
+
+class L3NatDBSepTestCaseXML(L3NatDBSepTestCase):
     fmt = 'xml'

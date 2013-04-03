@@ -33,6 +33,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
+from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
@@ -188,12 +189,13 @@ class MidonetPluginException(n_exc.NeutronException):
 
 
 class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                      external_net_db.External_net_db_mixin,
                       l3_db.L3_NAT_db_mixin,
                       agentschedulers_db.DhcpAgentSchedulerDbMixin,
                       securitygroups_db.SecurityGroupDbMixin):
 
-    supported_extension_aliases = ['router', 'security-group', 'agent',
-                                   'dhcp_agent_scheduler']
+    supported_extension_aliases = ['external-net', 'router', 'security-group',
+                                   'agent' 'dhcp_agent_scheduler']
     __native_bulk_support = False
 
     def __init__(self):

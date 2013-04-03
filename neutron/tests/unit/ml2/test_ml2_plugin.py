@@ -19,7 +19,6 @@ from neutron.extensions import providernet as pnet
 from neutron.plugins.ml2 import config
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
-from neutron.tests.unit import test_extension_ext_gw_mode
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
@@ -31,6 +30,10 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = PLUGIN_NAME
 
     def setUp(self):
+        # We need a L3 service plugin
+        l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
+                     'TestL3NatServicePlugin')
+        service_plugins = {'l3_plugin_name': l3_plugin}
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
@@ -43,7 +46,8 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('network_vlan_ranges', [self.phys_vrange],
                                      group='ml2_type_vlan')
         self.addCleanup(config.cfg.CONF.reset)
-        super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME)
+        super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
+                                               service_plugins=service_plugins)
         self.port_create_status = 'DOWN'
 
 
@@ -90,11 +94,6 @@ class TestMl2PortBindingNoSG(TestMl2PortBinding):
 
 class TestMl2PortBindingHost(Ml2PluginV2TestCase,
                              test_bindings.PortBindingsHostTestCaseMixin):
-    pass
-
-
-class TestMl2ExtGwModeSupport(Ml2PluginV2TestCase,
-                              test_extension_ext_gw_mode.ExtGwModeTestCase):
     pass
 
 

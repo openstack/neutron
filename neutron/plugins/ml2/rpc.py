@@ -20,7 +20,6 @@ from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
-from neutron.db import l3_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.openstack.common import log
 from neutron.openstack.common.rpc import proxy
@@ -37,7 +36,6 @@ TAP_DEVICE_PREFIX_LENGTH = 3
 
 
 class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                   l3_rpc_base.L3RpcCallbackMixin,
                    sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
                    type_tunnel.TunnelRpcCallbackMixin):
 
