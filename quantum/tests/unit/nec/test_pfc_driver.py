@@ -35,7 +35,7 @@ class TestConfig(object):
 
 def _ofc(id):
     """OFC ID converter"""
-    return "ofc-%s" % id
+    return id
 
 
 class PFCDriverTestBase(unittest.TestCase):
@@ -99,8 +99,8 @@ class PFCDriverTestBase(unittest.TestCase):
         description = "desc of %s" % n
 
         path = "/tenants/%s/networks" % _ofc(t)
-        body = {'id': n, 'description': description}
-        network = {'id': _ofc(n)}
+        body = {'id': _ofc(n), 'description': description}
+        network = {}
         ofc.OFCClient.do_request("POST", path, body=body).AndReturn(network)
         self.mox.ReplayAll()
 
@@ -134,11 +134,11 @@ class PFCDriverTestBase(unittest.TestCase):
         t, n, p = self.get_ofc_item_random_params()
 
         path = "/tenants/%s/networks/%s/ports" % (_ofc(t), _ofc(n))
-        body = {'id': p.id,
+        body = {'id': _ofc(p.id),
                 'datapath_id': p.datapath_id,
                 'port': str(p.port_no),
                 'vid': str(p.vlan_id)}
-        port = {'id': _ofc(p.id)}
+        port = {}
         ofc.OFCClient.do_request("POST", path, body=body).AndReturn(port)
         self.mox.ReplayAll()
 

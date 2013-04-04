@@ -57,13 +57,12 @@ class PFCDriver(ofc_driver_base.OFCDriverBase):
         path = TENANT_PATH % ofc_tenant_id
         return self.client.delete(path)
 
-    def create_network(self, ofc_tenant_id, description, network_id=None):
+    def create_network(self, ofc_tenant_id, description, network_id):
         path = NETWORKS_PATH % ofc_tenant_id
-        body = {'description': description}
-        if network_id:
-            body.update({'id': network_id})
+        ofc_network_id = network_id
+        body = {'description': description,
+                'id': ofc_network_id}
         res = self.client.post(path, body=body)
-        ofc_network_id = res['id']
         return ofc_network_id
 
     def update_network(self, ofc_tenant_id, ofc_network_id, description):
@@ -76,15 +75,14 @@ class PFCDriver(ofc_driver_base.OFCDriverBase):
         return self.client.delete(path)
 
     def create_port(self, ofc_tenant_id, ofc_network_id, portinfo,
-                    port_id=None):
+                    port_id):
         path = PORTS_PATH % (ofc_tenant_id, ofc_network_id)
+        ofc_port_id = port_id
         body = {'datapath_id': portinfo.datapath_id,
                 'port': str(portinfo.port_no),
-                'vid': str(portinfo.vlan_id)}
-        if port_id:
-            body.update({'id': port_id})
+                'vid': str(portinfo.vlan_id),
+                'id': ofc_port_id}
         res = self.client.post(path, body=body)
-        ofc_port_id = res['id']
         return ofc_port_id
 
     def update_port(self, ofc_tenant_id, ofc_network_id, portinfo, port_id):
