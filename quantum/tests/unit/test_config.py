@@ -17,7 +17,7 @@ import os
 
 from oslo.config import cfg
 
-from quantum.common import config
+from quantum.common import config  # noqa
 from quantum.tests import base
 
 

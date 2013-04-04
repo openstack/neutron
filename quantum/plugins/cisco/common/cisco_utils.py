@@ -20,7 +20,6 @@ import hashlib
 import logging
 
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.db import l2network_db as cdb
 
 
 LOG = logging.getLogger(__name__)

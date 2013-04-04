@@ -56,7 +56,7 @@ class TestQuantumContext(base.BaseTestCase):
         self.assertIsNone(cxt_dict['user_id'])
         self.assertIsNone(cxt_dict['tenant_id'])
         try:
-            session = cxt.session
+            cxt.session
         except Exception:
             pass
         else:

@@ -217,7 +217,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                               webob.exc.HTTPInternalServerError)
 
     def test_proxy_request_other_code(self):
-        with testtools.ExpectedException(Exception) as e:
+        with testtools.ExpectedException(Exception):
             self._proxy_request_test_helper(302)
 
     def test_sign_instance_id(self):
@@ -288,7 +288,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         with mock.patch('os.path.isdir') as isdir:
             with mock.patch('os.makedirs') as makedirs:
                 isdir.return_value = False
-                p = agent.UnixDomainMetadataProxy(mock.Mock())
+                agent.UnixDomainMetadataProxy(mock.Mock())
 
                 isdir.assert_called_once_with('/the')
                 makedirs.assert_called_once_with('/the', 0755)
@@ -297,7 +297,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         with mock.patch('os.path.isdir') as isdir:
             with mock.patch('os.unlink') as unlink:
                 isdir.return_value = True
-                p = agent.UnixDomainMetadataProxy(mock.Mock())
+                agent.UnixDomainMetadataProxy(mock.Mock())
 
                 isdir.assert_called_once_with('/the')
                 unlink.assert_called_once_with('/the/path')
@@ -310,7 +310,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     exists.return_value = False
                     unlink.side_effect = OSError
 
-                    p = agent.UnixDomainMetadataProxy(mock.Mock())
+                    agent.UnixDomainMetadataProxy(mock.Mock())
 
                     isdir.assert_called_once_with('/the')
                     unlink.assert_called_once_with('/the/path')
@@ -325,7 +325,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     unlink.side_effect = OSError
 
                     with testtools.ExpectedException(OSError):
-                        p = agent.UnixDomainMetadataProxy(mock.Mock())
+                        agent.UnixDomainMetadataProxy(mock.Mock())
 
                     isdir.assert_called_once_with('/the')
                     unlink.assert_called_once_with('/the/path')
@@ -355,7 +355,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
             with mock.patch('eventlet.monkey_patch') as eventlet:
                 with mock.patch.object(agent, 'config') as config:
                     with mock.patch.object(agent, 'cfg') as cfg:
-                        with mock.patch.object(utils, 'cfg') as utils_cfg:
+                        with mock.patch.object(utils, 'cfg'):
                             agent.main()
 
                             self.assertTrue(eventlet.called)

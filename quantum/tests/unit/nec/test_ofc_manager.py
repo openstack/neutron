@@ -19,7 +19,7 @@ from quantum import context
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import config
 from quantum.plugins.nec.db import api as ndb
-from quantum.plugins.nec.db import models as nmodels
+from quantum.plugins.nec.db import models as nmodels  # noqa
 from quantum.plugins.nec import ofc_manager
 from quantum.tests import base
 

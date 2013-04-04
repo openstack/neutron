@@ -160,14 +160,14 @@ class RootwrapTestCase(base.BaseTestCase):
         f = filters.IpNetnsExecFilter('/sbin/ip', 'root')
         self.assertFalse(f.match(['ip', 'link', 'list']))
 
-    def test_match_filter_recurses_exec_command_filter(self):
+    def test_match_filter_recurses_exec_command_filter_matches(self):
         filter_list = [filters.IpNetnsExecFilter('/sbin/ip', 'root'),
                        filters.IpFilter('/sbin/ip', 'root')]
         args = ['ip', 'netns', 'exec', 'foo', 'ip', 'link', 'list']
 
         self.assertIsNotNone(wrapper.match_filter(filter_list, args))
 
-    def test_match_filter_recurses_exec_command_filter(self):
+    def test_match_filter_recurses_exec_command_filter_does_not_match(self):
         filter_list = [filters.IpNetnsExecFilter('/sbin/ip', 'root'),
                        filters.IpFilter('/sbin/ip', 'root')]
         args = ['ip', 'netns', 'exec', 'foo', 'ip', 'netns', 'exec', 'bar',

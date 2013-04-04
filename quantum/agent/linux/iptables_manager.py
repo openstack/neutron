@@ -24,8 +24,6 @@
 import inspect
 import os
 
-from oslo.config import cfg
-
 from quantum.agent.linux import utils
 from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging

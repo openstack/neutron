@@ -22,7 +22,7 @@ import mock
 from quantum.api.v2 import attributes
 from quantum.extensions import securitygroup as ext_sg
 from quantum import manager
-from quantum.plugins.nec.db import api as ndb
+from quantum.plugins.nec.db import api as ndb  # noqa
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 

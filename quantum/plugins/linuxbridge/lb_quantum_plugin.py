@@ -25,7 +25,6 @@ from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
-from quantum.common import utils
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
 from quantum.db import api as db_api
@@ -33,12 +32,10 @@ from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
-# NOTE: quota_db cannot be removed, it is for db model
-from quantum.db import quota_db
+from quantum.db import quota_db  # noqa
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
-from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc

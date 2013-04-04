@@ -17,8 +17,7 @@
 
 from oslo.config import cfg
 
-#NOTE this import loads tests required options
-from quantum.plugins.ryu.common import config
+from quantum.plugins.ryu.common import config  # noqa
 from quantum.tests import base
 
 

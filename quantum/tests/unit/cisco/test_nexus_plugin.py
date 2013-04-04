@@ -18,7 +18,6 @@ import mock
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from quantum.tests import base
 

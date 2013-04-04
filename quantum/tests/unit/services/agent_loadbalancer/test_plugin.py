@@ -135,7 +135,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
     def test_get_logical_device_inactive(self):
         with self.pool() as pool:
             with self.vip(pool=pool) as vip:
-                with self.member(pool_id=vip['vip']['pool_id']) as member:
+                with self.member(pool_id=vip['vip']['pool_id']):
                     self.assertRaises(
                         Exception,
                         self.callbacks.get_logical_device,
@@ -187,7 +187,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
 
         with self.pool() as pool:
             with self.vip(pool=pool) as vip:
-                with self.member(pool_id=vip['vip']['pool_id']) as member:
+                with self.member(pool_id=vip['vip']['pool_id']):
                     ctx = context.get_admin_context()
                     func(ctx, port_id=vip['vip']['port_id'], **kwargs)
 

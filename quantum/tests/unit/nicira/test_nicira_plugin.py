@@ -222,8 +222,8 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         self.assertEqual(net_del_res.status_int, 204)
 
     def test_list_networks_with_shared(self):
-        with self.network(name='net1') as net1:
-            with self.network(name='net2', shared=True) as net2:
+        with self.network(name='net1'):
+            with self.network(name='net2', shared=True):
                 req = self.new_list_request('networks')
                 res = self.deserialize('json', req.get_response(self.api))
                 self.assertEqual(len(res['networks']), 2)
@@ -478,10 +478,10 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
         self._nvp_metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
-                body = self._router_interface_action('add',
-                                                     r['router']['id'],
-                                                     s['subnet']['id'],
-                                                     None)
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
                 r_ports = self._list('ports')['ports']
                 self.assertEqual(len(r_ports), 2)
                 ips = []
@@ -491,10 +491,10 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                 meta_cidr = netaddr.IPNetwork('169.254.0.0/16')
                 self.assertTrue(any([ip in meta_cidr for ip in ips]))
                 # Needed to avoid 409
-                body = self._router_interface_action('remove',
-                                                     r['router']['id'],
-                                                     s['subnet']['id'],
-                                                     None)
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
         self._nvp_metadata_teardown()
 
     def test_metadatata_network_removed_with_router_interface_remove(self):
@@ -531,7 +531,7 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
         subnets = self._list('subnets')['subnets']
         with self.subnet() as s:
             with self.port(subnet=s, device_id='1234',
-                           device_owner='network:dhcp') as p:
+                           device_owner='network:dhcp'):
                 subnets = self._list('subnets')['subnets']
                 self.assertEqual(len(subnets), 1)
                 self.assertEquals(subnets[0]['host_routes'][0]['nexthop'],

@@ -275,7 +275,7 @@ class TremaIdConvertTest(base.BaseTestCase):
         t_id = 'dummy'
         ofc_t_id, ofc_n_id = generate_random_ids(2)
         ofc_n_id = '/networks/%s' % ofc_n_id
-        ret = self.driver.convert_ofc_network_id(self.ctx, ofc_n_id, t_id)
+        self.driver.convert_ofc_network_id(self.ctx, ofc_n_id, t_id)
 
     def test_convert_filter_id(self):
         ofc_f_id = generate_random_ids(1)

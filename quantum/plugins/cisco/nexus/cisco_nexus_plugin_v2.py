@@ -30,7 +30,6 @@ from quantum.common import exceptions as exc
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
-from quantum.plugins.cisco.common import cisco_exceptions as excep
 from quantum.plugins.cisco.common import config as conf
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import nexus_db_v2 as nxos_db

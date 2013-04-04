@@ -15,7 +15,7 @@
 
 from oslo.config import cfg
 
-from quantum.plugins.nicira.nicira_nvp_plugin.common import config
+from quantum.plugins.nicira.nicira_nvp_plugin.common import config  # noqa
 from quantum.tests import base
 
 

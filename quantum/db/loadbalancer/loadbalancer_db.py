@@ -15,17 +15,13 @@
 #    under the License.
 #
 
-from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import exc as sa_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
-from sqlalchemy.sql import expression as expr
-import webob.exc as w_exc
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
-from quantum.db import db_base_plugin_v2
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import loadbalancer
@@ -34,7 +30,6 @@ from quantum import manager
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -663,10 +658,9 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
-            pool = None
             try:
                 qry = context.session.query(Pool)
-                pool = qry.filter_by(id=v['pool_id']).one()
+                qry.filter_by(id=v['pool_id']).one()
             except exc.NoResultFound:
                 raise loadbalancer.PoolNotFound(pool_id=v['pool_id'])
 

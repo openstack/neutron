@@ -139,7 +139,7 @@ def destroy_namespace(conf, namespace, force=False):
                     unplug_device(conf, device)
 
         ip.garbage_collect_namespace()
-    except Exception, e:
+    except Exception:
         LOG.exception(_('Error unable to destroy namespace: %s'), namespace)
 
 

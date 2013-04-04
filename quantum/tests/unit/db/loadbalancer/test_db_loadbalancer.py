@@ -15,35 +15,23 @@
 
 import contextlib
 import logging
-import mock
 import os
 import testtools
 
-from oslo.config import cfg
 import webob.exc
 
 from quantum import context
 from quantum.api.extensions import ExtensionMiddleware
 from quantum.api.extensions import PluginAwareExtensionManager
-from quantum.api.v2 import attributes
-from quantum.api.v2.router import APIRouter
 from quantum.common import config
-from quantum.common import exceptions as q_exc
-from quantum.common.test_lib import test_config
-from quantum.db import api as db
 from quantum.db.loadbalancer import loadbalancer_db as ldb
 import quantum.extensions
 from quantum.extensions import loadbalancer
-from quantum.manager import QuantumManager
 from quantum.plugins.common import constants
 from quantum.plugins.services.agent_loadbalancer import (
     plugin as loadbalancer_plugin
 )
 from quantum.tests.unit import test_db_plugin
-from quantum.tests.unit import test_extensions
-from quantum.tests.unit import testlib_api
-from quantum.tests.unit.testlib_api import create_request
-from quantum import wsgi
 
 
 LOG = logging.getLogger(__name__)
@@ -306,7 +294,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         """ Test loadbalancer db plugin via extension and directly """
         with self.subnet() as subnet:
             with self.pool(name="pool1") as pool:
-                with self.vip(name='vip1', subnet=subnet, pool=pool) as vip:
+                with self.vip(name='vip1', subnet=subnet, pool=pool):
                     vip_data = {
                         'name': 'vip1',
                         'pool_id': pool['pool']['id'],
@@ -468,7 +456,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 self.assertEqual(res['vip'][k], v)
 
     def test_delete_vip(self):
-        with self.pool() as pool:
+        with self.pool():
             with self.vip(no_delete=True) as vip:
                 req = self.new_delete_request('vips',
                                               vip['vip']['id'])
@@ -600,7 +588,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def test_delete_pool(self):
         with self.pool(no_delete=True) as pool:
             with self.member(no_delete=True,
-                             pool_id=pool['pool']['id']) as member:
+                             pool_id=pool['pool']['id']):
                 req = self.new_delete_request('pools',
                                               pool['pool']['id'])
                 res = req.get_response(self.ext_api)

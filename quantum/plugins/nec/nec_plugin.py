@@ -19,21 +19,16 @@
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
-from quantum.common import constants as q_const
-from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
-from quantum import context
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
-#NOTE(amotoki): quota_db cannot be removed, it is for db model
-from quantum.db import quota_db
+from quantum.db import quota_db  # noqa
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
-from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
@@ -670,7 +665,6 @@ class NECPluginV2RPCCallbacks(object):
         """
         LOG.debug(_("NECPluginV2RPCCallbacks.update_ports() called, "
                     "kwargs=%s ."), kwargs)
-        topic = kwargs['topic']
         datapath_id = kwargs['datapath_id']
         session = rpc_context.session
         for p in kwargs.get('port_added', []):

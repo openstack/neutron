@@ -26,8 +26,7 @@ from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
-# NOTE (e0ne): this import is needed for config init
-from quantum.plugins.metaplugin.common import config
+from quantum.plugins.metaplugin.common import config  # noqa
 from quantum.plugins.metaplugin import meta_db_v2
 from quantum.plugins.metaplugin.meta_models_v2 import (NetworkFlavor,
                                                        RouterFlavor)

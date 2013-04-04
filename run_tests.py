@@ -41,7 +41,6 @@ To run a single functional test module::
     python run_tests.py functional.test_stores
 """
 
-import gettext
 import os
 import sys
 

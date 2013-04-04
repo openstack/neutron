@@ -21,8 +21,6 @@ This plugin will forward authenticated REST API calls
 to the Network Operating System by PLUMgrid called NOS
 """
 
-import sys
-
 from oslo.config import cfg
 
 from quantum.db import api as db
@@ -68,8 +66,8 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         self.snippets = plumgrid_nos_snippets.DataNOSPLUMgrid()
 
         # TODO: (Edgar) These are placeholders for next PLUMgrid release
-        nos_username = cfg.CONF.PLUMgridNOS.username
-        nos_password = cfg.CONF.PLUMgridNOS.password
+        cfg.CONF.PLUMgridNOS.username
+        cfg.CONF.PLUMgridNOS.password
         self.rest_conn = rest_connection.RestConnection(nos_plumgrid,
                                                         nos_port, timeout)
         if self.rest_conn is None:
@@ -131,10 +129,6 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         self._network_admin_state(network)
         tenant_id = self._get_tenant_id_for_create(context, network["network"])
 
-        # Get initial network details
-        original_net = super(QuantumPluginPLUMgridV2, self).get_network(
-            context, net_id)
-
         with context.session.begin(subtransactions=True):
             # Plugin DB - Network Update
             new_network = super(
@@ -169,8 +163,8 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Network Delete
-            net_deleted = super(QuantumPluginPLUMgridV2,
-                                self).delete_network(context, net_id)
+            super(QuantumPluginPLUMgridV2, self).delete_network(context,
+                                                                net_id)
 
             try:
                 nos_url = self.snippets.BASE_NOS_URL + net_id

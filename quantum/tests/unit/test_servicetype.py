@@ -26,14 +26,12 @@ import webob.exc as webexc
 import webtest
 
 from quantum.api import extensions
-from quantum.api.v2 import attributes
 from quantum import context
 from quantum.db import api as db_api
 from quantum.db import servicetype_db
 from quantum.extensions import servicetype
 from quantum import manager
 from quantum.plugins.common import constants
-from quantum.tests import base
 from quantum.tests.unit import dummy_plugin as dp
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin
@@ -137,9 +135,6 @@ class ServiceTypeExtensionTestCase(ServiceTypeTestCaseBase):
     def _test_service_type_update(self, env=None,
                                   expected_status=webexc.HTTPOk.code):
         svc_type_name = 'updated'
-        tenant_id = 'fake'
-        if env and 'quantum.context' in env:
-            tenant_id = env['quantum.context'].tenant_id
         data = {self.resource_name: {'name': svc_type_name}}
 
         svc_type_id = _uuid()

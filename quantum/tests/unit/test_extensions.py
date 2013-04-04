@@ -111,8 +111,7 @@ class ResourceExtensionTest(base.BaseTestCase):
         # anything that is below 200 or above 400 so we can't actually check
         # it.  It throws webtest.AppError instead.
         try:
-            response = (
-                test_app.get("/tweedles/some_id/notimplemented_function"))
+            test_app.get("/tweedles/some_id/notimplemented_function")
             # Shouldn't be reached
             self.assertTrue(False)
         except webtest.AppError:

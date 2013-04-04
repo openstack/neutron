@@ -77,7 +77,6 @@ class HaproxyNSDriver(object):
         namespace = get_ns_name(pool_id)
         ns = ip_lib.IPWrapper(self.root_helper, namespace)
         pid_path = self._get_state_file_path(pool_id, 'pid')
-        sock_path = self._get_state_file_path(pool_id, 'sock')
 
         # kill the process
         kill_pids_in_file(self.root_helper, pid_path)

@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
-
-# NOTE: this import is needed for correct plugin code work
-from quantum.plugins.ryu.db import models_v2 as ryu_models_v2
+from quantum.plugins.ryu.db import models_v2 as ryu_models_v2  # noqa
 from quantum.tests.unit.ryu import fake_ryu
 from quantum.tests.unit import test_db_plugin as test_plugin
 

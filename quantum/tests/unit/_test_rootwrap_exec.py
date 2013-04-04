@@ -76,7 +76,7 @@ to the aid of their party.\"\n")
             self.assertEqual(result,
                              "0 arg Now is the time for all good men to \
 come to the aid of their party.")
-        except Exception, ex:
+        except Exception:
             LOG.exception("Losing in rootwrap test")
 
     def tearDown(self):

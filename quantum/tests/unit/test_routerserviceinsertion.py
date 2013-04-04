@@ -424,12 +424,12 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
             uattrs['router_id'] = self._router_id
             with testtools.ExpectedException(
                     webexc.HTTPClientError) as ctx_manager:
-                newobj = self._do_request(
+                self._do_request(
                     'PUT',
                     _get_path('lb/{0}s/{1}'.format(res, obj['id'])), data)
                 self.assertEqual(ctx_manager.exception.code, 400)
         else:
-            newobj = self._do_request(
+            self._do_request(
                 'PUT',
                 _get_path('lb/{0}s/{1}'.format(res, obj['id'])), data)
             updated = self._do_request(

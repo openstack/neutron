@@ -333,13 +333,6 @@ class TestDebugCommands(base.BaseTestCase):
         with mock.patch('quantum.agent.linux.ip_lib.IpNetnsCommand') as ns:
             cmd.run(parsed_args)
             ns.assert_has_calls([mock.call.execute(mock.ANY)])
-        fake_port = {'port':
-                    {'device_owner': DEVICE_OWNER_NETWORK_PROBE,
-                     'admin_state_up': True,
-                     'network_id': 'fake_net',
-                     'tenant_id': 'fake_tenant',
-                     'fixed_ips': [{'subnet_id': 'fake_subnet'}],
-                     'device_id': socket.gethostname()}}
         expected = [mock.call.list_ports(),
                     mock.call.list_ports(
                         network_id='fake_net',

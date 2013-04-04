@@ -17,11 +17,9 @@ import logging
 import mock
 
 from quantum import context
-from quantum.db import api as db
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.db import network_db_v2
-from quantum.plugins.cisco.db import network_models_v2
+from quantum.plugins.cisco.db import network_db_v2  # noqa
 from quantum.tests.unit import test_db_plugin
 
 LOG = logging.getLogger(__name__)

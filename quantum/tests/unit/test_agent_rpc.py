@@ -16,7 +16,6 @@
 #    under the License.
 
 import mock
-from oslo.config import cfg
 
 from quantum.agent import rpc
 from quantum.openstack.common import context
@@ -77,5 +76,5 @@ class AgentRPCMethods(base.BaseTestCase):
 
         call_to_patch = 'quantum.openstack.common.rpc.create_connection'
         with mock.patch(call_to_patch) as create_connection:
-            conn = rpc.create_consumers(dispatcher, 'foo', [('topic', 'op')])
+            rpc.create_consumers(dispatcher, 'foo', [('topic', 'op')])
             create_connection.assert_has_calls(expected)

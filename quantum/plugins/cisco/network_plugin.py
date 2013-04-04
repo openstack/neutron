@@ -27,8 +27,7 @@ from quantum.db import models_v2
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.common import cisco_utils as cutil
-from quantum.plugins.cisco.common import config
+from quantum.plugins.cisco.common import config  # noqa
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 
 LOG = logging.getLogger(__name__)
@@ -300,7 +299,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """Delete a QoS level"""
         LOG.debug(_("delete_qos() called"))
         try:
-            qos_level = cdb.get_qos(tenant_id, qos_id)
+            cdb.get_qos(tenant_id, qos_id)
         except Exception:
             raise cexc.QosNotFound(tenant_id=tenant_id,
                                    qos_id=qos_id)
@@ -310,7 +309,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """Rename QoS level"""
         LOG.debug(_("rename_qos() called"))
         try:
-            qos_level = cdb.get_qos(tenant_id, qos_id)
+            cdb.get_qos(tenant_id, qos_id)
         except Exception:
             raise cexc.QosNotFound(tenant_id=tenant_id,
                                    qos_id=qos_id)

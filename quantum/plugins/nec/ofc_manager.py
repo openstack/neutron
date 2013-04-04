@@ -132,5 +132,5 @@ class OFCManager(object):
         ofc_pf_id = self._get_ofc_id(context, "ofc_packet_filter", filter_id)
         ofc_pf_id = self.driver.convert_ofc_filter_id(context, ofc_pf_id)
 
-        res = self.driver.delete_filter(ofc_pf_id)
+        self.driver.delete_filter(ofc_pf_id)
         self._del_ofc_item(context, "ofc_packet_filter", filter_id)

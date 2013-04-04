@@ -129,7 +129,7 @@ class DhcpAgent(manager.Manager):
             getattr(driver, action)()
             return True
 
-        except Exception, e:
+        except Exception:
             self.needs_resync = True
             LOG.exception(_('Unable to %s dhcp.'), action)
 
@@ -718,8 +718,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
         LOG.info(_("DHCP agent started"))
 
 
-def main():
-    eventlet.monkey_patch()
+def register_options():
     cfg.CONF.register_opts(DhcpAgent.OPTS)
     config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
@@ -727,6 +726,11 @@ def main():
     cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
     cfg.CONF.register_opts(dhcp.OPTS)
     cfg.CONF.register_opts(interface.OPTS)
+
+
+def main():
+    eventlet.monkey_patch()
+    register_options()
     cfg.CONF(project='quantum')
     config.setup_logging(cfg.CONF)
     server = quantum_service.Service.create(

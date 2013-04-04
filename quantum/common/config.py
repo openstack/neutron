@@ -25,7 +25,6 @@ from oslo.config import cfg
 from paste import deploy
 
 from quantum.api.v2 import attributes
-from quantum.common import constants
 from quantum.common import utils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
@@ -116,7 +115,6 @@ def setup_logging(conf):
     """
     product_name = "quantum"
     logging.setup(product_name)
-    log_root = logging.getLogger(product_name).logger
     LOG.info(_("Logging enabled!"))
 
 

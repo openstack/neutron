@@ -19,14 +19,12 @@
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 #
 
-from copy import deepcopy
 import inspect
 import logging
 
 from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
 
-from quantum.db import l3_db
 from quantum.manager import QuantumManager
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
@@ -229,9 +227,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         args = [ovs_output[0]['tenant_id'], id, {'vlan_id': vlan_id},
                 {'net_admin_state': ovs_output[0]['admin_state_up']},
                 {'vlan_ids': vlanids}]
-        nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                      self._func_name(),
-                                                      args)
+        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                       self._func_name(),
+                                       args)
         return ovs_output[0]
 
     def delete_network(self, context, id):
@@ -300,11 +298,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             instance_id = port['port']['device_id']
             device_owner = port['port']['device_owner']
 
-            if conf.CISCO_TEST.host is not None:
-                host = conf.CISCO_TEST.host
-            elif device_owner == 'network:dhcp':
-                return ovs_output[0]
-            elif instance_id:
+            create_net = (conf.CISCO_TEST.host is None and
+                          device_owner != 'network:dhcp' and
+                          instance_id)
+            if create_net:
                 net_id = port['port']['network_id']
                 tenant_id = port['port']['tenant_id']
                 self._invoke_nexus_for_net_create(
@@ -368,9 +365,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          self._func_name(),
-                                                          n_args)
+            self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                           self._func_name(),
+                                           n_args)
             return ovs_output[0]
         except:
             # TODO (asomya): Check if we need to perform any rollback here

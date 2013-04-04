@@ -15,9 +15,6 @@
 
 """Test of Policy Engine For Quantum"""
 
-import contextlib
-import os
-import shutil
 import StringIO
 import urllib2
 

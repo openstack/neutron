@@ -18,8 +18,7 @@
 from oslo.config import cfg
 
 from quantum.agent.common import config
-# import rpc config options
-from quantum.openstack.common import rpc
+from quantum.openstack.common import rpc  # noqa
 from quantum import scheduler
 
 

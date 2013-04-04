@@ -25,7 +25,6 @@ import testtools
 
 from quantum import context
 from quantum.db import api as db
-from quantum.db import models_v2
 from quantum.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from quantum.openstack.common import uuidutils
 from quantum.plugins.metaplugin.meta_quantum_plugin import FlavorNotFound
@@ -84,7 +83,6 @@ class MetaQuantumPluginV2Test(base.BaseTestCase):
 
         self.mox = mox.Mox()
         self.stubs = stubout.StubOutForTesting()
-        args = ['--config-file', etcdir('quantum.conf.test')]
         self.client_cls_p = mock.patch('quantumclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
         self.client_inst = mock.Mock()

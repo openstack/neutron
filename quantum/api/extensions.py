@@ -27,7 +27,6 @@ import webob.dec
 import webob.exc
 
 from quantum.api.v2 import attributes
-from quantum.common import constants
 from quantum.common import exceptions
 import quantum.extensions
 from quantum.manager import QuantumManager

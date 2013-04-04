@@ -83,8 +83,6 @@ class TestOVSCleanup(base.BaseTestCase):
     def test_delete_quantum_ports(self):
         ports = ['tap1234', 'tap5678', 'tap09ab']
         port_found = [True, False, True]
-        delete_ports = [p for p, found
-                        in itertools.izip(ports, port_found) if found]
         with contextlib.nested(
             mock.patch.object(ip_lib, 'device_exists',
                               side_effect=port_found),

@@ -218,13 +218,11 @@ class RuleManager:
         protocol = rule['protocol']
         port_range_max = rule['port_range_max']
         rule_id = rule['id']
-        ethertype = rule['ethertype']
         security_group_id = rule['security_group_id']
         remote_group_id = rule['remote_group_id']
         remote_ip_prefix = rule['remote_ip_prefix']  # watch out. not validated
         tenant_id = rule['tenant_id']
         port_range_min = rule['port_range_min']
-        external_id = rule['external_id']
 
         # construct a corresponding rule
         tp_src_start = tp_src_end = None
@@ -246,11 +244,11 @@ class RuleManager:
         tp_dst_start, tp_dst_end = port_range_min, port_range_max
 
         # protocol
-        if rule['protocol'] == 'tcp':
+        if protocol == 'tcp':
             nw_proto = 6
-        elif rule['protocol'] == 'udp':
+        elif protocol == 'udp':
             nw_proto = 17
-        elif rule['protocol'] == 'icmp':
+        elif protocol == 'icmp':
             nw_proto = 1
             # extract type and code from reporposed fields
             icmp_type = rule['from_port']

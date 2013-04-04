@@ -18,8 +18,6 @@
 
 from sqlalchemy.orm import exc
 
-from oslo.config import cfg
-
 from quantum.common import exceptions as q_exc
 import quantum.db.api as db
 from quantum.db import models_v2
@@ -329,7 +327,7 @@ def get_port_from_device(port_id):
     plugin = manager.QuantumManager.get_plugin()
     port_dict = plugin._make_port_dict(port)
     port_dict[ext_sg.SECURITYGROUPS] = [
-        sg_id for port, sg_id in port_and_sgs if sg_id]
+        sg_id for port_, sg_id in port_and_sgs if sg_id]
     port_dict['security_group_rules'] = []
     port_dict['security_group_source_groups'] = []
     port_dict['fixed_ips'] = [ip['ip_address']

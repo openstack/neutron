@@ -747,7 +747,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         # update network on network controller
         try:
             self._send_update_network(orig_net)
-        except RemoteRestError as e:
+        except RemoteRestError:
             # rollback creation of subnet
             super(QuantumRestProxyV2, self).delete_subnet(context,
                                                           subnet['id'])
@@ -770,7 +770,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         # update network on network controller
         try:
             self._send_update_network(orig_net)
-        except RemoteRestError as e:
+        except RemoteRestError:
             # rollback updation of subnet
             super(QuantumRestProxyV2, self).update_subnet(context, id,
                                                           orig_subnet)
@@ -788,7 +788,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         # update network on network controller
         try:
             self._send_update_network(orig_net)
-        except RemoteRestError as e:
+        except RemoteRestError:
             # TODO (Sumit): rollback deletion of subnet
             raise
 
@@ -1014,7 +1014,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         # update network on network controller
         try:
             self._send_update_network(orig_net)
-        except RemoteRestError as e:
+        except RemoteRestError:
             # rollback updation of subnet
             super(QuantumRestProxyV2, self).update_floatingip(context, id,
                                                               orig_fl_ip)
@@ -1035,7 +1035,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         # update network on network controller
         try:
             self._send_update_network(orig_net)
-        except RemoteRestError as e:
+        except RemoteRestError:
             # TODO(Sumit): rollback deletion of floating IP
             raise
 

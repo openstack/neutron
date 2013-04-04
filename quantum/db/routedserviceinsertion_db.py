@@ -18,7 +18,6 @@
 
 import sqlalchemy as sa
 from sqlalchemy import event
-from sqlalchemy.orm import exc
 
 from quantum.common import exceptions as qexception
 from quantum.db import model_base

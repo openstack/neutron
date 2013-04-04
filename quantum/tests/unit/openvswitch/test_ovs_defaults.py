@@ -15,8 +15,7 @@
 
 from oslo.config import cfg
 
-#NOTE this import loads tests required options
-from quantum.plugins.openvswitch.common import config
+from quantum.plugins.openvswitch.common import config  # noqa
 from quantum.tests import base
 
 
