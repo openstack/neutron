@@ -63,26 +63,14 @@ class PFCDriverTestBase(unittest.TestCase):
         description = "desc of %s" % t
 
         path = "/tenants"
-        body = {'id': t, 'description': description}
-        tenant = {'id': _ofc(t)}
+        body = {'id': _ofc(t)}
+        tenant = {}
         ofc.OFCClient.do_request("POST", path, body=body).AndReturn(tenant)
         self.mox.ReplayAll()
 
         ret = self.driver.create_tenant(description, t)
         self.mox.VerifyAll()
         self.assertEqual(ret, _ofc(t))
-
-    def testb_update_tenant(self):
-        t, n, p = self.get_ofc_item_random_params()
-        description = "new desc of %s" % t
-
-        path = "/tenants/%s" % _ofc(t)
-        body = {'description': description}
-        ofc.OFCClient.do_request("PUT", path, body=body)
-        self.mox.ReplayAll()
-
-        self.driver.update_tenant(_ofc(t), description)
-        self.mox.VerifyAll()
 
     def testc_delete_tenant(self):
         t, n, p = self.get_ofc_item_random_params()

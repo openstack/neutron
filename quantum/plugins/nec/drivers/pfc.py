@@ -40,18 +40,11 @@ class PFCDriver(ofc_driver_base.OFCDriverBase):
     def filter_supported(cls):
         return False
 
-    def create_tenant(self, description, tenant_id=None):
-        body = {'description': description}
-        if tenant_id:
-            body.update({'id': tenant_id})
+    def create_tenant(self, description, tenant_id):
+        ofc_tenant_id = tenant_id
+        body = {'id': ofc_tenant_id}
         res = self.client.post(TENANTS_PATH, body=body)
-        ofc_tenant_id = res['id']
         return ofc_tenant_id
-
-    def update_tenant(self, ofc_tenant_id, description):
-        path = TENANT_PATH % ofc_tenant_id
-        body = {'description': description}
-        res = self.client.put(path, body=body)
 
     def delete_tenant(self, ofc_tenant_id):
         path = TENANT_PATH % ofc_tenant_id
