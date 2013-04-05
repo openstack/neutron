@@ -43,8 +43,7 @@ from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.db import portsecurity_db
-# NOTE: quota_db cannot be removed, it is for db model
-from quantum.db import quota_db
+from quantum.db import quota_db  # noqa
 from quantum.db import securitygroups_db
 from quantum.extensions import l3
 from quantum.extensions import portsecurity as psec

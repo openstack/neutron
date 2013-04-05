@@ -46,14 +46,14 @@ class TestLinuxBridge(base.BaseTestCase):
     def test_ensure_physical_in_bridge_flat(self):
         with mock.patch.object(self.linux_bridge,
                                'ensure_flat_bridge') as flat_bridge_func:
-            result = self.linux_bridge.ensure_physical_in_bridge(
+            self.linux_bridge.ensure_physical_in_bridge(
                 'network_id', 'physnet1', lconst.FLAT_VLAN_ID)
         self.assertTrue(flat_bridge_func.called)
 
     def test_ensure_physical_in_bridge_vlan(self):
         with mock.patch.object(self.linux_bridge,
                                'ensure_vlan_bridge') as vlan_bridge_func:
-            result = self.linux_bridge.ensure_physical_in_bridge(
+            self.linux_bridge.ensure_physical_in_bridge(
                 'network_id', 'physnet1', 7)
         self.assertTrue(vlan_bridge_func.called)
 

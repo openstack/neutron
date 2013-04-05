@@ -22,13 +22,11 @@ from webob import exc
 import webtest
 
 from quantum.api import extensions
-from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.extensions import loadbalancer
 from quantum import manager
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
-from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api

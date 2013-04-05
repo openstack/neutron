@@ -89,7 +89,7 @@ class MetadataProxyHandler(object):
             else:
                 return webob.exc.HTTPNotFound()
 
-        except Exception, e:
+        except Exception:
             LOG.exception(_("Unexpected error."))
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')

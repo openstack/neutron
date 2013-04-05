@@ -86,9 +86,9 @@ class ProcessManager(object):
         try:
             with open(file_name, 'r') as f:
                 return int(f.read())
-        except IOError, e:
+        except IOError:
             msg = _('Unable to access %s')
-        except ValueError, e:
+        except ValueError:
             msg = _('Unable to convert value in %s')
 
         LOG.debug(msg, file_name)
@@ -103,5 +103,5 @@ class ProcessManager(object):
         cmd = ['cat', '/proc/%s/cmdline' % pid]
         try:
             return self.uuid in utils.execute(cmd, self.root_helper)
-        except RuntimeError, e:
+        except RuntimeError:
             return False

@@ -24,10 +24,7 @@ import sys
 import uuid
 
 import mock
-from webob import exc as w_exc
 
-import quantum.common.test_lib as test_lib
-import quantum.tests.unit.midonet as midonet
 import quantum.tests.unit.test_db_plugin as test_plugin
 
 
@@ -116,7 +113,7 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
         super(TestMidonetNetworksV2, self).test_update_network()
 
     def test_list_networks(self):
-        bridge = self._setup_bridge_mock()
+        self._setup_bridge_mock()
         with self.network(name='net1') as net1:
             req = self.new_list_request('networks')
             res = self.deserialize('json', req.get_response(self.api))
@@ -195,12 +192,6 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
     def test_list_networks_with_pagination_reverse_emulated(self):
         pass
 
-    def test_list_networks_with_parameters(self):
-        pass
-
-    def test_list_networks_with_parameters_invalid_values(self):
-        pass
-
     def test_list_networks_with_sort_emulated(self):
         pass
 
@@ -216,9 +207,6 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
         super(TestMidonetSubnetsV2, self).test_create_subnet()
 
     def test_create_two_subnets(self):
-        pass
-
-    def test_create_two_subnets_same_cidr_returns_400(self):
         pass
 
     def test_create_two_subnets_same_cidr_returns_400(self):

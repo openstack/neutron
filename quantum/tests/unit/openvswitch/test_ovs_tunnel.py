@@ -22,7 +22,6 @@ from oslo.config import cfg
 from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.agent.linux import utils
-from quantum.agent import rpc
 from quantum.openstack.common import log
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.plugins.openvswitch.common import constants
@@ -129,10 +128,10 @@ class TunnelTest(base.BaseTestCase):
 
     def testConstruct(self):
         self.mox.ReplayAll()
-        b = ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
-                                              self.TUN_BRIDGE,
-                                              '10.0.0.1', self.NET_MAPPING,
-                                              'sudo', 2, True)
+        ovs_quantum_agent.OVSQuantumAgent(self.INT_BRIDGE,
+                                          self.TUN_BRIDGE,
+                                          '10.0.0.1', self.NET_MAPPING,
+                                          'sudo', 2, True)
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):

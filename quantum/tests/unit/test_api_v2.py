@@ -20,7 +20,6 @@ import urlparse
 
 import mock
 from oslo.config import cfg
-from testtools import matchers
 import webob
 from webob import exc
 import webtest
@@ -31,7 +30,6 @@ from quantum.api.v2 import attributes
 from quantum.api.v2 import base as v2_base
 from quantum.api.v2 import router
 from quantum.common import config
-from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.manager import QuantumManager
@@ -39,7 +37,6 @@ from quantum.openstack.common.notifier import api as notifer_api
 from quantum.openstack.common import uuidutils
 from quantum.tests import base
 from quantum.tests.unit import testlib_api
-from quantum import wsgi
 
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))

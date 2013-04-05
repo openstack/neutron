@@ -212,7 +212,7 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
     def test_proxy_request_network_exception(self):
         self.handler.network_id = 'network_id'
 
-        resp = mock.Mock(status=500)
+        mock.Mock(status=500)
         with mock.patch('httplib2.Http') as mock_http:
             mock_http.return_value.request.side_effect = Exception
 
@@ -235,13 +235,13 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
 
 class TestProxyDaemon(base.BaseTestCase):
     def test_init(self):
-        with mock.patch('quantum.agent.linux.daemon.Pidfile') as pf:
+        with mock.patch('quantum.agent.linux.daemon.Pidfile'):
             pd = ns_proxy.ProxyDaemon('pidfile', 9697, 'net_id', 'router_id')
             self.assertEqual(pd.router_id, 'router_id')
             self.assertEqual(pd.network_id, 'net_id')
 
     def test_run(self):
-        with mock.patch('quantum.agent.linux.daemon.Pidfile') as pf:
+        with mock.patch('quantum.agent.linux.daemon.Pidfile'):
             with mock.patch('quantum.wsgi.Server') as Server:
                 pd = ns_proxy.ProxyDaemon('pidfile', 9697, 'net_id',
                                           'router_id')

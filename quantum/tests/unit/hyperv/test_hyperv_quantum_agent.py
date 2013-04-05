@@ -20,8 +20,6 @@
 Unit tests for Windows Hyper-V virtual switch quantum driver
 """
 
-import sys
-
 import mock
 from oslo.config import cfg
 

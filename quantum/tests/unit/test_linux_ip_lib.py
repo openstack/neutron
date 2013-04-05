@@ -216,7 +216,7 @@ class TestIpWrapper(base.BaseTestCase):
             ip = ip_lib.IPWrapper('sudo')
             with mock.patch.object(ip.netns, 'exists') as ns_exists:
                 ns_exists.return_value = False
-                ns = ip.ensure_namespace('ns')
+                ip.ensure_namespace('ns')
                 self.execute.assert_has_calls(
                     [mock.call([], 'netns', ('add', 'ns'), 'sudo', None)])
                 ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
@@ -626,7 +626,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.assertEqual(ns.namespace, 'ns')
 
     def test_delete_namespace(self):
-        with mock.patch('quantum.agent.linux.utils.execute') as execute:
+        with mock.patch('quantum.agent.linux.utils.execute'):
             self.netns_cmd.delete('ns')
             self._assert_sudo([], ('delete', 'ns'), force_root_namespace=True)
 

@@ -20,10 +20,7 @@ test_database.py is an independent test suite
 that tests the database api method calls
 """
 
-import logging as LOG
-
 from quantum.openstack.common import log as logging
-from quantum.plugins.cisco.common import cisco_constants as const
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db_v2 as nexus_db
@@ -364,8 +361,8 @@ class NexusDBTest(base.BaseTestCase):
 
     def testb_getall_nexusportbindings(self):
         """get all nexus port binding"""
-        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
-        binding2 = self.dbtest.create_nexusportbinding("port2", 10)
+        self.dbtest.create_nexusportbinding("port1", 10)
+        self.dbtest.create_nexusportbinding("port2", 10)
         bindings = self.dbtest.get_all_nexusportbindings()
         count = 0
         for bind in bindings:
@@ -376,7 +373,7 @@ class NexusDBTest(base.BaseTestCase):
 
     def testc_delete_nexusportbinding(self):
         """delete nexus port binding"""
-        binding1 = self.dbtest.create_nexusportbinding("port1", 10)
+        self.dbtest.create_nexusportbinding("port1", 10)
         self.dbtest.delete_nexusportbinding(10)
         bindings = self.dbtest.get_all_nexusportbindings()
         count = 0

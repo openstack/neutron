@@ -23,7 +23,6 @@ import random
 
 import mock
 from oslo.config import cfg
-import sqlalchemy as sa
 import testtools
 from testtools import matchers
 import webob.exc
@@ -355,7 +354,6 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, **kwargs):
-        content_type = 'application/' + fmt
         data = {'port': {'network_id': net_id,
                          'tenant_id': self._tenant_id}}
 
@@ -1058,12 +1056,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(port['port']['id'], sport['port']['id'])
 
     def test_delete_port(self):
-        port_id = None
         with self.port() as port:
-            port_id = port['port']['id']
-        req = self.new_show_request('port', self.fmt, port['port']['id'])
-        res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 404)
+            req = self.new_show_request('port', self.fmt, port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, 404)
 
     def test_delete_port_public_network(self):
         with self.network(shared=True) as network:
@@ -1074,7 +1070,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                          set_context=True)
 
             port = self.deserialize(self.fmt, port_res)
-            port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
             # Todo: verify!!!
@@ -1241,23 +1236,18 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             kwargs = {"mac_address": mac}
             net_id = port['port']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 409)
 
     def test_mac_generation(self):
         cfg.CONF.set_override('base_mac', "12:34:56:00:00:00")
         with self.port() as port:
             mac = port['port']['mac_address']
-            # check that MAC address matches base MAC
-            base_mac = cfg.CONF.base_mac
             self.assertTrue(mac.startswith("12:34:56"))
 
     def test_mac_generation_4octet(self):
         cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
         with self.port() as port:
             mac = port['port']['mac_address']
-            # check that MAC address matches base MAC
-            base_mac = cfg.CONF.base_mac
             self.assertTrue(mac.startswith("12:34:56:78"))
 
     def test_bad_mac_format(self):
@@ -1296,7 +1286,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                          'ip_address': ips[0]['ip_address']}]}
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                port2 = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, 409)
 
     def test_requested_subnet_delete(self):
@@ -1492,7 +1481,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '1011.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            port = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_requested_split(self):
@@ -1539,7 +1527,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_fixed_ip_invalid_subnet_id(self):
@@ -1549,7 +1536,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_fixed_ip_invalid_ip(self):
@@ -1559,7 +1545,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.55555'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            port2 = self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
     def test_requested_ips_only(self):
@@ -1676,7 +1661,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     matchers.GreaterThan(datetime.timedelta(seconds=10)))
 
     def test_port_delete_holds_ip(self):
-        plugin = QuantumManager.get_plugin()
         base_class = db_base_plugin_v2.QuantumDbPluginV2
         with mock.patch.object(base_class, '_hold_ip') as hold_ip:
             with self.subnet() as subnet:
@@ -1822,8 +1806,6 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
     def test_create_public_network_no_admin_tenant(self):
         name = 'public_net'
-        keys = [('subnets', []), ('name', name), ('admin_state_up', True),
-                ('status', 'ACTIVE'), ('shared', True)]
         with testtools.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             with self.network(name=name,
@@ -2489,7 +2471,6 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
-        network_id = network['network']['id']
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
                                    cidr, ip_version=4)
         self._create_port(self.fmt,
@@ -2501,7 +2482,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
 
     def test_delete_subnet_port_exists_owned_by_other(self):
         with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
+            with self.port(subnet=subnet):
                 id = subnet['subnet']['id']
                 req = self.new_delete_request('subnets', id)
                 res = req.get_response(self.api)
@@ -2517,8 +2498,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
-        subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4)
+        self._make_subnet(self.fmt, network, gateway_ip, cidr, ip_version=4)
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
@@ -2669,8 +2649,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
-        subnet = self._test_create_subnet(expected=expected,
-                                          gateway_ip=gateway)
+        self._test_create_subnet(expected=expected, gateway_ip=gateway)
         # Gateway is last IP in range
         gateway = '10.0.0.254'
         allocation_pools = [{'start': '10.0.0.1',
@@ -2678,8 +2657,7 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
-        subnet = self._test_create_subnet(expected=expected,
-                                          gateway_ip=gateway)
+        self._test_create_subnet(expected=expected, gateway_ip=gateway)
         # Gateway is first in subnet
         gateway = '10.0.0.1'
         allocation_pools = [{'start': '10.0.0.2',
@@ -2687,8 +2665,8 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
-        subnet = self._test_create_subnet(expected=expected,
-                                          gateway_ip=gateway)
+        self._test_create_subnet(expected=expected,
+                                 gateway_ip=gateway)
 
     def test_create_force_subnet_gw_values(self):
         cfg.CONF.set_override('force_gateway_on_subnet', True)
@@ -2741,7 +2719,6 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 201)
             port = self.deserialize(self.fmt, res)
-            port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
 
@@ -2751,7 +2728,6 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 201)
             port = self.deserialize(self.fmt, res)
-            port_id = port['port']['id']
             # delete the port
             self._delete('ports', port['port']['id'])
         cfg.CONF.set_override('dhcp_lease_duration', 120)

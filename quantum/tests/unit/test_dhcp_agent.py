@@ -113,9 +113,7 @@ fake_down_network = FakeModel('12345678-dddd-dddd-1234567890ab',
 class TestDhcpAgent(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgent, self).setUp()
-        cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
-        cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
-        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
+        dhcp_agent.register_options()
         cfg.CONF.set_override('interface_driver',
                               'quantum.agent.linux.interface.NullDriver')
         self.driver_cls_p = mock.patch(
@@ -182,7 +180,7 @@ class TestDhcpAgent(base.BaseTestCase):
                          mock.call().wait()])
 
     def test_run_completes_single_pass(self):
-        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager'):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             attrs_to_mock = dict(
                 [(a, mock.DEFAULT) for a in
@@ -195,13 +193,13 @@ class TestDhcpAgent(base.BaseTestCase):
                     [mock.call.start()])
 
     def test_ns_name(self):
-        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager'):
             mock_net = mock.Mock(id='foo')
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             self.assertEqual(dhcp._ns_name(mock_net), 'qdhcp-foo')
 
     def test_ns_name_disabled_namespace(self):
-        with mock.patch('quantum.agent.dhcp_agent.DeviceManager') as dev_mgr:
+        with mock.patch('quantum.agent.dhcp_agent.DeviceManager'):
             cfg.CONF.set_override('use_namespaces', False)
             mock_net = mock.Mock(id='foo')
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
@@ -986,10 +984,6 @@ class TestDeviceManager(base.BaseTestCase):
         fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
                               mac_address='aa:bb:cc:dd:ee:ff')
 
-        expected_driver_calls = [mock.call(cfg.CONF),
-                                 mock.call().get_device_name(fake_network),
-                                 mock.call().unplug('tap12345678-12')]
-
         with mock.patch('quantum.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
             #mock_driver.DEV_NAME_LEN = (
@@ -1018,10 +1012,6 @@ class TestDeviceManager(base.BaseTestCase):
         fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
                               mac_address='aa:bb:cc:dd:ee:ff')
 
-        expected_driver_calls = [mock.call(cfg.CONF),
-                                 mock.call().get_device_name(fake_network),
-                                 mock.call().unplug('tap12345678-12')]
-
         with mock.patch('quantum.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
             mock_driver.get_device_name.return_value = 'tap12345678-12'
@@ -1045,10 +1035,6 @@ class TestDeviceManager(base.BaseTestCase):
 
         fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
                               mac_address='aa:bb:cc:dd:ee:ff')
-
-        expected_driver_calls = [mock.call(cfg.CONF),
-                                 mock.call().get_device_name(fake_network),
-                                 mock.call().unplug('tap12345678-12')]
 
         with mock.patch('quantum.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
@@ -1100,7 +1086,7 @@ class TestDhcpLeaseRelay(base.BaseTestCase):
             exists.return_value = False
             self.unlink.side_effect = OSError
 
-            relay = dhcp_agent.DhcpLeaseRelay(None)
+            dhcp_agent.DhcpLeaseRelay(None)
 
             self.unlink.assert_called_once_with(
                 cfg.CONF.dhcp_lease_relay_socket)
@@ -1110,7 +1096,7 @@ class TestDhcpLeaseRelay(base.BaseTestCase):
         with mock.patch('os.path.exists') as exists:
             exists.return_value = False
 
-            relay = dhcp_agent.DhcpLeaseRelay(None)
+            dhcp_agent.DhcpLeaseRelay(None)
 
             self.unlink.assert_called_once_with(
                 cfg.CONF.dhcp_lease_relay_socket)
@@ -1121,7 +1107,7 @@ class TestDhcpLeaseRelay(base.BaseTestCase):
         with mock.patch('os.path.exists') as exists:
             exists.return_value = True
             with testtools.ExpectedException(OSError):
-                relay = dhcp_agent.DhcpLeaseRelay(None)
+                dhcp_agent.DhcpLeaseRelay(None)
 
                 self.unlink.assert_called_once_with(
                     cfg.CONF.dhcp_lease_relay_socket)
@@ -1175,14 +1161,6 @@ class TestDhcpLeaseRelay(base.BaseTestCase):
                 self.assertTrue(log.called)
 
     def test_handler_other_exception(self):
-        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-        ip_address = '192.168.x.x'
-        lease_remaining = 120
-
-        json_rep = jsonutils.dumps(
-            dict(network_id=network_id,
-                 lease_remaining=lease_remaining,
-                 ip_address=ip_address))
         handler = mock.Mock()
         mock_sock = mock.Mock()
         mock_sock.recv.side_effect = Exception

@@ -163,9 +163,9 @@ class DhcpLocalProcess(DhcpBase):
             with open(file_name, 'r') as f:
                 try:
                     return converter and converter(f.read()) or f.read()
-                except ValueError, e:
+                except ValueError:
                     msg = _('Unable to convert value in %s')
-        except IOError, e:
+        except IOError:
             msg = _('Unable to access %s')
 
         LOG.debug(msg % file_name)
@@ -185,7 +185,7 @@ class DhcpLocalProcess(DhcpBase):
         cmd = ['cat', '/proc/%s/cmdline' % pid]
         try:
             return self.network.id in utils.execute(cmd, self.root_helper)
-        except RuntimeError, e:
+        except RuntimeError:
             return False
 
     @property

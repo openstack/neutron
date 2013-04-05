@@ -23,8 +23,7 @@ from quantum.common import exceptions as q_exc
 from quantum.common import topics
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
-# NOTE: quota_db cannot be removed, it is for db model
-from quantum.db import quota_db
+from quantum.db import quota_db  # noqa
 from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import log as logging

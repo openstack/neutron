@@ -32,7 +32,6 @@ from quantum.db import models_v2
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)

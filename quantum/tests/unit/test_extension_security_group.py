@@ -17,7 +17,6 @@ import contextlib
 import os
 
 import mock
-from oslo.config import cfg
 import webob.exc
 
 from quantum.api.v2 import attributes as attr

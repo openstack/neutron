@@ -25,7 +25,6 @@ import routes
 import webob
 from webtest import TestApp
 
-from quantum import api as server
 from quantum.api import extensions
 from quantum.api.extensions import (
     ExtensionMiddleware,

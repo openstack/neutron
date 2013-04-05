@@ -21,7 +21,6 @@
 Implements a Nexus-OS NETCONF over SSHv2 API Client
 """
 
-import eventlet
 import logging
 
 from ncclient import manager

@@ -16,7 +16,6 @@
 #    under the License.
 
 import mock
-from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.dhcp_agent import DeviceManager
@@ -60,9 +59,6 @@ class FakePort:
 class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
-        root_helper_opt = [
-            cfg.StrOpt('root_helper', default='sudo'),
-        ]
         self.conf = config.setup_conf()
         self.conf.register_opts(interface.OPTS)
         config.register_root_helper(self.conf)
@@ -315,15 +311,6 @@ class TestBridgeInterfaceDriver(TestBase):
         self.device_exists.return_value = False
         self.conf.set_override('network_device_mtu', 9000)
         self._test_plug(mtu=9000)
-
-    def test_unplug(self):
-        self.device_exists.return_value = True
-        with mock.patch('quantum.agent.linux.interface.LOG.debug') as log:
-            br = interface.BridgeInterfaceDriver(self.conf)
-            br.unplug('tap0')
-            log.assert_called_once()
-        self.execute.assert_has_calls(
-            [mock.call(['ip', 'link', 'delete', 'tap0'], 'sudo')])
 
     def test_unplug_no_device(self):
         self.device_exists.return_value = False

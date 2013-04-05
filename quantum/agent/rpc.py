@@ -15,17 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
-
 from quantum.common import topics
 
 from quantum.openstack.common import log as logging
-from quantum.openstack.common.notifier import api
-from quantum.openstack.common.notifier import rpc_notifier
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
 from quantum.openstack.common import timeutils
-from quantum.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)

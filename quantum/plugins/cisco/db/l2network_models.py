@@ -15,11 +15,10 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relation, object_mapper
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import object_mapper
 
 from quantum.openstack.common import uuidutils
-from quantum.plugins.cisco.db import models
 from quantum.plugins.cisco.db.models import BASE
 
 

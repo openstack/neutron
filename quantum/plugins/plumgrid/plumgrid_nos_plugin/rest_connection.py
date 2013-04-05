@@ -82,7 +82,7 @@ class RestConnection(object):
                     raise plum_excep.PLUMgridException(err_message)
 
             ret = (resp.status, resp.reason, resp_str)
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError:
             LOG.error(_('PLUMgrid_NOS_Server: %(action)s failure, %(e)r'))
             ret = 0, None, None, None
         conn.close()

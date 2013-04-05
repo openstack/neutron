@@ -97,8 +97,8 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
         expectations = [
             mock.call.update_port(mock.ANY, 'port_id', dict(port=port_retval))]
 
-        retval = self._test_get_dhcp_port_helper(port_retval, expectations,
-                                                 update_port=port_retval)
+        self._test_get_dhcp_port_helper(port_retval, expectations,
+                                        update_port=port_retval)
         self.assertEqual(len(self.log.mock_calls), 1)
 
     def test_get_dhcp_port_create_new(self):

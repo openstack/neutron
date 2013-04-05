@@ -19,7 +19,6 @@
 import contextlib
 import mock
 from oslo.config import cfg
-import testtools
 
 from quantum.plugins.services.agent_loadbalancer import agent
 from quantum.tests import base

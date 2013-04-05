@@ -63,7 +63,7 @@ class NECPluginApi(agent_rpc.PluginApi):
                                     datapath_id=datapath_id,
                                     port_added=port_added,
                                     port_removed=port_removed))
-        except Exception as e:
+        except Exception:
             LOG.warn(_("update_ports() failed."))
             return
 

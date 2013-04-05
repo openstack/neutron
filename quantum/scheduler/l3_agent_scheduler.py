@@ -86,7 +86,7 @@ class ChanceScheduler(object):
 
             # check if the configuration of l3 agent is compatible
             # with the router
-            router_ids = [router_id[0] for router_id in router_ids]
+            router_ids = [router_id_[0] for router_id_ in router_ids]
             routers = plugin.get_routers(context, filters={'id': router_ids})
             to_removed_ids = []
             for router in routers:

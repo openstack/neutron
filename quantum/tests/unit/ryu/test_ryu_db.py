@@ -18,14 +18,10 @@
 from contextlib import nested
 import operator
 
-from oslo.config import cfg
-
 from quantum.db import api as db
-# NOTE: this import is needed for correct plugin code work
-from quantum.plugins.ryu.common import config
+from quantum.plugins.ryu.common import config  # noqa
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
-# NOTE: this import is needed for correct plugin code work
-from quantum.plugins.ryu.db import models_v2 as ryu_models_v2
+from quantum.plugins.ryu.db import models_v2 as ryu_models_v2  # noqa
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 

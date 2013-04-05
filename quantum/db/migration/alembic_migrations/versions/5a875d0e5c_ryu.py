@@ -40,7 +40,6 @@ migration_for_plugins = [
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
 
 from quantum.db import migration
 

@@ -17,7 +17,6 @@ import contextlib
 
 import mock
 from oslo.config import cfg
-import testtools
 from webob import exc
 import webtest
 

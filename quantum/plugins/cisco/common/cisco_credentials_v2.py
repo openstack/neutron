@@ -18,8 +18,6 @@
 
 import logging as LOG
 
-from oslo.config import cfg
-
 from quantum.plugins.cisco.common import config
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
@@ -54,7 +52,7 @@ class Store(object):
     @staticmethod
     def put_credential(cred_name, username, password):
         """Set the username and password"""
-        credential = cdb.add_credential(TENANT, cred_name, username, password)
+        cdb.add_credential(TENANT, cred_name, username, password)
 
     @staticmethod
     def get_username(cred_name):
@@ -71,7 +69,7 @@ class Store(object):
     @staticmethod
     def get_credential(cred_name):
         """Get the username and password"""
-        credential = cdb.get_credential_name(TENANT, cred_name)
+        cdb.get_credential_name(TENANT, cred_name)
         return {const.USERNAME: const.CREDENTIAL_USERNAME,
                 const.PASSWORD: const.CREDENTIAL_PASSWORD}
 

@@ -43,7 +43,7 @@ from quantum import context as q_context
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log
 from quantum.openstack.common.rpc import dispatcher
-from quantum.plugins.ryu.common import config
+from quantum.plugins.ryu.common import config  # noqa
 
 
 LOG = log.getLogger(__name__)

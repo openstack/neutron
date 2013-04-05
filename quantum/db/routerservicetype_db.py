@@ -17,7 +17,6 @@
 # @author: Kaiwei Fan, VMware, Inc
 
 import sqlalchemy as sa
-from sqlalchemy.orm import exc
 
 from quantum.db import model_base
 from quantum.extensions import routerservicetype as rst

@@ -85,12 +85,6 @@ class TestNetworkCtrl(object):
         assert id_ <= len(self.matches), 'remove_id: id > len()'
         self.matches.pop(id_)
 
-    def remove_match(self, prior, method_regexp, uri_regexp):
-        for i in self.matches:
-            if (i[0], i[1], i[2]) == (method_regexp, uri_regexp, idstr):
-                self.remove_id(i)
-                break
-
     def request_handler(self, method, uri, body):
         retstatus = self.default_status
         retbody = self.default_response

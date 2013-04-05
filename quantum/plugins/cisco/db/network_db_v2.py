@@ -24,7 +24,7 @@ from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
 from quantum.plugins.cisco.common import config
 from quantum.plugins.cisco.db import network_models_v2
-from quantum.plugins.cisco.db import nexus_models_v2
+from quantum.plugins.cisco.db import nexus_models_v2  # noqa
 from quantum.plugins.openvswitch import ovs_models_v2
 
 

@@ -58,7 +58,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual(port.switch.br_name, self.BR_NAME)
 
         # test __str__
-        foo = str(port)
+        str(port)
 
         self.mox.VerifyAll()
 
@@ -302,9 +302,8 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual(ovs_lib.get_bridge_for_iface(root_helper, iface), br)
         self.mox.VerifyAll()
 
-    def test_iface_to_br(self):
+    def test_iface_to_br_handles_ovs_vsctl_exception(self):
         iface = 'tap0'
-        br = 'br-int'
         root_helper = 'sudo'
         utils.execute(["ovs-vsctl", self.TO, "iface-to-br", iface],
                       root_helper=root_helper).AndRaise(Exception)
@@ -327,7 +326,6 @@ class OVS_Lib_Test(base.BaseTestCase):
                                 'ca:fe:de:ad:be:ef', 'br')
         port2 = ovs_lib.VifPort('tap5678', 2, uuidutils.generate_uuid(),
                                 'ca:ee:de:ad:be:ef', 'br')
-        ports = [port1, port2]
         self.mox.StubOutWithMock(self.br, 'get_vif_ports')
         self.br.get_vif_ports().AndReturn([port1, port2])
         self.mox.StubOutWithMock(self.br, 'delete_port')

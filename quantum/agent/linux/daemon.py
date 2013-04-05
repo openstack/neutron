@@ -31,7 +31,7 @@ class Pidfile(object):
     def __init__(self, pidfile, procname, root_helper='sudo'):
         try:
             self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
-        except IOError, e:
+        except IOError:
             LOG.exception(_("Failed to open pidfile: %s"), pidfile)
             sys.exit(1)
         self.pidfile = pidfile
@@ -68,7 +68,7 @@ class Pidfile(object):
         cmd = ['cat', '/proc/%s/cmdline' % pid]
         try:
             return self.procname in utils.execute(cmd, self.root_helper)
-        except RuntimeError, e:
+        except RuntimeError:
             return False
 
 
@@ -91,7 +91,7 @@ class Daemon(object):
             pid = os.fork()
             if pid > 0:
                 sys.exit(0)
-        except OSError, e:
+        except OSError:
             LOG.exception(_('Fork failed'))
             sys.exit(1)
 

@@ -32,11 +32,10 @@ from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
 from quantum.db import models_v2
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
-from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
-from quantum.plugins.ryu.common import config
+from quantum.plugins.ryu.common import config  # noqa
 from quantum.plugins.ryu.db import api_v2 as db_api_v2
 
 

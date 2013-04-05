@@ -16,11 +16,11 @@
 #
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relation, object_mapper
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import object_mapper
 
 from quantum.db import model_base
-from quantum.db import models_v2 as models
+from quantum.db import models_v2 as models  # noqa
 from quantum.openstack.common import uuidutils
 
 

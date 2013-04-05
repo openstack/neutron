@@ -40,7 +40,7 @@ from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import dispatcher
-from quantum.plugins.openvswitch.common import config
+from quantum.plugins.openvswitch.common import config  # noqa
 from quantum.plugins.openvswitch.common import constants
 
 

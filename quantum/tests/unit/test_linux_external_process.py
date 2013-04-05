@@ -73,7 +73,7 @@ class TestProcessManager(base.BaseTestCase):
             active.__get__ = mock.Mock(return_value=True)
 
             manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
-            with mock.patch.object(ep, 'ip_lib') as ip_lib:
+            with mock.patch.object(ep, 'ip_lib'):
                 manager.enable(callback)
                 self.assertFalse(callback.called)
 

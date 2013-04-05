@@ -31,11 +31,6 @@ down_revision = '1341ed32cc1e'
 
 migration_for_plugins = ['*']
 
-from alembic import op
-import sqlalchemy as sa
-
-from quantum.db import migration
-
 
 def upgrade(active_plugin=None, options=None):
     """A no-op migration for marking the Grizzly release."""
