@@ -26,7 +26,7 @@ import logging
 import time
 import urlparse
 
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
+from quantum.plugins.nicira.api_client.common import (
     _conn_str)
 
 logging.basicConfig(level=logging.INFO)

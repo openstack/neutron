@@ -14,3 +14,11 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
+import sys
+
+from quantum.plugins import nicira
+
+# Provide a mapping for the nicira_nvp_plugin package to ensure
+# backwards compatibilty for configuration.
+sys.modules['quantum.plugins.nicira.nicira_nvp_plugin'] = nicira

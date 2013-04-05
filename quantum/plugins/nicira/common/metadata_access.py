@@ -27,9 +27,8 @@ from quantum.common import exceptions as q_exc
 from quantum.db import l3_db
 from quantum.db import models_v2
 from quantum.openstack.common import log as logging
-from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
-                                                             as nvp_exc)
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira.common import exceptions as nvp_exc
+from quantum.plugins.nicira import NvpApiClient
 
 
 LOG = logging.getLogger(__name__)

@@ -9,7 +9,7 @@
 import httplib
 
 # Local
-import quantum.plugins.nicira.nicira_nvp_plugin.api_client.common as naco
+import quantum.plugins.nicira.api_client.common as naco
 from quantum.tests import base
 
 

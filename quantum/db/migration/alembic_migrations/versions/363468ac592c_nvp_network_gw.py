@@ -30,7 +30,7 @@ down_revision = '1c33fa3cd1a1'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPluginV2.NvpPluginV2'
+    'quantum.plugins.nicira.QuantumPluginV2.NvpPluginV2'
 ]
 
 from alembic import op

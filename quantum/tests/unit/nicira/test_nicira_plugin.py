@@ -29,12 +29,11 @@ from quantum.extensions import l3
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
-import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
-from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
-from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
-                                                                 as ext_qos)
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
-from quantum.plugins.nicira.nicira_nvp_plugin import QuantumPlugin
+import quantum.plugins.nicira as nvp_plugin
+from quantum.plugins.nicira.extensions import nvp_networkgw
+from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
+from quantum.plugins.nicira import nvplib
+from quantum.plugins.nicira import QuantumPlugin
 from quantum.tests.unit.nicira import fake_nvpapiclient
 import quantum.tests.unit.nicira.test_networkgw as test_l2_gw
 import quantum.tests.unit.test_db_plugin as test_plugin
@@ -44,7 +43,7 @@ from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_l3_plugin as test_l3_plugin
 
 NICIRA_PKG_PATH = nvp_plugin.__name__
-NICIRA_EXT_PATH = "../../plugins/nicira/nicira_nvp_plugin/extensions"
+NICIRA_EXT_PATH = "../../plugins/nicira/extensions"
 
 
 class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
@@ -419,7 +418,7 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
 
     def test_floatingip_with_assoc_fails(self):
         self._test_floatingip_with_assoc_fails(
-            'quantum.plugins.nicira.nicira_nvp_plugin.'
+            'quantum.plugins.nicira.'
             'QuantumPlugin.NvpPluginV2')
 
     def _nvp_metadata_setup(self):

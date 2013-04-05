@@ -30,9 +30,9 @@ import logging
 # no quantum-specific logic in it
 from quantum.common import constants
 from quantum.common import exceptions as exception
-from quantum.plugins.nicira.nicira_nvp_plugin.common import (
+from quantum.plugins.nicira.common import (
     exceptions as nvp_exc)
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira import NvpApiClient
 
 
 # HTTP METHODS CONSTANTS

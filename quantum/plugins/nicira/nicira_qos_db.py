@@ -23,9 +23,8 @@ from quantum.api.v2 import attributes as attr
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.openstack.common import uuidutils
-from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
-                                                                 as ext_qos)
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
+from quantum.plugins.nicira import nvplib
 
 
 class QoSQueue(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):

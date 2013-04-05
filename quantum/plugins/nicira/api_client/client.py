@@ -25,7 +25,7 @@ import time
 import logging
 
 
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client.common import (
+from quantum.plugins.nicira.api_client.common import (
     _conn_str)
 
 

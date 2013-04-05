@@ -24,7 +24,7 @@ import json
 import logging
 import urllib
 
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client import request
+from quantum.plugins.nicira.api_client import request
 
 eventlet.monkey_patch()
 logging.basicConfig(level=logging.INFO)

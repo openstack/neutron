@@ -22,8 +22,8 @@ import eventlet
 import logging
 import time
 
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client import client
-from quantum.plugins.nicira.nicira_nvp_plugin.api_client import (
+from quantum.plugins.nicira.api_client import client
+from quantum.plugins.nicira.api_client import (
     request_eventlet)
 
 eventlet.monkey_patch()

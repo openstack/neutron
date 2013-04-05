@@ -44,5 +44,5 @@ Quantum Configuration
     Modify your Quantum configuration for using the NVP Plugin:
 
     core_plugin =
-        quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2
+        quantum.plugins.nicira.QuantumPlugin.NvpPluginV2
 

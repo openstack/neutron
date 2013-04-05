@@ -19,7 +19,7 @@ import urlparse
 
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import uuidutils
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
+from quantum.plugins.nicira import NvpApiClient
 
 
 LOG = logging.getLogger(__name__)

@@ -33,7 +33,7 @@ migration_for_plugins = [
     'quantum.plugins.bigswitch.plugin.QuantumRestProxyV2',
     'quantum.plugins.hyperv.hyperv_quantum_plugin.HyperVQuantumPlugin',
     'quantum.plugins.midonet.plugin.MidonetPluginV2',
-    'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2'
+    'quantum.plugins.nicira.QuantumPlugin.NvpPluginV2'
 ]
 
 from quantum.db import migration

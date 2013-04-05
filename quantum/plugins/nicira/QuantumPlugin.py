@@ -51,27 +51,20 @@ from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import rpc
-from quantum.plugins.nicira.nicira_nvp_plugin.common import (metadata_access
-                                                             as nvp_meta)
-from quantum.plugins.nicira.nicira_nvp_plugin.common import (securitygroups
-                                                             as nvp_sec)
+from quantum.plugins.nicira.common import metadata_access as nvp_meta
+from quantum.plugins.nicira.common import securitygroups as nvp_sec
 from quantum import policy
-from quantum.plugins.nicira.nicira_nvp_plugin.common import config
-from quantum.plugins.nicira.nicira_nvp_plugin.common import (exceptions
-                                                             as nvp_exc)
-from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_networkgw
-                                                                 as networkgw)
-from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
-                                                                 as ext_qos)
-from quantum.plugins.nicira.nicira_nvp_plugin import nicira_db
-from quantum.plugins.nicira.nicira_nvp_plugin import (nicira_networkgw_db
-                                                      as networkgw_db)
-from quantum.plugins.nicira.nicira_nvp_plugin import nicira_qos_db as qos_db
-from quantum.plugins.nicira.nicira_nvp_plugin import nvp_cluster
-from quantum.plugins.nicira.nicira_nvp_plugin.nvp_plugin_version import (
-    PLUGIN_VERSION)
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
+from quantum.plugins.nicira.common import config
+from quantum.plugins.nicira.common import exceptions as nvp_exc
+from quantum.plugins.nicira.extensions import nvp_networkgw as networkgw
+from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
+from quantum.plugins.nicira import nicira_db
+from quantum.plugins.nicira import nicira_networkgw_db as networkgw_db
+from quantum.plugins.nicira import nicira_qos_db as qos_db
+from quantum.plugins.nicira import nvp_cluster
+from quantum.plugins.nicira.nvp_plugin_version import PLUGIN_VERSION
+from quantum.plugins.nicira import NvpApiClient
+from quantum.plugins.nicira import nvplib
 
 LOG = logging.getLogger("QuantumPlugin")
 NVP_NOSNAT_RULES_ORDER = 10
@@ -125,7 +118,7 @@ def parse_config():
     if not cfg.CONF.api_extensions_path:
         cfg.CONF.set_override(
             'api_extensions_path',
-            'quantum/plugins/nicira/nicira_nvp_plugin/extensions')
+            'quantum/plugins/nicira/extensions')
     if (cfg.CONF.NVP.metadata_mode == "access_network" and
         not cfg.CONF.allow_overlapping_ips):
         LOG.warn(_("Overlapping IPs must be enabled in order to setup "
