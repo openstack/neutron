@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.66"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.67"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-04 00:06+0000\n"
+"POT-Creation-Date: 2013-04-05 00:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -461,7 +461,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:914
+#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:919
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -2063,7 +2063,7 @@ msgstr ""
 msgid "Multiple routers match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:186 quantum/db/l3_db.py:602
+#: quantum/db/l3_db.py:186 quantum/db/l3_db.py:607
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
@@ -2085,7 +2085,7 @@ msgid ""
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:314 quantum/db/l3_db.py:389
+#: quantum/db/l3_db.py:314 quantum/db/l3_db.py:391
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
@@ -2101,77 +2101,77 @@ msgstr ""
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:456
+#: quantum/db/l3_db.py:461
 #, python-format
 msgid "Multiple floating ips match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:475
+#: quantum/db/l3_db.py:480
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: quantum/db/l3_db.py:513
+#: quantum/db/l3_db.py:518
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: quantum/db/l3_db.py:517
+#: quantum/db/l3_db.py:522
 #, python-format
 msgid ""
 "Cannnot create floating IP and bind it to Port %(port_id)s, since that "
 "port is owned by a different tenant."
 msgstr ""
 
-#: quantum/db/l3_db.py:529
+#: quantum/db/l3_db.py:534
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:536
+#: quantum/db/l3_db.py:541
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: quantum/db/l3_db.py:540
+#: quantum/db/l3_db.py:545
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:570
+#: quantum/db/l3_db.py:575
 #: quantum/plugins/nicira/nicira_nvp_plugin/QuantumPlugin.py:1948
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: quantum/db/l3_db.py:622
+#: quantum/db/l3_db.py:627
 msgid "Unable to find any IP address on external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:643
+#: quantum/db/l3_db.py:648
 msgid "Unable to create Floating ip due to a malformed request"
 msgstr ""
 
-#: quantum/db/l3_db.py:647
+#: quantum/db/l3_db.py:652
 msgid "Floating IP association failed"
 msgstr ""
 
-#: quantum/db/l3_db.py:732
+#: quantum/db/l3_db.py:737
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: quantum/db/l3_db.py:750
+#: quantum/db/l3_db.py:755
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:920
+#: quantum/db/l3_db.py:925
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
