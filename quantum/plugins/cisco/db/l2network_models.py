@@ -27,35 +27,36 @@ class L2NetworkBase(object):
     __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
-        """Internal Dict set method"""
+        """Internal Dict set method."""
         setattr(self, key, value)
 
     def __getitem__(self, key):
-        """Internal Dict get method"""
+        """Internal Dict get method."""
         return getattr(self, key)
 
     def get(self, key, default=None):
-        """Dict get method"""
+        """Dict get method."""
         return getattr(self, key, default)
 
     def __iter__(self):
-        """Iterate over table columns"""
+        """Iterate over table columns."""
         self._i = iter(object_mapper(self).columns)
         return self
 
     def next(self):
-        """Next method for the iterator"""
+        """Next method for the iterator."""
         n = self._i.next().name
         return n, getattr(self, n)
 
     def update(self, values):
-        """Make the model object behave like a dict"""
+        """Make the model object behave like a dict."""
         for k, v in values.iteritems():
             setattr(self, k, v)
 
     def iteritems(self):
         """Make the model object behave like a dict"
-        Includes attributes from joins."""
+        Includes attributes from joins.
+        """
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
                        if not k[0] == '_'])
@@ -64,7 +65,7 @@ class L2NetworkBase(object):
 
 
 class VlanID(BASE, L2NetworkBase):
-    """Represents a vlan_id usage"""
+    """Represents a vlan_id usage."""
     __tablename__ = 'vlan_ids'
 
     vlan_id = Column(Integer, primary_key=True)
@@ -79,7 +80,7 @@ class VlanID(BASE, L2NetworkBase):
 
 
 class VlanBinding(BASE, L2NetworkBase):
-    """Represents a binding of vlan_id to network_id"""
+    """Represents a binding of vlan_id to network_id."""
     __tablename__ = 'vlan_bindings'
 
     vlan_id = Column(Integer, primary_key=True)
@@ -99,7 +100,7 @@ class VlanBinding(BASE, L2NetworkBase):
 
 
 class QoS(BASE, L2NetworkBase):
-    """Represents QoS for a tenant"""
+    """Represents QoS for a tenant."""
     __tablename__ = 'qoss'
 
     qos_id = Column(String(255))
@@ -119,7 +120,7 @@ class QoS(BASE, L2NetworkBase):
 
 
 class Credential(BASE, L2NetworkBase):
-    """Represents credentials for a tenant"""
+    """Represents credentials for a tenant."""
     __tablename__ = 'credentials'
 
     credential_id = Column(String(255))

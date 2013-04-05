@@ -44,10 +44,10 @@ To run a single functional test module::
 import os
 import sys
 
-from quantum.common.test_lib import run_tests
 from nose import config
 from nose import core
 
+from quantum.common.test_lib import run_tests
 import quantum.tests.unit
 
 

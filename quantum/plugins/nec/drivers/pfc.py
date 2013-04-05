@@ -45,7 +45,7 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
         return False
 
     def _generate_pfc_str(self, raw_str):
-        """Generate PFC acceptable String"""
+        """Generate PFC acceptable String."""
         return re.sub(r'[^0-9a-zA-Z]', '_', raw_str)
 
     def _generate_pfc_id(self, id_str):
@@ -63,7 +63,7 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
             uuid_str = str(uuid.UUID(id_str)).replace('-', '')
             uuid_no_version = uuid_str[:12] + uuid_str[13:]
             return uuid_no_version[:31]
-        except:
+        except Exception:
             return self._generate_pfc_str(id_str)[:31]
 
     def _generate_pfc_description(self, desc):

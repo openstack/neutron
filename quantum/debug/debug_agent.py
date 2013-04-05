@@ -124,7 +124,7 @@ class QuantumDebugAgent():
                                namespace=namespace)
             try:
                 ip.netns.delete(namespace)
-            except:
+            except Exception:
                 LOG.warn(_('Failed to delete namespace %s'), namespace)
         else:
             self.driver.unplug(self.driver.get_device_name(port),

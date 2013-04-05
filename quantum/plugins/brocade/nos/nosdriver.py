@@ -66,7 +66,8 @@ class NOSdriver():
             LOG.debug(_("Connect failed to switch: %s"), e)
             raise
 
-        LOG.debug(_("Connect success to host %s:%d"), host, SSH_PORT)
+        LOG.debug(_("Connect success to host %(host)s:%(ssh_port)d"),
+                  dict(host=host, ssh_port=SSH_PORT))
         return mgr
 
     def create_network(self, host, username, password, net_id):

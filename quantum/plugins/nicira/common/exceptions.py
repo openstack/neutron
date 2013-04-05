@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-""" NVP Plugin exceptions """
+"""NVP Plugin exceptions"""
 
 from quantum.common import exceptions as q_exc
 

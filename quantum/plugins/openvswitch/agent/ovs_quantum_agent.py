@@ -89,7 +89,7 @@ class Port(object):
             return (self and other
                     and self.id == other.id
                     and self.admin_state_up == other.admin_state_up)
-        except:
+        except Exception:
             return False
 
     def __ne__(self, other):
@@ -377,7 +377,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         :param net_uuid: the network uuid associated with this vlan.
         :param lvm: a LocalVLANMapping object that tracks (vlan, lsw_id,
-            vif_ids) mapping.'''
+            vif_ids) mapping.
+        '''
         LOG.info(_("Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"),
                  {'vlan_id': lvm.vlan,
                   'net_uuid': net_uuid})
@@ -457,7 +458,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         VIF.
 
         :param vif_id: the id of the vif
-        :param net_uuid: the net_uuid this port is associated with.'''
+        :param net_uuid: the net_uuid this port is associated with.
+        '''
         if net_uuid is None:
             net_uuid = self.get_net_uuid(vif_id)
 
@@ -484,7 +486,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def port_dead(self, port):
         '''Once a port has no binding, put it on the "dead vlan".
 
-        :param port: a ovs_lib.VifPort object.'''
+        :param port: a ovs_lib.VifPort object.
+        '''
         self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                      DEAD_VLAN_TAG)
         self.int_br.add_flow(priority=2, in_port=port.ofport, actions="drop")
@@ -510,7 +513,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         Creates tunnel bridge, and links it to the integration bridge
         using a patch port.
 
-        :param tun_br: the name of the tunnel bridge.'''
+        :param tun_br: the name of the tunnel bridge.
+        '''
         self.tun_br = ovs_lib.OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
         self.patch_tun_ofport = self.int_br.add_patch_port(
@@ -532,7 +536,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         Creates physical network bridges and links them to the
         integration bridge using veths.
 
-        :param bridge_mappings: map physical network names to bridge names.'''
+        :param bridge_mappings: map physical network names to bridge names.
+        '''
         self.phys_brs = {}
         self.int_ofports = {}
         self.phys_ofports = {}
@@ -702,7 +707,7 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     sync = self.process_network_ports(port_info)
                     ports = port_info['current']
 
-            except:
+            except Exception:
                 LOG.exception(_("Error in agent event loop"))
                 sync = True
                 tunnel_sync = True

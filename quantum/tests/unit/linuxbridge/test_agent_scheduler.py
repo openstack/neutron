@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from quantum.tests.unit.openvswitch import test_agent_scheduler
 from quantum.tests.unit.linuxbridge import test_linuxbridge_plugin
+from quantum.tests.unit.openvswitch import test_agent_scheduler
 
 
 class LbAgentSchedulerTestCase(

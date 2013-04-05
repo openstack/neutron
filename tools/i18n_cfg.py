@@ -3,7 +3,7 @@ import re
 
 
 def is_log_callfunc(n):
-    """ LOG.xxx('hello %s' % xyz) and LOG('hello') """
+    """LOG.xxx('hello %s' % xyz) and LOG('hello')"""
     if isinstance(n.parent, compiler.ast.Mod):
         n = n.parent
     if isinstance(n.parent, compiler.ast.CallFunc):
@@ -16,7 +16,7 @@ def is_log_callfunc(n):
 
 
 def is_log_i18n_msg_with_mod(n):
-    """ LOG.xxx("Hello %s" % xyz) should be LOG.xxx("Hello %s", xyz) """
+    """LOG.xxx("Hello %s" % xyz) should be LOG.xxx("Hello %s", xyz)"""
     if not isinstance(n.parent.parent, compiler.ast.Mod):
         return False
     n = n.parent.parent
@@ -30,7 +30,7 @@ def is_log_i18n_msg_with_mod(n):
 
 
 def is_wrong_i18n_format(n):
-    """ Check _('hello %s' % xyz) """
+    """Check _('hello %s' % xyz)"""
     if isinstance(n.parent, compiler.ast.Mod):
         n = n.parent
     if isinstance(n.parent, compiler.ast.CallFunc):

@@ -34,14 +34,14 @@ def get16ByteUUID(uuid):
 
 
 def make_net_dict(net_id, net_name, ports):
-    """Helper funciton"""
+    """Helper funciton."""
     res = {const.NET_ID: net_id, const.NET_NAME: net_name}
     res[const.NET_PORTS] = ports
     return res
 
 
 def make_port_dict(port_id, port_state, net_id, attachment):
-    """Helper funciton"""
+    """Helper funciton."""
     res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
     res[const.NET_ID] = net_id
     res[const.ATTACHMENT] = attachment

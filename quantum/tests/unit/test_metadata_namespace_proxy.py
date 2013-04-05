@@ -23,8 +23,8 @@ import testtools
 import webob
 
 from quantum.agent.metadata import namespace_proxy as ns_proxy
-from quantum.tests import base
 from quantum.common import utils
+from quantum.tests import base
 
 
 class FakeConf(object):

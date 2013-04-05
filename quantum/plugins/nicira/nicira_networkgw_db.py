@@ -82,7 +82,7 @@ base.FAULT_MAP.update({GatewayInUse: web_exc.HTTPConflict,
 
 
 class NetworkConnection(model_base.BASEV2, models_v2.HasTenant):
-    """ Defines a connection between a network gateway and a network """
+    """Defines a connection between a network gateway and a network."""
     # We use port_id as the primary key as one can connect a gateway
     # to a network in multiple ways (and we cannot use the same port form
     # more than a single gateway)
@@ -115,7 +115,7 @@ class NetworkGatewayDevice(model_base.BASEV2):
 
 class NetworkGateway(model_base.BASEV2, models_v2.HasId,
                      models_v2.HasTenant):
-    """ Defines the data model for a network gateway """
+    """Defines the data model for a network gateway."""
     name = sa.Column(sa.String(255))
     # Tenant id is nullable for this resource
     tenant_id = sa.Column(sa.String(36))
@@ -194,7 +194,7 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
             gw['default'] = True
 
     def prevent_network_gateway_port_deletion(self, context, port):
-        """ Pre-deletion check.
+        """Pre-deletion check.
 
         Ensures a port will not be deleted if is being used by a network
         gateway. In that case an exception will be raised.

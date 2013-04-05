@@ -354,7 +354,7 @@ class FakeClient:
             def _lswitch_match(res_uuid):
                 # verify that the switch exist
                 if parent_uuid and not parent_uuid in self._fake_lswitch_dict:
-                    raise Exception(_("lswitch:%s not found" % parent_uuid))
+                    raise Exception(_("lswitch:%s not found") % parent_uuid)
                 if (not parent_uuid
                     or res_dict[res_uuid].get('ls_uuid') == parent_uuid):
                     return True
@@ -363,7 +363,7 @@ class FakeClient:
             def _lrouter_match(res_uuid):
                 # verify that the router exist
                 if parent_uuid and not parent_uuid in self._fake_lrouter_dict:
-                    raise Exception(_("lrouter:%s not found" % parent_uuid))
+                    raise Exception(_("lrouter:%s not found") % parent_uuid)
                 if (not parent_uuid or
                     res_dict[res_uuid].get('lr_uuid') == parent_uuid):
                     return True

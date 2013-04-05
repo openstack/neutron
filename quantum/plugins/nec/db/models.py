@@ -21,16 +21,16 @@ from quantum.db import model_base
 from quantum.db import models_v2
 
 
-"""New mapping tables"""
+"""New mapping tables."""
 
 
 class OFCId(object):
-    """Resource ID on OpenFlow Controller"""
+    """Resource ID on OpenFlow Controller."""
     ofc_id = sa.Column(sa.String(255), unique=True, nullable=False)
 
 
 class QuantumId(object):
-    """Logical ID on Quantum"""
+    """Logical ID on Quantum."""
     quantum_id = sa.Column(sa.String(36), primary_key=True)
 
 
@@ -50,11 +50,11 @@ class OFCFilterMapping(model_base.BASEV2, QuantumId, OFCId):
     """Represents a Filter on OpenFlow Network/Controller."""
 
 
-"""Old mapping tables"""
+"""Old mapping tables."""
 
 
 class HasQuantumId(object):
-    """Logical ID on Quantum"""
+    """Logical ID on Quantum."""
     quantum_id = sa.Column(sa.String(36), nullable=False)
 
 
@@ -83,7 +83,7 @@ class PortInfo(model_base.BASEV2, models_v2.HasId):
 
 
 class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represents a packet filter"""
+    """Represents a packet filter."""
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            nullable=False)

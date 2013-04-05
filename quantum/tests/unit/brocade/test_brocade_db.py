@@ -29,7 +29,7 @@ TEST_VLAN = 1000
 
 
 class TestBrocadeDb(test_plugin.QuantumDbPluginV2TestCase):
-    """Test brocade db functionality"""
+    """Test brocade db functionality."""
 
     def test_create_network(self):
         """Test brocade specific network db."""

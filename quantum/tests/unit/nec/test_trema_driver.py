@@ -27,7 +27,7 @@ from quantum.tests import base
 
 
 class TestConfig(object):
-    """Configuration for this test"""
+    """Configuration for this test."""
     host = '127.0.0.1'
     port = 8888
 
@@ -44,7 +44,7 @@ class TremaDriverTestBase(base.BaseTestCase):
         self.addCleanup(self.mox.UnsetStubs)
 
     def get_ofc_item_random_params(self):
-        """create random parameters for ofc_item test"""
+        """create random parameters for ofc_item test."""
         tenant_id = uuidutils.generate_uuid()
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
@@ -181,7 +181,7 @@ class TremaMACBaseDriverTest(TremaDriverNetworkTestBase):
 class TremaFilterDriverTest(TremaDriverTestBase):
 
     def get_ofc_item_random_params(self):
-        """create random parameters for ofc_item test"""
+        """create random parameters for ofc_item test."""
         t, n, p = (super(TremaFilterDriverTest, self).
                    get_ofc_item_random_params())
         filter_id = uuidutils.generate_uuid()

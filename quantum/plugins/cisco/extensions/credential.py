@@ -31,36 +31,36 @@ from quantum import wsgi
 
 
 class Credential(extensions.ExtensionDescriptor):
-    """extension class Credential"""
+    """extension class Credential."""
 
     @classmethod
     def get_name(cls):
-        """ Returns Ext Resource Name """
+        """Returns Ext Resource Name."""
         return "Cisco Credential"
 
     @classmethod
     def get_alias(cls):
-        """ Returns Ext Resource Alias """
+        """Returns Ext Resource Alias."""
         return "Cisco Credential"
 
     @classmethod
     def get_description(cls):
-        """ Returns Ext Resource Description """
+        """Returns Ext Resource Description."""
         return "Credential include username and password"
 
     @classmethod
     def get_namespace(cls):
-        """ Returns Ext Resource Namespace """
+        """Returns Ext Resource Namespace."""
         return "http://docs.ciscocloud.com/api/ext/credential/v1.0"
 
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource Update Time """
+        """Returns Ext Resource Update Time."""
         return "2011-07-25T13:25:27-06:00"
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
         controller = CredentialController(QuantumManager.get_plugin())
@@ -69,8 +69,7 @@ class Credential(extensions.ExtensionDescriptor):
 
 
 class CredentialController(common.QuantumController, wsgi.Controller):
-    """ credential API controller
-        based on QuantumController """
+    """Credential API controller based on QuantumController."""
 
     _credential_ops_param_list = [
         {'param-name': 'credential_name', 'required': True},
@@ -91,11 +90,11 @@ class CredentialController(common.QuantumController, wsgi.Controller):
         self._plugin = plugin
 
     def index(self, request, tenant_id):
-        """ Returns a list of credential ids """
+        """Returns a list of credential ids."""
         return self._items(request, tenant_id, is_detail=False)
 
     def _items(self, request, tenant_id, is_detail):
-        """ Returns a list of credentials. """
+        """Returns a list of credentials."""
         credentials = self._plugin.get_all_credentials(tenant_id)
         builder = credential_view.get_view_builder(request)
         result = [builder.build(credential, is_detail)['credential']
@@ -104,7 +103,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
 
     # pylint: disable-msg=E1101,W0613
     def show(self, request, tenant_id, id):
-        """ Returns credential details for the given credential id """
+        """Returns credential details for the given credential id."""
         try:
             credential = self._plugin.get_credential_details(tenant_id, id)
             builder = credential_view.get_view_builder(request)
@@ -115,7 +114,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
             return faults.Fault(faults.CredentialNotFound(exp))
 
     def create(self, request, tenant_id):
-        """ Creates a new credential for a given tenant """
+        """Creates a new credential for a given tenant."""
         try:
             body = self._deserialize(request.body, request.get_content_type())
             req_body = self._prepare_request_body(
@@ -134,7 +133,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
         return dict(credentials=result)
 
     def update(self, request, tenant_id, id):
-        """ Updates the name for the credential with the given id """
+        """Updates the name for the credential with the given id."""
         try:
             body = self._deserialize(request.body, request.get_content_type())
             req_body = self._prepare_request_body(
@@ -153,7 +152,7 @@ class CredentialController(common.QuantumController, wsgi.Controller):
             return faults.Fault(faults.CredentialNotFound(exp))
 
     def delete(self, request, tenant_id, id):
-        """ Destroys the credential with the given id """
+        """Destroys the credential with the given id."""
         try:
             self._plugin.delete_credential(tenant_id, id)
             return exc.HTTPOk()

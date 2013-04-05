@@ -335,8 +335,9 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                 self.assertEqual(net['network'][k], v)
 
     def _nvp_validate_ext_gw(self, router_id, l3_gw_uuid, vlan_id):
-        """ Verify data on fake NVP API client in order to validate
-        plugin did set them properly"""
+        """Verify data on fake NVP API client in order to validate
+        plugin did set them properly
+        """
         ports = [port for port in self.fc._fake_lrouter_lport_dict.values()
                  if (port['lr_uuid'] == router_id and
                      port['att_type'] == "L3GatewayAttachment")]

@@ -21,8 +21,8 @@
 
 from abc import ABCMeta
 import httplib
-import time
 import logging
+import time
 
 
 from quantum.plugins.nicira.api_client.common import (

@@ -126,7 +126,7 @@ class Daemon(object):
         os.remove(str(self.pidfile))
 
     def start(self):
-        """ Start the daemon """
+        """Start the daemon."""
 
         if self.pidfile.is_running():
             self.pidfile.unlock()

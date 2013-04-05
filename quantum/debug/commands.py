@@ -59,7 +59,7 @@ class CreateProbe(ProbeCommand):
 
 
 class DeleteProbe(ProbeCommand):
-    """Delete probe - delete port then uplug """
+    """Delete probe - delete port then uplug."""
 
     log = logging.getLogger(__name__ + '.DeleteProbe')
 
@@ -78,7 +78,7 @@ class DeleteProbe(ProbeCommand):
 
 
 class ListProbe(QuantumCommand, lister.Lister):
-    """ List probes """
+    """List probes."""
 
     log = logging.getLogger(__name__ + '.ListProbe')
     _formatters = {'fixed_ips': _format_fixed_ips, }
@@ -97,7 +97,7 @@ class ListProbe(QuantumCommand, lister.Lister):
 
 
 class ClearProbe(ProbeCommand):
-    """Clear All probes """
+    """Clear All probes."""
 
     log = logging.getLogger(__name__ + '.ClearProbe')
 

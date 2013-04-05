@@ -20,8 +20,8 @@ import socket
 import urllib2
 
 import mock
-import testtools
 from oslo.config import cfg
+import testtools
 import webob
 import webob.exc
 

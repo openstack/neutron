@@ -51,14 +51,14 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
                 dhcp_agent in dhcp_agents]
 
     def _notification_host(self, context, method, payload, host):
-        """Notify the agent on host"""
+        """Notify the agent on host."""
         self.cast(
             context, self.make_msg(method,
                                    payload=payload),
             topic='%s.%s' % (topics.DHCP_AGENT, host))
 
     def _notification(self, context, method, payload, network_id):
-        """Notify all the agents that are hosting the network"""
+        """Notify all the agents that are hosting the network."""
         plugin = manager.QuantumManager.get_plugin()
         if (method != 'network_delete_end' and utils.is_extension_supported(
                 plugin, constants.AGENT_SCHEDULER_EXT_ALIAS)):
@@ -87,7 +87,7 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
             self._notification_fanout(context, method, payload)
 
     def _notification_fanout(self, context, method, payload):
-        """Fanout the payload to all dhcp agents"""
+        """Fanout the payload to all dhcp agents."""
         self.fanout_cast(
             context, self.make_msg(method,
                                    payload=payload),

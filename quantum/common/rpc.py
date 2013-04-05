@@ -25,7 +25,8 @@ LOG = logging.getLogger(__name__)
 
 class PluginRpcDispatcher(dispatcher.RpcDispatcher):
     """This class is used to convert RPC common context into
-    Quantum Context."""
+    Quantum Context.
+    """
 
     def __init__(self, callbacks):
         super(PluginRpcDispatcher, self).__init__(callbacks)

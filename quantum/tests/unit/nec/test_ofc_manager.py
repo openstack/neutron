@@ -25,7 +25,7 @@ from quantum.tests import base
 
 
 class OFCManagerTestBase(base.BaseTestCase):
-    """Class conisting of OFCManager unit tests"""
+    """Class conisting of OFCManager unit tests."""
 
     def setUp(self):
         super(OFCManagerTestBase, self).setUp()
@@ -37,7 +37,7 @@ class OFCManagerTestBase(base.BaseTestCase):
         self.ctx = context.get_admin_context()
 
     def get_random_params(self):
-        """create random parameters for portinfo test"""
+        """create random parameters for portinfo test."""
         tenant = uuidutils.generate_uuid()
         network = uuidutils.generate_uuid()
         port = uuidutils.generate_uuid()
@@ -48,7 +48,7 @@ class OFCManagerTestBase(base.BaseTestCase):
 
 class OFCManagerTest(OFCManagerTestBase):
     def testa_create_ofc_tenant(self):
-        """test create ofc_tenant"""
+        """test create ofc_tenant."""
         t, n, p, f, none = self.get_random_params()
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
         self.ofc.create_ofc_tenant(self.ctx, t)
@@ -57,14 +57,14 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertEqual(tenant.ofc_id, "ofc-" + t[:-4])
 
     def testb_exists_ofc_tenant(self):
-        """test exists_ofc_tenant"""
+        """test exists_ofc_tenant."""
         t, n, p, f, none = self.get_random_params()
         self.assertFalse(self.ofc.exists_ofc_tenant(self.ctx, t))
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.assertTrue(self.ofc.exists_ofc_tenant(self.ctx, t))
 
     def testc_delete_ofc_tenant(self):
-        """test delete ofc_tenant"""
+        """test delete ofc_tenant."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
@@ -72,7 +72,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_tenant', t))
 
     def testd_create_ofc_network(self):
-        """test create ofc_network"""
+        """test create ofc_network."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
@@ -82,7 +82,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertEqual(network.ofc_id, "ofc-" + n[:-4])
 
     def teste_exists_ofc_network(self):
-        """test exists_ofc_network"""
+        """test exists_ofc_network."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.assertFalse(self.ofc.exists_ofc_network(self.ctx, n))
@@ -90,7 +90,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertTrue(self.ofc.exists_ofc_network(self.ctx, n))
 
     def testf_delete_ofc_network(self):
-        """test delete ofc_network"""
+        """test delete ofc_network."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -99,7 +99,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_network', n))
 
     def testg_create_ofc_port(self):
-        """test create ofc_port"""
+        """test create ofc_port."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -113,7 +113,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertEqual(port.ofc_id, "ofc-" + p[:-4])
 
     def testh_exists_ofc_port(self):
-        """test exists_ofc_port"""
+        """test exists_ofc_port."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -125,7 +125,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertTrue(self.ofc.exists_ofc_port(self.ctx, p))
 
     def testi_delete_ofc_port(self):
-        """test delete ofc_port"""
+        """test delete ofc_port."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -138,7 +138,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
 
     def testj_create_ofc_packet_filter(self):
-        """test create ofc_filter"""
+        """test create ofc_filter."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -152,7 +152,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertEqual(_filter.ofc_id, "ofc-" + f[:-4])
 
     def testk_exists_ofc_packet_filter(self):
-        """test exists_ofc_packet_filter"""
+        """test exists_ofc_packet_filter."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
@@ -162,7 +162,7 @@ class OFCManagerTest(OFCManagerTestBase):
         self.assertTrue(self.ofc.exists_ofc_packet_filter(self.ctx, f))
 
     def testl_delete_ofc_packet_filter(self):
-        """test delete ofc_filter"""
+        """test delete ofc_filter."""
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)

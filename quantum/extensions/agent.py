@@ -72,7 +72,7 @@ class MultipleAgentFoundByTypeHost(exceptions.Conflict):
 
 
 class Agent(object):
-    """Agent management extension"""
+    """Agent management extension."""
 
     @classmethod
     def get_name(cls):
@@ -96,7 +96,7 @@ class Agent(object):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         attr.PLURALS.update(dict(my_plurals))
         plugin = manager.QuantumManager.get_plugin()
@@ -116,13 +116,13 @@ class Agent(object):
 
 
 class AgentPluginBase(object):
-    """ REST API to operate the Agent.
+    """REST API to operate the Agent.
 
     All of method must be in an admin context.
     """
 
     def create_agent(self, context, agent):
-        """ Create agent.
+        """Create agent.
 
         This operation is not allow in REST API.
         @raise exceptions.BadRequest:

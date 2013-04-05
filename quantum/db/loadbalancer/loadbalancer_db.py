@@ -48,7 +48,7 @@ class SessionPersistence(model_base.BASEV2):
 
 
 class PoolStatistics(model_base.BASEV2):
-    """Represents pool statistics """
+    """Represents pool statistics."""
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         primary_key=True)
     bytes_in = sa.Column(sa.Integer, nullable=False)
@@ -274,7 +274,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         return self._fields(res, fields)
 
     def _check_session_persistence_info(self, info):
-        """ Performs sanity check on session persistence info.
+        """Performs sanity check on session persistence info.
         :param info: Session persistence info
         """
         if info['type'] == 'APP_COOKIE':

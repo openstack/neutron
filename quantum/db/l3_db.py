@@ -75,7 +75,7 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 
 class L3_NAT_db_mixin(l3.RouterPluginBase):
-    """Mixin class to add L3/NAT router methods to db_plugin_base_v2"""
+    """Mixin class to add L3/NAT router methods to db_plugin_base_v2."""
 
     def _network_model_hook(self, context, original_model, query):
         query = query.outerjoin(ExternalNetwork,
@@ -716,7 +716,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                           filters=filters)
 
     def prevent_l3_port_deletion(self, context, port_id):
-        """ Checks to make sure a port is allowed to be deleted, raising
+        """Checks to make sure a port is allowed to be deleted, raising
         an exception if this is not the case.  This should be called by
         any plugin when the API requests the deletion of a port, since
         some ports for L3 are not intended to be deleted directly via a

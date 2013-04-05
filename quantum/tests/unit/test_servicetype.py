@@ -48,7 +48,7 @@ _get_path = test_api_v2._get_path
 
 
 class TestServiceTypeExtensionManager(object):
-    """ Mock extensions manager """
+    """Mock extensions manager."""
 
     def get_resources(self):
         return (servicetype.Servicetype.get_resources() +

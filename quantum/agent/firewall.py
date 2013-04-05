@@ -20,7 +20,7 @@ import contextlib
 
 
 class FirewallDriver(object):
-    """ Firewall Driver base class.
+    """Firewall Driver base class.
 
     Defines methods that any driver providing security groups
     and provider firewall functionality should implement.
@@ -81,25 +81,25 @@ class FirewallDriver(object):
         raise NotImplementedError()
 
     def remove_port_filter(self, port):
-        """Stop filtering port"""
+        """Stop filtering port."""
         raise NotImplementedError()
 
     def filter_defer_apply_on(self):
-        """Defer application of filtering rule"""
+        """Defer application of filtering rule."""
         pass
 
     def filter_defer_apply_off(self):
-        """Turn off deferral of rules and apply the rules now"""
+        """Turn off deferral of rules and apply the rules now."""
         pass
 
     @property
     def ports(self):
-        """ returns filterd ports"""
+        """Returns filtered ports."""
         pass
 
     @contextlib.contextmanager
     def defer_apply(self):
-        """defer apply context"""
+        """Defer apply context."""
         self.filter_defer_apply_on()
         try:
             yield
@@ -108,7 +108,7 @@ class FirewallDriver(object):
 
 
 class NoopFirewallDriver(FirewallDriver):
-    """ Noop Firewall Driver.
+    """Noop Firewall Driver.
 
     Firewall driver which does nothing.
     This driver is for disabling the firewall functionality.

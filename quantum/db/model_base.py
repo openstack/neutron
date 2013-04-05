@@ -39,13 +39,14 @@ class QuantumBase(object):
         return n, getattr(self, n)
 
     def update(self, values):
-        """Make the model object behave like a dict"""
+        """Make the model object behave like a dict."""
         for k, v in values.iteritems():
             setattr(self, k, v)
 
     def iteritems(self):
         """Make the model object behave like a dict.
-        Includes attributes from joins."""
+        Includes attributes from joins.
+        """
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
                        if not k[0] == '_'])
@@ -53,7 +54,7 @@ class QuantumBase(object):
         return local.iteritems()
 
     def __repr__(self):
-        """sqlalchemy based automatic __repr__ method"""
+        """sqlalchemy based automatic __repr__ method."""
         items = ['%s=%r' % (col.name, getattr(self, col.name))
                  for col in self.__table__.columns]
         return "<%s.%s[object at %x] {%s}>" % (self.__class__.__module__,

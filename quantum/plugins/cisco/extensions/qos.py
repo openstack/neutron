@@ -30,36 +30,36 @@ from quantum import wsgi
 
 
 class Qos(extensions.ExtensionDescriptor):
-    """Qos extension file"""
+    """Qos extension file."""
 
     @classmethod
     def get_name(cls):
-        """ Returns Ext Resource Name """
+        """Returns Ext Resource Name."""
         return "Cisco qos"
 
     @classmethod
     def get_alias(cls):
-        """ Returns Ext Resource Alias """
+        """Returns Ext Resource Alias."""
         return "Cisco qos"
 
     @classmethod
     def get_description(cls):
-        """ Returns Ext Resource Description """
+        """Returns Ext Resource Description."""
         return "qos includes qos_name and qos_desc"
 
     @classmethod
     def get_namespace(cls):
-        """ Returns Ext Resource Namespace """
+        """Returns Ext Resource Namespace."""
         return "http://docs.ciscocloud.com/api/ext/qos/v1.0"
 
     @classmethod
     def get_updated(cls):
-        """ Returns Ext Resource update """
+        """Returns Ext Resource update."""
         return "2011-07-25T13:25:27-06:00"
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         parent_resource = dict(member_name="tenant",
                                collection_name="extensions/csco/tenants")
 
@@ -69,8 +69,7 @@ class Qos(extensions.ExtensionDescriptor):
 
 
 class QosController(common.QuantumController, wsgi.Controller):
-    """ qos API controller
-        based on QuantumController """
+    """qos API controller based on QuantumController."""
 
     _qos_ops_param_list = [
         {'param-name': 'qos_name', 'required': True},
@@ -90,11 +89,11 @@ class QosController(common.QuantumController, wsgi.Controller):
         self._plugin = plugin
 
     def index(self, request, tenant_id):
-        """ Returns a list of qos ids """
+        """Returns a list of qos ids."""
         return self._items(request, tenant_id, is_detail=False)
 
     def _items(self, request, tenant_id, is_detail):
-        """ Returns a list of qoss. """
+        """Returns a list of qoss."""
         qoss = self._plugin.get_all_qoss(tenant_id)
         builder = qos_view.get_view_builder(request)
         result = [builder.build(qos, is_detail)['qos'] for qos in qoss]
@@ -102,7 +101,7 @@ class QosController(common.QuantumController, wsgi.Controller):
 
     # pylint: disable-msg=E1101
     def show(self, request, tenant_id, id):
-        """ Returns qos details for the given qos id """
+        """Returns qos details for the given qos id."""
         try:
             qos = self._plugin.get_qos_details(tenant_id, id)
             builder = qos_view.get_view_builder(request)
@@ -113,7 +112,7 @@ class QosController(common.QuantumController, wsgi.Controller):
             return faults.Fault(faults.QosNotFound(exp))
 
     def create(self, request, tenant_id):
-        """ Creates a new qos for a given tenant """
+        """Creates a new qos for a given tenant."""
         #look for qos name in request
         try:
             body = self._deserialize(request.body, request.get_content_type())
@@ -130,7 +129,7 @@ class QosController(common.QuantumController, wsgi.Controller):
         return dict(qoss=result)
 
     def update(self, request, tenant_id, id):
-        """ Updates the name for the qos with the given id """
+        """Updates the name for the qos with the given id."""
         try:
             body = self._deserialize(request.body, request.get_content_type())
             req_body = self._prepare_request_body(body,
@@ -149,7 +148,7 @@ class QosController(common.QuantumController, wsgi.Controller):
             return faults.Fault(faults.QosNotFound(exp))
 
     def delete(self, request, tenant_id, id):
-        """ Destroys the qos with the given id """
+        """Destroys the qos with the given id."""
         try:
             self._plugin.delete_qos(tenant_id, id)
             return exc.HTTPOk()

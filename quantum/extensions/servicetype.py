@@ -72,7 +72,7 @@ def set_default_svctype_id(original_id):
 
 
 def _validate_servicetype_ref(data, valid_values=None):
-    """ Verify the service type id exists """
+    """Verify the service type id exists."""
     svc_type_id = data
     svctype_mgr = servicetype_db.ServiceTypeManager.get_instance()
     try:
@@ -83,7 +83,7 @@ def _validate_servicetype_ref(data, valid_values=None):
 
 
 def _validate_service_defs(data, valid_values=None):
-    """ Validate the list of service definitions. """
+    """Validate the list of service definitions."""
     try:
         if not data:
             return _("No service type definition was provided. At least a "
@@ -182,7 +182,7 @@ class Servicetype(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Extended Resource for service type management """
+        """Returns Extended Resource for service type management."""
         my_plurals = [(key.replace('-', '_'),
                        key[:-1].replace('-', '_')) for
                       key in RESOURCE_ATTRIBUTE_MAP.keys()]

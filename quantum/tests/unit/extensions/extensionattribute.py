@@ -71,7 +71,7 @@ class Extensionattribute(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         exts = []
         plugin = manager.QuantumManager.get_plugin()
         resource_name = 'ext_test_resource'

@@ -110,7 +110,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context,
                                                             new_network])
             return new_network
-        except:
+        except Exception:
             super(PluginV2, self).delete_network(context,
                                                  new_network['id'])
             raise
@@ -153,7 +153,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_network(context, id)
-        except:
+        except Exception:
             raise
 
     def get_network(self, context, id, fields=None):
@@ -179,7 +179,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         try:
             self._invoke_device_plugins(self._func_name(), [context, new_port])
             return new_port
-        except:
+        except Exception:
             super(PluginV2, self).delete_port(context, new_port['id'])
             raise
 
@@ -199,11 +199,11 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         try:
             kwargs = {const.PORT: port}
-            # TODO (Sumit): Might first need to check here if port is active
+            # TODO(Sumit): Might first need to check here if port is active
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_port(context, id)
-        except:
+        except Exception:
             raise
 
     def update_port(self, context, id, port):
@@ -215,7 +215,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             port])
             return super(PluginV2, self).update_port(context, id, port)
-        except:
+        except Exception:
             raise
 
     def create_subnet(self, context, subnet):
@@ -229,7 +229,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context,
                                                             new_subnet])
             return new_subnet
-        except:
+        except Exception:
             super(PluginV2, self).delete_subnet(context, new_subnet['id'])
             raise
 
@@ -242,7 +242,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             subnet])
             return super(PluginV2, self).update_subnet(context, id, subnet)
-        except:
+        except Exception:
             raise
 
     def delete_subnet(self, context, id):
@@ -267,20 +267,20 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_subnet(context, id)
-        except:
+        except Exception:
             raise
 
     """
     Extension API implementation
     """
     def get_all_qoss(self, tenant_id):
-        """Get all QoS levels"""
+        """Get all QoS levels."""
         LOG.debug(_("get_all_qoss() called"))
         qoslist = cdb.get_all_qoss(tenant_id)
         return qoslist
 
     def get_qos_details(self, tenant_id, qos_id):
-        """Get QoS Details"""
+        """Get QoS Details."""
         LOG.debug(_("get_qos_details() called"))
         try:
             qos_level = cdb.get_qos(tenant_id, qos_id)
@@ -290,13 +290,13 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return qos_level
 
     def create_qos(self, tenant_id, qos_name, qos_desc):
-        """Create a QoS level"""
+        """Create a QoS level."""
         LOG.debug(_("create_qos() called"))
         qos = cdb.add_qos(tenant_id, qos_name, str(qos_desc))
         return qos
 
     def delete_qos(self, tenant_id, qos_id):
-        """Delete a QoS level"""
+        """Delete a QoS level."""
         LOG.debug(_("delete_qos() called"))
         try:
             cdb.get_qos(tenant_id, qos_id)
@@ -306,7 +306,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return cdb.remove_qos(tenant_id, qos_id)
 
     def rename_qos(self, tenant_id, qos_id, new_name):
-        """Rename QoS level"""
+        """Rename QoS level."""
         LOG.debug(_("rename_qos() called"))
         try:
             cdb.get_qos(tenant_id, qos_id)
@@ -317,13 +317,13 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return qos
 
     def get_all_credentials(self, tenant_id):
-        """Get all credentials"""
+        """Get all credentials."""
         LOG.debug(_("get_all_credentials() called"))
         credential_list = cdb.get_all_credentials(tenant_id)
         return credential_list
 
     def get_credential_details(self, tenant_id, credential_id):
-        """Get a particular credential"""
+        """Get a particular credential."""
         LOG.debug(_("get_credential_details() called"))
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
@@ -334,14 +334,14 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def create_credential(self, tenant_id, credential_name, user_name,
                           password):
-        """Create a new credential"""
+        """Create a new credential."""
         LOG.debug(_("create_credential() called"))
         credential = cdb.add_credential(tenant_id, credential_name,
                                         user_name, password)
         return credential
 
     def delete_credential(self, tenant_id, credential_id):
-        """Delete a credential"""
+        """Delete a credential."""
         LOG.debug(_("delete_credential() called"))
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
@@ -352,7 +352,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return credential
 
     def rename_credential(self, tenant_id, credential_id, new_name):
-        """Rename the particular credential resource"""
+        """Rename the particular credential resource."""
         LOG.debug(_("rename_credential() called"))
         try:
             credential = cdb.get_credential(tenant_id, credential_id)
@@ -363,7 +363,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return credential
 
     def schedule_host(self, tenant_id, instance_id, instance_desc):
-        """Provides the hostname on which a dynamic vnic is reserved"""
+        """Provides the hostname on which a dynamic vnic is reserved."""
         LOG.debug(_("schedule_host() called"))
         host_list = self._invoke_device_plugins(self._func_name(),
                                                 [tenant_id,
@@ -401,5 +401,5 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             return getattr(self._model, function_name)(*args)
 
     def _func_name(self, offset=0):
-        """Getting the name of the calling funciton"""
+        """Getting the name of the calling funciton."""
         return inspect.stack()[1 + offset][3]

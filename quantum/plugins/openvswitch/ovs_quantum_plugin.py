@@ -85,7 +85,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return port
 
     def get_device_details(self, rpc_context, **kwargs):
-        """Agent requests device details"""
+        """Agent requests device details."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
@@ -110,8 +110,8 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return entry
 
     def update_device_down(self, rpc_context, **kwargs):
-        """Device no longer exists on agent"""
-        # (TODO) garyk - live migration and port status
+        """Device no longer exists on agent."""
+        # TODO(garyk) - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
@@ -130,7 +130,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return entry
 
     def update_device_up(self, rpc_context, **kwargs):
-        """Device is up on agent"""
+        """Device is up on agent."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s up on %(agent_id)s"),

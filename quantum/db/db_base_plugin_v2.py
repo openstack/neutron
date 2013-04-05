@@ -50,7 +50,7 @@ AUTO_DELETE_PORT_OWNERS = ['network:dhcp']
 
 
 class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
-    """ A class that implements the v2 Quantum plugin interface
+    """A class that implements the v2 Quantum plugin interface
         using SQLAlchemy models.  Whenever a non-read call happens
         the plugin will call an event handler class method (e.g.,
         network_created()).  The result is that this class can be
@@ -120,7 +120,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     @classmethod
     def register_model_query_hook(cls, model, name, query_hook, filter_hook,
                                   result_filters=None):
-        """ register an hook to be invoked when a query is executed.
+        """Register a hook to be invoked when a query is executed.
 
         Add the hooks to the _model_query_hooks dict. Models are the keys
         of this dict, whereas the value is another dict mapping hook names to
@@ -948,7 +948,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._create_bulk('network', context, networks)
 
     def create_network(self, context, network):
-        """ handle creation of a single network """
+        """Handle creation of a single network."""
         # single request processing
         n = network['network']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
@@ -1026,7 +1026,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._create_bulk('subnet', context, subnets)
 
     def _validate_ip_version(self, ip_version, addr, name):
-        """Check IP field of a subnet match specified ip version"""
+        """Check IP field of a subnet match specified ip version."""
         ip = netaddr.IPNetwork(addr)
         if ip.version != ip_version:
             msg = _("%(name)s '%(addr)s' does not match "
@@ -1034,7 +1034,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise q_exc.InvalidInput(error_message=msg)
 
     def _validate_subnet(self, s):
-        """Validate a subnet spec"""
+        """Validate a subnet spec."""
 
         # This method will validate attributes which may change during
         # create_subnet() and update_subnet().
@@ -1155,7 +1155,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info. The change however will not be
            realized until the client renew the dns lease or we support
-           gratuitous DHCP offers"""
+           gratuitous DHCP offers
+        """
 
         s = subnet['subnet']
         db_subnet = self._get_subnet(context, id)

@@ -354,7 +354,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         for device_route_line in device_route_list_lines:
             try:
                 subnet = device_route_line.split()[0]
-            except:
+            except Exception:
                 continue
             subnet_route_list_lines = self._run('list', 'proto', 'kernel',
                                                 'match', subnet).split('\n')
@@ -367,7 +367,7 @@ class IpRouteCommand(IpDeviceCommandBase):
                     while(i.next() != 'src'):
                         pass
                     src = i.next()
-                except:
+                except Exception:
                     src = ''
                 if device != interface_name:
                     device_list.append((device, src))

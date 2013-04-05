@@ -148,7 +148,7 @@ class SecurityGroupsTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                              security_group_rule['security_group_rule']['id'])
 
     def _delete_default_security_group_egress_rules(self, security_group_id):
-        """Deletes default egress rules given a security group ID"""
+        """Deletes default egress rules given a security group ID."""
         res = self._list(
             'security-group-rules',
             query_params='security_group_id=%s' % security_group_id)
@@ -173,7 +173,7 @@ class SecurityGroupsTestCaseXML(SecurityGroupsTestCase):
 
 class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                               securitygroups_db.SecurityGroupDbMixin):
-    """ Test plugin that implements necessary calls on create/delete port for
+    """Test plugin that implements necessary calls on create/delete port for
     associating ports with security groups.
     """
 

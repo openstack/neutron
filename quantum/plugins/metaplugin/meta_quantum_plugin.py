@@ -166,7 +166,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             try:
                 meta_db_v2.add_network_flavor_binding(context.session,
                                                       flavor, str(net['id']))
-            except:
+            except Exception:
                 LOG.exception(_('Failed to add flavor bindings'))
                 plugin.delete_network(context, net['id'])
                 raise FaildToAddFlavorBinding()

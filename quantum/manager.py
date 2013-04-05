@@ -97,7 +97,7 @@ class QuantumManager(object):
 
         # core plugin as a part of plugin collection simplifies
         # checking extensions
-        # TODO (enikanorov): make core plugin the same as
+        # TODO(enikanorov): make core plugin the same as
         # the rest of service plugins
         self.service_plugins = {constants.CORE: self.plugin}
         self._load_service_plugins()

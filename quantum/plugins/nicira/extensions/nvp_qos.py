@@ -20,9 +20,9 @@
 
 from abc import abstractmethod
 
+from quantum.api import extensions
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
-from quantum.api import extensions
 from quantum.common import exceptions as qexception
 from quantum import manager
 
@@ -137,7 +137,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 
 class Nvp_qos(object):
-    """Port Queue extension"""
+    """Port Queue extension."""
 
     @classmethod
     def get_name(cls):
@@ -161,7 +161,7 @@ class Nvp_qos(object):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         exts = []
         plugin = manager.QuantumManager.get_plugin()
         resource_name = 'qos_queue'

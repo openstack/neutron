@@ -100,7 +100,7 @@ class Server(object):
                                       socket.SOCK_STREAM)[0]
             family = info[0]
             bind_addr = info[-1]
-        except:
+        except Exception:
             LOG.exception(_("Unable to listen on %(host)s:%(port)s") %
                           {'host': host, 'port': port})
             sys.exit(1)
@@ -321,7 +321,7 @@ class ActionDispatcher(object):
 
 
 class DictSerializer(ActionDispatcher):
-    """Default request body serialization"""
+    """Default request body serialization."""
 
     def serialize(self, data, action='default'):
         return self.dispatch(data, action=action)
@@ -331,7 +331,7 @@ class DictSerializer(ActionDispatcher):
 
 
 class JSONDictSerializer(DictSerializer):
-    """Default JSON request body serialization"""
+    """Default JSON request body serialization."""
 
     def default(self, data):
         def sanitizer(obj):
@@ -483,7 +483,7 @@ class XMLDictSerializer(DictSerializer):
 
 
 class ResponseHeaderSerializer(ActionDispatcher):
-    """Default response headers serialization"""
+    """Default response headers serialization."""
 
     def serialize(self, response, data, action):
         self.dispatch(response, data, action=action)
@@ -493,7 +493,7 @@ class ResponseHeaderSerializer(ActionDispatcher):
 
 
 class ResponseSerializer(object):
-    """Encode the necessary pieces into a response object"""
+    """Encode the necessary pieces into a response object."""
 
     def __init__(self, body_serializers=None, headers_serializer=None):
         self.body_serializers = {
@@ -534,7 +534,7 @@ class ResponseSerializer(object):
 
 
 class TextDeserializer(ActionDispatcher):
-    """Default request body deserialization"""
+    """Default request body deserialization."""
 
     def deserialize(self, datastring, action='default'):
         return self.dispatch(datastring, action=action)
@@ -703,7 +703,7 @@ class XMLDeserializer(TextDeserializer):
 
 
 class RequestHeadersDeserializer(ActionDispatcher):
-    """Default request headers deserializer"""
+    """Default request headers deserializer."""
 
     def deserialize(self, request, action):
         return self.dispatch(request, action=action)
@@ -1077,7 +1077,7 @@ def _default_body_function(wrapped_exc):
 
 
 class Fault(webob.exc.HTTPException):
-    """ Generates an HTTP response from a webob HTTP exception"""
+    """Generates an HTTP response from a webob HTTP exception."""
 
     def __init__(self, exception, xmlns=None, body_function=None):
         """Creates a Fault for the given webob.exc.exception."""

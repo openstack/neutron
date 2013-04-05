@@ -20,8 +20,8 @@
 import mock
 
 from quantum import context
-from quantum import manager
 from quantum.db.loadbalancer import loadbalancer_db as ldb
+from quantum import manager
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
 from quantum.plugins.services.agent_loadbalancer import plugin

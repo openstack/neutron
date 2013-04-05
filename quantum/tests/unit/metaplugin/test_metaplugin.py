@@ -68,7 +68,7 @@ def setup_metaplugin_conf():
 
 
 class MetaQuantumPluginV2Test(base.BaseTestCase):
-    """Class conisting of MetaQuantumPluginV2 unit tests"""
+    """Class conisting of MetaQuantumPluginV2 unit tests."""
 
     def setUp(self):
         super(MetaQuantumPluginV2Test, self).setUp()
@@ -300,7 +300,7 @@ class MetaQuantumPluginV2Test(base.BaseTestCase):
             self.plugin.not_implemented()
         except AttributeError:
             return
-        except:
+        except Exception:
             self.fail("AttributeError Error is not raised")
 
         self.fail("No Error is not raised")

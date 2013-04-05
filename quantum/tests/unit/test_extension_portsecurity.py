@@ -20,8 +20,8 @@ from quantum import context
 from quantum.db import db_base_plugin_v2
 from quantum.db import portsecurity_db
 from quantum.db import securitygroups_db
-from quantum.extensions import securitygroup as ext_sg
 from quantum.extensions import portsecurity as psec
+from quantum.extensions import securitygroup as ext_sg
 from quantum.manager import QuantumManager
 from quantum import policy
 from quantum.tests.unit import test_db_plugin
@@ -48,7 +48,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                              securitygroups_db.SecurityGroupDbMixin,
                              portsecurity_db.PortSecurityDbMixin):
 
-    """ Test plugin that implements necessary calls on create/delete port for
+    """Test plugin that implements necessary calls on create/delete port for
     associating ports with security groups and port security.
     """
 

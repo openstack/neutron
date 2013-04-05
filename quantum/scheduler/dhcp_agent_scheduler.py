@@ -21,9 +21,9 @@ from sqlalchemy.orm import exc
 from sqlalchemy.sql import exists
 
 from quantum.common import constants
-from quantum.db import models_v2
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
+from quantum.db import models_v2
 from quantum.openstack.common import log as logging
 
 
@@ -33,7 +33,8 @@ LOG = logging.getLogger(__name__)
 class ChanceScheduler(object):
     """Allocate a DHCP agent for a network in a random way.
     More sophisticated scheduler (similar to filter scheduler in nova?)
-    can be introduced later."""
+    can be introduced later.
+    """
 
     def schedule(self, plugin, context, network):
         """Schedule the network to an active DHCP agent if there
@@ -75,7 +76,8 @@ class ChanceScheduler(object):
 
     def auto_schedule_networks(self, plugin, context, host):
         """Schedule non-hosted networks to the DHCP agent on
-        the specified host."""
+        the specified host.
+        """
         with context.session.begin(subtransactions=True):
             query = context.session.query(agents_db.Agent)
             query = query.filter(agents_db.Agent.agent_type ==

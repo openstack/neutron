@@ -19,7 +19,7 @@ from quantum.db import model_base
 
 
 class NetworkState(model_base.BASEV2):
-    """Represents state of vlan_id on physical network"""
+    """Represents state of vlan_id on physical network."""
     __tablename__ = 'network_states'
 
     physical_network = sa.Column(sa.String(64), nullable=False,
@@ -39,7 +39,7 @@ class NetworkState(model_base.BASEV2):
 
 
 class NetworkBinding(model_base.BASEV2):
-    """Represents binding of virtual network to physical_network and vlan_id"""
+    """Represents binding of virtual network to physical network and vlan."""
     __tablename__ = 'network_bindings'
 
     network_id = sa.Column(sa.String(36),

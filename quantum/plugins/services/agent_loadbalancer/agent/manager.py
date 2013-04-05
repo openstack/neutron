@@ -57,7 +57,7 @@ class LogicalDeviceCache(object):
     """Manage a cache of known devices."""
 
     class Device(object):
-        """Inner classes used to hold values for weakref lookups"""
+        """Inner classes used to hold values for weakref lookups."""
         def __init__(self, port_id, pool_id):
             self.port_id = port_id
             self.pool_id = pool_id

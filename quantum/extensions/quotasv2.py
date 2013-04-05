@@ -104,7 +104,7 @@ class QuotaSetsController(wsgi.Controller):
 
 
 class Quotasv2(extensions.ExtensionDescriptor):
-    """Quotas management support"""
+    """Quotas management support."""
 
     @classmethod
     def get_name(cls):
@@ -131,7 +131,7 @@ class Quotasv2(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         controller = resource.Resource(
             QuotaSetsController(QuantumManager.get_plugin()),
             faults=base.FAULT_MAP)

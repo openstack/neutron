@@ -65,7 +65,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         self.topology_name = cfg.CONF.PLUMgridNOS.topologyname
         self.snippets = plumgrid_nos_snippets.DataNOSPLUMgrid()
 
-        # TODO: (Edgar) These are placeholders for next PLUMgrid release
+        # TODO(Edgar) These are placeholders for next PLUMgrid release
         cfg.CONF.PLUMgridNOS.username
         cfg.CONF.PLUMgridNOS.password
         self.rest_conn = rest_connection.RestConnection(nos_plumgrid,
@@ -104,15 +104,20 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                       network)
 
             try:
-                LOG.debug(_('QuantumPluginPLUMgrid Status: %s, %s, %s'),
-                          tenant_id, network["network"], net["id"])
+                LOG.debug(_('QuantumPluginPLUMgrid Status: %(tenant_id)s, '
+                            '%(network)s, %(network_id)s'),
+                          dict(
+                              tenant_id=tenant_id,
+                              network=network["network"],
+                              network_id=net["id"],
+                          ))
                 nos_url = self.snippets.BASE_NOS_URL + net["id"]
                 headers = {}
                 body_data = self.snippets.create_domain_body_data(tenant_id)
                 self.rest_conn.nos_rest_conn(nos_url,
                                              'PUT', body_data, headers)
 
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -146,7 +151,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                 body_data = self.snippets.create_domain_body_data(tenant_id)
                 self.rest_conn.nos_rest_conn(nos_url,
                                              'PUT', body_data, headers)
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -172,7 +177,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                 body_data = {}
                 self.rest_conn.nos_rest_conn(nos_url,
                                              'DELETE', body_data, headers)
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -240,7 +245,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                     tenant_id, self.topology_name)
                 self.rest_conn.nos_rest_conn(nos_url,
                                              'PUT', body_data, headers)
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -265,7 +270,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                 body_data = {}
                 net_id = subnet_details["network_id"]
                 self._cleaning_nos_subnet_structure(body_data, headers, net_id)
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -299,7 +304,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                 self.rest_conn.nos_rest_conn(nos_url,
                                              'PUT', body_data, headers)
 
-            except:
+            except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
                 raise plum_excep.PLUMgridException(err_message)
@@ -309,7 +314,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     Extension API implementation
     """
-    # TODO: (Edgar) Complete extensions for PLUMgrid
+    # TODO(Edgar) Complete extensions for PLUMgrid
 
     """
     Internal PLUMgrid fuctions
@@ -332,7 +337,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                     LOG.warning(_("Network with admin_state_up=False are not "
                                   "supported yet by this plugin. Ignoring "
                                   "setting for network %s"), network_name)
-        except:
+        except Exception:
             err_message = _("Network Admin State Validation Falied: ")
             LOG.Exception(err_message)
             raise plum_excep.PLUMgridException(err_message)

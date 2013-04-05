@@ -105,11 +105,11 @@ class HyperVUtils(object):
         self._check_job_status(ret_val, job_path)
 
     def _check_job_status(self, ret_val, jobpath):
-        """Poll WMI job state for completion"""
+        """Poll WMI job state for completion."""
         if not ret_val:
             return
         elif ret_val != WMI_JOB_STATE_RUNNING:
-            raise HyperVException(msg=_('Job failed with error %d' % ret_val))
+            raise HyperVException(msg=_('Job failed with error %d') % ret_val)
 
         job_wmi_path = jobpath.replace('\\', '/')
         job = wmi.WMI(moniker=job_wmi_path)
@@ -144,7 +144,7 @@ class HyperVUtils(object):
                   locals())
 
     def _create_switch_port(self, vswitch_name, switch_port_name):
-        """ Creates a switch port """
+        """Creates a switch port."""
         switch_svc = self._conn.Msvm_VirtualSwitchManagementService()[0]
         vswitch_path = self._get_vswitch(vswitch_name).path_()
         (new_port, ret_val) = switch_svc.CreateSwitchPort(
@@ -159,7 +159,7 @@ class HyperVUtils(object):
 
     def disconnect_switch_port(
             self, vswitch_name, switch_port_name, delete_port):
-        """ Disconnects the switch port """
+        """Disconnects the switch port."""
         switch_svc = self._conn.Msvm_VirtualSwitchManagementService()[0]
         switch_port_path = self._get_switch_port_path_by_name(
             switch_port_name)

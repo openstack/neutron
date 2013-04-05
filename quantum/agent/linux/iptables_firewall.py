@@ -81,7 +81,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.apply()
 
     def _setup_chains(self):
-        """Setup ingress and egress chain for a port. """
+        """Setup ingress and egress chain for a port."""
         self._add_chain_by_name_v4v6(SG_CHAIN)
         for port in self.filtered_ports.values():
             self._setup_chain(port, INGRESS_DIRECTION)
@@ -90,7 +90,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self.iptables.ipv6['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
 
     def _remove_chains(self):
-        """Remove ingress and egress chain for a port"""
+        """Remove ingress and egress chain for a port."""
         for port in self.filtered_ports.values():
             self._remove_chain(port, INGRESS_DIRECTION)
             self._remove_chain(port, EGRESS_DIRECTION)

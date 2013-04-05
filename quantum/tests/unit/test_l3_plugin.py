@@ -308,7 +308,7 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
 class L3NatTestCaseMixin(object):
 
     def _create_network(self, fmt, name, admin_state_up, **kwargs):
-        """ Override the routine for allowing the router:external attribute """
+        """Override the routine for allowing the router:external attribute."""
         # attributes containing a colon should be passed with
         # a double underscore
         new_args = dict(itertools.izip(map(lambda x: x.replace('__', ':'),
@@ -1496,7 +1496,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 kargs = [item for item in args]
                 kargs.append(notifyApi)
                 target_func(*kargs)
-        except:
+        except Exception:
             l3_rpc_agent_api.L3AgentNotify = oldNotify
             raise
         else:

@@ -76,7 +76,7 @@ class Dummy(object):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Extended Resource for dummy management """
+        """Returns Extended Resource for dummy management."""
         q_mgr = manager.QuantumManager.get_instance()
         dummy_inst = q_mgr.get_service_plugins()['DUMMY']
         controller = base.create_resource(
@@ -87,7 +87,7 @@ class Dummy(object):
 
 
 class DummyServicePlugin(ServicePluginBase):
-    """ This is a simple plugin for managing instantes of a fictional 'dummy'
+    """This is a simple plugin for managing instantes of a fictional 'dummy'
         service. This plugin is provided as a proof-of-concept of how
         advanced service might leverage the service type extension.
         Ideally, instances of real advanced services, such as load balancing

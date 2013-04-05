@@ -175,7 +175,7 @@ class LoadBalancerCallbacks(object):
             LOG.debug(msg, port_id)
 
     def update_pool_stats(self, context, pool_id=None, stats=None, host=None):
-        # TODO (markmcclain): add stats collection
+        # TODO(markmcclain): add stats collection
         pass
 
 

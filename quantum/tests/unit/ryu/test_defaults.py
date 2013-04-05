@@ -22,7 +22,7 @@ from quantum.tests import base
 
 
 class ConfigurationTest(base.BaseTestCase):
-    """Configuration file Tests"""
+    """Configuration file Tests."""
     def test_defaults(self):
         self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)

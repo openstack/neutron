@@ -31,10 +31,10 @@ from quantum import manager
 from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
 from quantum.tests.unit import test_agent_ext_plugin
-from quantum.tests.unit.testlib_api import create_request
 from quantum.tests.unit import test_db_plugin as test_plugin
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import test_l3_plugin
+from quantum.tests.unit.testlib_api import create_request
 from quantum.wsgi import Serializer
 
 L3_HOSTA = 'hosta'

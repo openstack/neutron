@@ -54,7 +54,7 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             subnet_in_db = super(ProxyPluginV2, self).create_subnet(
                 context, subnet)
-        except:
+        except Exception:
             self._get_client().delete_subnet(subnet_remote['id'])
         return subnet_in_db
 
@@ -82,7 +82,7 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             network_in_db = super(ProxyPluginV2, self).create_network(
                 context, network)
-        except:
+        except Exception:
             self._get_client().delete_network(network_remote['id'])
         return network_in_db
 
@@ -110,7 +110,7 @@ class ProxyPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             port_in_db = super(ProxyPluginV2, self).create_port(
                 context, port)
-        except:
+        except Exception:
             self._get_client().delete_port(port_remote['id'])
         return port_in_db
 

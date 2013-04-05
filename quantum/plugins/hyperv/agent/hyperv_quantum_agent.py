@@ -156,13 +156,14 @@ class HyperVQuantumAgent(object):
             #Nothing to do
             pass
         elif network_type == constants.TYPE_LOCAL:
-            #TODO (alexpilotti): Check that the switch type is private
+            #TODO(alexpilotti): Check that the switch type is private
             #or create it if not existing
             pass
         else:
-            raise utils.HyperVException(_("Cannot provision unknown network "
-                                          "type %s for network %s"),
-                                        network_type, net_uuid)
+            raise utils.HyperVException(
+                _("Cannot provision unknown network type %(network_type)s "
+                  "for network %(net_uuid)s"),
+                dict(network_type=network_type, net_uuid=net_uuid))
 
         map = {
             'network_type': network_type,
@@ -193,8 +194,9 @@ class HyperVQuantumAgent(object):
         self._utils.connect_vnic_to_vswitch(map['vswitch_name'], port_id)
 
         if network_type == constants.TYPE_VLAN:
-            LOG.info(_('Binding VLAN ID %s to switch port %s'),
-                     segmentation_id, port_id)
+            LOG.info(_('Binding VLAN ID %(segmentation_id)s '
+                       'to switch port %(port_id)s'),
+                     dict(segmentation_id=segmentation_id, port_id=port_id))
             self._utils.set_vswitch_port_vlan_id(
                 segmentation_id,
                 port_id)
@@ -253,14 +255,14 @@ class HyperVQuantumAgent(object):
                     self.agent_id)
             except Exception as e:
                 LOG.debug(_(
-                    "Unable to get port details for device %s: %s"),
-                    device, e)
+                    "Unable to get port details for device %(device)s: %(e)s"),
+                    dict(device=device, e=e))
                 resync = True
                 continue
             if 'port_id' in device_details:
                 LOG.info(_(
                     "Port %(device)s updated. Details: %(device_details)s") %
-                    locals())
+                    dict(device=device, device_details=device_details))
                 self._treat_vif_port(
                     device_details['port_id'],
                     device_details['network_id'],
@@ -279,8 +281,9 @@ class HyperVQuantumAgent(object):
                                                    device,
                                                    self.agent_id)
             except Exception as e:
-                LOG.debug(_("Removing port failed for device %s: %s"),
-                          device, e)
+                LOG.debug(
+                    _("Removing port failed for device %(device)s: %(e)s"),
+                    dict(device=device, e=e))
                 resync = True
                 continue
             self._port_unbound(device)

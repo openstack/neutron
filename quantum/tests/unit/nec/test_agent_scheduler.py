@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from quantum.tests.unit.openvswitch import test_agent_scheduler
 from quantum.tests.unit.nec import test_nec_plugin
+from quantum.tests.unit.openvswitch import test_agent_scheduler
 
 
 class NecAgentSchedulerTestCase(

@@ -21,8 +21,9 @@ from oslo.config import cfg
 
 from quantum.agent.common import config as a_cfg
 from quantum.agent.linux.iptables_firewall import IptablesFirewallDriver
-from quantum.tests.unit import test_api_v2
 from quantum.tests import base
+from quantum.tests.unit import test_api_v2
+
 
 _uuid = test_api_v2._uuid
 FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
@@ -909,7 +910,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
         try:
             with self.firewall.defer_apply():
                 raise Exception("same exception")
-        except:
+        except Exception:
             pass
         self.iptables_inst.assert_has_calls([call.defer_apply_on(),
                                              call.defer_apply_off()])

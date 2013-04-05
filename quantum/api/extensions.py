@@ -552,7 +552,8 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     def _check_extension(self, extension):
         """Checks if any of plugins supports extension and implements the
-        extension contract."""
+        extension contract.
+        """
         extension_is_valid = super(PluginAwareExtensionManager,
                                    self)._check_extension(extension)
         return (extension_is_valid and
