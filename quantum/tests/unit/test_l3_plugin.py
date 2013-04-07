@@ -107,7 +107,6 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = L3TestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
-        super(L3NatExtensionTestCase, self).setUp()
 
     def tearDown(self):
         self._plugin_patcher.stop()
