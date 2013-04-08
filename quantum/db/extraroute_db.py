@@ -154,17 +154,6 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
                     context, router['id'])
             return routers
 
-    def get_sync_data(self, context, router_ids=None, active=None):
-        """Query routers and their related floating_ips, interfaces."""
-        with context.session.begin(subtransactions=True):
-            routers = super(ExtraRoute_db_mixin,
-                            self).get_sync_data(context, router_ids,
-                                                active=active)
-            for router in routers:
-                router['routes'] = self._get_extra_routes_by_router_id(
-                    context, router['id'])
-        return routers
-
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
         super(ExtraRoute_db_mixin, self)._confirm_router_interface_not_in_use(
