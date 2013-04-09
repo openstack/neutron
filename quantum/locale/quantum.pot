@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.70"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.71"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-08 00:03+0000\n"
+"POT-Creation-Date: 2013-04-09 00:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -461,7 +461,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:919
+#: quantum/agent/l3_agent.py:286 quantum/db/l3_db.py:911
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -2063,115 +2063,115 @@ msgstr ""
 msgid "Multiple routers match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:186 quantum/db/l3_db.py:607
+#: quantum/db/l3_db.py:187 quantum/db/l3_db.py:608
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:227
+#: quantum/db/l3_db.py:228
 #, python-format
 msgid "No IPs available for external network %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:295
+#: quantum/db/l3_db.py:296
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:305
+#: quantum/db/l3_db.py:306
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:314 quantum/db/l3_db.py:391
+#: quantum/db/l3_db.py:315 quantum/db/l3_db.py:392
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: quantum/db/l3_db.py:319
+#: quantum/db/l3_db.py:320
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: quantum/db/l3_db.py:329
+#: quantum/db/l3_db.py:330
 msgid "Router port must have exactly one fixed IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:344
+#: quantum/db/l3_db.py:345
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:461
+#: quantum/db/l3_db.py:462
 #, python-format
 msgid "Multiple floating ips match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:480
+#: quantum/db/l3_db.py:481
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: quantum/db/l3_db.py:518
+#: quantum/db/l3_db.py:519
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: quantum/db/l3_db.py:522
+#: quantum/db/l3_db.py:523
 #, python-format
 msgid ""
 "Cannnot create floating IP and bind it to Port %(port_id)s, since that "
 "port is owned by a different tenant."
 msgstr ""
 
-#: quantum/db/l3_db.py:534
+#: quantum/db/l3_db.py:535
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:541
+#: quantum/db/l3_db.py:542
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: quantum/db/l3_db.py:545
+#: quantum/db/l3_db.py:546
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:575
+#: quantum/db/l3_db.py:576
 #: quantum/plugins/nicira/nicira_nvp_plugin/QuantumPlugin.py:1947
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: quantum/db/l3_db.py:627
+#: quantum/db/l3_db.py:628
 msgid "Unable to find any IP address on external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:648
+#: quantum/db/l3_db.py:649
 msgid "Unable to create Floating ip due to a malformed request"
 msgstr ""
 
-#: quantum/db/l3_db.py:652
+#: quantum/db/l3_db.py:653
 msgid "Floating IP association failed"
 msgstr ""
 
-#: quantum/db/l3_db.py:737
+#: quantum/db/l3_db.py:738
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: quantum/db/l3_db.py:755
+#: quantum/db/l3_db.py:756
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:925
+#: quantum/db/l3_db.py:917
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
