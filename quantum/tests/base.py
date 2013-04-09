@@ -50,10 +50,10 @@ class BaseTestCase(testtools.TestCase):
 
         self.addCleanup(CONF.reset)
 
-        if os.environ.get('OS_STDOUT_NOCAPTURE') not in TRUE_STRING:
+        if os.environ.get('OS_STDOUT_CAPTURE') in TRUE_STRING:
             stdout = self.useFixture(fixtures.StringStream('stdout')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
-        if os.environ.get('OS_STDERR_NOCAPTURE') not in TRUE_STRING:
+        if os.environ.get('OS_STDERR_CAPTURE') in TRUE_STRING:
             stderr = self.useFixture(fixtures.StringStream('stderr')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
         self.stubs = stubout.StubOutForTesting()
