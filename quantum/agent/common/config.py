@@ -75,7 +75,8 @@ def get_root_helper(conf):
 
     root_helper = conf.root_helper
     if root_helper is not 'sudo':
-        LOG.deprecated(_('DEFAULT.root_helper is deprecated!'))
+        LOG.deprecated(_('DEFAULT.root_helper is deprecated! Please move '
+                         'root_helper configuration to [AGENT] section.'))
         return root_helper
 
     return 'sudo'
