@@ -127,7 +127,7 @@ class TestNiciraPortsV2(test_plugin.TestPortsV2, NiciraPluginV2TestCase):
                 with self.port(subnet=sub):
                     with self.port(subnet=sub):
                         plugin = manager.QuantumManager.get_plugin()
-                        ls = nvplib.get_lswitches(plugin.default_cluster,
+                        ls = nvplib.get_lswitches(plugin.cluster,
                                                   net['network']['id'])
                         self.assertEqual(len(ls), 2)
 

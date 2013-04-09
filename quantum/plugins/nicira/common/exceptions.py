@@ -28,6 +28,12 @@ class NvpInvalidConnection(NvpPluginException):
     message = _("Invalid NVP connection parameters: %(conn_params)s")
 
 
+class NvpInvalidClusterConfiguration(NvpPluginException):
+    message = _("Invalid cluster values: %(invalid_attrs)s. Please ensure "
+                "that these values are specified in the [DEFAULT] "
+                "section of the nvp plugin ini file.")
+
+
 class NvpInvalidNovaZone(NvpPluginException):
     message = _("Unable to find cluster config entry "
                 "for nova zone: %(nova_zone)s")
