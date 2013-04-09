@@ -64,8 +64,8 @@ class DhcpAgent(manager.Manager):
                     help=_("Support Metadata requests on isolated networks.")),
         cfg.BoolOpt('enable_metadata_network', default=False,
                     help=_("Allows for serving metadata requests from a "
-                           "dedicate network. Requires "
-                           "enable isolated_metadata = True ")),
+                           "dedicated network. Requires "
+                           "enable_isolated_metadata = True")),
     ]
 
     def __init__(self, host=None):
@@ -184,7 +184,8 @@ class DhcpAgent(manager.Manager):
         for subnet in network.subnets:
             if subnet.enable_dhcp:
                 if self.call_driver('enable', network):
-                    if self.conf.use_namespaces:
+                    if (self.conf.use_namespaces and
+                        self.conf.enable_isolated_metadata):
                         self.enable_isolated_metadata_proxy(network)
                     self.cache.put(network)
                 break
@@ -193,7 +194,8 @@ class DhcpAgent(manager.Manager):
         """Disable DHCP for a network known to the agent."""
         network = self.cache.get_network_by_id(network_id)
         if network:
-            if self.conf.use_namespaces:
+            if (self.conf.use_namespaces and
+                self.conf.enable_isolated_metadata):
                 self.disable_isolated_metadata_proxy(network)
             if self.call_driver('disable', network):
                 self.cache.remove(network)
