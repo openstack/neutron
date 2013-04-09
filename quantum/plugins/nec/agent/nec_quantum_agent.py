@@ -169,7 +169,8 @@ class NECQuantumAgent(object):
 
         report_interval = config.CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
             heartbeat.start(interval=report_interval)
 
     def _report_state(self):

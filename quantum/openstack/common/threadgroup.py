@@ -63,7 +63,7 @@ class ThreadGroup(object):
 
     def add_timer(self, interval, callback, initial_delay=None,
                   *args, **kwargs):
-        pulse = loopingcall.LoopingCall(callback, *args, **kwargs)
+        pulse = loopingcall.FixedIntervalLoopingCall(callback, *args, **kwargs)
         pulse.start(interval=interval,
                     initial_delay=initial_delay)
         self.timers.append(pulse)

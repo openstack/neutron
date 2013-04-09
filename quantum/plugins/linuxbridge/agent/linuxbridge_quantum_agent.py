@@ -517,7 +517,8 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                                      consumers)
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
             heartbeat.start(interval=report_interval)
 
     def setup_linux_bridge(self, interface_mappings):

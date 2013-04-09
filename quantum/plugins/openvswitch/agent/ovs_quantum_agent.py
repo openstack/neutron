@@ -225,7 +225,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                                      consumers)
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
             heartbeat.start(interval=report_interval)
 
     def get_net_uuid(self, vif_id):

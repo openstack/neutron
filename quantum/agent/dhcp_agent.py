@@ -686,7 +686,8 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'agent_type': constants.AGENT_TYPE_DHCP}
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
-            self.heartbeat = loopingcall.LoopingCall(self._report_state)
+            self.heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
