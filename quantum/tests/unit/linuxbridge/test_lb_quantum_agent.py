@@ -64,7 +64,7 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue \\'
         'state UNKNOWN \\'
         'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00',
-        '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 \\'
+        '2: eth77: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 \\'
         'qdisc mq state UP qlen 1000\    link/ether \\'
         'cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff']
 
@@ -81,6 +81,11 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.execute = self.execute_p.start()
         self.addCleanup(self.execute_p.stop)
         self.execute.return_value = '\n'.join(self.LINK_SAMPLE)
+        self.get_mac_p = mock.patch('quantum.agent.linux.utils.'
+                                    'get_interface_mac')
+        self.get_mac = self.get_mac_p.start()
+        self.addCleanup(self.get_mac_p.stop)
+        self.get_mac.return_value = '00:00:00:00:00:01'
 
     def test_update_devices_failed(self):
         lbmgr_instance = self.lbmgr_mock.return_value

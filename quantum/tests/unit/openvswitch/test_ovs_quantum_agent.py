@@ -58,7 +58,7 @@ class TestOvsQuantumAgent(base.BaseTestCase):
                         'OVSQuantumAgent.setup_integration_br',
                         return_value=mock.Mock()):
             with mock.patch('quantum.agent.linux.utils.get_interface_mac',
-                            return_value='000000000001'):
+                            return_value='00:00:00:00:00:01'):
                 self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
         self.agent.sg_agent = mock.Mock()
 
