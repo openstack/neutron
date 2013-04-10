@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.71"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.72"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-09 00:14+0000\n"
+"POT-Creation-Date: 2013-04-10 00:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -138,11 +138,11 @@ msgstr ""
 msgid "Quantum service started, listening on %(host)s:%(port)s"
 msgstr ""
 
-#: quantum/service.py:212
+#: quantum/service.py:213
 msgid "Exception occurs when timer stops"
 msgstr ""
 
-#: quantum/service.py:222
+#: quantum/service.py:223
 msgid "Exception occurs when waiting for timer"
 msgstr ""
 
@@ -317,7 +317,7 @@ msgid ""
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:718
+#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:719
 msgid "DHCP agent started"
 msgstr ""
 
@@ -396,19 +396,19 @@ msgstr ""
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:701 quantum/agent/l3_agent.py:728
+#: quantum/agent/dhcp_agent.py:702 quantum/agent/l3_agent.py:729
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:733
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:184
+#: quantum/agent/dhcp_agent.py:708 quantum/agent/l3_agent.py:734
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:185
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:715 quantum/agent/l3_agent.py:738
+#: quantum/agent/dhcp_agent.py:716 quantum/agent/l3_agent.py:739
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -525,7 +525,7 @@ msgstr ""
 
 #: quantum/agent/ovs_cleanup_util.py:73
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:410
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:239
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:240
 #, python-format
 msgid "Delete %s"
 msgstr ""
@@ -606,10 +606,12 @@ msgid "Seconds between nodes reporting state to server"
 msgstr ""
 
 #: quantum/agent/common/config.py:78
-msgid "DEFAULT.root_helper is deprecated!"
+msgid ""
+"DEFAULT.root_helper is deprecated! Please move root_helper configuration "
+"to [AGENT] section."
 msgstr ""
 
-#: quantum/agent/common/config.py:88
+#: quantum/agent/common/config.py:89
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
@@ -2781,13 +2783,22 @@ msgstr ""
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
 
-#: quantum/openstack/common/loopingcall.py:73
+#: quantum/openstack/common/loopingcall.py:84
 #, python-format
 msgid "task run outlasted interval by %s sec"
 msgstr ""
 
-#: quantum/openstack/common/loopingcall.py:80
-msgid "in looping call"
+#: quantum/openstack/common/loopingcall.py:91
+msgid "in fixed duration looping call"
+msgstr ""
+
+#: quantum/openstack/common/loopingcall.py:131
+#, python-format
+msgid "Dynamic looping call sleeping for %.02f seconds"
+msgstr ""
+
+#: quantum/openstack/common/loopingcall.py:138
+msgid "in dynamic looping call"
 msgstr ""
 
 #: quantum/openstack/common/periodic_task.py:97
@@ -4316,7 +4327,7 @@ msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:130
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:414
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:248
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:249
 msgid "port_update received"
 msgstr ""
 
@@ -4391,14 +4402,14 @@ msgid "Removing port failed for device %s: %s"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:307
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:600
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:687
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:601
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:688
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:315
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:612
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:700
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:613
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:701
 msgid "Agent loop has new devices!"
 msgstr ""
 
@@ -4413,8 +4424,8 @@ msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:342
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:651
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:766
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:652
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:767
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -4653,7 +4664,7 @@ msgid "Done deleting subinterface %s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:407
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:237
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:238
 msgid "network_delete received"
 msgstr ""
 
@@ -4667,76 +4678,76 @@ msgstr ""
 msgid "RPC agent_id: %s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:545
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:605
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:546
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:606
 #, python-format
 msgid "Port %s added"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:551
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:611
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:552
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:612
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:556
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:617
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:557
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:618
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:568
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:588
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:626
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:649
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:569
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:589
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:627
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:650
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:575
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:635
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:576
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:636
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:581
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:641
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:582
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:642
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:585
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:646
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:586
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:647
 #, python-format
 msgid "Port %s updated."
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:595
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:596
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:607
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:608
 msgid "Update devices failed"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:618
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:619
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:626
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:715
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:627
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:716
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:270
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:641
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:642
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:644
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:645
 #, python-format
 msgid "Interface mappings: %s"
 msgstr ""
@@ -5499,7 +5510,7 @@ msgstr ""
 msgid "port_update received: %s"
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:221
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:222
 msgid "No port changed."
 msgstr ""
 
@@ -6961,122 +6972,122 @@ msgstr ""
 msgid "provider:physical_network specified for GRE network"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:245
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:246
 #, python-format
 msgid "Network %s not used on agent."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:273
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:274
 msgid "tunnel_update received"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:302
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:303
 #, python-format
 msgid "No local VLAN available for net-id=%s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:305
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:306
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:327
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:328
 #, python-format
 msgid "Cannot provision GRE network for net-id=%s - tunneling disabled"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:344
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:345
 #, python-format
 msgid ""
 "Cannot provision flat network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:363
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:364
 #, python-format
 msgid ""
 "Cannot provision VLAN network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:371
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:372
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:381
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:382
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:415
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:416
 #, python-format
 msgid ""
 "Cannot reclaim unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:465
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:466
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:478
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:479
 #, python-format
 msgid "port_unbound: vif_id %s not in local_vlan_map"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:521
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:522
 msgid ""
 "Failed to create OVS patch port. Cannot have tunneling enabled on this "
 "agent, since this version of OVS does not support tunnels or patch ports."
 " Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:541
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:542
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:546
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:547
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
 "exist. Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:599
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:600
 #, python-format
 msgid "No VIF port for port %s defined on agent."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:673
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:674
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:693
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:694
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:706
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:707
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:264
 #: quantum/tests/unit/openvswitch/test_ovs_tunnel.py:359
 msgid "Error in agent event loop"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:733
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:734
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:746
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:747
 msgid "Tunnelling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:760
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:761
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
