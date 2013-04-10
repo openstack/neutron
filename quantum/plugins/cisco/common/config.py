@@ -19,12 +19,6 @@ from oslo.config import cfg
 from quantum.agent.common import config
 
 
-cisco_test_opts = [
-    cfg.StrOpt('host',
-               default=None,
-               help=_("Cisco test host option.")),
-]
-
 cisco_plugins_opts = [
     cfg.StrOpt('vswitch_plugin',
                default='quantum.plugins.openvswitch.ovs_quantum_plugin.'
@@ -66,13 +60,12 @@ cisco_opts = [
 
 cfg.CONF.register_opts(cisco_opts, "CISCO")
 cfg.CONF.register_opts(cisco_plugins_opts, "CISCO_PLUGINS")
-cfg.CONF.register_opts(cisco_test_opts, "CISCO_TEST")
 config.register_root_helper(cfg.CONF)
 
 # shortcuts
+CONF = cfg.CONF
 CISCO = cfg.CONF.CISCO
 CISCO_PLUGINS = cfg.CONF.CISCO_PLUGINS
-CISCO_TEST = cfg.CONF.CISCO_TEST
 
 #
 # When populated the nexus_dictionary format is:
@@ -81,6 +74,7 @@ CISCO_TEST = cfg.CONF.CISCO_TEST
 # Example:
 # {('1.1.1.1', 'username'): 'admin',
 #  ('1.1.1.1', 'password'): 'mySecretPassword',
+#  ('1.1.1.1', 'ssh_port'): 22,
 #  ('1.1.1.1', 'compute1'): '1/1', ...}
 #
 nexus_dictionary = {}

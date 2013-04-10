@@ -20,7 +20,9 @@ import inspect
 import logging
 
 from sqlalchemy import orm
+import webob.exc as wexc
 
+from quantum.api.v2 import base
 from quantum.common import exceptions as exc
 from quantum.db import db_base_plugin_v2
 from quantum.db import models_v2
@@ -47,6 +49,24 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                             'get_subnet', 'get_subnets', ]
     _master = True
 
+    CISCO_FAULT_MAP = {
+        cexc.NetworkSegmentIDNotFound: wexc.HTTPNotFound,
+        cexc.NoMoreNics: wexc.HTTPBadRequest,
+        cexc.NetworkVlanBindingAlreadyExists: wexc.HTTPBadRequest,
+        cexc.VlanIDNotFound: wexc.HTTPNotFound,
+        cexc.VlanIDNotAvailable: wexc.HTTPNotFound,
+        cexc.QosNotFound: wexc.HTTPNotFound,
+        cexc.QosNameAlreadyExists: wexc.HTTPBadRequest,
+        cexc.CredentialNotFound: wexc.HTTPNotFound,
+        cexc.CredentialNameNotFound: wexc.HTTPNotFound,
+        cexc.CredentialAlreadyExists: wexc.HTTPBadRequest,
+        cexc.NexusComputeHostNotConfigured: wexc.HTTPNotFound,
+        cexc.NexusConnectFailed: wexc.HTTPServiceUnavailable,
+        cexc.NexusConfigFailed: wexc.HTTPBadRequest,
+        cexc.NexusPortBindingNotFound: wexc.HTTPNotFound,
+        cexc.PortVnicBindingAlreadyExists: wexc.HTTPBadRequest,
+        cexc.PortVnicNotFound: wexc.HTTPNotFound}
+
     def __init__(self):
         """Load the model class."""
         self._model = importutils.import_object(config.CISCO.model_class)
@@ -61,6 +81,9 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         if hasattr(self._model, "supported_extension_aliases"):
             self.supported_extension_aliases.extend(
                 self._model.supported_extension_aliases)
+
+        # Extend the fault map
+        self._extend_fault_map()
 
         LOG.debug(_("Plugin initialization complete"))
 
@@ -93,6 +116,15 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             # otherwise getattr() and even hasattr() doesn't work corretly.
             raise AttributeError("'%s' object has no attribute '%s'" %
                                  (self._model, name))
+
+    def _extend_fault_map(self):
+        """Extend the Quantum Fault Map for Cisco exceptions.
+
+        Map exceptions which are specific to the Cisco Plugin
+        to standard HTTP exceptions.
+
+        """
+        base.FAULT_MAP.update(self.CISCO_FAULT_MAP)
 
     """
     Core API implementation
@@ -143,15 +175,12 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 raise exc.NetworkInUse(net_id=id)
         context.session.close()
         #Network does not have any ports, we can proceed to delete
-        try:
-            network = self._get_network(context, id)
-            kwargs = {const.NETWORK: network,
-                      const.BASE_PLUGIN_REF: self}
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            kwargs])
-            return super(PluginV2, self).delete_network(context, id)
-        except Exception:
-            raise
+        network = self._get_network(context, id)
+        kwargs = {const.NETWORK: network,
+                  const.BASE_PLUGIN_REF: self}
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        kwargs])
+        return super(PluginV2, self).delete_network(context, id)
 
     def get_network(self, context, id, fields=None):
         """Get a particular network."""
@@ -186,24 +215,18 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         #    raise exc.PortInUse(port_id=id, net_id=port['network_id'],
         #                        att_id=port['device_id'])
         """
-        try:
-            kwargs = {const.PORT: port}
-            # TODO(Sumit): Might first need to check here if port is active
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            kwargs])
-            return super(PluginV2, self).delete_port(context, id)
-        except Exception:
-            raise
+        kwargs = {const.PORT: port}
+        # TODO(Sumit): Might first need to check here if port is active
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        kwargs])
+        return super(PluginV2, self).delete_port(context, id)
 
     def update_port(self, context, id, port):
         """Update the state of a port and return the updated port."""
         LOG.debug(_("update_port() called"))
-        try:
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            port])
-            return super(PluginV2, self).update_port(context, id, port)
-        except Exception:
-            raise
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        port])
+        return super(PluginV2, self).update_port(context, id, port)
 
     def create_subnet(self, context, subnet):
         """Create subnet.
@@ -224,12 +247,9 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     def update_subnet(self, context, id, subnet):
         """Updates the state of a subnet and returns the updated subnet."""
         LOG.debug(_("update_subnet() called"))
-        try:
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            subnet])
-            return super(PluginV2, self).update_subnet(context, id, subnet)
-        except Exception:
-            raise
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        subnet])
+        return super(PluginV2, self).update_subnet(context, id, subnet)
 
     def delete_subnet(self, context, id):
         LOG.debug(_("delete_subnet() called"))
@@ -245,13 +265,10 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                        for a in allocated):
                 raise exc.SubnetInUse(subnet_id=id)
         context.session.close()
-        try:
-            kwargs = {const.SUBNET: subnet}
-            self._invoke_device_plugins(self._func_name(), [context, id,
-                                                            kwargs])
-            return super(PluginV2, self).delete_subnet(context, id)
-        except Exception:
-            raise
+        kwargs = {const.SUBNET: subnet}
+        self._invoke_device_plugins(self._func_name(), [context, id,
+                                                        kwargs])
+        return super(PluginV2, self).delete_subnet(context, id)
 
     """
     Extension API implementation
