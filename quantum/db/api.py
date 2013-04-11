@@ -42,7 +42,8 @@ SQL_CONNECTION_DEFAULT = 'sqlite://'
 database_opts = [
     cfg.StrOpt('sql_connection',
                help=_('The SQLAlchemy connection string used to connect to '
-                      'the database')),
+                      'the database'),
+               secret=True),
     cfg.IntOpt('sql_max_retries', default=-1,
                help=_('Database reconnection retry times')),
     cfg.IntOpt('reconnect_interval', default=2,
