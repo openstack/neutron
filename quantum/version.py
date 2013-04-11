@@ -24,7 +24,7 @@ except ImportError:
 QUANTUM_VERSION = ['2012', '2', '4']
 YEAR, COUNT, REVSISION = QUANTUM_VERSION
 
-FINAL = False   # This becomes true at Release Candidate time
+FINAL = True   # This becomes true at Release Candidate time
 
 
 def canonical_version_string():
