@@ -124,7 +124,8 @@ class TunnelTest(base.BaseTestCase):
             'phy-tunnel_bridge_mapping').AndReturn([self.inta, self.intb])
 
         self.mox.StubOutWithMock(utils, 'get_interface_mac')
-        utils.get_interface_mac(self.INT_BRIDGE).AndReturn('000000000001')
+        utils.get_interface_mac(self.INT_BRIDGE).AndReturn(
+            '00:00:00:00:00:01')
 
     def testConstruct(self):
         self.mox.ReplayAll()
