@@ -547,6 +547,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
         with context.session.begin(subtransactions=True):
             pool_db = self._get_resource(context, Pool, id)
+            self.assert_modification_allowed(pool_db)
             if p:
                 pool_db.update(p)
 
@@ -680,6 +681,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         v = member['member']
         with context.session.begin(subtransactions=True):
             member_db = self._get_resource(context, Member, id)
+            self.assert_modification_allowed(member_db)
             if v:
                 member_db.update(v)
 
@@ -740,6 +742,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         v = health_monitor['health_monitor']
         with context.session.begin(subtransactions=True):
             monitor_db = self._get_resource(context, HealthMonitor, id)
+            self.assert_modification_allowed(monitor_db)
             if v:
                 monitor_db.update(v)
         return self._make_health_monitor_dict(monitor_db)
