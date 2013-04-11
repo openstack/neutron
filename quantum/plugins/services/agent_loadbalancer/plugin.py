@@ -346,3 +346,13 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
         self.agent_rpc.modify_pool(context, pool_id)
 
         return retval
+
+    def delete_pool_health_monitor(self, context, id, pool_id):
+        retval = super(LoadBalancerPlugin, self).delete_pool_health_monitor(
+            context,
+            id,
+            pool_id
+        )
+        self.agent_rpc.modify_pool(context, pool_id)
+
+        return retval
