@@ -138,7 +138,7 @@ else:
         ('quantum-lbaas-agent = '
          'quantum.plugins.services.agent_loadbalancer.agent:main'),
         ('quantum-check-nvp-config = '
-         'quantum.plugins.nicira.nicira_nvp_plugin.check_nvp_config:main'),
+         'quantum.plugins.nicira.check_nvp_config:main'),
     ]
 
     ProjectScripts = [

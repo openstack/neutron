@@ -24,9 +24,9 @@ import sys
 from oslo.config import cfg
 
 from quantum.common import config
-from quantum.plugins.nicira.nicira_nvp_plugin import NvpApiClient
-from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
-from quantum.plugins.nicira.nicira_nvp_plugin import QuantumPlugin
+from quantum.plugins.nicira import NvpApiClient
+from quantum.plugins.nicira import nvplib
+from quantum.plugins.nicira import QuantumPlugin
 
 config.setup_logging(cfg.CONF)
 
