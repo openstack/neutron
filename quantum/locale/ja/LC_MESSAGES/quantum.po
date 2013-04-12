@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-10 00:13+0000\n"
+"POT-Creation-Date: 2013-04-12 00:07+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -7075,7 +7075,7 @@ msgstr ""
 
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:707
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:264
-#: quantum/tests/unit/openvswitch/test_ovs_tunnel.py:359
+#: quantum/tests/unit/openvswitch/test_ovs_tunnel.py:371
 msgid "Error in agent event loop"
 msgstr ""
 
@@ -7596,10 +7596,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "DEFAULT.root_helper is deprecated!"
-#~ msgstr ""
-
-#~ msgid "in looping call"
-#~ msgstr ""
 
