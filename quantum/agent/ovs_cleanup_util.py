@@ -53,7 +53,7 @@ def setup_conf():
 
 
 def collect_quantum_ports(bridges, root_helper):
-    """Collect ports created by Quantum from OVS"""
+    """Collect ports created by Quantum from OVS."""
     ports = []
     for bridge in bridges:
         ovs = ovs_lib.OVSBridge(bridge, root_helper)

@@ -203,7 +203,7 @@ def del_portinfo(session, id):
 
 
 def get_port_from_device(port_id):
-    """Get port from database"""
+    """Get port from database."""
     LOG.debug(_("get_port_with_securitygroups() called:port_id=%s"), port_id)
     session = db.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id

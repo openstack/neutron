@@ -153,7 +153,7 @@ def _check_and_truncate_name(display_name):
 
 
 def get_cluster_version(cluster):
-    """Return major/minor version #"""
+    """Return major/minor version #."""
     # Get control-cluster nodes
     uri = "/ws.v1/control-cluster/node?_page_length=1&fields=uuid"
     try:
@@ -199,7 +199,8 @@ def get_all_query_pages(path, c):
 
 def do_single_request(*args, **kwargs):
     """Issue a request to a specified cluster if specified via kwargs
-       (cluster=<cluster>)."""
+       (cluster=<cluster>).
+    """
     cluster = kwargs["cluster"]
     try:
         req = cluster.api_client.request(*args)
@@ -209,7 +210,7 @@ def do_single_request(*args, **kwargs):
 
 
 def do_multi_request(*args, **kwargs):
-    """Issue a request to all clusters"""
+    """Issue a request to all clusters."""
     results = []
     clusters = kwargs["clusters"]
     for x in clusters:
@@ -343,7 +344,7 @@ def update_lswitch(cluster, lswitch_id, display_name,
 
 
 def create_l2_gw_service(cluster, tenant_id, display_name, devices):
-    """ Create a NVP Layer-2 Network Gateway Service.
+    """Create a NVP Layer-2 Network Gateway Service.
 
         :param cluster: The target NVP cluster
         :param tenant_id: Identifier of the Openstack tenant for which
@@ -379,7 +380,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
 
 
 def create_lrouter(cluster, tenant_id, display_name, nexthop):
-    """ Create a NVP logical router on the specified cluster.
+    """Create a NVP logical router on the specified cluster.
 
         :param cluster: The target NVP cluster
         :param tenant_id: Identifier of the Openstack tenant for which
@@ -776,7 +777,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
                  display_name, device_id, admin_status_enabled,
                  mac_address=None, fixed_ips=None, port_security_enabled=None,
                  security_profiles=None, queue_id=None):
-    """ Creates a logical port on the assigned logical switch """
+    """Creates a logical port on the assigned logical switch."""
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
     display_name = _check_and_truncate_name(display_name)
@@ -810,7 +811,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
 
 def create_router_lport(cluster, lrouter_uuid, tenant_id, quantum_port_id,
                         display_name, admin_status_enabled, ip_addresses):
-    """ Creates a logical port on the assigned logical router """
+    """Creates a logical port on the assigned logical router."""
     tags = [dict(scope='os_tid', tag=tenant_id),
             dict(scope='q_port_id', tag=quantum_port_id)]
     lport_obj = dict(
@@ -841,7 +842,7 @@ def create_router_lport(cluster, lrouter_uuid, tenant_id, quantum_port_id,
 def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
                         tenant_id, quantum_port_id, display_name,
                         admin_status_enabled, ip_addresses):
-    """ Updates a logical port on the assigned logical router """
+    """Updates a logical port on the assigned logical router."""
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
@@ -874,7 +875,7 @@ def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
 
 
 def delete_router_lport(cluster, lrouter_uuid, lport_uuid):
-    """ Creates a logical port on the assigned logical router """
+    """Creates a logical port on the assigned logical router."""
     path = _build_uri_path(LROUTERPORT_RESOURCE, lport_uuid, lrouter_uuid)
     try:
         do_single_request(HTTP_DELETE, path, cluster=cluster)
@@ -906,7 +907,7 @@ def delete_peer_router_lport(cluster, lr_uuid, ls_uuid, lp_uuid):
 
 
 def find_router_gw_port(context, cluster, router_id):
-    """ Retrieves the external gateway port for a NVP logical router """
+    """Retrieves the external gateway port for a NVP logical router."""
 
     # Find the uuid of nvp ext gw logical router port
     # TODO(salvatore-orlando): Consider storing it in Quantum DB
@@ -959,7 +960,7 @@ def plug_router_port_attachment(cluster, router_id, port_id,
 
 
 def get_port_status(cluster, lswitch_id, port_id):
-    """Retrieve the operational status of the port"""
+    """Retrieve the operational status of the port."""
     try:
         r = do_single_request(HTTP_GET,
                               "/ws.v1/lswitch/%s/lport/%s/status" %
@@ -996,7 +997,7 @@ def _plug_interface(cluster, lswitch_id, lport_id, att_obj):
 
 def plug_l2_gw_service(cluster, lswitch_id, lport_id,
                        gateway_id, vlan_id=None):
-    """ Plug a Layer-2 Gateway Attachment object in a logical port """
+    """Plug a Layer-2 Gateway Attachment object in a logical port."""
     att_obj = {'type': 'L2GatewayAttachment',
                'l2_gateway_service_uuid': gateway_id}
     if vlan_id:
@@ -1005,7 +1006,7 @@ def plug_l2_gw_service(cluster, lswitch_id, lport_id,
 
 
 def plug_interface(cluster, lswitch_id, port, type, attachment=None):
-    """ Plug a VIF Attachment object in a logical port """
+    """Plug a VIF Attachment object in a logical port."""
     lport_obj = {}
     if attachment:
         lport_obj["vif_uuid"] = attachment
@@ -1044,7 +1045,8 @@ def do_request(*args, **kwargs):
     :param args: a list of positional arguments.
     :param kwargs: a list of keyworkds arguments.
     :returns: the result of do_single_request loaded into a python object
-        or None."""
+        or None.
+    """
     res = do_single_request(*args, **kwargs)
     if res:
         return json.loads(res)
@@ -1055,7 +1057,8 @@ def mk_body(**kwargs):
     """Convenience function creates and dumps dictionary to string.
 
     :param kwargs: the key/value pirs to be dumped into a json string.
-    :returns: a json string."""
+    :returns: a json string.
+    """
     return json.dumps(kwargs, ensure_ascii=False)
 
 
@@ -1065,7 +1068,8 @@ def set_tenant_id_tag(tenant_id, taglist=None):
     :param tenant_id: the tenant_id to set.
     :param taglist: the taglist to append to (or None).
     :returns: a new taglist that includes the old taglist with the new
-        tenant_id tag set."""
+        tenant_id tag set.
+    """
     new_taglist = []
     if taglist:
         new_taglist = [x for x in taglist if x['scope'] != TENANT_ID_SCOPE]
@@ -1402,7 +1406,7 @@ def delete_lqueue(cluster, id):
 # NVP API Calls for check_nvp_config utility
 # -----------------------------------------------------------------------------
 def check_cluster_connectivity(cluster):
-    """Make sure that we can issue a request to each of the cluster nodes"""
+    """Make sure that we can issue a request to each of the cluster nodes."""
     try:
         resp = do_single_request(HTTP_GET, "/ws.v1/control-cluster",
                                  cluster=cluster)

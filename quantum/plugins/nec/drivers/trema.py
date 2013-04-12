@@ -23,7 +23,7 @@ from quantum.plugins.nec import ofc_driver_base
 
 
 class TremaDriverBase(ofc_driver_base.OFCDriverBase):
-    """Common class for Trema (Sliceable Switch) Drivers"""
+    """Common class for Trema (Sliceable Switch) Drivers."""
     networks_path = "/networks"
     network_path = "/networks/%s"
 
@@ -75,7 +75,7 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
 
 
 class TremaFilterDriver(object):
-    """Trema (Sliceable Switch) PacketFilter Driver Mixin"""
+    """Trema (Sliceable Switch) PacketFilter Driver Mixin."""
     filters_path = "/filters"
     filter_path = "/filters/%s"
 

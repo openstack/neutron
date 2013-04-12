@@ -30,7 +30,7 @@ from quantum.tests import base
 
 
 class TestConfig(object):
-    """Configuration for this test"""
+    """Configuration for this test."""
     host = '127.0.0.1'
     port = 8888
     use_ssl = False
@@ -39,7 +39,7 @@ class TestConfig(object):
 
 
 def _ofc(id):
-    """OFC ID converter"""
+    """OFC ID converter."""
     return "ofc-%s" % id
 
 
@@ -55,7 +55,7 @@ class PFCDriverTestBase(base.BaseTestCase):
         self.addCleanup(self.mox.UnsetStubs)
 
     def get_ofc_item_random_params(self):
-        """create random parameters for ofc_item test"""
+        """create random parameters for ofc_item test."""
         tenant_id = uuidutils.generate_uuid()
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()

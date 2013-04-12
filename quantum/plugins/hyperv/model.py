@@ -22,7 +22,7 @@ from quantum.db.models_v2 import model_base
 
 
 class VlanAllocation(model_base.BASEV2):
-    """Represents allocation state of vlan_id on physical network"""
+    """Represents allocation state of vlan_id on physical network."""
     __tablename__ = 'hyperv_vlan_allocations'
 
     physical_network = Column(String(64), nullable=False, primary_key=True)
@@ -37,7 +37,7 @@ class VlanAllocation(model_base.BASEV2):
 
 
 class NetworkBinding(model_base.BASEV2):
-    """Represents binding of virtual network to physical realization"""
+    """Represents binding of virtual network to physical realization."""
     __tablename__ = 'hyperv_network_bindings'
 
     network_id = Column(String(36),

@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 
 class NetworkDhcpAgentBinding(model_base.BASEV2):
-    """Represents binding between quantum networks and DHCP agents"""
+    """Represents binding between quantum networks and DHCP agents."""
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete='CASCADE'),
                            primary_key=True)
@@ -44,7 +44,7 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
 
 
 class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
-    """Represents binding between quantum routers and L3 agents"""
+    """Represents binding between quantum routers and L3 agents."""
     router_id = sa.Column(sa.String(36),
                           sa.ForeignKey("routers.id", ondelete='CASCADE'))
     l3_agent = orm.relation(agents_db.Agent)
@@ -194,7 +194,8 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
     def remove_router_from_l3_agent(self, context, id, router_id):
         """Remove the router from l3 agent. After it, the router
         will be non-hosted until there is update which
-        lead to re schedule or be added to another agent manually."""
+        lead to re schedule or be added to another agent manually.
+        """
         agent = self._get_agent(context, id)
         with context.session.begin(subtransactions=True):
             query = context.session.query(RouterL3AgentBinding)
@@ -321,7 +322,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
         return l3_agents
 
     def get_l3_agent_candidates(self, sync_router, l3_agents):
-        """Get the valid l3 agents for the router from a list of l3_agents"""
+        """Get the valid l3 agents for the router from a list of l3_agents."""
         candidates = []
         for l3_agent in l3_agents:
             if not l3_agent.admin_state_up:

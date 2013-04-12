@@ -56,7 +56,7 @@ def add_network_binding(session, network_id, network_type,
 
 
 def sync_vlan_allocations(network_vlan_ranges):
-    """Synchronize vlan_allocations table with configured VLAN ranges"""
+    """Synchronize vlan_allocations table with configured VLAN ranges."""
 
     session = db.get_session()
     with session.begin():
@@ -197,7 +197,7 @@ def release_vlan(session, physical_network, vlan_id, network_vlan_ranges):
 
 
 def sync_tunnel_allocations(tunnel_id_ranges):
-    """Synchronize tunnel_allocations table with configured tunnel ranges"""
+    """Synchronize tunnel_allocations table with configured tunnel ranges."""
 
     # determine current configured allocatable tunnels
     tunnel_ids = set()
@@ -310,7 +310,7 @@ def get_port(port_id):
 
 
 def get_port_from_device(port_id):
-    """Get port from database"""
+    """Get port from database."""
     LOG.debug(_("get_port_with_securitygroups() called:port_id=%s"), port_id)
     session = db.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id

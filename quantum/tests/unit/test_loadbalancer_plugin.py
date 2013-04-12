@@ -172,7 +172,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         self.assertEqual(res['vip'], return_value)
 
     def _test_entity_delete(self, entity):
-        """ does the entity deletion based on naming convention  """
+        """Does the entity deletion based on naming convention."""
         entity_id = _uuid()
         res = self.api.delete(_get_path('lb/' + entity + 's', id=entity_id,
                                         fmt=self.fmt))

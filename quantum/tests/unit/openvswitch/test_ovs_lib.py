@@ -41,7 +41,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.addCleanup(self.mox.UnsetStubs)
 
     def test_vifport(self):
-        """create and stringify vif port, confirm no exceptions"""
+        """create and stringify vif port, confirm no exceptions."""
         self.mox.ReplayAll()
 
         pname = "vif1.0"

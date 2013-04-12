@@ -53,7 +53,7 @@ ACTIVE = qconstants.ACTIVE
 
 
 def save_config(conf_path, logical_config, socket_path=None):
-    """Convert a logical configuration to the HAProxy version"""
+    """Convert a logical configuration to the HAProxy version."""
     data = []
     data.extend(_build_global(logical_config, socket_path=socket_path))
     data.extend(_build_defaults(logical_config))
@@ -156,7 +156,7 @@ def _get_first_ip_from_port(port):
 
 
 def _get_server_health_option(config):
-    """return the first active health option"""
+    """return the first active health option."""
     for monitor in config['healthmonitors']:
         if monitor['status'] == ACTIVE and monitor['admin_state_up']:
             break

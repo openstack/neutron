@@ -789,7 +789,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             self._send_update_network(orig_net)
         except RemoteRestError:
-            # TODO (Sumit): rollback deletion of subnet
+            # TODO(Sumit): rollback deletion of subnet
             raise
 
     def create_router(self, context, router):

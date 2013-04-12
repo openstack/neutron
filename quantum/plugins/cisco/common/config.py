@@ -87,7 +87,7 @@ nexus_dictionary = {}
 
 
 class CiscoConfigOptions():
-    """ Cisco Configuration Options Class """
+    """Cisco Configuration Options Class."""
     def __init__(self):
         self._create_nexus_dictionary()
 

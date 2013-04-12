@@ -154,7 +154,7 @@ def get_hostname():
 
 
 def compare_elements(a, b):
-    """ compare elements if a and b have same elements
+    """Compare elements if a and b have same elements.
 
     This method doesn't consider ordering
     """

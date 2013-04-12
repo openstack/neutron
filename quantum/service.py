@@ -120,7 +120,8 @@ class Service(service.Service):
     """Service object for binaries running on hosts.
 
     A service takes a manager and enables rpc by listening to queues based
-    on topic. It also periodically runs tasks on the manager."""
+    on topic. It also periodically runs tasks on the manager.
+    """
 
     def __init__(self, host, binary, topic, manager, report_interval=None,
                  periodic_interval=None, periodic_fuzzy_delay=None,

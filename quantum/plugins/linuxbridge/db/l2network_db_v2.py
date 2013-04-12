@@ -93,7 +93,7 @@ def sync_network_states(network_vlan_ranges):
 
 
 def get_network_state(physical_network, vlan_id):
-    """Get state of specified network"""
+    """Get state of specified network."""
 
     session = db.get_session()
     try:
@@ -193,7 +193,7 @@ def get_network_binding(session, network_id):
 
 
 def get_port_from_device(device):
-    """Get port from database"""
+    """Get port from database."""
     LOG.debug(_("get_port_from_device() called"))
     session = db.get_session()
     sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
@@ -221,7 +221,7 @@ def get_port_from_device(device):
 
 
 def set_port_status(port_id, status):
-    """Set the port status"""
+    """Set the port status."""
     LOG.debug(_("set_port_status as %s called"), status)
     session = db.get_session()
     try:

@@ -145,7 +145,7 @@ class Agentscheduler(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """Returns Ext Resources """
+        """Returns Ext Resources."""
         exts = []
         parent = dict(member_name="agent",
                       collection_name="agents")
@@ -214,7 +214,7 @@ class RouterNotHostedByL3Agent(exceptions.Conflict):
 
 
 class AgentSchedulerPluginBase(object):
-    """ REST API to operate the agent scheduler.
+    """REST API to operate the agent scheduler.
 
     All of method must be in an admin context.
     """

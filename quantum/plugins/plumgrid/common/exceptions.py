@@ -17,7 +17,7 @@
 # @author: Edgar Magana, emagana@plumgrid.com, PLUMgrid, Inc.
 
 
-""" Quantum PLUMgrid Plugin exceptions """
+"""Quantum PLUMgrid Plugin exceptions"""
 
 from quantum.common import exceptions as base_exec
 

@@ -180,7 +180,7 @@ class HyperVPluginDB(object):
                     session.delete(alloc)
 
     def sync_vlan_allocations(self, network_vlan_ranges):
-        """Synchronize vlan_allocations table with configured VLAN ranges"""
+        """Synchronize vlan_allocations table with configured VLAN ranges."""
 
         session = db_api.get_session()
         with session.begin():

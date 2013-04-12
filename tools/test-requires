@@ -5,6 +5,7 @@ discover
 distribute>=0.6.24
 fixtures>=0.3.12
 flake8
+hacking
 mock>=1.0b1
 mox==0.5.3
 nose

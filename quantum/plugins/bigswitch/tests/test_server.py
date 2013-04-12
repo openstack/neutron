@@ -120,7 +120,7 @@ class TestNetworkCtrl(object):
                 if request_data:
                     try:
                         request_data = json.loads(request_data)
-                    except:
+                    except Exception:
                         # OK for it not to be json! Ignore it
                         pass
 
@@ -141,7 +141,7 @@ class TestNetworkCtrl(object):
             if body:
                 try:
                     body_data = json.loads(body)
-                except:
+                except Exception:
                     # OK for it not to be json! Ignore it
                     pass
 

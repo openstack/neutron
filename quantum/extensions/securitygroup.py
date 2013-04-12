@@ -216,7 +216,7 @@ cfg.CONF.register_opts(security_group_quota_opts, 'QUOTAS')
 
 
 class Securitygroup(extensions.ExtensionDescriptor):
-    """ Security group extension"""
+    """Security group extension."""
 
     @classmethod
     def get_name(cls):
@@ -241,7 +241,7 @@ class Securitygroup(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         attr.PLURALS.update(dict(my_plurals))
         exts = []

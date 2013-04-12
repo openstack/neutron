@@ -17,7 +17,7 @@
 #
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-""" stubs.py provides interface methods for the database test cases """
+"""stubs.py provides interface methods for the database test cases"""
 
 from quantum.db import api as db
 from quantum.openstack.common import log as logging
@@ -27,9 +27,9 @@ LOG = logging.getLogger(__name__)
 
 
 class QuantumDB(object):
-    """Class conisting of methods to call Quantum db methods"""
+    """Class conisting of methods to call Quantum db methods."""
     def get_all_networks(self, tenant_id):
-        """Get all networks"""
+        """Get all networks."""
         nets = []
         try:
             for net in db.network_list(tenant_id):
@@ -44,7 +44,7 @@ class QuantumDB(object):
         return nets
 
     def get_network(self, network_id):
-        """Get a network"""
+        """Get a network."""
         net = []
         try:
             for net in db.network_get(network_id):
@@ -59,7 +59,7 @@ class QuantumDB(object):
         return net
 
     def create_network(self, tenant_id, net_name):
-        """Create a network"""
+        """Create a network."""
         net_dict = {}
         try:
             res = db.network_create(tenant_id, net_name)
@@ -72,7 +72,7 @@ class QuantumDB(object):
             LOG.error("Failed to create network: %s", str(exc))
 
     def delete_network(self, net_id):
-        """Delete a network"""
+        """Delete a network."""
         try:
             net = db.network_destroy(net_id)
             LOG.debug("Deleted network: %s", net.uuid)
@@ -83,7 +83,7 @@ class QuantumDB(object):
             LOG.error("Failed to delete network: %s", str(exc))
 
     def update_network(self, tenant_id, net_id, param_data):
-        """Rename a network"""
+        """Rename a network."""
         try:
             print param_data
             net = db.network_update(net_id, tenant_id, **param_data)
@@ -96,7 +96,7 @@ class QuantumDB(object):
             LOG.error("Failed to update network: %s", str(exc))
 
     def get_all_ports(self, net_id):
-        """Get all ports"""
+        """Get all ports."""
         ports = []
         try:
             for port in db.port_list(net_id):
@@ -112,7 +112,7 @@ class QuantumDB(object):
             LOG.error("Failed to get all ports: %s", str(exc))
 
     def get_port(self, net_id, port_id):
-        """Get a port"""
+        """Get a port."""
         port_list = []
         port = db.port_get(port_id, net_id)
         try:
@@ -128,7 +128,7 @@ class QuantumDB(object):
             LOG.error("Failed to get port: %s", str(exc))
 
     def create_port(self, net_id):
-        """Add a port"""
+        """Add a port."""
         port_dict = {}
         try:
             port = db.port_create(net_id)
@@ -142,7 +142,7 @@ class QuantumDB(object):
             LOG.error("Failed to create port: %s", str(exc))
 
     def delete_port(self, net_id, port_id):
-        """Delete a port"""
+        """Delete a port."""
         try:
             port = db.port_destroy(port_id, net_id)
             LOG.debug("Deleted port %s", port.uuid)
@@ -153,7 +153,7 @@ class QuantumDB(object):
             LOG.error("Failed to delete port: %s", str(exc))
 
     def update_port(self, net_id, port_id, **kwargs):
-        """Update a port"""
+        """Update a port."""
         try:
             port = db.port_update(port_id, net_id, **kwargs)
             LOG.debug("Updated port %s", port.uuid)
@@ -167,7 +167,7 @@ class QuantumDB(object):
             LOG.error("Failed to update port state: %s", str(exc))
 
     def plug_interface(self, net_id, port_id, int_id):
-        """Plug interface to a port"""
+        """Plug interface to a port."""
         try:
             port = db.port_set_attachment(port_id, net_id, int_id)
             LOG.debug("Attached interface to port %s", port.uuid)
@@ -181,7 +181,7 @@ class QuantumDB(object):
             LOG.error("Failed to plug interface: %s", str(exc))
 
     def unplug_interface(self, net_id, port_id):
-        """Unplug interface to a port"""
+        """Unplug interface to a port."""
         try:
             db.port_unset_attachment(port_id, net_id)
             LOG.debug("Detached interface from port %s", port_id)

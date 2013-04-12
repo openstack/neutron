@@ -32,7 +32,7 @@ SHARED = 'shared'
 
 
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
-    """ Allows to verify keys in a dictionary.
+    """Allows to verify keys in a dictionary.
     :param expected_keys: A list of keys expected to be present.
     :param target_dict: The dictionary which should be verified.
     :param strict: Specifies whether additional keys are allowed to be present.

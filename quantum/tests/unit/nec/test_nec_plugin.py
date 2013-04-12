@@ -15,10 +15,10 @@
 
 import mock
 
-from quantum import context as q_context
-from quantum import manager
 from quantum.common import topics
+from quantum import context as q_context
 from quantum.extensions import portbindings
+from quantum import manager
 from quantum.plugins.nec import nec_plugin
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin

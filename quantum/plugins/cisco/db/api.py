@@ -53,7 +53,7 @@ def clear_db():
 
 
 def get_session(autocommit=True, expire_on_commit=False):
-    """Helper method to grab session"""
+    """Helper method to grab session."""
     global _MAKER, _ENGINE
     if not _MAKER:
         assert _ENGINE
@@ -64,14 +64,14 @@ def get_session(autocommit=True, expire_on_commit=False):
 
 
 def register_models():
-    """Register Models and create properties"""
+    """Register Models and create properties."""
     global _ENGINE
     assert _ENGINE
     BASE.metadata.create_all(_ENGINE)
 
 
 def unregister_models():
-    """Unregister Models, useful clearing out data before testing"""
+    """Unregister Models, useful clearing out data before testing."""
     global _ENGINE
     assert _ENGINE
     BASE.metadata.drop_all(_ENGINE)

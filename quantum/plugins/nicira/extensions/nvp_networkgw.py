@@ -55,7 +55,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 
 
 def _validate_device_list(data, valid_values=None):
-    """ Validate the list of service definitions. """
+    """Validate the list of service definitions."""
     if not data:
         # Devices must be provided
         msg = _("Cannot create a gateway with an empty device list")
@@ -89,7 +89,7 @@ attributes.validators['type:device_list'] = _validate_device_list
 
 
 class Nvp_networkgw(object):
-    """ API extension for Layer-2 Gateway support.
+    """API extension for Layer-2 Gateway support.
 
     The Layer-2 gateway feature allows for connecting quantum networks
     with external networks at the layer-2 level. No assumption is made on
@@ -122,7 +122,7 @@ class Nvp_networkgw(object):
 
     @classmethod
     def get_resources(cls):
-        """ Returns Ext Resources """
+        """Returns Ext Resources."""
         plugin = manager.QuantumManager.get_plugin()
         params = RESOURCE_ATTRIBUTE_MAP.get(COLLECTION_NAME, dict())
 

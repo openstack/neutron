@@ -36,8 +36,8 @@ from quantum import context
 from quantum import manager
 from quantum.openstack.common import importutils
 from quantum.openstack.common import jsonutils
-from quantum.openstack.common import log as logging
 from quantum.openstack.common import lockutils
+from quantum.openstack.common import log as logging
 from quantum.openstack.common import loopingcall
 from quantum.openstack.common.rpc import proxy
 from quantum.openstack.common import service
@@ -83,7 +83,7 @@ class DhcpAgent(manager.Manager):
         self._populate_networks_cache()
 
     def _populate_networks_cache(self):
-        """Populate the networks cache when the DHCP-agent starts"""
+        """Populate the networks cache when the DHCP-agent starts."""
 
         try:
             existing_networks = self.dhcp_driver_cls.existing_dhcp_networks(
@@ -137,7 +137,7 @@ class DhcpAgent(manager.Manager):
         try:
             self.plugin_rpc.update_lease_expiration(network_id, ip_address,
                                                     time_remaining)
-        except:
+        except Exception:
             self.needs_resync = True
             LOG.exception(_('Unable to update lease'))
 
@@ -153,7 +153,7 @@ class DhcpAgent(manager.Manager):
 
             for network_id in active_networks:
                 self.refresh_dhcp_helper(network_id)
-        except:
+        except Exception:
             self.needs_resync = True
             LOG.exception(_('Unable to sync network state.'))
 
@@ -173,7 +173,7 @@ class DhcpAgent(manager.Manager):
         """Enable DHCP for a network that meets enabling criteria."""
         try:
             network = self.plugin_rpc.get_network_info(network_id)
-        except:
+        except Exception:
             self.needs_resync = True
             LOG.exception(_('Network %s RPC info call failed.'), network_id)
             return
@@ -210,7 +210,7 @@ class DhcpAgent(manager.Manager):
 
         try:
             network = self.plugin_rpc.get_network_info(network_id)
-        except:
+        except Exception:
             self.needs_resync = True
             LOG.exception(_('Network %s RPC info call failed.'), network_id)
             return
@@ -502,7 +502,7 @@ class DeviceManager(object):
         try:
             self.driver = importutils.import_object(conf.interface_driver,
                                                     conf)
-        except:
+        except Exception:
             msg = _("Error importing interface driver "
                     "'%s'") % conf.interface_driver
             raise SystemExit(msg)

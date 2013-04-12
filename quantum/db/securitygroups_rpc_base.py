@@ -63,7 +63,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def update_security_group_on_port(self, context, id, port,
                                       original_port, updated_port):
-        """ update security groups on port
+        """Update security groups on port.
 
         This method returns a flag which indicates request notification
         is required and does not perform notification itself.
@@ -85,7 +85,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def is_security_group_member_updated(self, context,
                                          original_port, updated_port):
-        """ check security group member updated or not
+        """Check security group member updated or not.
 
         This method returns a flag which indicates request notification
         is required and does not perform notification itself.
@@ -102,7 +102,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         return need_notify
 
     def notify_security_groups_member_updated(self, context, port):
-        """ notify update event of security group members
+        """Notify update event of security group members.
 
         The agent setups the iptables rule to allow
         ingress packet from the dhcp server (as a part of provider rules),
@@ -126,7 +126,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
     """
 
     def security_group_rules_for_devices(self, context, **kwargs):
-        """ return security group rules for each port
+        """Return security group rules for each port.
 
         also convert remote_group_id rule
         to source_ip_prefix and dest_ip_prefix rule

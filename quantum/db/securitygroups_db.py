@@ -35,7 +35,7 @@ class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 
 class SecurityGroupPortBinding(model_base.BASEV2):
-    """Represents binding between quantum ports and security profiles"""
+    """Represents binding between quantum ports and security profiles."""
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey("ports.id",
                                       ondelete='CASCADE'),
@@ -450,7 +450,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _check_update_deletes_security_groups(self, port):
         """Return True if port has as a security group and it's value
-        is either [] or not is_attr_set, otherwise return False"""
+        is either [] or not is_attr_set, otherwise return False
+        """
         if (ext_sg.SECURITYGROUPS in port['port'] and
             not (attr.is_attr_set(port['port'][ext_sg.SECURITYGROUPS])
                  and port['port'][ext_sg.SECURITYGROUPS] != [])):
@@ -459,7 +460,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _check_update_has_security_groups(self, port):
         """Return True if port has as a security group and False if the
-        security_group field is is_attr_set or []."""
+        security_group field is is_attr_set or [].
+        """
         if (ext_sg.SECURITYGROUPS in port['port'] and
             (attr.is_attr_set(port['port'][ext_sg.SECURITYGROUPS]) and
              port['port'][ext_sg.SECURITYGROUPS] != [])):

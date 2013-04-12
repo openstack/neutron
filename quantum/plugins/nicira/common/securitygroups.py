@@ -81,7 +81,7 @@ class NVPSecurityGroups(object):
         return self._convert_to_nvp_rules(rules, with_id)
 
     def _get_profile_uuid(self, context, remote_group_id):
-        """Return profile id from novas group id. """
+        """Return profile id from novas group id."""
         security_group = self.get_security_group(context, remote_group_id)
         if not security_group:
             raise ext_sg.SecurityGroupNotFound(id=remote_group_id)

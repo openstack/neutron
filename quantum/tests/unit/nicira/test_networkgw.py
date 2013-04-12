@@ -209,7 +209,7 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
 
 
 class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
-    """ Unit tests for Network Gateway DB support """
+    """Unit tests for Network Gateway DB support."""
 
     def setUp(self):
         test_config['plugin_name_v2'] = '%s.%s' % (
@@ -511,7 +511,7 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
 class TestNetworkGatewayPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                                nicira_networkgw_db.NetworkGatewayMixin):
-    """ Simple plugin class for testing db support for network gateway ext """
+    """Simple plugin class for testing db support for network gateway ext."""
 
     supported_extension_aliases = ["network-gateway"]
 

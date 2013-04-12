@@ -22,7 +22,7 @@ from quantum import wsgi
 
 
 class Fault(webob.exc.HTTPException):
-    """Error codes for API faults"""
+    """Error codes for API faults."""
 
     _fault_names = {
         400: "malformedRequest",
@@ -42,7 +42,8 @@ class Fault(webob.exc.HTTPException):
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
         """Generate a WSGI response based on the
-         exception passed to constructor."""
+         exception passed to constructor.
+        """
         # Replace the body with fault details.
         code = self.wrapped_exc.status_int
         fault_name = self._fault_names.get(code, "quantumServiceFault")

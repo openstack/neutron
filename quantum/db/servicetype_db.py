@@ -48,7 +48,7 @@ cfg.CONF.register_opts(default_servicetype_opts, 'DEFAULT_SERVICETYPE')
 
 
 def parse_service_definition_opt():
-    """ parse service definition opts and returns result """
+    """Parse service definition opts and returns result."""
     results = []
     svc_def_opt = cfg.CONF.DEFAULT_SERVICETYPE.service_definition
     try:
@@ -96,7 +96,7 @@ class ServiceDefinition(model_base.BASEV2, models_v2.HasId):
 
 
 class ServiceType(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """ Service Type Object Model """
+    """Service Type Object Model."""
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
     default = sa.Column(sa.Boolean(), nullable=False, default=False)
@@ -108,7 +108,7 @@ class ServiceType(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     num_instances = sa.Column(sa.Integer(), default=0)
 
     def as_dict(self):
-        """ Convert a row into a dict """
+        """Convert a row into a dict."""
         ret_dict = {}
         for c in self.__table__.columns:
             ret_dict[c.name] = getattr(self, c.name)
@@ -116,7 +116,7 @@ class ServiceType(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 
 class ServiceTypeManager(object):
-    """ Manage service type objects in Quantum database """
+    """Manage service type objects in Quantum database."""
 
     _instance = None
 
@@ -254,13 +254,13 @@ class ServiceTypeManager(object):
         return res
 
     def get_service_type(self, context, id, fields=None):
-        """ Retrieve a service type record """
+        """Retrieve a service type record."""
         return self._make_svc_type_dict(context,
                                         self._get_service_type(context, id),
                                         fields)
 
     def get_service_types(self, context, fields=None, filters=None):
-        """ Retrieve a possibly filtered list of service types """
+        """Retrieve a possibly filtered list of service types."""
         query = context.session.query(ServiceType)
         if filters:
             for key, value in filters.iteritems():
@@ -271,21 +271,21 @@ class ServiceTypeManager(object):
                 for svc_type in query.all()]
 
     def create_service_type(self, context, service_type):
-        """ Create a new service type """
+        """Create a new service type."""
         svc_type_data = service_type['service_type']
         svc_type_db = self._create_service_type(context, svc_type_data)
         LOG.debug(_("Created service type object:%s"), svc_type_db['id'])
         return self._make_svc_type_dict(context, svc_type_db)
 
     def update_service_type(self, context, id, service_type):
-        """ Update a service type """
+        """Update a service type."""
         svc_type_data = service_type['service_type']
         svc_type_db = self._update_service_type(context, id,
                                                 svc_type_data)
         return self._make_svc_type_dict(context, svc_type_db)
 
     def delete_service_type(self, context, id):
-        """ Delete a service type """
+        """Delete a service type."""
         # Verify that the service type is not in use.
         svc_type_db = self._get_service_type(context, id)
         if svc_type_db['num_instances'] > 0:
@@ -294,7 +294,7 @@ class ServiceTypeManager(object):
             context.session.delete(svc_type_db)
 
     def increase_service_type_refcount(self, context, id):
-        """ Increase references count for a service type object
+        """Increase references count for a service type object
 
         This method should be invoked by plugins using the service
         type concept everytime an instance of an object associated
@@ -309,7 +309,7 @@ class ServiceTypeManager(object):
         return svc_type_db['num_instances']
 
     def decrease_service_type_refcount(self, context, id):
-        """ Decrease references count for a service type object
+        """Decrease references count for a service type object
 
         This method should be invoked by plugins using the service
         type concept everytime an instance of an object associated

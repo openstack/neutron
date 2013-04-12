@@ -31,10 +31,10 @@ from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.v2 import attributes as attr
 from quantum.api.v2 import base
 from quantum.common import constants
-from quantum import context as q_context
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum import context as q_context
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
 from quantum.db import api as db
@@ -51,11 +51,10 @@ from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
 from quantum.openstack.common import importutils
 from quantum.openstack.common import rpc
-from quantum.plugins.nicira.common import metadata_access as nvp_meta
-from quantum.plugins.nicira.common import securitygroups as nvp_sec
-from quantum import policy
 from quantum.plugins.nicira.common import config
 from quantum.plugins.nicira.common import exceptions as nvp_exc
+from quantum.plugins.nicira.common import metadata_access as nvp_meta
+from quantum.plugins.nicira.common import securitygroups as nvp_sec
 from quantum.plugins.nicira.extensions import nvp_networkgw as networkgw
 from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
 from quantum.plugins.nicira import nicira_db
@@ -65,6 +64,7 @@ from quantum.plugins.nicira import nvp_cluster
 from quantum.plugins.nicira.nvp_plugin_version import PLUGIN_VERSION
 from quantum.plugins.nicira import NvpApiClient
 from quantum.plugins.nicira import nvplib
+from quantum import policy
 
 LOG = logging.getLogger("QuantumPlugin")
 NVP_NOSNAT_RULES_ORDER = 10
@@ -74,7 +74,7 @@ NVP_EXTGW_NAT_RULES_ORDER = 255
 
 # Provider network extension - allowed network types for the NVP Plugin
 class NetworkTypes:
-    """ Allowed provider network types for the NVP Plugin """
+    """Allowed provider network types for the NVP Plugin."""
     L3_EXT = 'l3_ext'
     STT = 'stt'
     GRE = 'gre'
@@ -315,7 +315,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             raise
 
     def _build_ip_address_list(self, context, fixed_ips, subnet_ids=None):
-        """  Build ip_addresses data structure for logical router port
+        """Build ip_addresses data structure for logical router port
 
         No need to perform validation on IPs - this has already been
         done in the l3_db mixin class
@@ -392,7 +392,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           'router_id': router_id}))
 
     def _get_port_by_device_id(self, context, device_id, device_owner):
-        """ Retrieve ports associated with a specific device id.
+        """Retrieve ports associated with a specific device id.
 
         Used for retrieving all quantum ports attached to a given router.
         """
@@ -402,7 +402,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             device_owner=device_owner,).all()
 
     def _find_router_subnets_cidrs(self, context, router_id):
-        """ Retrieve subnets attached to the specified router """
+        """Retrieve subnets attached to the specified router."""
         ports = self._get_port_by_device_id(context, router_id,
                                             l3_db.DEVICE_OWNER_ROUTER_INTF)
         # No need to check for overlapping CIDRs
@@ -430,8 +430,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 cluster, network, network_binding, max_ports,
                 allow_extra_lswitches)
         except NvpApiClient.NvpApiException:
-            err_desc = _(("An exception occured while selecting logical "
-                          "switch for the port"))
+            err_desc = _("An exception occured while selecting logical "
+                         "switch for the port")
             LOG.exception(err_desc)
             raise nvp_exc.NvpPluginException(err_msg=err_desc)
 
@@ -448,7 +448,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    port_data[ext_qos.QUEUE])
 
     def _nvp_create_port(self, context, port_data):
-        """ Driver for creating a logical switch port on NVP platform """
+        """Driver for creating a logical switch port on NVP platform."""
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
         # external networks. So if as user tries and create a "regular" VIF
         # port on an external network we are unable to actually create.
@@ -540,7 +540,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self._nvp_delete_port(context, port_data)
 
     def _nvp_create_router_port(self, context, port_data):
-        """ Driver for creating a switch port to be connected to a router """
+        """Driver for creating a switch port to be connected to a router."""
         # No router ports on external networks!
         if self._network_is_external(context, port_data['network_id']):
             raise nvp_exc.NvpPluginException(
@@ -586,7 +586,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return lr_port
 
     def _nvp_create_ext_gw_port(self, context, port_data):
-        """ Driver for creating an external gateway port on NVP platform """
+        """Driver for creating an external gateway port on NVP platform."""
         # TODO(salvatore-orlando): Handle NVP resource
         # rollback when something goes not quite as expected
         lr_port = self._find_router_gw_port(context, port_data)
@@ -677,7 +677,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                    'router_id': router_id})
 
     def _nvp_create_l2_gw_port(self, context, port_data):
-        """ Create a switch port, and attach it to a L2 gateway attachment """
+        """Create a switch port, and attach it to a L2 gateway attachment."""
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
         # external networks. So if as user tries and create a "regular" VIF
         # port on an external network we are unable to actually create.
@@ -727,10 +727,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         pass
 
     def _nvp_get_port_id(self, context, cluster, quantum_port):
-        """ Return the NVP port uuid for a given quantum port.
+        """Return the NVP port uuid for a given quantum port.
         First, look up the Quantum database. If not found, execute
         a query on NVP platform as the mapping might be missing because
-        the port was created before upgrading to grizzly. """
+        the port was created before upgrading to grizzly.
+        """
         nvp_port_id = nicira_db.get_nvp_port_id(context.session,
                                                 quantum_port['id'])
         if nvp_port_id:
@@ -747,12 +748,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     quantum_port['id'],
                     nvp_port['uuid'])
                 return nvp_port['uuid']
-        except:
+        except Exception:
             LOG.exception(_("Unable to find NVP uuid for Quantum port %s"),
                           quantum_port['id'])
 
     def _extend_fault_map(self):
-        """ Extends the Quantum Fault Map
+        """Extends the Quantum Fault Map
 
         Exceptions specific to the NVP Plugin are mapped to standard
         HTTP Exceptions
@@ -777,7 +778,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         raise nvp_exc.NvpInvalidNovaZone(nova_zone=novazone_id)
 
     def _find_target_cluster(self, resource):
-        """ Return cluster where configuration should be applied
+        """Return cluster where configuration should be applied
 
         If the resource being configured has a paremeter expressing
         the zone id (nova_id), then select corresponding cluster,
@@ -863,7 +864,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                   allow_extra_lswitches):
         lswitches = nvplib.get_lswitches(cluster, network.id)
         try:
-            # TODO find main_ls too!
+            # TODO(savatore-orlando) Find main_ls too!
             return [ls for ls in lswitches
                     if (ls['_relations']['LogicalSwitchStatus']
                         ['lport_count'] < max_ports)].pop(0)
@@ -1025,7 +1026,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _get_lswitch_cluster_pairs(self, netw_id, tenant_id):
         """Figure out the set of lswitches on each cluster that maps to this
-           network id"""
+           network id
+        """
         pairs = []
         for c in self.clusters.itervalues():
             lswitches = []
@@ -1454,7 +1456,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         try:
             ret_port['status'] = nvplib.get_port_status(
                 self.default_cluster, ret_port['network_id'], nvp_port_id)
-        except:
+        except Exception:
             LOG.warn(_("Unable to retrieve port status for:%s."), nvp_port_id)
         return ret_port
 
@@ -1520,7 +1522,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # If there's no nvp IP do not bother going to NVP and put
             # the port in error state
             if nvp_id:
-                #TODO: pass the appropriate cluster here
+                #TODO(salvatore-orlando): pass the appropriate cluster here
                 try:
                     port = nvplib.get_logical_port_status(
                         self.default_cluster, quantum_db_port['network_id'],
@@ -1930,7 +1932,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                        ips_to_remove=nvp_floating_ips)
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
-        """ Update floating IP association data.
+        """Update floating IP association data.
 
         Overrides method from base class.
         The method is augmented for creating NAT rules in the process.
@@ -2048,7 +2050,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         super(NvpPluginV2, self).disassociate_floatingips(context, port_id)
 
     def create_network_gateway(self, context, network_gateway):
-        """ Create a layer-2 network gateway
+        """Create a layer-2 network gateway
 
         Create the gateway service on NVP platform and corresponding data
         structures in Quantum datase
@@ -2077,7 +2079,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                network_gateway)
 
     def delete_network_gateway(self, context, id):
-        """ Remove a layer-2 network gateway
+        """Remove a layer-2 network gateway
 
         Remove the gateway service from NVP platform and corresponding data
         structures in Quantum datase
@@ -2156,12 +2158,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, security_group_id)
 
     def create_security_group_rule(self, context, security_group_rule):
-        """create a single security group rule"""
+        """create a single security group rule."""
         bulk_rule = {'security_group_rules': [security_group_rule]}
         return self.create_security_group_rule_bulk(context, bulk_rule)[0]
 
     def create_security_group_rule_bulk(self, context, security_group_rule):
-        """ create security group rules
+        """create security group rules
         :param security_group_rule: list of rules to create
         """
         s = security_group_rule.get('security_group_rules')
@@ -2194,7 +2196,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     context, security_group_rule)
 
     def delete_security_group_rule(self, context, sgrid):
-        """ Delete a security group rule
+        """Delete a security group rule
         :param sgrid: security group id to remove.
         """
         with context.session.begin(subtransactions=True):

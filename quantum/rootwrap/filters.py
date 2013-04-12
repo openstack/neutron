@@ -21,7 +21,7 @@ import re
 
 
 class CommandFilter(object):
-    """Command filter only checking that the 1st argument matches exec_path"""
+    """Command filter only checking that the 1st argument matches exec_path."""
 
     def __init__(self, exec_path, run_as, *args):
         self.exec_path = exec_path
@@ -29,7 +29,7 @@ class CommandFilter(object):
         self.args = args
 
     def match(self, userargs):
-        """Only check that the first argument (command) matches exec_path"""
+        """Only check that the first argument (command) matches exec_path."""
         return os.path.basename(self.exec_path) == userargs[0]
 
     def get_command(self, userargs):
@@ -40,7 +40,7 @@ class CommandFilter(object):
         return [self.exec_path] + userargs[1:]
 
     def get_environment(self, userargs):
-        """Returns specific environment to set, None if none"""
+        """Returns specific environment to set, None if none."""
         return None
 
 
@@ -50,7 +50,7 @@ class ExecCommandFilter(CommandFilter):
 
 
 class RegExpFilter(CommandFilter):
-    """Command filter doing regexp matching for every argument"""
+    """Command filter doing regexp matching for every argument."""
 
     def match(self, userargs):
         # Early skip if command or number of args don't match
@@ -74,7 +74,7 @@ class RegExpFilter(CommandFilter):
 
 
 class DnsmasqFilter(CommandFilter):
-    """Specific filter for the dnsmasq call (which includes env)"""
+    """Specific filter for the dnsmasq call (which includes env)."""
 
     def is_dnsmasq_cmd(self, argv):
         if (argv[0] == "dnsmasq"):
@@ -89,7 +89,8 @@ class DnsmasqFilter(CommandFilter):
 
     def match(self, userargs):
         """This matches the combination of the leading env
-        vars plus "dnsmasq" """
+        vars plus "dnsmasq"
+        """
         if (self.is_dnsmasq_env_vars(userargs) and
             self.is_dnsmasq_cmd(userargs[2:])):
             return True
@@ -106,7 +107,7 @@ class DnsmasqFilter(CommandFilter):
 
 
 class DnsmasqNetnsFilter(DnsmasqFilter):
-    """Specific filter for the dnsmasq call (which includes env)"""
+    """Specific filter for the dnsmasq call (which includes env)."""
 
     def is_ip_netns_cmd(self, argv):
         if ((argv[0] == "ip") and
@@ -117,7 +118,8 @@ class DnsmasqNetnsFilter(DnsmasqFilter):
 
     def match(self, userargs):
         """This matches the combination of the leading env
-        vars plus "ip" "netns" "exec" <foo> "dnsmasq" """
+        vars plus "ip" "netns" "exec" <foo> "dnsmasq"
+        """
         if (self.is_dnsmasq_env_vars(userargs) and
             self.is_ip_netns_cmd(userargs[2:]) and
             self.is_dnsmasq_cmd(userargs[6:])):
@@ -172,7 +174,7 @@ class KillFilter(CommandFilter):
 
 
 class ReadFileFilter(CommandFilter):
-    """Specific filter for the utils.read_file_as_root call"""
+    """Specific filter for the utils.read_file_as_root call."""
 
     def __init__(self, file_path, *args):
         self.file_path = file_path

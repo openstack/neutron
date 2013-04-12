@@ -25,15 +25,15 @@ import logging
 from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
 
+from quantum.db import api as db_api
 from quantum.manager import QuantumManager
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
-from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.common import config as conf
+from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.openvswitch import ovs_db_v2 as odb
 from quantum import quantum_plugin_base_v2
-from quantum.db import api as db_api
 
 
 LOG = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             return getattr(plugin, name)
 
     def _func_name(self, offset=0):
-        """Get the name of the calling function"""
+        """Get the name of the calling function."""
         frame_record = inspect.stack()[1 + offset]
         func_name = frame_record[3]
         return func_name
@@ -206,8 +206,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     ovs_output[0]['id'], vlan_name, vlan_id,
                     {'vlan_ids': vlanids}]
             return ovs_output[0]
-        except:
-            # TODO (Sumit): Check if we need to perform any rollback here
+        except Exception:
+            # TODO(Sumit): Check if we need to perform any rollback here
             raise
 
     def update_network(self, context, id, network):
@@ -253,15 +253,15 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
                                                self._func_name(), args)
             return ovs_output[0]
-        except:
+        except Exception:
             raise
 
     def get_network(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def get_networks(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
@@ -308,16 +308,16 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     context, tenant_id, net_id, instance_id)
 
             return ovs_output[0]
-        except:
-            # TODO (asomya): Check if we need to perform any rollback here
+        except Exception:
+            # TODO(asomya): Check if we need to perform any rollback here
             raise
 
     def get_port(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def get_ports(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def update_port(self, context, id, port):
@@ -348,7 +348,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     context, tenant_id, net_id, instance_id)
 
             return ovs_output[0]
-        except:
+        except Exception:
             raise
 
     def delete_port(self, context, id):
@@ -369,26 +369,26 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                            self._func_name(),
                                            n_args)
             return ovs_output[0]
-        except:
-            # TODO (asomya): Check if we need to perform any rollback here
+        except Exception:
+            # TODO(asomya): Check if we need to perform any rollback here
             raise
 
     def create_subnet(self, context, subnet):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def update_subnet(self, context, id, subnet):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def get_subnet(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def delete_subnet(self, context, id, kwargs):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass
 
     def get_subnets(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin"""
+        """For this model this method will be delegated to vswitch plugin."""
         pass

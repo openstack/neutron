@@ -50,8 +50,8 @@ class RestConnection(object):
         headers['Content-type'] = 'application/json'
         headers['Accept'] = 'application/json'
 
-        LOG.debug(_("PLUMgrid_NOS_Server: %s %s %s"), self.server, self.port,
-                  action)
+        LOG.debug(_("PLUMgrid_NOS_Server: %(server)s %(port)s %(action)s"),
+                  dict(server=self.server, port=self.port, action=action))
 
         conn = httplib.HTTPConnection(self.server, self.port,
                                       timeout=self.timeout)
@@ -61,14 +61,19 @@ class RestConnection(object):
             return
 
         try:
-            LOG.debug(_("PLUMgrid_NOS_Server Sending Data: %s %s %s"),
-                      nos_url, body_data, headers)
+            LOG.debug(_("PLUMgrid_NOS_Server Sending Data: %(nos_url)s "
+                        "%(body_data)s %(headers)s"),
+                      dict(
+                          nos_url=nos_url,
+                          body_data=body_data,
+                          headers=headers,
+                      ))
             conn.request(action, nos_url, body_data, headers)
             resp = conn.getresponse()
             resp_str = resp.read()
 
-            LOG.debug(_("PLUMgrid_NOS_Server Connection Data: %s, %s"),
-                      resp, resp_str)
+            LOG.debug(_("PLUMgrid_NOS_Server Connection Data: %(resp)s, "
+                        "%(resp_str)s"), dict(resp=resp, resp_str=resp_str))
 
             if resp.status is httplib.OK:
                 try:

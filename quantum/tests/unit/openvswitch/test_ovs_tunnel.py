@@ -399,7 +399,7 @@ class TunnelTest(base.BaseTestCase):
         # If something goes wrong, mox.VerifyAll() will catch it
         try:
             q_agent.daemon_loop()
-        except:
+        except Exception:
             pass
 
         self.mox.VerifyAll()

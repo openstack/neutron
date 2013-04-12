@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 
 
 class OFCClient(object):
-    """A HTTP/HTTPS client for OFC Drivers"""
+    """A HTTP/HTTPS client for OFC Drivers."""
 
     def __init__(self, host="127.0.0.1", port=8888, use_ssl=False,
                  key_file=None, cert_file=None):
@@ -47,7 +47,7 @@ class OFCClient(object):
         self.connection = None
 
     def get_connection_type(self):
-        """Returns the proper connection type"""
+        """Returns the proper connection type."""
         if self.use_ssl:
             return httplib.HTTPSConnection
         else:

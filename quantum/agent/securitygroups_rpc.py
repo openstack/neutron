@@ -66,7 +66,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     sg_agent = None
 
     def security_groups_rule_updated(self, context, **kwargs):
-        """ callback for security group rule update
+        """Callback for security group rule update.
 
         :param security_groups: list of updated security_groups
         """
@@ -76,7 +76,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         self.sg_agent.security_groups_rule_updated(security_groups)
 
     def security_groups_member_updated(self, context, **kwargs):
-        """ callback for security group member update
+        """Callback for security group member update.
 
         :param security_groups: list of updated security_groups
         """
@@ -86,9 +86,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         self.sg_agent.security_groups_member_updated(security_groups)
 
     def security_groups_provider_updated(self, context, **kwargs):
-        """ callback for security group provider update
-
-        """
+        """Callback for security group provider update."""
         LOG.debug(_("Provider rule updated"))
         self.sg_agent.security_groups_provider_updated()
 
@@ -172,7 +170,7 @@ class SecurityGroupAgentRpcApiMixin(object):
                                      topics.UPDATE)
 
     def security_groups_rule_updated(self, context, security_groups):
-        """ notify rule updated security groups """
+        """Notify rule updated security groups."""
         if not security_groups:
             return
         self.fanout_cast(context,
@@ -182,7 +180,7 @@ class SecurityGroupAgentRpcApiMixin(object):
                          topic=self._get_security_group_topic())
 
     def security_groups_member_updated(self, context, security_groups):
-        """ notify member updated security groups """
+        """Notify member updated security groups."""
         if not security_groups:
             return
         self.fanout_cast(context,
@@ -192,7 +190,7 @@ class SecurityGroupAgentRpcApiMixin(object):
                          topic=self._get_security_group_topic())
 
     def security_groups_provider_updated(self, context):
-        """ notify provider updated security groups """
+        """Notify provider updated security groups."""
         self.fanout_cast(context,
                          self.make_msg('security_groups_provider_updated'),
                          version=SG_RPC_VERSION,

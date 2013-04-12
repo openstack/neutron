@@ -50,13 +50,14 @@ class QuantumBase(object):
         return n, getattr(self, n)
 
     def update(self, values):
-        """Make the model object behave like a dict"""
+        """Make the model object behave like a dict."""
         for k, v in values.iteritems():
             setattr(self, k, v)
 
     def iteritems(self):
         """Make the model object behave like a dict.
-        Includes attributes from joins."""
+        Includes attributes from joins.
+        """
         local = dict(self)
         joined = dict([(k, v) for k, v in self.__dict__.iteritems()
                        if not k[0] == '_'])
@@ -65,7 +66,7 @@ class QuantumBase(object):
 
 
 class Port(BASE, QuantumBase):
-    """Represents a port on a quantum network"""
+    """Represents a port on a quantum network."""
     __tablename__ = 'ports'
 
     uuid = Column(String(255), primary_key=True)
@@ -86,7 +87,7 @@ class Port(BASE, QuantumBase):
 
 
 class Network(BASE, QuantumBase):
-    """Represents a quantum network"""
+    """Represents a quantum network."""
     __tablename__ = 'networks'
 
     uuid = Column(String(255), primary_key=True)

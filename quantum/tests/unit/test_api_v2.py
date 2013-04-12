@@ -119,7 +119,7 @@ class APIv2TestBase(base.BaseTestCase):
 
 
 class _ArgMatcher(object):
-    """ An adapter to assist mock assertions, used to custom compare """
+    """An adapter to assist mock assertions, used to custom compare."""
 
     def __init__(self, cmp, obj):
         self.cmp = cmp

@@ -119,7 +119,7 @@ def _get_limit_param(request, max_limit):
 
 
 def list_args(request, arg):
-    """Extracts the list of arg from request"""
+    """Extracts the list of arg from request."""
     return [v for v in request.GET.getall(arg) if v]
 
 
@@ -292,7 +292,7 @@ class NoSortingHelper(SortingHelper):
 
 
 class QuantumController(object):
-    """ Base controller class for Quantum API """
+    """Base controller class for Quantum API."""
     # _resource_name will be redefined in sub concrete controller
     _resource_name = None
 
@@ -301,7 +301,7 @@ class QuantumController(object):
         super(QuantumController, self).__init__()
 
     def _prepare_request_body(self, body, params):
-        """ verifies required parameters are in request body.
+        """Verifies required parameters are in request body.
             sets default value for missing optional parameters.
 
             body argument must be the deserialized body

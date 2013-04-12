@@ -57,7 +57,7 @@ def init():
 
 
 def get_resource_and_action(action):
-    """ Extract resource and action (write, read) from api operation """
+    """Extract resource and action (write, read) from api operation."""
     data = action.split(':', 1)[0].split('_', 1)
     return ("%ss" % data[-1], data[0] != 'get')
 
@@ -68,7 +68,7 @@ def _set_rules(data):
 
 
 def _is_attribute_explicitly_set(attribute_name, resource, target):
-    """Verify that an attribute is present and has a non-default value"""
+    """Verify that an attribute is present and has a non-default value."""
     return ('default' in resource[attribute_name] and
             attribute_name in target and
             target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED and

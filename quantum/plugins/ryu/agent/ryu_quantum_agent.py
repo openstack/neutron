@@ -260,7 +260,7 @@ class OVSQuantumOFPRyuAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     LOG.debug(_("Agent loop has new device"))
                     self._process_devices_filter(port_info)
                     ports = port_info['current']
-            except:
+            except Exception:
                 LOG.exception(_("Error in agent event loop"))
 
             elapsed = max(time.time() - start, 0)

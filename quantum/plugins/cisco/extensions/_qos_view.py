@@ -19,7 +19,7 @@
 
 
 def get_view_builder(req):
-    """get view builder"""
+    """get view builder."""
     base_url = req.application_url
     return ViewBuilder(base_url)
 

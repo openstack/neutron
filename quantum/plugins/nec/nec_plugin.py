@@ -595,7 +595,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
 
 class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
                                   sg_rpc.SecurityGroupAgentRpcApiMixin):
-    '''RPC API for NEC plugin agent'''
+    '''RPC API for NEC plugin agent.'''
 
     BASE_RPC_API_VERSION = '1.0'
 

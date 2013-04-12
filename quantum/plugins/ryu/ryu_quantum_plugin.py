@@ -161,7 +161,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             tunnel_key = self.tunnel_key.allocate(session, net['id'])
             try:
                 self._client_create_network(net['id'], tunnel_key)
-            except:
+            except Exception:
                 self._client_delete_network(net['id'])
                 raise
 

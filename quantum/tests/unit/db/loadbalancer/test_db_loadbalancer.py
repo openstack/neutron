@@ -20,10 +20,10 @@ import testtools
 
 import webob.exc
 
-from quantum import context
 from quantum.api.extensions import ExtensionMiddleware
 from quantum.api.extensions import PluginAwareExtensionManager
 from quantum.common import config
+from quantum import context
 from quantum.db.loadbalancer import loadbalancer_db as ldb
 import quantum.extensions
 from quantum.extensions import loadbalancer
@@ -291,7 +291,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             return vip
 
     def test_create_vip_twice_for_same_pool(self):
-        """ Test loadbalancer db plugin via extension and directly """
+        """Test loadbalancer db plugin via extension and directly."""
         with self.subnet() as subnet:
             with self.pool(name="pool1") as pool:
                 with self.vip(name='vip1', subnet=subnet, pool=pool):

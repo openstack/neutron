@@ -522,7 +522,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("MidonetPluginV2.create_router called: router=%r"), router)
 
         if router['router']['admin_state_up'] is False:
-            LOG.warning(_('Ignoreing admin_state_up=False for router=%r',
+            LOG.warning(_('Ignoring admin_state_up=False for router=%r.  '
                           'Overriding with True'), router)
             router['router']['admin_state_up'] = True
 

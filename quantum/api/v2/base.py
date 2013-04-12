@@ -181,7 +181,7 @@ class Controller(object):
         return api_common.NoSortingHelper(request, self._attr_info)
 
     def _items(self, request, do_authz=False, parent_id=None):
-        """Retrieves and formats a list of elements of the requested entity"""
+        """Retrieves and formats a list of elements of the requested entity."""
         # NOTE(salvatore-orlando): The following ensures that fields which
         # are needed for authZ policy validation are not stripped away by the
         # plugin before returning.
@@ -227,7 +227,7 @@ class Controller(object):
 
     def _item(self, request, id, do_authz=False, field_list=None,
               parent_id=None):
-        """Retrieves and formats a single element of the requested entity"""
+        """Retrieves and formats a single element of the requested entity."""
         kwargs = {'fields': field_list}
         action = self._plugin_handlers[self.SHOW]
         if parent_id:
@@ -246,12 +246,12 @@ class Controller(object):
             self._dhcp_agent_notifier.notify(context, data, methodname)
 
     def index(self, request, **kwargs):
-        """Returns a list of the requested entity"""
+        """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
         return self._items(request, True, parent_id)
 
     def show(self, request, id, **kwargs):
-        """Returns detailed information about the requested entity"""
+        """Returns detailed information about the requested entity."""
         try:
             # NOTE(salvatore-orlando): The following ensures that fields
             # which are needed for authZ policy validation are not stripped
@@ -304,7 +304,7 @@ class Controller(object):
             raise ex
 
     def create(self, request, body=None, **kwargs):
-        """Creates a new instance of the requested entity"""
+        """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
         notifier_api.notify(request.context,
                             self._publisher_id,
@@ -382,7 +382,7 @@ class Controller(object):
                 return notify({self._resource: self._view(obj)})
 
     def delete(self, request, id, **kwargs):
-        """Deletes the specified entity"""
+        """Deletes the specified entity."""
         notifier_api.notify(request.context,
                             self._publisher_id,
                             self._resource + '.delete.start',
@@ -417,7 +417,7 @@ class Controller(object):
                                      notifier_method)
 
     def update(self, request, id, body=None, **kwargs):
-        """Updates the specified entity's attributes"""
+        """Updates the specified entity's attributes."""
         parent_id = kwargs.get(self._parent_id_name)
         try:
             payload = body.copy()
@@ -492,7 +492,7 @@ class Controller(object):
     @staticmethod
     def prepare_request_body(context, body, is_create, resource, attr_info,
                              allow_bulk=False):
-        """ verifies required attributes are in request body, and that
+        """Verifies required attributes are in request body, and that
             an attribute is only specified if it is allowed for the given
             operation (create/update).
             Attribute with default values are considered to be

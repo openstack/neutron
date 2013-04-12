@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 
 def create_vlanids():
-    """Prepopulates the vlan_bindings table"""
+    """Prepopulates the vlan_bindings table."""
     LOG.debug(_("create_vlanids() called"))
     session = db.get_session()
     try:
@@ -51,7 +51,7 @@ def create_vlanids():
 
 
 def get_all_vlanids():
-    """Gets all the vlanids"""
+    """Gets all the vlanids."""
     LOG.debug(_("get_all_vlanids() called"))
     session = db.get_session()
     try:
@@ -62,7 +62,7 @@ def get_all_vlanids():
 
 
 def is_vlanid_used(vlan_id):
-    """Checks if a vlanid is in use"""
+    """Checks if a vlanid is in use."""
     LOG.debug(_("is_vlanid_used() called"))
     session = db.get_session()
     try:
@@ -74,7 +74,7 @@ def is_vlanid_used(vlan_id):
 
 
 def release_vlanid(vlan_id):
-    """Sets the vlanid state to be unused"""
+    """Sets the vlanid state to be unused."""
     LOG.debug(_("release_vlanid() called"))
     session = db.get_session()
     try:
@@ -90,7 +90,7 @@ def release_vlanid(vlan_id):
 
 
 def delete_vlanid(vlan_id):
-    """Deletes a vlanid entry from db"""
+    """Deletes a vlanid entry from db."""
     LOG.debug(_("delete_vlanid() called"))
     session = db.get_session()
     try:
@@ -104,7 +104,7 @@ def delete_vlanid(vlan_id):
 
 
 def reserve_vlanid():
-    """Reserves the first unused vlanid"""
+    """Reserves the first unused vlanid."""
     LOG.debug(_("reserve_vlanid() called"))
     session = db.get_session()
     try:
@@ -123,7 +123,7 @@ def reserve_vlanid():
 
 
 def get_all_vlanids_used():
-    """Gets all the vlanids used"""
+    """Gets all the vlanids used."""
     LOG.debug(_("get_all_vlanids() called"))
     session = db.get_session()
     try:
@@ -135,7 +135,7 @@ def get_all_vlanids_used():
 
 
 def get_all_vlan_bindings():
-    """Lists all the vlan to network associations"""
+    """Lists all the vlan to network associations."""
     LOG.debug(_("get_all_vlan_bindings() called"))
     session = db.get_session()
     try:
@@ -146,7 +146,7 @@ def get_all_vlan_bindings():
 
 
 def get_vlan_binding(netid):
-    """Lists the vlan given a network_id"""
+    """Lists the vlan given a network_id."""
     LOG.debug(_("get_vlan_binding() called"))
     session = db.get_session()
     try:
@@ -158,7 +158,7 @@ def get_vlan_binding(netid):
 
 
 def add_vlan_binding(vlanid, vlanname, netid):
-    """Adds a vlan to network association"""
+    """Adds a vlan to network association."""
     LOG.debug(_("add_vlan_binding() called"))
     session = db.get_session()
     try:
@@ -174,7 +174,7 @@ def add_vlan_binding(vlanid, vlanname, netid):
 
 
 def remove_vlan_binding(netid):
-    """Removes a vlan to network association"""
+    """Removes a vlan to network association."""
     LOG.debug(_("remove_vlan_binding() called"))
     session = db.get_session()
     try:
@@ -188,7 +188,7 @@ def remove_vlan_binding(netid):
 
 
 def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
-    """Updates a vlan to network association"""
+    """Updates a vlan to network association."""
     LOG.debug(_("update_vlan_binding() called"))
     session = db.get_session()
     try:
@@ -206,7 +206,7 @@ def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
 
 
 def get_all_qoss(tenant_id):
-    """Lists all the qos to tenant associations"""
+    """Lists all the qos to tenant associations."""
     LOG.debug(_("get_all_qoss() called"))
     session = db.get_session()
     try:
@@ -218,7 +218,7 @@ def get_all_qoss(tenant_id):
 
 
 def get_qos(tenant_id, qos_id):
-    """Lists the qos given a tenant_id and qos_id"""
+    """Lists the qos given a tenant_id and qos_id."""
     LOG.debug(_("get_qos() called"))
     session = db.get_session()
     try:
@@ -232,7 +232,7 @@ def get_qos(tenant_id, qos_id):
 
 
 def add_qos(tenant_id, qos_name, qos_desc):
-    """Adds a qos to tenant association"""
+    """Adds a qos to tenant association."""
     LOG.debug(_("add_qos() called"))
     session = db.get_session()
     try:
@@ -249,7 +249,7 @@ def add_qos(tenant_id, qos_name, qos_desc):
 
 
 def remove_qos(tenant_id, qos_id):
-    """Removes a qos to tenant association"""
+    """Removes a qos to tenant association."""
     session = db.get_session()
     try:
         qos = (session.query(network_models_v2.QoS).
@@ -263,7 +263,7 @@ def remove_qos(tenant_id, qos_id):
 
 
 def update_qos(tenant_id, qos_id, new_qos_name=None):
-    """Updates a qos to tenant association"""
+    """Updates a qos to tenant association."""
     session = db.get_session()
     try:
         qos = (session.query(network_models_v2.QoS).
@@ -280,7 +280,7 @@ def update_qos(tenant_id, qos_id, new_qos_name=None):
 
 
 def get_all_credentials(tenant_id):
-    """Lists all the creds for a tenant"""
+    """Lists all the creds for a tenant."""
     session = db.get_session()
     try:
         creds = (session.query(network_models_v2.Credential).
@@ -291,7 +291,7 @@ def get_all_credentials(tenant_id):
 
 
 def get_credential(tenant_id, credential_id):
-    """Lists the creds for given a cred_id and tenant_id"""
+    """Lists the creds for given a cred_id and tenant_id."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
@@ -304,7 +304,7 @@ def get_credential(tenant_id, credential_id):
 
 
 def get_credential_name(tenant_id, credential_name):
-    """Lists the creds for given a cred_name and tenant_id"""
+    """Lists the creds for given a cred_name and tenant_id."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
@@ -317,7 +317,7 @@ def get_credential_name(tenant_id, credential_name):
 
 
 def add_credential(tenant_id, credential_name, user_name, password):
-    """Adds a qos to tenant association"""
+    """Adds a qos to tenant association."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
@@ -334,7 +334,7 @@ def add_credential(tenant_id, credential_name, user_name, password):
 
 
 def remove_credential(tenant_id, credential_id):
-    """Removes a credential from a  tenant"""
+    """Removes a credential from a  tenant."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
@@ -349,7 +349,7 @@ def remove_credential(tenant_id, credential_id):
 
 def update_credential(tenant_id, credential_id,
                       new_user_name=None, new_password=None):
-    """Updates a credential for a tenant"""
+    """Updates a credential for a tenant."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).

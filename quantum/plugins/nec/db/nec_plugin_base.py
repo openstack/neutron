@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 
 class NECPluginV2Base(db_base_plugin_v2.QuantumDbPluginV2):
 
-    """ Base class of plugins that handle packet filters. """
+    """Base class of plugins that handle packet filters."""
 
     def _make_packet_filter_dict(self, packet_filter, fields=None):
         res = {'id': packet_filter['id'],
