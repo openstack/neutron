@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-13 00:08+0000\n"
+"POT-Creation-Date: 2013-04-14 00:07+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -7592,34 +7592,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "Connect success to host %s:%d"
-#~ msgstr ""
-
-#~ msgid "Cannot provision unknown network type %s for network %s"
-#~ msgstr ""
-
-#~ msgid "Binding VLAN ID %s to switch port %s"
-#~ msgstr ""
-
-#~ msgid "Unable to get port details for device %s: %s"
-#~ msgstr ""
-
-#~ msgid "Removing port failed for device %s: %s"
-#~ msgstr ""
-
-#~ msgid "Ignoreing admin_state_up=False for router=%r"
-#~ msgstr ""
-
-#~ msgid "QuantumPluginPLUMgrid Status: %s, %s, %s"
-#~ msgstr ""
-
-#~ msgid "PLUMgrid_NOS_Server: %s %s %s"
-#~ msgstr ""
-
-#~ msgid "PLUMgrid_NOS_Server Sending Data: %s %s %s"
-#~ msgstr ""
-
-#~ msgid "PLUMgrid_NOS_Server Connection Data: %s, %s"
-#~ msgstr ""
 
