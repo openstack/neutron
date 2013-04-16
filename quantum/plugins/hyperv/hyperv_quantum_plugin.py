@@ -174,8 +174,8 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                                        constants.TYPE_VLAN,
                                        constants.TYPE_NONE]:
             msg = _(
-                "Invalid tenant_network_type: %(tenant_network_type)s. "
-                "Agent terminated!") % locals()
+                "Invalid tenant_network_type: %s. "
+                "Agent terminated!") % tenant_network_type
             raise q_exc.InvalidInput(error_message=msg)
         self._tenant_network_type = tenant_network_type
 

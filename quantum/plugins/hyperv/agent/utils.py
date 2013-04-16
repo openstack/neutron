@@ -123,25 +123,31 @@ class HyperVUtils(object):
                 err_sum_desc = job.ErrorSummaryDescription
                 err_desc = job.ErrorDescription
                 err_code = job.ErrorCode
+                data = {'job_state': job_state,
+                        'err_sum_desc': err_sum_desc,
+                        'err_desc': err_desc,
+                        'err_code': err_code}
                 raise HyperVException(
                     msg=_("WMI job failed with status %(job_state)d. "
                           "Error details: %(err_sum_desc)s - %(err_desc)s - "
-                          "Error code: %(err_code)d") % locals())
+                          "Error code: %(err_code)d") % data)
             else:
                 (error, ret_val) = job.GetError()
                 if not ret_val and error:
+                    data = {'job_state': job_state,
+                            'error': error}
                     raise HyperVException(
                         msg=_("WMI job failed with status %(job_state)d. "
-                              "Error details: %(error)s") % locals())
+                              "Error details: %(error)s") % data)
                 else:
                     raise HyperVException(
-                        msg=_("WMI job failed with status %(job_state)d. "
-                              "No error description available") % locals())
+                        msg=_("WMI job failed with status %d. "
+                              "No error description available") % job_state)
 
         desc = job.Description
         elap = job.ElapsedTime
         LOG.debug(_("WMI job succeeded: %(desc)s, Elapsed=%(elap)s") %
-                  locals())
+                  {'desc': desc, 'elap': elap})
 
     def _create_switch_port(self, vswitch_name, switch_port_name):
         """Creates a switch port."""
@@ -170,18 +176,24 @@ class HyperVUtils(object):
         (ret_val, ) = switch_svc.DisconnectSwitchPort(
             SwitchPort=switch_port_path)
         if ret_val != 0:
+            data = {'switch_port_name': switch_port_name,
+                    'vswitch_name': vswitch_name,
+                    'ret_val': ret_val}
             raise HyperVException(
                 msg=_('Failed to disconnect port %(switch_port_name)s '
                       'from switch %(vswitch_name)s '
-                      'with error %(ret_val)s') % locals())
+                      'with error %(ret_val)s') % data)
         if delete_port:
             (ret_val, ) = switch_svc.DeleteSwitchPort(
                 SwitchPort=switch_port_path)
             if ret_val != 0:
+                data = {'switch_port_name': switch_port_name,
+                        'vswitch_name': vswitch_name,
+                        'ret_val': ret_val}
                 raise HyperVException(
                     msg=_('Failed to delete port %(switch_port_name)s '
                           'from switch %(vswitch_name)s '
-                          'with error %(ret_val)s') % locals())
+                          'with error %(ret_val)s') % data)
 
     def _get_vswitch(self, vswitch_name):
         vswitch = self._conn.Msvm_VirtualSwitch(ElementName=vswitch_name)

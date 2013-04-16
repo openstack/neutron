@@ -190,6 +190,8 @@ Example::
     msg = _("The server with id %(s_id)s has no key %(m_key)s")
     LOG.error(msg % {"s_id": "1234", "m_key": "imageId"})
 
+Please do not use locals() for string substitutions.
+
 
 Creating Unit Tests
 -------------------

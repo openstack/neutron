@@ -51,7 +51,7 @@ class HyperVRpcCallbacks(
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = self._db.get_port(device)
         if port:
             binding = self._db.get_network_binding(None, port['network_id'])
@@ -75,7 +75,7 @@ class HyperVRpcCallbacks(
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = self._db.get_port(device)
         if port:
             entry = {'device': device,

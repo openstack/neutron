@@ -138,11 +138,15 @@ def reserve_specific_network(session, physical_network, vlan_id):
                     raise q_exc.VlanIdInUse(vlan_id=vlan_id,
                                             physical_network=physical_network)
             LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
-                        "network %(physical_network)s from pool"), locals())
+                        "network %(physical_network)s from pool"),
+                      {'vlan_id': vlan_id,
+                       'physical_network': physical_network})
             state.allocated = True
         except exc.NoResultFound:
             LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
-                        "network %(physical_network)s outside pool"), locals())
+                        "network %(physical_network)s outside pool"),
+                      {'vlan_id': vlan_id,
+                       'physical_network': physical_network})
             state = l2network_models_v2.NetworkState(physical_network, vlan_id)
             state.allocated = True
             session.add(state)
@@ -165,14 +169,19 @@ def release_network(session, physical_network, vlan_id, network_vlan_ranges):
             if inside:
                 LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
                             "%(physical_network)s to pool"),
-                          locals())
+                          {'vlan_id': vlan_id,
+                           'physical_network': physical_network})
             else:
                 LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
-                          "%(physical_network)s outside pool"), locals())
+                          "%(physical_network)s outside pool"),
+                          {'vlan_id': vlan_id,
+                           'physical_network': physical_network})
                 session.delete(state)
         except exc.NoResultFound:
             LOG.warning(_("vlan_id %(vlan_id)s on physical network "
-                          "%(physical_network)s not found"), locals())
+                          "%(physical_network)s not found"),
+                        {'vlan_id': vlan_id,
+                         'physical_network': physical_network})
 
 
 def add_network_binding(session, network_id, physical_network, vlan_id):

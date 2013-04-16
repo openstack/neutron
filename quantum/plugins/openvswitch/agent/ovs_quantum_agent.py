@@ -345,7 +345,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                 LOG.error(_("Cannot provision flat network for "
                             "net-id=%(net_uuid)s - no bridge for "
                             "physical_network %(physical_network)s"),
-                          locals())
+                          {'net_uuid': net_uuid,
+                           'physical_network': physical_network})
         elif network_type == constants.TYPE_VLAN:
             if physical_network in self.phys_brs:
                 # outbound
@@ -364,14 +365,16 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                 LOG.error(_("Cannot provision VLAN network for "
                             "net-id=%(net_uuid)s - no bridge for "
                             "physical_network %(physical_network)s"),
-                          locals())
+                          {'net_uuid': net_uuid,
+                           'physical_network': physical_network})
         elif network_type == constants.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
             LOG.error(_("Cannot provision unknown network type "
                         "%(network_type)s for net-id=%(net_uuid)s"),
-                      locals())
+                      {'network_type': network_type,
+                       'net_uuid': net_uuid})
 
     def reclaim_local_vlan(self, net_uuid, lvm):
         '''Reclaim a local VLAN.
@@ -546,13 +549,15 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         for physical_network, bridge in bridge_mappings.iteritems():
             LOG.info(_("Mapping physical network %(physical_network)s to "
                        "bridge %(bridge)s"),
-                     locals())
+                     {'physical_network': physical_network,
+                      'bridge': bridge})
             # setup physical bridge
             if not ip_lib.device_exists(bridge, self.root_helper):
                 LOG.error(_("Bridge %(bridge)s for physical network "
                             "%(physical_network)s does not exist. Agent "
                             "terminated!"),
-                          locals())
+                          {'physical_network': physical_network,
+                           'bridge': bridge})
                 sys.exit(1)
             br = ovs_lib.OVSBridge(bridge, self.root_helper)
             br.remove_all_flows()
@@ -615,13 +620,14 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                                              self.agent_id)
             except Exception as e:
                 LOG.debug(_("Unable to get port details for "
-                            "%(device)s: %(e)s"), locals())
+                            "%(device)s: %(e)s"),
+                          {'device': device, 'e': e})
                 resync = True
                 continue
             port = self.int_br.get_vif_port_by_id(details['device'])
             if 'port_id' in details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
-                         locals())
+                         {'device': device, 'details': details})
                 self.treat_vif_port(port, details['port_id'],
                                     details['network_id'],
                                     details['network_type'],
@@ -645,7 +651,7 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                                              self.agent_id)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
-                          locals())
+                          {'device': device, 'e': e})
                 resync = True
                 continue
             if details['exists']:

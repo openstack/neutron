@@ -466,7 +466,8 @@ class L3NATAgent(manager.Manager):
                                    interface_name):
         rules = [('POSTROUTING', '! -i %(interface_name)s '
                   '! -o %(interface_name)s -m conntrack ! '
-                  '--ctstate DNAT -j ACCEPT' % locals())]
+                  '--ctstate DNAT -j ACCEPT' %
+                  {'interface_name': interface_name})]
         for cidr in internal_cidrs:
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules

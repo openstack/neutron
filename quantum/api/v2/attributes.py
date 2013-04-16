@@ -41,7 +41,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     if not isinstance(target_dict, dict):
         msg = (_("Invalid input. '%(target_dict)s' must be a dictionary "
                  "with keys: %(expected_keys)s") %
-               dict(target_dict=target_dict, expected_keys=expected_keys))
+               {'target_dict': target_dict, 'expected_keys': expected_keys})
         return msg
 
     expected_keys = set(expected_keys)
@@ -52,7 +52,9 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     if not predicate(provided_keys):
         msg = (_("Validation of dictionary's keys failed."
                  "Expected keys: %(expected_keys)s "
-                 "Provided keys: %(provided_keys)s") % locals())
+                 "Provided keys: %(provided_keys)s") %
+               {'expected_keys': expected_keys,
+                'provided_keys': provided_keys})
         return msg
 
 
@@ -63,7 +65,7 @@ def is_attr_set(attribute):
 def _validate_values(data, valid_values=None):
     if data not in valid_values:
         msg = (_("'%(data)s' is not in %(valid_values)s") %
-               dict(data=data, valid_values=valid_values))
+               {'data': data, 'valid_values': valid_values})
         LOG.debug(msg)
         return msg
 
@@ -76,7 +78,7 @@ def _validate_string(data, max_len=None):
 
     if max_len is not None and len(data) > max_len:
         msg = (_("'%(data)s' exceeds maximum length of %(max_len)s") %
-               dict(data=data, max_len=max_len))
+               {'data': data, 'max_len': max_len})
         LOG.debug(msg)
         return msg
 
@@ -86,9 +88,9 @@ def _validate_range(data, valid_values=None):
     max_value = valid_values[1]
     if not min_value <= data <= max_value:
         msg = _("'%(data)s' is not in range %(min_value)s through "
-                "%(max_value)s") % dict(data=data,
-                                        min_value=min_value,
-                                        max_value=max_value)
+                "%(max_value)s") % {'data': data,
+                                    'min_value': min_value,
+                                    'max_value': max_value}
         LOG.debug(msg)
         return msg
 

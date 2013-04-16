@@ -769,7 +769,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("Looking for nova zone: %s"), novazone_id)
         for x in self.clusters:
             LOG.debug(_("Looking for nova zone %(novazone_id)s in "
-                        "cluster: %(x)s"), locals())
+                        "cluster: %(x)s"),
+                      {'novazone_id': novazone_id, 'x': x})
             if x.zone == str(novazone_id):
                 self.novazone_cluster_map[x.zone] = x
                 return x
@@ -912,7 +913,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         for c in self.clusters:
             networks.extend(nvplib.get_all_networks(c, tenant_id, networks))
         LOG.debug(_("get_all_networks() completed for tenant "
-                    "%(tenant_id)s: %(networks)s"), locals())
+                    "%(tenant_id)s: %(networks)s"),
+                  {'tenant_id': tenant_id, 'networks': networks})
         return networks
 
     def create_network(self, context, network):
@@ -1072,7 +1074,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                 break
                     LOG.debug(_("Current network status:%(nvp_net_status)s; "
                                 "Status in Quantum DB:%(quantum_status)s"),
-                              locals())
+                              {'nvp_net_status': nvp_net_status,
+                               'quantum_status': quantum_status})
                     if nvp_net_status != network.status:
                         # update the network status
                         network.status = nvp_net_status
@@ -1760,8 +1763,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("The port %(port_id)s, connected to the router "
-                           "%(router_id)s was not found on the NVP backend.")
-                         % locals()))
+                           "%(router_id)s was not found on the NVP "
+                           "backend.") % {'port_id': port_id,
+                                          'router_id': router_id}))
 
         # Create logical router port and patch attachment
         self._create_and_attach_router_port(
@@ -1840,7 +1844,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             LOG.warning(_("The port %(port_id)s, connected to the router "
                           "%(router_id)s was not found on the NVP backend"),
-                        locals())
+                        {'port_id': port_id, 'router_id': router_id})
         # Finally remove the data from the Quantum DB
         # This will also destroy the port on the logical switch
         super(NvpPluginV2, self).remove_router_interface(context,

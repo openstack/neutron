@@ -206,7 +206,8 @@ def retry_registration(remaining, reconnect_interval, base=BASE):
             remaining -= 1
         LOG.info(_("Unable to connect to database, %(remaining)s attempts "
                    "left. Retrying in %(reconnect_interval)s seconds"),
-                 locals())
+                 {'remaining': remaining,
+                  'reconnect_interval': reconnect_interval})
         time.sleep(reconnect_interval)
         if register_models(base):
             break

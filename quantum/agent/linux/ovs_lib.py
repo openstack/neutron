@@ -54,7 +54,10 @@ class OVSBridge:
         name = 'name\s*:\s"(?P<port_name>[^"]*)"'
         port = 'ofport\s*:\s(?P<ofport>-?\d+)'
         _re = ('%(external)s:\s{ ( %(mac)s,? | %(iface)s,? | . )* }'
-               ' \s+ %(name)s \s+ %(port)s' % locals())
+               ' \s+ %(name)s \s+ %(port)s' % {'external': external,
+                                               'mac': mac,
+                                               'iface': iface, 'name': name,
+                                               'port': port})
         return re.compile(_re, re.M | re.X)
 
     def run_vsctl(self, args):
@@ -285,9 +288,8 @@ def get_bridge_for_iface(root_helper, iface):
     args = ["ovs-vsctl", "--timeout=2", "iface-to-br", iface]
     try:
         return utils.execute(args, root_helper=root_helper).strip()
-    except Exception, e:
-        LOG.exception(_("Interface %(iface)s not found. Exception: %(e)s"),
-                      locals())
+    except Exception:
+        LOG.exception(_("Interface %s not found."), iface)
         return None
 
 

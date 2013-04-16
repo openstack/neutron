@@ -78,7 +78,8 @@ class HyperVPluginDB(object):
                             physical_network=physical_network)
                 LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
                             "network %(physical_network)s from pool"),
-                          locals())
+                          {'vlan_id': vlan_id,
+                           'physical_network': physical_network})
                 alloc.allocated = True
             except exc.NoResultFound:
                 raise q_exc.NoNetworkAvailable()
@@ -134,11 +135,13 @@ class HyperVPluginDB(object):
                 #session.delete(alloc)
                 LOG.debug(_("Releasing vlan %(vlan_id)s on physical network "
                             "%(physical_network)s"),
-                          locals())
+                          {'vlan_id': vlan_id,
+                           'physical_network': physical_network})
             except exc.NoResultFound:
                 LOG.warning(_("vlan_id %(vlan_id)s on physical network "
                               "%(physical_network)s not found"),
-                            locals())
+                            {'vlan_id': vlan_id,
+                             'physical_network': physical_network})
 
     def _add_missing_allocatable_vlans(self, session, vlan_ids,
                                        physical_network):

@@ -89,7 +89,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = ovs_db_v2.get_port(device)
         if port:
             binding = ovs_db_v2.get_network_binding(None, port['network_id'])
@@ -115,7 +115,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = ovs_db_v2.get_port(device)
         if port:
             entry = {'device': device,
@@ -134,7 +134,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s up on %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = ovs_db_v2.get_port(device)
         if port:
             if port['status'] != q_const.PORT_STATUS_ACTIVE:

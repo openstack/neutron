@@ -169,7 +169,8 @@ class LinuxBridgeManager:
             LOG.debug(_("Creating subinterface %(interface)s for "
                         "VLAN %(vlan_id)s on interface "
                         "%(physical_interface)s"),
-                      locals())
+                      {'interface': interface, 'vlan_id': vlan_id,
+                       'physical_interface': physical_interface})
             if utils.execute(['ip', 'link', 'add', 'link',
                               physical_interface,
                               'name', interface, 'type', 'vlan', 'id',
@@ -216,7 +217,8 @@ class LinuxBridgeManager:
         """
         if not self.device_exists(bridge_name):
             LOG.debug(_("Starting bridge %(bridge_name)s for subinterface "
-                        "%(interface)s"), locals())
+                        "%(interface)s"),
+                      {'bridge_name': bridge_name, 'interface': interface})
             if utils.execute(['brctl', 'addbr', bridge_name],
                              root_helper=self.root_helper):
                 return
@@ -231,7 +233,7 @@ class LinuxBridgeManager:
                 return
             LOG.debug(_("Done starting bridge %(bridge_name)s for "
                         "subinterface %(interface)s"),
-                      locals())
+                      {'bridge_name': bridge_name, 'interface': interface})
 
         if not interface:
             return
@@ -246,7 +248,9 @@ class LinuxBridgeManager:
                               root_helper=self.root_helper)
             except Exception as e:
                 LOG.error(_("Unable to add %(interface)s to %(bridge_name)s! "
-                            "Exception: %(e)s"), locals())
+                            "Exception: %(e)s"),
+                          {'interface': interface, 'bridge_name': bridge_name,
+                           'e': e})
                 return
 
     def ensure_physical_in_bridge(self, network_id,
@@ -289,15 +293,19 @@ class LinuxBridgeManager:
         # Check if device needs to be added to bridge
         tap_device_in_bridge = self.get_bridge_for_tap_device(tap_device_name)
         if not tap_device_in_bridge:
+            data = {'tap_device_name': tap_device_name,
+                    'bridge_name': bridge_name}
             msg = _("Adding device %(tap_device_name)s to bridge "
-                    "%(bridge_name)s") % locals()
+                    "%(bridge_name)s") % data
             LOG.debug(msg)
             if utils.execute(['brctl', 'addif', bridge_name, tap_device_name],
                              root_helper=self.root_helper):
                 return False
         else:
+            data = {'tap_device_name': tap_device_name,
+                    'bridge_name': bridge_name}
             msg = _("%(tap_device_name)s already exists on bridge "
-                    "%(bridge_name)s") % locals()
+                    "%(bridge_name)s") % data
             LOG.debug(msg)
         return True
 
@@ -343,16 +351,22 @@ class LinuxBridgeManager:
             if not self.is_device_on_bridge(interface_name):
                 return True
             LOG.debug(_("Removing device %(interface_name)s from bridge "
-                        "%(bridge_name)s"), locals())
+                        "%(bridge_name)s"),
+                      {'interface_name': interface_name,
+                       'bridge_name': bridge_name})
             if utils.execute(['brctl', 'delif', bridge_name, interface_name],
                              root_helper=self.root_helper):
                 return False
             LOG.debug(_("Done removing device %(interface_name)s from bridge "
-                        "%(bridge_name)s"), locals())
+                        "%(bridge_name)s"),
+                      {'interface_name': interface_name,
+                       'bridge_name': bridge_name})
             return True
         else:
             LOG.debug(_("Cannot remove device %(interface_name)s bridge "
-                        "%(bridge_name)s does not exist"), locals())
+                        "%(bridge_name)s does not exist"),
+                      {'interface_name': interface_name,
+                       'bridge_name': bridge_name})
             return False
 
     def delete_vlan(self, interface):
@@ -550,12 +564,13 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                                              self.agent_id)
             except Exception as e:
                 LOG.debug(_("Unable to get port details for "
-                            "%(device)s: %(e)s"), locals())
+                            "%(device)s: %(e)s"),
+                          {'device': device, 'e': e})
                 resync = True
                 continue
             if 'port_id' in details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
-                         locals())
+                         {'device': device, 'details': details})
                 if details['admin_state_up']:
                     # create the networking for the port
                     self.br_mgr.add_interface(details['network_id'],
@@ -580,7 +595,7 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                                              self.agent_id)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
-                          locals())
+                          {'device': device, 'e': e})
                 resync = True
             if details['exists']:
                 LOG.info(_("Port %s updated."), device)

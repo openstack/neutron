@@ -229,7 +229,8 @@ def find_port_and_cluster(clusters, port_id):
     for c in clusters:
         query = "/ws.v1/lswitch/*/lport?uuid=%s&fields=*" % port_id
         LOG.debug(_("Looking for lswitch with port id "
-                    "'%(port_id)s' on: %(c)s"), locals())
+                    "'%(port_id)s' on: %(c)s"),
+                  {'port_id': port_id, 'c': c})
         try:
             res = do_single_request(HTTP_GET, query, cluster=c)
         except Exception as e:
@@ -664,7 +665,8 @@ def get_port_by_display_name(clusters, lswitch, display_name):
     query = ("/ws.v1/lswitch/%s/lport?display_name=%s&fields=*" %
              (lswitch, display_name))
     LOG.debug(_("Looking for port with display_name "
-                "'%(display_name)s' on: %(lswitch)s"), locals())
+                "'%(display_name)s' on: %(lswitch)s"),
+              {'display_name': display_name, 'lswitch': lswitch})
     for c in clusters:
         try:
             res_obj = do_single_request(HTTP_GET, query, cluster=c)
@@ -709,7 +711,8 @@ def get_port_by_quantum_tag(cluster, lswitch_uuid, quantum_port_id):
 
 
 def get_port(cluster, network, port, relations=None):
-    LOG.info(_("get_port() %(network)s %(port)s"), locals())
+    LOG.info(_("get_port() %(network)s %(port)s"),
+             {'network': network, 'port': port})
     uri = "/ws.v1/lswitch/" + network + "/lport/" + port + "?"
     if relations:
         uri += "relations=%s" % relations
@@ -1354,8 +1357,9 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         port['ip_addresses'] = list(ip_address_set)
         do_single_request(HTTP_PUT, uri, json.dumps(port), cluster=cluster)
     except NvpApiClient.ResourceNotFound as e:
+        data = {'lport_id': lport_id, 'lrouter_id': lrouter_id}
         msg = (_("Router Port %(lport_id)s not found on router "
-                 "%(lrouter_id)s") % locals())
+                 "%(lrouter_id)s") % data)
         LOG.exception(msg)
         raise nvp_exc.NvpPluginException(err_msg=msg)
     except NvpApiClient.NvpApiException as e:
