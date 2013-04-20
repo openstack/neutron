@@ -19,7 +19,8 @@
 Network-related utilities and helper functions.
 """
 
-import logging
+from quantum.openstack.common import log as logging
+
 
 LOG = logging.getLogger(__name__)
 

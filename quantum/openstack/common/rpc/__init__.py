@@ -26,13 +26,13 @@ For some wrappers that add message versioning to rpc, see:
 """
 
 import inspect
-import logging
 
 from oslo.config import cfg
 
 from quantum.openstack.common.gettextutils import _
 from quantum.openstack.common import importutils
 from quantum.openstack.common import local
+from quantum.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
