@@ -28,8 +28,6 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
     def setUp(self):
         super(QuotaExtensionTestCase, self).setUp()
-        db._ENGINE = None
-        db._MAKER = None
         # Ensure 'stale' patched copies of the plugin are never returned
         manager.QuantumManager._instance = None
 
@@ -69,8 +67,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         self._plugin_patcher.stop()
         self.api = None
         self.plugin = None
-        db._ENGINE = None
-        db._MAKER = None
+        db.clear_db()
         cfg.CONF.reset()
 
         # Restore the global RESOURCE_ATTRIBUTE_MAP

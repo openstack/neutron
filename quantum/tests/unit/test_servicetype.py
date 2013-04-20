@@ -250,8 +250,6 @@ class ServiceTypeExtensionTestCaseXML(ServiceTypeExtensionTestCase):
 class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
 
     def setUp(self):
-        db_api._ENGINE = None
-        db_api._MAKER = None
         # Blank out service type manager instance
         servicetype_db.ServiceTypeManager._instance = None
         plugin_name = "%s.%s" % (dp.__name__, dp.DummyServicePlugin.__name__)

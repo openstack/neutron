@@ -234,6 +234,14 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                         'ports',
                         wexc.HTTPInternalServerError.code)
 
+    def test_create_ports_bulk_native(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk port create")
+
+    def test_create_ports_bulk_emulated(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk port create")
+
     def test_create_ports_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")

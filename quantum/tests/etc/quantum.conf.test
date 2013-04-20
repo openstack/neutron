@@ -23,7 +23,7 @@ rpc_backend = quantum.openstack.common.rpc.impl_fake
 lock_path = $state_path/lock
 
 [database]
-sql_connection = 'sqlite:///:memory:'
+connection = 'sqlite://'
 
 [default_servicetype]
 description = "default service type"

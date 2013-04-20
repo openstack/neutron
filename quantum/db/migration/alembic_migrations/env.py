@@ -54,7 +54,7 @@ def run_migrations_offline():
     script output.
 
     """
-    context.configure(url=quantum_config.DATABASE.sql_connection)
+    context.configure(url=quantum_config.database.connection)
 
     with context.begin_transaction():
         context.run_migrations(active_plugin=quantum_config.core_plugin,
@@ -69,7 +69,7 @@ def run_migrations_online():
 
     """
     engine = create_engine(
-        quantum_config.DATABASE.sql_connection,
+        quantum_config.database.connection,
         poolclass=pool.NullPool)
 
     connection = engine.connect()

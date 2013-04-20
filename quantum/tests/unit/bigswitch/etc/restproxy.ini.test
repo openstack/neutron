@@ -3,15 +3,15 @@
 [database]
 # This line MUST be changed to actually run the plugin.
 # Example:
-# sql_connection = mysql://root:pass@127.0.0.1:3306/restproxy_quantum
+# connection = mysql://root:pass@127.0.0.1:3306/restproxy_quantum
 # Replace 127.0.0.1 above with the IP address of the database used by the
 # main quantum server. (Leave it as is if the database runs on this host.)
-sql_connection = sqlite://
+connection = sqlite://
 # Database reconnection retry times - in event connectivity is lost
 # set to -1 implies an infinite retry count
-# sql_max_retries = 10
+# max_retries = 10
 # Database reconnection interval in seconds - in event connectivity is lost
-reconnect_interval = 2
+retry_interval = 2
 
 [restproxy]
 # All configuration for this plugin is in section '[restproxy]'

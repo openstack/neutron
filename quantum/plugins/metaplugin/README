@@ -9,16 +9,16 @@ This plugin also support extensions. We can map extension to plugin by using ext
 [database]
 # This line MUST be changed to actually run the plugin.
 # Example:
-# sql_connection = mysql://root:nova@127.0.0.1:3306/ovs_quantum
+# connection = mysql://root:nova@127.0.0.1:3306/ovs_quantum
 # Replace 127.0.0.1 above with the IP address of the database used by the
 # main quantum server. (Leave it as is if the database runs on this host.)
-sql_connection = mysql://root:password@localhost/quantum_metaplugin?charset=utf8
+connection = mysql://root:password@localhost/quantum_metaplugin?charset=utf8
 
 # Database reconnection retry times - in event connectivity is lost
 # set to -1 implgies an infinite retry count
-# sql_max_retries = 10
+# max_retries = 10
 # Database reconnection interval in seconds - in event connectivity is lost
-reconnect_interval = 2
+retry_interval = 2
 
 [meta]
 ## This is list of flavor:quantum_plugins

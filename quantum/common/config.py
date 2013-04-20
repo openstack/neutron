@@ -26,6 +26,7 @@ from paste import deploy
 
 from quantum.api.v2 import attributes
 from quantum.common import utils
+from quantum.openstack.common.db.sqlalchemy import session as db_session
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.version import version_info as quantum_version
@@ -94,6 +95,12 @@ cfg.CONF.register_cli_opts(core_cli_opts)
 
 # Ensure that the control exchange is set correctly
 rpc.set_defaults(control_exchange='quantum')
+_SQL_CONNECTION_DEFAULT = 'sqlite://'
+# Update the default QueuePool parameters. These can be tweaked by the
+# configuration variables - max_pool_size, max_overflow and pool_timeout
+db_session.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
+                        sqlite_db='', max_pool_size=10,
+                        max_overflow=20, pool_timeout=10)
 
 
 def parse(args):
