@@ -126,8 +126,9 @@ class ExtensionsTestApp(wsgi.Router):
     def _delete_port(self, network_id, port_id):
         """Delete port."""
         LOG.debug("Deleting port for network %s - START", network_id)
+        data = {'network_id': network_id, 'port_id': port_id}
         port_path = ("/tenants/tt/networks/%(network_id)s/ports/%(port_id)s" %
-                     locals())
+                     data)
         port_req = self.create_request(port_path, None,
                                        self.contenttype, 'DELETE')
         port_req.get_response(self.api)

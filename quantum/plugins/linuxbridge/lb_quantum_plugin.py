@@ -80,7 +80,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = self.get_port_from_device(device)
         if port:
             binding = db.get_network_binding(db_api.get_session(),
@@ -106,7 +106,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = self.get_port_from_device(device)
         if port:
             entry = {'device': device,
@@ -125,7 +125,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s up %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = self.get_port_from_device(device)
         if port:
             if port['status'] != q_const.PORT_STATUS_ACTIVE:
@@ -262,7 +262,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     LOG.error(_("Invalid network VLAN range: "
                                 "'%(entry)s' - %(ex)s. "
                                 "Service terminated!"),
-                              locals())
+                              {'entry': entry, 'ex': ex})
                     sys.exit(1)
             else:
                 self._add_network(entry)

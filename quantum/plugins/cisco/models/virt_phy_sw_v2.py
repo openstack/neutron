@@ -125,7 +125,9 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         if plugin_key not in self._plugins:
             LOG.info(_("No %s Plugin loaded"), plugin_key)
             LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
-                     "ignored"), locals())
+                     "ignored"),
+                     {'plugin_key': plugin_key, 'function_name': function_name,
+                      'args': args})
             return
 
         device_params = {const.DEVICE_IP: []}

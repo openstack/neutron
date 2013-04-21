@@ -303,9 +303,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
                     match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
                     if match1 or match2:
+                        data = {'subnet_cidr': subnet_cidr,
+                                'subnet_id': subnet_id,
+                                'cidr': cidr,
+                                'sub_id': sub_id}
                         msg = (_("Cidr %(subnet_cidr)s of subnet "
                                  "%(subnet_id)s overlaps with cidr %(cidr)s "
-                                 "of subnet %(sub_id)s") % locals())
+                                 "of subnet %(sub_id)s") % data)
                         raise q_exc.BadRequest(resource='router', msg=msg)
         except exc.NoResultFound:
             pass
@@ -516,14 +520,16 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port_id = fip['port_id']
             if 'id' in fip:
                 floatingip_id = fip['id']
-                msg = _('Port %(port_id)s is associated with a different '
-                        'tenant than Floating IP %(floatingip_id)s and '
-                        'therefore cannot be bound.')
+                data = {'port_id': port_id,
+                        'floatingip_id': floatingip_id}
+                msg = (_('Port %(port_id)s is associated with a different '
+                         'tenant than Floating IP %(floatingip_id)s and '
+                         'therefore cannot be bound.') % data)
             else:
-                msg = _('Cannnot create floating IP and bind it to '
-                        'Port %(port_id)s, since that port is owned by a '
-                        'different tenant.')
-            raise q_exc.BadRequest(resource='floatingip', msg=msg % locals())
+                msg = (_('Cannnot create floating IP and bind it to '
+                         'Port %s, since that port is owned by a '
+                         'different tenant.') % port_id)
+            raise q_exc.BadRequest(resource='floatingip', msg=msg)
 
         internal_subnet_id = None
         if 'fixed_ip_address' in fip and fip['fixed_ip_address']:
@@ -558,7 +564,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # ip enabled gateway with support for this floating IP network
         try:
             port_qry = context.elevated().session.query(models_v2.Port)
-            ports = port_qry.filter_by(
+            port_qry.filter_by(
                 network_id=floating_network_id,
                 device_id=router_id,
                 device_owner=DEVICE_OWNER_ROUTER_GW).one()

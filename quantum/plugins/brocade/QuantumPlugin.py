@@ -125,7 +125,7 @@ class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         LOG.debug(_("Device %(device)s details requested from %(agent_id)s"),
-                  locals())
+                  {'device': device, 'agent_id': agent_id})
         port = brocade_db.get_port(rpc_context, device[self.TAP_PREFIX_LEN:])
         if port:
             entry = {'device': device,

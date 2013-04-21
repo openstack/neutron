@@ -163,7 +163,8 @@ class ServerProxy(object):
                   {'server': self.server, 'port': self.port, 'ssl': self.ssl,
                    'action': action})
         LOG.debug(_("ServerProxy: resource=%(resource)s, data=%(data)r, "
-                    "headers=%(headers)r"), locals())
+                    "headers=%(headers)r"),
+                  {'resource': resource, 'data': data, 'headers': headers})
 
         conn = None
         if self.ssl:
@@ -194,7 +195,8 @@ class ServerProxy(object):
                     pass
             ret = (response.status, response.reason, respstr, respdata)
         except (socket.timeout, socket.error) as e:
-            LOG.error(_('ServerProxy: %(action)s failure, %(e)r'), locals())
+            LOG.error(_('ServerProxy: %(action)s failure, %(e)r'),
+                      {'action': action, 'e': e})
             ret = 0, None, None, None
         conn.close()
         LOG.debug(_("ServerProxy: status=%(status)d, reason=%(reason)r, "

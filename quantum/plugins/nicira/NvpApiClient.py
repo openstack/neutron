@@ -121,7 +121,8 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
 
         if response is None:
             # Timeout.
-            LOG.error(_('Request timed out: %(method)s to %(url)s'), locals())
+            LOG.error(_('Request timed out: %(method)s to %(url)s'),
+                      {'method': method, 'url': url})
             raise RequestTimeout()
 
         status = response.status
