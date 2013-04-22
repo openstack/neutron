@@ -35,7 +35,7 @@ class PolicyFileTestCase(base.BaseTestCase):
         super(PolicyFileTestCase, self).setUp()
         policy.reset()
         self.addCleanup(policy.reset)
-        self.context = context.Context('fake', 'fake')
+        self.context = context.Context('fake', 'fake', is_admin=False)
         self.target = {}
         self.tempdir = self.useFixture(fixtures.TempDir())
 
@@ -200,11 +200,15 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         policy.reset()
         policy.init()
         self.addCleanup(policy.reset)
+        self.admin_only_legacy = "role:admin"
+        self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
-            "admin_or_network_owner": "role:admin or "
+            "context_is_admin": "role:admin",
+            "admin_or_network_owner": "rule:context_is_admin or "
                                       "tenant_id:%(network_tenant_id)s",
-            "admin_or_owner": "role:admin or tenant_id:%(tenant_id)s",
-            "admin_only": "role:admin",
+            "admin_or_owner": ("rule:context_is_admin or "
+                               "tenant_id:%(tenant_id)s"),
+            "admin_only": "rule:context_is_admin",
             "regular_user": "role:user",
             "shared": "field:networks:shared=True",
             "external": "field:networks:router:external=True",
@@ -278,7 +282,26 @@ class QuantumPolicyTestCase(base.BaseTestCase):
     def test_enforce_adminonly_attribute_update(self):
         self._test_enforce_adminonly_attribute('update_network')
 
+    def test_enforce_adminonly_attribute_no_context_is_admin_policy(self):
+        del self.rules[policy.ADMIN_CTX_POLICY]
+        self.rules['admin_only'] = common_policy.parse_rule(
+            self.admin_only_legacy)
+        self.rules['admin_or_owner'] = common_policy.parse_rule(
+            self.admin_or_owner_legacy)
+        self._test_enforce_adminonly_attribute('create_network')
+
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
+        action = "create_network"
+        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          self.context, action, target, None)
+
+    def test_enforce_adminonly_nonadminctx_no_ctx_is_admin_policy_403(self):
+        del self.rules[policy.ADMIN_CTX_POLICY]
+        self.rules['admin_only'] = common_policy.parse_rule(
+            self.admin_only_legacy)
+        self.rules['admin_or_owner'] = common_policy.parse_rule(
+            self.admin_or_owner_legacy)
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
@@ -300,3 +323,41 @@ class QuantumPolicyTestCase(base.BaseTestCase):
             target = {'network_id': 'whatever'}
             result = policy.enforce(self.context, action, target, self.plugin)
             self.assertTrue(result)
+
+    def test_get_roles_context_is_admin_rule_missing(self):
+        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+            "some_other_rule": "role:admin",
+        }.items())
+        common_policy.set_rules(common_policy.Rules(rules))
+        # 'admin' role is expected for bw compatibility
+        self.assertEqual(['admin'], policy.get_admin_roles())
+
+    def test_get_roles_with_role_check(self):
+        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+            policy.ADMIN_CTX_POLICY: "role:admin",
+        }.items())
+        common_policy.set_rules(common_policy.Rules(rules))
+        self.assertEqual(['admin'], policy.get_admin_roles())
+
+    def test_get_roles_with_rule_check(self):
+        rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+            policy.ADMIN_CTX_POLICY: "rule:some_other_rule",
+            "some_other_rule": "role:admin",
+        }.items())
+        common_policy.set_rules(common_policy.Rules(rules))
+        self.assertEqual(['admin'], policy.get_admin_roles())
+
+    def test_get_roles_with_or_check(self):
+        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+            policy.ADMIN_CTX_POLICY: "rule:rule1 or rule:rule2",
+            "rule1": "role:admin_1",
+            "rule2": "role:admin_2"
+        }.items())
+        self.assertEqual(['admin_1', 'admin_2'],
+                         policy.get_admin_roles())
+
+    def test_get_roles_with_other_rules(self):
+        self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
+            policy.ADMIN_CTX_POLICY: "role:xxx or other:value",
+        }.items())
+        self.assertEqual(['xxx'], policy.get_admin_roles())

@@ -31,6 +31,7 @@ from quantum.openstack.common import policy
 LOG = logging.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
+ADMIN_CTX_POLICY = 'context_is_admin'
 cfg.CONF.import_opt('policy_file', 'quantum.common.config')
 
 
@@ -207,3 +208,48 @@ def enforce(context, action, target, plugin=None):
     credentials = context.to_dict()
     return policy.check(match_rule, real_target, credentials,
                         exceptions.PolicyNotAuthorized, action=action)
+
+
+def check_is_admin(context):
+    """Verify context has admin rights according to policy settings."""
+    init()
+    # the target is user-self
+    credentials = context.to_dict()
+    target = credentials
+    # Backward compatibility: if ADMIN_CTX_POLICY is not
+    # found, default to validating role:admin
+    admin_policy = (ADMIN_CTX_POLICY in policy._rules
+                    and ADMIN_CTX_POLICY or 'role:admin')
+    return policy.check(admin_policy, target, credentials)
+
+
+def _extract_roles(rule, roles):
+    if isinstance(rule, policy.RoleCheck):
+        roles.append(rule.match.lower())
+    elif isinstance(rule, policy.RuleCheck):
+        _extract_roles(policy._rules[rule.match], roles)
+    elif hasattr(rule, 'rules'):
+        for rule in rule.rules:
+            _extract_roles(rule, roles)
+
+
+def get_admin_roles():
+    """Return a list of roles which are granted admin rights according
+    to policy settings.
+    """
+    # NOTE(salvatore-orlando): This function provides a solution for
+    # populating implicit contexts with the appropriate roles so that
+    # they correctly pass policy checks, and will become superseded
+    # once all explicit policy checks are removed from db logic and
+    # plugin modules. For backward compatibility it returns the literal
+    # admin if ADMIN_CTX_POLICY is not defined
+    init()
+    if not policy._rules or ADMIN_CTX_POLICY not in policy._rules:
+        return ['admin']
+    try:
+        admin_ctx_rule = policy._rules[ADMIN_CTX_POLICY]
+    except (KeyError, TypeError):
+        return
+    roles = []
+    _extract_roles(admin_ctx_rule, roles)
+    return roles
