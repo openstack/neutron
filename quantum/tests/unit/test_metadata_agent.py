@@ -95,7 +95,9 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                 region_name=FakeConf.auth_region,
                 auth_url=FakeConf.auth_url,
                 password=FakeConf.admin_password,
-                auth_strategy=FakeConf.auth_strategy)
+                auth_strategy=FakeConf.auth_strategy,
+                auth_token=None,
+                endpoint_url=None)
         ]
 
         if router_id:

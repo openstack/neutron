@@ -66,6 +66,7 @@ class MetadataProxyHandler(object):
 
     def __init__(self, conf):
         self.conf = conf
+        self.auth_info = {}
 
     def _get_quantum_client(self):
         qclient = client.Client(
@@ -75,6 +76,8 @@ class MetadataProxyHandler(object):
             auth_url=self.conf.auth_url,
             auth_strategy=self.conf.auth_strategy,
             region_name=self.conf.auth_region,
+            auth_token=self.auth_info.get('auth_token'),
+            endpoint_url=self.auth_info.get('endpoint_url'),
         )
         return qclient
 
@@ -114,6 +117,8 @@ class MetadataProxyHandler(object):
         ports = qclient.list_ports(
             network_id=networks,
             fixed_ips=['ip_address=%s' % remote_address])['ports']
+
+        self.auth_info = qclient.get_auth_info()
 
         if len(ports) == 1:
             return ports[0]['device_id']
