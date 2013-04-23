@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-22 00:08+0000\n"
+"POT-Creation-Date: 2013-04-23 00:08+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -7588,22 +7588,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "Interface %(iface)s not found. Exception: %(e)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Cannnot create floating IP and bind "
-#~ "it to Port %(port_id)s, since that "
-#~ "port is owned by a different "
-#~ "tenant."
-#~ msgstr ""
-
-#~ msgid "Invalid tenant_network_type: %(tenant_network_type)s. Agent terminated!"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "WMI job failed with status "
-#~ "%(job_state)d. No error description available"
-#~ msgstr ""
 
