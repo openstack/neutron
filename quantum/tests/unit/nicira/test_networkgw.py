@@ -103,6 +103,27 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         nw_gw = res.json[self._resource]
         self.assertEqual(nw_gw['id'], nw_gw_id)
 
+    def _test_network_gateway_create_with_error(
+        self, data, error_code=exc.HTTPBadRequest.code):
+        res = self.api.post_json(_get_path(networkgw.COLLECTION_NAME), data,
+                                 expect_errors=True)
+        self.assertEqual(res.status_int, error_code)
+
+    def test_network_gateway_create_invalid_device_spec(self):
+        data = {self._resource: {'name': 'nw-gw',
+                                 'tenant_id': _uuid(),
+                                 'devices': [{'id': _uuid(),
+                                              'invalid': 'xxx'}]}}
+        self._test_network_gateway_create_with_error(data)
+
+    def test_network_gateway_create_extra_attr_in_device_spec(self):
+        data = {self._resource: {'name': 'nw-gw',
+                                 'tenant_id': _uuid(),
+                                 'devices': [{'id': _uuid(),
+                                              'interface_name': 'xxx',
+                                              'extra_attr': 'onetoomany'}]}}
+        self._test_network_gateway_create_with_error(data)
+
     def test_network_gateway_update(self):
         nw_gw_name = 'updated'
         data = {self._resource: {'name': nw_gw_name}}
