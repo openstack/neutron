@@ -196,7 +196,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
                         fields=None, sorts=None, limit=None, marker_obj=None,
                         page_reverse=False):
         query = self._get_collection_query(context, model, filters)
-        return [dict_func(c, fields) for c in query.all()]
+        return [dict_func(c, fields) for c in query]
 
     def _get_collection_count(self, context, model, filters=None):
         return self._get_collection_query(context, model, filters).count()
@@ -463,7 +463,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         with context.session.begin(subtransactions=True):
             vip = self._get_resource(context, Vip, id)
             qry = context.session.query(Pool)
-            for pool in qry.filter_by(vip_id=id).all():
+            for pool in qry.filter_by(vip_id=id):
                 pool.update({"vip_id": None})
 
             context.session.delete(vip)
@@ -576,7 +576,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
         collection = self._model_query(context, Pool)
         collection = self._apply_filters_to_query(collection, Pool, filters)
         return [self._make_pool_dict(c, fields)
-                for c in collection.all()]
+                for c in collection]
 
     def stats(self, context, pool_id):
         with context.session.begin(subtransactions=True):

@@ -268,7 +268,7 @@ class ServiceTypeManager(object):
                 if column:
                     query = query.filter(column.in_(value))
         return [self._make_svc_type_dict(context, svc_type, fields)
-                for svc_type in query.all()]
+                for svc_type in query]
 
     def create_service_type(self, context, service_type):
         """Create a new service type."""

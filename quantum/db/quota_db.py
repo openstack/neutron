@@ -58,7 +58,7 @@ class DbQuotaDriver(object):
 
         # update with tenant specific limits
         q_qry = context.session.query(Quota).filter_by(tenant_id=tenant_id)
-        tenant_quota.update((q['resource'], q['limit']) for q in q_qry.all())
+        tenant_quota.update((q['resource'], q['limit']) for q in q_qry)
 
         return tenant_quota
 
@@ -69,10 +69,9 @@ class DbQuotaDriver(object):
         Atfer deletion, this tenant will use default quota values in conf.
         """
         with context.session.begin():
-            tenant_quotas = context.session.query(Quota).filter_by(
-                tenant_id=tenant_id).all()
-            for quota in tenant_quotas:
-                context.session.delete(quota)
+            tenant_quotas = context.session.query(Quota)
+            tenant_quotas = tenant_quotas.filter_by(tenant_id=tenant_id)
+            tenant_quotas.delete()
 
     @staticmethod
     def get_all_quotas(context, resources):
@@ -91,7 +90,7 @@ class DbQuotaDriver(object):
 
         all_tenant_quotas = {}
 
-        for quota in context.session.query(Quota).all():
+        for quota in context.session.query(Quota):
             tenant_id = quota['tenant_id']
 
             # avoid setdefault() because only want to copy when actually req'd

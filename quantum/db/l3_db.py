@@ -285,8 +285,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                      network_id, subnet_id, subnet_cidr):
         try:
             rport_qry = context.session.query(models_v2.Port)
-            rports = rport_qry.filter_by(
-                device_id=router_id).all()
+            rports = rport_qry.filter_by(device_id=router_id)
             # its possible these ports on on the same network, but
             # different subnet
             new_ipnet = netaddr.IPNetwork(subnet_cidr)
@@ -427,7 +426,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 ports = rport_qry.filter_by(
                     device_id=router_id,
                     device_owner=DEVICE_OWNER_ROUTER_INTF,
-                    network_id=subnet['network_id']).all()
+                    network_id=subnet['network_id'])
 
                 for p in ports:
                     if p['fixed_ips'][0]['subnet_id'] == subnet_id:
@@ -833,8 +832,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if not vals:
             return nets
 
-        ext_nets = set([en['network_id'] for en in
-                        context.session.query(ExternalNetwork).all()])
+        ext_nets = set(en['network_id']
+                       for en in context.session.query(ExternalNetwork))
         if vals[0]:
             return [n for n in nets if n['id'] in ext_nets]
         else:

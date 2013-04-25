@@ -190,7 +190,7 @@ class HyperVPluginDB(object):
             # get existing allocations for all physical networks
             allocations = dict()
             allocs_q = session.query(hyperv_model.VlanAllocation)
-            for alloc in allocs_q.all():
+            for alloc in allocs_q:
                 allocations.setdefault(alloc.physical_network,
                                        set()).add(alloc)
 

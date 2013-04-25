@@ -57,7 +57,7 @@ class LoadBalancerCallbacks(object):
             up = True  # makes pep8 and sqlalchemy happy
             qry = qry.filter(loadbalancer_db.Vip.admin_state_up == up)
             qry = qry.filter(loadbalancer_db.Pool.admin_state_up == up)
-            return [id for id, in qry.all()]
+            return [id for id, in qry]
 
     def get_logical_device(self, context, pool_id=None, activate=True,
                            **kwargs):
@@ -321,7 +321,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
             )
             qry = qry.filter_by(monitor_id=hm['id'])
 
-            for assoc in qry.all():
+            for assoc in qry:
                 self.agent_rpc.modify_pool(context, assoc['pool_id'])
         return hm
 
@@ -332,7 +332,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
             )
             qry = qry.filter_by(monitor_id=id)
 
-            pool_ids = [a['pool_id'] for a in qry.all()]
+            pool_ids = [a['pool_id'] for a in qry]
             super(LoadBalancerPlugin, self).delete_health_monitor(context, id)
         for pid in pool_ids:
             self.agent_rpc.modify_pool(context, pid)

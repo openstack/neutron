@@ -177,8 +177,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
         query = query.filter(sg_binding_sgid.in_(remote_group_ids))
-        ip_in_db = query.all()
-        for security_group_id, ip_address in ip_in_db:
+        for security_group_id, ip_address in query:
             ips_by_group[security_group_id].append(ip_address)
         return ips_by_group
 
@@ -208,7 +207,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
         for network_id in network_ids:
             ips[network_id] = []
 
-        for port, ip in query.all():
+        for port, ip in query:
             ips[port['network_id']].append(ip)
         return ips
 
