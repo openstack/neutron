@@ -325,7 +325,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         ) as (de_fn, exec_fn, upd_fn, ie_fn):
             de_fn.return_value = False
             exec_fn.return_value = False
-            self.assertIsNone(self.lbm.ensure_bridge("br0", None))
+            self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
             ie_fn.return_Value = False
             self.lbm.ensure_bridge("br0", "eth0")
             self.assertTrue(upd_fn.called)
