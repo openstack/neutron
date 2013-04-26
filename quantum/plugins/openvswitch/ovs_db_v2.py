@@ -355,12 +355,8 @@ def set_port_status(port_id, status):
 
 def get_tunnel_endpoints():
     session = db.get_session()
-    try:
-        # TODO(rpodolyaka): Query.all() can't raise the NoResultNound exception
-        #                   Fix this later along with other identical cases.
-        tunnels = session.query(ovs_models_v2.TunnelEndpoint).all()
-    except exc.NoResultFound:
-        return []
+
+    tunnels = session.query(ovs_models_v2.TunnelEndpoint)
     return [{'id': tunnel.id,
              'ip_address': tunnel.ip_address} for tunnel in tunnels]
 

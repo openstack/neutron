@@ -179,11 +179,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return port
 
     def _get_dns_by_subnet(self, context, subnet_id):
-        try:
-            dns_qry = context.session.query(models_v2.DNSNameServer)
-            return dns_qry.filter_by(subnet_id=subnet_id).all()
-        except exc.NoResultFound:
-            return []
+        dns_qry = context.session.query(models_v2.DNSNameServer)
+        return dns_qry.filter_by(subnet_id=subnet_id).all()
 
     def _get_route_by_subnet(self, context, subnet_id):
         route_qry = context.session.query(models_v2.SubnetRoute)
