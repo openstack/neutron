@@ -1329,6 +1329,15 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                 self._delete('floatingips', fp2['floatingip']['id'])
                 self._delete('floatingips', fp3['floatingip']['id'])
 
+    def test_floatingip_list_with_port_id(self):
+        with self.floatingip_with_assoc() as fip:
+            port_id = fip['floatingip']['port_id']
+            res = self._list('floatingips',
+                             query_params="port_id=%s" % port_id)
+            self.assertEqual(len(res['floatingips']), 1)
+            res = self._list('floatingips', query_params="port_id=aaa")
+            self.assertEqual(len(res['floatingips']), 0)
+
     def test_floatingip_list_with_pagination(self):
         with contextlib.nested(self.subnet(cidr="10.0.0.0/24"),
                                self.subnet(cidr="11.0.0.0/24"),
