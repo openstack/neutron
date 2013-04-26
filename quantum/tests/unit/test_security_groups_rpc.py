@@ -519,8 +519,8 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
             [call(None,
              {'args':
                  {'devices': ['fake_device']},
-             'method':
-                 'security_group_rules_for_devices'},
+             'method': 'security_group_rules_for_devices',
+             'namespace': None},
              version=sg_rpc.SG_RPC_VERSION,
              topic='fake_topic')])
 
@@ -544,7 +544,8 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
             [call(None,
                   {'args':
                       {'security_groups': ['fake_sgid']},
-                      'method': 'security_groups_rule_updated'},
+                      'method': 'security_groups_rule_updated',
+                      'namespace': None},
                   version=sg_rpc.SG_RPC_VERSION,
                   topic='fake-security_group-update')])
 
@@ -555,7 +556,8 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
             [call(None,
                   {'args':
                       {'security_groups': ['fake_sgid']},
-                      'method': 'security_groups_member_updated'},
+                      'method': 'security_groups_member_updated',
+                      'namespace': None},
                   version=sg_rpc.SG_RPC_VERSION,
                   topic='fake-security_group-update')])
 

@@ -31,7 +31,7 @@ class PluginRpcDispatcher(dispatcher.RpcDispatcher):
     def __init__(self, callbacks):
         super(PluginRpcDispatcher, self).__init__(callbacks)
 
-    def dispatch(self, rpc_ctxt, version, method, **kwargs):
+    def dispatch(self, rpc_ctxt, version, method, namespace, **kwargs):
         rpc_ctxt_dict = rpc_ctxt.to_dict()
         user_id = rpc_ctxt_dict.pop('user_id', None)
         if not user_id:
@@ -41,4 +41,4 @@ class PluginRpcDispatcher(dispatcher.RpcDispatcher):
             tenant_id = rpc_ctxt_dict.pop('project_id', None)
         quantum_ctxt = context.Context(user_id, tenant_id, **rpc_ctxt_dict)
         return super(PluginRpcDispatcher, self).dispatch(
-            quantum_ctxt, version, method, **kwargs)
+            quantum_ctxt, version, method, namespace, **kwargs)

@@ -145,7 +145,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
             self.needs_resync = False
             self.sync_state()
 
-    @periodic_task.periodic_task(ticks_between_runs=6)
+    @periodic_task.periodic_task(spacing=6)
     def collect_stats(self, context):
         for pool_id in self.cache.get_pool_ids():
             try:
