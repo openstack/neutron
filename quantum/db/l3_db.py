@@ -47,6 +47,7 @@ DEVICE_OWNER_FLOATINGIP = l3_constants.DEVICE_OWNER_FLOATINGIP
 
 class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum router."""
+
     name = sa.Column(sa.String(255))
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
@@ -61,10 +62,12 @@ class ExternalNetwork(model_base.BASEV2):
 
 
 class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represents a floating IP, which may or many not be
-       allocated to a tenant, and may or may not be associated with
-       an internal port/ip address/router.
+    """Represents a floating IP address.
+
+    This IP address may or many not be allocated to a tenant, and may or
+    may not be associated with an internal port/ip address/router.
     """
+
     floating_ip_address = sa.Column(sa.String(64), nullable=False)
     floating_network_id = sa.Column(sa.String(36), nullable=False)
     floating_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
@@ -509,7 +512,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port_id=internal_port['id'])
 
     def get_assoc_data(self, context, fip, floating_network_id):
-        """When a floating IP is associated with an internal port,
+        """Determine/extract data associated with the internal port.
+
+        When a floating IP is associated with an internal port,
         we need to extract/determine some data associated with the
         internal port, including the internal_ip_address, and router_id.
         We also need to confirm that this internal port is owned by the
@@ -723,12 +728,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                           filters=filters)
 
     def prevent_l3_port_deletion(self, context, port_id):
-        """Checks to make sure a port is allowed to be deleted, raising
-        an exception if this is not the case.  This should be called by
-        any plugin when the API requests the deletion of a port, since
-        some ports for L3 are not intended to be deleted directly via a
-        DELETE to /ports, but rather via other API calls that perform the
-        proper deletion checks.
+        """Checks to make sure a port is allowed to be deleted.
+
+        Raises an exception if this is not the case.  This should be called by
+        any plugin when the API requests the deletion of a port, since some
+        ports for L3 are not intended to be deleted directly via a DELETE
+        to /ports, but rather via other API calls that perform the proper
+        deletion checks.
         """
         port_db = self._get_port(context, port_id)
         if port_db['device_owner'] in [DEVICE_OWNER_ROUTER_INTF,

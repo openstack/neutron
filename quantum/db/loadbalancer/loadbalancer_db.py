@@ -36,6 +36,7 @@ LOG = logging.getLogger(__name__)
 
 
 class SessionPersistence(model_base.BASEV2):
+
     vip_id = sa.Column(sa.String(36),
                        sa.ForeignKey("vips.id"),
                        primary_key=True)
@@ -49,6 +50,7 @@ class SessionPersistence(model_base.BASEV2):
 
 class PoolStatistics(model_base.BASEV2):
     """Represents pool statistics."""
+
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         primary_key=True)
     bytes_in = sa.Column(sa.Integer, nullable=False)
@@ -59,6 +61,7 @@ class PoolStatistics(model_base.BASEV2):
 
 class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer vip."""
+
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
@@ -78,6 +81,7 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer member."""
+
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         nullable=False)
     address = sa.Column(sa.String(64), nullable=False)
@@ -89,6 +93,7 @@ class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer pool."""
+
     vip_id = sa.Column(sa.String(36), sa.ForeignKey("vips.id"))
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
@@ -115,6 +120,7 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum loadbalancer healthmonitor."""
+
     type = sa.Column(sa.Enum("PING", "TCP", "HTTP", "HTTPS",
                              name="healthmontiors_type"),
                      nullable=False)
@@ -135,10 +141,8 @@ class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 
 class PoolMonitorAssociation(model_base.BASEV2):
-    """
-    Represents the many-to-many association between pool and
-    healthMonitor classes
-    """
+    """Many-to-many association between pool and healthMonitor classes."""
+
     pool_id = sa.Column(sa.String(36),
                         sa.ForeignKey("pools.id"),
                         primary_key=True)
@@ -148,9 +152,10 @@ class PoolMonitorAssociation(model_base.BASEV2):
 
 
 class LoadBalancerPluginDb(LoadBalancerPluginBase):
-    """
-    A class that wraps the implementation of the Quantum
-    loadbalancer plugin database access interface using SQLAlchemy models.
+    """Wraps loadbalancer with SQLAlchemy models.
+
+    A class that wraps the implementation of the Quantum loadbalancer
+    plugin database access interface using SQLAlchemy models.
     """
 
     @property
@@ -279,6 +284,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
     def _check_session_persistence_info(self, info):
         """Performs sanity check on session persistence info.
+
         :param info: Session persistence info
         """
         if info['type'] == 'APP_COOKIE':

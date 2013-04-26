@@ -105,11 +105,11 @@ class PortSecurityDbMixin(object):
         return self._fields(res, fields)
 
     def _determine_port_security_and_has_ip(self, context, port):
-        """Returns a tuple of (port_security_enabled, has_ip) where
-        port_security_enabled and has_ip are bools. Port_security is the
-        value assocated with the port if one is present otherwise the value
-        associated with the network is returned. has_ip is if the port is
-        associated with an ip or not.
+        """Returns a tuple of booleans (port_security_enabled, has_ip).
+
+        Port_security is the value assocated with the port if one is present
+        otherwise the value associated with the network is returned. has_ip is
+        if the port is associated with an ip or not.
         """
         has_ip = self._ip_on_port(port)
         # we don't apply security groups for dhcp, router

@@ -19,6 +19,7 @@ from sqlalchemy import orm
 
 class QuantumBase(object):
     """Base class for Quantum Models."""
+
     __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
@@ -45,6 +46,7 @@ class QuantumBase(object):
 
     def iteritems(self):
         """Make the model object behave like a dict.
+
         Includes attributes from joins.
         """
         local = dict(self)

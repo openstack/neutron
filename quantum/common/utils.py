@@ -58,8 +58,7 @@ def read_cached_file(filename, cache_info, reload_func=None):
 
 
 def find_config_file(options, config_file):
-    """
-    Return the first config file found.
+    """Return the first config file found.
 
     We search for the paste config file in the following order:
     * If --config-file option is used, use that

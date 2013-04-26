@@ -109,8 +109,7 @@ class ClearProbe(ProbeCommand):
 
 
 class ExecProbe(ProbeCommand):
-    """Exec commands on the namespace of the probe
-    """
+    """Exec commands on the namespace of the probe."""
 
     log = logging.getLogger(__name__ + '.ExecProbe')
 
@@ -134,8 +133,7 @@ class ExecProbe(ProbeCommand):
 
 
 class PingAll(ProbeCommand):
-    """Ping all fixed_ip
-    """
+    """Ping all fixed_ip."""
 
     log = logging.getLogger(__name__ + '.ExecProbe')
 

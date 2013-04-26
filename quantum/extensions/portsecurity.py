@@ -52,8 +52,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 
 class Portsecurity(object):
-    """Extension class supporting port security
-    """
+    """Extension class supporting port security."""
 
     @classmethod
     def get_name(cls):

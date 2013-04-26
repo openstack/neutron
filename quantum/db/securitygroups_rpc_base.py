@@ -120,9 +120,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
 
 class SecurityGroupServerRpcCallbackMixin(object):
-    """A mix-in that enable SecurityGroup agent
-
-    support in plugin implementations.
+    """A mix-in that enable SecurityGroup agent support in plugin
+    implementations.
     """
 
     def security_group_rules_for_devices(self, context, **kwargs):

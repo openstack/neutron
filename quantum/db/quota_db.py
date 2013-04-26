@@ -34,16 +34,15 @@ class Quota(model_base.BASEV2, models_v2.HasId):
 
 
 class DbQuotaDriver(object):
-    """
-    Driver to perform necessary checks to enforce quotas and obtain
-    quota information.  The default driver utilizes the local
-    database.
+    """Driver to perform necessary checks to enforce quotas and obtain quota
+    information.
+
+    The default driver utilizes the local database.
     """
 
     @staticmethod
     def get_tenant_quotas(context, resources, tenant_id):
-        """
-        Given a list of resources, retrieve the quotas for the given
+        """Given a list of resources, retrieve the quotas for the given
         tenant.
 
         :param context: The request context, for access checks.
@@ -76,16 +75,13 @@ class DbQuotaDriver(object):
 
     @staticmethod
     def get_all_quotas(context, resources):
-        """
-        Given a list of resources, retrieve the quotas for the all
-        tenants.
+        """Given a list of resources, retrieve the quotas for the all tenants.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
         :return quotas: list of dict of tenant_id:, resourcekey1:
         resourcekey2: ...
         """
-
         tenant_default = dict((key, resource.default)
                               for key, resource in resources.items())
 
@@ -120,7 +116,8 @@ class DbQuotaDriver(object):
                 context.session.add(tenant_quota)
 
     def _get_quotas(self, context, tenant_id, resources, keys):
-        """
+        """Retrieves the quotas for specific resources.
+
         A helper method which retrieves the quotas for the specific
         resources identified by keys, and which apply to the current
         context.
@@ -131,7 +128,6 @@ class DbQuotaDriver(object):
         :param keys: A list of the desired quotas to retrieve.
 
         """
-
         desired = set(keys)
         sub_resources = dict((k, v) for k, v in resources.items()
                              if k in desired)

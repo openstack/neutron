@@ -108,8 +108,7 @@ def parse(args):
 
 
 def setup_logging(conf):
-    """
-    Sets up the logging options for a log with supplied name
+    """Sets up the logging options for a log with supplied name.
 
     :param conf: a cfg.ConfOpts object
     """
@@ -119,8 +118,7 @@ def setup_logging(conf):
 
 
 def load_paste_app(app_name):
-    """
-    Builds and returns a WSGI app from a paste config file.
+    """Builds and returns a WSGI app from a paste config file.
 
     :param app_name: Name of the application to load
     :raises RuntimeError when config file cannot be located or application

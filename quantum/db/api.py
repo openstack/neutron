@@ -77,10 +77,7 @@ BASE = model_base.BASEV2
 
 
 class MySQLPingListener(object):
-
-    """
-    Ensures that MySQL connections checked out of the
-    pool are alive.
+    """Ensures that MySQL connections checked out of the pool are alive.
 
     Borrowed from:
     http://groups.google.com/group/sqlalchemy/msg/a4ce563d802c929f
@@ -98,8 +95,7 @@ class MySQLPingListener(object):
 
 
 class SqliteForeignKeysListener(PoolListener):
-    """
-    Ensures that the foreign key constraints are enforced in SQLite.
+    """Ensures that the foreign key constraints are enforced in SQLite.
 
     The foreign key constraints are disabled by default in SQLite,
     so the foreign key constraints will be enabled here for every
@@ -110,9 +106,10 @@ class SqliteForeignKeysListener(PoolListener):
 
 
 def configure_db():
-    """
-    Establish the database, create an engine if needed, and
-    register the models.
+    """Configure database.
+
+    Establish the database, create an engine if needed, and register
+    the models.
     """
     global _ENGINE
     if not _ENGINE:
@@ -233,10 +230,11 @@ def unregister_models(base=BASE):
 
 
 def greenthread_yield(dbapi_con, con_record):
-    """
-    Ensure other greenthreads get a chance to execute by forcing a context
-    switch. With common database backends (eg MySQLdb and sqlite), there is
-    no implicit yield caused by network I/O since they are implemented by
-    C libraries that eventlet cannot monkey patch.
+    """Ensure other greenthreads get a chance to execute.
+
+    This is done by forcing a context switch. With common database
+    backends (eg MySQLdb and sqlite), there is no implicit yield caused
+    by network I/O since they are implemented by C libraries that
+    eventlet cannot monkey patch.
     """
     greenthread.sleep(0)
