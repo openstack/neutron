@@ -127,6 +127,12 @@ class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
 
+    pools = orm.relationship(
+        "PoolMonitorAssociation",
+        backref="healthmonitor",
+        cascade="all"
+    )
+
 
 class PoolMonitorAssociation(model_base.BASEV2):
     """
@@ -139,8 +145,6 @@ class PoolMonitorAssociation(model_base.BASEV2):
     monitor_id = sa.Column(sa.String(36),
                            sa.ForeignKey("healthmonitors.id"),
                            primary_key=True)
-    monitor = orm.relationship("HealthMonitor",
-                               backref="pools_poolmonitorassociations")
 
 
 class LoadBalancerPluginDb(LoadBalancerPluginBase):
@@ -606,7 +610,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
             assoc = PoolMonitorAssociation(pool_id=pool_id,
                                            monitor_id=monitor_id)
-            assoc.monitor = monitor
+            assoc.healthmonitor = monitor
             pool.monitors.append(assoc)
 
         monitors = []
@@ -749,14 +753,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
     def delete_health_monitor(self, context, id):
         with context.session.begin(subtransactions=True):
-            assoc_qry = context.session.query(PoolMonitorAssociation)
-            pool_qry = context.session.query(Pool)
-            for assoc in assoc_qry.filter_by(monitor_id=id).all():
-                try:
-                    pool = pool_qry.filter_by(id=assoc['pool_id']).one()
-                except exc.NoResultFound:
-                    raise loadbalancer.PoolNotFound(pool_id=pool['id'])
-                pool.monitors.remove(assoc)
             monitor_db = self._get_resource(context, HealthMonitor, id)
             context.session.delete(monitor_db)
 

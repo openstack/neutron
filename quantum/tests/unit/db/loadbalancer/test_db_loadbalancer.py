@@ -836,6 +836,42 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             res = req.get_response(self.ext_api)
             self.assertEqual(res.status_int, 204)
 
+    def test_delete_healthmonitor_cascade_deletion_of_associations(self):
+        with self.health_monitor(type='HTTP', no_delete=True) as monitor:
+            with self.pool() as pool:
+                data = {
+                    'health_monitor': {
+                        'id': monitor['health_monitor']['id'],
+                        'tenant_id': self._tenant_id
+                    }
+                }
+                req = self.new_create_request(
+                    'pools',
+                    data,
+                    fmt=self.fmt,
+                    id=pool['pool']['id'],
+                    subresource='health_monitors')
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 201)
+
+                ctx = context.get_admin_context()
+
+                # check if we actually have corresponding Pool associations
+                qry = ctx.session.query(ldb.PoolMonitorAssociation)
+                qry = qry.filter_by(monitor_id=monitor['health_monitor']['id'])
+                self.assertTrue(qry.all())
+                # delete the HealthMonitor instance
+                req = self.new_delete_request(
+                    'health_monitors',
+                    monitor['health_monitor']['id']
+                )
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 204)
+                # check if all corresponding Pool associations are deleted
+                qry = ctx.session.query(ldb.PoolMonitorAssociation)
+                qry = qry.filter_by(monitor_id=monitor['health_monitor']['id'])
+                self.assertFalse(qry.all())
+
     def test_show_healthmonitor(self):
         with self.health_monitor() as monitor:
             keys = [('type', "TCP"),

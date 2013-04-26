@@ -79,8 +79,8 @@ class LoadBalancerCallbacks(object):
                         m.status = constants.ACTIVE
 
                 for hm in pool.monitors:
-                    if hm.monitor.status in ACTIVE_PENDING:
-                        hm.monitor.status = constants.ACTIVE
+                    if hm.healthmonitor.status in ACTIVE_PENDING:
+                        hm.healthmonitor.status = constants.ACTIVE
 
             if (pool.status != constants.ACTIVE
                 or pool.vip.status != constants.ACTIVE):
@@ -104,9 +104,9 @@ class LoadBalancerCallbacks(object):
                 for m in pool.members if m.status == constants.ACTIVE
             ]
             retval['healthmonitors'] = [
-                self.plugin._make_health_monitor_dict(hm.monitor)
+                self.plugin._make_health_monitor_dict(hm.healthmonitor)
                 for hm in pool.monitors
-                if hm.monitor.status == constants.ACTIVE
+                if hm.healthmonitor.status == constants.ACTIVE
             ]
 
             return retval
