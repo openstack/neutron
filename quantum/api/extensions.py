@@ -42,7 +42,8 @@ class PluginInterface(object):
 
     @classmethod
     def __subclasshook__(cls, klass):
-        """
+        """Checking plugin class.
+
         The __subclasshook__ method is a class method
         that will be called everytime a class is tested
         using issubclass(klass, PluginInterface).
@@ -134,7 +135,7 @@ class ExtensionDescriptor(object):
         return request_exts
 
     def get_extended_resources(self, version):
-        """retrieve extended resources or attributes for core resources.
+        """Retrieve extended resources or attributes for core resources.
 
         Extended attributes are implemented by a core plugin similarly
         to the attributes defined in the core, and can appear in
@@ -151,8 +152,8 @@ class ExtensionDescriptor(object):
         return {}
 
     def get_plugin_interface(self):
-        """
-        Returns an abstract class which defines contract for the plugin.
+        """Returns an abstract class which defines contract for the plugin.
+
         The abstract class should inherit from extesnions.PluginInterface,
         Methods in this abstract class  should be decorated as abstractmethod
         """
@@ -160,7 +161,7 @@ class ExtensionDescriptor(object):
 
     def update_attributes_map(self, extended_attributes,
                               extension_attrs_map=None):
-        """Update attributes map for this extension
+        """Update attributes map for this extension.
 
         This is default method for extending an extension's attributes map.
         An extension can use this method and supplying its own resource

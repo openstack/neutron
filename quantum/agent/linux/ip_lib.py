@@ -351,8 +351,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         return retval
 
     def pullup_route(self, interface_name):
-        """
-        Ensures that the route entry for the interface is before all
+        """Ensures that the route entry for the interface is before all
         others on the same subnet.
         """
         device_list = []

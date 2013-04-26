@@ -1,4 +1,3 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2012 Nicira Networks, Inc.  All rights reserved.
@@ -17,7 +16,6 @@
 #
 # @author: Dan Wendlandt, Nicira, Inc
 #
-"""
 
 import eventlet
 from eventlet import semaphore

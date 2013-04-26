@@ -72,7 +72,8 @@ class LinuxInterfaceDriver(object):
 
     def init_l3(self, device_name, ip_cidrs, namespace=None):
         """Set the L3 settings for the interface using data from the port.
-           ip_cidrs: list of 'X.X.X.X/YY' strings
+
+        ip_cidrs: list of 'X.X.X.X/YY' strings
         """
         device = ip_lib.IPDevice(device_name,
                                  self.root_helper,

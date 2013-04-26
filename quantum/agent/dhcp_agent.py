@@ -201,7 +201,6 @@ class DhcpAgent(manager.Manager):
     def refresh_dhcp_helper(self, network_id):
         """Refresh or disable DHCP for a network depending on the current state
         of the network.
-
         """
         old_network = self.cache.get_network_by_id(network_id)
         if not old_network:

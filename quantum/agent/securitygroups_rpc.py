@@ -46,8 +46,7 @@ def disable_security_group_extension_if_noop_driver(
 
 
 class SecurityGroupServerRpcApiMixin(object):
-    """A mix-in that enable SecurityGroup support in plugin rpc
-    """
+    """A mix-in that enable SecurityGroup support in plugin rpc."""
     def security_group_rules_for_devices(self, context, devices):
         LOG.debug(_("Get security group rules "
                     "for devices via rpc %r"), devices)

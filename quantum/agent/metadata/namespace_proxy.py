@@ -58,8 +58,8 @@ class UnixDomainHTTPConnection(httplib.HTTPConnection):
 class NetworkMetadataProxyHandler(object):
     """Proxy AF_INET metadata request through Unix Domain socket.
 
-       The Unix domain socket allows the proxy access resource that are not
-       accessible within the isolated tenant context.
+    The Unix domain socket allows the proxy access resource that are not
+    accessible within the isolated tenant context.
     """
 
     def __init__(self, network_id=None, router_id=None):

@@ -33,6 +33,7 @@ SHARED = 'shared'
 
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
     """Allows to verify keys in a dictionary.
+
     :param expected_keys: A list of keys expected to be present.
     :param target_dict: The dictionary which should be verified.
     :param strict: Specifies whether additional keys are allowed to be present.
@@ -114,10 +115,9 @@ def _validate_ip_address(data, valid_values=None):
 
 
 def _validate_ip_pools(data, valid_values=None):
-    """Validate that start and end IP addresses are present
+    """Validate that start and end IP addresses are present.
 
     In addition to this the IP addresses will also be validated
-
     """
     if not isinstance(data, list):
         msg = _("Invalid data format for IP pool: '%s'") % data

@@ -29,8 +29,8 @@ LOG = logging.getLogger(__name__)
 
 
 def get_filters(request, attr_info, skips=[]):
-    """
-    Extracts the filters from the request string
+    """Extracts the filters from the request string.
+
     Returns a dict of lists for the filters:
     check=a&check=b&name=Bob&
     becomes:
@@ -124,8 +124,9 @@ def list_args(request, arg):
 
 
 def get_sorts(request, attr_info):
-    """Extract sort_key and sort_dir from request, return as:
-       [(key1, value1), (key2, value2)]
+    """Extract sort_key and sort_dir from request.
+
+    Return as: [(key1, value1), (key2, value2)]
     """
     sort_keys = list_args(request, "sort_key")
     sort_dirs = list_args(request, "sort_dir")
@@ -302,9 +303,9 @@ class QuantumController(object):
 
     def _prepare_request_body(self, body, params):
         """Verifies required parameters are in request body.
-            sets default value for missing optional parameters.
 
-            body argument must be the deserialized body
+        Sets default value for missing optional parameters.
+        Body argument must be the deserialized body.
         """
         try:
             if body is None:

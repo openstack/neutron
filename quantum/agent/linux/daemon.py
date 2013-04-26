@@ -73,8 +73,7 @@ class Pidfile(object):
 
 
 class Daemon(object):
-    """
-    A generic daemon class.
+    """A generic daemon class.
 
     Usage: subclass the Daemon class and override the run() method
     """

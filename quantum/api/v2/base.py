@@ -492,13 +492,14 @@ class Controller(object):
     @staticmethod
     def prepare_request_body(context, body, is_create, resource, attr_info,
                              allow_bulk=False):
-        """Verifies required attributes are in request body, and that
-            an attribute is only specified if it is allowed for the given
-            operation (create/update).
-            Attribute with default values are considered to be
-            optional.
+        """Verifies required attributes are in request body.
 
-            body argument must be the deserialized body
+        Also checking that an attribute is only specified if it is allowed
+        for the given operation (create/update).
+
+        Attribute with default values are considered to be optional.
+
+        body argument must be the deserialized body.
         """
         collection = resource + "s"
         if not body:
