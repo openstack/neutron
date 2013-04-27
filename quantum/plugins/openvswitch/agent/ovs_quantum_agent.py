@@ -472,13 +472,11 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                      net_uuid)
             return
         lvm = self.local_vlan_map[net_uuid]
-        if lvm.network_type == 'gre':
-            if self.enable_tunneling:
+        if vif_id in lvm.vif_ports:
+            if lvm.network_type == 'gre' and self.enable_tunneling:
                 # remove inbound unicast flow
                 self.tun_br.delete_flows(tun_id=lvm.segmentation_id,
                                          dl_dst=lvm.vif_ports[vif_id].vif_mac)
-
-        if vif_id in lvm.vif_ports:
             del lvm.vif_ports[vif_id]
         else:
             LOG.info(_('port_unbound: vif_id %s not in local_vlan_map'),
