@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-26 00:09+0000\n"
+"POT-Creation-Date: 2013-04-27 00:08+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -752,27 +752,27 @@ msgstr ""
 msgid "Authentication region"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:192 quantum/agent/linux/interface.py:249
+#: quantum/agent/linux/interface.py:197 quantum/agent/linux/interface.py:252
 #, python-format
 msgid "Device %s already exists"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:210 quantum/agent/linux/interface.py:256
+#: quantum/agent/linux/interface.py:215 quantum/agent/linux/interface.py:259
 #, python-format
 msgid "Unplugged interface '%s'"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:212 quantum/agent/linux/interface.py:258
+#: quantum/agent/linux/interface.py:217 quantum/agent/linux/interface.py:261
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: quantum/agent/linux/interface.py:316
+#: quantum/agent/linux/interface.py:319
 #, python-format
 msgid "Driver location: %s"
 msgstr ""
 
-#: quantum/agent/linux/ip_lib.py:401
+#: quantum/agent/linux/ip_lib.py:408
 msgid "No namespace defined for parent"
 msgstr ""
 
@@ -1787,7 +1787,7 @@ msgid "Database registration exception: %s"
 msgstr ""
 
 #: quantum/db/db_base_plugin_v2.py:86
-#: quantum/db/loadbalancer/loadbalancer_db.py:166
+#: quantum/db/loadbalancer/loadbalancer_db.py:170
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
@@ -2264,11 +2264,11 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:282
+#: quantum/db/loadbalancer/loadbalancer_db.py:286
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr ""
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:286
+#: quantum/db/loadbalancer/loadbalancer_db.py:290
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr ""
 
@@ -2777,7 +2777,7 @@ msgstr ""
 msgid "syslog facility must be one of: %s"
 msgstr ""
 
-#: quantum/openstack/common/log.py:540
+#: quantum/openstack/common/log.py:537
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
@@ -2800,17 +2800,27 @@ msgstr ""
 msgid "in dynamic looping call"
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:97
+#: quantum/openstack/common/periodic_task.py:41
 #, python-format
-msgid "Skipping %(full_task_name)s, %(ticks_to_skip)s ticks left until next run"
+msgid "Unexpected argument for periodic task creation: %(arg)s."
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:105
+#: quantum/openstack/common/periodic_task.py:132
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr ""
+
+#: quantum/openstack/common/periodic_task.py:137
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr ""
+
+#: quantum/openstack/common/periodic_task.py:175
 #, python-format
 msgid "Running periodic task %(full_task_name)s"
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:113
+#: quantum/openstack/common/periodic_task.py:183
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
 msgstr ""
@@ -2908,19 +2918,19 @@ msgstr ""
 msgid "Waiting on %d children to exit"
 msgstr ""
 
-#: quantum/openstack/common/notifier/api.py:126
+#: quantum/openstack/common/notifier/api.py:125
 #, python-format
 msgid "%s not in valid priorities"
 msgstr ""
 
-#: quantum/openstack/common/notifier/api.py:142
+#: quantum/openstack/common/notifier/api.py:141
 #, python-format
 msgid ""
 "Problem '%(e)s' attempting to send to notification system. "
 "Payload=%(payload)s"
 msgstr ""
 
-#: quantum/openstack/common/notifier/api.py:172
+#: quantum/openstack/common/notifier/api.py:171
 #, python-format
 msgid "Failed to load notifier %s. These notifications will not be sent."
 msgstr ""
@@ -2974,47 +2984,47 @@ msgstr ""
 msgid "received %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:413
+#: quantum/openstack/common/rpc/amqp.py:414
 #, python-format
 msgid "no method for message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:414
+#: quantum/openstack/common/rpc/amqp.py:415
 #, python-format
 msgid "No method for message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:440
-#: quantum/openstack/common/rpc/impl_zmq.py:285
+#: quantum/openstack/common/rpc/amqp.py:443
+#: quantum/openstack/common/rpc/impl_zmq.py:286
 #, python-format
 msgid "Expected exception during message handling (%s)"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:448
-#: quantum/openstack/common/rpc/impl_zmq.py:291
+#: quantum/openstack/common/rpc/amqp.py:451
+#: quantum/openstack/common/rpc/impl_zmq.py:292
 msgid "Exception during message handling"
-msgstr ""
-
-#: quantum/openstack/common/rpc/amqp.py:583
-#, python-format
-msgid "Making synchronous call on %s ..."
 msgstr ""
 
 #: quantum/openstack/common/rpc/amqp.py:586
 #, python-format
+msgid "Making synchronous call on %s ..."
+msgstr ""
+
+#: quantum/openstack/common/rpc/amqp.py:589
+#, python-format
 msgid "MSG_ID is %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:620
+#: quantum/openstack/common/rpc/amqp.py:623
 #, python-format
 msgid "Making asynchronous cast on %s..."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:629
+#: quantum/openstack/common/rpc/amqp.py:632
 msgid "Making asynchronous fanout cast..."
 msgstr ""
 
-#: quantum/openstack/common/rpc/amqp.py:657
+#: quantum/openstack/common/rpc/amqp.py:660
 #, python-format
 msgid "Sending %(event_type)s on %(topic)s"
 msgstr ""
@@ -3195,144 +3205,144 @@ msgstr ""
 msgid "Running func with context: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:310
+#: quantum/openstack/common/rpc/impl_zmq.py:311
 msgid "Sending reply"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:344
+#: quantum/openstack/common/rpc/impl_zmq.py:345
 msgid "RPC message did not include method."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:379
+#: quantum/openstack/common/rpc/impl_zmq.py:380
 msgid "Registering reactor"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:391
+#: quantum/openstack/common/rpc/impl_zmq.py:392
 msgid "In reactor registered"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:406
+#: quantum/openstack/common/rpc/impl_zmq.py:407
 msgid "Out reactor registered"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:410
+#: quantum/openstack/common/rpc/impl_zmq.py:411
 msgid "Consuming socket"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:452
+#: quantum/openstack/common/rpc/impl_zmq.py:453
 #, python-format
 msgid "CONSUMER GOT %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:464
+#: quantum/openstack/common/rpc/impl_zmq.py:465
 #, python-format
 msgid "Creating proxy for topic: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:470
+#: quantum/openstack/common/rpc/impl_zmq.py:471
 msgid "Topic contained dangerous characters."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:495
+#: quantum/openstack/common/rpc/impl_zmq.py:496
 #, python-format
 msgid "ROUTER RELAY-OUT SUCCEEDED %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:504
+#: quantum/openstack/common/rpc/impl_zmq.py:505
 msgid "Topic socket file creation failed."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:509
+#: quantum/openstack/common/rpc/impl_zmq.py:510
 #, python-format
 msgid "ROUTER RELAY-OUT QUEUED %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:512
+#: quantum/openstack/common/rpc/impl_zmq.py:513
 #, python-format
 msgid "Local per-topic backlog buffer full for topic %(topic)s. Dropping message."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:531
+#: quantum/openstack/common/rpc/impl_zmq.py:532
 #, python-format
 msgid "Could not create IPC directory %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:541
+#: quantum/openstack/common/rpc/impl_zmq.py:542
 msgid "Could not create ZeroMQ receiver daemon. Socket may already be in use."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:575
+#: quantum/openstack/common/rpc/impl_zmq.py:576
 #, python-format
 msgid "CONSUMER RECEIVED DATA: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:577
+#: quantum/openstack/common/rpc/impl_zmq.py:578
 #, python-format
 msgid "ROUTER RELAY-OUT %(data)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:599
+#: quantum/openstack/common/rpc/impl_zmq.py:600
 msgid "ZMQ Envelope version unsupported or unknown."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:627
+#: quantum/openstack/common/rpc/impl_zmq.py:628
 msgid "Skipping topic registration. Already registered."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:634
+#: quantum/openstack/common/rpc/impl_zmq.py:635
 #, python-format
 msgid "Consumer is a zmq.%s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:686
+#: quantum/openstack/common/rpc/impl_zmq.py:687
 msgid "Creating payload"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:699
+#: quantum/openstack/common/rpc/impl_zmq.py:700
 msgid "Creating queue socket for reply waiter"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:712
+#: quantum/openstack/common/rpc/impl_zmq.py:713
 msgid "Sending cast"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:715
+#: quantum/openstack/common/rpc/impl_zmq.py:716
 msgid "Cast sent; Waiting reply"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:718
+#: quantum/openstack/common/rpc/impl_zmq.py:719
 #, python-format
 msgid "Received message: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:719
+#: quantum/openstack/common/rpc/impl_zmq.py:720
 msgid "Unpacking response"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:728
+#: quantum/openstack/common/rpc/impl_zmq.py:729
 msgid "Unsupported or unknown ZMQ envelope returned."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:735
+#: quantum/openstack/common/rpc/impl_zmq.py:736
 msgid "RPC Message Invalid."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:759
+#: quantum/openstack/common/rpc/impl_zmq.py:760
 #: quantum/plugins/midonet/plugin.py:52
 #, python-format
 msgid "%(msg)s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:762
+#: quantum/openstack/common/rpc/impl_zmq.py:763
 #, python-format
 msgid "Sending message(s) to: %s"
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:766
+#: quantum/openstack/common/rpc/impl_zmq.py:767
 msgid "No matchmaker results. Not casting."
 msgstr ""
 
-#: quantum/openstack/common/rpc/impl_zmq.py:769
+#: quantum/openstack/common/rpc/impl_zmq.py:770
 msgid "No match from matchmaker."
 msgstr ""
 
@@ -7555,88 +7565,8 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "Cluster options:%s"
-#~ msgstr ""
-
 #~ msgid ""
-#~ "Overlapping IPs must be enabled in "
-#~ "order to setup the metadata access "
-#~ "network. Metadata access in routed mode"
-#~ " will not work with this "
-#~ "configuration"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Invalid connection parameters for controller"
-#~ " %(ctrl)s in cluster %(cluster)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No controller connection specified in "
-#~ "cluster configuration. Please ensure at "
-#~ "least a value for 'nvp_controller_connection'"
-#~ " is specified in the [CLUSTER:%s] "
-#~ "section"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No cluster specified in NVP plugin "
-#~ "configuration. Unable to start. Please "
-#~ "ensure at least a [CLUSTER:<cluster_name>] "
-#~ "section is specified in the NVP "
-#~ "Plugin configuration file."
-#~ msgstr ""
-
-#~ msgid "Looking for nova zone: %s"
-#~ msgstr ""
-
-#~ msgid "Looking for nova zone %(novazone_id)s in cluster: %(x)s"
-#~ msgstr ""
-
-#~ msgid "Unable to find cluster config entry for nova zone: %s"
-#~ msgstr ""
-
-#~ msgid "get_all_networks() completed for tenant %(tenant_id)s: %(networks)s"
-#~ msgstr ""
-
-#~ msgid "Returning pairs for network: %s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "default_tz_uuid:%(default_tz_uuid)s is not a "
-#~ "valid UUID in the cluster "
-#~ "%(cluster_name)s. Network operations might not"
-#~ " work properly in this cluster"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "default_l3_gw_service_uuid:%(l3_gw_service_uuid)s is not"
-#~ " a valid UUID in the cluster "
-#~ "%(cluster_name)s. Logical router operations "
-#~ "might not work properly in this "
-#~ "cluster"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "default_l2_gw_node_uuid:%(l2_gw_service_uuid)s is not "
-#~ "a valid UUID in the cluster "
-#~ "%(cluster_name)s."
-#~ msgstr ""
-
-#~ msgid "Default cluster name"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Optional parameter identifying the Nova "
-#~ "\"zone\" that maps to this NVP "
-#~ "cluster."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Describes a connection to a single "
-#~ "NVP controller. A different connection "
-#~ "for each controller in the cluster "
-#~ "can be specified; there must be at"
-#~ " least one connection per cluster."
+#~ "Skipping %(full_task_name)s, %(ticks_to_skip)s ticks"
+#~ " left until next run"
 #~ msgstr ""
 
