@@ -380,8 +380,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             sgids = self._get_security_groups_on_port(context, port)
             port = super(NECPluginV2, self).create_port(context, port)
             self._process_port_create_security_group(
-                context, port['id'], sgids)
-            self._extend_port_dict_security_group(context, port)
+                context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
         self._update_resource_status(context, "port", port['id'],
                                      OperationalStatus.BUILD)
@@ -416,9 +415,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             else:
                 self.deactivate_port(context, old_port)
 
-        # NOTE: _extend_port_dict_security_group() is called in
-        # update_security_group_on_port() above, so we don't need to
-        # call it here.
         return self._extend_port_dict_binding(context, new_port)
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -452,7 +448,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
             port = super(NECPluginV2, self).get_port(context, id, fields)
-            self._extend_port_dict_security_group(context, port)
             self._extend_port_dict_binding(context, port)
         return self._fields(port, fields)
 
@@ -462,7 +457,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                                                        fields)
             # TODO(amotoki) filter by security group
             for port in ports:
-                self._extend_port_dict_security_group(context, port)
                 self._extend_port_dict_binding(context, port)
         return [self._fields(port, fields) for port in ports]
 

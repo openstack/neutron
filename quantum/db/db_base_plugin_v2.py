@@ -70,6 +70,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
     # To this aim, the register_model_query_hook and unregister_query_hook
     # from this class should be invoked
     _model_query_hooks = {}
+    # This dictionary will store methods for extending attributes of
+    # api resources. Mixins can use this dict for adding their own methods
+    # TODO(salvatore-orlando): Avoid using class-level variables
+    _dict_extend_functions = {}
 
     def __init__(self):
         # NOTE(jkoelker) This is an incomlete implementation. Subclasses
@@ -118,6 +122,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return query
 
     @classmethod
+    def register_dict_extend_funcs(cls, resource, funcs):
+        cur_funcs = cls._dict_extend_functions.get(resource, [])
+        cur_funcs.extend(funcs)
+        cls._dict_extend_functions[resource] = cur_funcs
+
+    @classmethod
     def register_model_query_hook(cls, model, name, query_hook, filter_hook,
                                   result_filters=None):
         """Register a hook to be invoked when a query is executed.
@@ -141,6 +151,14 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             cls._model_query_hooks[model] = model_hooks
         model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
                              'result_filters': result_filters}
+
+    def _filter_non_model_columns(self, data, model):
+        """Remove all the attributes from data which are not columns of
+        the model passed as second parameter.
+        """
+        columns = [c.name for c in model.__table__.columns]
+        return dict((k, v) for (k, v) in
+                    data.iteritems() if k in columns)
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
@@ -909,7 +927,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                }
         return self._fields(res, fields)
 
-    def _make_port_dict(self, port, fields=None):
+    def _make_port_dict(self, port, fields=None,
+                        process_extensions=True):
         res = {"id": port["id"],
                'name': port['name'],
                "network_id": port["network_id"],
@@ -922,6 +941,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                              for ip in port["fixed_ips"]],
                "device_id": port["device_id"],
                "device_owner": port["device_owner"]}
+        # Call auxiliary extend functions, if any
+        if process_extensions:
+            for func in self._dict_extend_functions.get(attributes.PORTS,
+                                                        []):
+                func(self, res, port)
         return self._fields(res, fields)
 
     def _create_bulk(self, resource, context, request_items):
@@ -1331,7 +1355,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     )
                     context.session.add(allocated)
 
-        return self._make_port_dict(port)
+        return self._make_port_dict(port, process_extensions=False)
 
     def update_port(self, context, id, port):
         p = port['port']
@@ -1342,15 +1366,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             if 'fixed_ips' in p:
                 self._recycle_expired_ip_allocations(context,
                                                      port['network_id'])
-                original = self._make_port_dict(port)
+                original = self._make_port_dict(port, process_extensions=False)
                 ips = self._update_ips_for_port(context,
                                                 port["network_id"],
                                                 id,
                                                 original["fixed_ips"],
                                                 p['fixed_ips'])
-                # 'fixed_ip's not part of DB so it is deleted
-                del p['fixed_ips']
-
                 # Update ips if necessary
                 for ip in ips:
                     allocated = models_v2.IPAllocation(
@@ -1358,8 +1379,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         ip_address=ip['ip_address'], subnet_id=ip['subnet_id'],
                         expiration=self._default_allocation_expiration())
                     context.session.add(allocated)
-
-            port.update(p)
+        # Remove all attributes in p which are not in the port DB model
+        # and then update the port
+        port.update(self._filter_non_model_columns(p, models_v2.Port))
 
         return self._make_port_dict(port)
 

@@ -382,15 +382,16 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 port['port'][ext_sg.SECURITYGROUPS] = (
                     self._get_security_groups_on_port(context, port))
                 self._delete_port_security_group_bindings(context, port_id)
+                # process_port_create_security_group also needs port id
+                port['port']['id'] = port_id
                 self._process_port_create_security_group(
                     context,
-                    port_id,
+                    port['port'],
                     port['port'][ext_sg.SECURITYGROUPS])
                 port_updated = True
 
             port = super(BrocadePluginV2, self).update_port(
                 context, port_id, port)
-            self._extend_port_dict_security_group(context, port)
 
         if original_port['admin_state_up'] != port['admin_state_up']:
             port_updated = True
@@ -411,7 +412,6 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             port = super(BrocadePluginV2, self).get_port(
                 context, port_id, fields)
-            self._extend_port_dict_security_group(context, port)
             self._extend_port_dict_binding(context, port)
 
         return self._fields(port, fields)
@@ -423,7 +423,6 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                            filters,
                                                            fields)
             for port in ports:
-                self._extend_port_dict_security_group(context, port)
                 self._extend_port_dict_binding(context, port)
                 res_ports.append(self._fields(port, fields))
 

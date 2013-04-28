@@ -22,6 +22,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
 from quantum.api.v2 import attributes as attr
+from quantum.db import db_base_plugin_v2
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import securitygroup as ext_sg
@@ -45,6 +46,13 @@ class SecurityGroupPortBinding(model_base.BASEV2):
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id"),
                                   primary_key=True)
+
+    # Add a relationship to the Port model in order to instruct SQLAlchemy to
+    # eagerly load security group bindings
+    ports = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("security_groups",
+                            lazy='joined', cascade='delete'))
 
 
 class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
@@ -385,25 +393,29 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             rule = self._get_security_group_rule(context, id)
             context.session.delete(rule)
 
-    def _extend_port_dict_security_group(self, context, port):
-        filters = {'port_id': [port['id']]}
-        fields = {'security_group_id': None}
-        security_group_id = self._get_port_security_group_bindings(
-            context, filters, fields)
+    def _extend_port_dict_security_group(self, port_res, port_db):
+        # If port_db is provided, security groups will be accessed via
+        # sqlalchemy models. As they're loaded together with ports this
+        # will not cause an extra query.
+        security_group_ids = [sec_group_mapping['security_group_id'] for
+                              sec_group_mapping in port_db.security_groups]
+        port_res[ext_sg.SECURITYGROUPS] = security_group_ids
+        return port_res
 
-        port[ext_sg.SECURITYGROUPS] = []
-        for security_group_id in security_group_id:
-            port[ext_sg.SECURITYGROUPS].append(
-                security_group_id['security_group_id'])
-        return port
+    # Register dict extend functions for ports
+    db_base_plugin_v2.QuantumDbPluginV2.register_dict_extend_funcs(
+        attr.PORTS, [_extend_port_dict_security_group])
 
-    def _process_port_create_security_group(self, context, port_id,
-                                            security_group_id):
-        if not attr.is_attr_set(security_group_id):
-            return
-        for security_group_id in security_group_id:
-            self._create_port_security_group_binding(context, port_id,
-                                                     security_group_id)
+    def _process_port_create_security_group(self, context, port,
+                                            security_group_ids):
+        if attr.is_attr_set(security_group_ids):
+            for security_group_id in security_group_ids:
+                self._create_port_security_group_binding(context, port['id'],
+                                                         security_group_id)
+        # Convert to list as a set might be passed here and
+        # this has to be serialized
+        port[ext_sg.SECURITYGROUPS] = (security_group_ids and
+                                       list(security_group_ids) or [])
 
     def _ensure_default_security_group(self, context, tenant_id):
         """Create a default security group if one doesn't exist.

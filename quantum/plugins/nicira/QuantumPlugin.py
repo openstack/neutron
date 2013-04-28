@@ -183,6 +183,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                           self.nvp_opts.nvp_gen_timeout)
 
         db.configure_db()
+        # Extend the fault map
         self._extend_fault_map()
         # Set up RPC interface for DHCP agent
         self.setup_rpc()
@@ -1041,7 +1042,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, filters)
             for quantum_lport in quantum_lports:
                 self._extend_port_port_security_dict(context, quantum_lport)
-                self._extend_port_dict_security_group(context, quantum_lport)
         if (filters.get('network_id') and len(filters.get('network_id')) and
             self._network_is_external(context, filters['network_id'][0])):
             # Do not perform check on NVP platform
@@ -1173,7 +1173,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port_data[ext_sg.SECURITYGROUPS] = (
                 self._get_security_groups_on_port(context, port))
             self._process_port_create_security_group(
-                context, quantum_db['id'], port_data[ext_sg.SECURITYGROUPS])
+                context, port_data, port_data[ext_sg.SECURITYGROUPS])
             # QoS extension checks
             port_data[ext_qos.QUEUE] = self._check_for_queue_and_create(
                 context, port_data)
@@ -1201,7 +1201,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # remove since it will be added in extend based on policy
             del port_data[ext_qos.QUEUE]
             self._extend_port_port_security_dict(context, port_data)
-            self._extend_port_dict_security_group(context, port_data)
             self._extend_port_qos_queue(context, port_data)
         net = self.get_network(context, port_data['network_id'])
         self.schedule_network(context, net)
@@ -1218,7 +1217,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             ret_port = super(NvpPluginV2, self).update_port(
                 context, id, port)
-            # copy values over
+            # copy values over - except fixed_ips as
+            # they've alreaby been processed
+            port['port'].pop('fixed_ips', None)
             ret_port.update(port['port'])
             tenant_id = self._get_tenant_id_for_create(context, ret_port)
             # populate port_security setting
@@ -1246,7 +1247,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 # delete the port binding and read it with the new rules.
                 self._delete_port_security_group_bindings(context, id)
                 sgids = self._get_security_groups_on_port(context, port)
-                self._process_port_create_security_group(context, id, sgids)
+                self._process_port_create_security_group(context, ret_port,
+                                                         sgids)
 
             if psec.PORTSECURITY in port['port']:
                 self._update_port_security_binding(
@@ -1257,8 +1259,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port)
             self._extend_port_port_security_dict(context, ret_port)
-            self._extend_port_dict_security_group(context, ret_port)
-            LOG.debug(_("Update port request: %s"), port)
+            LOG.warn(_("Update port request: %s"), port)
             nvp_port_id = self._nvp_get_port_id(
                 context, self.cluster, ret_port)
             nvplib.update_port(self.cluster,
@@ -1335,7 +1336,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             quantum_db_port = super(NvpPluginV2, self).get_port(context,
                                                                 id, fields)
             self._extend_port_port_security_dict(context, quantum_db_port)
-            self._extend_port_dict_security_group(context, quantum_db_port)
             self._extend_port_qos_queue(context, quantum_db_port)
 
             if self._network_is_external(context,
