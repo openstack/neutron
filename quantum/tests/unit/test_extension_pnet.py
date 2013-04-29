@@ -72,9 +72,11 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
-        cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
+        # Ensure Quota checks never fail because of mock
+        instance = self.plugin.return_value
+        instance.get_networks_count.return_value = 1
         # Instantiate mock plugin and enable the 'provider' extension
         QuantumManager.get_plugin().supported_extension_aliases = (
             ["provider"])
