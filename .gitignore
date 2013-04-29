@@ -4,6 +4,7 @@ build-stamp
 ChangeLog
 .coverage
 covhtml/
+dist/
 doc/build
 *.DS_Store
 *.pyc
