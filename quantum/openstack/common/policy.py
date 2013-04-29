@@ -738,7 +738,6 @@ class RuleCheck(Check):
 class RoleCheck(Check):
     def __call__(self, target, creds):
         """Check that there is a matching role in the cred dict."""
-
         return self.match.lower() in [x.lower() for x in creds['roles']]
 
 

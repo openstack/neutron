@@ -12,7 +12,6 @@
     "extension:provider_network:set": "rule:admin_only",
 
     "extension:router:view": "rule:regular_user",
-    "extension:router:set": "rule:admin_only",
 
     "extension:port_binding:view": "rule:admin_only",
     "extension:port_binding:set": "rule:admin_only",
@@ -31,7 +30,13 @@
     "get_network": "rule:admin_or_owner or rule:shared or rule:external",
     "create_network:shared": "rule:admin_only",
     "create_network:router:external": "rule:admin_only",
+    "create_network:provider:network_type": "rule:admin_only",
+    "create_network:provider:physical_network": "rule:admin_only",
+    "create_network:provider:segmentation_id": "rule:admin_only",
     "update_network": "rule:admin_or_owner",
+    "update_network:provider:network_type": "rule:admin_only",
+    "update_network:provider:physical_network": "rule:admin_only",
+    "update_network:provider:segmentation_id": "rule:admin_only",
     "delete_network": "rule:admin_or_owner",
 
     "create_port": "",

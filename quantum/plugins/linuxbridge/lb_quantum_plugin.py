@@ -271,9 +271,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
-    def _enforce_set_auth(self, context, resource, action):
-        policy.enforce(context, action, resource)
-
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
         self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
@@ -313,9 +310,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return (None, None, None)
-
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
 
         if not network_type_set:
             msg = _("provider:network_type required")
@@ -377,9 +371,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return
-
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
 
         msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)

@@ -204,3 +204,9 @@ class Servicetype(extensions.ExtensionDescriptor):
         return [extensions.ResourceExtension(COLLECTION_NAME,
                                              controller,
                                              attr_map=attr_map)]
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return dict(RESOURCE_ATTRIBUTE_MAP.items())
+        else:
+            return {}

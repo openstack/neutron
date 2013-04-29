@@ -195,9 +195,6 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
-    def _enforce_set_auth(self, context, resource, action):
-        policy.enforce(context, action, resource)
-
     def _parse_network_vlan_ranges(self):
         self._network_vlan_ranges = {}
         for entry in cfg.CONF.HYPERV.network_vlan_ranges:
@@ -256,9 +253,6 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         # Provider specific network creation
         p.create_network(session, attrs)
 
-        if network_type_set:
-            self._enforce_set_auth(context, attrs, self.network_set)
-
     def create_network(self, context, network):
         session = context.session
         with session.begin(subtransactions=True):
@@ -310,8 +304,6 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def update_network(self, context, id, network):
         network_attrs = network['network']
         self._check_provider_update(context, network_attrs)
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, network_attrs, self.network_set)
 
         session = context.session
         with session.begin(subtransactions=True):

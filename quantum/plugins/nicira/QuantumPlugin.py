@@ -142,8 +142,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     novazone_cluster_map = {}
 
     provider_network_view = "extension:provider_network:view"
-    provider_network_set = "extension:provider_network:set"
-    port_security_enabled_create = "create_port:port_security_enabled"
     port_security_enabled_update = "update_port:port_security_enabled"
 
     def __init__(self, loglevel=None):
@@ -664,9 +662,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
 
-    def _enforce_set_auth(self, context, resource, action):
-        return policy.enforce(context, action, resource)
-
     def _handle_provider_create(self, context, attrs):
         # NOTE(salvatore-orlando): This method has been borrowed from
         # the OpenvSwtich plugin, altough changed to match NVP specifics.
@@ -680,8 +675,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 segmentation_id_set):
             return
 
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.provider_network_set)
         err_msg = None
         if not network_type_set:
             err_msg = _("%s required") % pnet.NETWORK_TYPE
@@ -1146,10 +1139,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # pass the value to the policy engine when the port is
         # ATTR_NOT_SPECIFIED is for the case where a port is created on a
         # shared network that is not owned by the tenant.
-        # TODO(arosen) fix policy engine to do this for us automatically.
-        if attr.is_attr_set(port['port'].get(psec.PORTSECURITY)):
-            self._enforce_set_auth(context, port,
-                                   self.port_security_enabled_create)
         port_data = port['port']
         notify_dhcp_agent = False
         with context.session.begin(subtransactions=True):
@@ -1215,9 +1204,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return port_data
 
     def update_port(self, context, id, port):
-        if attr.is_attr_set(port['port'].get(psec.PORTSECURITY)):
-            self._enforce_set_auth(context, port,
-                                   self.port_security_enabled_update)
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
@@ -2035,8 +2021,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def create_qos_queue(self, context, qos_queue, check_policy=True):
         q = qos_queue.get('qos_queue')
-        if check_policy:
-            self._enforce_set_auth(context, q, ext_qos.qos_queue_create)
         self._validate_qos_queue(context, q)
         q['id'] = nvplib.create_lqueue(self.cluster,
                                        self._nvp_lqueue(q))
