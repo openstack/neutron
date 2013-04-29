@@ -20,9 +20,7 @@
 # Varma Bhupatiraju (vbhupati@#brocade.com)
 
 
-"""
-A Vlan Bitmap class to handle allocation/de-allocation of vlan ids.
-"""
+"""A Vlan Bitmap class to handle allocation/de-allocation of vlan ids."""
 from quantum.plugins.brocade.db import models as brocade_db
 
 
@@ -37,16 +35,14 @@ class VlanBitmap(object):
     # uses a bitmap to do this
 
     def __init__(self, ctxt):
-        """initialize the vlan as a set."""
+        """Initialize the vlan as a set."""
         self.vlans = set(int(net['vlan'])
                          for net in brocade_db.get_networks(ctxt)
                          if net['vlan']
                          )
 
     def get_next_vlan(self, vlan_id=None):
-        """try to get a specific vlan if requested
-        or get the next vlan.
-        """
+        """Try to get a specific vlan if requested or get the next vlan."""
         min_vlan_search = vlan_id or MIN_VLAN
         max_vlan_search = (vlan_id and vlan_id + 1) or MAX_VLAN
 
@@ -56,6 +52,6 @@ class VlanBitmap(object):
                 return vlan
 
     def release_vlan(self, vlan_id):
-        """return the vlan to the pool."""
+        """Return the vlan to the pool."""
         if vlan_id in self.vlans:
             self.vlans.remove(vlan_id)

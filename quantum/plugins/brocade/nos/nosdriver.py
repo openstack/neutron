@@ -20,10 +20,10 @@
 # Shiv Haris (sharis@brocade.com)
 
 
+"""Brocade NOS Driver implements NETCONF over SSHv2 for
+Quantum network life-cycle management.
 """
-Brocade NOS Driver implements NETCONF over SSHv2 for
-Quantum network life-cycle management
-"""
+
 from ncclient import manager
 
 from quantum.openstack.common import log as logging
@@ -40,9 +40,7 @@ def nos_unknown_host_cb(host, fingerprint):
     Returns `True` if it finds the key acceptable,
     and `False` if not. This default callback for NOS always returns 'True'
     (i.e. trusts all hosts for now).
-
     """
-
     return True
 
 
@@ -50,7 +48,6 @@ class NOSdriver():
     """NOS NETCONF interface driver for Quantum network.
 
     Handles life-cycle management of Quantum network (leverages AMPP on NOS)
-
     """
 
     def __init__(self):

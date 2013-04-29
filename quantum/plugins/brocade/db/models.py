@@ -20,9 +20,7 @@
 # Varma Bhupatiraju (vbhupati@#brocade.com)
 
 
-"""
-Brocade specific database schema/model.
-"""
+"""Brocade specific database schema/model."""
 
 import sqlalchemy as sa
 
@@ -32,6 +30,7 @@ from quantum.db import models_v2
 
 class BrocadeNetwork(model_base.BASEV2, models_v2.HasId):
     """Schema for brocade network."""
+
     vlan = sa.Column(sa.String(10))
 
 
