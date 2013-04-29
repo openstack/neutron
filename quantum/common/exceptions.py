@@ -25,12 +25,11 @@ from quantum.openstack.common.exception import OpenstackException
 
 
 class QuantumException(OpenstackException):
-    """Base Quantum Exception
+    """Base Quantum Exception.
 
     To correctly use this class, inherit from it and define
     a 'message' property. That message will get printf'd
     with the keyword arguments provided to the constructor.
-
     """
     message = _("An unknown exception occurred.")
 

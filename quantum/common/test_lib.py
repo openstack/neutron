@@ -47,7 +47,8 @@ from quantum.common import constants
 
 
 class _AnsiColorizer(object):
-    """
+    """ANSI colored texts.
+
     A colorizer is an object that loosely wraps around a stream, allowing
     callers to write text to the stream in a particular color.
 
@@ -60,7 +61,8 @@ class _AnsiColorizer(object):
         self.stream = stream
 
     def supported(cls, stream=sys.stdout):
-        """
+        """Checks for coloring terminal support.
+
         A class method that returns True if the current platform supports
         coloring terminal output using this method. Returns False otherwise.
         """
@@ -84,8 +86,7 @@ class _AnsiColorizer(object):
     supported = classmethod(supported)
 
     def write(self, text, color):
-        """
-        Write the given text to the stream in the given color.
+        """Write the given text to the stream in the given color.
 
         @param text: Text to be written to the stream.
 
@@ -96,9 +97,7 @@ class _AnsiColorizer(object):
 
 
 class _Win32Colorizer(object):
-    """
-    See _AnsiColorizer docstring.
-    """
+    """See _AnsiColorizer docstring."""
     def __init__(self, stream):
         from win32console import GetStdHandle, STD_OUT_HANDLE
         from win32console import FOREGROUND_RED, FOREGROUND_BLUE
@@ -144,9 +143,7 @@ class _Win32Colorizer(object):
 
 
 class _NullColorizer(object):
-    """
-    See _AnsiColorizer docstring.
-    """
+    """See _AnsiColorizer docstring."""
     def __init__(self, stream):
         self.stream = stream
 
@@ -198,6 +195,7 @@ class QuantumTestResult(result.TextTestResult):
     # NOTE(vish, tfukushima): copied from unittest with edit to add color
     def addError(self, test, err):
         """Overrides normal addError to add support for errorClasses.
+
         If the exception is a registered class, the error will be added
         to the list for that class, not errors.
         """

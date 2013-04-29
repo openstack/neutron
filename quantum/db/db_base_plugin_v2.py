@@ -50,12 +50,12 @@ AUTO_DELETE_PORT_OWNERS = ['network:dhcp']
 
 
 class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
-    """A class that implements the v2 Quantum plugin interface
-        using SQLAlchemy models.  Whenever a non-read call happens
-        the plugin will call an event handler class method (e.g.,
-        network_created()).  The result is that this class can be
-        sub-classed by other classes that add custom behaviors on
-        certain events.
+    """V2 Quantum plugin interface implementation using SQLAlchemy models.
+
+    Whenever a non-read call happens the plugin will call an event handler
+    class method (e.g., network_created()).  The result is that this class
+    can be sub-classed by other classes that add custom behaviors on certain
+    events.
     """
 
     # This attribute specifies whether the plugin supports or not
@@ -730,7 +730,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Verifies the specified CIDR does not overlap with the ones defined
         for the other subnets specified for this network, or with any other
         CIDR if overlapping IPs are disabled.
-
         """
         new_subnet_ipset = netaddr.IPSet([new_subnet_cidr])
         if cfg.CONF.allow_overlapping_ips:
@@ -760,9 +759,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         ie: constituted by valid and appropriately ordered IP addresses.
         Also, verify pools do not overlap among themselves.
         Finally, verify that each range fall within the subnet's CIDR.
-
         """
-
         subnet = netaddr.IPNetwork(subnet_cidr)
         subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
         subnet_last_ip = netaddr.IPAddress(subnet.last - 1)
@@ -843,9 +840,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Pools are defined by the 'allocation_pools' attribute,
         a list of dict objects with 'start' and 'end' keys for
         defining the pool range.
-
         """
-
         pools = []
         # Auto allocate the pool around gateway_ip
         net = netaddr.IPNetwork(subnet['cidr'])
@@ -1167,11 +1162,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return self._make_subnet_dict(subnet)
 
     def update_subnet(self, context, id, subnet):
-        """Update the subnet with new info. The change however will not be
-           realized until the client renew the dns lease or we support
-           gratuitous DHCP offers
-        """
+        """Update the subnet with new info.
 
+        The change however will not be realized until the client renew the
+        dns lease or we support gratuitous DHCP offers
+        """
         s = subnet['subnet']
         db_subnet = self._get_subnet(context, id)
         # Fill 'ip_version' and 'allocation_pools' fields with the current

@@ -24,12 +24,14 @@ from quantum.openstack.common import uuidutils
 
 class HasTenant(object):
     """Tenant mixin, add to subclasses that have a tenant."""
+
     # NOTE(jkoelker) tenant_id is just a free form string ;(
     tenant_id = sa.Column(sa.String(255))
 
 
 class HasId(object):
     """id mixin, add to subclasses that have an id."""
+
     id = sa.Column(sa.String(36),
                    primary_key=True,
                    default=uuidutils.generate_uuid)
@@ -45,8 +47,8 @@ class IPAvailabilityRange(model_base.BASEV2):
     only done if the range is contiguous. If not, the first_ip will be
     the same as the last_ip. When adjacent ips are recycled the ranges
     will be merged.
-
     """
+
     allocation_pool_id = sa.Column(sa.String(36),
                                    sa.ForeignKey('ipallocationpools.id',
                                                  ondelete="CASCADE"),
@@ -79,6 +81,7 @@ class IPAllocationPool(model_base.BASEV2, HasId):
 class IPAllocation(model_base.BASEV2):
     """Internal representation of allocated IP addresses in a Quantum subnet.
     """
+
     port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id',
                                                      ondelete="CASCADE"),
                         nullable=True)
@@ -94,11 +97,13 @@ class IPAllocation(model_base.BASEV2):
 
 class Route(object):
     """mixin of a route."""
+
     destination = sa.Column(sa.String(64), nullable=False, primary_key=True)
     nexthop = sa.Column(sa.String(64), nullable=False, primary_key=True)
 
 
 class SubnetRoute(model_base.BASEV2, Route):
+
     subnet_id = sa.Column(sa.String(36),
                           sa.ForeignKey('subnets.id',
                                         ondelete="CASCADE"),
@@ -107,6 +112,7 @@ class SubnetRoute(model_base.BASEV2, Route):
 
 class Port(model_base.BASEV2, HasId, HasTenant):
     """Represents a port on a quantum v2 network."""
+
     name = sa.Column(sa.String(255))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
@@ -120,6 +126,7 @@ class Port(model_base.BASEV2, HasId, HasTenant):
 
 class DNSNameServer(model_base.BASEV2):
     """Internal representation of a DNS nameserver."""
+
     address = sa.Column(sa.String(128), nullable=False, primary_key=True)
     subnet_id = sa.Column(sa.String(36),
                           sa.ForeignKey('subnets.id',
@@ -133,6 +140,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
     When a subnet is created the first and last entries will be created. These
     are used for the IP allocation.
     """
+
     name = sa.Column(sa.String(255))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
     ip_version = sa.Column(sa.Integer, nullable=False)
@@ -154,6 +162,7 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
 
 class Network(model_base.BASEV2, HasId, HasTenant):
     """Represents a v2 quantum network."""
+
     name = sa.Column(sa.String(255))
     ports = orm.relationship(Port, backref='networks')
     subnets = orm.relationship(Subnet, backref='networks')

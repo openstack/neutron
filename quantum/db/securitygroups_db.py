@@ -30,12 +30,14 @@ from quantum.openstack.common import uuidutils
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 quantum security group."""
+
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
 
 
 class SecurityGroupPortBinding(model_base.BASEV2):
     """Represents binding between quantum ports and security profiles."""
+
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey("ports.id",
                                       ondelete='CASCADE'),
@@ -48,6 +50,7 @@ class SecurityGroupPortBinding(model_base.BASEV2):
 class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
                         models_v2.HasTenant):
     """Represents a v2 quantum security group rule."""
+
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id",
                                                 ondelete="CASCADE"),
@@ -86,6 +89,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.
+
         If default_sg is true that means we are a default security group for
         a given tenant if it does not exist.
         """
@@ -140,8 +144,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                           filters=filters)
 
     def get_security_group(self, context, id, fields=None, tenant_id=None):
-        """Tenant id is given to handle the case when we
-        are creating a security group rule on behalf of another use.
+        """Tenant id is given to handle the case when creating a security
+        group rule on behalf of another use.
         """
 
         if tenant_id:
@@ -257,7 +261,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                                            bulk_rule)[0]
 
     def _validate_security_group_rules(self, context, security_group_rule):
-        """Check that rules being installed all belong to the same security
+        """Check that rules being installed.
+
+        Check that all rules belong to the same security
         group, remote_group_id/security_group_id belong to the same tenant,
         and rules are valid.
         """

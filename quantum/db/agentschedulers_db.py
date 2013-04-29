@@ -33,6 +33,7 @@ LOG = logging.getLogger(__name__)
 
 class NetworkDhcpAgentBinding(model_base.BASEV2):
     """Represents binding between quantum networks and DHCP agents."""
+
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete='CASCADE'),
                            primary_key=True)
@@ -45,6 +46,7 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
 
 class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
     """Represents binding between quantum routers and L3 agents."""
+
     router_id = sa.Column(sa.String(36),
                           sa.ForeignKey("routers.id", ondelete='CASCADE'))
     l3_agent = orm.relation(agents_db.Agent)
@@ -159,8 +161,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             return {'agents': []}
 
     def add_router_to_l3_agent(self, context, id, router_id):
-        """Add a l3 agent to host a router.
-        """
+        """Add a l3 agent to host a router."""
         router = self.get_router(context, router_id)
         with context.session.begin(subtransactions=True):
             agent_db = self._get_agent(context, id)
@@ -192,8 +193,9 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
                 context, routers, agent_db.host)
 
     def remove_router_from_l3_agent(self, context, id, router_id):
-        """Remove the router from l3 agent. After it, the router
-        will be non-hosted until there is update which
+        """Remove the router from l3 agent.
+
+        After it, the router will be non-hosted until there is update which
         lead to re schedule or be added to another agent manually.
         """
         agent = self._get_agent(context, id)
@@ -356,8 +358,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
                 self, context, router)
 
     def schedule_routers(self, context, routers):
-        """Schedule the routers to l3 agents.
-        """
+        """Schedule the routers to l3 agents."""
         for router in routers:
             self.schedule_router(context, router)
 

@@ -158,6 +158,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
 
 class AgentExtRpcCallback(object):
     """Processes the rpc report in plugin implementations."""
+
     RPC_API_VERSION = '1.0'
     START_TIME = timeutils.utcnow()
 
