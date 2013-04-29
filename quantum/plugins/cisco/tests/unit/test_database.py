@@ -42,7 +42,7 @@ class NexusDB(object):
                 bind_dict["port-id"] = str(bind.port_id)
                 bind_dict["vlan-id"] = str(bind.vlan_id)
                 bindings.append(bind_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all bindings: %s" % str(exc))
         return bindings
 
@@ -56,7 +56,7 @@ class NexusDB(object):
                 bind_dict["port-id"] = str(bind.port_id)
                 bind_dict["vlan-id"] = str(bind.vlan_id)
                 binding.append(bind_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all bindings: %s" % str(exc))
         return binding
 
@@ -69,7 +69,7 @@ class NexusDB(object):
             bind_dict["port-id"] = str(res.port_id)
             bind_dict["vlan-id"] = str(res.vlan_id)
             return bind_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create nexus binding: %s" % str(exc))
 
     def delete_nexusportbinding(self, vlan_id):
@@ -83,7 +83,7 @@ class NexusDB(object):
                 bind_dict["port-id"] = res.port_id
                 bindings.append(bind_dict)
             return bindings
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to delete nexus port binding: %s"
                             % str(exc))
 
@@ -96,7 +96,7 @@ class NexusDB(object):
             bind_dict["port-id"] = str(res.port_id)
             bind_dict["vlan-id"] = str(res.vlan_id)
             return bind_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to update nexus port binding vnic: %s"
                             % str(exc))
 
@@ -115,7 +115,7 @@ class L2networkDB(object):
                 vlan_dict["vlan-name"] = vlan_bind.vlan_name
                 vlan_dict["net-id"] = str(vlan_bind.network_id)
                 vlans.append(vlan_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all vlan bindings: %s" % str(exc))
         return vlans
 
@@ -131,7 +131,7 @@ class L2networkDB(object):
                 vlan_dict["vlan-name"] = vlan_bind.vlan_name
                 vlan_dict["net-id"] = str(vlan_bind.network_id)
                 vlan.append(vlan_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get vlan binding: %s" % str(exc))
         return vlan
 
@@ -145,7 +145,7 @@ class L2networkDB(object):
             vlan_dict["vlan-name"] = res.vlan_name
             vlan_dict["net-id"] = str(res.network_id)
             return vlan_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create vlan binding: %s" % str(exc))
 
     def delete_vlan_binding(self, network_id):
@@ -156,7 +156,7 @@ class L2networkDB(object):
             vlan_dict = {}
             vlan_dict["vlan-id"] = str(res.vlan_id)
             return vlan_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to delete vlan binding: %s" % str(exc))
 
     def update_vlan_binding(self, network_id, vlan_id, vlan_name):
@@ -170,7 +170,7 @@ class L2networkDB(object):
             vlan_dict["vlan-name"] = res.vlan_name
             vlan_dict["net-id"] = str(res.network_id)
             return vlan_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to update vlan binding: %s" % str(exc))
 
 
@@ -187,7 +187,7 @@ class QuantumDB(object):
                 net_dict["net-id"] = str(net.uuid)
                 net_dict["net-name"] = net.name
                 nets.append(net_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all networks: %s" % str(exc))
         return nets
 
@@ -202,7 +202,7 @@ class QuantumDB(object):
                 net_dict["net-id"] = str(net.uuid)
                 net_dict["net-name"] = net.name
                 net.append(net_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get network: %s" % str(exc))
         return net
 
@@ -216,7 +216,7 @@ class QuantumDB(object):
             net_dict["net-id"] = str(res.uuid)
             net_dict["net-name"] = res.name
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create network: %s" % str(exc))
 
     def delete_network(self, net_id):
@@ -227,7 +227,7 @@ class QuantumDB(object):
             net_dict = {}
             net_dict["net-id"] = str(net.uuid)
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to delete port: %s" % str(exc))
 
     def update_network(self, tenant_id, net_id, **kwargs):
@@ -239,7 +239,7 @@ class QuantumDB(object):
             net_dict["net-id"] = str(net.uuid)
             net_dict["net-name"] = net.name
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to update network: %s" % str(exc))
 
     def get_all_ports(self, net_id):
@@ -256,7 +256,7 @@ class QuantumDB(object):
                 port_dict["net"] = port.network
                 ports.append(port_dict)
             return ports
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all ports: %s" % str(exc))
 
     def get_port(self, net_id, port_id):
@@ -272,7 +272,7 @@ class QuantumDB(object):
             port_dict["state"] = port.state
             port_list.append(port_dict)
             return port_list
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get port: %s" % str(exc))
 
     def create_port(self, net_id):
@@ -286,7 +286,7 @@ class QuantumDB(object):
             port_dict["int-id"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create port: %s" % str(exc))
 
     def delete_port(self, net_id, port_id):
@@ -297,7 +297,7 @@ class QuantumDB(object):
             port_dict = {}
             port_dict["port-id"] = str(port.uuid)
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to delete port: %s" % str(exc))
 
     def update_port(self, net_id, port_id, port_state):
@@ -311,7 +311,7 @@ class QuantumDB(object):
             port_dict["int-id"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to update port state: %s" % str(exc))
 
     def plug_interface(self, net_id, port_id, int_id):
@@ -325,7 +325,7 @@ class QuantumDB(object):
             port_dict["int-id"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to plug interface: %s" % str(exc))
 
     def unplug_interface(self, net_id, port_id):
@@ -339,7 +339,7 @@ class QuantumDB(object):
             port_dict["int-id"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             raise Exception("Failed to unplug interface: %s" % str(exc))
 
 

@@ -1043,7 +1043,7 @@ class Resource(Application):
         try:
             msg_dict = dict(url=request.url, status=response.status_int)
             msg = _("%(url)s returned with HTTP %(status)d") % msg_dict
-        except AttributeError, e:
+        except AttributeError as e:
             msg_dict = dict(url=request.url, exception=e)
             msg = _("%(url)s returned a fault: %(exception)s") % msg_dict
 

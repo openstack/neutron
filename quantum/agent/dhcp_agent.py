@@ -656,11 +656,11 @@ class DhcpLeaseRelay(object):
             ip_address = str(netaddr.IPAddress(data['ip_address']))
             lease_remaining = int(data['lease_remaining'])
             self.callback(network_id, ip_address, lease_remaining)
-        except ValueError, e:
+        except ValueError as e:
             LOG.warn(_('Unable to parse lease relay msg to dict.'))
             LOG.warn(_('Exception value: %s'), e)
             LOG.warn(_('Message representation: %s'), repr(msg))
-        except Exception, e:
+        except Exception as e:
             LOG.exception(_('Unable update lease. Exception'))
 
     def start(self):

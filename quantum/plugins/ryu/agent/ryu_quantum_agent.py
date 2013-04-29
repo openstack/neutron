@@ -293,7 +293,7 @@ def main():
         agent = OVSQuantumOFPRyuAgent(integ_br, tunnel_ip, ovsdb_ip,
                                       ovsdb_port, polling_interval,
                                       root_helper)
-    except httplib.HTTPException, e:
+    except httplib.HTTPException as e:
         LOG.error(_("Initialization failed: %s"), e)
         sys.exit(1)
 
