@@ -14,10 +14,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
+import sys
+
 import mock
 from oslo.config import cfg
 import testtools
 
+from quantum.agent.linux import ip_lib
+from quantum.agent.linux import ovs_lib
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
 from quantum.tests import base
 
@@ -54,15 +59,18 @@ class TestOvsQuantumAgent(base.BaseTestCase):
                               'quantum.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         kwargs = ovs_quantum_agent.create_agent_config_map(cfg.CONF)
-        with mock.patch('quantum.plugins.openvswitch.agent.ovs_quantum_agent.'
-                        'OVSQuantumAgent.setup_integration_br',
-                        return_value=mock.Mock()):
-            with mock.patch('quantum.agent.linux.utils.get_interface_mac',
-                            return_value='00:00:00:00:00:01'):
-                self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
+
+        with contextlib.nested(
+            mock.patch('quantum.plugins.openvswitch.agent.ovs_quantum_agent.'
+                       'OVSQuantumAgent.setup_integration_br',
+                       return_value=mock.Mock()),
+            mock.patch('quantum.agent.linux.utils.get_interface_mac',
+                       return_value='00:00:00:00:00:01')):
+            self.agent = ovs_quantum_agent.OVSQuantumAgent(**kwargs)
+            self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()
 
-    def mock_port_bound(self, ofport=None):
+    def _mock_port_bound(self, ofport=None):
         port = mock.Mock()
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
@@ -72,10 +80,10 @@ class TestOvsQuantumAgent(base.BaseTestCase):
         self.assertEqual(delete_flows_func.called, ofport != -1)
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
-        self.mock_port_bound(ofport=1)
+        self._mock_port_bound(ofport=1)
 
     def test_port_bound_ignores_flows_for_invalid_ofport(self):
-        self.mock_port_bound(ofport=-1)
+        self._mock_port_bound(ofport=-1)
 
     def test_port_dead(self):
         with mock.patch.object(self.agent.int_br,
@@ -103,7 +111,7 @@ class TestOvsQuantumAgent(base.BaseTestCase):
                                side_effect=Exception()):
             self.assertTrue(self.agent.treat_devices_added([{}]))
 
-    def mock_treat_devices_added(self, details, port, func_name):
+    def _mock_treat_devices_added(self, details, port, func_name):
         """
 
         :param details: the details to return for the device
@@ -111,39 +119,41 @@ class TestOvsQuantumAgent(base.BaseTestCase):
         :param func_name: the function that should be called
         :returns: whether the named function was called
         """
-        with mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
-                               return_value=details):
-            with mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
-                                   return_value=port):
-                with mock.patch.object(self.agent, func_name) as func:
-                    self.assertFalse(self.agent.treat_devices_added([{}]))
+        with contextlib.nested(
+            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
+                              return_value=details),
+            mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
+                              return_value=port),
+            mock.patch.object(self.agent, func_name)
+        ) as (get_dev_fn, get_vif_func, func):
+            self.assertFalse(self.agent.treat_devices_added([{}]))
         return func.called
 
     def test_treat_devices_added_ignores_invalid_ofport(self):
         port = mock.Mock()
         port.ofport = -1
-        self.assertFalse(self.mock_treat_devices_added(mock.MagicMock(), port,
-                                                       'port_dead'))
+        self.assertFalse(self._mock_treat_devices_added(mock.MagicMock(), port,
+                                                        'port_dead'))
 
     def test_treat_devices_added_marks_unknown_port_as_dead(self):
         port = mock.Mock()
         port.ofport = 1
-        self.assertTrue(self.mock_treat_devices_added(mock.MagicMock(), port,
-                                                      'port_dead'))
+        self.assertTrue(self._mock_treat_devices_added(mock.MagicMock(), port,
+                                                       'port_dead'))
 
     def test_treat_devices_added_updates_known_port(self):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
-        self.assertTrue(self.mock_treat_devices_added(details,
-                                                      mock.Mock(),
-                                                      'treat_vif_port'))
+        self.assertTrue(self._mock_treat_devices_added(details,
+                                                       mock.Mock(),
+                                                       'treat_vif_port'))
 
     def test_treat_devices_removed_returns_true_for_missing_device(self):
         with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
                                side_effect=Exception()):
             self.assertTrue(self.agent.treat_devices_removed([{}]))
 
-    def mock_treat_devices_removed(self, port_exists):
+    def _mock_treat_devices_removed(self, port_exists):
         details = dict(exists=port_exists)
         with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
                                return_value=details):
@@ -152,30 +162,10 @@ class TestOvsQuantumAgent(base.BaseTestCase):
         self.assertEqual(port_unbound.called, not port_exists)
 
     def test_treat_devices_removed_unbinds_port(self):
-        self.mock_treat_devices_removed(False)
+        self._mock_treat_devices_removed(True)
 
     def test_treat_devices_removed_ignores_missing_port(self):
-        self.mock_treat_devices_removed(False)
-
-    def test_port_update(self):
-        port = {'id': 1,
-                'network_id': 1,
-                'admin_state_up': True}
-        with mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
-                               return_value='2'):
-            with mock.patch.object(self.agent.plugin_rpc,
-                                   'update_device_up') as device_up:
-                with mock.patch.object(self.agent, 'port_bound') as port_bound:
-                    self.agent.port_update(mock.Mock(), port=port)
-                    self.assertTrue(port_bound.called)
-                    self.assertTrue(device_up.called)
-            with mock.patch.object(self.agent.plugin_rpc,
-                                   'update_device_down') as device_down:
-                with mock.patch.object(self.agent, 'port_dead') as port_dead:
-                    port['admin_state_up'] = False
-                    self.agent.port_update(mock.Mock(), port=port)
-                    self.assertTrue(port_dead.called)
-                    self.assertTrue(device_down.called)
+        self._mock_treat_devices_removed(False)
 
     def test_process_network_ports(self):
         reply = {'current': set(['tap0']),
@@ -188,3 +178,110 @@ class TestOvsQuantumAgent(base.BaseTestCase):
                 self.assertFalse(self.agent.process_network_ports(reply))
                 self.assertTrue(device_added.called)
                 self.assertTrue(device_removed.called)
+
+    def test_report_state(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.int_br, "get_vif_port_set"),
+            mock.patch.object(self.agent.state_rpc, "report_state")
+        ) as (get_vif_fn, report_st):
+            get_vif_fn.return_value = ["vif123", "vif234"]
+            self.agent._report_state()
+            self.assertTrue(get_vif_fn.called)
+            report_st.assert_called_with(self.agent.context,
+                                         self.agent.agent_state)
+            self.assertNotIn("start_flag", self.agent.agent_state)
+            self.assertEqual(
+                self.agent.agent_state["configurations"]["devices"], 2
+            )
+
+    def test_network_delete(self):
+        with mock.patch.object(self.agent, "reclaim_local_vlan") as recl_fn:
+            self.agent.network_delete("unused_context",
+                                      network_id="123")
+            self.assertFalse(recl_fn.called)
+
+            self.agent.local_vlan_map["123"] = "LVM object"
+            self.agent.network_delete("unused_context",
+                                      network_id="123")
+            recl_fn.assert_called_with("123", self.agent.local_vlan_map["123"])
+
+    def test_port_update(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.int_br, "get_vif_port_by_id"),
+            mock.patch.object(self.agent, "treat_vif_port"),
+            mock.patch.object(self.agent.plugin_rpc, "update_device_up"),
+            mock.patch.object(self.agent.plugin_rpc, "update_device_down")
+        ) as (getvif_fn, treatvif_fn, updup_fn, upddown_fn):
+            port = {"id": "123",
+                    "network_id": "124",
+                    "admin_state_up": False}
+            getvif_fn.return_value = "vif_port_obj"
+            self.agent.port_update("unused_context",
+                                   port=port,
+                                   network_type="vlan",
+                                   segmentation_id="1",
+                                   physical_network="physnet")
+            treatvif_fn.assert_called_with("vif_port_obj", "123",
+                                           "124", "vlan", "physnet",
+                                           "1", False)
+            upddown_fn.assert_called_with(self.agent.context,
+                                          "123", self.agent.agent_id)
+
+            port["admin_state_up"] = True
+            self.agent.port_update("unused_context",
+                                   port=port,
+                                   network_type="vlan",
+                                   segmentation_id="1",
+                                   physical_network="physnet")
+            updup_fn.assert_called_with(self.agent.context,
+                                        "123", self.agent.agent_id)
+
+    def test_setup_physical_bridges(self):
+        with contextlib.nested(
+            mock.patch.object(ip_lib, "device_exists"),
+            mock.patch.object(sys, "exit"),
+            mock.patch.object(ovs_lib.OVSBridge, "remove_all_flows"),
+            mock.patch.object(ovs_lib.OVSBridge, "add_flow"),
+            mock.patch.object(ovs_lib.OVSBridge, "add_port"),
+            mock.patch.object(ovs_lib.OVSBridge, "delete_port"),
+            mock.patch.object(self.agent.int_br, "add_port"),
+            mock.patch.object(self.agent.int_br, "delete_port"),
+            mock.patch.object(ip_lib.IPWrapper, "add_veth"),
+            mock.patch.object(ip_lib.IpLinkCommand, "delete"),
+            mock.patch.object(ip_lib.IpLinkCommand, "set_up")
+        ) as (devex_fn, sysexit_fn, remflows_fn, ovs_addfl_fn,
+              ovs_addport_fn, ovs_delport_fn, br_addport_fn,
+              br_delport_fn, addveth_fn, linkdel_fn, linkset_fn):
+            devex_fn.return_value = True
+            addveth_fn.return_value = (ip_lib.IPDevice("int-br-eth1"),
+                                       ip_lib.IPDevice("phy-br-eth1"))
+            ovs_addport_fn.return_value = "int_ofport"
+            br_addport_fn.return_value = "phys_veth"
+            self.agent.setup_physical_bridges({"physnet1": "br-eth"})
+            self.assertEqual(self.agent.int_ofports["physnet1"],
+                             "phys_veth")
+            self.assertEqual(self.agent.phys_ofports["physnet1"],
+                             "int_ofport")
+
+    def test_port_unbound(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.tun_br, "delete_flows"),
+            mock.patch.object(self.agent, "reclaim_local_vlan")
+        ) as (delfl_fn, reclvl_fn):
+            self.agent.enable_tunneling = True
+            lvm = mock.Mock()
+            lvm.network_type = "gre"
+            lvm.vif_ports = {"vif1": mock.Mock()}
+            self.agent.local_vlan_map["netuid12345"] = lvm
+            self.agent.port_unbound("vif1", "netuid12345")
+            self.assertTrue(delfl_fn.called)
+            self.assertTrue(reclvl_fn.called)
+            reclvl_fn.called = False
+
+            lvm.vif_ports = {}
+            self.agent.port_unbound("vif1", "netuid12345")
+            self.assertEqual(reclvl_fn.call_count, 2)
+
+            lvm.vif_ports = {"vif1": mock.Mock()}
+            self.agent.port_unbound("vif3", "netuid12345")
+            self.assertEqual(reclvl_fn.call_count, 2)
