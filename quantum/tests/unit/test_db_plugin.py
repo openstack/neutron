@@ -1709,7 +1709,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     q = update_context.session.query(models_v2.IPAllocation)
                     q = q.filter_by(port_id=None, ip_address=ip_address)
 
-                self.assertEqual(len(q.all()), 1)
+                self.assertEqual(q.count(), 1)
 
     def test_recycle_held_ip_address(self):
         plugin = QuantumManager.get_plugin()

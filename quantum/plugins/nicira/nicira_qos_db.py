@@ -230,14 +230,14 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             filters = {'device_id': [port.get('device_id')],
                        'network_id': [network['network_id'] for
                                       network in networks_with_same_queue]}
-            query = self._model_query(context, models_v2.Port)
-            ports = self._apply_filters_to_query(query, models_v2.Port,
-                                                 filters).all()
-
-            if ports:
+            query = self._model_query(context, models_v2.Port.id)
+            query = self._apply_filters_to_query(query, models_v2.Port,
+                                                 filters)
+            ports_ids = [p[0] for p in query]
+            if ports_ids:
                 # shared queue already exists find the queue id
-                filters = {'port_id': [p['id'] for p in ports]}
-                queues = self._get_port_queue_bindings(context, filters,
+                queues = self._get_port_queue_bindings(context,
+                                                       {'port_id': ports_ids},
                                                        ['queue_id'])
                 if queues:
                     return queues[0]['queue_id']

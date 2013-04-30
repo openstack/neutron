@@ -64,6 +64,19 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
     network_scheduler = None
     router_scheduler = None
 
+    @staticmethod
+    def is_eligible_agent(active, agent):
+        if active is None:
+            # filtering by activeness is disabled, all agents are eligible
+            return True
+        else:
+            # note(rpodolyaka): original behaviour is saved here: if active
+            #                   filter is set, only agents which are 'up'
+            #                   (i.e. have a recent heartbeat timestamp)
+            #                   are eligible, even if active is False
+            return not agents_db.AgentDbMixin.is_agent_down(
+                agent['heartbeat_timestamp'])
+
     def get_dhcp_agents_hosting_networks(
         self, context, network_ids, active=None):
         if not network_ids:
@@ -78,13 +91,11 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
                 NetworkDhcpAgentBinding.network_id in network_ids)
         if active is not None:
             query = (query.filter(agents_db.Agent.admin_state_up == active))
-        dhcp_agents = [binding.dhcp_agent for binding in query.all()]
-        if active is not None:
-            dhcp_agents = [dhcp_agent for dhcp_agent in
-                           dhcp_agents if not
-                           agents_db.AgentDbMixin.is_agent_down(
-                           dhcp_agent['heartbeat_timestamp'])]
-        return dhcp_agents
+
+        return [binding.dhcp_agent
+                for binding in query
+                if AgentSchedulerDbMixin.is_eligible_agent(active,
+                                                           binding.dhcp_agent)]
 
     def add_network_to_dhcp_agent(self, context, id, network_id):
         self._get_network(context, network_id)
@@ -125,12 +136,12 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
 
     def list_networks_on_dhcp_agent(self, context, id):
         query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        net_ids = query.filter(
-            NetworkDhcpAgentBinding.dhcp_agent_id == id).all()
+        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == id)
+
+        net_ids = [item[0] for item in query]
         if net_ids:
-            _ids = [item[0] for item in net_ids]
             return {'networks':
-                    self.get_networks(context, filters={'id': _ids})}
+                    self.get_networks(context, filters={'id': net_ids})}
         else:
             return {'networks': []}
 
@@ -140,12 +151,14 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
         if not agent.admin_state_up:
             return []
         query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        net_ids = query.filter(
-            NetworkDhcpAgentBinding.dhcp_agent_id == agent.id).all()
+        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
+
+        net_ids = [item[0] for item in query]
         if net_ids:
-            _ids = [item[0] for item in net_ids]
             return self.get_networks(
-                context, filters={'id': _ids, 'admin_state_up': [True]})
+                context,
+                filters={'id': net_ids, 'admin_state_up': [True]}
+            )
         else:
             return []
 
@@ -216,12 +229,12 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
 
     def list_routers_on_l3_agent(self, context, id):
         query = context.session.query(RouterL3AgentBinding.router_id)
-        router_ids = query.filter(
-            RouterL3AgentBinding.l3_agent_id == id).all()
+        query = query.filter(RouterL3AgentBinding.l3_agent_id == id)
+
+        router_ids = [item[0] for item in query]
         if router_ids:
-            _ids = [item[0] for item in router_ids]
             return {'routers':
-                    self.get_routers(context, filters={'id': _ids})}
+                    self.get_routers(context, filters={'id': router_ids})}
         else:
             return {'routers': []}
 
@@ -236,13 +249,13 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             RouterL3AgentBinding.l3_agent_id == agent.id)
         if router_id:
             query = query.filter(RouterL3AgentBinding.router_id == router_id)
-        router_ids = query.all()
+
+        router_ids = [item[0] for item in query]
         if router_ids:
-            _ids = [item[0] for item in router_ids]
-            routers = self.get_sync_data(context, router_ids=_ids,
-                                         active=True)
-            return routers
-        return []
+            return self.get_sync_data(context, router_ids=router_ids,
+                                      active=True)
+        else:
+            return []
 
     def get_l3_agents_hosting_routers(self, context, router_ids,
                                       admin_state_up=None,
@@ -259,7 +272,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
         if admin_state_up is not None:
             query = (query.filter(agents_db.Agent.admin_state_up ==
                                   admin_state_up))
-        l3_agents = [binding.l3_agent for binding in query.all()]
+        l3_agents = [binding.l3_agent for binding in query]
         if active is not None:
             l3_agents = [l3_agent for l3_agent in
                          l3_agents if not
@@ -315,13 +328,10 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
                 column = getattr(agents_db.Agent, key, None)
                 if column:
                     query = query.filter(column.in_(value))
-        l3_agents = query.all()
-        if active is not None:
-            l3_agents = [l3_agent for l3_agent in
-                         l3_agents if not
-                         agents_db.AgentDbMixin.is_agent_down(
-                         l3_agent['heartbeat_timestamp'])]
-        return l3_agents
+
+        return [l3_agent
+                for l3_agent in query
+                if AgentSchedulerDbMixin.is_eligible_agent(active, l3_agent)]
 
     def get_l3_agent_candidates(self, sync_router, l3_agents):
         """Get the valid l3 agents for the router from a list of l3_agents."""

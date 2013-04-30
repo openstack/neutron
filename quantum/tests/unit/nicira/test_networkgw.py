@@ -337,8 +337,8 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
         session = db_api.get_session()
         gw_query = session.query(nicira_networkgw_db.NetworkGateway)
         dev_query = session.query(nicira_networkgw_db.NetworkGatewayDevice)
-        self.assertEqual(exp_gw_count, len(gw_query.all()))
-        self.assertEqual(0, len(dev_query.all()))
+        self.assertEqual(exp_gw_count, gw_query.count())
+        self.assertEqual(0, dev_query.count())
 
     def test_delete_network_gateway(self):
         self._test_delete_network_gateway()

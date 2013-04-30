@@ -1625,7 +1625,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             ports = rport_qry.filter_by(
                 device_id=router_id,
                 device_owner=l3_db.DEVICE_OWNER_ROUTER_INTF,
-                network_id=subnet['network_id']).all()
+                network_id=subnet['network_id'])
             for p in ports:
                 if p['fixed_ips'][0]['subnet_id'] == subnet_id:
                     port_id = p['id']

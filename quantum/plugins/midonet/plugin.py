@@ -831,7 +831,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             ports = rport_qry.filter_by(
                 device_id=router_id,
                 device_owner=l3_db.DEVICE_OWNER_ROUTER_INTF,
-                network_id=network_id).all()
+                network_id=network_id)
             network_port = None
             for p in ports:
                 if p['fixed_ips'][0]['subnet_id'] == subnet_id:

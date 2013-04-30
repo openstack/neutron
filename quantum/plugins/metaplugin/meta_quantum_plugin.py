@@ -217,7 +217,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     column = getattr(models_v2.Network, key, None)
                 if column:
                     collection = collection.filter(column.in_(value))
-        return [self._make_network_dict(c, fields) for c in collection.all()]
+        return [self._make_network_dict(c, fields) for c in collection]
 
     def get_networks(self, context, filters=None, fields=None):
         nets = self.get_networks_with_flavor(context, filters, None)
@@ -333,7 +333,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     column = getattr(l3_db.Router, key, None)
                 if column:
                     collection = collection.filter(column.in_(value))
-        return [self._make_router_dict(c, fields) for c in collection.all()]
+        return [self._make_router_dict(c, fields) for c in collection]
 
     def get_routers(self, context, filters=None, fields=None):
         routers = self.get_routers_with_flavor(context, filters,

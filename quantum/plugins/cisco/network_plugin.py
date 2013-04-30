@@ -255,7 +255,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             # Check if ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
             allocated_qry = allocated_qry.options(orm.joinedload('ports'))
-            allocated = allocated_qry.filter_by(subnet_id=id).all()
+            allocated = allocated_qry.filter_by(subnet_id=id)
 
             prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
             if not all(not a.port_id or a.ports.device_owner.startswith(prefix)

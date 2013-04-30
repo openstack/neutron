@@ -132,7 +132,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         for tun in self.tunnel_key.all_list():
             self.tun_client.update_tunnel_key(tun.network_id, tun.tunnel_key)
         session = db.get_session()
-        for port in session.query(models_v2.Port).all():
+        for port in session.query(models_v2.Port):
             self.iface_client.update_network_id(port.id, port.network_id)
 
     def _client_create_network(self, net_id, tunnel_key):

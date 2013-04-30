@@ -237,7 +237,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                            limit=limit,
                                            marker_obj=marker_obj,
                                            page_reverse=page_reverse)
-        items = [dict_func(c, fields) for c in query.all()]
+        items = [dict_func(c, fields) for c in query]
         if limit and page_reverse:
             items.reverse()
         return items
@@ -319,7 +319,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         expired_qry = expired_qry.filter(
             models_v2.IPAllocation.expiration <= timeutils.utcnow())
 
-        for expired in expired_qry.all():
+        for expired in expired_qry:
             QuantumDbPluginV2._recycle_ip(context,
                                           network_id,
                                           expired['subnet_id'],
@@ -338,7 +338,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         # Grab all allocation pools for the subnet
         pool_qry = context.session.query(
             models_v2.IPAllocationPool).with_lockmode('update')
-        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id).all()
+        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id)
         # Find the allocation pool for the IP to recycle
         pool_id = None
         for allocation_pool in allocation_pools:
@@ -494,7 +494,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             models_v2.IPAvailabilityRange,
             models_v2.IPAllocationPool).join(
                 models_v2.IPAllocationPool).with_lockmode('update')
-        results = range_qry.filter_by(subnet_id=subnet_id).all()
+        results = range_qry.filter_by(subnet_id=subnet_id)
         for (range, pool) in results:
             first = int(netaddr.IPAddress(range['first_ip']))
             last = int(netaddr.IPAddress(range['last_ip']))
@@ -560,7 +560,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         # Check if the requested IP is in a defined allocation pool
         pool_qry = context.session.query(models_v2.IPAllocationPool)
-        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id).all()
+        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id)
         ip = netaddr.IPAddress(ip_address)
         for allocation_pool in allocation_pools:
             allocation_pool_range = netaddr.IPRange(
@@ -867,10 +867,10 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             return
         ports = self._model_query(
             context, models_v2.Port).filter(
-                models_v2.Port.network_id == id).all()
+                models_v2.Port.network_id == id)
         subnets = self._model_query(
             context, models_v2.Subnet).filter(
-                models_v2.Subnet.network_id == id).all()
+                models_v2.Subnet.network_id == id)
         tenant_ids = set([port['tenant_id'] for port in ports] +
                          [subnet['tenant_id'] for subnet in subnets])
         # raise if multiple tenants found or if the only tenant found
@@ -1233,7 +1233,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # Check if any tenant owned ports are using this subnet
             allocated_qry = context.session.query(models_v2.IPAllocation)
             allocated_qry = allocated_qry.options(orm.joinedload('ports'))
-            allocated = allocated_qry.filter_by(subnet_id=id).all()
+            allocated = allocated_qry.filter_by(subnet_id=id)
 
             only_auto_del = all(not a.port_id or
                                 a.ports.device_owner in AUTO_DELETE_PORT_OWNERS
@@ -1242,8 +1242,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 raise q_exc.SubnetInUse(subnet_id=id)
 
             # remove network owned ports
-            for allocation in allocated:
-                context.session.delete(allocation)
+            allocated.delete()
 
             context.session.delete(subnet)
 
@@ -1377,30 +1376,29 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         allocated_qry = context.session.query(
             models_v2.IPAllocation).with_lockmode('update')
         # recycle all of the IP's
-        allocated = allocated_qry.filter_by(port_id=id).all()
-        if allocated:
-            for a in allocated:
-                subnet = self._get_subnet(context, a['subnet_id'])
-                # Check if IP was allocated from allocation pool
-                if QuantumDbPluginV2._check_ip_in_allocation_pool(
-                    context, a['subnet_id'], subnet['gateway_ip'],
-                    a['ip_address']):
-                    QuantumDbPluginV2._hold_ip(context,
-                                               a['network_id'],
-                                               a['subnet_id'],
-                                               id,
-                                               a['ip_address'])
-                else:
-                    # IPs out of allocation pool will not be recycled, but
-                    # we do need to delete the allocation from the DB
-                    QuantumDbPluginV2._delete_ip_allocation(
-                        context, a['network_id'],
-                        a['subnet_id'], a['ip_address'])
-                    msg_dict = {'address': a['ip_address'],
-                                'subnet_id': a['subnet_id']}
-                    msg = _("%(address)s (%(subnet_id)s) is not "
-                            "recycled") % msg_dict
-                    LOG.debug(msg)
+        allocated = allocated_qry.filter_by(port_id=id)
+        for a in allocated:
+            subnet = self._get_subnet(context, a['subnet_id'])
+            # Check if IP was allocated from allocation pool
+            if QuantumDbPluginV2._check_ip_in_allocation_pool(
+                context, a['subnet_id'], subnet['gateway_ip'],
+                a['ip_address']):
+                QuantumDbPluginV2._hold_ip(context,
+                                           a['network_id'],
+                                           a['subnet_id'],
+                                           id,
+                                           a['ip_address'])
+            else:
+                # IPs out of allocation pool will not be recycled, but
+                # we do need to delete the allocation from the DB
+                QuantumDbPluginV2._delete_ip_allocation(
+                    context, a['network_id'],
+                    a['subnet_id'], a['ip_address'])
+                msg_dict = {'address': a['ip_address'],
+                            'subnet_id': a['subnet_id']}
+                msg = _("%(address)s (%(subnet_id)s) is not "
+                        "recycled") % msg_dict
+                LOG.debug(msg)
 
         context.session.delete(port)
 
@@ -1443,7 +1441,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,
                                       page_reverse=page_reverse)
-        items = [self._make_port_dict(c, fields) for c in query.all()]
+        items = [self._make_port_dict(c, fields) for c in query]
         if limit and page_reverse:
             items.reverse()
         return items
