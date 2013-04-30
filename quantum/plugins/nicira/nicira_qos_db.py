@@ -189,7 +189,9 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         return self._fields(res, fields)
 
     def _check_for_queue_and_create(self, context, port):
-        """This function determines if a port should be associated with a
+        """Check for queue and create.
+
+        This function determines if a port should be associated with a
         queue. It works by first querying NetworkQueueMapping to determine
         if the network is associated with a queue. If so, then it queries
         NetworkQueueMapping for all the networks that are associated with

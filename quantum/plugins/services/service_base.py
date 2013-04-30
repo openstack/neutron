@@ -21,20 +21,21 @@ from quantum.api import extensions
 
 
 class ServicePluginBase(extensions.PluginInterface):
-    """defines base interface for any Advanced Service plugin."""
+    """Define base interface for any Advanced Service plugin."""
     __metaclass__ = abc.ABCMeta
     supported_extension_aliases = []
 
     @abc.abstractmethod
     def get_plugin_type(self):
-        """returns one of predefine service types. see
-            quantum/plugins/common/constants.py
+        """Return one of predefined service types.
+
+        See quantum/plugins/common/constants.py
         """
         pass
 
     @abc.abstractmethod
     def get_plugin_name(self):
-        """return a symbolic name for the plugin.
+        """Return a symbolic name for the plugin.
 
         Each service plugin should have a symbolic name. This name
         will be used, for instance, by service definitions in service types
@@ -43,5 +44,5 @@ class ServicePluginBase(extensions.PluginInterface):
 
     @abc.abstractmethod
     def get_plugin_description(self):
-        """returns string description of the plugin."""
+        """Return string description of the plugin."""
         pass

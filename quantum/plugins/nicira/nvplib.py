@@ -224,7 +224,9 @@ def do_multi_request(*args, **kwargs):
 # Network functions
 # -------------------------------------------------------------------
 def find_port_and_cluster(clusters, port_id):
-    """Return (url, cluster_id) of port or (None, None) if port does not exist.
+    """Find port and cluster.
+
+    Returns (url, cluster_id) of port or (None, None) if port does not exist.
     """
     for c in clusters:
         query = "/ws.v1/lswitch/*/lport?uuid=%s&fields=*" % port_id
@@ -549,9 +551,11 @@ def update_lrouter(cluster, lrouter_id, display_name, nexthop):
 
 
 def get_all_networks(cluster, tenant_id, networks):
-    """Append the quantum network uuids we can find in the given cluster to
-       "networks"
-       """
+    """Get all networks.
+
+    Append the quantum network uuids we can find in the given cluster
+    to "networks".
+    """
     uri = "/ws.v1/lswitch?fields=*&tag=%s&tag_scope=os_tid" % tenant_id
     try:
         resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
@@ -664,8 +668,7 @@ def get_logical_port_status(cluster, switch, port):
 
 
 def get_port_by_display_name(clusters, lswitch, display_name):
-    """Return (url, cluster_id) of port or raises ResourceNotFound
-    """
+    """Return (url, cluster_id) of port or raises PortNotFound."""
     query = ("/ws.v1/lswitch/%s/lport?display_name=%s&fields=*" %
              (lswitch, display_name))
     LOG.debug(_("Looking for port with display_name "
@@ -685,8 +688,10 @@ def get_port_by_display_name(clusters, lswitch, display_name):
 
 
 def get_port_by_quantum_tag(cluster, lswitch_uuid, quantum_port_id):
-    """Return the NVP UUID of the logical port with tag q_port_id
-    equal to quantum_port_id or None if the port is not Found.
+    """Get port by quantum tag.
+
+    Returns the NVP UUID of the logical port with tag q_port_id equal to
+    quantum_port_id or None if the port is not Found.
     """
     uri = _build_uri_path(LSWITCHPORT_RESOURCE,
                           parent_resource_id=lswitch_uuid,
@@ -938,10 +943,11 @@ def plug_router_port_attachment(cluster, router_id, port_id,
                                 attachment_uuid, nvp_attachment_type,
                                 attachment_vlan=None):
     """Attach a router port to the given attachment.
-       Current attachment types:
+
+    Current attachment types:
        - PatchAttachment [-> logical switch port uuid]
        - L3GatewayAttachment [-> L3GatewayService uuid]
-       For the latter attachment type a VLAN ID can be specified as well
+    For the latter attachment type a VLAN ID can be specified as well.
     """
     uri = _build_uri_path(LROUTERPORT_RESOURCE, port_id, router_id,
                           is_attachment=True)
@@ -1036,6 +1042,7 @@ TENANT_ID_SCOPE = 'os_tid'
 
 def format_exception(etype, e, execption_locals, request=None):
     """Consistent formatting for exceptions.
+
     :param etype: a string describing the exception type.
     :param e: the exception.
     :param request: the request object.

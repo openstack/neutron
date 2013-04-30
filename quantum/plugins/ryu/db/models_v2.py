@@ -20,8 +20,9 @@ from quantum.db import model_base
 
 
 class TunnelKeyLast(model_base.BASEV2):
-    """Lastly allocated Tunnel key. The next key allocation will be started
-    from this value + 1
+    """Last allocated Tunnel key.
+
+    The next key allocation will be started from this value + 1
     """
     last_key = sa.Column(sa.Integer, primary_key=True)
 

@@ -98,8 +98,9 @@ class TunnelKey(object):
         return session.query(ryu_models_v2.TunnelKeyLast).one()
 
     def _find_key(self, session, last_key):
-        """
-        Try to find unused tunnel key in TunnelKey table starting
+        """Try to find unused tunnel key.
+
+        Trying to find unused tunnel key in TunnelKey table starting
         from last_key + 1.
         When all keys are used, raise sqlalchemy.orm.exc.NoResultFound
         """

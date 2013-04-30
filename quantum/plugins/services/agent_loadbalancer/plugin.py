@@ -114,8 +114,8 @@ class LoadBalancerCallbacks(object):
     def pool_destroyed(self, context, pool_id=None, host=None):
         """Agent confirmation hook that a pool has been destroyed.
 
-           This method exists for subclasses to change the deletion
-           behavior.
+        This method exists for subclasses to change the deletion
+        behavior.
         """
         pass
 
@@ -212,8 +212,7 @@ class LoadBalancerAgentApi(proxy.RpcProxy):
 
 class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
 
-    """
-    Implementation of the Quantum Loadbalancer Service Plugin.
+    """Implementation of the Quantum Loadbalancer Service Plugin.
 
     This class manages the workflow of LBaaS request/response.
     Most DB related works are implemented in class
@@ -222,9 +221,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
     supported_extension_aliases = ["lbaas"]
 
     def __init__(self):
-        """
-        Do the initialization for the loadbalancer service plugin here.
-        """
+        """Do the initialization for the loadbalancer service plugin here."""
         qdbapi.register_models()
 
         self.callbacks = LoadBalancerCallbacks(self)

@@ -38,7 +38,8 @@ def _find_nvp_version_in_headers(headers):
 
 
 class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
-    '''
+    '''API helper class.
+
     Helper class to do basic login, cookie management, and provide base
     method to send HTTP requests.
 
@@ -187,14 +188,13 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
 
 
 class NvpApiException(Exception):
-    '''
-    Base NvpApiClient Exception
+    """Base NvpApiClient Exception.
 
     To correctly use this class, inherit from it and define
     a 'message' property. That message will get printf'd
     with the keyword arguments provided to the constructor.
 
-    '''
+    """
     message = _("An unknown exception occurred.")
 
     def __init__(self, **kwargs):

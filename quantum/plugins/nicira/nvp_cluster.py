@@ -36,8 +36,10 @@ DEPRECATED_ATTRIBUTES = ['metadata_dhcp_host_route',
 
 
 class NVPCluster(object):
-    """Encapsulates controller connections and the Api client for a
-    NVP cluster. Accessed within the NvpPluginV2 class.
+    """NVP cluster class.
+
+    Encapsulates controller connections and the API client for a NVP cluster.
+    Accessed within the NvpPluginV2 class.
 
     Controller-specific parameters, such as timeouts are stored in the
     elements of the controllers attribute, which are dicts.

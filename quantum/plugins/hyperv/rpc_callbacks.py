@@ -89,7 +89,9 @@ class HyperVRpcCallbacks(
         return entry
 
     def tunnel_sync(self, rpc_context, **kwargs):
-        """Dummy function for ovs agent running on Linux to
+        """Tunnel sync.
+
+        Dummy function for ovs agent running on Linux to
         work with Hyper-V plugin and agent.
         """
         entry = dict()
