@@ -37,22 +37,32 @@ class CiscoNEXUSDriver():
     def __init__(self):
         pass
 
-    def _edit_config(self, mgr, target='running', config=''):
+    def _edit_config(self, mgr, target='running', config='',
+                     allowed_exc_strs=None):
         """Modify switch config for a target config type.
 
         :param mgr: NetConf client manager
         :param target: Target config type
         :param config: Configuration string in XML format
+        :param allowed_exc_strs: Exceptions which have any of these strings
+                                 as a subset of their exception message
+                                 (str(exception)) can be ignored
 
         :raises: NexusConfigFailed
 
         """
+        if not allowed_exc_strs:
+            allowed_exc_strs = []
         try:
             mgr.edit_config(target, config=config)
         except Exception as e:
-            # Raise a Quantum exception. Include a description of
-            # the original ncclient exception.
-            raise cexc.NexusConfigFailed(config=config, exc=e)
+            for exc_str in allowed_exc_strs:
+                if exc_str in str(e):
+                    break
+            else:
+                # Raise a Quantum exception. Include a description of
+                # the original ncclient exception.
+                raise cexc.NexusConfigFailed(config=config, exc=e)
 
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
@@ -77,10 +87,33 @@ class CiscoNEXUSDriver():
         return conf_xml_snippet
 
     def enable_vlan(self, mgr, vlanid, vlanname):
-        """Creates a VLAN on Nexus Switch given the VLAN ID and Name."""
-        confstr = snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname)
-        confstr = self.create_xml_snippet(confstr)
+        """Create a VLAN on Nexus Switch given the VLAN ID and Name."""
+        confstr = self.create_xml_snippet(
+            snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname))
         self._edit_config(mgr, target='running', config=confstr)
+
+        # Enable VLAN active and no-shutdown states. Some versions of
+        # Nexus switch do not allow state changes for the extended VLAN
+        # range (1006-4094), but these errors can be ignored (default
+        # values are appropriate).
+        state_config = [snipp.CMD_VLAN_ACTIVE_SNIPPET,
+                        snipp.CMD_VLAN_NO_SHUTDOWN_SNIPPET]
+        for snippet in state_config:
+            try:
+                confstr = self.create_xml_snippet(snippet % vlanid)
+                self._edit_config(
+                    mgr,
+                    target='running',
+                    config=confstr,
+                    allowed_exc_strs=["Can't modify state for extended",
+                                      "Command is only allowed on VLAN"])
+            except cexc.NexusConfigFailed as e:
+                # Rollback VLAN creation
+                try:
+                    self.disable_vlan(mgr, vlanid)
+                finally:
+                    # Re-raise original exception
+                    raise e
 
     def disable_vlan(self, mgr, vlanid):
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
