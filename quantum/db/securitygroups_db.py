@@ -136,7 +136,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def get_security_groups(self, context, filters=None, fields=None,
                             sorts=None, limit=None,
-                            marker=None, page_reverse=False):
+                            marker=None, page_reverse=False, default_sg=False):
+
+        # If default_sg is True do not call _ensure_default_security_group()
+        # so this can be done recursively. Context.tenant_id is checked
+        # because all the unit tests do not explicitly set the context on
+        # GETS. TODO(arosen)  context handling can probably be improved here.
+        if not default_sg and context.tenant_id:
+            self._ensure_default_security_group(context, context.tenant_id)
         marker_obj = self._get_marker_obj(context, 'security_group', limit,
                                           marker)
         return self._get_collection(context,
@@ -423,7 +430,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         :returns: the default security group id.
         """
         filters = {'name': ['default'], 'tenant_id': [tenant_id]}
-        default_group = self.get_security_groups(context, filters)
+        default_group = self.get_security_groups(context, filters,
+                                                 default_sg=True)
         if not default_group:
             security_group = {'security_group': {'name': 'default',
                                                  'tenant_id': tenant_id,
