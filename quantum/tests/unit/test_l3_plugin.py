@@ -360,7 +360,8 @@ class L3NatTestCaseMixin(object):
                             expected_code=expected_code)
 
     def _router_interface_action(self, action, router_id, subnet_id, port_id,
-                                 expected_code=exc.HTTPOk.code):
+                                 expected_code=exc.HTTPOk.code,
+                                 expected_body=None):
         interface_data = {}
         if subnet_id:
             interface_data.update({'subnet_id': subnet_id})
@@ -371,7 +372,10 @@ class L3NatTestCaseMixin(object):
                                       "%s_router_interface" % action)
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, expected_code)
-        return self.deserialize(self.fmt, res)
+        response = self.deserialize(self.fmt, res)
+        if expected_body:
+            self.assertEqual(response, expected_body)
+        return response
 
     @contextlib.contextmanager
     def router(self, name='router1', admin_state_up=True,
@@ -1014,6 +1018,19 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                                   r['router']['id'],
                                                   None,
                                                   p['port']['id'])
+
+    def test_router_remove_interface_returns_200(self):
+        with self.router() as r:
+            with self.port(no_delete=True) as p:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     None,
+                                                     p['port']['id'])
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'],
+                                              expected_body=body)
 
     def test_router_remove_interface_wrong_port_returns_404(self):
         with self.router() as r:

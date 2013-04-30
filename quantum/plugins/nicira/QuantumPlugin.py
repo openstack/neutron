@@ -1648,9 +1648,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         {'port_id': port_id, 'router_id': router_id})
         # Finally remove the data from the Quantum DB
         # This will also destroy the port on the logical switch
-        super(NvpPluginV2, self).remove_router_interface(context,
-                                                         router_id,
-                                                         interface_info)
+        info = super(NvpPluginV2, self).remove_router_interface(
+            context, router_id, interface_info)
         # Destroy router port (no need to unplug the attachment)
         # FIXME(salvatore-orlando): In case of failures in the Quantum plugin
         # this migth leave a dangling port. We perform the operation here
@@ -1659,7 +1658,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             LOG.warning(_("Unable to find NVP logical router port for "
                           "Quantum port id:%s. Was this port ever paired "
                           "with a logical router?"), port_id)
-            return
+            return info
 
         # Ensure the connection to the 'metadata access network'
         # is removed  (with the network) if this the last subnet
@@ -1691,6 +1690,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to update logical router"
                            "on NVP Platform")))
+        return info
 
     def _retrieve_and_delete_nat_rules(self, floating_ip_address,
                                        internal_ip, router_id,
