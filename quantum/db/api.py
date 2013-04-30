@@ -86,7 +86,7 @@ class MySQLPingListener(object):
     def checkout(self, dbapi_con, con_record, con_proxy):
         try:
             dbapi_con.cursor().execute('select 1')
-        except dbapi_con.OperationalError, ex:
+        except dbapi_con.OperationalError as ex:
             if ex.args[0] in (2006, 2013, 2014, 2045, 2055):
                 LOG.warn(_('Got mysql server has gone away: %s'), ex)
                 raise DisconnectionError(_("Database server went away"))

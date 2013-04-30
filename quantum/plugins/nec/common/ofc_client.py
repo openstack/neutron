@@ -85,7 +85,7 @@ class OFCClient(object):
             else:
                 reason = _("An operation on OFC is failed.")
                 raise nexc.OFCException(reason=reason)
-        except (socket.error, IOError), e:
+        except (socket.error, IOError) as e:
             reason = _("Failed to connect OFC : %s") % str(e)
             LOG.error(reason)
             raise nexc.OFCException(reason=reason)

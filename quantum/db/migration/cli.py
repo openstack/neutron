@@ -51,7 +51,7 @@ CONF.register_opts(_quota_opts, 'QUOTAS')
 def do_alembic_command(config, cmd, *args, **kwargs):
     try:
         getattr(alembic_command, cmd)(config, *args, **kwargs)
-    except alembic_util.CommandError, e:
+    except alembic_util.CommandError as e:
         alembic_util.err(str(e))
 
 

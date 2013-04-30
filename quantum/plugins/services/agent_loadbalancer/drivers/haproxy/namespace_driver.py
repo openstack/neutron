@@ -121,7 +121,7 @@ class HaproxyNSDriver(object):
                         break
 
                 return self._parse_stats(raw_stats)
-            except socket.error, e:
+            except socket.error as e:
                 LOG.warn(_('Error while connecting to stats socket: %s') % e)
                 return {}
         else:

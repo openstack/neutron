@@ -39,7 +39,7 @@ class QuantumDB(object):
                 net_dict["id"] = str(net.uuid)
                 net_dict["name"] = net.name
                 nets.append(net_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all networks: %s", str(exc))
         return nets
 
@@ -54,7 +54,7 @@ class QuantumDB(object):
                 net_dict["id"] = str(net.uuid)
                 net_dict["name"] = net.name
                 net.append(net_dict)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get network: %s", str(exc))
         return net
 
@@ -68,7 +68,7 @@ class QuantumDB(object):
             net_dict["id"] = str(res.uuid)
             net_dict["name"] = res.name
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create network: %s", str(exc))
 
     def delete_network(self, net_id):
@@ -79,7 +79,7 @@ class QuantumDB(object):
             net_dict = {}
             net_dict["id"] = str(net.uuid)
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to delete network: %s", str(exc))
 
     def update_network(self, tenant_id, net_id, param_data):
@@ -92,7 +92,7 @@ class QuantumDB(object):
             net_dict["id"] = str(net.uuid)
             net_dict["name"] = net.name
             return net_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to update network: %s", str(exc))
 
     def get_all_ports(self, net_id):
@@ -108,7 +108,7 @@ class QuantumDB(object):
                 port_dict["state"] = port.state
                 ports.append(port_dict)
             return ports
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get all ports: %s", str(exc))
 
     def get_port(self, net_id, port_id):
@@ -124,7 +124,7 @@ class QuantumDB(object):
             port_dict["state"] = port.state
             port_list.append(port_dict)
             return port_list
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to get port: %s", str(exc))
 
     def create_port(self, net_id):
@@ -138,7 +138,7 @@ class QuantumDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to create port: %s", str(exc))
 
     def delete_port(self, net_id, port_id):
@@ -149,7 +149,7 @@ class QuantumDB(object):
             port_dict = {}
             port_dict["id"] = str(port.uuid)
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to delete port: %s", str(exc))
 
     def update_port(self, net_id, port_id, **kwargs):
@@ -163,7 +163,7 @@ class QuantumDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to update port state: %s", str(exc))
 
     def plug_interface(self, net_id, port_id, int_id):
@@ -177,7 +177,7 @@ class QuantumDB(object):
             port_dict["attachment"] = port.interface_id
             port_dict["state"] = port.state
             return port_dict
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to plug interface: %s", str(exc))
 
     def unplug_interface(self, net_id, port_id):
@@ -185,5 +185,5 @@ class QuantumDB(object):
         try:
             db.port_unset_attachment(port_id, net_id)
             LOG.debug("Detached interface from port %s", port_id)
-        except Exception, exc:
+        except Exception as exc:
             LOG.error("Failed to unplug interface: %s", str(exc))
