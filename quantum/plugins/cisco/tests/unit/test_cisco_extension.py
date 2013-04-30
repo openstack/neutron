@@ -74,7 +74,6 @@ class ExtensionsTestApp(wsgi.Router):
         super(ExtensionsTestApp, self).__init__(mapper)
 
     def create_request(self, path, body, content_type, method='GET'):
-
         """Test create request."""
 
         LOG.debug("test_create_request - START")
@@ -87,7 +86,6 @@ class ExtensionsTestApp(wsgi.Router):
         return req
 
     def _create_network(self, name=None):
-
         """Test create network."""
 
         LOG.debug("Creating network - START")
@@ -107,7 +105,6 @@ class ExtensionsTestApp(wsgi.Router):
         return network_data['network']['id']
 
     def _create_port(self, network_id, port_state):
-
         """Test create port."""
 
         LOG.debug("Creating port for network %s - START", network_id)
@@ -153,7 +150,6 @@ class ExtensionsTestApp(wsgi.Router):
 class QosExtensionTest(base.BaseTestCase):
 
     def setUp(self):
-
         """Set up function."""
 
         super(QosExtensionTest, self).setUp()
@@ -180,7 +176,6 @@ class QosExtensionTest(base.BaseTestCase):
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_create_qos(self):
-
         """Test create qos."""
 
         LOG.debug("test_create_qos - START")
@@ -199,7 +194,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_create_qos - END")
 
     def test_create_qosBADRequest(self):
-
         """Test create qos bad request."""
 
         LOG.debug("test_create_qosBADRequest - START")
@@ -211,7 +205,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_create_qosBADRequest - END")
 
     def test_list_qoss(self):
-
         """Test list qoss."""
 
         LOG.debug("test_list_qoss - START")
@@ -251,7 +244,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_list_qoss - END")
 
     def test_show_qos(self):
-
         """Test show qos."""
 
         LOG.debug("test_show_qos - START")
@@ -275,7 +267,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_show_qos - END")
 
     def test_show_qosDNE(self, qos_id='100'):
-
         """Test show qos does not exist."""
 
         LOG.debug("test_show_qosDNE - START")
@@ -286,7 +277,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_show_qosDNE - END")
 
     def test_update_qos(self):
-
         """Test update qos."""
 
         LOG.debug("test_update_qos - START")
@@ -318,7 +308,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_qos - END")
 
     def test_update_qosDNE(self, qos_id='100'):
-
         """Test update qos does not exist."""
 
         LOG.debug("test_update_qosDNE - START")
@@ -340,7 +329,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_qosDNE - END")
 
     def test_update_qosBADRequest(self):
-
         """Test update qos bad request."""
 
         LOG.debug("test_update_qosBADRequest - START")
@@ -361,7 +349,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_qosBADRequest - END")
 
     def test_delete_qos(self):
-
         """Test delte qos."""
 
         LOG.debug("test_delete_qos - START")
@@ -386,7 +373,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_delete_qos - END")
 
     def test_delete_qosDNE(self, qos_id='100'):
-
         """Test delte qos does not exist."""
 
         LOG.debug("test_delete_qosDNE - START")
@@ -397,7 +383,6 @@ class QosExtensionTest(base.BaseTestCase):
         LOG.debug("test_delete_qosDNE - END")
 
     def tearDownQos(self, delete_profile_path):
-
         """Tear Down Qos."""
 
         self.test_app.delete(delete_profile_path)
@@ -409,7 +394,6 @@ class QosExtensionTest(base.BaseTestCase):
 class CredentialExtensionTest(base.BaseTestCase):
 
     def setUp(self):
-
         """Set up function."""
 
         super(CredentialExtensionTest, self).setUp()
@@ -434,7 +418,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         self._l2network_plugin = l2network_plugin.L2Network()
 
     def test_list_credentials(self):
-
         """Test list credentials."""
 
         #Create Credential before listing
@@ -479,7 +462,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_list_credentials - END")
 
     def test_create_credential(self):
-
         """Test create credential."""
 
         LOG.debug("test_create_credential - START")
@@ -498,7 +480,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_create_credential - END")
 
     def test_create_credentialBADRequest(self):
-
         """Test create credential bad request."""
 
         LOG.debug("test_create_credentialBADRequest - START")
@@ -509,7 +490,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_create_credentialBADRequest - END")
 
     def test_show_credential(self):
-
         """Test show credential."""
 
         LOG.debug("test_show_credential - START")
@@ -534,7 +514,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_show_credential - END")
 
     def test_show_credentialDNE(self, credential_id='100'):
-
         """Test show credential does not exist."""
 
         LOG.debug("test_show_credentialDNE - START")
@@ -545,7 +524,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_show_credentialDNE - END")
 
     def test_update_credential(self):
-
         """Test update credential."""
 
         LOG.debug("test_update_credential - START")
@@ -581,7 +559,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_credential - END")
 
     def test_update_credBADReq(self):
-
         """Test update credential bad request."""
 
         LOG.debug("test_update_credBADReq - START")
@@ -600,7 +577,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_credBADReq - END")
 
     def test_update_credentialDNE(self, credential_id='100'):
-
         """Test update credential does not exist."""
 
         LOG.debug("test_update_credentialDNE - START")
@@ -620,7 +596,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_update_credentialDNE - END")
 
     def test_delete_credential(self):
-
         """Test delete credential."""
 
         LOG.debug("test_delete_credential - START")
@@ -638,7 +613,6 @@ class CredentialExtensionTest(base.BaseTestCase):
         LOG.debug("test_delete_credential - END")
 
     def test_delete_credentialDNE(self, credential_id='100'):
-
         """Test delete credential does not exist."""
 
         LOG.debug("test_delete_credentialDNE - START")

@@ -41,8 +41,9 @@ class Fault(webob.exc.HTTPException):
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):
-        """Generate a WSGI response based on the
-         exception passed to constructor.
+        """Generate a WSGI response.
+
+        Response is generated based on the exception passed to constructor.
         """
         # Replace the body with fault details.
         code = self.wrapped_exc.status_int
@@ -60,7 +61,8 @@ class Fault(webob.exc.HTTPException):
 
 
 class PortNotFound(webob.exc.HTTPClientError):
-    """
+    """PortNotFound exception.
+
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server did not find the port specified
@@ -74,7 +76,8 @@ class PortNotFound(webob.exc.HTTPClientError):
 
 
 class CredentialNotFound(webob.exc.HTTPClientError):
-    """
+    """CredentialNotFound exception.
+
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server did not find the Credential specified
@@ -89,7 +92,8 @@ class CredentialNotFound(webob.exc.HTTPClientError):
 
 
 class QosNotFound(webob.exc.HTTPClientError):
-    """
+    """QosNotFound exception.
+
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server did not find the QoS specified
@@ -104,7 +108,8 @@ class QosNotFound(webob.exc.HTTPClientError):
 
 
 class NovatenantNotFound(webob.exc.HTTPClientError):
-    """
+    """NovatenantNotFound exception.
+
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server did not find the Novatenant specified
@@ -119,7 +124,8 @@ class NovatenantNotFound(webob.exc.HTTPClientError):
 
 
 class RequestedStateInvalid(webob.exc.HTTPClientError):
-    """
+    """RequestedStateInvalid exception.
+
     subclass of :class:`~HTTPClientError`
 
     This indicates that the server could not update the port state to

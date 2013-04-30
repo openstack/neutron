@@ -19,95 +19,87 @@
 
 
 class CiscoNEXUSFakeDriver():
-    """
-    Nexus Driver Fake Class
-    """
+    """Nexus Driver Fake Class."""
+
     def __init__(self):
         pass
 
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
-        """
-        Makes the fake connection to the Nexus Switch
-        """
+        """Make the fake connection to the Nexus Switch."""
         pass
 
     def create_xml_snippet(self, cutomized_config):
-        """
-        Creates the Proper XML structure for the Nexus Switch Configuration
+        """Create XML snippet.
+
+        Creates the Proper XML structure for the Nexus Switch
+        Configuration.
         """
         pass
 
     def enable_vlan(self, mgr, vlanid, vlanname):
-        """
-        Creates a VLAN on Nexus Switch given the VLAN ID and Name
-        """
+        """Create a VLAN on Nexus Switch given the VLAN ID and Name."""
         pass
 
     def disable_vlan(self, mgr, vlanid):
-        """
-        Delete a VLAN on Nexus Switch given the VLAN ID
-        """
+        """Delete a VLAN on Nexus Switch given the VLAN ID."""
         pass
 
     def enable_port_trunk(self, mgr, interface):
-        """
-        Enables trunk mode an interface on Nexus Switch
-        """
+        """Enable trunk mode an interface on Nexus Switch."""
         pass
 
     def disable_switch_port(self, mgr, interface):
-        """
-        Disables trunk mode an interface on Nexus Switch
-        """
+        """Disable trunk mode an interface on Nexus Switch."""
         pass
 
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        """
-        Enables trunk mode vlan access an interface on Nexus Switch given
-        VLANID
+        """Enable vlan on trunk interface.
+
+        Enable trunk mode vlan access an interface on Nexus Switch given
+        VLANID.
         """
         pass
 
     def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        """
+        """Disables vlan in trunk interface.
+
         Enables trunk mode vlan access an interface on Nexus Switch given
-        VLANID
+        VLANID.
         """
         pass
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
                     nexus_password, nexus_ports, nexus_ssh_port, vlan_ids):
-        """
+        """Create VLAN and enable it on interface.
+
         Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
-        given the VLAN ID and Name and Interface Number
+        given the VLAN ID and Name and Interface Number.
         """
         pass
 
     def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
                     nexus_ports, nexus_ssh_port):
-        """
+        """Delete VLAN.
+
         Delete a VLAN and Disables trunk mode an interface on Nexus Switch
-        given the VLAN ID and Interface Number
+        given the VLAN ID and Interface Number.
         """
         pass
 
     def build_vlans_cmd(self):
-        """
-        Builds a string with all the VLANs on the same Switch
-        """
+        """Build a string with all the VLANs on the same Switch."""
         pass
 
     def add_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
                      nexus_ports, nexus_ssh_port, vlan_ids=None):
-        """
-        Adds a vlan from interfaces on the Nexus switch given the VLAN ID
-        """
+        """Add a vlan from interfaces on the Nexus switch given the VLAN ID."""
         pass
 
     def remove_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
                         nexus_ports, nexus_ssh_port):
-        """
-        Removes a vlan from interfaces on the Nexus switch given the VLAN ID
+        """Remove vlan from interfaces.
+
+        Removes a vlan from interfaces on the Nexus switch given the VLAN ID.
         """
         pass

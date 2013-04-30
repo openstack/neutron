@@ -31,7 +31,7 @@ from quantum import wsgi
 
 
 class Credential(extensions.ExtensionDescriptor):
-    """extension class Credential."""
+    """Extension class Credential."""
 
     @classmethod
     def get_name(cls):

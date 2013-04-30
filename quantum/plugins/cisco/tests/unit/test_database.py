@@ -32,8 +32,9 @@ LOG = logging.getLogger(__name__)
 
 class NexusDB(object):
     """Class consisting of methods to call nexus db methods."""
+
     def get_all_nexusportbindings(self):
-        """get all nexus port bindings."""
+        """Get all nexus port bindings."""
         bindings = []
         try:
             for bind in nexus_db.get_all_nexusport_bindings():
@@ -47,7 +48,7 @@ class NexusDB(object):
         return bindings
 
     def get_nexusportbinding(self, vlan_id):
-        """get nexus port binding."""
+        """Get nexus port binding."""
         binding = []
         try:
             for bind in nexus_db.get_nexusport_binding(vlan_id):
@@ -61,7 +62,7 @@ class NexusDB(object):
         return binding
 
     def create_nexusportbinding(self, port_id, vlan_id):
-        """create nexus port binding."""
+        """Create nexus port binding."""
         bind_dict = {}
         try:
             res = nexus_db.add_nexusport_binding(port_id, vlan_id)
@@ -73,7 +74,7 @@ class NexusDB(object):
             LOG.error("Failed to create nexus binding: %s" % str(exc))
 
     def delete_nexusportbinding(self, vlan_id):
-        """delete nexus port binding."""
+        """Delete nexus port binding."""
         bindings = []
         try:
             bind = nexus_db.remove_nexusport_binding(vlan_id)
@@ -88,7 +89,7 @@ class NexusDB(object):
                             % str(exc))
 
     def update_nexusport_binding(self, port_id, new_vlan_id):
-        """update nexus port binding."""
+        """Update nexus port binding."""
         try:
             res = nexus_db.update_nexusport_binding(port_id, new_vlan_id)
             LOG.debug("Updating nexus port binding : %s" % res.port_id)
@@ -354,13 +355,13 @@ class NexusDBTest(base.BaseTestCase):
         LOG.debug("Setup")
 
     def testa_create_nexusportbinding(self):
-        """create nexus port binding."""
+        """Create nexus port binding."""
         binding1 = self.dbtest.create_nexusportbinding("port1", 10)
         self.assertTrue(binding1["port-id"] == "port1")
         self.tearDown_nexusportbinding()
 
     def testb_getall_nexusportbindings(self):
-        """get all nexus port binding."""
+        """Get all nexus port bindings."""
         self.dbtest.create_nexusportbinding("port1", 10)
         self.dbtest.create_nexusportbinding("port2", 10)
         bindings = self.dbtest.get_all_nexusportbindings()
@@ -372,7 +373,7 @@ class NexusDBTest(base.BaseTestCase):
         self.tearDown_nexusportbinding()
 
     def testc_delete_nexusportbinding(self):
-        """delete nexus port binding."""
+        """Delete nexus port binding."""
         self.dbtest.create_nexusportbinding("port1", 10)
         self.dbtest.delete_nexusportbinding(10)
         bindings = self.dbtest.get_all_nexusportbindings()
@@ -384,7 +385,7 @@ class NexusDBTest(base.BaseTestCase):
         self.tearDown_nexusportbinding()
 
     def testd_update_nexusportbinding(self):
-        """update nexus port binding."""
+        """Update nexus port binding."""
         binding1 = self.dbtest.create_nexusportbinding("port1", 10)
         binding1 = self.dbtest.update_nexusport_binding(binding1["port-id"],
                                                         20)
@@ -397,7 +398,7 @@ class NexusDBTest(base.BaseTestCase):
         self.tearDown_nexusportbinding()
 
     def tearDown_nexusportbinding(self):
-        """tear down nexusport binding table."""
+        """Tear down nexus port binding table."""
         LOG.debug("Tearing Down Nexus port Bindings")
         binds = self.dbtest.get_all_nexusportbindings()
         for bind in binds:
@@ -417,7 +418,7 @@ class L2networkDBTest(base.BaseTestCase):
         LOG.debug("Setup")
 
     def testa_create_vlanbinding(self):
-        """test add vlan binding."""
+        """Test add vlan binding."""
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, "vlan1", net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
@@ -425,7 +426,7 @@ class L2networkDBTest(base.BaseTestCase):
         self.teardown_network()
 
     def testb_getall_vlanbindings(self):
-        """test get all vlan binding."""
+        """Test get all vlan bindings."""
         net1 = self.quantum.create_network("t1", "netid1")
         net2 = self.quantum.create_network("t1", "netid2")
         vlan1 = self.dbtest.create_vlan_binding(10, "vlan1", net1["net-id"])
@@ -442,7 +443,7 @@ class L2networkDBTest(base.BaseTestCase):
         self.teardown_network()
 
     def testc_delete_vlanbinding(self):
-        """test delete vlan binding."""
+        """Test delete vlan binding."""
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, "vlan1", net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
@@ -457,7 +458,7 @@ class L2networkDBTest(base.BaseTestCase):
         self.teardown_network()
 
     def testd_update_vlanbinding(self):
-        """test update vlan binding."""
+        """Test update vlan binding."""
         net1 = self.quantum.create_network("t1", "netid1")
         vlan1 = self.dbtest.create_vlan_binding(10, "vlan1", net1["net-id"])
         self.assertTrue(vlan1["vlan-id"] == "10")
@@ -472,7 +473,7 @@ class L2networkDBTest(base.BaseTestCase):
         self.teardown_network()
 
     def testm_test_vlanids(self):
-        """test vlanid methods."""
+        """Test vlanid methods."""
         l2network_db.create_vlanids()
         vlanids = l2network_db.get_all_vlanids()
         self.assertTrue(len(vlanids) > 0)
@@ -523,13 +524,13 @@ class QuantumDBTest(base.BaseTestCase):
         LOG.debug("Setup")
 
     def testa_create_network(self):
-        """test to create network."""
+        """Test to create network."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
         self.teardown_network_port()
 
     def testb_get_networks(self):
-        """test to get all networks."""
+        """Test to get all networks."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
         net2 = self.dbtest.create_network(self.tenant_id, "plugin_test2")
@@ -543,7 +544,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def testc_delete_network(self):
-        """test to delete network."""
+        """Test to delete network."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
         self.dbtest.delete_network(net1["net-id"])
@@ -556,7 +557,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def testd_update_network(self):
-        """test to update (rename) network."""
+        """Test to update (rename) network."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         self.assertTrue(net1["net-name"] == "plugin_test1")
         net = self.dbtest.update_network(self.tenant_id, net1["net-id"],
@@ -565,7 +566,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def teste_create_port(self):
-        """test to create port."""
+        """Test to create port."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         port = self.dbtest.create_port(net1["net-id"])
         self.assertTrue(port["net-id"] == net1["net-id"])
@@ -577,7 +578,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def testf_delete_port(self):
-        """test to delete port."""
+        """Test to delete port."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         port = self.dbtest.create_port(net1["net-id"])
         self.assertTrue(port["net-id"] == net1["net-id"])
@@ -596,7 +597,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def testg_plug_unplug_interface(self):
-        """test to plug/unplug interface."""
+        """Test to plug/unplug interface."""
         net1 = self.dbtest.create_network(self.tenant_id, "plugin_test1")
         port1 = self.dbtest.create_port(net1["net-id"])
         self.dbtest.plug_interface(net1["net-id"], port1["port-id"], "vif1.1")
@@ -608,7 +609,7 @@ class QuantumDBTest(base.BaseTestCase):
         self.teardown_network_port()
 
     def testh_joined_test(self):
-        """test to get network and port."""
+        """Test to get network and port."""
         net1 = self.dbtest.create_network("t1", "net1")
         port1 = self.dbtest.create_port(net1["net-id"])
         self.assertTrue(port1["net-id"] == net1["net-id"])

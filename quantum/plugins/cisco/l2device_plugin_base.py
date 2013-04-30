@@ -21,8 +21,8 @@ import inspect
 
 
 class L2DevicePluginBase(object):
-    """
-    Base class for a device-specific plugin.
+    """Base class for a device-specific plugin.
+
     An example of a device-specific plugin is a Nexus switch plugin.
     The network model relies on device-category-specific plugins to perform
     the configuration on each device.
@@ -32,7 +32,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def get_all_networks(self, tenant_id, **kwargs):
-        """
+        """Get newtorks.
+
         :returns:
         :raises:
         """
@@ -41,7 +42,8 @@ class L2DevicePluginBase(object):
     @abstractmethod
     def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
                        **kwargs):
-        """
+        """Create network.
+
         :returns:
         :raises:
         """
@@ -49,7 +51,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def delete_network(self, tenant_id, net_id, **kwargs):
-        """
+        """Delete network.
+
         :returns:
         :raises:
         """
@@ -57,7 +60,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def get_network_details(self, tenant_id, net_id, **kwargs):
-        """
+        """Get network details.
+
         :returns:
         :raises:
         """
@@ -65,7 +69,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def update_network(self, tenant_id, net_id, name, **kwargs):
-        """
+        """Update network.
+
         :returns:
         :raises:
         """
@@ -73,7 +78,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def get_all_ports(self, tenant_id, net_id, **kwargs):
-        """
+        """Get ports.
+
         :returns:
         :raises:
         """
@@ -81,7 +87,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
-        """
+        """Create port.
+
         :returns:
         :raises:
         """
@@ -89,7 +96,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):
-        """
+        """Delete port.
+
         :returns:
         :raises:
         """
@@ -97,7 +105,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def update_port(self, tenant_id, net_id, port_id, **kwargs):
-        """
+        """Update port.
+
         :returns:
         :raises:
         """
@@ -105,7 +114,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def get_port_details(self, tenant_id, net_id, port_id, **kwargs):
-        """
+        """Get port details.
+
         :returns:
         :raises:
         """
@@ -114,7 +124,8 @@ class L2DevicePluginBase(object):
     @abstractmethod
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
                        **kwargs):
-        """
+        """Plug interface.
+
         :returns:
         :raises:
         """
@@ -122,7 +133,8 @@ class L2DevicePluginBase(object):
 
     @abstractmethod
     def unplug_interface(self, tenant_id, net_id, port_id, **kwargs):
-        """
+        """Unplug interface.
+
         :returns:
         :raises:
         """
@@ -130,35 +142,40 @@ class L2DevicePluginBase(object):
 
     def create_subnet(self, tenant_id, net_id, ip_version,
                       subnet_cidr, **kwargs):
-        """
+        """Create subnet.
+
         :returns:
         :raises:
         """
         pass
 
     def get_subnets(self, tenant_id, net_id, **kwargs):
-        """
+        """Get subnets.
+
         :returns:
         :raises:
         """
         pass
 
     def get_subnet(self, tenant_id, net_id, subnet_id, **kwargs):
-        """
+        """Get subnet.
+
         :returns:
         :raises:
         """
         pass
 
     def update_subnet(self, tenant_id, net_id, subnet_id, **kwargs):
-        """
+        """Update subnet.
+
         :returns:
         :raises:
         """
         pass
 
     def delete_subnet(self, tenant_id, net_id, subnet_id, **kwargs):
-        """
+        """Delete subnet.
+
         :returns:
         :raises:
         """
@@ -166,7 +183,8 @@ class L2DevicePluginBase(object):
 
     @classmethod
     def __subclasshook__(cls, klass):
-        """
+        """Check plugin class.
+
         The __subclasshook__ method is a class method
         that will be called everytime a class is tested
         using issubclass(klass, Plugin).

@@ -34,9 +34,8 @@ LOG = logging.getLogger(__name__)
 
 
 class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
-    """
-    Meta-Plugin with v2 API support for multiple sub-plugins.
-    """
+    """Meta-Plugin with v2 API support for multiple sub-plugins."""
+
     supported_extension_aliases = ["Cisco Credential", "Cisco qos"]
     _methods_to_delegate = ['create_network',
                             'delete_network', 'update_network', 'get_network',
@@ -49,9 +48,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     _master = True
 
     def __init__(self):
-        """
-        Loads the model class.
-        """
+        """Load the model class."""
         self._model = importutils.import_object(config.CISCO.model_class)
         if hasattr(self._model, "MANAGE_STATE") and self._model.MANAGE_STATE:
             self._master = False
@@ -68,7 +65,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         LOG.debug(_("Plugin initialization complete"))
 
     def __getattribute__(self, name):
-        """
+        """Delegate core API calls to the model class.
+
         When the configured model class offers to manage the state of the
         logical resources, we delegate the core API calls directly to it.
         Note: Bulking calls will be handled by this class, and turned into
@@ -83,7 +81,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             return object.__getattribute__(self, name)
 
     def __getattr__(self, name):
-        """
+        """Delegate calls to the extensions.
+
         This delegates the calls to the extensions explicitly implemented by
         the model.
         """
@@ -99,10 +98,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     Core API implementation
     """
     def create_network(self, context, network):
-        """
-        Creates a new Virtual Network, and assigns it
-        a symbolic name.
-        """
+        """Create new Virtual Network, and assigns it a symbolic name."""
         LOG.debug(_("create_network() called"))
         new_network = super(PluginV2, self).create_network(context,
                                                            network)
@@ -116,9 +112,9 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def update_network(self, context, id, network):
-        """
-        Updates the symbolic name belonging to a particular
-        Virtual Network.
+        """Update network.
+
+        Updates the symbolic name belonging to a particular Virtual Network.
         """
         LOG.debug(_("update_network() called"))
         upd_net_dict = super(PluginV2, self).update_network(context, id,
@@ -128,7 +124,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return upd_net_dict
 
     def delete_network(self, context, id):
-        """
+        """Delete network.
+
         Deletes the network with the specified network identifier
         belonging to the specified tenant.
         """
@@ -157,23 +154,17 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def get_network(self, context, id, fields=None):
-        """
-        Gets a particular network
-        """
+        """Get a particular network."""
         LOG.debug(_("get_network() called"))
         return super(PluginV2, self).get_network(context, id, fields)
 
     def get_networks(self, context, filters=None, fields=None):
-        """
-        Gets all networks
-        """
+        """Get all networks."""
         LOG.debug(_("get_networks() called"))
         return super(PluginV2, self).get_networks(context, filters, fields)
 
     def create_port(self, context, port):
-        """
-        Creates a port on the specified Virtual Network.
-        """
+        """Create a port on the specified Virtual Network."""
         LOG.debug(_("create_port() called"))
         new_port = super(PluginV2, self).create_port(context, port)
         try:
@@ -184,18 +175,16 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def delete_port(self, context, id):
-        """
-        Deletes a port
-        """
         LOG.debug(_("delete_port() called"))
         port = self._get_port(context, id)
-        """
+        """Delete port.
+
         TODO (Sumit): Disabling this check for now, check later
-        #Allow deleting a port only if the administrative state is down,
-        #and its operation status is also down
-        if port['admin_state_up'] or port['status'] == 'ACTIVE':
-            raise exc.PortInUse(port_id=id, net_id=port['network_id'],
-                                att_id=port['device_id'])
+        Allow deleting a port only if the administrative state is down,
+        and its operation status is also down
+        #if port['admin_state_up'] or port['status'] == 'ACTIVE':
+        #    raise exc.PortInUse(port_id=id, net_id=port['network_id'],
+        #                        att_id=port['device_id'])
         """
         try:
             kwargs = {const.PORT: port}
@@ -207,9 +196,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def update_port(self, context, id, port):
-        """
-        Updates the state of a port and returns the updated port
-        """
+        """Update the state of a port and return the updated port."""
         LOG.debug(_("update_port() called"))
         try:
             self._invoke_device_plugins(self._func_name(), [context, id,
@@ -219,7 +206,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def create_subnet(self, context, subnet):
-        """
+        """Create subnet.
+
         Create a subnet, which represents a range of IP addresses
         that can be allocated to devices.
         """
@@ -234,9 +222,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def update_subnet(self, context, id, subnet):
-        """
-        Updates the state of a subnet and returns the updated subnet
-        """
+        """Updates the state of a subnet and returns the updated subnet."""
         LOG.debug(_("update_subnet() called"))
         try:
             self._invoke_device_plugins(self._func_name(), [context, id,
@@ -246,9 +232,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             raise
 
     def delete_subnet(self, context, id):
-        """
-        Deletes a subnet
-        """
         LOG.debug(_("delete_subnet() called"))
         with context.session.begin():
             subnet = self._get_subnet(context, id)
@@ -372,8 +355,9 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return host_list
 
     def associate_port(self, tenant_id, instance_id, instance_desc):
-        """
-        Get the portprofile name and the device name for the dynamic vnic
+        """Associate port.
+
+        Get the portprofile name and the device name for the dynamic vnic.
         """
         LOG.debug(_("associate_port() called"))
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
@@ -381,9 +365,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                instance_desc])
 
     def detach_port(self, tenant_id, instance_id, instance_desc):
-        """
-        Remove the association of the VIF with the dynamic vnic
-        """
+        """Remove the association of the VIF with the dynamic vnic."""
         LOG.debug(_("detach_port() called"))
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
@@ -393,9 +375,9 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     Private functions
     """
     def _invoke_device_plugins(self, function_name, args):
-        """
-        Device-specific calls including core API and extensions are
-        delegated to the model.
+        """Device-specific calls.
+
+        Including core API and extensions are delegated to the model.
         """
         if hasattr(self._model, function_name):
             return getattr(self._model, function_name)(*args)
