@@ -88,13 +88,14 @@ nexus_dictionary = {}
 
 class CiscoConfigOptions():
     """Cisco Configuration Options Class."""
+
     def __init__(self):
         self._create_nexus_dictionary()
 
     def _create_nexus_dictionary(self):
-        """
-        Create the Nexus dictionary from the cisco_plugins.ini
-        NEXUS_SWITCH section(s).
+        """Create the Nexus dictionary.
+
+        Reads data from cisco_plugins.ini NEXUS_SWITCH section(s).
         """
         for parsed_file in cfg.CONF._cparser.parsed:
             for parsed_item in parsed_file.keys():

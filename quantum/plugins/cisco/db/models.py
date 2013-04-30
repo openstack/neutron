@@ -30,6 +30,7 @@ BASE = declarative_base()
 
 class QuantumBase(object):
     """Base class for Quantum Models."""
+
     __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
@@ -56,6 +57,7 @@ class QuantumBase(object):
 
     def iteritems(self):
         """Make the model object behave like a dict.
+
         Includes attributes from joins.
         """
         local = dict(self)
@@ -67,6 +69,7 @@ class QuantumBase(object):
 
 class Port(BASE, QuantumBase):
     """Represents a port on a quantum network."""
+
     __tablename__ = 'ports'
 
     uuid = Column(String(255), primary_key=True)
@@ -88,6 +91,7 @@ class Port(BASE, QuantumBase):
 
 class Network(BASE, QuantumBase):
     """Represents a quantum network."""
+
     __tablename__ = 'networks'
 
     uuid = Column(String(255), primary_key=True)

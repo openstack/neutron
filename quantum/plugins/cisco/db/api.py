@@ -30,9 +30,10 @@ BASE = models.BASE
 
 
 def configure_db(options):
-    """
-    Establish the database, create an engine if needed, and
-    register the models.
+    """Configure database.
+
+    Establish the database, create an engine if needed, and register the
+    models.
 
     :param options: Mapping of configuration options
     """

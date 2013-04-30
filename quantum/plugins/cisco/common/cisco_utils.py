@@ -26,9 +26,9 @@ LOG = logging.getLogger(__name__)
 
 
 def get16ByteUUID(uuid):
-    """
-    Return a 16 byte has of the UUID, used when smaller unique
-    ID is required.
+    """Return first 16 bytes of UUID.
+
+    Used when smaller unique ID is required.
     """
     return hashlib.md5(uuid).hexdigest()[:16]
 

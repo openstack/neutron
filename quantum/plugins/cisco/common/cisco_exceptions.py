@@ -17,9 +17,7 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-"""
-Exceptions used by the Cisco plugin
-"""
+"""Exceptions used by the Cisco plugin."""
 
 from quantum.common import exceptions
 

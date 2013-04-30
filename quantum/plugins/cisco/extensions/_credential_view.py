@@ -19,18 +19,16 @@
 
 
 def get_view_builder(req):
-    """get view builder."""
     base_url = req.application_url
     return ViewBuilder(base_url)
 
 
 class ViewBuilder(object):
-    """
-    ViewBuilder for Credential,
-    derived from quantum.views.networks
-    """
+    """ViewBuilder for Credential, derived from quantum.views.networks."""
+
     def __init__(self, base_url):
-        """
+        """Initialize builder.
+
         :param base_url: url of the root wsgi application
         """
         self.base_url = base_url

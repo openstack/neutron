@@ -40,7 +40,8 @@ LOG = logging.getLogger(__name__)
 
 
 class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
-    """
+    """Virtual Physical Switch Model.
+
     This implementation works with OVS and Nexus plugin for the
     following topology:
     One or more servers to a nexus switch.
@@ -58,10 +59,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                             'get_subnet', 'get_subnets', ]
 
     def __init__(self):
-        """
-        Initialize the segmentation manager, check which device plugins are
-        configured, and load the inventories those device plugins for which the
-        inventory is configured
+        """Initialize the segmentation manager.
+
+        Checks which device plugins are configured, and load the inventories
+        those device plugins for which the inventory is configured.
         """
         conf.CiscoConfigOptions()
 
@@ -90,7 +91,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                    'name': self.__class__.__name__})
 
     def __getattribute__(self, name):
-        """
+        """Delegate calls to OVS sub-plugin.
+
         This delegates the calls to the methods implemented only by the OVS
         sub-plugin. Note: Currently, bulking is handled by the caller
         (PluginV2), and this model class expects to receive only non-bulking
@@ -118,7 +120,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return func_name
 
     def _invoke_plugin_per_device(self, plugin_key, function_name, args):
-        """
+        """Invoke plugin per device.
+
         Invokes a device plugin's relevant functions (based on the
         plugin implementation) for completing this operation.
         """
@@ -135,7 +138,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                     device_params)]
 
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
-        """
+        """Invoke plugin.
+
         Invokes the relevant function on a device plugin's
         implementation for completing this operation.
         """
@@ -189,7 +193,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return host
 
     def create_network(self, context, network):
-        """
+        """Create network.
+
         Perform this operation in the context of the configured device
         plugins.
         """
@@ -213,7 +218,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def update_network(self, context, id, network):
-        """
+        """Update network.
+
         Perform this operation in the context of the configured device
         plugins.
         """
@@ -235,7 +241,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return ovs_output[0]
 
     def delete_network(self, context, id):
-        """
+        """Delete network.
+
         Perform this operation in the context of the configured device
         plugins.
         """
@@ -286,7 +293,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         return nexus_output
 
     def create_port(self, context, port):
-        """
+        """Create port.
+
         Perform this operation in the context of the configured device
         plugins.
         """
@@ -323,7 +331,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         pass
 
     def update_port(self, context, id, port):
-        """
+        """Update port.
+
         Perform this operation in the context of the configured device
         plugins.
         """
@@ -354,7 +363,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def delete_port(self, context, id):
-        """
+        """Delete port.
+
         Perform this operation in the context of the configured device
         plugins.
         """

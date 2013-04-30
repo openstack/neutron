@@ -26,6 +26,7 @@ from quantum.openstack.common import uuidutils
 
 class L2NetworkBase(object):
     """Base class for L2Network Models."""
+
     #__table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
@@ -56,7 +57,8 @@ class L2NetworkBase(object):
             setattr(self, k, v)
 
     def iteritems(self):
-        """Make the model object behave like a dict"
+        """Make the model object behave like a dict.
+
         Includes attributes from joins.
         """
         local = dict(self)
@@ -103,6 +105,7 @@ class Vlan_Binding(model_base.BASEV2, L2NetworkBase):
 
 class QoS(model_base.BASEV2, L2NetworkBase):
     """Represents QoS for a tenant."""
+
     __tablename__ = 'qoss'
 
     qos_id = Column(String(255))
@@ -123,6 +126,7 @@ class QoS(model_base.BASEV2, L2NetworkBase):
 
 class Credential(model_base.BASEV2, L2NetworkBase):
     """Represents credentials for a tenant."""
+
     __tablename__ = 'credentials'
 
     credential_id = Column(String(255))
