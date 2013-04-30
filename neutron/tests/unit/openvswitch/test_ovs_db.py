@@ -13,12 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
 import testtools
 from testtools import matchers
 
 from neutron.common import exceptions as q_exc
 from neutron.db import api as db
+from neutron.openstack.common.db import exception as db_exc
+from neutron.openstack.common.db.sqlalchemy import session
 from neutron.plugins.openvswitch import ovs_db_v2
+from neutron.plugins.openvswitch import ovs_models_v2 as ovs_models
 from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -261,6 +265,30 @@ class TunnelAllocationsTest(base.BaseTestCase):
 
         ovs_db_v2.release_tunnel(self.session, tunnel_id, TUNNEL_RANGES)
         self.assertIsNone(ovs_db_v2.get_tunnel_allocation(tunnel_id))
+
+    def test_add_tunnel_endpoint_create_new_endpoint(self):
+        addr = '10.0.0.1'
+        ovs_db_v2.add_tunnel_endpoint(addr)
+        self.assertIsNotNone(self.session.query(ovs_models.TunnelEndpoint).
+                             filter_by(ip_address=addr).first())
+
+    def test_add_tunnel_endpoint_retrieve_an_existing_endpoint(self):
+        addr = '10.0.0.1'
+        self.session.add(ovs_models.TunnelEndpoint(ip_address=addr, id=1))
+        self.session.flush()
+
+        tunnel = ovs_db_v2.add_tunnel_endpoint(addr)
+        self.assertEquals(tunnel.id, 1)
+        self.assertEquals(tunnel.ip_address, addr)
+
+    def test_add_tunnel_endpoint_handle_duplicate_error(self):
+        with mock.patch.object(session.Session, 'query') as query_mock:
+            error = db_exc.DBDuplicateEntry(['id'])
+            query_mock.side_effect = error
+
+            with testtools.ExpectedException(q_exc.NeutronException):
+                ovs_db_v2.add_tunnel_endpoint('10.0.0.1', 5)
+            self.assertEquals(query_mock.call_count, 5)
 
 
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):

@@ -18,6 +18,7 @@
 
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.schema import UniqueConstraint
 
 from neutron.db.models_v2 import model_base
 
@@ -86,6 +87,9 @@ class NetworkBinding(model_base.BASEV2):
 class TunnelEndpoint(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""
     __tablename__ = 'ovs_tunnel_endpoints'
+    __table_args__ = (
+        UniqueConstraint('id', name='uniq_ovs_tunnel_endpoints0id'),
+    )
 
     ip_address = Column(String(64), primary_key=True)
     id = Column(Integer, nullable=False)
