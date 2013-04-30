@@ -114,9 +114,7 @@ class TestWSGIServer(base.BaseTestCase):
 
 class SerializerTest(base.BaseTestCase):
     def test_serialize_unknown_content_type(self):
-        """
-        Test serialize verifies that exception InvalidContentType is raised
-        """
+        """Verify that exception InvalidContentType is raised."""
         input_dict = {'servers': {'test': 'pass'}}
         content_type = 'application/unknown'
         serializer = wsgi.Serializer()
@@ -126,10 +124,7 @@ class SerializerTest(base.BaseTestCase):
             input_dict, content_type)
 
     def test_get_deserialize_handler_unknown_content_type(self):
-        """
-        Test get deserialize verifies
-        that exception InvalidContentType is raised
-        """
+        """Verify that exception InvalidContentType is raised."""
         content_type = 'application/unknown'
         serializer = wsgi.Serializer()
 
@@ -138,9 +133,7 @@ class SerializerTest(base.BaseTestCase):
             serializer.get_deserialize_handler, content_type)
 
     def test_serialize_content_type_json(self):
-        """
-        Test serialize with content type json
-        """
+        """Test serialize with content type json."""
         input_data = {'servers': ['test=pass']}
         content_type = 'application/json'
         serializer = wsgi.Serializer(default_xmlns="fake")
@@ -149,9 +142,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual('{"servers": ["test=pass"]}', result)
 
     def test_serialize_content_type_xml(self):
-        """
-        Test serialize with content type xml
-        """
+        """Test serialize with content type xml."""
         input_data = {'servers': ['test=pass']}
         content_type = 'application/xml'
         serializer = wsgi.Serializer(default_xmlns="fake")
@@ -168,9 +159,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual(expected, result)
 
     def test_deserialize_raise_bad_request(self):
-        """
-        Test serialize verifies that exception is raises
-        """
+        """Test serialize verifies that exception is raises."""
         content_type = 'application/unknown'
         data_string = 'test'
         serializer = wsgi.Serializer(default_xmlns="fake")
@@ -180,9 +169,7 @@ class SerializerTest(base.BaseTestCase):
             serializer.deserialize, data_string, content_type)
 
     def test_deserialize_json_content_type(self):
-        """
-        Test Serializer.deserialize with content type json
-        """
+        """Test Serializer.deserialize with content type json."""
         content_type = 'application/json'
         data_string = '{"servers": ["test=pass"]}'
         serializer = wsgi.Serializer(default_xmlns="fake")
@@ -191,9 +178,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual({'body': {u'servers': [u'test=pass']}}, result)
 
     def test_deserialize_xml_content_type(self):
-        """
-        Test deserialize with content type xml
-        """
+        """Test deserialize with content type xml."""
         content_type = 'application/xml'
         data_string = (
             '<servers xmlns="fake">'
@@ -208,9 +193,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual(expected, result)
 
     def test_deserialize_xml_content_type_with_meta(self):
-        """
-        Test deserialize with content type xml with meta
-        """
+        """Test deserialize with content type xml with meta."""
         content_type = 'application/xml'
         data_string = (
             '<servers>'
@@ -229,9 +212,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual(expected, result)
 
     def test_serialize_xml_root_key_is_dict(self):
-        """
-        Test Serializer.serialize with content type xml with meta dict
-        """
+        """Test Serializer.serialize with content type xml with meta dict."""
         content_type = 'application/xml'
         data = {'servers': {'network': (2, 3)}}
         metadata = {'xmlns': 'fake'}
@@ -249,9 +230,7 @@ class SerializerTest(base.BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_serialize_xml_root_key_is_list(self):
-        """
-        Test serialize with content type xml with meta list
-        """
+        """Test serialize with content type xml with meta list."""
         input_dict = {'servers': ['test=pass']}
         content_type = 'application/xml'
         metadata = {'application/xml': {
@@ -307,9 +286,7 @@ class RequestDeserializerTest(testtools.TestCase):
         self.deserializer = wsgi.RequestDeserializer(self.body_deserializers)
 
     def test_get_deserializer(self):
-        """
-        Test RequestDeserializer.get_body_deserializer
-        """
+        """Test RequestDeserializer.get_body_deserializer."""
         expected_json_serializer = self.deserializer.get_body_deserializer(
             'application/json')
         expected_xml_serializer = self.deserializer.get_body_deserializer(
@@ -323,9 +300,7 @@ class RequestDeserializerTest(testtools.TestCase):
             self.body_deserializers['application/xml'])
 
     def test_get_expected_content_type(self):
-        """
-        Test RequestDeserializer.get_expected_content_type
-        """
+        """Test RequestDeserializer.get_expected_content_type."""
         request = wsgi.Request.blank('/')
         request.headers['Accept'] = 'application/json'
 
@@ -334,9 +309,7 @@ class RequestDeserializerTest(testtools.TestCase):
             'application/json')
 
     def test_get_action_args(self):
-        """
-        Test RequestDeserializer.get_action_args
-        """
+        """Test RequestDeserializer.get_action_args."""
         env = {
             'wsgiorg.routing_args': [None, {
                 'controller': None,
@@ -349,9 +322,7 @@ class RequestDeserializerTest(testtools.TestCase):
             self.deserializer.get_action_args(env), expected)
 
     def test_deserialize(self):
-        """
-        Test RequestDeserializer.deserialize
-        """
+        """Test RequestDeserializer.deserialize."""
         with mock.patch.object(
             self.deserializer, 'get_action_args') as mock_method:
             mock_method.return_value = {'action': 'create'}
@@ -363,10 +334,7 @@ class RequestDeserializerTest(testtools.TestCase):
             self.assertEqual(expected, deserialized)
 
     def test_get_body_deserializer_unknown_content_type(self):
-        """
-        Test get body deserializer verifies
-         that exception InvalidContentType is raised
-        """
+        """Verify that exception InvalidContentType is raised."""
         content_type = 'application/unknown'
         deserializer = wsgi.RequestDeserializer()
         self.assertRaises(
@@ -398,28 +366,20 @@ class ResponseSerializerTest(testtools.TestCase):
             self.body_serializers, HeadersSerializer())
 
     def test_serialize_unknown_content_type(self):
-        """
-        Test serialize verifies
-        that exception InvalidContentType is raised
-        """
+        """Verify that exception InvalidContentType is raised."""
         self.assertRaises(
             exception.InvalidContentType,
             self.serializer.serialize,
             {}, 'application/unknown')
 
     def test_get_body_serializer(self):
-        """
-        Test get body serializer verifies
-        that exception InvalidContentType is raised
-        """
+        """Verify that exception InvalidContentType is raised."""
         self.assertRaises(
             exception.InvalidContentType,
             self.serializer.get_body_serializer, 'application/unknown')
 
     def test_get_serializer(self):
-        """
-        Test ResponseSerializer.get_body_serializer
-        """
+        """Test ResponseSerializer.get_body_serializer."""
         content_type = 'application/json'
         self.assertEqual(
             self.serializer.get_body_serializer(content_type),
@@ -542,9 +502,7 @@ class RequestTest(base.BaseTestCase):
 
 class ActionDispatcherTest(base.BaseTestCase):
     def test_dispatch(self):
-        """
-        Test ActionDispatcher.dispatch
-        """
+        """Test ActionDispatcher.dispatch."""
         serializer = wsgi.ActionDispatcher()
         serializer.create = lambda x: x
 
@@ -553,9 +511,7 @@ class ActionDispatcherTest(base.BaseTestCase):
             'pants')
 
     def test_dispatch_action_None(self):
-        """
-        Test ActionDispatcher.dispatch with none action
-        """
+        """Test ActionDispatcher.dispatch with none action."""
         serializer = wsgi.ActionDispatcher()
         serializer.create = lambda x: x + ' pants'
         serializer.default = lambda x: x + ' trousers'
@@ -662,9 +618,10 @@ class JSONDeserializerTest(base.BaseTestCase):
             deserializer.deserialize(data), as_dict)
 
     def test_default_raise_Malformed_Exception(self):
-        """
-        Test verifies JsonDeserializer.default
-        raises exception MalformedRequestBody correctly
+        """Test JsonDeserializer.default.
+
+        Test verifies JsonDeserializer.default raises exception
+        MalformedRequestBody correctly.
         """
         data_string = ""
         deserializer = wsgi.JSONDeserializer()
@@ -704,9 +661,7 @@ class XMLDeserializerTest(base.BaseTestCase):
             {'body': {u'a': {u'b': u'test'}}}, deserializer(xml))
 
     def test_default_raise_Malformed_Exception(self):
-        """
-        Test verifies that exception MalformedRequestBody is raised
-        """
+        """Verify that exception MalformedRequestBody is raised."""
         data_string = ""
         deserializer = wsgi.XMLDeserializer()
 

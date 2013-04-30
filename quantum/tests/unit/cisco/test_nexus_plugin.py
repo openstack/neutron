@@ -36,9 +36,7 @@ NEXUS_DRIVER = ('quantum.plugins.cisco.nexus.'
 class TestCiscoNexusPlugin(base.BaseTestCase):
 
     def setUp(self):
-        """
-        Set up function
-        """
+        """Set up function."""
         super(TestCiscoNexusPlugin, self).setUp()
         self.tenant_id = "test_tenant_cisco1"
         self.net_name = "test_network_cisco1"
@@ -84,9 +82,7 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         self.addCleanup(self.patch_obj.stop)
 
     def test_create_networks(self):
-        """
-        Tests creation of two new Virtual Networks.
-        """
+        """Tests creation of two new Virtual Networks."""
         tenant_id = self.tenant_id
         net_name = self.net_name
         net_id = self.net_id
@@ -117,9 +113,7 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.second_vlan_id)
 
     def test_nexus_delete_port(self):
-        """
-        Test deletion of a vlan.
-        """
+        """Test deletion of a vlan."""
         self._cisco_nexus_plugin.create_network(
             self.tenant_id, self.net_name, self.net_id, self.vlan_name,
             self.vlan_id, self._hostname, INSTANCE)

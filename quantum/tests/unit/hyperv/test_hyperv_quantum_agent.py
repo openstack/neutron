@@ -72,7 +72,8 @@ class TestHyperVQuantumAgent(base.BaseTestCase):
         self.assertTrue(self.agent._treat_devices_added([{}]))
 
     def mock_treat_devices_added(self, details, func_name):
-        """
+        """Mock treat devices added.
+
         :param details: the details to return for the device
         :param func_name: the function that should be called
         :returns: whether the named function was called

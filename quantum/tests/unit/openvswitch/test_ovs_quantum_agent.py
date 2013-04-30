@@ -112,7 +112,7 @@ class TestOvsQuantumAgent(base.BaseTestCase):
             self.assertTrue(self.agent.treat_devices_added([{}]))
 
     def _mock_treat_devices_added(self, details, port, func_name):
-        """
+        """Mock treat devices added.
 
         :param details: the details to return for the device
         :param port: the port that get_vif_port_by_id should return

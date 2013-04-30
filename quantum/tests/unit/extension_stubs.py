@@ -48,9 +48,10 @@ class StubPlugin(object):
 
 
 class ExtensionExpectingPluginInterface(StubExtension):
-    """
+    """Expect plugin to implement all methods in StubPluginInterface.
+
     This extension expects plugin to implement all the methods defined
-    in StubPluginInterface
+    in StubPluginInterface.
     """
 
     def get_plugin_interface(self):

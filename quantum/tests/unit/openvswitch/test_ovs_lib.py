@@ -23,8 +23,8 @@ from quantum.tests import base
 
 
 class OVS_Lib_Test(base.BaseTestCase):
-    """
-    A test suite to excercise the OVS libraries shared by Quantum agents.
+    """A test suite to excercise the OVS libraries shared by Quantum agents.
+
     Note: these tests do not actually execute ovs-* utilities, and thus
     can run on any system.  That does, however, limit their scope.
     """
@@ -41,7 +41,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.addCleanup(self.mox.UnsetStubs)
 
     def test_vifport(self):
-        """create and stringify vif port, confirm no exceptions."""
+        """Create and stringify vif port, confirm no exceptions."""
         self.mox.ReplayAll()
 
         pname = "vif1.0"

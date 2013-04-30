@@ -60,8 +60,7 @@ class BaseTestCase(testtools.TestCase):
         self.stubs.Set(exception, '_FATAL_EXCEPTION_FORMAT_ERRORS', True)
 
     def config(self, **kw):
-        """
-        Override some configuration values.
+        """Override some configuration values.
 
         The keyword arguments are the names of configuration options to
         override and their values.

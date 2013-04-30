@@ -291,7 +291,8 @@ class FakeClient:
         return new_data
 
     def _get_resource_type(self, path):
-        """
+        """Get resource type.
+
         Identifies resource type and relevant uuids in the uri
 
         /ws.v1/lswitch/xxx
