@@ -74,8 +74,10 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             retval = self.handler(req)
             self.assertEqual(retval, 'value')
             proxy_req.assert_called_once_with(req.remote_addr,
+                                              req.method,
                                               req.path_info,
-                                              req.query_string)
+                                              req.query_string,
+                                              req.body)
 
     def test_no_argument_passed_to_init(self):
         with testtools.ExpectedException(ValueError):
@@ -98,17 +100,21 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             mock_http.return_value.request.return_value = (resp, 'content')
 
             retval = self.handler._proxy_request('192.168.1.1',
+                                                 'GET',
                                                  '/latest/meta-data',
+                                                 '',
                                                  '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Router-ID': 'router_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 
@@ -122,17 +128,21 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             mock_http.return_value.request.return_value = (resp, 'content')
 
             retval = self.handler._proxy_request('192.168.1.1',
+                                                 'GET',
                                                  '/latest/meta-data',
+                                                 '',
                                                  '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 
@@ -146,21 +156,53 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             mock_http.return_value.request.return_value = (resp, '')
 
             retval = self.handler._proxy_request('192.168.1.1',
+                                                 'GET',
                                                  '/latest/meta-data',
+                                                 '',
                                                  '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 
             self.assertIsInstance(retval, webob.exc.HTTPNotFound)
+
+    def test_proxy_request_network_409(self):
+        self.handler.network_id = 'network_id'
+
+        resp = mock.Mock(status=409)
+        with mock.patch('httplib2.Http') as mock_http:
+            mock_http.return_value.request.return_value = (resp, '')
+
+            retval = self.handler._proxy_request('192.168.1.1',
+                                                 'POST',
+                                                 '/latest/meta-data',
+                                                 '',
+                                                 '')
+
+            mock_http.assert_has_calls([
+                mock.call().request(
+                    'http://169.254.169.254/latest/meta-data',
+                    method='POST',
+                    headers={
+                        'X-Forwarded-For': '192.168.1.1',
+                        'X-Quantum-Network-ID': 'network_id'
+                    },
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
+                )]
+            )
+
+            self.assertIsInstance(retval, webob.exc.HTTPConflict)
 
     def test_proxy_request_network_500(self):
         self.handler.network_id = 'network_id'
@@ -170,17 +212,21 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
             mock_http.return_value.request.return_value = (resp, '')
 
             retval = self.handler._proxy_request('192.168.1.1',
+                                                 'GET',
                                                  '/latest/meta-data',
+                                                 '',
                                                  '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 
@@ -195,17 +241,21 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
 
             with testtools.ExpectedException(Exception):
                 self.handler._proxy_request('192.168.1.1',
+                                            'GET',
                                             '/latest/meta-data',
+                                            '',
                                             '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 
@@ -218,17 +268,21 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
 
             with testtools.ExpectedException(Exception):
                 self.handler._proxy_request('192.168.1.1',
+                                            'GET',
                                             '/latest/meta-data',
+                                            '',
                                             '')
 
             mock_http.assert_has_calls([
                 mock.call().request(
                     'http://169.254.169.254/latest/meta-data',
+                    method='GET',
                     headers={
                         'X-Forwarded-For': '192.168.1.1',
                         'X-Quantum-Network-ID': 'network_id'
                     },
-                    connection_type=ns_proxy.UnixDomainHTTPConnection
+                    connection_type=ns_proxy.UnixDomainHTTPConnection,
+                    body=''
                 )]
             )
 

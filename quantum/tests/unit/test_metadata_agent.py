@@ -178,9 +178,12 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             self._get_instance_id_helper(headers, ports, networks=['the_id'])
         )
 
-    def _proxy_request_test_helper(self, response_code):
+    def _proxy_request_test_helper(self, response_code=200, method='GET'):
         hdrs = {'X-Forwarded-For': '8.8.8.8'}
-        req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs)
+        body = 'body'
+
+        req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
+                        method=method, body=body)
         resp = mock.Mock(status=response_code)
         with mock.patch.object(self.handler, '_sign_instance_id') as sign:
             sign.return_value = 'signed'
@@ -191,15 +194,21 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                 mock_http.assert_has_calls([
                     mock.call().request(
                         'http://9.9.9.9:8775/the_path',
+                        method=method,
                         headers={
                             'X-Forwarded-For': '8.8.8.8',
                             'X-Instance-ID-Signature': 'signed',
                             'X-Instance-ID': 'the_id'
-                        }
+                        },
+                        body=body
                     )]
                 )
 
                 return retval
+
+    def test_proxy_request_post(self):
+        self.assertEqual('content',
+                         self._proxy_request_test_helper(method='POST'))
 
     def test_proxy_request_200(self):
         self.assertEqual('content', self._proxy_request_test_helper(200))
@@ -211,6 +220,10 @@ class TestMetadataProxyHandler(base.BaseTestCase):
     def test_proxy_request_404(self):
         self.assertIsInstance(self._proxy_request_test_helper(404),
                               webob.exc.HTTPNotFound)
+
+    def test_proxy_request_409(self):
+        self.assertIsInstance(self._proxy_request_test_helper(409),
+                              webob.exc.HTTPConflict)
 
     def test_proxy_request_500(self):
         self.assertIsInstance(self._proxy_request_test_helper(500),
