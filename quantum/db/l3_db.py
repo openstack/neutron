@@ -457,6 +457,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                             'router.interface.delete',
                             notifier_api.CONF.default_notification_level,
                             {'router.interface': info})
+        return info
 
     def _get_floatingip(self, context, id):
         try:

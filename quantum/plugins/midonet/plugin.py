@@ -869,9 +869,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 break
         assert found
 
-        super(MidonetPluginV2, self).remove_router_interface(
+        info = super(MidonetPluginV2, self).remove_router_interface(
             context, router_id, interface_info)
         LOG.debug(_("MidonetPluginV2.remove_router_interface exiting"))
+        return info
 
     def update_floatingip(self, context, id, floatingip):
         LOG.debug(_("MidonetPluginV2.update_floatingip called: id=%(id)s "
