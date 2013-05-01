@@ -212,9 +212,7 @@ class LinuxBridgeManager:
 
     def ensure_bridge(self, bridge_name, interface=None, ips=None,
                       gateway=None):
-        """
-        Create a bridge unless it already exists.
-        """
+        """Create a bridge unless it already exists."""
         if not self.device_exists(bridge_name):
             LOG.debug(_("Starting bridge %(bridge_name)s for subinterface "
                         "%(interface)s"),
@@ -271,9 +269,10 @@ class LinuxBridgeManager:
 
     def add_tap_interface(self, network_id, physical_network, vlan_id,
                           tap_device_name):
-        """
+        """Add tap interface.
+
         If a VIF has been plugged into a network, this function will
-        add the corresponding tap device to the relevant bridge
+        add the corresponding tap device to the relevant bridge.
         """
         if not self.device_exists(tap_device_name):
             LOG.debug(_("Tap device: %s does not exist on "

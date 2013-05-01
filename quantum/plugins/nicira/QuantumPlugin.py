@@ -127,7 +127,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   nvp_sec.NVPSecurityGroups,
                   nvp_meta.NvpMetadataAccess,
                   agentschedulers_db.AgentSchedulerDbMixin):
-    """
+    """L2 Virtual network plugin.
+
     NvpPluginV2 is a Quantum plugin that provides L2 Virtual Network
     functionality using NVP.
     """
@@ -218,10 +219,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             raise
 
     def _build_ip_address_list(self, context, fixed_ips, subnet_ids=None):
-        """Build ip_addresses data structure for logical router port
+        """Build ip_addresses data structure for logical router port.
 
         No need to perform validation on IPs - this has already been
-        done in the l3_db mixin class
+        done in the l3_db mixin class.
         """
         ip_addresses = []
         for ip in fixed_ips:
@@ -624,6 +625,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _nvp_get_port_id(self, context, cluster, quantum_port):
         """Return the NVP port uuid for a given quantum port.
+
         First, look up the Quantum database. If not found, execute
         a query on NVP platform as the mapping might be missing because
         the port was created before upgrading to grizzly.
@@ -649,10 +651,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           quantum_port['id'])
 
     def _extend_fault_map(self):
-        """Extends the Quantum Fault Map
+        """Extends the Quantum Fault Map.
 
         Exceptions specific to the NVP Plugin are mapped to standard
-        HTTP Exceptions
+        HTTP Exceptions.
         """
         base.FAULT_MAP.update({nvp_exc.NvpInvalidNovaZone:
                                webob.exc.HTTPBadRequest,
@@ -1280,11 +1282,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def delete_port(self, context, id, l3_port_check=True,
                     nw_gw_port_check=True):
-        """
-        Deletes a port on a specified Virtual Network,
-        if the port contains a remote interface attachment,
-        the remote interface is first un-plugged and then the port
-        is deleted.
+        """Deletes a port on a specified Virtual Network.
+
+        If the port contains a remote interface attachment, the remote
+        interface is first un-plugged and then the port is deleted.
 
         :returns: None
         :raises: exception.PortInUse
@@ -1853,10 +1854,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         super(NvpPluginV2, self).disassociate_floatingips(context, port_id)
 
     def create_network_gateway(self, context, network_gateway):
-        """Create a layer-2 network gateway
+        """Create a layer-2 network gateway.
 
         Create the gateway service on NVP platform and corresponding data
-        structures in Quantum datase
+        structures in Quantum datase.
         """
         # Need to re-do authZ checks here in order to avoid creation on NVP
         gw_data = network_gateway[networkgw.RESOURCE_NAME.replace('-', '_')]
@@ -1880,10 +1881,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                network_gateway)
 
     def delete_network_gateway(self, context, id):
-        """Remove a layer-2 network gateway
+        """Remove a layer-2 network gateway.
 
         Remove the gateway service from NVP platform and corresponding data
-        structures in Quantum datase
+        structures in Quantum datase.
         """
         with context.session.begin(subtransactions=True):
             try:
@@ -1921,6 +1922,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.
+
         If default_sg is true that means a we are creating a default security
         group and we don't need to check if one exists.
         """
@@ -1937,7 +1939,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             context, security_group, default_sg)
 
     def delete_security_group(self, context, security_group_id):
-        """Delete a security group
+        """Delete a security group.
+
         :param security_group_id: security group rule to remove.
         """
         with context.session.begin(subtransactions=True):
@@ -1959,12 +1962,13 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, security_group_id)
 
     def create_security_group_rule(self, context, security_group_rule):
-        """create a single security group rule."""
+        """Create a single security group rule."""
         bulk_rule = {'security_group_rules': [security_group_rule]}
         return self.create_security_group_rule_bulk(context, bulk_rule)[0]
 
     def create_security_group_rule_bulk(self, context, security_group_rule):
-        """create security group rules
+        """Create security group rules.
+
         :param security_group_rule: list of rules to create
         """
         s = security_group_rule.get('security_group_rules')

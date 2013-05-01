@@ -52,8 +52,7 @@ LOG = log.getLogger(__name__)
 # This is copied of nova.flags._get_my_ip()
 # Agent shouldn't depend on nova module
 def _get_my_ip():
-    """
-    Returns the actual ip of the local machine.
+    """Return the actual ip of the local machine.
 
     This code figures out what source address would be used if some traffic
     were to be sent out to some well known address on the Internet. In this

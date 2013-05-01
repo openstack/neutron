@@ -174,7 +174,7 @@ class TremaFilterDriver(object):
 
 
 class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
-    """Trema (Sliceable Switch) Driver for port base binding
+    """Trema (Sliceable Switch) Driver for port base binding.
 
     TremaPortBaseDriver uses port base binding.
     Ports are identified by datapath_id, port_no and vlan_id.
@@ -212,7 +212,7 @@ class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
 
 
 class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
-    """Trema (Sliceable Switch) Driver for port-mac base binding
+    """Trema (Sliceable Switch) Driver for port-mac base binding.
 
     TremaPortBaseDriver uses port-mac base binding.
     Ports are identified by datapath_id, port_no, vlan_id and mac.
@@ -268,7 +268,7 @@ class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
 
 
 class TremaMACBaseDriver(TremaDriverBase):
-    """Trema (Sliceable Switch) Driver for mac base binding
+    """Trema (Sliceable Switch) Driver for mac base binding.
 
     TremaPortBaseDriver uses mac base binding.
     Ports are identified by mac.

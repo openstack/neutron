@@ -88,9 +88,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                         'PLUMgrid Plugin has started'))
 
     def create_network(self, context, network):
-        """
-        Create network core Quantum API
-        """
+        """Create network core Quantum API."""
 
         LOG.debug(_('QuantumPluginPLUMgrid Status: create_network() called'))
 
@@ -126,9 +124,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         return net
 
     def update_network(self, context, net_id, network):
-        """
-        Update network core Quantum API
-        """
+        """Update network core Quantum API."""
 
         LOG.debug(_("QuantumPluginPLUMgridV2.update_network() called"))
         self._network_admin_state(network)
@@ -160,9 +156,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         return new_network
 
     def delete_network(self, context, net_id):
-        """
-        Delete network core Quantum API
-        """
+        """Delete network core Quantum API."""
         LOG.debug(_("QuantumPluginPLUMgrid Status: delete_network() called"))
         super(QuantumPluginPLUMgridV2, self).get_network(context, net_id)
 
@@ -183,9 +177,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                 raise plum_excep.PLUMgridException(err_message)
 
     def create_port(self, context, port):
-        """
-        Create port core Quantum API
-        """
+        """Create port core Quantum API."""
         LOG.debug(_("QuantumPluginPLUMgrid Status: create_port() called"))
 
         # Port operations on PLUMgrid NOS is an automatic operation from the
@@ -197,10 +189,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                 port)
 
     def update_port(self, context, port_id, port):
-        """
-        Update port core Quantum API
-
-        """
+        """Update port core Quantum API."""
         LOG.debug(_("QuantumPluginPLUMgrid Status: update_port() called"))
 
         # Port operations on PLUMgrid NOS is an automatic operation from the
@@ -211,9 +200,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
             context, port_id, port)
 
     def delete_port(self, context, port_id):
-        """
-        Delete port core Quantum API
-        """
+        """Delete port core Quantum API."""
 
         LOG.debug(_("QuantumPluginPLUMgrid Status: delete_port() called"))
 
@@ -224,9 +211,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         super(QuantumPluginPLUMgridV2, self).delete_port(context, port_id)
 
     def create_subnet(self, context, subnet):
-        """
-        Create subnet core Quantum API
-        """
+        """Create subnet core Quantum API."""
 
         LOG.debug(_("QuantumPluginPLUMgrid Status: create_subnet() called"))
 
@@ -253,9 +238,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         return subnet
 
     def delete_subnet(self, context, subnet_id):
-        """
-        Delete subnet core Quantum API
-        """
+        """Delete subnet core Quantum API."""
 
         LOG.debug(_("QuantumPluginPLUMgrid Status: delete_subnet() called"))
         #Collecting subnet info
@@ -278,9 +261,7 @@ class QuantumPluginPLUMgridV2(db_base_plugin_v2.QuantumDbPluginV2):
         return del_subnet
 
     def update_subnet(self, context, subnet_id, subnet):
-        """
-        Update subnet core Quantum API
-        """
+        """Update subnet core Quantum API."""
 
         LOG.debug(_("update_subnet() called"))
         #Collecting subnet info
