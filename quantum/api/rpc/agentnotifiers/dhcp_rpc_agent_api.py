@@ -69,12 +69,13 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
                 adminContext = (context if context.is_admin else
                                 context.elevated())
                 network = plugin.get_network(adminContext, network_id)
-                chosen_agent = plugin.schedule_network(adminContext, network)
-                if chosen_agent:
-                    self._notification_host(
-                        context, 'network_create_end',
-                        {'network': {'id': network_id}},
-                        chosen_agent['host'])
+                chosen_agents = plugin.schedule_network(adminContext, network)
+                if chosen_agents:
+                    for agent in chosen_agents:
+                        self._notification_host(
+                            context, 'network_create_end',
+                            {'network': {'id': network_id}},
+                            agent['host'])
             for (host, topic) in self._get_dhcp_agents(context, network_id):
                 self.cast(
                     context, self.make_msg(method,

@@ -31,4 +31,6 @@ AGENTS_SCHEDULER_OPTS = [
                 help=_('Allow auto scheduling networks to DHCP agent.')),
     cfg.BoolOpt('router_auto_schedule', default=True,
                 help=_('Allow auto scheduling routers to L3 agent.')),
+    cfg.IntOpt('dhcp_agents_per_network', default=1,
+               help=_('Number of DHCP agents scheduled to host a network.')),
 ]

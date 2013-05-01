@@ -17,6 +17,7 @@ import contextlib
 import copy
 
 import mock
+from oslo.config import cfg
 from webob import exc
 
 from quantum.api import extensions
@@ -230,8 +231,9 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_auto_schedule_with_disabled(self):
-        with contextlib.nested(self.network(),
-                               self.network()):
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        with contextlib.nested(self.subnet(),
+                               self.subnet()):
             dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -249,17 +251,58 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.assertEqual(0, num_hosta_nets)
         self.assertEqual(2, num_hostc_nets)
 
+    def test_network_auto_schedule_with_no_dhcp(self):
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        with contextlib.nested(self.subnet(enable_dhcp=False),
+                               self.subnet(enable_dhcp=False)):
+            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTC)
+            self._disable_agent(hosta_id)
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
+            num_hostc_nets = len(networks['networks'])
+            networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
+            num_hosta_nets = len(networks['networks'])
+        self.assertEqual(0, num_hosta_nets)
+        self.assertEqual(0, num_hostc_nets)
+
+    def test_network_auto_schedule_with_multiple_agents(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        with contextlib.nested(self.subnet(),
+                               self.subnet()):
+            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTC)
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
+            networks = self._list_networks_hosted_by_dhcp_agent(hostc_id)
+            num_hostc_nets = len(networks['networks'])
+            networks = self._list_networks_hosted_by_dhcp_agent(hosta_id)
+            num_hosta_nets = len(networks['networks'])
+        self.assertEqual(2, num_hosta_nets)
+        self.assertEqual(2, num_hostc_nets)
+
     def test_network_auto_schedule_with_hosted(self):
         # one agent hosts all the networks, other hosts none
-        with contextlib.nested(self.network(),
-                               self.network()) as (net1, net2):
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        with contextlib.nested(self.subnet(),
+                               self.subnet()) as (sub1, sub2):
             dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
             self._register_agent_states()
             dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             # second agent will not host the network since first has got it.
             dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTC)
             dhcp_agents = self._list_dhcp_agents_hosting_network(
-                net1['network']['id'])
+                sub1['subnet']['network_id'])
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             hostc_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -287,20 +330,21 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
             'agent_type': constants.AGENT_TYPE_DHCP}
         dhcp_hostc = copy.deepcopy(dhcp_hosta)
         dhcp_hostc['host'] = DHCP_HOSTC
-        with self.network() as net1:
+        cfg.CONF.set_override('allow_overlapping_ips', True)
+        with self.subnet() as sub1:
             self._register_one_agent_state(dhcp_hosta)
             dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
                                           DHCP_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
-            with self.network() as net2:
+            with self.subnet() as sub2:
                 self._register_one_agent_state(dhcp_hostc)
                 dhcp_rpc.get_active_networks(self.adminContext,
                                              host=DHCP_HOSTC)
                 dhcp_agents_1 = self._list_dhcp_agents_hosting_network(
-                    net1['network']['id'])
+                    sub1['subnet']['network_id'])
                 dhcp_agents_2 = self._list_dhcp_agents_hosting_network(
-                    net2['network']['id'])
+                    sub2['subnet']['network_id'])
                 hosta_nets = self._list_networks_hosted_by_dhcp_agent(hosta_id)
                 num_hosta_nets = len(hosta_nets['networks'])
                 hostc_id = self._get_agent_id(
@@ -329,6 +373,43 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 result1 = len(dhcp_agents['agents'])
         self.assertEqual(0, result0)
         self.assertEqual(1, result1)
+
+    def test_network_ha_scheduling_on_port_creation(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        with self.subnet() as subnet:
+            dhcp_agents = self._list_dhcp_agents_hosting_network(
+                subnet['subnet']['network_id'])
+            result0 = len(dhcp_agents['agents'])
+            self._register_agent_states()
+            with self.port(subnet=subnet,
+                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                dhcp_agents = self._list_dhcp_agents_hosting_network(
+                    port['port']['network_id'])
+                result1 = len(dhcp_agents['agents'])
+        self.assertEqual(0, result0)
+        self.assertEqual(2, result1)
+
+    def test_network_ha_scheduling_on_port_creation_with_new_agent(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 3)
+        with self.subnet() as subnet:
+            dhcp_agents = self._list_dhcp_agents_hosting_network(
+                subnet['subnet']['network_id'])
+            result0 = len(dhcp_agents['agents'])
+            self._register_agent_states()
+            with self.port(subnet=subnet,
+                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                dhcp_agents = self._list_dhcp_agents_hosting_network(
+                    port['port']['network_id'])
+                result1 = len(dhcp_agents['agents'])
+            self._register_one_dhcp_agent()
+            with self.port(subnet=subnet,
+                           device_owner="compute:test:" + DHCP_HOSTA) as port:
+                dhcp_agents = self._list_dhcp_agents_hosting_network(
+                    port['port']['network_id'])
+                result2 = len(dhcp_agents['agents'])
+        self.assertEqual(0, result0)
+        self.assertEqual(2, result1)
+        self.assertEqual(3, result2)
 
     def test_network_scheduler_with_disabled_agent(self):
         dhcp_hosta = {
@@ -872,6 +953,57 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                         payload={'port': port['port']}),
                     topic='dhcp_agent.' + DHCP_HOSTA)]
             self.assertEqual(mock_dhcp.call_args_list, expected_calls)
+
+    def test_network_ha_port_create_notification(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        dhcp_hosta = {
+            'binary': 'quantum-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'topic': 'dhcp_agent',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        self._register_one_agent_state(dhcp_hosta)
+        dhcp_hostc = copy.deepcopy(dhcp_hosta)
+        dhcp_hostc['host'] = DHCP_HOSTC
+        self._register_one_agent_state(dhcp_hostc)
+        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
+            with self.network(do_delete=False) as net1:
+                with self.subnet(network=net1,
+                                 do_delete=False) as subnet1:
+                    with self.port(subnet=subnet1, no_delete=True) as port:
+                        network_id = port['port']['network_id']
+            expected_calls_a = [
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'network_create_end',
+                        payload={'network': {'id': network_id}}),
+                    topic='dhcp_agent.' + DHCP_HOSTA),
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'port_create_end',
+                        payload={'port': port['port']}),
+                    topic='dhcp_agent.' + DHCP_HOSTA)]
+            expected_calls_c = [
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'network_create_end',
+                        payload={'network': {'id': network_id}}),
+                    topic='dhcp_agent.' + DHCP_HOSTC),
+                mock.call(
+                    mock.ANY,
+                    self.dhcp_notifier.make_msg(
+                        'port_create_end',
+                        payload={'port': port['port']}),
+                    topic='dhcp_agent.' + DHCP_HOSTC)]
+            for expected in expected_calls_a:
+                self.assertIn(expected, mock_dhcp.call_args_list)
+            for expected in expected_calls_c:
+                self.assertIn(expected, mock_dhcp.call_args_list)
 
 
 class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,

@@ -44,6 +44,7 @@ L3_HOSTA = 'hosta'
 DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
+DHCP_HOST1 = 'host1'
 
 
 class AgentTestExtensionManager(object):
@@ -123,6 +124,22 @@ class AgentDBTestMixIn(object):
                               agent_state={'agent_state': dhcp_hostc},
                               time=timeutils.strtime())
         return [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
+
+    def _register_one_dhcp_agent(self):
+        """Register one DHCP agent."""
+        dhcp_host = {
+            'binary': 'quantum-dhcp-agent',
+            'host': DHCP_HOST1,
+            'topic': 'DHCP_AGENT',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        callback = agents_db.AgentExtRpcCallback()
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': dhcp_host},
+                              time=timeutils.strtime())
+        return [dhcp_host]
 
 
 class AgentDBTestCase(AgentDBTestMixIn,
