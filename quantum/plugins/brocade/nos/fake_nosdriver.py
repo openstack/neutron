@@ -20,10 +20,10 @@
 # Shiv Haris (sharis@brocade.com)
 
 
-"""
-FAKE DRIVER, for unit tests purposes
+"""FAKE DRIVER, for unit tests purposes.
+
 Brocade NOS Driver implements NETCONF over SSHv2 for
-Quantum network life-cycle management
+Quantum network life-cycle management.
 """
 
 
@@ -33,7 +33,6 @@ class NOSdriver():
     Fake: Handles life-cycle management of Quantum network,
     leverages AMPP on NOS
     (for use by unit tests, avoids touching any hardware)
-
     """
 
     def __init__(self):

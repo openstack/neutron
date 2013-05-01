@@ -23,9 +23,7 @@
 # TODO(shiv) need support for security groups
 
 
-"""
-Implentation of Brocade Quantum Plugin.
-"""
+"""Implentation of Brocade Quantum Plugin."""
 
 from oslo.config import cfg
 
@@ -86,11 +84,11 @@ class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
     TAP_PREFIX_LEN = 3
 
     def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
+        """Get the rpc dispatcher for this manager.
 
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
-        '''
+        """
         return q_rpc.PluginRpcDispatcher([self,
                                           agents_db.AgentExtRpcCallback()])
 
@@ -161,12 +159,12 @@ class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
 
 class AgentNotifierApi(proxy.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
-    '''Agent side of the linux bridge rpc API.
+    """Agent side of the linux bridge rpc API.
 
     API version history:
         1.0 - Initial version.
 
-    '''
+    """
 
     BASE_RPC_API_VERSION = '1.0'
 
@@ -207,8 +205,9 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     """
 
     def __init__(self):
-        """Initialize Brocade Plugin, specify switch address
-        and db configuration.
+        """Initialize Brocade Plugin.
+
+        Specify switch address and db configuration.
         """
 
         self.supported_extension_aliases = ["binding", "security-group",
@@ -255,8 +254,10 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
     def create_network(self, context, network):
-        """This call to create network translates to creation of
-        port-profile on the physical switch.
+        """Create network.
+
+        This call to create network translates to creation of port-profile on
+        the physical switch.
         """
 
         with context.session.begin(subtransactions=True):
@@ -284,8 +285,10 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return net
 
     def delete_network(self, context, net_id):
-        """This call to delete the network translates to removing
-        the port-profile on the physical switch.
+        """Delete network.
+
+        This call to delete the network translates to removing the
+        port-profile on the physical switch.
         """
 
         with context.session.begin(subtransactions=True):
@@ -460,7 +463,6 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         :type interface_mac: string
         :returns: MAC address in the format xxxx.xxxx.xxxx
         :rtype: string
-
         """
 
         mac = interface_mac.replace(":", "")

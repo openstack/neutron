@@ -18,7 +18,7 @@
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 
 """
-Quantum REST Proxy Plug-in for Big Switch and FloodLight Controllers
+Quantum REST Proxy Plug-in for Big Switch and FloodLight Controllers.
 
 QuantumRestProxy provides a generic quantum plugin that translates all plugin
 function calls to equivalent authenticated REST calls to a set of redundant
@@ -119,6 +119,7 @@ METADATA_SERVER_IP = '169.254.169.254'
 
 
 class RemoteRestError(exceptions.QuantumException):
+
     def __init__(self, message):
         if message is None:
             message = "None"
@@ -208,6 +209,7 @@ class ServerProxy(object):
 
 
 class ServerPool(object):
+
     def __init__(self, servers, ssl, auth, quantum_id, timeout=10,
                  base_uri='/quantum/v1.0', name='QuantumRestProxy'):
         self.base_uri = base_uri
@@ -226,6 +228,7 @@ class ServerPool(object):
 
     def server_failure(self, resp):
         """Define failure codes as required.
+
         Note: We assume 301-303 is a failure, and try the next server in
         the server pool.
         """
@@ -233,6 +236,7 @@ class ServerPool(object):
 
     def action_success(self, resp):
         """Defining success codes as required.
+
         Note: We assume any valid 2xx as being successful response.
         """
         return resp[0] in SUCCESS_CODES
@@ -335,8 +339,11 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("QuantumRestProxyV2: initialization done"))
 
     def create_network(self, context, network):
-        """Create a network, which represents an L2 network segment which
-        can have a set of subnets and ports associated with it.
+        """Create a network.
+
+        Network represents an L2 network segment which can have a set of
+        subnets and ports associated with it.
+
         :param context: quantum api request context
         :param network: dictionary describing the network
 
@@ -355,7 +362,6 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         :raises: RemoteRestError
         """
-
         LOG.debug(_("QuantumRestProxyV2: create_network() called"))
 
         self._warn_on_state_status(network['network'])
@@ -393,6 +399,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def update_network(self, context, net_id, network):
         """Updates the properties of a particular Virtual Network.
+
         :param context: quantum api request context
         :param net_id: uuid of the network to update
         :param network: dictionary describing the updates
@@ -413,7 +420,6 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         :raises: exceptions.NetworkNotFound
         :raises: RemoteRestError
         """
-
         LOG.debug(_("QuantumRestProxyV2.update_network() called"))
 
         self._warn_on_state_status(network['network'])
@@ -571,6 +577,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def update_port(self, context, port_id, port):
         """Update values of a port.
+
         :param context: quantum api request context
         :param id: UUID representing the port to update.
         :param port: dictionary with keys indicating fields to update.
@@ -640,6 +647,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def delete_port(self, context, port_id, l3_port_check=True):
         """Delete a port.
+
         :param context: quantum api request context
         :param id: UUID representing the port to delete.
 
@@ -648,7 +656,6 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         :raises: exceptions.NetworkNotFound
         :raises: RemoteRestError
         """
-
         LOG.debug(_("QuantumRestProxyV2: delete_port() called"))
 
         # if needed, check to see if this is a port owned by
@@ -684,8 +691,10 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def _plug_interface(self, context, tenant_id, net_id, port_id,
                         remote_interface_id):
-        """Attaches a remote interface to the specified port on the
-        specified Virtual Network.
+        """Plug remote interface to the network.
+
+        Attaches a remote interface to the specified port on the specified
+        Virtual Network.
 
         :returns: None
 
@@ -716,8 +725,10 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
             raise
 
     def _unplug_interface(self, context, tenant_id, net_id, port_id):
-        """Detaches a remote interface from the specified port on the
-        network controller
+        """Detach interface from the network controller.
+
+        Detaches a remote interface from the specified port on the network
+        controller.
 
         :returns: None
 
@@ -1042,8 +1053,9 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
             raise
 
     def _send_all_data(self):
-        """Pushes all data to network ctrl (networks/ports, ports/attachments)
-        to give the controller an option to re-sync it's persistent store
+        """Pushes all data to network ctrl (networks/ports, ports/attachments).
+
+        This gives the controller an option to re-sync it's persistent store
         with quantum's current view of that data.
         """
         admin_context = qcontext.get_admin_context()

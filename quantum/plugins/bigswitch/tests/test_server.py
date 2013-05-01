@@ -18,8 +18,9 @@
 #
 # @author: Mandeep Dhami, Big Switch Networks, Inc.
 
-"""
-Test server mocking a REST based network ctrl. Used for QuantumRestProxy tests
+"""Test server mocking a REST based network ctrl.
+
+Used for QuantumRestProxy tests
 """
 
 import json
@@ -29,6 +30,7 @@ from wsgiref.simple_server import make_server
 
 
 class TestNetworkCtrl(object):
+
     def __init__(self, host='', port=8000,
                  default_status='404 Not Found',
                  default_response='404 Not Found',
@@ -44,9 +46,10 @@ class TestNetworkCtrl(object):
 
     def match(self, prior, method_regexp, uri_regexp, handler, data=None,
               multi=True):
-        """Adds to the list of exptected inputs. The incomming request is
-        matched in the order of priority. For same priority, match the
-        oldest match request first.
+        """Add to the list of exptected inputs.
+
+        The incoming request is matched in the order of priority. For same
+        priority, match the oldest match request first.
 
         :param prior: intgere priority of this match (e.g. 100)
         :param method_regexp: regexp to match method (e.g. 'PUT|POST')
