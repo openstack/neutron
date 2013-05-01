@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.92"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.93"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-30 00:09+0000\n"
+"POT-Creation-Date: 2013-05-01 00:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -461,7 +461,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:284 quantum/db/l3_db.py:914
+#: quantum/agent/l3_agent.py:284 quantum/db/l3_db.py:913
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -1710,7 +1710,7 @@ msgstr ""
 msgid "Message with invalid timestamp received"
 msgstr ""
 
-#: quantum/db/agentschedulers_db.py:300
+#: quantum/db/agentschedulers_db.py:313
 #, python-format
 msgid "Fail scheduling network %s"
 msgstr ""
@@ -1998,12 +1998,12 @@ msgstr ""
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1323
+#: quantum/db/db_base_plugin_v2.py:1322
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1401
+#: quantum/db/db_base_plugin_v2.py:1399
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -2064,7 +2064,7 @@ msgstr ""
 msgid "Multiple routers match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:189 quantum/db/l3_db.py:618
+#: quantum/db/l3_db.py:189 quantum/db/l3_db.py:617
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
@@ -2074,104 +2074,104 @@ msgstr ""
 msgid "No IPs available for external network %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:298
+#: quantum/db/l3_db.py:297
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:312
+#: quantum/db/l3_db.py:311
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:321 quantum/db/l3_db.py:398
+#: quantum/db/l3_db.py:320 quantum/db/l3_db.py:397
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: quantum/db/l3_db.py:326
+#: quantum/db/l3_db.py:325
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: quantum/db/l3_db.py:336
+#: quantum/db/l3_db.py:335
 msgid "Router port must have exactly one fixed IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:351
+#: quantum/db/l3_db.py:350
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:468
+#: quantum/db/l3_db.py:467
 #, python-format
 msgid "Multiple floating ips match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:487
+#: quantum/db/l3_db.py:486
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: quantum/db/l3_db.py:529
+#: quantum/db/l3_db.py:528
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: quantum/db/l3_db.py:533
+#: quantum/db/l3_db.py:532
 #, python-format
 msgid ""
 "Cannnot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: quantum/db/l3_db.py:545
+#: quantum/db/l3_db.py:544
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:552
+#: quantum/db/l3_db.py:551
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: quantum/db/l3_db.py:556
+#: quantum/db/l3_db.py:555
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:586 quantum/plugins/nicira/QuantumPlugin.py:1746
+#: quantum/db/l3_db.py:585 quantum/plugins/nicira/QuantumPlugin.py:1746
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: quantum/db/l3_db.py:638
+#: quantum/db/l3_db.py:637
 msgid "Unable to find any IP address on external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:659
+#: quantum/db/l3_db.py:658
 msgid "Unable to create Floating ip due to a malformed request"
 msgstr ""
 
-#: quantum/db/l3_db.py:663
+#: quantum/db/l3_db.py:662
 msgid "Floating IP association failed"
 msgstr ""
 
-#: quantum/db/l3_db.py:749
+#: quantum/db/l3_db.py:748
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: quantum/db/l3_db.py:767
+#: quantum/db/l3_db.py:766
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:920
+#: quantum/db/l3_db.py:919
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -3670,230 +3670,230 @@ msgstr ""
 msgid "Connect success to host %(host)s:%(ssh_port)d"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:58
+#: quantum/plugins/cisco/network_plugin.py:55
 #, python-format
 msgid "Model %s manages state"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:68
+#: quantum/plugins/cisco/network_plugin.py:65
 msgid "Plugin initialization complete"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:106
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:196
+#: quantum/plugins/cisco/network_plugin.py:102
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:201
 msgid "create_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:123
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:220
+#: quantum/plugins/cisco/network_plugin.py:119
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:226
 msgid "update_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:135
+#: quantum/plugins/cisco/network_plugin.py:132
 msgid "delete_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:163
+#: quantum/plugins/cisco/network_plugin.py:158
 msgid "get_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:170
+#: quantum/plugins/cisco/network_plugin.py:163
 msgid "get_networks() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:177
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:293
+#: quantum/plugins/cisco/network_plugin.py:168
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:301
 msgid "create_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:190
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:361
+#: quantum/plugins/cisco/network_plugin.py:178
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:371
 msgid "delete_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:213
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:330
+#: quantum/plugins/cisco/network_plugin.py:200
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:339
 msgid "update_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:226
+#: quantum/plugins/cisco/network_plugin.py:214
 msgid "create_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:240
+#: quantum/plugins/cisco/network_plugin.py:226
 #: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:285
 msgid "update_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:252
+#: quantum/plugins/cisco/network_plugin.py:235
 msgid "delete_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:278
+#: quantum/plugins/cisco/network_plugin.py:261
 #: quantum/plugins/cisco/db/l2network_db.py:213
 #: quantum/plugins/cisco/db/network_db_v2.py:210
 msgid "get_all_qoss() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:284
+#: quantum/plugins/cisco/network_plugin.py:267
 msgid "get_qos_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:294
+#: quantum/plugins/cisco/network_plugin.py:277
 msgid "create_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:300
+#: quantum/plugins/cisco/network_plugin.py:283
 msgid "delete_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:310
+#: quantum/plugins/cisco/network_plugin.py:293
 msgid "rename_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:321
+#: quantum/plugins/cisco/network_plugin.py:304
 msgid "get_all_credentials() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:327
+#: quantum/plugins/cisco/network_plugin.py:310
 msgid "get_credential_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:338
+#: quantum/plugins/cisco/network_plugin.py:321
 msgid "create_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:345
+#: quantum/plugins/cisco/network_plugin.py:328
 msgid "delete_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:356
+#: quantum/plugins/cisco/network_plugin.py:339
 msgid "rename_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:367
+#: quantum/plugins/cisco/network_plugin.py:350
 msgid "schedule_host() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:378
+#: quantum/plugins/cisco/network_plugin.py:362
 msgid "associate_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:387
+#: quantum/plugins/cisco/network_plugin.py:369
 msgid "detach_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:29
+#: quantum/plugins/cisco/common/cisco_exceptions.py:27
 msgid ""
 "Unable to complete operation. No more dynamic nics are available in the "
 "system."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:35
+#: quantum/plugins/cisco/common/cisco_exceptions.py:33
 msgid ""
 "Unable to create new network. Number of networksfor the system has "
 "exceeded the limit"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:41
+#: quantum/plugins/cisco/common/cisco_exceptions.py:39
 #, python-format
 msgid ""
 "NetworkVlanBinding for %(vlan_id)s and network %(network_id)s already "
 "exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:47
+#: quantum/plugins/cisco/common/cisco_exceptions.py:45
 #, python-format
 msgid "Vlan ID %(vlan_id)s not found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:52
+#: quantum/plugins/cisco/common/cisco_exceptions.py:50
 msgid "No Vlan ID available"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:57
+#: quantum/plugins/cisco/common/cisco_exceptions.py:55
 #, python-format
 msgid "QoS level %(qos_id)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:63
+#: quantum/plugins/cisco/common/cisco_exceptions.py:61
 #, python-format
 msgid ""
 "QoS level %(qos_id)s could not be deleted for tenant %(tenant_id)s since "
 "association exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:69
+#: quantum/plugins/cisco/common/cisco_exceptions.py:67
 #, python-format
 msgid "QoS level with name %(qos_name)s already exists for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:75
+#: quantum/plugins/cisco/common/cisco_exceptions.py:73
 #, python-format
 msgid "Credential %(credential_id)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:81
+#: quantum/plugins/cisco/common/cisco_exceptions.py:79
 #, python-format
 msgid "Credential %(credential_name)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:87
+#: quantum/plugins/cisco/common/cisco_exceptions.py:85
 #, python-format
 msgid "Credential %(credential_id)s already exists for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:93
+#: quantum/plugins/cisco/common/cisco_exceptions.py:91
 #, python-format
 msgid "Nexus Port Binding %(port_id)s is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:98
+#: quantum/plugins/cisco/common/cisco_exceptions.py:96
 #, python-format
 msgid "Nexus Port Binding %(port_id)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:103
+#: quantum/plugins/cisco/common/cisco_exceptions.py:101
 #, python-format
 msgid "Ucsm Binding with ip %(ucsm_ip)s is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:108
+#: quantum/plugins/cisco/common/cisco_exceptions.py:106
 #, python-format
 msgid "Ucsm Binding with ip %(ucsm_ip)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:113
+#: quantum/plugins/cisco/common/cisco_exceptions.py:111
 #, python-format
 msgid "Dyanmic Vnic %(vnic_id)s is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:118
+#: quantum/plugins/cisco/common/cisco_exceptions.py:116
 #, python-format
 msgid "Dynamic Vnic with name %(device_name)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:123
+#: quantum/plugins/cisco/common/cisco_exceptions.py:121
 #, python-format
 msgid "Blade %(blade_id)s is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:128
+#: quantum/plugins/cisco/common/cisco_exceptions.py:126
 #, python-format
 msgid "Blade with mgmt_ip %(mgmt_ip)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:133
+#: quantum/plugins/cisco/common/cisco_exceptions.py:131
 #, python-format
 msgid "PortVnic Binding %(port_id)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:138
+#: quantum/plugins/cisco/common/cisco_exceptions.py:136
 #, python-format
 msgid "PortVnic Binding %(port_id)s is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:142
+#: quantum/plugins/cisco/common/cisco_exceptions.py:140
 #, python-format
 msgid ""
 "Unable to plug the attachment %(att_id)s into port %(port_id)s for "
@@ -3902,50 +3902,50 @@ msgid ""
 "subsequently."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:150
+#: quantum/plugins/cisco/common/cisco_exceptions.py:148
 #, python-format
 msgid ""
 "Unable to unplug the attachment %(att_id)s from port %(port_id)s for "
 "network %(net_id)s. The attachment %(att_id)s does not exist."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:72
+#: quantum/plugins/cisco/common/cisco_faults.py:74
 msgid "Port not Found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:73
+#: quantum/plugins/cisco/common/cisco_faults.py:75
 msgid "Unable to find a port with the specified identifier."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:86
+#: quantum/plugins/cisco/common/cisco_faults.py:89
 msgid "Credential Not Found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:87
+#: quantum/plugins/cisco/common/cisco_faults.py:90
 msgid "Unable to find a Credential with the specified identifier."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:101
+#: quantum/plugins/cisco/common/cisco_faults.py:105
 msgid "QoS Not Found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:102
+#: quantum/plugins/cisco/common/cisco_faults.py:106
 msgid "Unable to find a QoS with the specified identifier."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:116
+#: quantum/plugins/cisco/common/cisco_faults.py:121
 msgid "Nova tenant Not Found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:117
+#: quantum/plugins/cisco/common/cisco_faults.py:122
 msgid "Unable to find a Novatenant with the specified identifier."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:131
+#: quantum/plugins/cisco/common/cisco_faults.py:137
 msgid "Requested State Invalid"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_faults.py:132
+#: quantum/plugins/cisco/common/cisco_faults.py:138
 msgid "Unable to update port state with specified value."
 msgstr ""
 
@@ -4096,89 +4096,89 @@ msgstr ""
 msgid "get_port_vlan_switch_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:71
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
 #, python-format
 msgid "Loaded device plugin %s\n"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:88
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:89
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:126
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:129
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:127
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:80
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:71
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:78
 #: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:89
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:99
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:109
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:100
 #, python-format
 msgid "NexusDriver: %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:124
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:116
 #, python-format
 msgid "NexusDriver VLAN IDs: %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:53
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:49
 #, python-format
 msgid "Loaded driver %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:73
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:69
 msgid "NexusPlugin:get_all_networks() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:83
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:79
 msgid "NexusPlugin:create_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:136
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:133
 msgid "NexusPlugin:delete_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:142
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:137
 msgid "NexusPlugin:get_network_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:151
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:143
 msgid "NexusPlugin:update_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:158
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:151
 msgid "NexusPlugin:get_all_ports() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:165
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:159
 msgid "NexusPlugin:create_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:173
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:167
 msgid "NexusPlugin:delete_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:205
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:200
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:212
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:208
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:220
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:217
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:227
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:225
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -7554,12 +7554,12 @@ msgstr ""
 msgid "ERROR: %s"
 msgstr ""
 
-#: quantum/tests/unit/nicira/fake_nvpapiclient.py:357
+#: quantum/tests/unit/nicira/fake_nvpapiclient.py:358
 #, python-format
 msgid "lswitch:%s not found"
 msgstr ""
 
-#: quantum/tests/unit/nicira/fake_nvpapiclient.py:366
+#: quantum/tests/unit/nicira/fake_nvpapiclient.py:367
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
