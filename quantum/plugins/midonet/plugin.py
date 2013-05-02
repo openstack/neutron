@@ -1018,7 +1018,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             sg_id = sg_db_entry['id']
             tenant_id = sg_db_entry['tenant_id']
 
-            if sg_name == 'default':
+            if sg_name == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
 
             filters = {'security_group_id': [sg_id]}
