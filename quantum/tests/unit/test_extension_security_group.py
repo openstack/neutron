@@ -432,12 +432,20 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             remote_group_id = sg['security_group']['id']
             self._delete('security-groups', remote_group_id, 204)
 
-    def test_delete_default_security_group_fail(self):
+    def test_delete_default_security_group_admin(self):
         with self.network():
             res = self.new_list_request('security-groups')
             sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
             self._delete('security-groups', sg['security_groups'][0]['id'],
-                         409)
+                         204)
+
+    def test_delete_default_security_group_nonadmin(self):
+        with self.network():
+            res = self.new_list_request('security-groups')
+            sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
+            quantum_context = context.Context('', 'test-tenant')
+            self._delete('security-groups', sg['security_groups'][0]['id'],
+                         409, quantum_context=quantum_context)
 
     def test_default_security_group_rules(self):
         with self.network():

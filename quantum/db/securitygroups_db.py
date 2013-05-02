@@ -180,7 +180,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # confirm security group exists
         sg = self._get_security_group(context, id)
 
-        if sg['name'] == 'default':
+        if sg['name'] == 'default' and not context.is_admin:
             raise ext_sg.SecurityGroupCannotRemoveDefault()
         with context.session.begin(subtransactions=True):
             context.session.delete(sg)
