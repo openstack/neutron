@@ -25,7 +25,6 @@ from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import portbindings
 from quantum.openstack.common import log as logging
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -68,18 +67,6 @@ class PortBindingMixin(object):
         _port_model_hook,
         None,
         _port_result_filter_hook)
-
-    def _check_portbindings_view_auth(self, context, port):
-        #TODO(salv-orlando): Remove this as part of bp/make-authz-orthogonal
-        keys_to_delete = []
-        for key in port:
-            if key.startswith('binding'):
-                policy_rule = "get_port:%s" % key
-                if not policy.check(context, policy_rule, port):
-                    keys_to_delete.append(key)
-        for key in keys_to_delete:
-            del port[key]
-        return port
 
     def _process_portbindings_create_and_update(self, context, port_data,
                                                 port):

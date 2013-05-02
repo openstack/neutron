@@ -59,6 +59,12 @@ _get_path = test_api_v2._get_path
 class L3TestExtensionManager(object):
 
     def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            l3.RESOURCE_ATTRIBUTE_MAP)
         return l3.L3.get_resources()
 
     def get_actions(self):

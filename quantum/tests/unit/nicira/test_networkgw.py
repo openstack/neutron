@@ -22,6 +22,7 @@ import webtest
 
 from quantum.api import extensions
 from quantum.api.extensions import PluginAwareExtensionManager
+from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum import context
@@ -43,6 +44,12 @@ _get_path = test_api_v2._get_path
 class TestExtensionManager(object):
 
     def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            networkgw.RESOURCE_ATTRIBUTE_MAP)
         return networkgw.Nvp_networkgw.get_resources()
 
     def get_actions(self):

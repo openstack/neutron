@@ -138,27 +138,23 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
                 context.session.delete(binding)
 
     def _extend_port_qos_queue(self, context, port):
-        if self._check_view_auth(context, {'qos_queue': None},
-                                 ext_qos.qos_queue_get):
-            filters = {'port_id': [port['id']]}
-            fields = ['queue_id']
-            port[ext_qos.QUEUE] = None
-            queue_id = self._get_port_queue_bindings(
-                context, filters, fields)
-            if queue_id:
-                port[ext_qos.QUEUE] = queue_id[0]['queue_id']
+        filters = {'port_id': [port['id']]}
+        fields = ['queue_id']
+        port[ext_qos.QUEUE] = None
+        queue_id = self._get_port_queue_bindings(
+            context, filters, fields)
+        if queue_id:
+            port[ext_qos.QUEUE] = queue_id[0]['queue_id']
         return port
 
     def _extend_network_qos_queue(self, context, network):
-        if self._check_view_auth(context, {'qos_queue': None},
-                                 ext_qos.qos_queue_get):
-            filters = {'network_id': [network['id']]}
-            fields = ['queue_id']
-            network[ext_qos.QUEUE] = None
-            queue_id = self._get_network_queue_bindings(
-                context, filters, fields)
-            if queue_id:
-                network[ext_qos.QUEUE] = queue_id[0]['queue_id']
+        filters = {'network_id': [network['id']]}
+        fields = ['queue_id']
+        network[ext_qos.QUEUE] = None
+        queue_id = self._get_network_queue_bindings(
+            context, filters, fields)
+        if queue_id:
+            network[ext_qos.QUEUE] = queue_id[0]['queue_id']
         return network
 
     def _make_qos_queue_dict(self, queue, fields=None):

@@ -24,6 +24,7 @@ import webob.exc as webexc
 
 import quantum
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum import manager
 from quantum.plugins.common import constants
@@ -93,7 +94,23 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         self._api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
         self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            extattr.EXTENDED_ATTRIBUTES_2_0)
+        self.agentscheduler_dbMinxin = manager.QuantumManager.get_plugin()
         self.addCleanup(cfg.CONF.reset)
+        self.addCleanup(self.restore_attribute_map)
+
+    def restore_attribute_map(self):
+        # Restore the original RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def _do_request(self, method, path, data=None, params=None, action=None):
         content_type = 'application/json'

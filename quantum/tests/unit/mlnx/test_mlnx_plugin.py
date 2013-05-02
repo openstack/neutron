@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from quantum import context
-from quantum.manager import QuantumManager
 from quantum.plugins.mlnx.common import constants
+from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
 
 PLUGIN_NAME = ('quantum.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin')
@@ -39,24 +38,14 @@ class TestMlnxV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 class TestMlnxPortsV2(test_plugin.TestPortsV2,
                       MlnxPluginV2TestCase):
-    VIF_TYPE = constants.VIF_TYPE_DIRECT
-    HAS_PORT_FILTER = False
-
-    def test_port_vif_details(self):
-        plugin = QuantumManager.get_plugin()
-        with self.port(name='name') as port:
-            port_id = port['port']['id']
-            self.assertEqual(port['port']['binding:vif_type'],
-                             self.VIF_TYPE)
-            # By default user is admin - now test non admin user
-            ctx = context.Context(user_id=None,
-                                  tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
-            non_admin_port = plugin.get_port(ctx, port_id)
-            self.assertIn('status', non_admin_port)
-            self.assertNotIn('binding:vif_type', non_admin_port)
+    pass
 
 
 class TestMlnxNetworksV2(test_plugin.TestNetworksV2, MlnxPluginV2TestCase):
     pass
+
+
+class TestMlnxPortBinding(MlnxPluginV2TestCase,
+                          test_bindings.PortBindingsTestCase):
+    VIF_TYPE = constants.VIF_TYPE_DIRECT
+    HAS_PORT_FILTER = False

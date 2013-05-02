@@ -26,6 +26,7 @@ import webob.exc as webexc
 import webtest
 
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum import context
 from quantum.db import api as db_api
 from quantum.db import servicetype_db
@@ -51,6 +52,13 @@ class TestServiceTypeExtensionManager(object):
     """Mock extensions manager."""
 
     def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            servicetype.RESOURCE_ATTRIBUTE_MAP)
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(dp.RESOURCE_ATTRIBUTE_MAP)
         return (servicetype.Servicetype.get_resources() +
                 dp.Dummy.get_resources())
 

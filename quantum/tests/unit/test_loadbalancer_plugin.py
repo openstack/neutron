@@ -22,6 +22,7 @@ from webob import exc
 import webtest
 
 from quantum.api import extensions
+from quantum.api.v2 import attributes
 from quantum.common import config
 from quantum.extensions import loadbalancer
 from quantum import manager
@@ -39,6 +40,12 @@ _get_path = test_api_v2._get_path
 class LoadBalancerTestExtensionManager(object):
 
     def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            loadbalancer.RESOURCE_ATTRIBUTE_MAP)
         return loadbalancer.Loadbalancer.get_resources()
 
     def get_actions(self):

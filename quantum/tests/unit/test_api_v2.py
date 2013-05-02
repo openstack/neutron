@@ -34,6 +34,7 @@ from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.manager import QuantumManager
 from quantum.openstack.common.notifier import api as notifer_api
+from quantum.openstack.common import policy as common_policy
 from quantum.openstack.common import uuidutils
 from quantum.tests import base
 from quantum.tests.unit import testlib_api
@@ -1033,6 +1034,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                            extra_environ=env,
                            expect_errors=expect_errors)
         self.assertEqual(res.status_int, expected_code)
+        return res
 
     def test_get_noauth(self):
         self._test_get(None, _uuid(), 200)
@@ -1049,6 +1051,18 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_get_keystone_shared_network(self):
         tenant_id = _uuid()
         self._test_get(tenant_id + "another", tenant_id, 200)
+
+    def test_get_keystone_strip_admin_only_attribute(self):
+        tenant_id = _uuid()
+        # Inject rule in policy engine
+        common_policy._rules['get_network:name'] = common_policy.parse_rule(
+            "rule:admin_only")
+        res = self._test_get(tenant_id, tenant_id, 200)
+        res = self.deserialize(res)
+        try:
+            self.assertNotIn('name', res['network'])
+        finally:
+            del common_policy._rules['get_network:name']
 
     def _test_update(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):
@@ -1209,7 +1223,7 @@ class V2Views(base.BaseTestCase):
         data['fake'] = 'value'
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[collection]
         controller = v2_base.Controller(None, collection, resource, attr_info)
-        res = controller._view(data)
+        res = controller._view(context.get_admin_context(), data)
         self.assertTrue('fake' not in res)
         for key in keys:
             self.assertTrue(key in res)

@@ -39,6 +39,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
         PORTSECURITY: {'allow_post': True, 'allow_put': True,
                        'convert_to': attributes.convert_to_boolean,
+                       'enforce_policy': True,
                        'default': True,
                        'is_visible': True},
     },
@@ -46,6 +47,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
         PORTSECURITY: {'allow_post': True, 'allow_put': True,
                        'convert_to': attributes.convert_to_boolean,
                        'default': attributes.ATTR_NOT_SPECIFIED,
+                       'enforce_policy': True,
                        'is_visible': True},
     }
 }

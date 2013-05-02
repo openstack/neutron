@@ -69,7 +69,6 @@ from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.bigswitch.version import version_string_with_vcs
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -291,9 +290,6 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
                          l3_db.L3_NAT_db_mixin):
 
     supported_extension_aliases = ["router", "binding"]
-
-    binding_view = "extension:port_binding:view"
-    binding_set = "extension:port_binding:set"
 
     def __init__(self):
         LOG.info(_('QuantumRestProxy: Starting plugin. Version=%s'),
@@ -1243,13 +1239,9 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         return data
 
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
-
     def _extend_port_dict_binding(self, context, port):
-        if self._check_view_auth(context, port, self.binding_view):
-            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
-            port[portbindings.CAPABILITIES] = {
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}
+        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER:
+            'security-group' in self.supported_extension_aliases}
         return port

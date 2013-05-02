@@ -79,8 +79,12 @@ class PortNotFound(NotFound):
                 "on network %(net_id)s")
 
 
-class PolicyNotFound(NotFound):
+class PolicyFileNotFound(NotFound):
     message = _("Policy configuration policy.json could not be found")
+
+
+class PolicyRuleNotFound(NotFound):
+    message = _("Requested rule:%(rule)s cannot be found")
 
 
 class StateInvalid(BadRequest):

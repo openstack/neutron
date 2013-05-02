@@ -112,7 +112,10 @@ class Agent(object):
         return [ex]
 
     def get_extended_resources(self, version):
-        return {}
+        if version == "2.0":
+            return RESOURCE_ATTRIBUTE_MAP
+        else:
+            return {}
 
 
 class AgentPluginBase(object):

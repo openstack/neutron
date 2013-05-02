@@ -27,7 +27,7 @@ from quantum import manager
 from quantum import quota
 
 
-RESOURCE_NAME = "network-gateway"
+RESOURCE_NAME = "network_gateway"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME
 EXT_ALIAS = RESOURCE_NAME
 DEVICE_ID_ATTR = 'id'
@@ -137,14 +137,20 @@ class Nvp_networkgw(object):
 
         # register quotas for network gateways
         quota.QUOTAS.register_resource_by_name(RESOURCE_NAME)
-
-        controller = base.create_resource(COLLECTION_NAME,
+        collection_name = COLLECTION_NAME.replace('_', '-')
+        controller = base.create_resource(collection_name,
                                           RESOURCE_NAME,
                                           plugin, params,
                                           member_actions=member_actions)
         return [extensions.ResourceExtension(COLLECTION_NAME,
                                              controller,
                                              member_actions=member_actions)]
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return RESOURCE_ATTRIBUTE_MAP
+        else:
+            return {}
 
 
 class NetworkGatewayPluginBase(object):

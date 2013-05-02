@@ -44,7 +44,6 @@ from quantum.openstack.common.rpc import proxy
 from quantum.plugins.common import utils as plugin_utils
 from quantum.plugins.linuxbridge.common import constants
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as db
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -214,9 +213,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._aliases = aliases
         return self._aliases
 
-    network_view = "extension:provider_network:view"
-    network_set = "extension:provider_network:set"
-
     def __init__(self):
         self.extra_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_BRIDGE,
@@ -264,27 +260,28 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             sys.exit(1)
         LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
+    def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
+        self._add_network(physical_network)
+        self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
 
-    # REVISIT(rkukura) Use core mechanism for attribute authorization
-    # when available.
+    def _add_network(self, physical_network):
+        if physical_network not in self.network_vlan_ranges:
+            self.network_vlan_ranges[physical_network] = []
 
     def _extend_network_dict_provider(self, context, network):
-        if self._check_view_auth(context, network, self.network_view):
-            binding = db.get_network_binding(context.session, network['id'])
-            if binding.vlan_id == constants.FLAT_VLAN_ID:
-                network[provider.NETWORK_TYPE] = constants.TYPE_FLAT
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = None
-            elif binding.vlan_id == constants.LOCAL_VLAN_ID:
-                network[provider.NETWORK_TYPE] = constants.TYPE_LOCAL
-                network[provider.PHYSICAL_NETWORK] = None
-                network[provider.SEGMENTATION_ID] = None
-            else:
-                network[provider.NETWORK_TYPE] = constants.TYPE_VLAN
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = binding.vlan_id
+        binding = db.get_network_binding(context.session, network['id'])
+        if binding.vlan_id == constants.FLAT_VLAN_ID:
+            network[provider.NETWORK_TYPE] = constants.TYPE_FLAT
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = None
+        elif binding.vlan_id == constants.LOCAL_VLAN_ID:
+            network[provider.NETWORK_TYPE] = constants.TYPE_LOCAL
+            network[provider.PHYSICAL_NETWORK] = None
+            network[provider.SEGMENTATION_ID] = None
+        else:
+            network[provider.NETWORK_TYPE] = constants.TYPE_VLAN
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = binding.vlan_id
 
     def _process_provider_create(self, context, attrs):
         network_type = attrs.get(provider.NETWORK_TYPE)
@@ -446,25 +443,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
-    def get_port(self, context, id, fields=None):
-        with context.session.begin(subtransactions=True):
-            port = super(LinuxBridgePluginV2, self).get_port(context,
-                                                             id,
-                                                             fields)
-        return self._check_portbindings_view_auth(context, port)
-
-    def get_ports(self, context, filters=None, fields=None,
-                  sorts=None, limit=None, marker=None, page_reverse=False):
-        res_ports = []
-        with context.session.begin(subtransactions=True):
-            ports = super(LinuxBridgePluginV2,
-                          self).get_ports(context, filters, fields, sorts,
-                                          limit, marker, page_reverse)
-            for port in ports:
-                self._check_portbindings_view_auth(context, port)
-                res_ports.append(port)
-        return res_ports
-
     def create_port(self, context, port):
         session = context.session
         port_data = port['port']
@@ -482,7 +460,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._process_port_create_security_group(
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
-        return self._check_portbindings_view_auth(context, port)
+        return port
 
     def update_port(self, context, id, port):
         original_port = self.get_port(context, id)
@@ -506,7 +484,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         if need_port_update_notify:
             self._notify_port_updated(context, updated_port)
-        return self._check_portbindings_view_auth(context, updated_port)
+        return updated_port
 
     def delete_port(self, context, id, l3_port_check=True):
 

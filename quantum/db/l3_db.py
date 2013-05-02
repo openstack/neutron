@@ -34,7 +34,6 @@ from quantum.extensions import l3
 from quantum.openstack.common import log as logging
 from quantum.openstack.common.notifier import api as notifier_api
 from quantum.openstack.common import uuidutils
-from quantum import policy
 
 LOG = logging.getLogger(__name__)
 
@@ -784,11 +783,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             routers = self.get_sync_data(context.elevated(), [router_id])
             l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
 
-    def _check_l3_view_auth(self, context, network):
-        return policy.check(context,
-                            "extension:router:view",
-                            network)
-
     def _network_is_external(self, context, net_id):
         try:
             context.session.query(ExternalNetwork).filter_by(
@@ -798,9 +792,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             return False
 
     def _extend_network_dict_l3(self, context, network):
-        if self._check_l3_view_auth(context, network):
-            network[l3.EXTERNAL] = self._network_is_external(
-                context, network['id'])
+        network[l3.EXTERNAL] = self._network_is_external(
+            context, network['id'])
 
     def _process_l3_create(self, context, net_data, net_id):
         external = net_data.get(l3.EXTERNAL)
