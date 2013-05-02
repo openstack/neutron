@@ -188,9 +188,13 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.setup_rpc()
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver)
-        self._ensure_default_network_gateway()
+        # Set this flag to false as the default gateway has not
+        # been yet updated from the config file
+        self._is_default_net_gw_in_sync = False
 
     def _ensure_default_network_gateway(self):
+        if self._is_default_net_gw_in_sync:
+            return
         # Add the gw in the db as default, and unset any previous default
         def_l2_gw_uuid = self.cluster.default_l2_gw_service_uuid
         try:
@@ -212,8 +216,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         ctx, {gw_res_name: def_gw_data})
             # In any case set is as default
             self._set_default_network_gateway(ctx, def_network_gw['id'])
+            # Ensure this method is executed only once
+            self._is_default_net_gw_in_sync = True
         except Exception:
-            # This is fatal - abort startup
             LOG.exception(_("Unable to process default l2 gw service:%s"),
                           def_l2_gw_uuid)
             raise
@@ -1859,6 +1864,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         Create the gateway service on NVP platform and corresponding data
         structures in Quantum datase.
         """
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
         # Need to re-do authZ checks here in order to avoid creation on NVP
         gw_data = network_gateway[networkgw.RESOURCE_NAME.replace('-', '_')]
         tenant_id = self._get_tenant_id_for_create(context, gw_data)
@@ -1886,6 +1893,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         Remove the gateway service from NVP platform and corresponding data
         structures in Quantum datase.
         """
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
         with context.session.begin(subtransactions=True):
             try:
                 super(NvpPluginV2, self).delete_network_gateway(context, id)
@@ -1902,6 +1911,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return net_gateway
 
     def get_network_gateway(self, context, id, fields=None):
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
         # Ensure the tenant_id attribute is populated on the returned gateway
         #return self._ensure_tenant_on_net_gateway(
         #    context, super(NvpPluginV2, self).get_network_gateway(
@@ -1910,12 +1921,34 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                             id, fields)
 
     def get_network_gateways(self, context, filters=None, fields=None):
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
         # Ensure the tenant_id attribute is populated on returned gateways
         net_gateways = super(NvpPluginV2,
                              self).get_network_gateways(context,
                                                         filters,
                                                         fields)
         return net_gateways
+
+    def update_network_gateway(self, context, id, network_gateway):
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
+        return super(NvpPluginV2, self).update_network_gateway(
+            context, id, network_gateway)
+
+    def connect_network(self, context, network_gateway_id,
+                        network_mapping_info):
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
+        return super(NvpPluginV2, self).connect_network(
+            context, network_gateway_id, network_mapping_info)
+
+    def disconnect_network(self, context, network_gateway_id,
+                           network_mapping_info):
+        # Ensure the default gateway in the config file is in sync with the db
+        self._ensure_default_network_gateway()
+        return super(NvpPluginV2, self).disconnect_network(
+            context, network_gateway_id, network_mapping_info)
 
     def get_plugin_version(self):
         return PLUGIN_VERSION
