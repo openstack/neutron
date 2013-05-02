@@ -1,11 +1,15 @@
+# Install bounded pep8/pyflakes first, then let flake8 install
+pep8==1.4.5
+pyflakes==0.7.2
+flake8==2.0
+hacking>=0.5.3,<0.6
+
 Babel>=0.9.6
 cliff
 coverage>=3.6
 discover
 distribute>=0.6.24
 fixtures>=0.3.12
-flake8
-hacking
 mock>=1.0b1
 mox==0.5.3
 nose
