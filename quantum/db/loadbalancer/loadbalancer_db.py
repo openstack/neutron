@@ -602,12 +602,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
     def create_pool_health_monitor(self, context, health_monitor, pool_id):
         monitor_id = health_monitor['health_monitor']['id']
         with context.session.begin(subtransactions=True):
-            monitor_qry = context.session.query(HealthMonitor)
-            try:
-                monitor = monitor_qry.filter_by(id=monitor_id).one()
-                monitor.update({'pool_id': pool_id})
-            except exc.NoResultFound:
-                raise loadbalancer.HealthMonitorNotFound(monitor_id=monitor_id)
             try:
                 qry = context.session.query(Pool)
                 pool = qry.filter_by(id=pool_id).one()
@@ -616,17 +610,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
 
             assoc = PoolMonitorAssociation(pool_id=pool_id,
                                            monitor_id=monitor_id)
-            assoc.healthmonitor = monitor
             pool.monitors.append(assoc)
-
-        monitors = []
-        try:
-            qry = context.session.query(Pool)
-            pool = qry.filter_by(id=pool_id).one()
-            for monitor in pool['monitors']:
-                monitors.append(monitor['monitor_id'])
-        except exc.NoResultFound:
-            pass
+            monitors = [monitor['monitor_id'] for monitor in pool['monitors']]
 
         res = {"health_monitor": monitors}
         return res

@@ -1097,6 +1097,38 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 self._delete('members', member1['member']['id'])
                 self._delete('members', member2['member']['id'])
 
+    def test_create_pool_health_monitor(self):
+        with contextlib.nested(
+            self.pool(name="pool"),
+            self.health_monitor(),
+            self.health_monitor()
+        ) as (pool, health_mon1, health_mon2):
+                res = self.plugin.create_pool_health_monitor(
+                    context.get_admin_context(),
+                    health_mon1, pool['pool']['id']
+                )
+                self.assertEqual({'health_monitor':
+                                  [health_mon1['health_monitor']['id']]},
+                                 res)
+
+                res = self.plugin.create_pool_health_monitor(
+                    context.get_admin_context(),
+                    health_mon2, pool['pool']['id']
+                )
+                self.assertEqual({'health_monitor':
+                                  [health_mon1['health_monitor']['id'],
+                                   health_mon2['health_monitor']['id']]},
+                                 res)
+
+    def test_create_pool_healthmon_invalid_pool_id(self):
+        with self.health_monitor() as healthmon:
+            self.assertRaises(loadbalancer.PoolNotFound,
+                              self.plugin.create_pool_health_monitor,
+                              context.get_admin_context(),
+                              healthmon,
+                              "123-456-789"
+                              )
+
 
 class TestLoadBalancerXML(TestLoadBalancer):
     fmt = 'xml'
