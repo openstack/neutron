@@ -39,7 +39,7 @@ OPTS = [
     cfg.BoolOpt('ovs_use_veth',
                 default=False,
                 help=_('Uses veth for an interface or not')),
-    cfg.StrOpt('network_device_mtu',
+    cfg.IntOpt('network_device_mtu',
                help=_('MTU setting for device.')),
     cfg.StrOpt('meta_flavor_driver_mappings',
                help=_('Mapping between flavor and LinuxInterfaceDriver')),

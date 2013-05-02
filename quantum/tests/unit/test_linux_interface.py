@@ -152,6 +152,11 @@ class TestOVSInterfaceDriver(TestBase):
 
         self.ip.assert_has_calls(expected)
 
+    def test_mtu_int(self):
+        self.assertIsNone(self.conf.network_device_mtu)
+        self.conf.set_override('network_device_mtu', 9000)
+        self.assertEqual(self.conf.network_device_mtu, 9000)
+
     def test_plug_mtu(self):
         self.conf.set_override('network_device_mtu', 9000)
         self._test_plug([mock.call().device().link.set_mtu(9000)])
