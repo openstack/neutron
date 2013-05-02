@@ -301,8 +301,11 @@ class Dnsmasq(DhcpLocalProcess):
 
         self._output_hosts_file()
         self._output_opts_file()
-        cmd = ['kill', '-HUP', self.pid]
-        utils.execute(cmd, self.root_helper)
+        if self.active:
+            cmd = ['kill', '-HUP', self.pid]
+            utils.execute(cmd, self.root_helper)
+        else:
+            LOG.debug(_('Pid %d is stale, relaunching dnsmasq'), self.pid)
         LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
 
     def _output_hosts_file(self):
