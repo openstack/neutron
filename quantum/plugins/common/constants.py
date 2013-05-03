@@ -20,6 +20,12 @@ CORE = "CORE"
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
 
+#maps extension alias to service type
+EXT_TO_SERVICE_MAPPING = {
+    'dummy': DUMMY,
+    'lbaas': LOADBALANCER
+}
+
 # TODO(salvatore-orlando): Move these (or derive them) from conf file
 ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER]
 

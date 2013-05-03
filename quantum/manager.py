@@ -102,7 +102,29 @@ class QuantumManager(object):
         self.service_plugins = {constants.CORE: self.plugin}
         self._load_service_plugins()
 
+    def _load_services_from_core_plugin(self):
+        """Puts core plugin in service_plugins for supported services."""
+        LOG.debug(_("Loading services supported by the core plugin"))
+
+        # supported service types are derived from supported extensions
+        if not hasattr(self.plugin, "supported_extension_aliases"):
+            return
+        for ext_alias in self.plugin.supported_extension_aliases:
+            if ext_alias in constants.EXT_TO_SERVICE_MAPPING:
+                service_type = constants.EXT_TO_SERVICE_MAPPING[ext_alias]
+                self.service_plugins[service_type] = self.plugin
+                LOG.info(_("Service %s is supported by the core plugin"),
+                         service_type)
+
     def _load_service_plugins(self):
+        """Loads service plugins.
+
+        Starts from the core plugin and checks if it supports
+        advanced services then loads classes provided in configuration.
+        """
+        # load services from the core plugin first
+        self._load_services_from_core_plugin()
+
         plugin_providers = cfg.CONF.service_plugins
         LOG.debug(_("Loading service plugins: %s"), plugin_providers)
         for provider in plugin_providers:
