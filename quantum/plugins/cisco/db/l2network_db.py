@@ -57,11 +57,7 @@ def get_all_vlanids():
     """Gets all the vlanids."""
     LOG.debug(_("get_all_vlanids() called"))
     session = db.get_session()
-    try:
-        vlanids = session.query(l2network_models.VlanID).all()
-        return vlanids
-    except exc.NoResultFound:
-        return []
+    return session.query(l2network_models.VlanID).all()
 
 
 def is_vlanid_used(vlan_id):
@@ -129,23 +125,15 @@ def get_all_vlanids_used():
     """Gets all the vlanids used."""
     LOG.debug(_("get_all_vlanids() called"))
     session = db.get_session()
-    try:
-        vlanids = (session.query(l2network_models.VlanID).
-                   filter_by(vlan_used=True).all())
-        return vlanids
-    except exc.NoResultFound:
-        return []
+    return (session.query(l2network_models.VlanID).
+            filter_by(vlan_used=True).all())
 
 
 def get_all_vlan_bindings():
     """Lists all the vlan to network associations."""
     LOG.debug(_("get_all_vlan_bindings() called"))
     session = db.get_session()
-    try:
-        bindings = session.query(l2network_models.VlanBinding).all()
-        return bindings
-    except exc.NoResultFound:
-        return []
+    return session.query(l2network_models.VlanBinding).all()
 
 
 def get_vlan_binding(netid):
@@ -212,12 +200,8 @@ def get_all_qoss(tenant_id):
     """Lists all the qos to tenant associations."""
     LOG.debug(_("get_all_qoss() called"))
     session = db.get_session()
-    try:
-        qoss = (session.query(l2network_models.QoS).
-                filter_by(tenant_id=tenant_id).all())
-        return qoss
-    except exc.NoResultFound:
-        return []
+    return (session.query(l2network_models.QoS).
+            filter_by(tenant_id=tenant_id).all())
 
 
 def get_qos(tenant_id, qos_id):
@@ -285,12 +269,8 @@ def update_qos(tenant_id, qos_id, new_qos_name=None):
 def get_all_credentials(tenant_id):
     """Lists all the creds for a tenant."""
     session = db.get_session()
-    try:
-        creds = (session.query(l2network_models.Credential).
-                 filter_by(tenant_id=tenant_id).all())
-        return creds
-    except exc.NoResultFound:
-        return []
+    return (session.query(l2network_models.Credential).
+            filter_by(tenant_id=tenant_id).all())
 
 
 def get_credential(tenant_id, credential_id):
