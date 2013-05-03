@@ -17,8 +17,12 @@
 
 import sys
 
-from quantum.plugins import nicira
+# catch an import error if nicira is not the configured plugin
+try:
+    from quantum.plugins import nicira
 
-# Provide a mapping for the nicira_nvp_plugin package to ensure
-# backwards compatibilty for configuration.
-sys.modules['quantum.plugins.nicira.nicira_nvp_plugin'] = nicira
+    # Provide a mapping for the nicira_nvp_plugin package to ensure
+    # backwards compatibility for configuration.
+    sys.modules['quantum.plugins.nicira.nicira_nvp_plugin'] = nicira
+except ImportError:
+    pass
