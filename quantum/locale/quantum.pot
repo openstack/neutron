@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.95"
+"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.96"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-03 12:11+0000\n"
+"POT-Creation-Date: 2013-05-04 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1810,205 +1810,205 @@ msgstr ""
 msgid "Multiple ports match for %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:261
+#: quantum/db/db_base_plugin_v2.py:258
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:267
+#: quantum/db/db_base_plugin_v2.py:264
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:271
+#: quantum/db/db_base_plugin_v2.py:268
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:301
+#: quantum/db/db_base_plugin_v2.py:298
 #, python-format
 msgid ""
 "Hold allocated IP %(ip_address)s "
 "(%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:352
+#: quantum/db/db_base_plugin_v2.py:349
 #, python-format
 msgid "No allocation pool found for ip address:%s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:365
+#: quantum/db/db_base_plugin_v2.py:362
 #, python-format
 msgid "Recycle %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:369
+#: quantum/db/db_base_plugin_v2.py:366
 #, python-format
 msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:376
+#: quantum/db/db_base_plugin_v2.py:373
 #, python-format
 msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:388
+#: quantum/db/db_base_plugin_v2.py:385
 #, python-format
 msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:397
+#: quantum/db/db_base_plugin_v2.py:394
 #, python-format
 msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:402
+#: quantum/db/db_base_plugin_v2.py:399
 #, python-format
 msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:411
+#: quantum/db/db_base_plugin_v2.py:408
 #, python-format
 msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:435
+#: quantum/db/db_base_plugin_v2.py:432
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:444
+#: quantum/db/db_base_plugin_v2.py:441
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:468
+#: quantum/db/db_base_plugin_v2.py:465
 #, python-format
 msgid "All IP's from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:473
+#: quantum/db/db_base_plugin_v2.py:470
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:480
+#: quantum/db/db_base_plugin_v2.py:477
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:587
+#: quantum/db/db_base_plugin_v2.py:584
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:599
+#: quantum/db/db_base_plugin_v2.py:596
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:605
+#: quantum/db/db_base_plugin_v2.py:602
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:625
+#: quantum/db/db_base_plugin_v2.py:622
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:634 quantum/db/db_base_plugin_v2.py:665
+#: quantum/db/db_base_plugin_v2.py:631 quantum/db/db_base_plugin_v2.py:662
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:679
+#: quantum/db/db_base_plugin_v2.py:676
 #, python-format
 msgid "Port update. Hold %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:687
+#: quantum/db/db_base_plugin_v2.py:684
 #, python-format
 msgid "Port update. Adding %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:742
+#: quantum/db/db_base_plugin_v2.py:739
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:747
+#: quantum/db/db_base_plugin_v2.py:744
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:767
+#: quantum/db/db_base_plugin_v2.py:764
 msgid "Performing IP validity checks on allocation pools"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:774
+#: quantum/db/db_base_plugin_v2.py:771
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:781
+#: quantum/db/db_base_plugin_v2.py:778
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:785
+#: quantum/db/db_base_plugin_v2.py:782
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:790
+#: quantum/db/db_base_plugin_v2.py:787
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:803
+#: quantum/db/db_base_plugin_v2.py:800
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:814
+#: quantum/db/db_base_plugin_v2.py:811
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:827 quantum/db/db_base_plugin_v2.py:831
+#: quantum/db/db_base_plugin_v2.py:824 quantum/db/db_base_plugin_v2.py:828
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:941
+#: quantum/db/db_base_plugin_v2.py:938
 #, python-format
 msgid "An exception occured while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1041
+#: quantum/db/db_base_plugin_v2.py:1038
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1065
+#: quantum/db/db_base_plugin_v2.py:1062
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1078
+#: quantum/db/db_base_plugin_v2.py:1075
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1322
+#: quantum/db/db_base_plugin_v2.py:1319
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: quantum/db/db_base_plugin_v2.py:1399
+#: quantum/db/db_base_plugin_v2.py:1396
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -3735,8 +3735,8 @@ msgid "delete_subnet() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:261
-#: quantum/plugins/cisco/db/l2network_db.py:213
-#: quantum/plugins/cisco/db/network_db_v2.py:210
+#: quantum/plugins/cisco/db/l2network_db.py:201
+#: quantum/plugins/cisco/db/network_db_v2.py:198
 msgid "get_all_qoss() called"
 msgstr ""
 
@@ -4008,64 +4008,64 @@ msgid "create_vlanids() called"
 msgstr ""
 
 #: quantum/plugins/cisco/db/l2network_db.py:58
-#: quantum/plugins/cisco/db/l2network_db.py:130
+#: quantum/plugins/cisco/db/l2network_db.py:126
 #: quantum/plugins/cisco/db/network_db_v2.py:55
-#: quantum/plugins/cisco/db/network_db_v2.py:127
+#: quantum/plugins/cisco/db/network_db_v2.py:123
 msgid "get_all_vlanids() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:69
-#: quantum/plugins/cisco/db/network_db_v2.py:66
+#: quantum/plugins/cisco/db/l2network_db.py:65
+#: quantum/plugins/cisco/db/network_db_v2.py:62
 msgid "is_vlanid_used() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:81
-#: quantum/plugins/cisco/db/network_db_v2.py:78
+#: quantum/plugins/cisco/db/l2network_db.py:77
+#: quantum/plugins/cisco/db/network_db_v2.py:74
 msgid "release_vlanid() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:97
-#: quantum/plugins/cisco/db/network_db_v2.py:94
+#: quantum/plugins/cisco/db/l2network_db.py:93
+#: quantum/plugins/cisco/db/network_db_v2.py:90
 msgid "delete_vlanid() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:111
-#: quantum/plugins/cisco/db/network_db_v2.py:108
+#: quantum/plugins/cisco/db/l2network_db.py:107
+#: quantum/plugins/cisco/db/network_db_v2.py:104
 msgid "reserve_vlanid() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:142
-#: quantum/plugins/cisco/db/network_db_v2.py:139
+#: quantum/plugins/cisco/db/l2network_db.py:134
+#: quantum/plugins/cisco/db/network_db_v2.py:131
 msgid "get_all_vlan_bindings() called"
+msgstr ""
+
+#: quantum/plugins/cisco/db/l2network_db.py:141
+#: quantum/plugins/cisco/db/network_db_v2.py:138
+msgid "get_vlan_binding() called"
 msgstr ""
 
 #: quantum/plugins/cisco/db/l2network_db.py:153
 #: quantum/plugins/cisco/db/network_db_v2.py:150
-msgid "get_vlan_binding() called"
-msgstr ""
-
-#: quantum/plugins/cisco/db/l2network_db.py:165
-#: quantum/plugins/cisco/db/network_db_v2.py:162
 msgid "add_vlan_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:181
-#: quantum/plugins/cisco/db/network_db_v2.py:178
+#: quantum/plugins/cisco/db/l2network_db.py:169
+#: quantum/plugins/cisco/db/network_db_v2.py:166
 msgid "remove_vlan_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:195
-#: quantum/plugins/cisco/db/network_db_v2.py:192
+#: quantum/plugins/cisco/db/l2network_db.py:183
+#: quantum/plugins/cisco/db/network_db_v2.py:180
 msgid "update_vlan_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:225
-#: quantum/plugins/cisco/db/network_db_v2.py:222
+#: quantum/plugins/cisco/db/l2network_db.py:209
+#: quantum/plugins/cisco/db/network_db_v2.py:206
 msgid "get_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/l2network_db.py:239
-#: quantum/plugins/cisco/db/network_db_v2.py:236
+#: quantum/plugins/cisco/db/l2network_db.py:223
+#: quantum/plugins/cisco/db/network_db_v2.py:220
 msgid "add_qos() called"
 msgstr ""
 
@@ -4073,31 +4073,31 @@ msgstr ""
 msgid "get_all_nexusport_bindings() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:45
+#: quantum/plugins/cisco/db/nexus_db_v2.py:41
 msgid "get_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:59
+#: quantum/plugins/cisco/db/nexus_db_v2.py:53
 msgid "get_nexusvlan_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:72
+#: quantum/plugins/cisco/db/nexus_db_v2.py:64
 msgid "add_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:83
+#: quantum/plugins/cisco/db/nexus_db_v2.py:75
 msgid "remove_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:101
+#: quantum/plugins/cisco/db/nexus_db_v2.py:90
 msgid "update_nexusport_binding called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:117
+#: quantum/plugins/cisco/db/nexus_db_v2.py:106
 msgid "get_nexusvm_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:130
+#: quantum/plugins/cisco/db/nexus_db_v2.py:119
 msgid "get_port_vlan_switch_binding() called"
 msgstr ""
 
@@ -4419,13 +4419,13 @@ msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:310
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:615
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:697
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:698
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:318
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:627
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:710
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:711
 msgid "Agent loop has new devices!"
 msgstr ""
 
@@ -4441,7 +4441,7 @@ msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:345
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:666
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:776
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:777
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -4695,45 +4695,45 @@ msgid "RPC agent_id: %s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:559
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:614
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:615
 #, python-format
 msgid "Port %s added"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:565
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:620
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:621
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:571
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:627
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:628
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:583
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:603
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:636
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:659
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:637
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:660
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:590
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:645
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:646
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:596
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:651
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:652
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:600
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:656
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:657
 #, python-format
 msgid "Port %s updated."
 msgstr ""
@@ -4752,7 +4752,7 @@ msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:641
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:725
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:726
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:269
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -7007,60 +7007,60 @@ msgstr ""
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:482
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:483
 #, python-format
 msgid "port_unbound: vif_id %s not in local_vlan_map"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:527
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:528
 msgid ""
 "Failed to create OVS patch port. Cannot have tunneling enabled on this "
 "agent, since this version of OVS does not support tunnels or patch ports."
 " Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:548
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:549
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:554
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:555
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
 "exist. Agent terminated!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:608
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:609
 #, python-format
 msgid "No VIF port for port %s defined on agent."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:683
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:684
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:703
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:704
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:716
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:717
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:263
 #: quantum/tests/unit/openvswitch/test_ovs_tunnel.py:371
 msgid "Error in agent event loop"
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:743
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:744
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:756
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:757
 msgid "Tunnelling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:770
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:771
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
