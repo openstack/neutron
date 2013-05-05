@@ -39,7 +39,7 @@ LOG = logging.getLogger(__name__)
 DB_CORE_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 DB_LB_PLUGIN_KLASS = (
     "quantum.plugins.services.agent_loadbalancer."
-    "lbaas_plugin.LoadBalancerPlugin"
+    "plugin.LoadBalancerPlugin"
 )
 ROOTDIR = os.path.dirname(__file__) + '../../../..'
 ETCDIR = os.path.join(ROOTDIR, 'etc')

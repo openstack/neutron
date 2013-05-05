@@ -21,11 +21,12 @@ from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.linux import interface
-from quantum.common import topics
 from quantum.openstack.common.rpc import service as rpc_service
 from quantum.openstack.common import service
-from quantum.plugins.services.agent_loadbalancer.agent import manager
-
+from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+    agent_manager as manager,
+    plugin_driver
+)
 
 OPTS = [
     cfg.IntOpt(
@@ -61,7 +62,7 @@ def main():
     mgr = manager.LbaasAgentManager(cfg.CONF)
     svc = LbaasAgentService(
         host=cfg.CONF.host,
-        topic=topics.LOADBALANCER_AGENT,
+        topic=plugin_driver.TOPIC_LOADBALANCER_AGENT,
         manager=mgr
     )
     service.launch(svc).wait()

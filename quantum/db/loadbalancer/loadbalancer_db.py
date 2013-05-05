@@ -426,7 +426,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             context.session.delete(vip)
             if vip.port:  # this is a Quantum port
                 self._core_plugin.delete_port(context, vip.port.id)
-            context.session.flush()
 
     def get_vip(self, context, id, fields=None):
         vip = self._get_resource(context, Vip, id)

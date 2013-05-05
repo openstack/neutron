@@ -21,12 +21,14 @@ import weakref
 from oslo.config import cfg
 
 from quantum.agent.common import config
-from quantum.common import topics
 from quantum import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import periodic_task
-from quantum.plugins.services.agent_loadbalancer.agent import api
+from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+    agent_api,
+    plugin_driver
+)
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qlbaas-'
@@ -128,8 +130,8 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
             msg = _('Error importing loadbalancer device driver: %s')
             raise SystemExit(msg % conf.device_driver)
         ctx = context.get_admin_context_without_session()
-        self.plugin_rpc = api.LbaasAgentApi(
-            topics.LOADBALANCER_PLUGIN,
+        self.plugin_rpc = agent_api.LbaasAgentApi(
+            plugin_driver.TOPIC_PROCESS_ON_HOST,
             ctx,
             conf.host
         )
