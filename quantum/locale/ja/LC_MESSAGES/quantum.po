@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-04 12:11+0000\n"
+"POT-Creation-Date: 2013-05-05 12:11+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -895,33 +895,33 @@ msgid "Request: %s"
 msgstr ""
 
 #: quantum/agent/metadata/agent.py:96
-#: quantum/agent/metadata/namespace_proxy.py:81
+#: quantum/agent/metadata/namespace_proxy.py:83
 msgid "Unexpected error."
 msgstr ""
 
 #: quantum/agent/metadata/agent.py:97
-#: quantum/agent/metadata/namespace_proxy.py:82
+#: quantum/agent/metadata/namespace_proxy.py:84
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:148
+#: quantum/agent/metadata/agent.py:149
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:157
-#: quantum/agent/metadata/namespace_proxy.py:116
+#: quantum/agent/metadata/agent.py:160
+#: quantum/agent/metadata/namespace_proxy.py:123
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:163
-#: quantum/agent/metadata/namespace_proxy.py:122
+#: quantum/agent/metadata/agent.py:166
+#: quantum/agent/metadata/namespace_proxy.py:129
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
 
-#: quantum/agent/metadata/agent.py:201
+#: quantum/agent/metadata/agent.py:204
 msgid "Location for Metadata Proxy UNIX domain socket"
 msgstr ""
 
@@ -933,7 +933,7 @@ msgstr ""
 msgid "network_id and router_id are None. One must be provided."
 msgstr ""
 
-#: quantum/agent/metadata/namespace_proxy.py:150
+#: quantum/agent/metadata/namespace_proxy.py:157
 msgid "TCP Port to listen for metadata server requests."
 msgstr ""
 
