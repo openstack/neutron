@@ -52,7 +52,6 @@ def init():
             raise exceptions.PolicyNotFound(path=cfg.CONF.policy_file)
     # pass _set_brain to read_cached_file so that the policy brain
     # is reset only if the file has changed
-    LOG.debug(_("loading policy file at %s"), _POLICY_PATH)
     utils.read_cached_file(_POLICY_PATH, _POLICY_CACHE,
                            reload_func=_set_rules)
 
@@ -65,6 +64,7 @@ def get_resource_and_action(action):
 
 def _set_rules(data):
     default_rule = 'default'
+    LOG.debug(_("loading policies from file: %s"), _POLICY_PATH)
     policy.set_rules(policy.Rules.load_json(data, default_rule))
 
 
