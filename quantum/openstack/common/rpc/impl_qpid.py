@@ -40,8 +40,8 @@ qpid_opts = [
     cfg.StrOpt('qpid_hostname',
                default='localhost',
                help='Qpid broker hostname'),
-    cfg.StrOpt('qpid_port',
-               default='5672',
+    cfg.IntOpt('qpid_port',
+               default=5672,
                help='Qpid broker port'),
     cfg.ListOpt('qpid_hosts',
                 default=['$qpid_hostname:$qpid_port'],
@@ -331,15 +331,16 @@ class Connection(object):
 
     def reconnect(self):
         """Handles reconnecting and re-establishing sessions and queues"""
-        if self.connection.opened():
-            try:
-                self.connection.close()
-            except qpid_exceptions.ConnectionError:
-                pass
-
         attempt = 0
         delay = 1
         while True:
+            # Close the session if necessary
+            if self.connection.opened():
+                try:
+                    self.connection.close()
+                except qpid_exceptions.ConnectionError:
+                    pass
+
             broker = self.brokers[attempt % len(self.brokers)]
             attempt += 1
 
