@@ -15,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 import os
 import re
 
@@ -24,20 +23,39 @@ class CommandFilter(object):
     """Command filter only checking that the 1st argument matches exec_path."""
 
     def __init__(self, exec_path, run_as, *args):
+        self.name = ''
         self.exec_path = exec_path
         self.run_as = run_as
         self.args = args
+        self.real_exec = None
+
+    def get_exec(self, exec_dirs=[]):
+        """Returns existing executable, or empty string if none found."""
+        if self.real_exec is not None:
+            return self.real_exec
+        self.real_exec = ""
+        if self.exec_path.startswith('/'):
+            if os.access(self.exec_path, os.X_OK):
+                self.real_exec = self.exec_path
+        else:
+            for binary_path in exec_dirs:
+                expanded_path = os.path.join(binary_path, self.exec_path)
+                if os.access(expanded_path, os.X_OK):
+                    self.real_exec = expanded_path
+                    break
+        return self.real_exec
 
     def match(self, userargs):
         """Only check that the first argument (command) matches exec_path."""
         return os.path.basename(self.exec_path) == userargs[0]
 
-    def get_command(self, userargs):
+    def get_command(self, userargs, exec_dirs=[]):
         """Returns command to execute (with sudo -u if run_as != root)."""
+        to_exec = self.get_exec(exec_dirs=exec_dirs) or self.exec_path
         if (self.run_as != 'root'):
             # Used to run commands at lesser privileges
-            return ['sudo', '-u', self.run_as, self.exec_path] + userargs[1:]
-        return [self.exec_path] + userargs[1:]
+            return ['sudo', '-u', self.run_as, to_exec] + userargs[1:]
+        return [to_exec] + userargs[1:]
 
     def get_environment(self, userargs):
         """Returns specific environment to set, None if none."""
@@ -73,6 +91,52 @@ class RegExpFilter(CommandFilter):
         return False
 
 
+class PathFilter(CommandFilter):
+    """Command filter checking that path arguments are within given dirs
+
+        One can specify the following constraints for command arguments:
+            1) pass     - pass an argument as is to the resulting command
+            2) some_str - check if an argument is equal to the given string
+            3) abs path - check if a path argument is within the given base dir
+
+        A typical rootwrapper filter entry looks like this:
+            # cmdname: filter name, raw command, user, arg_i_constraint [, ...]
+            chown: PathFilter, /bin/chown, root, nova, /var/lib/images
+
+    """
+
+    def match(self, userargs):
+        command, arguments = userargs[0], userargs[1:]
+
+        equal_args_num = len(self.args) == len(arguments)
+        exec_is_valid = super(PathFilter, self).match(userargs)
+        args_equal_or_pass = all(
+            arg == 'pass' or arg == value
+            for arg, value in zip(self.args, arguments)
+            if not os.path.isabs(arg)  # arguments not specifying abs paths
+        )
+        paths_are_within_base_dirs = all(
+            os.path.commonprefix([arg, os.path.realpath(value)]) == arg
+            for arg, value in zip(self.args, arguments)
+            if os.path.isabs(arg)  # arguments specifying abs paths
+        )
+
+        return (equal_args_num and
+                exec_is_valid and
+                args_equal_or_pass and
+                paths_are_within_base_dirs)
+
+    def get_command(self, userargs, exec_dirs=[]):
+        command, arguments = userargs[0], userargs[1:]
+
+        # convert path values to canonical ones; copy other args as is
+        args = [os.path.realpath(value) if os.path.isabs(arg) else value
+                for arg, value in zip(self.args, arguments)]
+
+        return super(PathFilter, self).get_command([command] + args,
+                                                   exec_dirs)
+
+
 class DnsmasqFilter(CommandFilter):
     """Specific filter for the dnsmasq call (which includes env)."""
 
@@ -96,8 +160,9 @@ class DnsmasqFilter(CommandFilter):
             return True
         return False
 
-    def get_command(self, userargs):
-        return [self.exec_path] + userargs[3:]
+    def get_command(self, userargs, exec_dirs=[]):
+        to_exec = self.get_exec(exec_dirs=exec_dirs) or self.exec_path
+        return [to_exec] + userargs[3:]
 
     def get_environment(self, userargs):
         env = os.environ.copy()
@@ -145,7 +210,7 @@ class KillFilter(CommandFilter):
             return False
         args = list(userargs)
         if len(args) == 3:
-            # this means we're asking for a specific signal
+            # A specific signal is requested
             signal = args.pop(1)
             if signal not in self.args[1:]:
                 # Requested signal not in accepted list
@@ -157,7 +222,6 @@ class KillFilter(CommandFilter):
             if len(self.args) > 1:
                 # No signal requested, but filter requires specific signal
                 return False
-
         try:
             command = os.readlink("/proc/%d/exe" % int(args[1]))
             # NOTE(dprince): /proc/PID/exe may have ' (deleted)' on
@@ -165,7 +229,7 @@ class KillFilter(CommandFilter):
             if command.endswith(" (deleted)"):
                 command = command[:command.rindex(" ")]
             if command != self.args[0]:
-                # Affected executable doesn't match
+                # Affected executable does not match
                 return False
         except (ValueError, OSError):
             # Incorrect PID

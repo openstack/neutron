@@ -17,19 +17,86 @@
 
 
 import ConfigParser
+import logging
+import logging.handlers
 import os
 import string
 
-# this import has the effect of defining global var "filters",
-# referenced by build_filter(), below.  It gets set up by
-# quantum-rootwrap, when we load_filters().
 from quantum.rootwrap import filters
+
+
+class NoFilterMatched(Exception):
+    """This exception is raised when no filter matched."""
+    pass
+
+
+class FilterMatchNotExecutable(Exception):
+    """
+    This exception is raised when a filter matched but no executable was
+    found.
+    """
+    def __init__(self, match=None, **kwargs):
+        self.match = match
+
+
+class RootwrapConfig(object):
+
+    def __init__(self, config):
+        # filters_path
+        self.filters_path = config.get("DEFAULT", "filters_path").split(",")
+
+        # exec_dirs
+        if config.has_option("DEFAULT", "exec_dirs"):
+            self.exec_dirs = config.get("DEFAULT", "exec_dirs").split(",")
+        else:
+            # Use system PATH if exec_dirs is not specified
+            self.exec_dirs = os.environ["PATH"].split(':')
+
+        # syslog_log_facility
+        if config.has_option("DEFAULT", "syslog_log_facility"):
+            v = config.get("DEFAULT", "syslog_log_facility")
+            facility_names = logging.handlers.SysLogHandler.facility_names
+            self.syslog_log_facility = getattr(logging.handlers.SysLogHandler,
+                                               v, None)
+            if self.syslog_log_facility is None and v in facility_names:
+                self.syslog_log_facility = facility_names.get(v)
+            if self.syslog_log_facility is None:
+                raise ValueError('Unexpected syslog_log_facility: %s' % v)
+        else:
+            default_facility = logging.handlers.SysLogHandler.LOG_SYSLOG
+            self.syslog_log_facility = default_facility
+
+        # syslog_log_level
+        if config.has_option("DEFAULT", "syslog_log_level"):
+            v = config.get("DEFAULT", "syslog_log_level")
+            self.syslog_log_level = logging.getLevelName(v.upper())
+            if (self.syslog_log_level == "Level %s" % v.upper()):
+                raise ValueError('Unexepected syslog_log_level: %s' % v)
+        else:
+            self.syslog_log_level = logging.ERROR
+
+        # use_syslog
+        if config.has_option("DEFAULT", "use_syslog"):
+            self.use_syslog = config.getboolean("DEFAULT", "use_syslog")
+        else:
+            self.use_syslog = False
+
+
+def setup_syslog(execname, facility, level):
+    rootwrap_logger = logging.getLogger()
+    rootwrap_logger.setLevel(level)
+    handler = logging.handlers.SysLogHandler(address='/dev/log',
+                                             facility=facility)
+    handler.setFormatter(logging.Formatter(
+                         os.path.basename(execname) + ': %(message)s'))
+    rootwrap_logger.addHandler(handler)
 
 
 def build_filter(class_name, *args):
     """Returns a filter object of class class_name."""
     if not hasattr(filters, class_name):
-        # TODO(jrd): Log the error (whenever quantum-rootwrap has a log file)
+        logging.warning("Skipping unknown filter class (%s) specified "
+                        "in filter definitions" % class_name)
         return None
     filterclass = getattr(filters, class_name)
     return filterclass(*args)
@@ -49,17 +116,20 @@ def load_filters(filters_path):
                 newfilter = build_filter(*filterdefinition)
                 if newfilter is None:
                     continue
+                newfilter.name = name
                 filterlist.append(newfilter)
     return filterlist
 
 
-def match_filter(filter_list, userargs):
+def match_filter(filter_list, userargs, exec_dirs=[]):
     """
     Checks user command and arguments through command filters and
-    returns the first matching filter, or None is none matched.
+    returns the first matching filter.
+    Raises NoFilterMatched if no filter matched.
+    Raises FilterMatchNotExecutable if no executable was found for the
+    best filter match.
     """
-
-    found_filter = None
+    first_not_executable_filter = None
 
     for f in filter_list:
         if f.match(userargs):
@@ -70,16 +140,21 @@ def match_filter(filter_list, userargs):
                                 if not isinstance(fltr,
                                                   filters.ExecCommandFilter)]
                 args = f.exec_args(userargs)
-                if not args or not match_filter(leaf_filters, args):
+                if (not args or not
+                    match_filter(leaf_filters, args, exec_dirs=exec_dirs)):
                     continue
 
             # Try other filters if executable is absent
-            if not os.access(f.exec_path, os.X_OK):
-                if not found_filter:
-                    found_filter = f
+            if not f.get_exec(exec_dirs=exec_dirs):
+                if not first_not_executable_filter:
+                    first_not_executable_filter = f
                 continue
             # Otherwise return matching filter for execution
             return f
 
-    # No filter matched or first missing executable
-    return found_filter
+    if first_not_executable_filter:
+        # A filter matched, but no executable was found for it
+        raise FilterMatchNotExecutable(match=first_not_executable_filter)
+
+    # No filter matched
+    raise NoFilterMatched()
