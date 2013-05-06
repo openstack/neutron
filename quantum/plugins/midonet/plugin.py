@@ -422,7 +422,9 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             port_db_entry = super(MidonetPluginV2,
                                   self).create_port(context, port)
-            self._extend_port_dict_security_group(context, port_db_entry)
+            # Caveat: port_db_entry is not a db model instance
+            sg_ids = self._get_security_groups_on_port(context, port)
+            self._process_port_create_security_group(context, port, sg_ids)
             if is_compute_interface:
                 # Create a DHCP entry if needed.
                 if 'ip_address' in (port_db_entry['fixed_ips'] or [{}])[0]:
@@ -453,8 +455,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # get the quantum port from DB.
         port_db_entry = super(MidonetPluginV2, self).get_port(context,
                                                               id, fields)
-        self._extend_port_dict_security_group(context, port_db_entry)
-
         # verify that corresponding port exists in MidoNet.
         try:
             self.mido_api.get_port(id)
@@ -477,7 +477,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             try:
                 for port in ports_db_entry:
                     self.mido_api.get_port(port['id'])
-                    self._extend_port_dict_security_group(context, port)
             except w_exc.HTTPNotFound:
                 raise MidonetResourceNotFound(resource_type='Port',
                                               id=port['id'])

@@ -471,7 +471,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port = super(LinuxBridgePluginV2, self).get_port(context,
                                                              id,
                                                              fields)
-            self._extend_port_dict_security_group(context, port)
         self._extend_port_dict_binding(context, port),
         return self._fields(port, fields)
 
@@ -484,7 +483,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                           limit, marker, page_reverse)
             #TODO(nati) filter by security group
             for port in ports:
-                self._extend_port_dict_security_group(context, port)
                 self._extend_port_dict_binding(context, port)
                 res_ports.append(self._fields(port, fields))
         return res_ports
@@ -500,8 +498,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port = super(LinuxBridgePluginV2,
                          self).create_port(context, port)
             self._process_port_create_security_group(
-                context, port['id'], sgids)
-            self._extend_port_dict_security_group(context, port)
+                context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
         return self._extend_port_dict_binding(context, port)
 

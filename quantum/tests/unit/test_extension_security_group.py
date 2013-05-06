@@ -192,9 +192,8 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             sgids = self._get_security_groups_on_port(context, port)
             port = super(SecurityGroupTestPlugin, self).create_port(context,
                                                                     port)
-            self._process_port_create_security_group(context, port['id'],
+            self._process_port_create_security_group(context, port,
                                                      sgids)
-            self._extend_port_dict_security_group(context, port)
         return port
 
     def update_port(self, context, id, port):
@@ -205,11 +204,12 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                     self._get_security_groups_on_port(context, port))
                 # delete the port binding and read it with the new rules
                 self._delete_port_security_group_bindings(context, id)
+                port['port']['id'] = id
                 self._process_port_create_security_group(
-                    context, id, port['port'].get(ext_sg.SECURITYGROUPS))
+                    context, port['port'],
+                    port['port'].get(ext_sg.SECURITYGROUPS))
             port = super(SecurityGroupTestPlugin, self).update_port(
                 context, id, port)
-            self._extend_port_dict_security_group(context, port)
         return port
 
     def create_network(self, context, network):
@@ -224,8 +224,6 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         quantum_lports = super(SecurityGroupTestPlugin, self).get_ports(
             context, filters, sorts=sorts, limit=limit, marker=marker,
             page_reverse=page_reverse)
-        for quantum_lport in quantum_lports:
-            self._extend_port_dict_security_group(context, quantum_lport)
         return quantum_lports
 
 
@@ -721,11 +719,10 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_list_ports_security_group(self):
         with self.network() as n:
             with self.subnet(n):
-                res = self._create_port(self.fmt, n['network']['id'])
-                self.deserialize(self.fmt, res)
-                res = self.new_list_request('ports')
-                ports = self.deserialize(self.fmt,
-                                         res.get_response(self.api))
+                self._create_port(self.fmt, n['network']['id'])
+                req = self.new_list_request('ports')
+                res = req.get_response(self.api)
+                ports = self.deserialize(self.fmt, res)
                 port = ports['ports'][0]
                 self.assertEqual(len(port[ext_sg.SECURITYGROUPS]), 1)
                 self._delete('ports', port['id'])

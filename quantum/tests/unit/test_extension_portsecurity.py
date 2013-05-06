@@ -116,9 +116,8 @@ class PortSecurityTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
 
             if (p.get(ext_sg.SECURITYGROUPS) and p[psec.PORTSECURITY]):
                 self._process_port_create_security_group(
-                    context, p['id'], p[ext_sg.SECURITYGROUPS])
+                    context, p, p[ext_sg.SECURITYGROUPS])
 
-            self._extend_port_dict_security_group(context, p)
             self._extend_port_port_security_dict(context, p)
 
         return port['port']
@@ -132,7 +131,8 @@ class PortSecurityTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             ret_port = super(PortSecurityTestPlugin, self).update_port(
                 context, id, port)
-            # copy values over
+            # copy values over - but not fixed_ips
+            port['port'].pop('fixed_ips', None)
             ret_port.update(port['port'])
 
             # populate port_security setting
@@ -164,14 +164,16 @@ class PortSecurityTestPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                 # delete the port binding and read it with the new rules.
                 self._delete_port_security_group_bindings(context, id)
                 sgids = self._get_security_groups_on_port(context, port)
-                self._process_port_create_security_group(context, id, sgids)
+                # process port create sec groups needs port id
+                port['id'] = id
+                self._process_port_create_security_group(context,
+                                                         ret_port, sgids)
 
             if psec.PORTSECURITY in port['port']:
                 self._update_port_security_binding(
                     context, id, ret_port[psec.PORTSECURITY])
 
             self._extend_port_port_security_dict(context, ret_port)
-            self._extend_port_dict_security_group(context, ret_port)
 
         return ret_port
 
@@ -301,13 +303,12 @@ class TestPortSecurity(PortSecurityDBTestCase):
                                         psec.PORTSECURITY: False}}
                 req = self.new_update_request('ports', update_port,
                                               port['port']['id'])
-
                 port = self.deserialize('json', req.get_response(self.api))
                 self.assertEqual(port['port'][psec.PORTSECURITY], False)
                 self.assertEqual(len(port['port'][ext_sg.SECURITYGROUPS]), 0)
                 self._delete('ports', port['port']['id'])
 
-    def test_update_port_remove_port_security_security_group_readd(self):
+    def test_update_port_remove_port_security_security_group_read(self):
         if self._skip_security_group:
             self.skipTest("Plugin does not support security groups")
         with self.network() as net:

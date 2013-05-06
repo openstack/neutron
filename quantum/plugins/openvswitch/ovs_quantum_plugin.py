@@ -563,9 +563,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             port = super(OVSQuantumPluginV2, self).create_port(context, port)
-            self._process_port_create_security_group(
-                context, port['id'], sgids)
-            self._extend_port_dict_security_group(context, port)
+            self._process_port_create_security_group(context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
         return self._extend_port_dict_binding(context, port)
 
@@ -573,7 +571,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             port = super(OVSQuantumPluginV2, self).get_port(context,
                                                             id, fields)
-            self._extend_port_dict_security_group(context, port)
             self._extend_port_dict_binding(context, port)
         return self._fields(port, fields)
 
@@ -586,13 +583,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 page_reverse)
             #TODO(nati) filter by security group
             for port in ports:
-                self._extend_port_dict_security_group(context, port)
                 self._extend_port_dict_binding(context, port)
         return [self._fields(port, fields) for port in ports]
 
     def update_port(self, context, id, port):
         session = context.session
-
         need_port_update_notify = False
         with session.begin(subtransactions=True):
             original_port = super(OVSQuantumPluginV2, self).get_port(
@@ -601,10 +596,8 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
-
         need_port_update_notify |= self.is_security_group_member_updated(
             context, original_port, updated_port)
-
         if original_port['admin_state_up'] != updated_port['admin_state_up']:
             need_port_update_notify = True
 
@@ -615,7 +608,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
-
         return self._extend_port_dict_binding(context, updated_port)
 
     def delete_port(self, context, id, l3_port_check=True):

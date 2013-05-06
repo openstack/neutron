@@ -77,10 +77,12 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             self._delete_port_security_group_bindings(context, id)
             self._process_port_create_security_group(
                 context,
-                id,
+                updated_port,
                 port['port'][ext_sg.SECURITYGROUPS])
             need_notify = True
-        self._extend_port_dict_security_group(context, updated_port)
+        else:
+            updated_port[ext_sg.SECURITYGROUPS] = (
+                original_port[ext_sg.SECURITYGROUPS])
         return need_notify
 
     def is_security_group_member_updated(self, context,
