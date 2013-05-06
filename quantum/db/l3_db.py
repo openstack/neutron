@@ -127,7 +127,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             raise l3.RouterNotFound(router_id=id)
         return router
 
-    def _make_router_dict(self, router, fields=None):
+    def _make_router_dict(self, router, fields=None,
+                          process_extensions=True):
         res = {'id': router['id'],
                'name': router['name'],
                'tenant_id': router['tenant_id'],
@@ -138,6 +139,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
             res['external_gateway_info'] = {'network_id': nw_id}
+        if process_extensions:
+            for func in self._dict_extend_functions.get(l3.ROUTERS, []):
+                func(self, res, router)
         return self._fields(res, fields)
 
     def create_router(self, context, router):

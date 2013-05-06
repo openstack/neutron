@@ -87,10 +87,11 @@ class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
                 "gateway to external network %(net_id)s is required by one or "
                 "more floating IPs.")
 
+ROUTERS = 'routers'
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
-    'routers': {
+    ROUTERS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
