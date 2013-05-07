@@ -68,7 +68,7 @@ from quantum import policy
 
 LOG = logging.getLogger("QuantumPlugin")
 NVP_NOSNAT_RULES_ORDER = 10
-NVP_FLOATINGIP_NAT_RULES_ORDER = 200
+NVP_FLOATINGIP_NAT_RULES_ORDER = 224
 NVP_EXTGW_NAT_RULES_ORDER = 255
 
 
@@ -524,11 +524,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 lr_port['uuid'])
         # Set the SNAT rule for each subnet (only first IP)
         for cidr in self._find_router_subnets_cidrs(context, router_id):
+            cidr_prefix = int(cidr.split('/')[1])
             nvplib.create_lrouter_snat_rule(
                 self.cluster, router_id,
                 ip_addresses[0].split('/')[0],
                 ip_addresses[0].split('/')[0],
-                order=NVP_EXTGW_NAT_RULES_ORDER,
+                order=NVP_EXTGW_NAT_RULES_ORDER - cidr_prefix,
                 match_criteria={'source_ip_addresses': cidr})
 
         LOG.debug(_("_nvp_create_ext_gw_port completed on external network "
@@ -1601,9 +1602,11 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # In that case we will consider only the first one
             if gw_port.get('fixed_ips'):
                 snat_ip = gw_port['fixed_ips'][0]['ip_address']
+                subnet = self._get_subnet(context, subnet_id)
+                cidr_prefix = int(subnet['cidr'].split('/')[1])
                 nvplib.create_lrouter_snat_rule(
                     self.cluster, router_id, snat_ip, snat_ip,
-                    order=NVP_EXTGW_NAT_RULES_ORDER,
+                    order=NVP_EXTGW_NAT_RULES_ORDER - cidr_prefix,
                     match_criteria={'source_ip_addresses': subnet['cidr']})
         nvplib.create_lrouter_nosnat_rule(
             self.cluster, router_id,
