@@ -1856,6 +1856,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         except sa_exc.NoResultFound:
             LOG.debug(_("The port '%s' is not associated with floating IPs"),
                       port_id)
+        except q_exc.NotFound:
+            LOG.warning(_("Nat rules not found in nvp for port: %s"), id)
+
         super(NvpPluginV2, self).disassociate_floatingips(context, port_id)
 
     def create_network_gateway(self, context, network_gateway):
