@@ -94,6 +94,30 @@ class TestPidfile(base.BaseTestCase):
             execute.assert_called_once_with(
                 ['cat', '/proc/34/cmdline'], 'sudo')
 
+    def test_is_running_uuid_true(self):
+        with mock.patch('quantum.agent.linux.utils.execute') as execute:
+            execute.return_value = 'python 1234'
+            p = daemon.Pidfile('thefile', 'python', uuid='1234')
+
+            with mock.patch.object(p, 'read') as read:
+                read.return_value = 34
+                self.assertTrue(p.is_running())
+
+            execute.assert_called_once_with(
+                ['cat', '/proc/34/cmdline'], 'sudo')
+
+    def test_is_running_uuid_false(self):
+        with mock.patch('quantum.agent.linux.utils.execute') as execute:
+            execute.return_value = 'python 1234'
+            p = daemon.Pidfile('thefile', 'python', uuid='6789')
+
+            with mock.patch.object(p, 'read') as read:
+                read.return_value = 34
+                self.assertFalse(p.is_running())
+
+            execute.assert_called_once_with(
+                ['cat', '/proc/34/cmdline'], 'sudo')
+
 
 class TestDaemon(base.BaseTestCase):
     def setUp(self):
