@@ -20,7 +20,11 @@ test_database.py is an independent test suite
 that tests the database api method calls
 """
 
+import mock
+import sqlalchemy
+
 from quantum.openstack.common import log as logging
+import quantum.plugins.cisco.common.cisco_exceptions as c_exc
 import quantum.plugins.cisco.db.api as db
 import quantum.plugins.cisco.db.l2network_db as l2network_db
 import quantum.plugins.cisco.db.nexus_db_v2 as nexus_db
@@ -396,6 +400,49 @@ class NexusDBTest(base.BaseTestCase):
                 count += 1
         self.assertTrue(count == 1)
         self.tearDown_nexusportbinding()
+
+    def test_get_nexusport_binding_no_result_found_handling(self):
+        with mock.patch('sqlalchemy.orm.Query.all') as mock_all:
+            mock_all.return_value = []
+
+            with self.assertRaises(c_exc.NexusPortBindingNotFound):
+                nexus_db.get_nexusport_binding(port_id=10,
+                                               vlan_id=20,
+                                               switch_ip='10.0.0.1',
+                                               instance_id=1)
+
+    def test_get_nexusvlan_binding_no_result_found_handling(self):
+        with mock.patch('sqlalchemy.orm.Query.all') as mock_all:
+            mock_all.return_value = []
+
+            with self.assertRaises(c_exc.NexusPortBindingNotFound):
+                nexus_db.get_nexusvlan_binding(vlan_id=10,
+                                               switch_ip='10.0.0.1')
+
+    def test_update_nexusport_binding_no_result_found_handling(self):
+        with mock.patch('sqlalchemy.orm.Query.one') as mock_one:
+            mock_one.side_effect = sqlalchemy.orm.exc.NoResultFound
+
+            with self.assertRaises(c_exc.NexusPortBindingNotFound):
+                nexus_db.update_nexusport_binding(port_id=10,
+                                                  vlan_id=20,
+                                                  switch_ip='10.0.0.1',
+                                                  instance_id=1)
+
+    def test_get_nexusvm_binding_no_result_found_handling(self):
+        with mock.patch('sqlalchemy.orm.Query.first') as mock_first:
+            mock_first.return_value = None
+
+            with self.assertRaises(c_exc.NexusPortBindingNotFound):
+                nexus_db.get_nexusvm_binding(port_id=10,
+                                             vlan_id=20,
+                                             switch_ip='10.0.0.1')
+
+    def test_nexusport_binding_not_found_exception_message_formatting(self):
+        try:
+            raise c_exc.NexusPortBindingNotFound(a=1, b='test')
+        except c_exc.NexusPortBindingNotFound as e:
+            self.assertIn('(a=1,b=test)', str(e))
 
     def tearDown_nexusportbinding(self):
         """Tear down nexus port binding table."""

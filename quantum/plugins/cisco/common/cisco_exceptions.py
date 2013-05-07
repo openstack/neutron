@@ -96,7 +96,11 @@ class NexusConfigFailed(exceptions.QuantumException):
 
 class NexusPortBindingNotFound(exceptions.QuantumException):
     """NexusPort Binding is not present."""
-    message = _("Nexus Port Binding %(port_id)s is not present.")
+    message = _("Nexus Port Binding (%(filters)s) is not present")
+
+    def __init__(self, **kwargs):
+        filters = ','.join('%s=%s' % i for i in kwargs.items())
+        super(NexusPortBindingNotFound, self).__init__(filters=filters)
 
 
 class PortVnicBindingAlreadyExists(exceptions.QuantumException):
