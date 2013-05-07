@@ -25,9 +25,9 @@ import logging
 
 from ncclient import manager
 
+from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.nexus import cisco_nexus_snippets as snipp
-
 
 LOG = logging.getLogger(__name__)
 
@@ -37,11 +37,35 @@ class CiscoNEXUSDriver():
     def __init__(self):
         pass
 
+    def _edit_config(self, mgr, target='running', config=''):
+        """Modify switch config for a target config type.
+
+        :param mgr: NetConf client manager
+        :param target: Target config type
+        :param config: Configuration string in XML format
+
+        :raises: NexusConfigFailed
+
+        """
+        try:
+            mgr.edit_config(target, config=config)
+        except Exception as e:
+            # Raise a Quantum exception. Include a description of
+            # the original ncclient exception.
+            raise cexc.NexusConfigFailed(config=config, exc=e)
+
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
         """Make SSH connection to the Nexus Switch."""
-        man = manager.connect(host=nexus_host, port=nexus_ssh_port,
-                              username=nexus_user, password=nexus_password)
+        try:
+            man = manager.connect(host=nexus_host, port=nexus_ssh_port,
+                                  username=nexus_user,
+                                  password=nexus_password)
+        except Exception as e:
+            # Raise a Quantum exception. Include a description of
+            # the original ncclient exception.
+            raise cexc.NexusConnectFailed(nexus_host=nexus_host, exc=e)
+
         return man
 
     def create_xml_snippet(self, cutomized_config):
@@ -56,27 +80,27 @@ class CiscoNEXUSDriver():
         """Creates a VLAN on Nexus Switch given the VLAN ID and Name."""
         confstr = snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname)
         confstr = self.create_xml_snippet(confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def disable_vlan(self, mgr, vlanid):
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
         confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
         confstr = self.create_xml_snippet(confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def enable_port_trunk(self, mgr, interface):
         """Enable trunk mode an interface on Nexus Switch."""
         confstr = snipp.CMD_PORT_TRUNK % (interface)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def disable_switch_port(self, mgr, interface):
         """Disable trunk mode an interface on Nexus Switch."""
         confstr = snipp.CMD_NO_SWITCHPORT % (interface)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
         """Enable vlan in trunk interface.
@@ -87,7 +111,7 @@ class CiscoNEXUSDriver():
         confstr = snipp.CMD_VLAN_INT_SNIPPET % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
         """Disable VLAN.
@@ -98,7 +122,7 @@ class CiscoNEXUSDriver():
         confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        mgr.edit_config(target='running', config=confstr)
+        self._edit_config(mgr, target='running', config=confstr)
 
     def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
                     nexus_password, nexus_ports,
