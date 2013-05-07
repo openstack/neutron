@@ -236,8 +236,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
 
         with context.session.begin(subtransactions=True):
             new_net = super(NECPluginV2, self).create_network(context, network)
-            self._process_l3_create(context, network['network'], new_net['id'])
-            self._extend_network_dict_l3(context, new_net)
+            self._process_l3_create(context, new_net, network['network'])
             self._update_resource_status(context, "network", new_net['id'],
                                          OperationalStatus.BUILD)
 
@@ -271,8 +270,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             old_net = super(NECPluginV2, self).get_network(context, id)
             new_net = super(NECPluginV2, self).update_network(context, id,
                                                               network)
-            self._process_l3_update(context, network['network'], id)
-            self._extend_network_dict_l3(context, new_net)
+            self._process_l3_update(context, new_net, network['network'])
 
         changed = (old_net['admin_state_up'] is not new_net['admin_state_up'])
         if changed and not new_net['admin_state_up']:
@@ -358,17 +356,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
                 reason = _("delete_ofc_tenant() failed due to %s") % exc
                 LOG.warn(reason)
-
-    def get_network(self, context, id, fields=None):
-        net = super(NECPluginV2, self).get_network(context, id, None)
-        self._extend_network_dict_l3(context, net)
-        return self._fields(net, fields)
-
-    def get_networks(self, context, filters=None, fields=None):
-        nets = super(NECPluginV2, self).get_networks(context, filters, None)
-        for net in nets:
-            self._extend_network_dict_l3(context, net)
-        return [self._fields(net, fields) for net in nets]
 
     def _extend_port_dict_binding(self, context, port):
         port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS

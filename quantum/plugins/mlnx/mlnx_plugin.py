@@ -265,9 +265,8 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                                    physical_network,
                                    vlan_id)
 
-            self._process_l3_create(context, network['network'], net['id'])
+            self._process_l3_create(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
             LOG.debug(_("Created network: %s"), net['id'])
             return net
@@ -279,9 +278,8 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             net = super(MellanoxEswitchPlugin, self).update_network(context,
                                                                     net_id,
                                                                     network)
-            self._process_l3_update(context, network['network'], net_id)
+            self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, net_id):
@@ -306,7 +304,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                                                                  net_id,
                                                                  None)
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None):
@@ -317,7 +314,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                                                                    None)
             for net in nets:
                 self._extend_network_dict_provider(context, net)
-                self._extend_network_dict_l3(context, net)
             # TODO(rkukura): Filter on extended provider attributes.
             nets = self._filter_nets_l3(context, nets, filters)
         return [self._fields(net, fields) for net in nets]

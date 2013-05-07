@@ -895,7 +895,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
             tenant_ids.pop() != original.tenant_id):
             raise q_exc.InvalidSharedSetting(network=original.name)
 
-    def _make_network_dict(self, network, fields=None):
+    def _make_network_dict(self, network, fields=None,
+                           process_extensions=True):
         res = {'id': network['id'],
                'name': network['name'],
                'tenant_id': network['tenant_id'],
@@ -904,7 +905,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                'shared': network['shared'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}
-
+        # Call auxiliary extend functions, if any
+        if process_extensions:
+            for func in self._dict_extend_functions.get(attributes.NETWORKS,
+                                                        []):
+                func(self, res, network)
         return self._fields(res, fields)
 
     def _make_subnet_dict(self, subnet, fields=None):

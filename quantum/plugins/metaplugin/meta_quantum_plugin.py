@@ -160,8 +160,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             net = plugin.create_network(context, network)
             if not self._is_l3_plugin(plugin):
-                self._process_l3_create(context, network['network'], net['id'])
-                self._extend_network_dict_l3(context, net)
+                self._process_l3_create(context, net, network['network'])
             LOG.debug(_("Created network: %(net_id)s with flavor "
                         "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
             try:
@@ -182,8 +181,7 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             net = plugin.update_network(context, id, network)
             if not self._is_l3_plugin(plugin):
-                self._process_l3_update(context, network['network'], id)
-                self._extend_network_dict_l3(context, net)
+                self._process_l3_update(context, net, network['network'])
         return net
 
     def delete_network(self, context, id):
@@ -196,8 +194,6 @@ class MetaPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         plugin = self._get_plugin(flavor)
         net = plugin.get_network(context, id, fields)
         net['id'] = id
-        if not fields or 'router:external' in fields:
-            self._extend_network_dict_l3(context, net)
         if not fields or FLAVOR_NETWORK in fields:
             self._extend_network_dict(context, net)
         if fields and 'id' not in fields:

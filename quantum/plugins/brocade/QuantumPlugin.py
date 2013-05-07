@@ -280,8 +280,7 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 raise Exception("Brocade plugin raised exception, check logs")
 
             brocade_db.create_network(context, net_uuid, vlan_id)
-            self._process_l3_create(context, network['network'], net['id'])
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_create(context, net, network['network'])
 
         LOG.info(_("Allocated vlan (%d) from the pool"), vlan_id)
         return net
@@ -333,30 +332,8 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(BrocadePluginV2, self).update_network(context, id,
                                                               network)
-            self._process_l3_update(context, network['network'], id)
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_update(context, net, network['network'])
         return net
-
-    def get_network(self, context, id, fields=None):
-        session = context.session
-        with session.begin(subtransactions=True):
-            net = super(BrocadePluginV2, self).get_network(context,
-                                                           id, None)
-            self._extend_network_dict_l3(context, net)
-
-        return self._fields(net, fields)
-
-    def get_networks(self, context, filters=None, fields=None,
-                     sorts=None, limit=None, marker=None, page_reverse=False):
-        session = context.session
-        with session.begin(subtransactions=True):
-            nets = super(BrocadePluginV2,
-                         self).get_networks(context, filters, None, sorts,
-                                            limit, marker, page_reverse)
-            for net in nets:
-                self._extend_network_dict_l3(context, net)
-
-        return [self._fields(net, fields) for net in nets]
 
     def create_port(self, context, port):
         """Create logical port on the switch."""

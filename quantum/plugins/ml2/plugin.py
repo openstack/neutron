@@ -196,12 +196,11 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
                 segment = self.type_manager.allocate_tenant_segment(session)
             result = super(Ml2Plugin, self).create_network(context, network)
             id = result['id']
-            self._process_l3_create(context, attrs, id)
+            self._process_l3_create(context, result, attrs)
             # REVISIT(rkukura): Consider moving all segment management
             # to TypeManager.
             db.add_network_segment(session, id, segment)
             self._extend_network_dict_provider(context, result)
-            self._extend_network_dict_l3(context, result)
 
         return result
 
@@ -212,9 +211,8 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).update_network(context, id,
                                                            network)
-            self._process_l3_update(context, network['network'], id)
+            self._process_l3_update(context, result, network['network'])
             self._extend_network_dict_provider(context, result)
-            self._extend_network_dict_l3(context, result)
 
         return result
 
@@ -223,7 +221,6 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).get_network(context, id, None)
             self._extend_network_dict_provider(context, result)
-            self._extend_network_dict_l3(context, result)
 
         return self._fields(result, fields)
 
@@ -236,7 +233,6 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
                                             limit, marker, page_reverse)
             for net in nets:
                 self._extend_network_dict_provider(context, net)
-                self._extend_network_dict_l3(context, net)
 
             nets = self._filter_nets_provider(context, nets, filters)
             nets = self._filter_nets_l3(context, nets, filters)

@@ -389,9 +389,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                   network)
             db.add_network_binding(session, net['id'],
                                    physical_network, vlan_id)
-            self._process_l3_create(context, network['network'], net['id'])
+            self._process_l3_create(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
             # note - exception will rollback entire transaction
         return net
 
@@ -402,9 +401,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(LinuxBridgePluginV2, self).update_network(context, id,
                                                                   network)
-            self._process_l3_update(context, network['network'], id)
+            self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
         return net
 
     def delete_network(self, context, id):
@@ -425,7 +423,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             net = super(LinuxBridgePluginV2, self).get_network(context,
                                                                id, None)
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None,
@@ -437,7 +434,6 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                             limit, marker, page_reverse)
             for net in nets:
                 self._extend_network_dict_provider(context, net)
-                self._extend_network_dict_l3(context, net)
 
         return [self._fields(net, fields) for net in nets]
 
