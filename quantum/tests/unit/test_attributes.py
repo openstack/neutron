@@ -92,6 +92,19 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_string("123456789", None)
         self.assertIsNone(msg)
 
+    def test_validate_no_whitespace(self):
+        data = 'no_white_space'
+        result = attributes._validate_no_whitespace(data)
+        self.assertEqual(result, data)
+
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes._validate_no_whitespace,
+                          'i have whitespace')
+
+        self.assertRaises(q_exc.InvalidInput,
+                          attributes._validate_no_whitespace,
+                          'i\thave\twhitespace')
+
     def test_validate_range(self):
         msg = attributes._validate_range(1, [1, 9])
         self.assertIsNone(msg)
@@ -132,6 +145,18 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         ip_addr = '1111.1.1.1'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
+        ip_addr = '1.1.1.1 has whitespace'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
+        ip_addr = '111.1.1.1\twhitespace'
+        msg = attributes._validate_ip_address(ip_addr)
+        self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
+
+        ip_addr = '111.1.1.1\nwhitespace'
         msg = attributes._validate_ip_address(ip_addr)
         self.assertEqual(msg, "'%s' is not a valid IP address" % ip_addr)
 
