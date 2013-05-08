@@ -323,7 +323,7 @@ class DhcpAgent(manager.Manager):
         pm = external_process.ProcessManager(
             self.conf,
             network.id,
-            self.conf.root_helper,
+            self.root_helper,
             self._ns_name(network))
         pm.enable(callback)
 
@@ -331,7 +331,7 @@ class DhcpAgent(manager.Manager):
         pm = external_process.ProcessManager(
             self.conf,
             network.id,
-            self.conf.root_helper,
+            self.root_helper,
             self._ns_name(network))
         pm.disable()
 
