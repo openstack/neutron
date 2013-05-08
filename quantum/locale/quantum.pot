@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: quantum jenkins.quantum.propose.translation.update.99"
-"\n"
+"Project-Id-Version: quantum "
+"jenkins.quantum.propose.translation.update.100\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-07 12:11+0000\n"
+"POT-Creation-Date: 2013-05-08 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,9 +76,9 @@ msgstr ""
 msgid "Successfully loaded %(type)s plugin. Description: %(desc)s"
 msgstr ""
 
-#: quantum/policy.py:55
+#: quantum/policy.py:67
 #, python-format
-msgid "loading policy file at %s"
+msgid "loading policies from file: %s"
 msgstr ""
 
 #: quantum/policy.py:154
@@ -1124,112 +1124,117 @@ msgstr ""
 msgid "'%(data)s' is not in range %(min_value)s through %(max_value)s"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:103
+#: quantum/api/v2/attributes.py:102
 #, python-format
-msgid "'%s' is not a valid MAC address"
+msgid "'%s' contains whitespace"
 msgstr ""
 
 #: quantum/api/v2/attributes.py:112
 #, python-format
+msgid "'%s' is not a valid MAC address"
+msgstr ""
+
+#: quantum/api/v2/attributes.py:121
+#, python-format
 msgid "'%s' is not a valid IP address"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:123
+#: quantum/api/v2/attributes.py:132
 #, python-format
 msgid "Invalid data format for IP pool: '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:142 quantum/api/v2/attributes.py:149
+#: quantum/api/v2/attributes.py:151 quantum/api/v2/attributes.py:158
 #, python-format
 msgid "Invalid data format for fixed IP: '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:157
+#: quantum/api/v2/attributes.py:166
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:173
+#: quantum/api/v2/attributes.py:182
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:184
+#: quantum/api/v2/attributes.py:193
 #, python-format
 msgid "'%s' is not a valid nameserver"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:188
+#: quantum/api/v2/attributes.py:197
 #, python-format
 msgid "Duplicate nameserver '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:196
+#: quantum/api/v2/attributes.py:205
 #, python-format
 msgid "Invalid data format for hostroute: '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:216
+#: quantum/api/v2/attributes.py:225
 #, python-format
 msgid "Duplicate hostroute '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:236
+#: quantum/api/v2/attributes.py:245
 #, python-format
 msgid "'%s' is not a valid IP subnet"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:248
+#: quantum/api/v2/attributes.py:257
 #, python-format
 msgid "'%s' is not a valid input"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:255
+#: quantum/api/v2/attributes.py:264
 #, python-format
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:267
+#: quantum/api/v2/attributes.py:276
 #, python-format
 msgid "'%s' is not a list"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:278
+#: quantum/api/v2/attributes.py:287
 #, python-format
 msgid "Duplicate items in the list: '%s'"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:285
+#: quantum/api/v2/attributes.py:294
 #, python-format
 msgid "'%s' is not a dictionary"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:311
+#: quantum/api/v2/attributes.py:320
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: quantum/api/v2/attributes.py:338
+#: quantum/api/v2/attributes.py:347
 #, python-format
 msgid "'%s' is not an integer"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:343
+#: quantum/api/v2/attributes.py:352
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:362
+#: quantum/api/v2/attributes.py:371
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:370
+#: quantum/api/v2/attributes.py:379
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: quantum/api/v2/attributes.py:383
+#: quantum/api/v2/attributes.py:392
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
@@ -2148,7 +2153,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:591 quantum/plugins/nicira/QuantumPlugin.py:1752
+#: quantum/db/l3_db.py:591 quantum/plugins/nicira/QuantumPlugin.py:1765
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -2844,22 +2849,22 @@ msgstr ""
 msgid "Failed to understand rule %(rule)r"
 msgstr ""
 
-#: quantum/openstack/common/processutils.py:90
+#: quantum/openstack/common/processutils.py:122
 #, python-format
 msgid "Got unknown keyword args to utils.execute: %r"
 msgstr ""
 
-#: quantum/openstack/common/processutils.py:99
+#: quantum/openstack/common/processutils.py:137
 #, python-format
 msgid "Running cmd (subprocess): %s"
 msgstr ""
 
-#: quantum/openstack/common/processutils.py:114
+#: quantum/openstack/common/processutils.py:162
 #, python-format
 msgid "Result was %s"
 msgstr ""
 
-#: quantum/openstack/common/processutils.py:128
+#: quantum/openstack/common/processutils.py:174
 #, python-format
 msgid "%r failed. Retrying."
 msgstr ""
@@ -3675,243 +3680,199 @@ msgstr ""
 msgid "Connect success to host %(host)s:%(ssh_port)d"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:55
+#: quantum/plugins/cisco/network_plugin.py:75
 #, python-format
 msgid "Model %s manages state"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:65
+#: quantum/plugins/cisco/network_plugin.py:88
 msgid "Plugin initialization complete"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:102
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:201
+#: quantum/plugins/cisco/network_plugin.py:134
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:204
 msgid "create_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:119
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:226
+#: quantum/plugins/cisco/network_plugin.py:151
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:217
 msgid "update_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:132
+#: quantum/plugins/cisco/network_plugin.py:164
 msgid "delete_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:158
+#: quantum/plugins/cisco/network_plugin.py:187
 msgid "get_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:163
+#: quantum/plugins/cisco/network_plugin.py:192
 msgid "get_networks() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:168
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:301
+#: quantum/plugins/cisco/network_plugin.py:197
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:292
 msgid "create_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:178
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:371
+#: quantum/plugins/cisco/network_plugin.py:207
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:370
 msgid "delete_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:200
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:339
+#: quantum/plugins/cisco/network_plugin.py:226
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:336
 msgid "update_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:214
+#: quantum/plugins/cisco/network_plugin.py:237
 msgid "create_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:226
+#: quantum/plugins/cisco/network_plugin.py:249
 #: quantum/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:266
 msgid "update_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:235
+#: quantum/plugins/cisco/network_plugin.py:255
 msgid "delete_subnet() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:261
+#: quantum/plugins/cisco/network_plugin.py:278
 #: quantum/plugins/cisco/db/l2network_db.py:201
 #: quantum/plugins/cisco/db/network_db_v2.py:198
 msgid "get_all_qoss() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:267
+#: quantum/plugins/cisco/network_plugin.py:284
 msgid "get_qos_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:277
+#: quantum/plugins/cisco/network_plugin.py:294
 msgid "create_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:283
+#: quantum/plugins/cisco/network_plugin.py:300
 msgid "delete_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:293
+#: quantum/plugins/cisco/network_plugin.py:310
 msgid "rename_qos() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:304
+#: quantum/plugins/cisco/network_plugin.py:321
 msgid "get_all_credentials() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:310
+#: quantum/plugins/cisco/network_plugin.py:327
 msgid "get_credential_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:321
+#: quantum/plugins/cisco/network_plugin.py:338
 msgid "create_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:328
+#: quantum/plugins/cisco/network_plugin.py:345
 msgid "delete_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:339
+#: quantum/plugins/cisco/network_plugin.py:356
 msgid "rename_credential() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:350
+#: quantum/plugins/cisco/network_plugin.py:367
 msgid "schedule_host() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:362
+#: quantum/plugins/cisco/network_plugin.py:379
 msgid "associate_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/network_plugin.py:369
+#: quantum/plugins/cisco/network_plugin.py:386
 msgid "detach_port() called"
 msgstr ""
 
 #: quantum/plugins/cisco/common/cisco_exceptions.py:27
+#, python-format
+msgid "Segmentation ID for network %(net_id)s is not found."
+msgstr ""
+
+#: quantum/plugins/cisco/common/cisco_exceptions.py:32
 msgid ""
 "Unable to complete operation. No more dynamic nics are available in the "
 "system."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:33
-msgid ""
-"Unable to create new network. Number of networksfor the system has "
-"exceeded the limit"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:39
+#: quantum/plugins/cisco/common/cisco_exceptions.py:38
 #, python-format
 msgid ""
 "NetworkVlanBinding for %(vlan_id)s and network %(network_id)s already "
 "exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:45
+#: quantum/plugins/cisco/common/cisco_exceptions.py:44
 #, python-format
 msgid "Vlan ID %(vlan_id)s not found"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:50
+#: quantum/plugins/cisco/common/cisco_exceptions.py:49
 msgid "No Vlan ID available"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:55
+#: quantum/plugins/cisco/common/cisco_exceptions.py:54
 #, python-format
 msgid "QoS level %(qos_id)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:61
-#, python-format
-msgid ""
-"QoS level %(qos_id)s could not be deleted for tenant %(tenant_id)s since "
-"association exists"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:67
+#: quantum/plugins/cisco/common/cisco_exceptions.py:60
 #, python-format
 msgid "QoS level with name %(qos_name)s already exists for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:73
+#: quantum/plugins/cisco/common/cisco_exceptions.py:66
 #, python-format
 msgid "Credential %(credential_id)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:79
+#: quantum/plugins/cisco/common/cisco_exceptions.py:72
 #, python-format
 msgid "Credential %(credential_name)s could not be found for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:85
+#: quantum/plugins/cisco/common/cisco_exceptions.py:78
 #, python-format
 msgid "Credential %(credential_id)s already exists for tenant %(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:91
+#: quantum/plugins/cisco/common/cisco_exceptions.py:84
 #, python-format
-msgid "Nexus Port Binding %(port_id)s is not present"
+msgid "Connection to %(host)s is not configured."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:96
+#: quantum/plugins/cisco/common/cisco_exceptions.py:89
 #, python-format
-msgid "Nexus Port Binding %(port_id)s already exists"
+msgid "Unable to connect to Nexus %(nexus_host)s. Reason: %(exc)s."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:101
+#: quantum/plugins/cisco/common/cisco_exceptions.py:94
 #, python-format
-msgid "Ucsm Binding with ip %(ucsm_ip)s is not present"
+msgid "Failed to configure Nexus: %(config)s. Reason: %(exc)s."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:106
+#: quantum/plugins/cisco/common/cisco_exceptions.py:99
 #, python-format
-msgid "Ucsm Binding with ip %(ucsm_ip)s already exists"
+msgid "Nexus Port Binding %(port_id)s is not present."
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:111
-#, python-format
-msgid "Dyanmic Vnic %(vnic_id)s is not present"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:116
-#, python-format
-msgid "Dynamic Vnic with name %(device_name)s already exists"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:121
-#, python-format
-msgid "Blade %(blade_id)s is not present"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:126
-#, python-format
-msgid "Blade with mgmt_ip %(mgmt_ip)s already exists"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:131
+#: quantum/plugins/cisco/common/cisco_exceptions.py:104
 #, python-format
 msgid "PortVnic Binding %(port_id)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:136
+#: quantum/plugins/cisco/common/cisco_exceptions.py:109
 #, python-format
 msgid "PortVnic Binding %(port_id)s is not present"
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:140
-#, python-format
-msgid ""
-"Unable to plug the attachment %(att_id)s into port %(port_id)s for "
-"network %(net_id)s. Association of attachment ID with port ID happens "
-"implicitly when VM is instantiated; attach operation can be performed "
-"subsequently."
-msgstr ""
-
-#: quantum/plugins/cisco/common/cisco_exceptions.py:148
-#, python-format
-msgid ""
-"Unable to unplug the attachment %(att_id)s from port %(port_id)s for "
-"network %(net_id)s. The attachment %(att_id)s does not exist."
 msgstr ""
 
 #: quantum/plugins/cisco/common/cisco_faults.py:74
@@ -3954,51 +3915,47 @@ msgstr ""
 msgid "Unable to update port state with specified value."
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:25
-msgid "Cisco test host option."
-msgstr ""
-
-#: quantum/plugins/cisco/common/config.py:32
+#: quantum/plugins/cisco/common/config.py:26
 msgid "Virtual Switch to use"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:36
+#: quantum/plugins/cisco/common/config.py:30
 msgid "Nexus Switch to use"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:42
+#: quantum/plugins/cisco/common/config.py:36
 msgid "VLAN start value"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:44
+#: quantum/plugins/cisco/common/config.py:38
 msgid "VLAN end value"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:46
+#: quantum/plugins/cisco/common/config.py:40
 msgid "VLAN Name prefix"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:48
+#: quantum/plugins/cisco/common/config.py:42
 msgid "Maximum Port value"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:50
+#: quantum/plugins/cisco/common/config.py:44
 msgid "Maximum Port Profile value"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:52
+#: quantum/plugins/cisco/common/config.py:46
 msgid "Maximum Network value"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:56
+#: quantum/plugins/cisco/common/config.py:50
 msgid "Model Class"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:60
+#: quantum/plugins/cisco/common/config.py:54
 msgid "Manager Class"
 msgstr ""
 
-#: quantum/plugins/cisco/common/config.py:64
+#: quantum/plugins/cisco/common/config.py:58
 msgid "Nexus Driver Name"
 msgstr ""
 
@@ -4106,84 +4063,94 @@ msgstr ""
 msgid "Loaded device plugin %s\n"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:89
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:90
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:129
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:71
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:78
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:89
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:100
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:237
+#, python-format
+msgid "Unable to update network '%s' on Nexus switch"
+msgstr ""
+
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:360
+#, python-format
+msgid "Unable to update port '%s' on Nexus switch"
+msgstr ""
+
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:95
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:102
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:113
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:124
 #, python-format
 msgid "NexusDriver: %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:116
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:140
 #, python-format
 msgid "NexusDriver VLAN IDs: %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:49
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:50
 #, python-format
 msgid "Loaded driver %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:69
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:70
 msgid "NexusPlugin:get_all_networks() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:79
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:80
 msgid "NexusPlugin:create_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:133
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:155
 msgid "NexusPlugin:delete_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:137
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:159
 msgid "NexusPlugin:get_network_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:143
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:165
 msgid "NexusPlugin:update_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:151
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:173
 msgid "NexusPlugin:get_all_ports() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:159
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:181
 msgid "NexusPlugin:create_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:167
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:189
 msgid "NexusPlugin:delete_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:200
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:236
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:208
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:244
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:217
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:253
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:225
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:261
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -5116,7 +5083,7 @@ msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
 #: quantum/plugins/midonet/plugin.py:319
-#: quantum/plugins/nicira/QuantumPlugin.py:1020
+#: quantum/plugins/nicira/QuantumPlugin.py:1021
 msgid "admin_state_up=False networks are not supported."
 msgstr ""
 
@@ -5749,7 +5716,7 @@ msgstr ""
 
 #: quantum/plugins/nicira/QuantumPlugin.py:367
 #: quantum/plugins/nicira/QuantumPlugin.py:402
-#: quantum/plugins/nicira/QuantumPlugin.py:591
+#: quantum/plugins/nicira/QuantumPlugin.py:592
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
@@ -5758,7 +5725,7 @@ msgstr ""
 
 #: quantum/plugins/nicira/QuantumPlugin.py:387
 #: quantum/plugins/nicira/QuantumPlugin.py:468
-#: quantum/plugins/nicira/QuantumPlugin.py:611
+#: quantum/plugins/nicira/QuantumPlugin.py:612
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
@@ -5786,7 +5753,7 @@ msgid "port %s not found in NVP"
 msgstr ""
 
 #: quantum/plugins/nicira/QuantumPlugin.py:443
-#: quantum/plugins/nicira/QuantumPlugin.py:871
+#: quantum/plugins/nicira/QuantumPlugin.py:872
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
@@ -5816,284 +5783,289 @@ msgstr ""
 msgid "The gateway port for the router %s was not found on the NVP backend"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:534
+#: quantum/plugins/nicira/QuantumPlugin.py:535
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s. NVP port id is %(nvp_port_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:572
+#: quantum/plugins/nicira/QuantumPlugin.py:573
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:576
-#: quantum/plugins/nicira/QuantumPlugin.py:1697
+#: quantum/plugins/nicira/QuantumPlugin.py:577
+#: quantum/plugins/nicira/QuantumPlugin.py:1710
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:578
+#: quantum/plugins/nicira/QuantumPlugin.py:579
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:616
+#: quantum/plugins/nicira/QuantumPlugin.py:617
 #, python-format
 msgid "An exception occured while plugging the gateway interface into network:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:656
+#: quantum/plugins/nicira/QuantumPlugin.py:657
 #, python-format
 msgid "Unable to find NVP uuid for Quantum port %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:688
+#: quantum/plugins/nicira/QuantumPlugin.py:689
 #, python-format
 msgid "%s required"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:692
+#: quantum/plugins/nicira/QuantumPlugin.py:693
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:696
+#: quantum/plugins/nicira/QuantumPlugin.py:697
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:700
-#: quantum/plugins/nicira/QuantumPlugin.py:711
+#: quantum/plugins/nicira/QuantumPlugin.py:701
+#: quantum/plugins/nicira/QuantumPlugin.py:712
 #, python-format
 msgid "%s out of range (1 to 4094)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:713
+#: quantum/plugins/nicira/QuantumPlugin.py:714
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:745
+#: quantum/plugins/nicira/QuantumPlugin.py:746
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:767
+#: quantum/plugins/nicira/QuantumPlugin.py:768
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:794
+#: quantum/plugins/nicira/QuantumPlugin.py:795
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
 "Ignoring setting for network %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:853
+#: quantum/plugins/nicira/QuantumPlugin.py:854
 #, python-format
 msgid "A nvp lport identifier was not found for quantum port '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:881
+#: quantum/plugins/nicira/QuantumPlugin.py:882
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:884
+#: quantum/plugins/nicira/QuantumPlugin.py:885
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:910
+#: quantum/plugins/nicira/QuantumPlugin.py:911
 #, python-format
 msgid ""
 "Current network status:%(nvp_net_status)s; Status in Quantum "
 "DB:%(quantum_status)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:920
-#: quantum/plugins/nicira/QuantumPlugin.py:970
+#: quantum/plugins/nicira/QuantumPlugin.py:921
+#: quantum/plugins/nicira/QuantumPlugin.py:971
 msgid "Unable to get logical switches"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:984
+#: quantum/plugins/nicira/QuantumPlugin.py:985
 #, python-format
 msgid "Logical Switch %s found in quantum database but not in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:999
+#: quantum/plugins/nicira/QuantumPlugin.py:1000
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Quantum networks. Quantum and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1003
+#: quantum/plugins/nicira/QuantumPlugin.py:1004
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1086
+#: quantum/plugins/nicira/QuantumPlugin.py:1087
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1095
+#: quantum/plugins/nicira/QuantumPlugin.py:1096
 msgid "Unable to get ports"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1122
+#: quantum/plugins/nicira/QuantumPlugin.py:1123
 #, python-format
 msgid "Quantum logical port %s was not found on NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1129
+#: quantum/plugins/nicira/QuantumPlugin.py:1130
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Quantum ports. Quantum and NVP are "
 "potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1193
+#: quantum/plugins/nicira/QuantumPlugin.py:1194
 msgid "Unable to create port or set port attachment in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1198
+#: quantum/plugins/nicira/QuantumPlugin.py:1199
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1262
+#: quantum/plugins/nicira/QuantumPlugin.py:1263
 #, python-format
 msgid "Update port request: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1286
+#: quantum/plugins/nicira/QuantumPlugin.py:1288
 #, python-format
-msgid "Unable to retrieve port status for:%s."
+msgid "Unable to update port id: %s."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1391
-#: quantum/plugins/nicira/QuantumPlugin.py:1436
+#: quantum/plugins/nicira/QuantumPlugin.py:1402
+#: quantum/plugins/nicira/QuantumPlugin.py:1447
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1404
+#: quantum/plugins/nicira/QuantumPlugin.py:1415
 msgid "Unable to create logical router on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1446
+#: quantum/plugins/nicira/QuantumPlugin.py:1457
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1449
+#: quantum/plugins/nicira/QuantumPlugin.py:1460
 msgid "Unable to update logical router on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1469
+#: quantum/plugins/nicira/QuantumPlugin.py:1480
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1473
+#: quantum/plugins/nicira/QuantumPlugin.py:1484
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1494
+#: quantum/plugins/nicira/QuantumPlugin.py:1505
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Quantum "
 "DB:%(db_router_status)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1502
+#: quantum/plugins/nicira/QuantumPlugin.py:1513
 msgid "Unable to get logical router"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1525
+#: quantum/plugins/nicira/QuantumPlugin.py:1536
 msgid "Unable to get logical routers from NVP controller"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1547
+#: quantum/plugins/nicira/QuantumPlugin.py:1558
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Quantum routers. Quantum and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1574
+#: quantum/plugins/nicira/QuantumPlugin.py:1585
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1607
+#: quantum/plugins/nicira/QuantumPlugin.py:1620
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1652
+#: quantum/plugins/nicira/QuantumPlugin.py:1665
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1664
+#: quantum/plugins/nicira/QuantumPlugin.py:1677
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Quantum port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1693
+#: quantum/plugins/nicira/QuantumPlugin.py:1706
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1719
+#: quantum/plugins/nicira/QuantumPlugin.py:1732
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1725
+#: quantum/plugins/nicira/QuantumPlugin.py:1738
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1791
+#: quantum/plugins/nicira/QuantumPlugin.py:1804
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1815
+#: quantum/plugins/nicira/QuantumPlugin.py:1828
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1857
+#: quantum/plugins/nicira/QuantumPlugin.py:1870
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1883
+#: quantum/plugins/nicira/QuantumPlugin.py:1873
+#, python-format
+msgid "Nat rules not found in nvp for port: %s"
+msgstr ""
+
+#: quantum/plugins/nicira/QuantumPlugin.py:1899
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1905
+#: quantum/plugins/nicira/QuantumPlugin.py:1921
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
