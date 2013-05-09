@@ -121,9 +121,11 @@ class NvpMetadataAccess(object):
         device_filter = {'device_id': [router_id],
                          'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
         with ctx_elevated.session.begin(subtransactions=True):
-            ports = self.get_ports(ctx_elevated, filters=device_filter)
-            # Filter out ports without an IP (those are 'stale' router ports)
-            ports = [port for port in ports if port['fixed_ips']]
+            # Retrieve ports without going to plugin
+            ports = [self._make_port_dict(port)
+                     for port in self._get_ports_query(
+                         ctx_elevated, filters=device_filter)
+                     if port['fixed_ips']]
             try:
                 if ports:
                     if (do_create and
