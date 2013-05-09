@@ -257,3 +257,7 @@ class InvalidConfigurationOption(QuantumException):
 class GatewayConflictWithAllocationPools(InUse):
     message = _("Gateway ip %(ip_address)s conflicts with "
                 "allocation pool %(pool)s")
+
+
+class NetworkVlanRangeError(QuantumException):
+    message = _("Invalid network VLAN range: '%(range)s' - '%(error)s'")

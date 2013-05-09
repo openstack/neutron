@@ -40,6 +40,7 @@ from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
+from quantum.plugins.common import utils as plugin_utils
 from quantum.plugins.linuxbridge.common import constants
 from quantum.plugins.linuxbridge.db import l2network_db_v2 as db
 from quantum import policy
@@ -250,34 +251,16 @@ class LinuxBridgePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
     def _parse_network_vlan_ranges(self):
-        self.network_vlan_ranges = {}
-        for entry in cfg.CONF.VLANS.network_vlan_ranges:
-            if ':' in entry:
-                try:
-                    physical_network, vlan_min, vlan_max = entry.split(':')
-                    self._add_network_vlan_range(physical_network,
-                                                 int(vlan_min),
-                                                 int(vlan_max))
-                except ValueError as ex:
-                    LOG.error(_("Invalid network VLAN range: "
-                                "'%(entry)s' - %(ex)s. "
-                                "Service terminated!"),
-                              {'entry': entry, 'ex': ex})
-                    sys.exit(1)
-            else:
-                self._add_network(entry)
-        LOG.debug(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
+        try:
+            self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+                cfg.CONF.VLANS.network_vlan_ranges)
+        except Exception as ex:
+            LOG.error(_("%s. Agent terminated!"), ex)
+            sys.exit(1)
+        LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _check_view_auth(self, context, resource, action):
         return policy.check(context, action, resource)
-
-    def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
-        self._add_network(physical_network)
-        self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
-
-    def _add_network(self, physical_network):
-        if physical_network not in self.network_vlan_ranges:
-            self.network_vlan_ranges[physical_network] = []
 
     # REVISIT(rkukura) Use core mechanism for attribute authorization
     # when available.
