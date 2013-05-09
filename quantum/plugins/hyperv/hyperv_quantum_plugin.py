@@ -28,6 +28,7 @@ from quantum.extensions import portbindings
 from quantum.extensions import providernet as provider
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
+from quantum.plugins.common import utils as plugin_utils
 from quantum.plugins.hyperv import agent_notifier_api
 from quantum.plugins.hyperv.common import constants
 from quantum.plugins.hyperv import db as hyperv_db
@@ -196,33 +197,9 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         return policy.check(context, action, resource)
 
     def _parse_network_vlan_ranges(self):
-        self._network_vlan_ranges = {}
-        for entry in cfg.CONF.HYPERV.network_vlan_ranges:
-            entry = entry.strip()
-            if ':' in entry:
-                try:
-                    physical_network, vlan_min, vlan_max = entry.split(':')
-                    self._add_network_vlan_range(physical_network.strip(),
-                                                 int(vlan_min),
-                                                 int(vlan_max))
-                except ValueError as ex:
-                    msg = _(
-                        "Invalid network VLAN range: "
-                        "'%(range)s' - %(e)s. Agent terminated!"), \
-                        {'range': entry, 'e': ex}
-                    raise q_exc.InvalidInput(error_message=msg)
-            else:
-                self._add_network(entry)
+        self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+            cfg.CONF.HYPERV.network_vlan_ranges)
         LOG.info(_("Network VLAN ranges: %s"), self._network_vlan_ranges)
-
-    def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
-        self._add_network(physical_network)
-        self._network_vlan_ranges[physical_network].append(
-            (vlan_min, vlan_max))
-
-    def _add_network(self, physical_network):
-        if physical_network not in self._network_vlan_ranges:
-            self._network_vlan_ranges[physical_network] = []
 
     def _check_vlan_id_in_range(self, physical_network, vlan_id):
         for r in self._network_vlan_ranges[physical_network]:
