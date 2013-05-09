@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: quantum "
-"jenkins.quantum.propose.translation.update.100\n"
+"jenkins.quantum.propose.translation.update.101\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-08 12:11+0000\n"
+"POT-Creation-Date: 2013-05-09 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -306,8 +306,8 @@ msgstr ""
 
 #: quantum/agent/dhcp_agent.py:66
 msgid ""
-"Allows for serving metadata requests from a dedicate network. Requires "
-"enable isolated_metadata = True "
+"Allows for serving metadata requests from a dedicated network. Requires "
+"enable_isolated_metadata = True"
 msgstr ""
 
 #: quantum/agent/dhcp_agent.py:100
@@ -317,7 +317,7 @@ msgid ""
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:718
+#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:720
 msgid "DHCP agent started"
 msgstr ""
 
@@ -338,77 +338,77 @@ msgstr ""
 msgid "Unable to sync network state."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:178 quantum/agent/dhcp_agent.py:214
+#: quantum/agent/dhcp_agent.py:178 quantum/agent/dhcp_agent.py:216
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:303
+#: quantum/agent/dhcp_agent.py:305
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:492 quantum/agent/l3_agent.py:119
+#: quantum/agent/dhcp_agent.py:494 quantum/agent/l3_agent.py:119
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:500
+#: quantum/agent/dhcp_agent.py:502
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:505 quantum/agent/l3_agent.py:158
+#: quantum/agent/dhcp_agent.py:507 quantum/agent/l3_agent.py:158
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:543 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:545 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:623
+#: quantum/agent/dhcp_agent.py:625
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:653
+#: quantum/agent/dhcp_agent.py:655
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:659
+#: quantum/agent/dhcp_agent.py:661
 msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:660
+#: quantum/agent/dhcp_agent.py:662
 #, python-format
 msgid "Exception value: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:661
+#: quantum/agent/dhcp_agent.py:663
 #, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:663
+#: quantum/agent/dhcp_agent.py:665
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:701 quantum/agent/l3_agent.py:728
+#: quantum/agent/dhcp_agent.py:703 quantum/agent/l3_agent.py:728
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:707 quantum/agent/l3_agent.py:733
+#: quantum/agent/dhcp_agent.py:709 quantum/agent/l3_agent.py:733
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:185
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:715 quantum/agent/l3_agent.py:738
+#: quantum/agent/dhcp_agent.py:717 quantum/agent/l3_agent.py:738
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -461,7 +461,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:284 quantum/db/l3_db.py:924
+#: quantum/agent/l3_agent.py:284 quantum/db/l3_db.py:928
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -2057,15 +2057,15 @@ msgid ""
 "from %(host)s."
 msgstr ""
 
-#: quantum/db/extraroute_db.py:35
+#: quantum/db/extraroute_db.py:38
 msgid "Maximum number of routes"
 msgstr ""
 
-#: quantum/db/extraroute_db.py:82
+#: quantum/db/extraroute_db.py:100
 msgid "the nexthop is not connected with router"
 msgstr ""
 
-#: quantum/db/extraroute_db.py:89
+#: quantum/db/extraroute_db.py:107
 msgid "the nexthop is used by router"
 msgstr ""
 
@@ -2074,114 +2074,114 @@ msgstr ""
 msgid "Multiple routers match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:194 quantum/db/l3_db.py:623
+#: quantum/db/l3_db.py:198 quantum/db/l3_db.py:627
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:235
+#: quantum/db/l3_db.py:239
 #, python-format
 msgid "No IPs available for external network %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:302
+#: quantum/db/l3_db.py:306
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:316
+#: quantum/db/l3_db.py:320
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:325 quantum/db/l3_db.py:402
+#: quantum/db/l3_db.py:329 quantum/db/l3_db.py:406
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: quantum/db/l3_db.py:330
+#: quantum/db/l3_db.py:334
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: quantum/db/l3_db.py:340
+#: quantum/db/l3_db.py:344
 msgid "Router port must have exactly one fixed IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:355
+#: quantum/db/l3_db.py:359
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:473
+#: quantum/db/l3_db.py:477
 #, python-format
 msgid "Multiple floating ips match for %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:492
+#: quantum/db/l3_db.py:496
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: quantum/db/l3_db.py:534
+#: quantum/db/l3_db.py:538
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: quantum/db/l3_db.py:538
+#: quantum/db/l3_db.py:542
 #, python-format
 msgid ""
 "Cannnot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: quantum/db/l3_db.py:550
+#: quantum/db/l3_db.py:554
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: quantum/db/l3_db.py:557
+#: quantum/db/l3_db.py:561
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: quantum/db/l3_db.py:561
+#: quantum/db/l3_db.py:565
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:591 quantum/plugins/nicira/QuantumPlugin.py:1765
+#: quantum/db/l3_db.py:595 quantum/plugins/nicira/QuantumPlugin.py:1765
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: quantum/db/l3_db.py:643
+#: quantum/db/l3_db.py:647
 msgid "Unable to find any IP address on external network"
 msgstr ""
 
-#: quantum/db/l3_db.py:664
+#: quantum/db/l3_db.py:668
 msgid "Unable to create Floating ip due to a malformed request"
 msgstr ""
 
-#: quantum/db/l3_db.py:668
+#: quantum/db/l3_db.py:672
 msgid "Floating IP association failed"
 msgstr ""
 
-#: quantum/db/l3_db.py:759
+#: quantum/db/l3_db.py:763
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: quantum/db/l3_db.py:777
+#: quantum/db/l3_db.py:781
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:930
+#: quantum/db/l3_db.py:934
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -2508,11 +2508,11 @@ msgid ""
 "external network %(net_id)s is required by one or more floating IPs."
 msgstr ""
 
-#: quantum/extensions/l3.py:154
+#: quantum/extensions/l3.py:155
 msgid "Number of routers allowed per tenant, -1 for unlimited"
 msgstr ""
 
-#: quantum/extensions/l3.py:158
+#: quantum/extensions/l3.py:159
 msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
 msgstr ""
 
