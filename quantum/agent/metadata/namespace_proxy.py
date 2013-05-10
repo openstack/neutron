@@ -131,7 +131,8 @@ class NetworkMetadataProxyHandler(object):
 
 class ProxyDaemon(daemon.Daemon):
     def __init__(self, pidfile, port, network_id=None, router_id=None):
-        super(ProxyDaemon, self).__init__(pidfile)
+        uuid = network_id or router_id
+        super(ProxyDaemon, self).__init__(pidfile, uuid=uuid)
         self.network_id = network_id
         self.router_id = router_id
         self.port = port
