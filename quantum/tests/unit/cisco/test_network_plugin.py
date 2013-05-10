@@ -155,28 +155,29 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         self.mock_ncclient.configure_mock(**config)
 
     @contextlib.contextmanager
-    def _create_port_res(self, fmt=None, no_delete=False,
-                         **kwargs):
+    def _create_port_res(self, name='myname', cidr='1.0.0.0/24',
+                         do_delete=True):
         """Create a network, subnet, and port and yield the result.
 
         Create a network, subnet, and port, yield the result,
         then delete the port, subnet, and network.
 
-        :param fmt: Format to be used for API requests.
-        :param no_delete: If set to True, don't delete the port at the
-                          end of testing.
-        :param kwargs: Keyword args to be passed to self._create_port.
+        :param name: Name of network to be created
+        :param cidr: cidr address of subnetwork to be created
+        :param do_delete: If set to True, delete the port at the
+                          end of testing
 
         """
-        with self.subnet() as subnet:
-            net_id = subnet['subnet']['network_id']
-            res = self._create_port(fmt, net_id, **kwargs)
-            port = self.deserialize(fmt, res)
-            try:
-                yield res
-            finally:
-                if not no_delete:
-                    self._delete('ports', port['port']['id'])
+        with self.network(name=name) as network:
+            with self.subnet(network=network, cidr=cidr) as subnet:
+                net_id = subnet['subnet']['network_id']
+                res = self._create_port(self.fmt, net_id)
+                port = self.deserialize(self.fmt, res)
+                try:
+                    yield res
+                finally:
+                    if do_delete:
+                        self._delete('ports', port['port']['id'])
 
     def _assertExpectedHTTP(self, status, exc):
         """Confirm that an HTTP status corresponds to an expected exception.
@@ -255,6 +256,17 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                     'ports',
                     wexc.HTTPInternalServerError.code)
 
+    def test_nexus_enable_vlan_cmd(self):
+        """Verify the syntax of the command to enable a vlan on an intf."""
+        # First vlan should be configured without 'add' keyword
+        with self._create_port_res(name='net1', cidr='1.0.0.0/24'):
+            self.assertTrue(self._is_in_last_nexus_cfg(['allowed', 'vlan']))
+            self.assertFalse(self._is_in_last_nexus_cfg(['add']))
+            # Second vlan should be configured with 'add' keyword
+            with self._create_port_res(name='net2', cidr='1.0.1.0/24'):
+                self.assertTrue(
+                    self._is_in_last_nexus_cfg(['allowed', 'vlan', 'add']))
+
     def test_nexus_connect_fail(self):
         """Test failure to connect to a Nexus switch.
 
@@ -265,8 +277,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         """
         with self._patch_ncclient('manager.connect.side_effect',
                                   AttributeError):
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(do_delete=False) as res:
                 self._assertExpectedHTTP(res.status_int,
                                          c_exc.NexusConnectFailed)
 
@@ -281,8 +292,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             AttributeError):
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(do_delete=False) as res:
                 self._assertExpectedHTTP(res.status_int,
                                          c_exc.NexusConfigFailed)
 
@@ -302,7 +312,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_a):
-            with self._create_port_res(self.fmt, name='myname') as res:
+            with self._create_port_res(name='myname') as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
         def mock_edit_config_b(target, config):
@@ -312,7 +322,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_b):
-            with self._create_port_res(self.fmt, name='myname') as res:
+            with self._create_port_res(name='myname') as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
     def test_nexus_vlan_config_rollback(self):
@@ -330,8 +340,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config):
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(name='myname', do_delete=False) as res:
                 # Confirm that the last configuration sent to the Nexus
                 # switch was deletion of the VLAN.
                 self.assertTrue(
@@ -362,8 +371,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
         with mock.patch.object(ovs_db_v2, 'get_network_binding',
                                new=_return_none_if_nexus_caller):
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(do_delete=False) as res:
                 self._assertExpectedHTTP(res.status_int,
                                          c_exc.NetworkSegmentIDNotFound)
 
@@ -377,8 +385,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
                                '_get_instance_host') as mock_get_instance:
             mock_get_instance.return_value = 'fictitious_host'
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(do_delete=False) as res:
                 self._assertExpectedHTTP(res.status_int,
                                          c_exc.NexusComputeHostNotConfigured)
 
@@ -392,8 +399,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         """
         with mock.patch.object(nexus_db_v2, 'add_nexusport_binding',
                                side_effect=KeyError):
-            with self._create_port_res(self.fmt, no_delete=True,
-                                       name='myname') as res:
+            with self._create_port_res(do_delete=False) as res:
                 # Confirm that the last configuration sent to the Nexus
                 # switch was a removal of vlan from the test interface.
                 self.assertTrue(
@@ -409,7 +415,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         plugin for a delete port operation.
 
         """
-        with self._create_port_res(self.fmt, name='myname') as res:
+        with self._create_port_res() as res:
 
             # After port is created, we should have one binding for this
             # vlan/nexus switch.
@@ -442,7 +448,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         nexus switch during a delete_port operation.
 
         """
-        with self._create_port_res(self.fmt, name='myname') as res:
+        with self._create_port_res() as res:
 
             port = self.deserialize(self.fmt, res)
 
