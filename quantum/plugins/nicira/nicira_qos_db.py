@@ -132,16 +132,10 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
 
     def _delete_network_queue_mapping(self, context, network_id):
         query = self._model_query(context, NetworkQueueMapping)
-        try:
-            with context.session.begin(subtransactions=True):
-                binding = query.filter_by(network_id=network_id).first()
-                if binding:
-                    context.session.delete(binding)
-        except exc.NoResultFound:
-            # return since this can happen if we are updating a port that
-            # did not already have a queue on it. There is no need to check
-            # if there is one before deleting if we return here.
-            return
+        with context.session.begin(subtransactions=True):
+            binding = query.filter_by(network_id=network_id).first()
+            if binding:
+                context.session.delete(binding)
 
     def _extend_port_qos_queue(self, context, port):
         if self._check_view_auth(context, {'qos_queue': None},
