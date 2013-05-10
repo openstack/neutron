@@ -41,11 +41,14 @@ def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     LOG.debug(_("get_nexusport_binding() called"))
     session = db.get_session()
 
-    # FIXME(rpodolyaka): https://bugs.launchpad.net/quantum/+bug/1174323
-    return (session.query(nexus_models_v2.NexusPortBinding).
-            filter_by(vlan_id=vlan_id).filter_by(switch_ip=switch_ip).
-            filter_by(port_id=port_id).
-            filter_by(instance_id=instance_id).all())
+    filters = dict(port_id=port_id, vlan_id=vlan_id, switch_ip=switch_ip,
+                   instance_id=instance_id)
+    bindings = (session.query(nexus_models_v2.NexusPortBinding).
+                filter_by(**filters).all())
+    if not bindings:
+        raise c_exc.NexusPortBindingNotFound(**filters)
+
+    return bindings
 
 
 def get_nexusvlan_binding(vlan_id, switch_ip):
@@ -53,10 +56,13 @@ def get_nexusvlan_binding(vlan_id, switch_ip):
     LOG.debug(_("get_nexusvlan_binding() called"))
     session = db.get_session()
 
-    # FIXME(rpodolyaka): https://bugs.launchpad.net/quantum/+bug/1174323
-    return (session.query(nexus_models_v2.NexusPortBinding).
-            filter_by(vlan_id=vlan_id).filter_by(switch_ip=switch_ip).
-            all())
+    filters = dict(vlan_id=vlan_id, switch_ip=switch_ip)
+    bindings = (session.query(nexus_models_v2.NexusPortBinding).
+                filter_by(**filters).all())
+    if not bindings:
+        raise c_exc.NexusPortBindingNotFound(**filters)
+
+    return bindings
 
 
 def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
@@ -98,20 +104,21 @@ def update_nexusport_binding(port_id, new_vlan_id):
         session.flush()
         return binding
     except exc.NoResultFound:
-        raise c_exc.NexusPortBindingNotFound()
+        raise c_exc.NexusPortBindingNotFound(port_id=port_id)
 
 
 def get_nexusvm_binding(vlan_id, instance_id):
     """Lists nexusvm bindings."""
     LOG.debug(_("get_nexusvm_binding() called"))
     session = db.get_session()
-    try:
-        binding = (session.query(nexus_models_v2.NexusPortBinding).
-                   filter_by(instance_id=instance_id).
-                   filter_by(vlan_id=vlan_id).first())
-        return binding
-    except exc.NoResultFound:
-        raise c_exc.NexusPortBindingNotFound(vlan_id=vlan_id)
+
+    filters = dict(instance_id=instance_id, vlan_id=vlan_id)
+    binding = (session.query(nexus_models_v2.NexusPortBinding).
+               filter_by(**filters).first())
+    if not binding:
+        raise c_exc.NexusPortBindingNotFound(**filters)
+
+    return binding
 
 
 def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
@@ -119,7 +126,10 @@ def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
     LOG.debug(_("get_port_vlan_switch_binding() called"))
     session = db.get_session()
 
-    # FIXME(rpodolyaka): https://bugs.launchpad.net/quantum/+bug/1174323
-    return (session.query(nexus_models_v2.NexusPortBinding).
-            filter_by(port_id=port_id).filter_by(switch_ip=switch_ip).
-            filter_by(vlan_id=vlan_id).all())
+    filters = dict(port_id=port_id, switch_ip=switch_ip, vlan_id=vlan_id)
+    bindings = (session.query(nexus_models_v2.NexusPortBinding).
+                filter_by(**filters).all())
+    if not bindings:
+        raise c_exc.NexusPortBindingNotFound(**filters)
+
+    return bindings
