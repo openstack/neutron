@@ -80,7 +80,7 @@ class DhcpAgent(manager.Manager):
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)
         self.lease_relay = DhcpLeaseRelay(self.update_lease)
 
-        self.dhcp_driver_cls.check_version(self.root_helper)
+        self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
 
     def _populate_networks_cache(self):

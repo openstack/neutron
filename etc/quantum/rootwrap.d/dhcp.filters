@@ -11,9 +11,7 @@
 # dhcp-agent
 ip_exec_dnsmasq: DnsmasqNetnsFilter, /sbin/ip, root
 dnsmasq: DnsmasqFilter, /sbin/dnsmasq, root
-dnsmasq_ver: DnsmasqVersionFilter, /sbin/dnsmasq, root
 dnsmasq_usr: DnsmasqFilter, /usr/sbin/dnsmasq, root
-dnsmasq_usr_ver: DnsmasqVersionFilter, /usr/sbin/dnsmasq, root
 # dhcp-agent uses kill as well, that's handled by the generic KillFilter
 # it looks like these are the only signals needed, per
 # quantum/agent/linux/dhcp.py

@@ -171,12 +171,6 @@ class DnsmasqFilter(CommandFilter):
         return env
 
 
-class DnsmasqVersionFilter(CommandFilter):
-    """Specific filter to check dnsmasq version."""
-    def match(self, userargs):
-        return userargs[0] == "dnsmasq" and userargs[1] == "--version"
-
-
 class DnsmasqNetnsFilter(DnsmasqFilter):
     """Specific filter for the dnsmasq call (which includes env)."""
 

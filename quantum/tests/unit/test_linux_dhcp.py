@@ -142,7 +142,7 @@ class TestDhcpBase(base.BaseTestCase):
 
     def test_check_version_abstract_error(self):
         self.assertRaises(NotImplementedError,
-                          dhcp.DhcpBase.check_version, None)
+                          dhcp.DhcpBase.check_version)
 
     def test_base_abc_error(self):
         self.assertRaises(TypeError, dhcp.DhcpBase, None)
@@ -720,7 +720,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
     def _check_version(self, cmd_out, expected_value):
         with mock.patch('quantum.agent.linux.utils.execute') as cmd:
             cmd.return_value = cmd_out
-            result = dhcp.Dnsmasq.check_version('sudo')
+            result = dhcp.Dnsmasq.check_version()
             self.assertEqual(result, expected_value)
 
     def test_check_minimum_version(self):
