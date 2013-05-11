@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-10 12:11+0000\n"
+"POT-Creation-Date: 2013-05-11 12:11+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -311,105 +311,105 @@ msgid ""
 "enable_isolated_metadata = True"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:100
+#: quantum/agent/dhcp_agent.py:101
 #, python-format
 msgid ""
 "The '%s' DHCP-driver does not support retrieving of a list of existing "
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:107 quantum/agent/dhcp_agent.py:720
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:721
 msgid "DHCP agent started"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:134
+#: quantum/agent/dhcp_agent.py:135
 #, python-format
 msgid "Unable to %s dhcp."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:142
+#: quantum/agent/dhcp_agent.py:143
 msgid "Unable to update lease"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:146
+#: quantum/agent/dhcp_agent.py:147
 msgid "Synchronizing state"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:158
+#: quantum/agent/dhcp_agent.py:159
 msgid "Unable to sync network state."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:178 quantum/agent/dhcp_agent.py:216
+#: quantum/agent/dhcp_agent.py:179 quantum/agent/dhcp_agent.py:217
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:305
+#: quantum/agent/dhcp_agent.py:306
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:494 quantum/agent/l3_agent.py:119
+#: quantum/agent/dhcp_agent.py:495 quantum/agent/l3_agent.py:119
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:502
+#: quantum/agent/dhcp_agent.py:503
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:507 quantum/agent/l3_agent.py:158
+#: quantum/agent/dhcp_agent.py:508 quantum/agent/l3_agent.py:158
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:545 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:546 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:625
+#: quantum/agent/dhcp_agent.py:626
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:655
+#: quantum/agent/dhcp_agent.py:656
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:661
-msgid "Unable to parse lease relay msg to dict."
-msgstr ""
-
 #: quantum/agent/dhcp_agent.py:662
-#, python-format
-msgid "Exception value: %s"
+msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
 #: quantum/agent/dhcp_agent.py:663
 #, python-format
+msgid "Exception value: %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:664
+#, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:665
+#: quantum/agent/dhcp_agent.py:666
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:703 quantum/agent/l3_agent.py:728
+#: quantum/agent/dhcp_agent.py:704 quantum/agent/l3_agent.py:728
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:709 quantum/agent/l3_agent.py:733
+#: quantum/agent/dhcp_agent.py:710 quantum/agent/l3_agent.py:733
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:185
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:205
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:717 quantum/agent/l3_agent.py:738
+#: quantum/agent/dhcp_agent.py:718 quantum/agent/l3_agent.py:738
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -621,19 +621,19 @@ msgstr ""
 msgid "Failed to open pidfile: %s"
 msgstr ""
 
-#: quantum/agent/linux/daemon.py:41
+#: quantum/agent/linux/daemon.py:42
 msgid "Unable to lock pid file"
 msgstr ""
 
-#: quantum/agent/linux/daemon.py:48
+#: quantum/agent/linux/daemon.py:49
 msgid "Unable to unlock pid file"
 msgstr ""
 
-#: quantum/agent/linux/daemon.py:94
+#: quantum/agent/linux/daemon.py:98
 msgid "Fork failed"
 msgstr ""
 
-#: quantum/agent/linux/daemon.py:132
+#: quantum/agent/linux/daemon.py:136
 #, python-format
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr ""
@@ -658,42 +658,56 @@ msgstr ""
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:135
+#: quantum/agent/linux/dhcp.py:141
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:138
+#: quantum/agent/linux/dhcp.py:144
 #, python-format
 msgid "No DHCP started for %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:160 quantum/agent/linux/external_process.py:84
+#: quantum/agent/linux/dhcp.py:166 quantum/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:167 quantum/agent/linux/external_process.py:92
+#: quantum/agent/linux/dhcp.py:173 quantum/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:169 quantum/agent/linux/external_process.py:90
+#: quantum/agent/linux/dhcp.py:175 quantum/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:298
+#: quantum/agent/linux/dhcp.py:235
+#, python-format
+msgid ""
+"FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
+" Please ensure that its version is %s or above!"
+msgstr ""
+
+#: quantum/agent/linux/dhcp.py:240
+#, python-format
+msgid ""
+"Unable to determine dnsmasq version. Please ensure that its version is %s"
+" or above!"
+msgstr ""
+
+#: quantum/agent/linux/dhcp.py:324
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:308
+#: quantum/agent/linux/dhcp.py:334
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:309
+#: quantum/agent/linux/dhcp.py:335
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
@@ -933,7 +947,7 @@ msgstr ""
 msgid "network_id and router_id are None. One must be provided."
 msgstr ""
 
-#: quantum/agent/metadata/namespace_proxy.py:157
+#: quantum/agent/metadata/namespace_proxy.py:158
 msgid "TCP Port to listen for metadata server requests."
 msgstr ""
 
@@ -3868,15 +3882,15 @@ msgstr ""
 
 #: quantum/plugins/cisco/common/cisco_exceptions.py:99
 #, python-format
-msgid "Nexus Port Binding %(port_id)s is not present."
+msgid "Nexus Port Binding (%(filters)s) is not present"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:104
+#: quantum/plugins/cisco/common/cisco_exceptions.py:108
 #, python-format
 msgid "PortVnic Binding %(port_id)s already exists"
 msgstr ""
 
-#: quantum/plugins/cisco/common/cisco_exceptions.py:109
+#: quantum/plugins/cisco/common/cisco_exceptions.py:113
 #, python-format
 msgid "PortVnic Binding %(port_id)s is not present"
 msgstr ""
@@ -4040,27 +4054,27 @@ msgstr ""
 msgid "get_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:53
+#: quantum/plugins/cisco/db/nexus_db_v2.py:56
 msgid "get_nexusvlan_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:64
+#: quantum/plugins/cisco/db/nexus_db_v2.py:70
 msgid "add_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:75
+#: quantum/plugins/cisco/db/nexus_db_v2.py:81
 msgid "remove_nexusport_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:90
+#: quantum/plugins/cisco/db/nexus_db_v2.py:96
 msgid "update_nexusport_binding called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:106
+#: quantum/plugins/cisco/db/nexus_db_v2.py:112
 msgid "get_nexusvm_binding() called"
 msgstr ""
 
-#: quantum/plugins/cisco/db/nexus_db_v2.py:119
+#: quantum/plugins/cisco/db/nexus_db_v2.py:126
 msgid "get_port_vlan_switch_binding() called"
 msgstr ""
 
@@ -4120,43 +4134,43 @@ msgstr ""
 msgid "NexusPlugin:create_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:155
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:157
 msgid "NexusPlugin:delete_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:159
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:161
 msgid "NexusPlugin:get_network_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:165
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:167
 msgid "NexusPlugin:update_network() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:173
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:175
 msgid "NexusPlugin:get_all_ports() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:181
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:183
 msgid "NexusPlugin:create_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:189
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:191
 msgid "NexusPlugin:delete_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:236
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:240
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:244
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:248
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:253
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:257
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:261
+#: quantum/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:265
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -7542,9 +7556,6 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "Invalid network VLAN range: '%(range)s' - %(e)s. Agent terminated!"
-#~ msgstr ""
-
-#~ msgid "Invalid network VLAN range: '%(entry)s' - %(ex)s. Service terminated!"
+#~ msgid "Nexus Port Binding %(port_id)s is not present."
 #~ msgstr ""
 
