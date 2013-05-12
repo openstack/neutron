@@ -199,12 +199,11 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
         self.device_exists.side_effect = device_exists
 
         root_dev = mock.Mock()
-        _ns_dev = mock.Mock()
         ns_dev = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_dev, _ns_dev))
-        self.ip().device = mock.Mock(return_value=(ns_dev))
-        expected = [mock.call('sudo'), mock.call().add_veth('tap0', devname),
-                    mock.call().device(devname)]
+        self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
+        expected = [mock.call('sudo'),
+                    mock.call().add_veth('tap0', devname,
+                                         namespace2=namespace)]
 
         vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
                      bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
@@ -228,11 +227,6 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
         if mtu:
             ns_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
             root_dev.assert_has_calls([mock.call.link.set_mtu(mtu)])
-        if namespace:
-            expected.extend(
-                [mock.call().ensure_namespace(namespace),
-                 mock.call().ensure_namespace().add_device_to_namespace(
-                     mock.ANY)])
 
         self.ip.assert_has_calls(expected)
         root_dev.assert_has_calls([mock.call.link.set_up()])
@@ -284,13 +278,9 @@ class TestBridgeInterfaceDriver(TestBase):
                 mac_address,
                 namespace=namespace)
 
-        ip_calls = [mock.call('sudo'), mock.call().add_veth('tap0', 'ns-0')]
+        ip_calls = [mock.call('sudo'),
+                    mock.call().add_veth('tap0', 'ns-0', namespace2=namespace)]
         ns_veth.assert_has_calls([mock.call.link.set_address(mac_address)])
-        if namespace:
-            ip_calls.extend([
-                mock.call().ensure_namespace('01234567-1234-1234-99'),
-                mock.call().ensure_namespace().add_device_to_namespace(
-                    ns_veth)])
         if mtu:
             ns_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
             root_veth.assert_has_calls([mock.call.link.set_mtu(mtu)])
