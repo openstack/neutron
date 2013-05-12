@@ -306,13 +306,17 @@ class Dnsmasq(DhcpLocalProcess):
 
         self._output_hosts_file()
         self._output_opts_file()
-        cmd = ['kill', '-HUP', self.pid]
 
-        if self.namespace:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
-            ip_wrapper.netns.execute(cmd)
+        if self.active:
+            cmd = ['kill', '-HUP', self.pid]
+
+            if self.namespace:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
+                ip_wrapper.netns.execute(cmd)
+            else:
+                utils.execute(cmd, self.root_helper)
         else:
-            utils.execute(cmd, self.root_helper)
+            LOG.debug(_('Pid %d is stale, relaunching dnsmasq'), self.pid)
         LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
 
     def _output_hosts_file(self):

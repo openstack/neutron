@@ -542,6 +542,50 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
         with mock.patch('os.path.isdir') as isdir:
             isdir.return_value = True
+            with mock.patch.object(dhcp.Dnsmasq, 'active') as active:
+                active.__get__ = mock.Mock(return_value=True)
+                with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
+                    pid.__get__ = mock.Mock(return_value=5)
+                    dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                                      namespace='qdhcp-ns')
+
+                    method_name = '_make_subnet_interface_ip_map'
+                    with mock.patch.object(dhcp.Dnsmasq,
+                                           method_name) as ip_map:
+                        ip_map.return_value = {}
+                        dm.reload_allocations()
+                        self.assertTrue(ip_map.called)
+
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_opt_name, exp_opt_data)])
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
+                                             check_exit_code=True)
+
+    def test_reload_allocations_stale_pid(self):
+        exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
+        exp_host_data = """
+00:00:80:aa:bb:cc,192-168-0-2.openstacklocal,192.168.0.2
+00:00:f3:aa:bb:cc,fdca-3ba5-a17a-4ba3--2.openstacklocal,fdca:3ba5:a17a:4ba3::2
+00:00:0f:aa:bb:cc,192-168-0-3.openstacklocal,192.168.0.3
+00:00:0f:aa:bb:cc,fdca-3ba5-a17a-4ba3--3.openstacklocal,fdca:3ba5:a17a:4ba3::3
+""".lstrip()
+        exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
+        exp_opt_data = "tag:tag0,option:router,192.168.0.1"
+        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
+        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        exp_opt_data = """
+tag:tag0,option:dns-server,8.8.8.8
+tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,option:router,192.168.0.1
+tag:tag1,option:dns-server,%s
+tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
+                                                            fake_v6_cidr,
+                                                            fake_v6)
+
+        exp_args = ['cat', '/proc/5/cmdline']
+
+        with mock.patch('os.path.isdir') as isdir:
+            isdir.return_value = True
             with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
                 pid.__get__ = mock.Mock(return_value=5)
                 dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
@@ -555,8 +599,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
-        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
-                                             check_exit_code=True)
+        self.execute.assert_called_once_with(exp_args, 'sudo')
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('quantum.agent.linux.ip_lib.IPDevice') as ip_dev:
