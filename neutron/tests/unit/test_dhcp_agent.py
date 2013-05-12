@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import os
 import socket
 import sys
@@ -53,14 +54,24 @@ class FakeModel:
     def __str__(self):
         return str(self.__dict__)
 
-
+fake_tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'
+fake_subnet1_allocation_pools = FakeModel('', start='172.9.9.2',
+                                          end='172.9.9.254')
 fake_subnet1 = FakeModel('bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                          network_id='12345678-1234-5678-1234567890ab',
-                         cidr='172.9.9.0/24', enable_dhcp=True)
+                         cidr='172.9.9.0/24', enable_dhcp=True, name='',
+                         tenant_id=fake_tenant_id, gateway_ip='172.9.9.1',
+                         host_routes=[], dns_nameservers=[], ip_version=4,
+                         allocation_pools=fake_subnet1_allocation_pools)
 
+fake_subnet2_allocation_pools = FakeModel('', start='172.9.8.2',
+                                          end='172.9.8.254')
 fake_subnet2 = FakeModel('dddddddd-dddd-dddd-dddddddddddd',
                          network_id='12345678-1234-5678-1234567890ab',
-                         cidr='172.9.9.0/24', enable_dhcp=False)
+                         cidr='172.9.8.0/24', enable_dhcp=False, name='',
+                         tenant_id=fake_tenant_id, gateway_ip='172.9.8.1',
+                         host_routes=[], dns_nameservers=[], ip_version=4,
+                         allocation_pools=fake_subnet2_allocation_pools)
 
 fake_subnet3 = FakeModel('bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                          network_id='12345678-1234-5678-1234567890ab',
@@ -71,14 +82,20 @@ fake_meta_subnet = FakeModel('bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                              cidr='169.254.169.252/30',
                              gateway_ip='169.254.169.253', enable_dhcp=True)
 
-fake_fixed_ip = FakeModel('', subnet=fake_subnet1, ip_address='172.9.9.9')
+fake_fixed_ip1 = FakeModel('', subnet_id=fake_subnet1.id,
+                           ip_address='172.9.9.9')
 fake_meta_fixed_ip = FakeModel('', subnet=fake_meta_subnet,
                                ip_address='169.254.169.254')
+fake_allocation_pool_subnet1 = FakeModel('', start='172.9.9.2',
+                                         end='172.9.9.254')
+
 
 fake_port1 = FakeModel('12345678-1234-aaaa-1234567890ab',
+                       device_id='dhcp-12345678-1234-aaaa-1234567890ab',
+                       allocation_pools=fake_subnet1_allocation_pools,
                        mac_address='aa:bb:cc:dd:ee:ff',
                        network_id='12345678-1234-5678-1234567890ab',
-                       fixed_ips=[fake_fixed_ip])
+                       fixed_ips=[fake_fixed_ip1])
 
 fake_port2 = FakeModel('12345678-1234-aaaa-123456789000',
                        mac_address='aa:bb:cc:dd:ee:99',
@@ -263,7 +280,7 @@ class TestDhcpAgent(base.BaseTestCase):
     def _test_sync_state_helper(self, known_networks, active_networks):
         with mock.patch('neutron.agent.dhcp_agent.DhcpPluginApi') as plug:
             mock_plugin = mock.Mock()
-            mock_plugin.get_active_networks.return_value = active_networks
+            mock_plugin.get_active_networks_info.return_value = active_networks
             plug.return_value = mock_plugin
 
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
@@ -298,7 +315,7 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_sync_state_plugin_error(self):
         with mock.patch('neutron.agent.dhcp_agent.DhcpPluginApi') as plug:
             mock_plugin = mock.Mock()
-            mock_plugin.get_active_networks.side_effect = Exception
+            mock_plugin.get_active_networks_info.side_effect = Exception
             plug.return_value = mock_plugin
 
             with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
@@ -781,12 +798,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self.call_p.stop()
         super(TestDhcpPluginApiProxy, self).tearDown()
 
-    def test_get_active_networks(self):
-        self.proxy.get_active_networks()
-        self.assertTrue(self.call.called)
-        self.make_msg.assert_called_once_with('get_active_networks',
-                                              host='foo')
-
     def test_get_network_info(self):
         self.call.return_value = dict(a=1)
         retval = self.proxy.get_network_info('netid')
@@ -804,6 +815,34 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self.make_msg.assert_called_once_with('get_dhcp_port',
                                               network_id='netid',
                                               device_id='devid',
+                                              host='foo')
+
+    def test_get_active_networks_info(self):
+        self.proxy.get_active_networks_info()
+        self.make_msg.assert_called_once_with('get_active_networks_info',
+                                              host='foo')
+
+    def test_create_dhcp_port(self):
+        port_body = (
+            {'port':
+                {'name': '', 'admin_state_up': True,
+                 'network_id': fake_network.id,
+                 'tenant_id': fake_network.tenant_id,
+                 'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id}],
+                 'device_id': mock.ANY}})
+
+        self.proxy.create_dhcp_port(port_body)
+        self.make_msg.assert_called_once_with('create_dhcp_port',
+                                              port=port_body,
+                                              host='foo')
+
+    def test_update_dhcp_port(self):
+        port_body = {'port': {'fixed_ips':
+                              [{'subnet_id': fake_fixed_ip1.subnet_id}]}}
+        self.proxy.update_dhcp_port(fake_port1.id, port_body)
+        self.make_msg.assert_called_once_with('update_dhcp_port',
+                                              port_id=fake_port1.id,
+                                              port=port_body,
                                               host='foo')
 
     def test_release_dhcp_port(self):
@@ -1019,6 +1058,7 @@ class TestDeviceManager(base.BaseTestCase):
         net = net or fake_network
         port = port or fake_port1
         plugin = mock.Mock()
+        plugin.create_dhcp_port.return_value = port or fake_port1
         plugin.get_dhcp_port.return_value = port or fake_port1
         self.device_exists.return_value = device_exists
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
@@ -1030,7 +1070,12 @@ class TestDeviceManager(base.BaseTestCase):
         self.assertEqual(interface_name, 'tap12345678-12')
 
         plugin.assert_has_calls([
-            mock.call.get_dhcp_port(net.id, mock.ANY)])
+            mock.call.create_dhcp_port(
+                {'port': {'name': '', 'admin_state_up': True,
+                          'network_id': net.id, 'tenant_id': net.tenant_id,
+                          'fixed_ips':
+                          [{'subnet_id': fake_fixed_ip1.subnet_id}],
+                          'device_id': mock.ANY}})])
 
         namespace = dhcp_agent.NS_PREFIX + net.id
 
@@ -1060,6 +1105,46 @@ class TestDeviceManager(base.BaseTestCase):
     def test_setup_device_exists_reuse(self):
         self._test_setup_helper(True, True)
 
+    def test_create_dhcp_port_create_new(self):
+        plugin = mock.Mock()
+        dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
+        plugin.create_dhcp_port.return_value = fake_network.ports[0]
+        dh.setup_dhcp_port(fake_network)
+        plugin.assert_has_calls([
+            mock.call.create_dhcp_port(
+                {'port': {'name': '', 'admin_state_up': True,
+                          'network_id':
+                          fake_network.id, 'tenant_id': fake_network.tenant_id,
+                          'fixed_ips':
+                          [{'subnet_id': fake_fixed_ip1.subnet_id}],
+                          'device_id': mock.ANY}})])
+
+    def test_create_dhcp_port_update_add_subnet(self):
+        plugin = mock.Mock()
+        dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        fake_network_copy.subnets[1].enable_dhcp = True
+        plugin.update_dhcp_port.return_value = fake_network.ports[0]
+        dh.setup_dhcp_port(fake_network_copy)
+        port_body = {'port': {
+                     'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id,
+                                    'ip_address': fake_fixed_ip1.ip_address},
+                                   {'subnet_id': fake_subnet2.id}]}}
+
+        plugin.assert_has_calls([
+            mock.call.update_dhcp_port(fake_network_copy.ports[0].id,
+                                       port_body)])
+
+    def test_create_dhcp_port_no_update_or_create(self):
+        plugin = mock.Mock()
+        dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        dh.setup_dhcp_port(fake_network_copy)
+        self.assertFalse(plugin.setup_dhcp_port.called)
+        self.assertFalse(plugin.update_dhcp_port.called)
+
     def test_destroy(self):
         fake_network = FakeModel('12345678-1234-5678-1234567890ab',
                                  tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa')
@@ -1069,9 +1154,6 @@ class TestDeviceManager(base.BaseTestCase):
 
         with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
-            #mock_driver.DEV_NAME_LEN = (
-            #    interface.LinuxInterfaceDriver.DEV_NAME_LEN)
-            #mock_driver.port = fake_port
             mock_driver.get_device_name.return_value = 'tap12345678-12'
             dvr_cls.return_value = mock_driver
 
@@ -1111,31 +1193,6 @@ class TestDeviceManager(base.BaseTestCase):
                 [mock.call.get_device_name(fake_port)])
 
             self.assertEqual(len(plugin.mock_calls), 0)
-
-    def test_get_interface_name_no_port_provided(self):
-        fake_network = FakeModel('12345678-1234-5678-1234567890ab',
-                                 tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa')
-
-        fake_port = FakeModel('12345678-1234-aaaa-1234567890ab',
-                              mac_address='aa:bb:cc:dd:ee:ff')
-
-        with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
-            mock_driver = mock.MagicMock()
-            mock_driver.get_device_name.return_value = 'tap12345678-12'
-            dvr_cls.return_value = mock_driver
-
-            plugin = mock.Mock()
-            plugin.get_dhcp_port.return_value = fake_port
-
-            dh = dhcp_agent.DeviceManager(cfg.CONF, plugin)
-            dh.get_interface_name(fake_network)
-
-            dvr_cls.assert_called_once_with(cfg.CONF)
-            mock_driver.assert_has_calls(
-                [mock.call.get_device_name(fake_port)])
-
-            plugin.assert_has_calls(
-                [mock.call.get_dhcp_port(fake_network.id, mock.ANY)])
 
     def test_get_device_id(self):
         fake_network = FakeModel('12345678-1234-5678-1234567890ab',

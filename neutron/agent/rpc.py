@@ -71,7 +71,7 @@ class PluginApi(proxy.RpcProxy):
 
     '''
 
-    BASE_RPC_API_VERSION = '1.0'
+    BASE_RPC_API_VERSION = '1.1'
 
     def __init__(self, topic):
         super(PluginApi, self).__init__(

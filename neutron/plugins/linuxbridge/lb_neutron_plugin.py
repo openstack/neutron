@@ -149,10 +149,13 @@ class AgentNotifierApi(proxy.RpcProxy,
 
     API version history:
         1.0 - Initial version.
+        1.1 - Added get_active_networks_info, create_dhcp_port,
+              and update_dhcp_port methods.
+
 
     '''
 
-    BASE_RPC_API_VERSION = '1.0'
+    BASE_RPC_API_VERSION = '1.1'
 
     def __init__(self, topic):
         super(AgentNotifierApi, self).__init__(
