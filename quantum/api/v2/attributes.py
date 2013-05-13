@@ -93,9 +93,18 @@ def _validate_range(data, valid_values=None):
         return msg
 
 
+def _validate_no_whitespace(data):
+    """Validates that input has no whitespace."""
+    if len(data.split()) > 1:
+        msg = _("'%s' contains whitespace") % data
+        LOG.debug(msg)
+        raise q_exc.InvalidInput(error_message=msg)
+    return data
+
+
 def _validate_mac_address(data, valid_values=None):
     try:
-        netaddr.EUI(data)
+        netaddr.EUI(_validate_no_whitespace(data))
     except Exception:
         msg = _("'%s' is not a valid MAC address") % data
         LOG.debug(msg)
@@ -104,7 +113,7 @@ def _validate_mac_address(data, valid_values=None):
 
 def _validate_ip_address(data, valid_values=None):
     try:
-        netaddr.IPAddress(data)
+        netaddr.IPAddress(_validate_no_whitespace(data))
     except Exception:
         msg = _("'%s' is not a valid IP address") % data
         LOG.debug(msg)
@@ -225,7 +234,7 @@ def _validate_ip_address_or_none(data, valid_values=None):
 
 def _validate_subnet(data, valid_values=None):
     try:
-        netaddr.IPNetwork(data)
+        netaddr.IPNetwork(_validate_no_whitespace(data))
         if len(data.split('/')) == 2:
             return
     except Exception:
