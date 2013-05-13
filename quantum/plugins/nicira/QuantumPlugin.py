@@ -1188,6 +1188,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     self._port_drivers['create']['default'])
 
                 port_create_func(context, port_data)
+            except q_exc.NotFound:
+                LOG.warning(_("Network %s was not found in NVP."),
+                            port_data['network_id'])
+                port_data['status'] = constants.PORT_STATUS_ERROR
             except Exception as e:
                 # FIXME (arosen) or the plugin_interface call failed in which
                 # case we need to garbage collect the left over port in nvp.
