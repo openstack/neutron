@@ -13,9 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import testtools
+
 from quantum.api.v2 import attributes
 from quantum.tests import base
 from quantum import wsgi
+
+
+class ExpectedException(testtools.ExpectedException):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if super(ExpectedException, self).__exit__(exc_type,
+                                                   exc_value,
+                                                   traceback):
+            self.exception = exc_value
+            return True
+        return False
 
 
 def create_request(path, body, content_type, method='GET',
