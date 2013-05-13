@@ -429,6 +429,35 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         self.assertEqual(agent._destroy_router_namespace.call_count, 1)
 
+    def _configure_metadata_proxy(self, enableflag=True):
+        if not enableflag:
+            self.conf.set_override('enable_metadata_proxy', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        router = {'id': _uuid(),
+                  'external_gateway_info': {},
+                  'routes': []}
+        with mock.patch.object(
+            agent, '_destroy_metadata_proxy') as destroy_proxy:
+            with mock.patch.object(
+                agent, '_spawn_metadata_proxy') as spawn_proxy:
+                agent._router_added(router_id, router)
+                if enableflag:
+                    spawn_proxy.assert_called_with(mock.ANY)
+                else:
+                    self.assertFalse(spawn_proxy.call_count)
+                agent._router_removed(router_id)
+                if enableflag:
+                    destroy_proxy.assert_called_with(mock.ANY)
+                else:
+                    self.assertFalse(destroy_proxy.call_count)
+
+    def test_enable_metadata_proxy(self):
+        self._configure_metadata_proxy()
+
+    def test_disable_metadata_proxy_spawn(self):
+        self._configure_metadata_proxy(enableflag=False)
+
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 
