@@ -1398,10 +1398,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(len(ips), 5)
                 alloc = ['10.0.0.1', '10.0.0.2', '10.0.0.4', '10.0.0.5',
                          '10.0.0.6']
-                for i in range(len(alloc)):
-                    self.assertEqual(ips[i]['ip_address'], alloc[i])
-                    self.assertEqual(ips[i]['subnet_id'],
+                for ip in ips:
+                    self.assertIn(ip['ip_address'], alloc)
+                    self.assertEqual(ip['subnet_id'],
                                      subnet['subnet']['id'])
+                    alloc.remove(ip['ip_address'])
+                self.assertEqual(len(alloc), 0)
                 self._delete('ports', port['port']['id'])
 
         with self.subnet(gateway_ip='11.0.0.6',
@@ -1419,10 +1421,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(len(ips), 5)
                 alloc = ['11.0.0.1', '11.0.0.2', '11.0.0.3', '11.0.0.4',
                          '11.0.0.5']
-                for i in range(len(alloc)):
-                    self.assertEqual(ips[i]['ip_address'], alloc[i])
-                    self.assertEqual(ips[i]['subnet_id'],
+                for ip in ips:
+                    self.assertIn(ip['ip_address'], alloc)
+                    self.assertEqual(ip['subnet_id'],
                                      subnet['subnet']['id'])
+                    alloc.remove(ip['ip_address'])
+                self.assertEqual(len(alloc), 0)
                 self._delete('ports', port['port']['id'])
 
     def test_requested_invalid_fixed_ips(self):
