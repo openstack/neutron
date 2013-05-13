@@ -1,18 +1,17 @@
-# Japanese translations for quantum.
+# Chinese (China) translations for quantum.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the quantum project.
 #
 # Translators:
-# Tomoyuki KATO <tomo@dream.daynight.jp>, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-05-13 12:12+0000\n"
-"PO-Revision-Date: 2013-01-30 10:28+0000\n"
-"Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
-"Language-Team: Japanese "
-"(http://www.transifex.com/projects/p/openstack/language/ja/)\n"
+"PO-Revision-Date: 2013-05-13 06:01+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"Language-Team: Chinese (China) "
+"(http://www.transifex.com/projects/p/openstack/language/zh_CN/)\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -273,7 +272,7 @@ msgstr ""
 
 #: quantum/wsgi.py:1030
 msgid "Internal error"
-msgstr "内部エラー"
+msgstr ""
 
 #: quantum/wsgi.py:1045 quantum/wsgi.py:1149
 #, python-format
@@ -892,7 +891,7 @@ msgstr ""
 #: quantum/agent/metadata/agent.py:44
 #: quantum/plugins/metaplugin/common/config.py:38
 msgid "Admin user"
-msgstr "管理ユーザー"
+msgstr ""
 
 #: quantum/agent/metadata/agent.py:57
 msgid "IP address used by Nova metadata server."
