@@ -23,7 +23,6 @@ import random
 
 import mock
 from oslo.config import cfg
-import testtools
 from testtools import matchers
 import webob.exc
 
@@ -1806,14 +1805,14 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
 
     def test_create_public_network_no_admin_tenant(self):
         name = 'public_net'
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             with self.network(name=name,
                               shared=True,
                               tenant_id="another_tenant",
                               set_context=True):
                 pass
-            self.assertEqual(ctx_manager.exception.code, 403)
+        self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_update_network(self):
         with self.network() as network:
@@ -2346,13 +2345,13 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             with self.subnet(network=network,
                              gateway_ip=gateway_ip_1,
                              cidr=cidr_1):
-                with testtools.ExpectedException(
+                with testlib_api.ExpectedException(
                         webob.exc.HTTPClientError) as ctx_manager:
                     with self.subnet(network=network,
                                      gateway_ip=gateway_ip_2,
                                      cidr=cidr_2):
                         pass
-                    self.assertEqual(ctx_manager.exception.code, 400)
+                self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_bad_V4_cidr(self):
         with self.network() as network:
@@ -2389,12 +2388,12 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr_1 = '10.0.0.0/23'
         cidr_2 = '10.0.0.0/24'
         cfg.CONF.set_override('allow_overlapping_ips', False)
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             with contextlib.nested(self.subnet(cidr=cidr_1),
                                    self.subnet(cidr=cidr_2)):
                 pass
-            self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnets_bulk_native(self):
         if self._skip_native_bulk:
@@ -2796,23 +2795,23 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.1',
                              'end': '10.0.0.5'}]
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      allocation_pools=allocation_pools)
-            self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         gateway_ip = '10.0.0.50'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.1',
                              'end': '10.0.0.100'}]
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-            self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_overlapping_allocation_pools_returns_409(self):
         gateway_ip = '10.0.0.1'
@@ -2821,44 +2820,44 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
                              'end': '10.0.0.150'},
                             {'start': '10.0.0.140',
                              'end': '10.0.0.180'}]
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-            self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code, 409)
 
     def test_create_subnet_invalid_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.0.256'}]
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-            self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_out_of_range_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'
         allocation_pools = [{'start': '10.0.0.2',
                              'end': '10.0.1.6'}]
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-            self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_shared_returns_400(self):
         cidr = '10.0.0.0/24'
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      shared=True)
-            self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_create_subnet_inconsistent_ipv6_cidrv4(self):
         with self.network() as network:

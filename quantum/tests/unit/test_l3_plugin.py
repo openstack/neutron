@@ -24,7 +24,6 @@ import itertools
 
 import mock
 from oslo.config import cfg
-import testtools
 from webob import exc
 import webtest
 
@@ -1484,13 +1483,13 @@ class L3NatDBTestCase(L3NatTestCaseBase):
     def test_create_port_external_network_non_admin_fails(self):
         with self.network(router__external=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
-                with testtools.ExpectedException(
+                with testlib_api.ExpectedException(
                         exc.HTTPClientError) as ctx_manager:
                     with self.port(subnet=ext_subnet,
                                    set_context='True',
                                    tenant_id='noadmin'):
                         pass
-                    self.assertEqual(ctx_manager.exception.code, 403)
+                self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_create_port_external_network_admin_suceeds(self):
         with self.network(router__external=True) as ext_net:
@@ -1500,12 +1499,12 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                          ext_net['network']['id'])
 
     def test_create_external_network_non_admin_fails(self):
-        with testtools.ExpectedException(exc.HTTPClientError) as ctx_manager:
+        with testlib_api.ExpectedException(exc.HTTPClientError) as ctx_manager:
             with self.network(router__external=True,
                               set_context='True',
                               tenant_id='noadmin'):
                 pass
-            self.assertEqual(ctx_manager.exception.code, 403)
+        self.assertEqual(ctx_manager.exception.code, 403)
 
     def test_create_external_network_admin_suceeds(self):
         with self.network(router__external=True) as ext_net:

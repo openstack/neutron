@@ -19,7 +19,6 @@ import os
 import mock
 import netaddr
 from oslo.config import cfg
-import testtools
 import webob.exc
 
 from quantum.common import constants
@@ -41,6 +40,7 @@ import quantum.tests.unit.test_extension_portsecurity as psec
 import quantum.tests.unit.test_extension_security_group as ext_sg
 from quantum.tests.unit import test_extensions
 import quantum.tests.unit.test_l3_plugin as test_l3_plugin
+from quantum.tests.unit import testlib_api
 
 NICIRA_PKG_PATH = nvp_plugin.__name__
 NICIRA_EXT_PATH = "../../plugins/nicira/extensions"
@@ -186,10 +186,10 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         self._test_create_bridge_network(vlan_id=123)
 
     def test_create_bridge_vlan_network_outofrange_returns_400(self):
-        with testtools.ExpectedException(
+        with testlib_api.ExpectedException(
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_bridge_network(vlan_id=5000)
-            self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code, 400)
 
     def test_list_networks_filter_by_id(self):
         # We add this unit test to cover some logic specific to the

@@ -15,7 +15,6 @@
 #    under the License.
 
 from oslo.config import cfg
-import testtools
 import webob.exc as webexc
 
 import quantum
@@ -293,11 +292,11 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         }
         if update_service_type_id:
             data["router"]["service_type_id"] = _uuid()
-            with testtools.ExpectedException(
+            with testlib_api.ExpectedException(
                     webexc.HTTPClientError) as ctx_manager:
                 res = self._do_request(
                     'PUT', _get_path('routers/{0}'.format(router_id)), data)
-                self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
         else:
             res = self._do_request(
                 'PUT', _get_path('routers/{0}'.format(router_id)), data)
@@ -422,12 +421,12 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         data = {res: uattrs}
         if update_router_id:
             uattrs['router_id'] = self._router_id
-            with testtools.ExpectedException(
+            with testlib_api.ExpectedException(
                     webexc.HTTPClientError) as ctx_manager:
                 self._do_request(
                     'PUT',
                     _get_path('lb/{0}s/{1}'.format(res, obj['id'])), data)
-                self.assertEqual(ctx_manager.exception.code, 400)
+            self.assertEqual(ctx_manager.exception.code, 400)
         else:
             self._do_request(
                 'PUT',
