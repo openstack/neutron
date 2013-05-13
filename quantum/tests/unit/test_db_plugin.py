@@ -2299,12 +2299,20 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             # verify the response has each key with the correct value
             for k in keys:
                 self.assertIn(k, subnet['subnet'])
-                self.assertEqual(subnet['subnet'][k], keys[k])
+                if isinstance(keys[k], list):
+                    self.assertEqual(sorted(subnet['subnet'][k]),
+                                     sorted(keys[k]))
+                else:
+                    self.assertEqual(subnet['subnet'][k], keys[k])
             # verify the configured validations are correct
             if expected:
                 for k in expected:
                     self.assertIn(k, subnet['subnet'])
-                    self.assertEqual(subnet['subnet'][k], expected[k])
+                    if isinstance(expected[k], list):
+                        self.assertEqual(sorted(subnet['subnet'][k]),
+                                         sorted(expected[k]))
+                    else:
+                        self.assertEqual(subnet['subnet'][k], expected[k])
             return subnet
 
     def test_create_subnet(self):
