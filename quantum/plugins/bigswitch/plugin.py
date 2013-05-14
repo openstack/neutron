@@ -65,7 +65,6 @@ from quantum.db import dhcp_rpc_base
 from quantum.db import l3_db
 from quantum.extensions import l3
 from quantum.extensions import portbindings
-from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.plugins.bigswitch.version import version_string_with_vcs
@@ -160,7 +159,7 @@ class ServerProxy(object):
         if auth:
             self.auth = 'Basic ' + base64.encodestring(auth).strip()
 
-    @lockutils.synchronized('rest_call', 'bsn-', external=True)
+    @utils.synchronized('bsn-rest-call', external=True)
     def rest_call(self, action, resource, data, headers):
         uri = self.base_uri + resource
         body = json.dumps(data)
