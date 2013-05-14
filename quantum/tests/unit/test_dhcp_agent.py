@@ -218,7 +218,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                                 mock.ANY,
                                                 'sudo',
                                                 mock.ANY,
-                                                'qdhcp-1')
+                                                'qdhcp-1',
+                                                mock.ANY)
 
     def test_call_driver_failure(self):
         network = mock.Mock()
@@ -233,7 +234,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                                     mock.ANY,
                                                     'sudo',
                                                     mock.ANY,
-                                                    'qdhcp-1')
+                                                    'qdhcp-1',
+                                                    mock.ANY)
                 self.assertEqual(log.call_count, 1)
                 self.assertTrue(dhcp.needs_resync)
 

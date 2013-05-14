@@ -450,7 +450,8 @@ class TestDnsmasq(TestBase):
                 argv.__getitem__.side_effect = fake_argv
                 dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
                                   device_delegate=delegate,
-                                  namespace='qdhcp-ns')
+                                  namespace='qdhcp-ns',
+                                  version=float(2.59))
                 dm.spawn_process()
                 self.assertTrue(mocks['_output_opts_file'].called)
                 self.execute.assert_called_once_with(expected,
@@ -488,7 +489,8 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
-            dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork())
+            dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                              version=float(2.59))
             dm._output_opts_file()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
@@ -500,7 +502,21 @@ tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
 tag:tag0,option:router,192.168.0.1""".lstrip()
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
-            dm = dhcp.Dnsmasq(self.conf, FakeDualNetworkSingleDHCP())
+            dm = dhcp.Dnsmasq(self.conf, FakeDualNetworkSingleDHCP(),
+                              version=float(2.59))
+            dm._output_opts_file()
+
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_single_dhcp_ver2_48(self):
+        expected = """
+tag0,option:dns-server,8.8.8.8
+tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag0,option:router,192.168.0.1""".lstrip()
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf, FakeDualNetworkSingleDHCP(),
+                              version=float(2.48))
             dm._output_opts_file()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
@@ -512,7 +528,8 @@ tag:tag0,option:router""".lstrip()
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
-            dm = dhcp.Dnsmasq(self.conf, FakeV4NoGatewayNetwork())
+            dm = dhcp.Dnsmasq(self.conf, FakeV4NoGatewayNetwork(),
+                              version=float(2.59))
             with mock.patch.object(dm, '_make_subnet_interface_ip_map') as ipm:
                 ipm.return_value = {FakeV4SubnetNoGateway.id: '192.168.1.1'}
 
@@ -551,7 +568,8 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
                 with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
                     pid.__get__ = mock.Mock(return_value=5)
                     dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                      namespace='qdhcp-ns')
+                                      namespace='qdhcp-ns',
+                                      version=float(2.59))
 
                     method_name = '_make_subnet_interface_ip_map'
                     with mock.patch.object(dhcp.Dnsmasq,
@@ -593,7 +611,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
             with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
                 pid.__get__ = mock.Mock(return_value=5)
                 dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                  namespace='qdhcp-ns')
+                                  namespace='qdhcp-ns', version=float(2.59))
 
                 method_name = '_make_subnet_interface_ip_map'
                 with mock.patch.object(dhcp.Dnsmasq, method_name) as ip_map:
@@ -727,13 +745,16 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
             self.assertEqual(result, expected_value)
 
     def test_check_minimum_version(self):
-        self._check_version('Dnsmasq version 2.59 Copyright (c)...', True)
+        self._check_version('Dnsmasq version 2.59 Copyright (c)...',
+                            float(2.59))
 
     def test_check_future_version(self):
-        self._check_version('Dnsmasq version 2.65 Copyright (c)...', True)
+        self._check_version('Dnsmasq version 2.65 Copyright (c)...',
+                            float(2.65))
 
     def test_check_fail_version(self):
-        self._check_version('Dnsmasq version 2.48 Copyright (c)...', False)
+        self._check_version('Dnsmasq version 2.48 Copyright (c)...',
+                            float(2.48))
 
     def test_check_version_failed_cmd_execution(self):
-        self._check_version('Error while executing command', None)
+        self._check_version('Error while executing command', 0)
