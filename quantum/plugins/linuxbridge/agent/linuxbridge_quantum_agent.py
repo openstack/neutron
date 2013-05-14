@@ -253,21 +253,26 @@ class LinuxBridgeManager:
         return bridge_name
 
     def ensure_physical_in_bridge(self, network_id,
+                                  network_type,
                                   physical_network,
-                                  vlan_id):
+                                  segmentation_id):
         physical_interface = self.interface_mappings.get(physical_network)
         if not physical_interface:
             LOG.error(_("No mapping for physical network %s"),
                       physical_network)
             return
-        if int(vlan_id) == lconst.FLAT_VLAN_ID:
+        if network_type == lconst.TYPE_FLAT:
             return self.ensure_flat_bridge(network_id, physical_interface)
-        else:
+        elif network_type == lconst.TYPE_VLAN:
             return self.ensure_vlan_bridge(network_id, physical_interface,
-                                           vlan_id)
+                                           segmentation_id)
+        else:
+            LOG.error(_("Unknown network_type %(network_type)s for network "
+                        "%(network_id)s."), {network_type: network_type,
+                                             network_id: network_id})
 
-    def add_tap_interface(self, network_id, physical_network, vlan_id,
-                          tap_device_name):
+    def add_tap_interface(self, network_id, network_type, physical_network,
+                          segmentation_id, tap_device_name):
         """Add tap interface.
 
         If a VIF has been plugged into a network, this function will
@@ -279,11 +284,12 @@ class LinuxBridgeManager:
             return False
 
         bridge_name = self.get_bridge_name(network_id)
-        if int(vlan_id) == lconst.LOCAL_VLAN_ID:
+        if network_type == lconst.TYPE_LOCAL:
             self.ensure_local_bridge(network_id)
         elif not self.ensure_physical_in_bridge(network_id,
+                                                network_type,
                                                 physical_network,
-                                                vlan_id):
+                                                segmentation_id):
             return False
 
         # Check if device needs to be added to bridge
@@ -305,11 +311,11 @@ class LinuxBridgeManager:
             LOG.debug(msg)
         return True
 
-    def add_interface(self, network_id, physical_network, vlan_id,
-                      port_id):
+    def add_interface(self, network_id, network_type, physical_network,
+                      segmentation_id, port_id):
         tap_device_name = self.get_tap_device_name(port_id)
-        return self.add_tap_interface(network_id,
-                                      physical_network, vlan_id,
+        return self.add_tap_interface(network_id, network_type,
+                                      physical_network, segmentation_id,
                                       tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
@@ -433,12 +439,20 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             self.sg_agent.refresh_firewall()
 
         if port['admin_state_up']:
-            vlan_id = kwargs.get('vlan_id')
+            network_type = kwargs.get('network_type')
+            if network_type:
+                segmentation_id = kwargs.get('segmentation_id')
+            else:
+                # compatibility with pre-Havana RPC vlan_id encoding
+                vlan_id = kwargs.get('vlan_id')
+                (network_type,
+                 segmentation_id) = lconst.interpret_vlan_id(vlan_id)
             physical_network = kwargs.get('physical_network')
             # create the networking for the port
             self.agent.br_mgr.add_interface(port['network_id'],
+                                            network_type,
                                             physical_network,
-                                            vlan_id,
+                                            segmentation_id,
                                             port['id'])
             # update plugin about port status
             self.agent.plugin_rpc.update_device_up(self.context,
@@ -569,9 +583,18 @@ class LinuxBridgeQuantumAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                          {'device': device, 'details': details})
                 if details['admin_state_up']:
                     # create the networking for the port
+                    network_type = details.get('network_type')
+                    if network_type:
+                        segmentation_id = details.get('segmentation_id')
+                    else:
+                        # compatibility with pre-Havana RPC vlan_id encoding
+                        vlan_id = details.get('vlan_id')
+                        (network_type,
+                         segmentation_id) = lconst.interpret_vlan_id(vlan_id)
                     self.br_mgr.add_interface(details['network_id'],
+                                              network_type,
                                               details['physical_network'],
-                                              details['vlan_id'],
+                                              segmentation_id,
                                               details['port_id'])
                 else:
                     self.remove_port_binding(details['network_id'],

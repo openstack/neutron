@@ -46,6 +46,9 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
+    #TODO(rkukura): Change default to False before havana rc1
+    cfg.BoolOpt('rpc_support_old_agents', default=True,
+                help=_("Enable server RPC compatibility with old agents")),
 ]
 
 

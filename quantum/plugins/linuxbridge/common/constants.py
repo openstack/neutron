@@ -25,3 +25,16 @@ TYPE_FLAT = 'flat'
 TYPE_VLAN = 'vlan'
 TYPE_LOCAL = 'local'
 TYPE_NONE = 'none'
+
+
+# TODO(rkukura): Eventually remove this function, which provides
+# temporary backward compatibility with pre-Havana RPC and DB vlan_id
+# encoding.
+def interpret_vlan_id(vlan_id):
+    """Return (network_type, segmentation_id) tuple for encoded vlan_id."""
+    if vlan_id == LOCAL_VLAN_ID:
+        return (TYPE_LOCAL, None)
+    elif vlan_id == FLAT_VLAN_ID:
+        return (TYPE_FLAT, None)
+    else:
+        return (TYPE_VLAN, vlan_id)
