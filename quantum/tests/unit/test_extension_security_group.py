@@ -277,6 +277,55 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     'port_range_min': None}
         self._assert_sg_rule_has_kvs(v6_rule, expected)
 
+    def test_update_security_group(self):
+        with self.security_group() as sg:
+            data = {'security_group': {'name': 'new_name',
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_group']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(res['security_group']['name'],
+                             data['security_group']['name'])
+            self.assertEqual(res['security_group']['description'],
+                             data['security_group']['description'])
+
+    def test_update_security_group_name_to_default_fail(self):
+        with self.security_group() as sg:
+            data = {'security_group': {'name': 'default',
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_group']['id'])
+            req.environ['quantum.context'] = context.Context('', 'somebody')
+            res = req.get_response(self.ext_api)
+            self.assertEqual(res.status_int, 409)
+
+    def test_update_default_security_group_name_fail(self):
+        with self.network():
+            res = self.new_list_request('security-groups')
+            sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
+            data = {'security_group': {'name': 'new_name',
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_groups'][0]['id'])
+            req.environ['quantum.context'] = context.Context('', 'somebody')
+            res = req.get_response(self.ext_api)
+            self.assertEqual(res.status_int, 404)
+
+    def test_update_default_security_group_with_description(self):
+        with self.network():
+            res = self.new_list_request('security-groups')
+            sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
+            data = {'security_group': {'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_groups'][0]['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(res['security_group']['description'],
+                             data['security_group']['description'])
+
     def test_default_security_group(self):
         with self.network():
             res = self.new_list_request('security-groups')
