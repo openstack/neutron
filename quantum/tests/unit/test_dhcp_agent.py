@@ -441,21 +441,32 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         cfg.CONF.reset()
         super(TestDhcpAgentEventHandler, self).tearDown()
 
-    def test_enable_dhcp_helper(self):
+    def _enable_dhcp_helper(self, isolated_metadata=False):
+        if isolated_metadata:
+            cfg.CONF.set_override('enable_isolated_metadata', True)
         self.plugin.get_network_info.return_value = fake_network
         self.dhcp.enable_dhcp_helper(fake_network.id)
         self.plugin.assert_has_calls(
             [mock.call.get_network_info(fake_network.id)])
         self.call_driver.assert_called_once_with('enable', fake_network)
         self.cache.assert_has_calls([mock.call.put(fake_network)])
-        self.external_process.assert_has_calls([
-            mock.call(
-                cfg.CONF,
-                '12345678-1234-5678-1234567890ab',
-                'sudo',
-                'qdhcp-12345678-1234-5678-1234567890ab'),
-            mock.call().enable(mock.ANY)
-        ])
+        if isolated_metadata:
+            self.external_process.assert_has_calls([
+                mock.call(
+                    cfg.CONF,
+                    '12345678-1234-5678-1234567890ab',
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().enable(mock.ANY)
+            ])
+        else:
+            self.assertFalse(self.external_process.call_count)
+
+    def test_enable_dhcp_helper_enable_isolated_metadata(self):
+        self._enable_dhcp_helper(isolated_metadata=True)
+
+    def test_enable_dhcp_helper(self):
+        self._enable_dhcp_helper()
 
     def test_enable_dhcp_helper_down_network(self):
         self.plugin.get_network_info.return_value = fake_down_network
@@ -488,30 +499,43 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.assertFalse(self.cache.called)
         self.assertFalse(self.external_process.called)
 
-    def test_disable_dhcp_helper_known_network(self):
+    def _disable_dhcp_helper_known_network(self, isolated_metadata=False):
+        if isolated_metadata:
+            cfg.CONF.set_override('enable_isolated_metadata', True)
         self.cache.get_network_by_id.return_value = fake_network
         self.dhcp.disable_dhcp_helper(fake_network.id)
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
         self.call_driver.assert_called_once_with('disable', fake_network)
-        self.external_process.assert_has_calls([
-            mock.call(
-                cfg.CONF,
-                '12345678-1234-5678-1234567890ab',
-                'sudo',
-                'qdhcp-12345678-1234-5678-1234567890ab'),
-            mock.call().disable()
-        ])
+        if isolated_metadata:
+            self.external_process.assert_has_calls([
+                mock.call(
+                    cfg.CONF,
+                    '12345678-1234-5678-1234567890ab',
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().disable()
+            ])
+        else:
+            self.assertFalse(self.external_process.call_count)
+
+    def test_disable_dhcp_helper_known_network_isolated_metadata(self):
+        self._disable_dhcp_helper_known_network(isolated_metadata=True)
+
+    def test_disable_dhcp_helper_known_network(self):
+        self._disable_dhcp_helper_known_network()
 
     def test_disable_dhcp_helper_unknown_network(self):
         self.cache.get_network_by_id.return_value = None
         self.dhcp.disable_dhcp_helper('abcdef')
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id('abcdef')])
-        self.assertEqual(self.call_driver.call_count, 0)
+        self.assertEqual(0, self.call_driver.call_count)
         self.assertFalse(self.external_process.called)
 
-    def test_disable_dhcp_helper_driver_failure(self):
+    def _disable_dhcp_helper_driver_failure(self, isolated_metadata=False):
+        if isolated_metadata:
+            cfg.CONF.set_override('enable_isolated_metadata', True)
         self.cache.get_network_by_id.return_value = fake_network
         self.call_driver.return_value = False
         self.dhcp.disable_dhcp_helper(fake_network.id)
@@ -520,14 +544,23 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('disable', fake_network)
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
-        self.external_process.assert_has_calls([
-            mock.call(
-                cfg.CONF,
-                '12345678-1234-5678-1234567890ab',
-                'sudo',
-                'qdhcp-12345678-1234-5678-1234567890ab'),
-            mock.call().disable()
-        ])
+        if isolated_metadata:
+            self.external_process.assert_has_calls([
+                mock.call(
+                    cfg.CONF,
+                    '12345678-1234-5678-1234567890ab',
+                    'sudo',
+                    'qdhcp-12345678-1234-5678-1234567890ab'),
+                mock.call().disable()
+            ])
+        else:
+            self.assertFalse(self.external_process.call_count)
+
+    def test_disable_dhcp_helper_driver_failure_isolated_metadata(self):
+        self._disable_dhcp_helper_driver_failure(isolated_metadata=True)
+
+    def test_disable_dhcp_helper_driver_failure(self):
+        self._disable_dhcp_helper_driver_failure()
 
     def test_enable_isolated_metadata_proxy(self):
         class_path = 'quantum.agent.linux.external_process.ProcessManager'
