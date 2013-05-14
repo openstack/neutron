@@ -257,9 +257,9 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
             service_defs = [{'service_class': constants.DUMMY,
                              'plugin': dp.DUMMY_PLUGIN_NAME}]
         res = self._create_service_type(name, service_defs)
-        svc_type = self.deserialize(res)
         if res.status_int >= 400:
             raise webexc.HTTPClientError(code=res.status_int)
+        svc_type = self.deserialize(res)
         yield svc_type
 
         if do_delete:
