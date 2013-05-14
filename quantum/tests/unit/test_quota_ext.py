@@ -9,9 +9,11 @@ from quantum.common import config
 from quantum.common import exceptions
 from quantum import context
 from quantum.db import api as db
+from quantum.db import quota_db
 from quantum import manager
 from quantum.plugins.linuxbridge.db import l2network_db_v2
 from quantum import quota
+from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api
@@ -341,3 +343,31 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
 
 class QuotaExtensionCfgTestCaseXML(QuotaExtensionCfgTestCase):
     fmt = 'xml'
+
+
+class TestDbQuotaDriver(base.BaseTestCase):
+    """Test for quantum.db.quota_db.DbQuotaDriver."""
+
+    def test_get_tenant_quotas_arg(self):
+        """Call quantum.db.quota_db.DbQuotaDriver._get_quotas."""
+
+        driver = quota_db.DbQuotaDriver()
+        ctx = context.Context('', 'bar')
+
+        foo_quotas = {'network': 5}
+        default_quotas = {'network': 10}
+        target_tenant = 'foo'
+
+        with mock.patch.object(quota_db.DbQuotaDriver,
+                               'get_tenant_quotas',
+                               return_value=foo_quotas) as get_tenant_quotas:
+
+            quotas = driver._get_quotas(ctx,
+                                        target_tenant,
+                                        default_quotas,
+                                        ['network'])
+
+            self.assertEqual(quotas, foo_quotas)
+            get_tenant_quotas.assert_called_once_with(ctx,
+                                                      default_quotas,
+                                                      target_tenant)
