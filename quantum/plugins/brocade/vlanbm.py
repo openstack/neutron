@@ -21,11 +21,13 @@
 
 
 """A Vlan Bitmap class to handle allocation/de-allocation of vlan ids."""
+
+from quantum.common import constants
 from quantum.plugins.brocade.db import models as brocade_db
 
 
-MIN_VLAN = 2
-MAX_VLAN = 4094
+MIN_VLAN = constants.MIN_VLAN_TAG + 1
+MAX_VLAN = constants.MAX_VLAN_TAG
 
 
 class VlanBitmap(object):

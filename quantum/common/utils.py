@@ -29,6 +29,7 @@ import socket
 from eventlet.green import subprocess
 from oslo.config import cfg
 
+from quantum.common import constants as q_const
 from quantum.openstack.common import log as logging
 
 
@@ -193,3 +194,7 @@ def is_extension_supported(plugin, ext_alias):
 
 def log_opt_values(log):
     cfg.CONF.log_opt_values(log, std_logging.DEBUG)
+
+
+def is_valid_vlan_tag(vlan):
+    return q_const.MIN_VLAN_TAG <= vlan <= q_const.MAX_VLAN_TAG
