@@ -32,7 +32,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def create_subnet(self, context, subnet):
-        """
+        """Create a subnet.
+
         Create a subnet, which represents a range of IP addresses
         that can be allocated to devices
         : param context: quantum api request context
@@ -44,8 +45,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def update_subnet(self, context, id, subnet):
-        """
-        Update values of a subnet.
+        """Update values of a subnet.
+
         : param context: quantum api request context
         : param id: UUID representing the subnet to update.
         : param subnet: dictionary with keys indicating fields to update.
@@ -57,8 +58,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def get_subnet(self, context, id, fields=None):
-        """
-        Retrieve a subnet.
+        """Retrieve a subnet.
+
         : param context: quantum api request context
         : param id: UUID representing the subnet to fetch.
         : param fields: a list of strings that are valid keys in a
@@ -71,8 +72,9 @@ class QuantumPluginBaseV2(object):
     @abstractmethod
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
-        """
-        Retrieve a list of subnets.  The contents of the list depends on
+        """Retrieve a list of subnets.
+
+        The contents of the list depends on
         the identity of the user making the request (as indicated by the
         context) as well as any filters.
         : param context: quantum api request context
@@ -91,8 +93,9 @@ class QuantumPluginBaseV2(object):
         pass
 
     def get_subnets_count(self, context, filters=None):
-        """
-        Return the number of subnets.  The result depends on the identity of
+        """Return the number of subnets.
+
+        The result depends on the identity of
         the user making the request (as indicated by the context) as well as
         any filters.
         : param context: quantum api request context
@@ -111,8 +114,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def delete_subnet(self, context, id):
-        """
-        Delete a subnet.
+        """Delete a subnet.
+
         : param context: quantum api request context
         : param id: UUID representing the subnet to delete.
         """
@@ -120,7 +123,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def create_network(self, context, network):
-        """
+        """Create a network.
+
         Create a network, which represents an L2 network segment which
         can have a set of subnets and ports associated with it.
         : param context: quantum api request context
@@ -132,8 +136,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def update_network(self, context, id, network):
-        """
-        Update values of a network.
+        """Update values of a network.
+
         : param context: quantum api request context
         : param id: UUID representing the network to update.
         : param network: dictionary with keys indicating fields to update.
@@ -145,8 +149,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def get_network(self, context, id, fields=None):
-        """
-        Retrieve a network.
+        """Retrieve a network.
+
         : param context: quantum api request context
         : param id: UUID representing the network to fetch.
         : param fields: a list of strings that are valid keys in a
@@ -159,8 +163,9 @@ class QuantumPluginBaseV2(object):
     @abstractmethod
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
-        """
-        Retrieve a list of networks.  The contents of the list depends on
+        """Retrieve a list of networks.
+
+        The contents of the list depends on
         the identity of the user making the request (as indicated by the
         context) as well as any filters.
         : param context: quantum api request context
@@ -179,8 +184,9 @@ class QuantumPluginBaseV2(object):
         pass
 
     def get_networks_count(self, context, filters=None):
-        """
-        Return the number of networks.  The result depends on the identity
+        """Return the number of networks.
+
+        The result depends on the identity
         of the user making the request (as indicated by the context) as well
         as any filters.
         : param context: quantum api request context
@@ -199,8 +205,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def delete_network(self, context, id):
-        """
-        Delete a network.
+        """Delete a network.
+
         : param context: quantum api request context
         : param id: UUID representing the network to delete.
         """
@@ -208,7 +214,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def create_port(self, context, port):
-        """
+        """Create a port.
+
         Create a port, which is a connection point of a device (e.g., a VM
         NIC) to attach to a L2 Quantum network.
         : param context: quantum api request context
@@ -220,8 +227,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def update_port(self, context, id, port):
-        """
-        Update values of a port.
+        """Update values of a port.
+
         : param context: quantum api request context
         : param id: UUID representing the port to update.
         : param port: dictionary with keys indicating fields to update.
@@ -233,8 +240,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def get_port(self, context, id, fields=None):
-        """
-        Retrieve a port.
+        """Retrieve a port.
+
         : param context: quantum api request context
         : param id: UUID representing the port to fetch.
         : param fields: a list of strings that are valid keys in a
@@ -247,10 +254,10 @@ class QuantumPluginBaseV2(object):
     @abstractmethod
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None, page_reverse=False):
-        """
-        Retrieve a list of ports.  The contents of the list depends on
-        the identity of the user making the request (as indicated by the
-        context) as well as any filters.
+        """Retrieve a list of ports.
+
+        The contents of the list depends on the identity of the user making
+        the request (as indicated by the context) as well as any filters.
         : param context: quantum api request context
         : param filters: a dictionary with keys that are valid keys for
             a port as listed in the RESOURCE_ATTRIBUTE_MAP object
@@ -267,10 +274,10 @@ class QuantumPluginBaseV2(object):
         pass
 
     def get_ports_count(self, context, filters=None):
-        """
-        Return the number of ports.  The result depends on the identity of
-        the user making the request (as indicated by the context) as well as
-        any filters.
+        """Return the number of ports.
+
+        The result depends on the identity of the user making the request
+        (as indicated by the context) as well as any filters.
         : param context: quantum api request context
         : param filters: a dictionary with keys that are valid keys for
             a network as listed in the RESOURCE_ATTRIBUTE_MAP object
@@ -287,8 +294,8 @@ class QuantumPluginBaseV2(object):
 
     @abstractmethod
     def delete_port(self, context, id):
-        """
-        Delete a port.
+        """Delete a port.
+
         : param context: quantum api request context
         : param id: UUID representing the port to delete.
         """

@@ -39,7 +39,8 @@ class ContextBase(common_context.RequestContext):
 
     def __init__(self, user_id, tenant_id, is_admin=None, read_deleted="no",
                  roles=None, timestamp=None, **kwargs):
-        """
+        """Object initialization.
+
         :param read_deleted: 'no' indicates deleted records are hidden, 'yes'
             indicates deleted records are visible, 'only' indicates that
             *only* deleted records are visible.

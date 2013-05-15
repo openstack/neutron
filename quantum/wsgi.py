@@ -202,11 +202,11 @@ class Server(object):
 
 
 class Middleware(object):
-    """
-    Base WSGI middleware wrapper. These classes require an application to be
-    initialized that will be called next.  By default the middleware will
-    simply call its wrapped app, or you can override __call__ to customize its
-    behavior.
+    """Base WSGI middleware wrapper.
+
+    These classes require an application to be initialized that will be called
+    next.  By default the middleware will simply call its wrapped app, or you
+    can override __call__ to customize its behavior.
     """
 
     @classmethod
@@ -240,8 +240,7 @@ class Middleware(object):
         self.application = application
 
     def process_request(self, req):
-        """
-        Called on each request.
+        """Called on each request.
 
         If this returns None, the next application down the stack will be
         executed. If it returns a response then that response will be returned
@@ -342,7 +341,8 @@ class JSONDictSerializer(DictSerializer):
 class XMLDictSerializer(DictSerializer):
 
     def __init__(self, metadata=None, xmlns=None):
-        """
+        """Object initialization.
+
         :param metadata: information needed to deserialize xml into
                          a dictionary.
         :param xmlns: XML namespace to include with serialized xml
@@ -356,7 +356,8 @@ class XMLDictSerializer(DictSerializer):
         self.xmlns = xmlns
 
     def default(self, data):
-        """
+        """Return data as XML string.
+
         :param data: expect data to contain a single key as XML root, or
                      contain another '*_links' key as atom links. Other
                      case will use 'VIRTUAL_ROOT_KEY' as XML root.
@@ -571,7 +572,8 @@ class ProtectedXMLParser(etree.XMLParser):
 class XMLDeserializer(TextDeserializer):
 
     def __init__(self, metadata=None):
-        """
+        """Object initialization.
+
         :param metadata: information needed to deserialize xml into
                          a dictionary.
         """
@@ -865,7 +867,8 @@ class Application(object):
 
 
 class Debug(Middleware):
-    """
+    """Middleware for debugging.
+
     Helper class that can be inserted into any WSGI application chain
     to get information about the request and response.
     """
@@ -889,10 +892,7 @@ class Debug(Middleware):
 
     @staticmethod
     def print_generator(app_iter):
-        """
-        Iterator that prints the contents of a wrapper string iterator
-        when iterated.
-        """
+        """Print contents of a wrapper string iterator when iterated."""
         print ("*" * 40) + " BODY"
         for part in app_iter:
             sys.stdout.write(part)
@@ -902,20 +902,15 @@ class Debug(Middleware):
 
 
 class Router(object):
-    """
-    WSGI middleware that maps incoming requests to WSGI apps.
-    """
+    """WSGI middleware that maps incoming requests to WSGI apps."""
 
     @classmethod
     def factory(cls, global_config, **local_config):
-        """
-        Returns an instance of the WSGI Router class
-        """
+        """Return an instance of the WSGI Router class."""
         return cls()
 
     def __init__(self, mapper):
-        """
-        Create a router for the given routes.Mapper.
+        """Create a router for the given routes.Mapper.
 
         Each route in `mapper` must specify a 'controller', which is a
         WSGI app to call.  You'll probably want to specify an 'action' as
@@ -943,8 +938,8 @@ class Router(object):
 
     @webob.dec.wsgify
     def __call__(self, req):
-        """
-        Route the incoming request to a controller based on self.map.
+        """Route the incoming request to a controller based on self.map.
+
         If no match, return a 404.
         """
         return self._router
@@ -952,9 +947,10 @@ class Router(object):
     @staticmethod
     @webob.dec.wsgify
     def _dispatch(req):
-        """
+        """Dispatch a Request.
+
         Called by self._router after matching the incoming request to a route
-        and putting the information into req.environ.  Either returns 404
+        and putting the information into req.environ. Either returns 404
         or the routed WSGI app's response.
         """
         match = req.environ['wsgiorg.routing_args'][1]
@@ -979,7 +975,8 @@ class Resource(Application):
 
     def __init__(self, controller, fault_body_function,
                  deserializer=None, serializer=None):
-        """
+        """Object initialization.
+
         :param controller: object that implement methods created by routes lib
         :param deserializer: object that can serialize the output of a
                              controller into a webob response
@@ -1118,9 +1115,7 @@ class Controller(object):
 
     @webob.dec.wsgify(RequestClass=Request)
     def __call__(self, req):
-        """
-        Call the method specified in req.environ by RoutesMiddleware.
-        """
+        """Call the method specified in req.environ by RoutesMiddleware."""
         arg_dict = req.environ['wsgiorg.routing_args'][1]
         action = arg_dict['action']
         method = getattr(self, action)
