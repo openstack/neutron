@@ -26,6 +26,8 @@ import inspect
 import json
 import logging
 
+from oslo.config import cfg
+
 #FIXME(danwent): I'd like this file to get to the point where it has
 # no quantum-specific logic in it
 from quantum.common import constants
@@ -40,8 +42,6 @@ HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
-# Default transport type for logical switches
-DEF_TRANSPORT_TYPE = "stt"
 # Prefix to be used for all NVP API calls
 URI_PREFIX = "/ws.v1"
 # Resources exposed by NVP API
@@ -292,10 +292,11 @@ def create_lswitch(cluster, tenant_id, display_name,
     nvp_binding_type = transport_type
     if transport_type in ('flat', 'vlan'):
         nvp_binding_type = 'bridge'
-    transport_zone_config = {"zone_uuid": (transport_zone_uuid or
-                                           cluster.default_tz_uuid),
-                             "transport_type": (nvp_binding_type or
-                                                DEF_TRANSPORT_TYPE)}
+    transport_zone_config = (
+        {"zone_uuid": (transport_zone_uuid or
+                       cluster.default_tz_uuid),
+         "transport_type": (nvp_binding_type or
+                            cfg.CONF.NVP.default_transport_type)})
     lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
                    "transport_zones": [transport_zone_config],
                    "tags": [{"tag": tenant_id, "scope": "os_tid"}]}

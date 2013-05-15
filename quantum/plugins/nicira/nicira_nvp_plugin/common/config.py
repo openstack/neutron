@@ -39,6 +39,9 @@ nvp_opts = [
     cfg.BoolOpt('enable_metadata_access_network', default=True,
                 help=_("Enables dedicated connection to the metadata proxy "
                        "for metadata server access via Quantum router")),
+    cfg.StrOpt('default_transport_type', default='stt',
+               help=_("The default network tranport type to use (stt, gre, "
+                      "bridge, ipsec_gre, or ipsec_stt)")),
 ]
 
 cluster_opts = [
