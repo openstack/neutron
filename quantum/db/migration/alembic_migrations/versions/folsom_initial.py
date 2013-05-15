@@ -30,7 +30,8 @@ PLUGINS = {
     'lbr': 'quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2',
     'meta': 'quantum.plugins.metaplugin.meta_quantum_plugin.MetaPluginV2',
     'nec': 'quantum.plugins.nec.nec_plugin.NECPluginV2',
-    'nvp': 'quantum.plugins.nicira/nicira_nvp_plugin/QuantumPlugin',
+    'nvp': (
+        'quantum.plugins.nicira.nicira_nvp_plugin.QuantumPlugin.NvpPluginV2'),
     'ovs': 'quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2',
     'ryu': 'quantum.plugins.ryu.ryu_quantum_plugin.RyuQuantumPluginV2',
 }
