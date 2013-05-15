@@ -1,4 +1,4 @@
-# Vietnamese (Vietnam) translations for quantum.
+# Finnish (Finland) translations for quantum.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the quantum project.
 #
@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-05-15 12:11+0000\n"
-"PO-Revision-Date: 2013-05-13 06:01+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
-"Language-Team: Vietnamese (Viet Nam) "
-"(http://www.transifex.com/projects/p/openstack/language/vi_VN/)\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"PO-Revision-Date: 2013-01-28 21:54+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Finnish (Finland) "
+"(http://www.transifex.com/projects/p/openstack/language/fi_FI/)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
