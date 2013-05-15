@@ -159,7 +159,7 @@ l3_quota_opts = [
                help=_('Number of floating IPs allowed per tenant, '
                       '-1 for unlimited')),
 ]
-cfg.CONF.register_opts(l3_quota_opts, 'QUOTAS')
+cfg.CONF.register_opts(l3_quota_opts, 'quotas')
 
 
 class L3(extensions.ExtensionDescriptor):

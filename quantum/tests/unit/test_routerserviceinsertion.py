@@ -169,7 +169,7 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         #just stubbing core plugin with LoadBalancer plugin
         cfg.CONF.set_override('core_plugin', plugin)
         cfg.CONF.set_override('service_plugins', [])
-        cfg.CONF.set_override('quota_router', -1, group='QUOTAS')
+        cfg.CONF.set_override('quota_router', -1, group='quotas')
         self.addCleanup(cfg.CONF.reset)
 
         # Ensure 'stale' patched copies of the plugin are never returned
