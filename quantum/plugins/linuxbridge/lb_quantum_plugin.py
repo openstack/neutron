@@ -86,12 +86,17 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         if port:
             binding = db.get_network_binding(db_api.get_session(),
                                              port['network_id'])
+            (network_type,
+             segmentation_id) = constants.interpret_vlan_id(binding.vlan_id)
             entry = {'device': device,
+                     'network_type': network_type,
                      'physical_network': binding.physical_network,
-                     'vlan_id': binding.vlan_id,
+                     'segmentation_id': segmentation_id,
                      'network_id': port['network_id'],
                      'port_id': port['id'],
                      'admin_state_up': port['admin_state_up']}
+            if cfg.CONF.AGENT.rpc_support_old_agents:
+                entry['vlan_id'] = binding.vlan_id
             new_status = (q_const.PORT_STATUS_ACTIVE if port['admin_state_up']
                           else q_const.PORT_STATUS_DOWN)
             if port['status'] != new_status:
@@ -165,11 +170,15 @@ class AgentNotifierApi(proxy.RpcProxy,
                          topic=self.topic_network_delete)
 
     def port_update(self, context, port, physical_network, vlan_id):
-        self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port,
-                                       physical_network=physical_network,
-                                       vlan_id=vlan_id),
+        network_type, segmentation_id = constants.interpret_vlan_id(vlan_id)
+        kwargs = {'port': port,
+                  'network_type': network_type,
+                  'physical_network': physical_network,
+                  'segmentation_id': segmentation_id}
+        if cfg.CONF.AGENT.rpc_support_old_agents:
+            kwargs['vlan_id'] = vlan_id
+        msg = self.make_msg('port_update', **kwargs)
+        self.fanout_cast(context, msg,
                          topic=self.topic_port_update)
 
 
