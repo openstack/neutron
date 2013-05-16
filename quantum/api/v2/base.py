@@ -177,11 +177,9 @@ class Controller(object):
                 # TODO(salvatore-orlando): bp/make-authz-ortogonal
                 # The body of the action request should be included
                 # in the info passed to the policy engine
-                # Enforce policy, if any, for this action
                 # It is ok to raise a 403 because accessibility to the
                 # object was checked earlier in this method
-                policy.enforce(request.context, name, resource,
-                               plugin=self._plugin)
+                policy.enforce(request.context, name, resource)
                 return getattr(self._plugin, name)(*arg_list, **kwargs)
             return _handle_action
         else:
@@ -260,7 +258,7 @@ class Controller(object):
         # FIXME(salvatore-orlando): obj_getter might return references to
         # other resources. Must check authZ on them too.
         if do_authz:
-            policy.enforce(request.context, action, obj, plugin=self._plugin)
+            policy.enforce(request.context, action, obj)
         return obj
 
     def _send_dhcp_notification(self, context, data, methodname):
@@ -353,8 +351,7 @@ class Controller(object):
                                                     item[self._resource])
             policy.enforce(request.context,
                            action,
-                           item[self._resource],
-                           plugin=self._plugin)
+                           item[self._resource])
             try:
                 tenant_id = item[self._resource]['tenant_id']
                 count = quota.QUOTAS.count(request.context, self._resource,
@@ -421,8 +418,7 @@ class Controller(object):
         try:
             policy.enforce(request.context,
                            action,
-                           obj,
-                           plugin=self._plugin)
+                           obj)
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
@@ -472,8 +468,7 @@ class Controller(object):
         try:
             policy.enforce(request.context,
                            action,
-                           orig_obj,
-                           plugin=self._plugin)
+                           orig_obj)
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist

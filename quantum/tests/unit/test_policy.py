@@ -25,6 +25,7 @@ import mock
 import quantum
 from quantum.common import exceptions
 from quantum import context
+from quantum import manager
 from quantum.openstack.common import importutils
 from quantum.openstack.common import policy as common_policy
 from quantum import policy
@@ -212,7 +213,7 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "context_is_admin": "role:admin",
             "admin_or_network_owner": "rule:context_is_admin or "
-                                      "tenant_id:%(network_tenant_id)s",
+                                      "tenant_id:%(network:tenant_id)s",
             "admin_or_owner": ("rule:context_is_admin or "
                                "tenant_id:%(tenant_id)s"),
             "admin_only": "rule:context_is_admin",
@@ -243,7 +244,11 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
             "quantum.db.db_base_plugin_v2.QuantumDbPluginV2")
-        self.plugin = plugin_klass()
+        self.manager_patcher = mock.patch('quantum.manager.QuantumManager')
+        fake_manager = self.manager_patcher.start()
+        fake_manager_instance = fake_manager.return_value
+        fake_manager_instance.plugin = plugin_klass()
+        self.addCleanup(self.manager_patcher.stop)
 
     def _test_action_on_attr(self, context, action, attr, value,
                              exception=None):
@@ -251,9 +256,9 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         target = {'tenant_id': 'the_owner', attr: value}
         if exception:
             self.assertRaises(exception, policy.enforce,
-                              context, action, target, None)
+                              context, action, target)
         else:
-            result = policy.enforce(context, action, target, None)
+            result = policy.enforce(context, action, target)
             self.assertEqual(result, True)
 
     def _test_nonadmin_action_on_attr(self, action, attr, value,
@@ -280,7 +285,7 @@ class QuantumPolicyTestCase(base.BaseTestCase):
     def _test_enforce_adminonly_attribute(self, action):
         admin_context = context.get_admin_context()
         target = {'shared': True}
-        result = policy.enforce(admin_context, action, target, None)
+        result = policy.enforce(admin_context, action, target)
         self.assertEqual(result, True)
 
     def test_enforce_adminonly_attribute_create(self):
@@ -301,7 +306,7 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, action, target, None)
+                          self.context, action, target)
 
     def test_enforce_adminonly_nonadminctx_no_ctx_is_admin_policy_403(self):
         del self.rules[policy.ADMIN_CTX_POLICY]
@@ -312,24 +317,69 @@ class QuantumPolicyTestCase(base.BaseTestCase):
         action = "create_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
-                          self.context, action, target, None)
+                          self.context, action, target)
 
     def test_enforce_regularuser_on_read(self):
         action = "get_network"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
-        result = policy.enforce(self.context, action, target, None)
+        result = policy.enforce(self.context, action, target)
         self.assertTrue(result)
 
-    def test_enforce_parentresource_owner(self):
+    def test_enforce_tenant_id_check(self):
+        # Trigger a policy with rule admin_or_owner
+        action = "create_network"
+        target = {'tenant_id': 'fake'}
+        result = policy.enforce(self.context, action, target)
+        self.assertTrue(result)
+
+    def test_enforce_tenant_id_check_parent_resource(self):
 
         def fakegetnetwork(*args, **kwargs):
             return {'tenant_id': 'fake'}
 
         action = "create_port:mac"
-        with mock.patch.object(self.plugin, 'get_network', new=fakegetnetwork):
+        with mock.patch.object(manager.QuantumManager.get_instance().plugin,
+                               'get_network', new=fakegetnetwork):
             target = {'network_id': 'whatever'}
-            result = policy.enforce(self.context, action, target, self.plugin)
+            result = policy.enforce(self.context, action, target)
             self.assertTrue(result)
+
+    def test_enforce_tenant_id_check_parent_resource_bw_compatibility(self):
+
+        def fakegetnetwork(*args, **kwargs):
+            return {'tenant_id': 'fake'}
+
+        del self.rules['admin_or_network_owner']
+        self.rules['admin_or_network_owner'] = common_policy.parse_rule(
+            "role:admin or tenant_id:%(network_tenant_id)s")
+        action = "create_port:mac"
+        with mock.patch.object(manager.QuantumManager.get_instance().plugin,
+                               'get_network', new=fakegetnetwork):
+            target = {'network_id': 'whatever'}
+            result = policy.enforce(self.context, action, target)
+            self.assertTrue(result)
+
+    def test_tenant_id_check_no_target_field_raises(self):
+        # Try and add a bad rule
+        self.assertRaises(
+            exceptions.PolicyInitError,
+            common_policy.parse_rule,
+            'tenant_id:(wrong_stuff)')
+
+    def _test_enforce_tenant_id_raises(self, bad_rule):
+        self.rules['admin_or_owner'] = common_policy.parse_rule(bad_rule)
+        # Trigger a policy with rule admin_or_owner
+        action = "create_network"
+        target = {'tenant_id': 'fake'}
+        self.assertRaises(exceptions.PolicyCheckError,
+                          policy.enforce,
+                          self.context, action, target)
+
+    def test_enforce_tenant_id_check_malformed_target_field_raises(self):
+        self._test_enforce_tenant_id_raises('tenant_id:%(malformed_field)s')
+
+    def test_enforce_tenant_id_check_invalid_parent_resource_raises(self):
+        self._test_enforce_tenant_id_raises('tenant_id:%(foobaz_tenant_id)s')
 
     def test_get_roles_context_is_admin_rule_missing(self):
         rules = dict((k, common_policy.parse_rule(v)) for k, v in {
