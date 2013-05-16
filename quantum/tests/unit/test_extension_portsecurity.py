@@ -364,4 +364,9 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 req.environ['quantum.context'] = context.Context(
                     '', 'not_network_owner')
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 403)
+                # TODO(salvatore-orlando): Expected error is 404 because
+                # the current API controller always returns this error
+                # code for any policy check failures on update.
+                # It should be 404 when the caller cannot access the whole
+                # resource, and 403 when it cannot access a single attribute
+                self.assertEqual(res.status_int, 404)

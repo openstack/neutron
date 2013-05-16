@@ -21,11 +21,13 @@ from webob import exc
 
 from quantum.api import extensions
 from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from quantum.api.v2 import attributes
 from quantum.common import constants
 from quantum import context
 from quantum.db import agents_db
 from quantum.db import dhcp_rpc_base
 from quantum.db import l3_rpc_base
+from quantum.extensions import agent
 from quantum.extensions import agentscheduler
 from quantum import manager
 from quantum.openstack.common import timeutils
@@ -179,10 +181,10 @@ class AgentSchedulerTestMixIn(object):
 
     def _get_agent_id(self, agent_type, host):
         agents = self._list_agents()
-        for agent in agents['agents']:
-            if (agent['agent_type'] == agent_type and
-                agent['host'] == host):
-                return agent['id']
+        for agent_data in agents['agents']:
+            if (agent_data['agent_type'] == agent_type and
+                agent_data['host'] == host):
+                return agent_data['id']
 
 
 class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
@@ -194,11 +196,26 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                   'ovs_quantum_plugin.OVSQuantumPluginV2')
 
     def setUp(self):
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
         super(OvsAgentSchedulerTestCase, self).setUp(self.plugin_str)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            agent.RESOURCE_ATTRIBUTE_MAP)
+        self.addCleanup(self.restore_attribute_map)
         self.agentscheduler_dbMinxin = manager.QuantumManager.get_plugin()
+
+    def restore_attribute_map(self):
+        # Restore the original RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_report_states(self):
         self._register_agent_states()
@@ -757,11 +774,27 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
             'DhcpAgentNotifyAPI')
         self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
         self.dhcp_notifier_cls.return_value = self.dhcp_notifier
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
         super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            agent.RESOURCE_ATTRIBUTE_MAP)
+        self.agentscheduler_dbMinxin = manager.QuantumManager.get_plugin()
         self.addCleanup(self.dhcp_notifier_cls_p.stop)
+        self.addCleanup(self.restore_attribute_map)
+
+    def restore_attribute_map(self):
+        # Restore the original RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_network_add_to_dhcp_agent_notification(self):
         with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
@@ -855,11 +888,27 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.dhcp_notifier = mock.Mock(name='dhcp_notifier')
         self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
         self.dhcp_notifier_cls.return_value = self.dhcp_notifier
+        # Save the global RESOURCE_ATTRIBUTE_MAP
+        self.saved_attr_map = {}
+        for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self.saved_attr_map[resource] = attrs.copy()
         super(OvsL3AgentNotifierTestCase, self).setUp(self.plugin_str)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            agent.RESOURCE_ATTRIBUTE_MAP)
+        self.agentscheduler_dbMinxin = manager.QuantumManager.get_plugin()
         self.addCleanup(self.dhcp_notifier_cls_p.stop)
+        self.addCleanup(self.restore_attribute_map)
+
+    def restore_attribute_map(self):
+        # Restore the original RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_router_add_to_l3_agent_notification(self):
         plugin = manager.QuantumManager.get_plugin()

@@ -30,12 +30,12 @@ from quantum.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
 
-RESOURCE_NAME = "service-type"
+RESOURCE_NAME = "service_type"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME
 SERVICE_ATTR = 'service_class'
 PLUGIN_ATTR = 'plugin'
 DRIVER_ATTR = 'driver'
-EXT_ALIAS = RESOURCE_NAME
+EXT_ALIAS = 'service-type'
 
 # Attribute Map for Service Type Resource
 RESOURCE_ATTRIBUTE_MAP = {
@@ -190,18 +190,17 @@ class Servicetype(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for service type management."""
-        my_plurals = [(key.replace('-', '_'),
-                       key[:-1].replace('-', '_')) for
-                      key in RESOURCE_ATTRIBUTE_MAP.keys()]
+        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         my_plurals.append(('service_definitions', 'service_definition'))
         attributes.PLURALS.update(dict(my_plurals))
         attr_map = RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME]
+        collection_name = COLLECTION_NAME.replace('_', '-')
         controller = base.create_resource(
-            COLLECTION_NAME,
+            collection_name,
             RESOURCE_NAME,
             servicetype_db.ServiceTypeManager.get_instance(),
             attr_map)
-        return [extensions.ResourceExtension(COLLECTION_NAME,
+        return [extensions.ResourceExtension(collection_name,
                                              controller,
                                              attr_map=attr_map)]
 

@@ -40,6 +40,12 @@ def etcdir(*p):
 class SecurityGroupTestExtensionManager(object):
 
     def get_resources(self):
+        # Add the resources to the global attribute map
+        # This is done here as the setup process won't
+        # initialize the main API router which extends
+        # the global attribute map
+        attr.RESOURCE_ATTRIBUTE_MAP.update(
+            ext_sg.RESOURCE_ATTRIBUTE_MAP)
         return ext_sg.Securitygroup.get_resources()
 
     def get_actions(self):

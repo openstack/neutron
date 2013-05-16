@@ -49,7 +49,6 @@ from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
 from quantum.plugins.brocade.db import models as brocade_db
 from quantum.plugins.brocade import vlanbm as vbm
-from quantum import policy
 from quantum import scheduler
 
 
@@ -212,8 +211,6 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         self.supported_extension_aliases = ["binding", "security-group",
                                             "agent", "agent_scheduler"]
-        self.binding_view = "extension:port_binding:view"
-        self.binding_set = "extension:port_binding:set"
 
         self.physical_interface = (cfg.CONF.PHYSICAL_INTERFACE.
                                    physical_interface)
@@ -436,15 +433,11 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                   bport.vlan_id)
 
     def _extend_port_dict_binding(self, context, port):
-        if self._check_view_auth(context, port, self.binding_view):
-            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_BRIDGE
-            port[portbindings.CAPABILITIES] = {
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}
+        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_BRIDGE
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER:
+            'security-group' in self.supported_extension_aliases}
         return port
-
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
 
     def get_plugin_version(self):
         """Get version number of the plugin."""

@@ -265,7 +265,8 @@ class Securitygroup(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
+            return dict(EXTENDED_ATTRIBUTES_2_0.items() +
+                        RESOURCE_ATTRIBUTE_MAP.items())
         else:
             return {}
 

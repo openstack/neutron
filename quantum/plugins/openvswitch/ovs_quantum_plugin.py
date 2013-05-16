@@ -51,7 +51,6 @@ from quantum.plugins.common import utils as plugin_utils
 from quantum.plugins.openvswitch.common import config  # noqa
 from quantum.plugins.openvswitch.common import constants
 from quantum.plugins.openvswitch import ovs_db_v2
-from quantum import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -254,9 +253,6 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self._aliases = aliases
         return self._aliases
 
-    network_view = "extension:provider_network:view"
-    network_set = "extension:provider_network:set"
-
     def __init__(self, configfile=None):
         self.extra_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
@@ -326,29 +322,22 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 sys.exit(1)
         LOG.info(_("Tunnel ID ranges: %s"), self.tunnel_id_ranges)
 
-    # TODO(rkukura) Use core mechanism for attribute authorization
-    # when available.
-
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
-
     def _extend_network_dict_provider(self, context, network):
-        if self._check_view_auth(context, network, self.network_view):
-            binding = ovs_db_v2.get_network_binding(context.session,
-                                                    network['id'])
-            network[provider.NETWORK_TYPE] = binding.network_type
-            if binding.network_type == constants.TYPE_GRE:
-                network[provider.PHYSICAL_NETWORK] = None
-                network[provider.SEGMENTATION_ID] = binding.segmentation_id
-            elif binding.network_type == constants.TYPE_FLAT:
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = None
-            elif binding.network_type == constants.TYPE_VLAN:
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = binding.segmentation_id
-            elif binding.network_type == constants.TYPE_LOCAL:
-                network[provider.PHYSICAL_NETWORK] = None
-                network[provider.SEGMENTATION_ID] = None
+        binding = ovs_db_v2.get_network_binding(context.session,
+                                                network['id'])
+        network[provider.NETWORK_TYPE] = binding.network_type
+        if binding.network_type == constants.TYPE_GRE:
+            network[provider.PHYSICAL_NETWORK] = None
+            network[provider.SEGMENTATION_ID] = binding.segmentation_id
+        elif binding.network_type == constants.TYPE_FLAT:
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = None
+        elif binding.network_type == constants.TYPE_VLAN:
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = binding.segmentation_id
+        elif binding.network_type == constants.TYPE_LOCAL:
+            network[provider.PHYSICAL_NETWORK] = None
+            network[provider.SEGMENTATION_ID] = None
 
     def _process_provider_create(self, context, attrs):
         network_type = attrs.get(provider.NETWORK_TYPE)
@@ -548,26 +537,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                          port_data, port)
             self._process_port_create_security_group(context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
-        return self._check_portbindings_view_auth(context, port)
-
-    def get_port(self, context, id, fields=None):
-        with context.session.begin(subtransactions=True):
-            port = super(OVSQuantumPluginV2, self).get_port(context,
-                                                            id,
-                                                            fields)
-        return self._check_portbindings_view_auth(context, port)
-
-    def get_ports(self, context, filters=None, fields=None,
-                  sorts=None, limit=None, marker=None, page_reverse=False):
-        res_ports = []
-        with context.session.begin(subtransactions=True):
-            ports = super(OVSQuantumPluginV2,
-                          self).get_ports(context, filters, fields, sorts,
-                                          limit, marker, page_reverse)
-            for port in ports:
-                self._check_portbindings_view_auth(context, port)
-                res_ports.append(port)
-        return res_ports
+        return port
 
     def update_port(self, context, id, port):
         session = context.session
@@ -594,7 +564,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
-        return self._check_portbindings_view_auth(context, updated_port)
+        return updated_port
 
     def delete_port(self, context, id, l3_port_check=True):
 

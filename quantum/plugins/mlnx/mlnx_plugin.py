@@ -37,7 +37,6 @@ from quantum.plugins.mlnx import agent_notify_api
 from quantum.plugins.mlnx.common import constants
 from quantum.plugins.mlnx.db import mlnx_db_v2 as db
 from quantum.plugins.mlnx import rpc_callbacks
-from quantum import policy
 
 LOG = logging.getLogger(__name__)
 
@@ -105,12 +104,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             sys.exit(1)
         LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
-
-    def _enforce_set_auth(self, context, resource, action):
-        policy.enforce(context, action, resource)
-
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
         self.network_vlan_ranges[physical_network].append((vlan_min, vlan_max))
@@ -120,18 +113,17 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             self.network_vlan_ranges[physical_network] = []
 
     def _extend_network_dict_provider(self, context, network):
-        if self._check_view_auth(context, network, self.network_view):
-            binding = db.get_network_binding(context.session, network['id'])
-            network[provider.NETWORK_TYPE] = binding.network_type
-            if binding.network_type == constants.TYPE_FLAT:
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = None
-            elif binding.network_type == constants.TYPE_LOCAL:
-                network[provider.PHYSICAL_NETWORK] = None
-                network[provider.SEGMENTATION_ID] = None
-            else:
-                network[provider.PHYSICAL_NETWORK] = binding.physical_network
-                network[provider.SEGMENTATION_ID] = binding.segmentation_id
+        binding = db.get_network_binding(context.session, network['id'])
+        network[provider.NETWORK_TYPE] = binding.network_type
+        if binding.network_type == constants.TYPE_FLAT:
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = None
+        elif binding.network_type == constants.TYPE_LOCAL:
+            network[provider.PHYSICAL_NETWORK] = None
+            network[provider.SEGMENTATION_ID] = None
+        else:
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = binding.segmentation_id
 
     def _set_tenant_network_type(self):
         self.tenant_network_type = cfg.CONF.MLNX.tenant_network_type
@@ -156,8 +148,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return (None, None, None)
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
 
         if not network_type_set:
             msg = _("provider:network_type required")
@@ -237,8 +227,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return
-        # Authorize before exposing plugin details to client
-        self._enforce_set_auth(context, attrs, self.network_set)
         msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)
 
@@ -346,18 +334,17 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def _extend_port_dict_binding(self, context, port):
-        if self._check_view_auth(context, port, self.binding_view):
-            port_binding = db.get_port_profile_binding(context.session,
-                                                       port['id'])
-            if port_binding:
-                port[portbindings.VIF_TYPE] = port_binding.vnic_type
-            port[portbindings.CAPABILITIES] = {
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}
-            binding = db.get_network_binding(context.session,
-                                             port['network_id'])
-            fabric = binding.physical_network
-            port[portbindings.PROFILE] = {'physical_network': fabric}
+        port_binding = db.get_port_profile_binding(context.session,
+                                                   port['id'])
+        if port_binding:
+            port[portbindings.VIF_TYPE] = port_binding.vnic_type
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER:
+            'security-group' in self.supported_extension_aliases}
+        binding = db.get_network_binding(context.session,
+                                         port['network_id'])
+        fabric = binding.physical_network
+        port[portbindings.PROFILE] = {'physical_network': fabric}
         return port
 
     def create_port(self, context, port):

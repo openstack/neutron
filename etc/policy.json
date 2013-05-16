@@ -8,20 +8,6 @@
     "external": "field:networks:router:external=True",
     "default": "rule:admin_or_owner",
 
-    "extension:provider_network:view": "rule:admin_only",
-    "extension:provider_network:set": "rule:admin_only",
-
-    "extension:router:view": "rule:regular_user",
-
-    "extension:port_binding:view": "rule:admin_only",
-    "extension:port_binding:set": "rule:admin_only",
-    "get_port:binding:host_id": "rule:admin_only",
-    "get_port:binding:vif_type": "rule:admin_only",
-    "get_port:binding:profile": "rule:admin_only",
-    "get_port:binding:capabilities": "rule:admin_only",
-    "create_port:binding:host_id": "rule:admin_only",
-    "update_port:binding:host_id": "rule:admin_only",
-
     "subnets:private:read": "rule:admin_or_owner",
     "subnets:private:write": "rule:admin_or_owner",
     "subnets:shared:read": "rule:regular_user",
@@ -34,6 +20,11 @@
 
     "create_network": "",
     "get_network": "rule:admin_or_owner or rule:shared or rule:external",
+    "get_network:router:external": "rule:regular_user",
+    "get_network:provider:network_type": "rule:admin_only",
+    "get_network:provider:physical_network": "rule:admin_only",
+    "get_network:provider:segmentation_id": "rule:admin_only",
+    "get_network:queue_id": "rule:admin_only",
     "create_network:shared": "rule:admin_only",
     "create_network:router:external": "rule:admin_only",
     "create_network:provider:network_type": "rule:admin_only",
@@ -49,13 +40,19 @@
     "create_port:mac_address": "rule:admin_or_network_owner",
     "create_port:fixed_ips": "rule:admin_or_network_owner",
     "create_port:port_security_enabled": "rule:admin_or_network_owner",
+    "create_port:binding:host_id": "rule:admin_only",
     "get_port": "rule:admin_or_owner",
+    "get_port:queue_id": "rule:admin_only",
+    "get_port:binding:vif_type": "rule:admin_only",
+    "get_port:binding:capabilities": "rule:admin_only",
+    "get_port:binding:host_id": "rule:admin_only",
+    "get_port:binding:profile": "rule:admin_only",
     "update_port": "rule:admin_or_owner",
     "update_port:fixed_ips": "rule:admin_or_network_owner",
     "update_port:port_security_enabled": "rule:admin_or_network_owner",
+    "update_port:binding:host_id": "rule:admin_only",
     "delete_port": "rule:admin_or_owner",
 
-    "extension:service_type:view_extended": "rule:admin_only",
     "create_service_type": "rule:admin_only",
     "update_service_type": "rule:admin_only",
     "delete_service_type": "rule:admin_only",
@@ -63,7 +60,6 @@
 
     "create_qos_queue": "rule:admin_only",
     "get_qos_queue": "rule:admin_only",
-    "get_qos_queues": "rule:admin_only",
 
     "update_agent": "rule:admin_only",
     "delete_agent": "rule:admin_only",

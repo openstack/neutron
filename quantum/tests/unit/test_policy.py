@@ -103,6 +103,12 @@ class PolicyTestCase(base.BaseTestCase):
         result = policy.check(self.context, action, self.target)
         self.assertEqual(result, False)
 
+    def test_check_if_exists_non_existent_action_raises(self):
+        action = "example:idonotexist"
+        self.assertRaises(exceptions.PolicyRuleNotFound,
+                          policy.check_if_exists,
+                          self.context, action, self.target)
+
     def test_enforce_good_action(self):
         action = "example:allowed"
         result = policy.enforce(self.context, action, self.target)

@@ -116,17 +116,40 @@ class Controller(object):
                                     % self._plugin.__class__.__name__)
         return getattr(self._plugin, native_sorting_attr_name, False)
 
-    def _is_visible(self, attr):
-        attr_val = self._attr_info.get(attr)
-        return attr_val and attr_val['is_visible']
+    def _is_visible(self, context, attr_name, data):
+        action = "%s:%s" % (self._plugin_handlers[self.SHOW], attr_name)
+        # Optimistically init authz_check to True
+        authz_check = True
+        try:
+            attr = (attributes.RESOURCE_ATTRIBUTE_MAP
+                    [self._collection].get(attr_name))
+            if attr and attr.get('enforce_policy'):
+                authz_check = policy.check_if_exists(
+                    context, action, data)
+        except KeyError:
+            # The extension was not configured for adding its resources
+            # to the global resource attribute map. Policy check should
+            # not be performed
+            LOG.debug(_("The resource %(resource)s was not found in the "
+                        "RESOURCE_ATTRIBUTE_MAP; unable to perform authZ "
+                        "check for attribute %(attr)s"),
+                      {'resource': self._collection,
+                       'attr': attr})
+        except exceptions.PolicyRuleNotFound:
+            LOG.debug(_("Policy rule:%(action)s not found. Assuming no "
+                        "authZ check is defined for %(attr)s"),
+                      {'action': action,
+                       'attr': attr_name})
+        attr_val = self._attr_info.get(attr_name)
+        return attr_val and attr_val['is_visible'] and authz_check
 
-    def _view(self, data, fields_to_strip=None):
+    def _view(self, context, data, fields_to_strip=None):
         # make sure fields_to_strip is iterable
         if not fields_to_strip:
             fields_to_strip = []
 
         return dict(item for item in data.iteritems()
-                    if (self._is_visible(item[0]) and
+                    if (self._is_visible(context, item[0], data) and
                         item[0] not in fields_to_strip))
 
     def _do_field_list(self, original_fields):
@@ -204,7 +227,6 @@ class Controller(object):
         obj_list = obj_getter(request.context, **kwargs)
         obj_list = sorting_helper.sort(obj_list)
         obj_list = pagination_helper.paginate(obj_list)
-
         # Check authz
         if do_authz:
             # FIXME(salvatore-orlando): obj_getter might return references to
@@ -216,7 +238,7 @@ class Controller(object):
                                         obj,
                                         plugin=self._plugin)]
         collection = {self._collection:
-                      [self._view(obj,
+                      [self._view(request.context, obj,
                                   fields_to_strip=fields_to_add)
                        for obj in obj_list]}
         pagination_links = pagination_helper.get_links(obj_list)
@@ -260,7 +282,8 @@ class Controller(object):
                 api_common.list_args(request, "fields"))
             parent_id = kwargs.get(self._parent_id_name)
             return {self._resource:
-                    self._view(self._item(request,
+                    self._view(request.context,
+                               self._item(request,
                                           id,
                                           do_authz=True,
                                           field_list=field_list,
@@ -278,7 +301,8 @@ class Controller(object):
                 kwargs = {self._resource: item}
                 if parent_id:
                     kwargs[self._parent_id_name] = parent_id
-                objs.append(self._view(obj_creator(request.context,
+                objs.append(self._view(request.context,
+                                       obj_creator(request.context,
                                                    **kwargs)))
             return objs
         # Note(salvatore-orlando): broad catch as in theory a plugin
@@ -367,7 +391,7 @@ class Controller(object):
             # plugin does atomic bulk create operations
             obj_creator = getattr(self._plugin, "%s_bulk" % action)
             objs = obj_creator(request.context, body, **kwargs)
-            return notify({self._collection: [self._view(obj)
+            return notify({self._collection: [self._view(request.context, obj)
                                               for obj in objs]})
         else:
             obj_creator = getattr(self._plugin, action)
@@ -379,7 +403,8 @@ class Controller(object):
             else:
                 kwargs.update({self._resource: body})
                 obj = obj_creator(request.context, **kwargs)
-                return notify({self._resource: self._view(obj)})
+                return notify({self._resource: self._view(request.context,
+                                                          obj)})
 
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
@@ -411,7 +436,7 @@ class Controller(object):
                             notifier_method,
                             notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
-        result = {self._resource: self._view(obj)}
+        result = {self._resource: self._view(request.context, obj)}
         self._send_dhcp_notification(request.context,
                                      result,
                                      notifier_method)
@@ -459,7 +484,7 @@ class Controller(object):
         if parent_id:
             kwargs[self._parent_id_name] = parent_id
         obj = obj_updater(request.context, id, **kwargs)
-        result = {self._resource: self._view(obj)}
+        result = {self._resource: self._view(request.context, obj)}
         notifier_method = self._resource + '.update.end'
         notifier_api.notify(request.context,
                             self._publisher_id,

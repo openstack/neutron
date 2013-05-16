@@ -757,7 +757,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
         quantum_context = context.Context('', 'not_admin')
         port = self._update('ports', port['port']['id'], data,
                             quantum_context=quantum_context)
-        self.assertEqual(ext_qos.QUEUE not in port['port'], True)
+        self.assertFalse(ext_qos.QUEUE in port['port'])
 
     def test_rxtx_factor(self):
         with self.qos_queue(max=10) as q1:

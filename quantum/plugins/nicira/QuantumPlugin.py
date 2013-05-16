@@ -64,7 +64,7 @@ from quantum.plugins.nicira import nvp_cluster
 from quantum.plugins.nicira.nvp_plugin_version import PLUGIN_VERSION
 from quantum.plugins.nicira import NvpApiClient
 from quantum.plugins.nicira import nvplib
-from quantum import policy
+
 
 LOG = logging.getLogger("QuantumPlugin")
 NVP_NOSNAT_RULES_ORDER = 10
@@ -142,7 +142,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     # Map nova zones to cluster for easy retrieval
     novazone_cluster_map = {}
 
-    provider_network_view = "extension:provider_network:view"
     port_security_enabled_update = "update_port:port_security_enabled"
 
     def __init__(self, loglevel=None):
@@ -668,9 +667,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                nvp_exc.NvpNoMorePortsException:
                                webob.exc.HTTPBadRequest})
 
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
-
     def _handle_provider_create(self, context, attrs):
         # NOTE(salvatore-orlando): This method has been borrowed from
         # the OpenvSwtich plugin, altough changed to match NVP specifics.
@@ -720,17 +716,16 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # which should be specified in physical_network
 
     def _extend_network_dict_provider(self, context, network, binding=None):
-        if self._check_view_auth(context, network, self.provider_network_view):
-            if not binding:
-                binding = nicira_db.get_network_binding(context.session,
-                                                        network['id'])
-            # With NVP plugin 'normal' overlay networks will have no binding
-            # TODO(salvatore-orlando) make sure users can specify a distinct
-            # phy_uuid as 'provider network' for STT net type
-            if binding:
-                network[pnet.NETWORK_TYPE] = binding.binding_type
-                network[pnet.PHYSICAL_NETWORK] = binding.phy_uuid
-                network[pnet.SEGMENTATION_ID] = binding.vlan_id
+        if not binding:
+            binding = nicira_db.get_network_binding(context.session,
+                                                    network['id'])
+        # With NVP plugin 'normal' overlay networks will have no binding
+        # TODO(salvatore-orlando) make sure users can specify a distinct
+        # phy_uuid as 'provider network' for STT net type
+        if binding:
+            network[pnet.NETWORK_TYPE] = binding.binding_type
+            network[pnet.PHYSICAL_NETWORK] = binding.phy_uuid
+            network[pnet.SEGMENTATION_ID] = binding.vlan_id
 
     def _handle_lswitch_selection(self, cluster, network,
                                   network_binding, max_ports,
@@ -2093,18 +2088,3 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 return
         nvplib.delete_lqueue(self.cluster, id)
         return super(NvpPluginV2, self).delete_qos_queue(context, id)
-
-    def get_qos_queue(self, context, id, fields=None):
-        if not self._check_view_auth(context, {}, ext_qos.qos_queue_get):
-            # don't want the user to find out that they guessed the right id
-            # so  we raise not found if the policy.json file doesn't allow them
-            raise ext_qos.QueueNotFound(id=id)
-
-        return super(NvpPluginV2, self).get_qos_queue(context, id, fields)
-
-    def get_qos_queues(self, context, filters=None, fields=None):
-        if not self._check_view_auth(context, {'qos_queue': []},
-                                     ext_qos.qos_queue_list):
-            return []
-        return super(NvpPluginV2, self).get_qos_queues(context, filters,
-                                                       fields)
