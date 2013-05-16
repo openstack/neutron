@@ -174,10 +174,13 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                        admin_state_up,
                                        subnet_id=tmp_subnet['subnet']['id'],
                                        **kwargs)
-                vip = self.deserialize(fmt or self.fmt, res)
                 if res.status_int >= 400:
-                    raise webob.exc.HTTPClientError(code=res.status_int)
+                    raise webob.exc.HTTPClientError(
+                        explanation=_("Unexpected error code: %s") %
+                        res.status_int
+                    )
                 try:
+                    vip = self.deserialize(fmt or self.fmt, res)
                     yield vip
                 finally:
                     if not no_delete:
@@ -195,10 +198,12 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                 protocol,
                                 admin_state_up,
                                 **kwargs)
-        pool = self.deserialize(fmt or self.fmt, res)
         if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+            raise webob.exc.HTTPClientError(
+                explanation=_("Unexpected error code: %s") % res.status_int
+            )
         try:
+            pool = self.deserialize(fmt or self.fmt, res)
             yield pool
         finally:
             if not no_delete:
@@ -214,10 +219,12 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                   protocol_port,
                                   admin_state_up,
                                   **kwargs)
-        member = self.deserialize(fmt or self.fmt, res)
         if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+            raise webob.exc.HTTPClientError(
+                explanation=_("Unexpected error code: %s") % res.status_int
+            )
         try:
+            member = self.deserialize(fmt or self.fmt, res)
             yield member
         finally:
             if not no_delete:
@@ -237,10 +244,12 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                           max_retries,
                                           admin_state_up,
                                           **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(
+                explanation=_("Unexpected error code: %s") % res.status_int
+            )
         health_monitor = self.deserialize(fmt or self.fmt, res)
         the_health_monitor = health_monitor['health_monitor']
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
         # make sure:
         # 1. When the type is HTTP/S we have HTTP related attributes in
         #    the result
