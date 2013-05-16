@@ -300,9 +300,20 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
         self._setup_subnet_mocks()
         super(TestMidonetSubnetsV2, self).test_create_subnet_gw_values()
 
-    def test_create_force_subnet_gw_values(self):
+    def test_create_subnet_gw_outside_cidr_force_on_returns_400(self):
         self._setup_subnet_mocks()
-        super(TestMidonetSubnetsV2, self).test_create_force_subnet_gw_values()
+        super(TestMidonetSubnetsV2,
+              self).test_create_subnet_gw_outside_cidr_force_on_returns_400()
+
+    def test_create_subnet_gw_of_network_force_on_returns_400(self):
+        self._setup_subnet_mocks()
+        super(TestMidonetSubnetsV2,
+              self).test_create_subnet_gw_of_network_force_on_returns_400()
+
+    def test_create_subnet_gw_bcast_force_on_returns_400(self):
+        self._setup_subnet_mocks()
+        super(TestMidonetSubnetsV2,
+              self).test_create_subnet_gw_bcast_force_on_returns_400()
 
     def test_create_subnet_with_allocation_pool(self):
         self._setup_subnet_mocks()
@@ -397,6 +408,9 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
         self._setup_subnet_mocks()
         super(TestMidonetSubnetsV2,
               self).test_update_subnet_shared_returns_400()
+
+    def test_update_subnet_gw_outside_cidr_force_on_returns_400(self):
+        pass
 
     def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
         pass
