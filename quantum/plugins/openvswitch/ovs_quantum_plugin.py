@@ -19,6 +19,7 @@
 # @author: Dave Lapsley, Nicira Networks, Inc.
 # @author: Aaron Rosen, Nicira Networks, Inc.
 # @author: Bob Kukura, Red Hat, Inc.
+# @author: Seetharama Ayyadevara, Freescale Semiconductor, Inc.
 
 import sys
 
@@ -222,7 +223,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     """Implement the Quantum abstractions using Open vSwitch.
 
-    Depending on whether tunneling is enabled, either a GRE tunnel or
+    Depending on whether tunneling is enabled, either a GRE, VXLAN tunnel or
     a new VLAN is created for each network. An agent is relied upon to
     perform the actual OVS configuration on each host.
 
@@ -269,9 +270,10 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if self.tenant_network_type not in [constants.TYPE_LOCAL,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_GRE,
+                                            constants.TYPE_VXLAN,
                                             constants.TYPE_NONE]:
             LOG.error(_("Invalid tenant_network_type: %s. "
-                      "Agent terminated!"),
+                      "Server terminated!"),
                       self.tenant_network_type)
             sys.exit(1)
         self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
@@ -279,9 +281,9 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if self.enable_tunneling:
             self._parse_tunnel_id_ranges()
             ovs_db_v2.sync_tunnel_allocations(self.tunnel_id_ranges)
-        elif self.tenant_network_type == constants.TYPE_GRE:
-            LOG.error(_("Tunneling disabled but tenant_network_type is 'gre'. "
-                      "Agent terminated!"))
+        elif self.tenant_network_type in constants.TUNNEL_NETWORK_TYPES:
+            LOG.error(_("Tunneling disabled but tenant_network_type is '%s'. "
+                      "Server terminated!"), self.tenant_network_type)
             sys.exit(1)
         self.setup_rpc()
         self.network_scheduler = importutils.import_object(
@@ -308,7 +310,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.OVS.network_vlan_ranges)
         except Exception as ex:
-            LOG.error(_("%s. Agent terminated!"), ex)
+            LOG.error(_("%s. Server terminated!"), ex)
             sys.exit(1)
         LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
@@ -320,7 +322,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self.tunnel_id_ranges.append((int(tun_min), int(tun_max)))
             except ValueError as ex:
                 LOG.error(_("Invalid tunnel ID range: "
-                            "'%(range)s' - %(e)s. Agent terminated!"),
+                            "'%(range)s' - %(e)s. Server terminated!"),
                           {'range': entry, 'e': ex})
                 sys.exit(1)
         LOG.info(_("Tunnel ID ranges: %s"), self.tunnel_id_ranges)
@@ -329,7 +331,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         binding = ovs_db_v2.get_network_binding(context.session,
                                                 network['id'])
         network[provider.NETWORK_TYPE] = binding.network_type
-        if binding.network_type == constants.TYPE_GRE:
+        if binding.network_type in constants.TUNNEL_NETWORK_TYPES:
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = binding.segmentation_id
         elif binding.network_type == constants.TYPE_FLAT:
@@ -374,13 +376,13 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                        {'min_id': q_const.MIN_VLAN_TAG,
                         'max_id': q_const.MAX_VLAN_TAG})
                 raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == constants.TYPE_GRE:
+        elif network_type in constants.TUNNEL_NETWORK_TYPES:
             if not self.enable_tunneling:
-                msg = _("GRE networks are not enabled")
+                msg = _("%s networks are not enabled") % network_type
                 raise q_exc.InvalidInput(error_message=msg)
             if physical_network_set:
-                msg = _("provider:physical_network specified for GRE "
-                        "network")
+                msg = _("provider:physical_network specified for %s "
+                        "network") % network_type
                 raise q_exc.InvalidInput(error_message=msg)
             else:
                 physical_network = None
@@ -454,7 +456,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 elif network_type == constants.TYPE_VLAN:
                     (physical_network,
                      segmentation_id) = ovs_db_v2.reserve_vlan(session)
-                elif network_type == constants.TYPE_GRE:
+                elif network_type in constants.TUNNEL_NETWORK_TYPES:
                     segmentation_id = ovs_db_v2.reserve_tunnel(session)
                 # no reservation needed for TYPE_LOCAL
             else:
@@ -462,7 +464,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
                     ovs_db_v2.reserve_specific_vlan(session, physical_network,
                                                     segmentation_id)
-                elif network_type == constants.TYPE_GRE:
+                elif network_type in constants.TUNNEL_NETWORK_TYPES:
                     ovs_db_v2.reserve_specific_tunnel(session, segmentation_id)
                 # no reservation needed for TYPE_LOCAL
             net = super(OVSQuantumPluginV2, self).create_network(context,
@@ -494,7 +496,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             binding = ovs_db_v2.get_network_binding(session, id)
             super(OVSQuantumPluginV2, self).delete_network(context, id)
-            if binding.network_type == constants.TYPE_GRE:
+            if binding.network_type in constants.TUNNEL_NETWORK_TYPES:
                 ovs_db_v2.release_tunnel(session, binding.segmentation_id,
                                          self.tunnel_id_ranges)
             elif binding.network_type in [constants.TYPE_VLAN,

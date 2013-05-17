@@ -24,9 +24,17 @@ TYPE_FLAT = 'flat'
 TYPE_VLAN = 'vlan'
 TYPE_GRE = 'gre'
 TYPE_LOCAL = 'local'
+TYPE_VXLAN = 'vxlan'
 TYPE_NONE = 'none'
+VXLAN_UDP_PORT = 4789
 
 # Name prefixes for veth device pair linking the integration bridge
 # with the physical bridge for a physical network
 VETH_INTEGRATION_PREFIX = 'int-'
 VETH_PHYSICAL_PREFIX = 'phy-'
+
+# The minimum version of OVS which supports VXLAN tunneling
+MINIMUM_OVS_VXLAN_VERSION = "1.10"
+
+# The different types of tunnels
+TUNNEL_NETWORK_TYPES = [TYPE_GRE, TYPE_VXLAN]
