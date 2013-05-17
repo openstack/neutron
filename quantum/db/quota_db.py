@@ -138,7 +138,7 @@ class DbQuotaDriver(object):
 
         # Grab and return the quotas (without usages)
         quotas = DbQuotaDriver.get_tenant_quotas(
-            context, sub_resources, context.tenant_id)
+            context, sub_resources, tenant_id)
 
         return dict((k, v) for k, v in quotas.items())
 
