@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-16 12:11+0000\n"
+"POT-Creation-Date: 2013-05-17 12:11+0000\n"
 "PO-Revision-Date: 2013-05-16 09:23+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Danish "
@@ -326,99 +326,99 @@ msgid ""
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:721
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:722
 msgid "DHCP agent started"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:135
+#: quantum/agent/dhcp_agent.py:136
 #, python-format
 msgid "Unable to %s dhcp."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:143
+#: quantum/agent/dhcp_agent.py:144
 msgid "Unable to update lease"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:147
+#: quantum/agent/dhcp_agent.py:148
 msgid "Synchronizing state"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:159
+#: quantum/agent/dhcp_agent.py:160
 msgid "Unable to sync network state."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:179 quantum/agent/dhcp_agent.py:217
+#: quantum/agent/dhcp_agent.py:180 quantum/agent/dhcp_agent.py:218
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:306
+#: quantum/agent/dhcp_agent.py:307
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:495 quantum/agent/l3_agent.py:119
+#: quantum/agent/dhcp_agent.py:496 quantum/agent/l3_agent.py:119
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:503
+#: quantum/agent/dhcp_agent.py:504
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:508 quantum/agent/l3_agent.py:160
+#: quantum/agent/dhcp_agent.py:509 quantum/agent/l3_agent.py:160
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:546 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:547 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:626
+#: quantum/agent/dhcp_agent.py:627
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:656
+#: quantum/agent/dhcp_agent.py:657
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:662
-msgid "Unable to parse lease relay msg to dict."
-msgstr ""
-
 #: quantum/agent/dhcp_agent.py:663
-#, python-format
-msgid "Exception value: %s"
+msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
 #: quantum/agent/dhcp_agent.py:664
 #, python-format
+msgid "Exception value: %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:665
+#, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:666
+#: quantum/agent/dhcp_agent.py:667
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:704 quantum/agent/l3_agent.py:732
+#: quantum/agent/dhcp_agent.py:705 quantum/agent/l3_agent.py:732
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:710 quantum/agent/l3_agent.py:737
+#: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:737
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:185
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:206
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:718 quantum/agent/l3_agent.py:742
+#: quantum/agent/dhcp_agent.py:719 quantum/agent/l3_agent.py:742
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -671,56 +671,56 @@ msgstr ""
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:141
+#: quantum/agent/linux/dhcp.py:142
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:144
+#: quantum/agent/linux/dhcp.py:145
 #, python-format
 msgid "No DHCP started for %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:166 quantum/agent/linux/external_process.py:84
+#: quantum/agent/linux/dhcp.py:167 quantum/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:173 quantum/agent/linux/external_process.py:92
+#: quantum/agent/linux/dhcp.py:174 quantum/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:175 quantum/agent/linux/external_process.py:90
+#: quantum/agent/linux/dhcp.py:176 quantum/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:235
+#: quantum/agent/linux/dhcp.py:236
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:240
+#: quantum/agent/linux/dhcp.py:241
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:324
+#: quantum/agent/linux/dhcp.py:329
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:334
+#: quantum/agent/linux/dhcp.py:339
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:335
+#: quantum/agent/linux/dhcp.py:340
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
