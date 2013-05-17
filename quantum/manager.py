@@ -60,7 +60,8 @@ class Manager(periodic_task.PeriodicTasks):
 
 
 class QuantumManager(object):
-    """
+    """Quantum's Manager class.
+
     Quantum's Manager class is responsible for parsing a config file and
     instantiating the correct plugin that concretely implement
     quantum_plugin_base class.

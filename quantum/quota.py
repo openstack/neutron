@@ -54,14 +54,16 @@ cfg.CONF.register_opts(quota_opts, 'QUOTAS')
 
 
 class ConfDriver(object):
-    """
+    """Configuration driver.
+
     Driver to perform necessary checks to enforce quotas and obtain
     quota information. The default driver utilizes the default values
     in quantum.conf.
     """
 
     def _get_quotas(self, context, resources, keys):
-        """
+        """Get quotas.
+
         A helper method which retrieves the quotas for the specific
         resources identified by keys, and which apply to the current
         context.
@@ -150,8 +152,7 @@ class BaseResource(object):
     """Describe a single resource for quota checking."""
 
     def __init__(self, name, flag):
-        """
-        Initializes a Resource.
+        """Initializes a resource.
 
         :param name: The name of the resource, i.e., "instances".
         :param flag: The name of the flag or configuration option
@@ -169,8 +170,7 @@ class BaseResource(object):
 
 
 class CountableResource(BaseResource):
-    """Describe a resource where the counts are determined by a function.
-    """
+    """Describe a resource where the counts are determined by a function."""
 
     def __init__(self, name, count, flag=None):
         """Initializes a CountableResource.
