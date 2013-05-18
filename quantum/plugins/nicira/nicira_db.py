@@ -47,18 +47,6 @@ def get_network_binding_by_vlanid(session, vlan_id):
         return
 
 
-def get_network_binding_by_vlanid_and_phynet(session, vlan_id,
-                                             physical_network):
-    session = session or db.get_session()
-    try:
-        binding = (session.query(nicira_models.NvpNetworkBinding).
-                   filter_by(vlan_id=vlan_id, phy_uuid=physical_network).
-                   one())
-        return binding
-    except exc.NoResultFound:
-        return
-
-
 def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     with session.begin(subtransactions=True):
         binding = nicira_models.NvpNetworkBinding(network_id, binding_type,

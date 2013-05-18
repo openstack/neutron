@@ -28,9 +28,11 @@ from quantum.extensions import l3
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as secgrp
 from quantum import manager
+from quantum.openstack.common import uuidutils
 import quantum.plugins.nicira as nvp_plugin
 from quantum.plugins.nicira.extensions import nvp_networkgw
 from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
+from quantum.plugins.nicira import NvpApiClient
 from quantum.plugins.nicira import nvplib
 from quantum.plugins.nicira import QuantumPlugin
 from quantum.tests.unit.nicira import fake_nvpapiclient
@@ -375,6 +377,21 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
     def test_router_create_with_gwinfo_and_l3_ext_net_with_vlan(self):
         self._test_router_create_with_gwinfo_and_l3_ext_net(444)
 
+    def test_router_create_nvp_error_returns_500(self, vlan_id=None):
+        with mock.patch.object(nvplib,
+                               'create_router_lport',
+                               side_effect=NvpApiClient.NvpApiException):
+            with self._create_l3_ext_network(vlan_id) as net:
+                with self.subnet(network=net) as s:
+                    data = {'router': {'tenant_id': 'whatever'}}
+                    data['router']['name'] = 'router1'
+                    data['router']['external_gateway_info'] = {
+                        'network_id': s['subnet']['network_id']}
+                    router_req = self.new_create_request(
+                        'routers', data, self.fmt)
+                    res = router_req.get_response(self.ext_api)
+                    self.assertEqual(500, res.status_int)
+
     def _test_router_update_gateway_on_l3_ext_net(self, vlan_id=None):
         with self.router() as r:
             with self.subnet() as s1:
@@ -413,6 +430,14 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
 
     def test_router_update_gateway_on_l3_ext_net_with_vlan(self):
         self._test_router_update_gateway_on_l3_ext_net(444)
+
+    def test_router_list_by_tenant_id(self):
+        with contextlib.nested(self.router(tenant_id='custom'),
+                               self.router(),
+                               self.router()
+                               ) as routers:
+            self._test_list_resources('router', [routers[0]],
+                                      query_params="tenant_id=custom")
 
     def test_create_l3_ext_network_with_vlan(self):
         self._test_create_l3_ext_network(666)
@@ -547,6 +572,22 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
             subnets = self._list('subnets')['subnets']
             # Test that route is deleted after dhcp port is removed
             self.assertEquals(len(subnets[0]['host_routes']), 0)
+
+    def test_floatingip_disassociate(self):
+        with self.port() as p:
+            private_sub = {'subnet': {'id':
+                                      p['port']['fixed_ips'][0]['subnet_id']}}
+            with self.floatingip_no_assoc(private_sub) as fip:
+                port_id = p['port']['id']
+                body = self._update('floatingips', fip['floatingip']['id'],
+                                    {'floatingip': {'port_id': port_id}})
+                self.assertEqual(body['floatingip']['port_id'], port_id)
+                # Disassociate
+                body = self._update('floatingips', fip['floatingip']['id'],
+                                    {'floatingip': {'port_id': None}})
+                body = self._show('floatingips', fip['floatingip']['id'])
+                self.assertIsNone(body['floatingip']['port_id'])
+                self.assertIsNone(body['floatingip']['fixed_ip_address'])
 
 
 class NvpQoSTestExtensionManager(object):
@@ -838,6 +879,7 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         res = self._create_port('json', net1['network']['id'])
         port = self.deserialize('json', res)
         self.fc._fake_lswitch_lport_dict.clear()
+        self.fc._fake_lswitch_lportstatus_dict.clear()
         req = self.new_show_request('ports', port['port']['id'])
         net = self.deserialize('json', req.get_response(self.api))
         self.assertEqual(net['port']['status'],
@@ -918,6 +960,18 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
         with self._network_gateway(name=name) as nw_gw:
             # Assert Quantum name is not truncated
             self.assertEqual(nw_gw[self.resource]['name'], name)
+
+    def test_create_network_gateway_nvp_error_returns_500(self):
+        def raise_nvp_api_exc(*args, **kwargs):
+            raise NvpApiClient.NvpApiException
+
+        with mock.patch.object(nvplib,
+                               'create_l2_gw_service',
+                               new=raise_nvp_api_exc):
+            res = self._create_network_gateway(
+                self.fmt, 'xxx', name='yyy',
+                devices=[{'id': uuidutils.generate_uuid()}])
+            self.assertEqual(500, res.status_int)
 
     def test_list_network_gateways(self):
         with self._network_gateway(name='test-gw-1') as gw1:

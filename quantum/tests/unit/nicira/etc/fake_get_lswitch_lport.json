@@ -1,4 +1,4 @@
-{"display_name": "%(uuid)s",
+{"display_name": "%(display_name)s",
    "_relations":
    {"LogicalPortStatus":
       {"type": "LogicalSwitchPortStatus",
@@ -12,7 +12,7 @@
     {"scope": "vm_id", "tag": "%(quantum_device_id)s"},
     {"scope": "os_tid", "tag": "%(tenant_id)s"}],
  "uuid": "%(uuid)s",
- "admin_status_enabled": true,
+ "admin_status_enabled": "%(admin_status_enabled)s",
  "type": "LogicalSwitchPortConfig",
  "_schema": "/ws.v1/schema/LogicalSwitchPortConfig",
  "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s"

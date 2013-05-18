@@ -17,6 +17,7 @@
  "link_status_up": false,
  "_schema": "/ws.v1/schema/LogicalSwitchPortStatus",
  "admin_status_enabled": true,
- "fabric_status_up": false,
+ "fabric_status_up": true,
+ "link_status_up": true,
  "type": "LogicalSwitchPortStatus"
 }

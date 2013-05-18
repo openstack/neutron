@@ -333,6 +333,16 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
             for k, v in keys:
                 self.assertEqual(gw[self.resource][k], v)
 
+    def test_create_network_gateway_no_interface_name(self):
+        name = 'test-gw'
+        devices = [{'id': _uuid()}]
+        exp_devices = devices
+        exp_devices[0]['interface_name'] = 'breth0'
+        keys = [('devices', exp_devices), ('name', name)]
+        with self._network_gateway(name=name, devices=devices) as gw:
+            for k, v in keys:
+                self.assertEqual(gw[self.resource][k], v)
+
     def _test_delete_network_gateway(self, exp_gw_count=0):
         name = 'test-gw'
         devices = [{'id': _uuid(), 'interface_name': 'xxx'},
