@@ -18,6 +18,7 @@
 """
 Policy engine for quantum.  Largely copied from nova.
 """
+import itertools
 
 from oslo.config import cfg
 
@@ -32,6 +33,23 @@ LOG = logging.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
 ADMIN_CTX_POLICY = 'context_is_admin'
+# Maps deprecated 'extension' policies to new-style policies
+DEPRECATED_POLICY_MAP = {
+    'extension:provider_network':
+    ['network:provider:network_type',
+     'network:provider:physical_network',
+     'network:provider:segmentation_id'],
+    'extension:router':
+    ['network:router:external'],
+    'extension:port_binding':
+    ['port:binding:vif_type', 'port:binding:capabilities',
+     'port:binding:profile', 'port:binding:host_id']
+}
+DEPRECATED_ACTION_MAP = {
+    'view': ['get'],
+    'set': ['create', 'update']
+}
+
 cfg.CONF.import_opt('policy_file', 'quantum.common.config')
 
 
@@ -65,9 +83,36 @@ def get_resource_and_action(action):
 def _set_rules(data):
     default_rule = 'default'
     LOG.debug(_("loading policies from file: %s"), _POLICY_PATH)
-    # TODO(salvatore-orlando): Ensure backward compatibility with
-    # folsom/grizzly style for extension rules (bp/make-authz-orthogonal)
-    policy.set_rules(policy.Rules.load_json(data, default_rule))
+    # Ensure backward compatibility with folsom/grizzly convention
+    # for extension rules
+    policies = policy.Rules.load_json(data, default_rule)
+    for pol in policies.keys():
+        if any([pol.startswith(depr_pol) for depr_pol in
+                DEPRECATED_POLICY_MAP.keys()]):
+            LOG.warn(_("Found deprecated policy rule:%s. Please consider "
+                       "upgrading your policy configuration file"), pol)
+            pol_name, action = pol.rsplit(':', 1)
+            try:
+                new_actions = DEPRECATED_ACTION_MAP[action]
+                new_policies = DEPRECATED_POLICY_MAP[pol_name]
+                # bind new actions and policies together
+                for actual_policy in ['_'.join(item) for item in
+                                      itertools.product(new_actions,
+                                                        new_policies)]:
+                    if not actual_policy in policies:
+                        # New policy, same rule
+                        LOG.info(_("Inserting policy:%(new_policy)s in place "
+                                   "of deprecated policy:%(old_policy)s"),
+                                 {'new_policy': actual_policy,
+                                  'old_policy': pol})
+                        policies[actual_policy] = policies[pol]
+                # Remove old-style policy
+                del policies[pol]
+            except KeyError:
+                LOG.error(_("Backward compatibility unavailable for "
+                            "deprecated policy %s. The policy will "
+                            "not be enforced"), pol)
+    policy.set_rules(policies)
 
 
 def _is_attribute_explicitly_set(attribute_name, resource, target):
