@@ -9,7 +9,4 @@
 [Filters]
 
 # nec_quantum_agent
-ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
-ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
-ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
-ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+ovs-vsctl: CommandFilter, ovs-vsctl, root
