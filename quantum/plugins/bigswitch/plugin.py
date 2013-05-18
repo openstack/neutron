@@ -486,6 +486,27 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
                         "network: %s"), e.message)
             raise
 
+    def get_network(self, context, id, fields=None):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(QuantumRestProxyV2, self).get_network(context,
+                                                              id, None)
+            self._extend_network_dict_l3(context, net)
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None,
+                     limit=None, marker=None, page_reverse=False):
+        session = context.session
+        with session.begin(subtransactions=True):
+            nets = super(QuantumRestProxyV2,
+                         self).get_networks(context, filters, None, sorts,
+                                            limit, marker, page_reverse)
+            for net in nets:
+                self._extend_network_dict_l3(context, net)
+
+        return [self._fields(net, fields) for net in nets]
+
     def create_port(self, context, port):
         """Create a port, which is a connection point of a device
         (e.g., a VM NIC) to attach to a L2 Quantum network.
