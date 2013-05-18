@@ -11,11 +11,17 @@
 # quantum/agent/linux/iptables_manager.py
 #   "iptables-save", ...
 iptables-save: CommandFilter, /sbin/iptables-save, root
+iptables-save_usr: CommandFilter, /usr/sbin/iptables-save, root
 iptables-restore: CommandFilter, /sbin/iptables-restore, root
+iptables-restore_usr: CommandFilter, /usr/sbin/iptables-restore, root
 ip6tables-save: CommandFilter, /sbin/ip6tables-save, root
+ip6tables-save_usr: CommandFilter, /usr/sbin/ip6tables-save, root
 ip6tables-restore: CommandFilter, /sbin/ip6tables-restore, root
+ip6tables-restore_usr: CommandFilter, /usr/sbin/ip6tables-restore, root
 
 # quantum/agent/linux/iptables_manager.py
 #   "iptables", "-A", ...
 iptables: CommandFilter, /sbin/iptables, root
+iptables_usr: CommandFilter, /usr/sbin/iptables, root
 ip6tables: CommandFilter, /sbin/ip6tables, root
+ip6tables_usr: CommandFilter, /usr/sbin/ip6tables, root
