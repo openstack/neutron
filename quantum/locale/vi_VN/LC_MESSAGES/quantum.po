@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-17 12:11+0000\n"
+"POT-Creation-Date: 2013-05-19 12:11+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Vietnamese (Viet Nam) "
@@ -22,75 +22,96 @@ msgstr ""
 msgid "Neither X_USER_ID nor X_USER found in request"
 msgstr ""
 
-#: quantum/context.py:48
+#: quantum/context.py:49
 #, python-format
 msgid "Arguments dropped when creating context: %s"
 msgstr ""
 
-#: quantum/context.py:94
+#: quantum/context.py:95
 #, python-format
 msgid "read_deleted can only be one of 'no', 'yes' or 'only', not %r"
 msgstr ""
 
-#: quantum/manager.py:77
+#: quantum/manager.py:78
 msgid "Quantum core_plugin not configured!"
 msgstr ""
 
-#: quantum/manager.py:86 quantum/plugins/metaplugin/meta_quantum_plugin.py:113
+#: quantum/manager.py:87 quantum/plugins/metaplugin/meta_quantum_plugin.py:113
 #, python-format
 msgid "Plugin location: %s"
 msgstr ""
 
-#: quantum/manager.py:89 quantum/manager.py:134
+#: quantum/manager.py:90 quantum/manager.py:135
 #, python-format
 msgid "Loading Plugin: %s"
 msgstr ""
 
-#: quantum/manager.py:92 quantum/manager.py:137
+#: quantum/manager.py:93 quantum/manager.py:138
 msgid "Error loading plugin"
 msgstr ""
 
-#: quantum/manager.py:93
+#: quantum/manager.py:94
 msgid ""
 "Plugin not found.  You can install a plugin with: pip install <plugin-"
 "name>\n"
 "Example: pip install quantum-sample-plugin"
 msgstr ""
 
-#: quantum/manager.py:107
+#: quantum/manager.py:108
 msgid "Loading services supported by the core plugin"
 msgstr ""
 
-#: quantum/manager.py:116
+#: quantum/manager.py:117
 #, python-format
 msgid "Service %s is supported by the core plugin"
 msgstr ""
 
-#: quantum/manager.py:129
+#: quantum/manager.py:130
 #, python-format
 msgid "Loading service plugins: %s"
 msgstr ""
 
-#: quantum/manager.py:138
+#: quantum/manager.py:139
 msgid "Plugin not found."
 msgstr ""
 
-#: quantum/manager.py:145
+#: quantum/manager.py:146
 #, python-format
 msgid "Multiple plugins for service %s were configured"
 msgstr ""
 
-#: quantum/manager.py:151
+#: quantum/manager.py:152
 #, python-format
 msgid "Successfully loaded %(type)s plugin. Description: %(desc)s"
 msgstr ""
 
-#: quantum/policy.py:67
+#: quantum/policy.py:85
 #, python-format
 msgid "loading policies from file: %s"
 msgstr ""
 
-#: quantum/policy.py:157
+#: quantum/policy.py:92
+#, python-format
+msgid ""
+"Found deprecated policy rule:%s. Please consider upgrading your policy "
+"configuration file"
+msgstr ""
+
+#: quantum/policy.py:104
+#, python-format
+msgid ""
+"Inserting policy:%(new_policy)s in place of deprecated "
+"policy:%(old_policy)s"
+msgstr ""
+
+#: quantum/policy.py:112
+#, python-format
+msgid ""
+"Backward compatibility unavailable for deprecated policy %s. The policy "
+"will not be enforced"
+msgstr ""
+
+#: quantum/policy.py:202
 #, python-format
 msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
 msgstr ""
@@ -210,90 +231,90 @@ msgstr ""
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: quantum/wsgi.py:296
+#: quantum/wsgi.py:295
 msgid "Missing Content-Type"
 msgstr ""
 
-#: quantum/wsgi.py:469
+#: quantum/wsgi.py:470
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr ""
 
-#: quantum/wsgi.py:552
+#: quantum/wsgi.py:553
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: quantum/wsgi.py:565 quantum/wsgi.py:568
+#: quantum/wsgi.py:566 quantum/wsgi.py:569
 msgid "Inline DTD forbidden"
 msgstr ""
 
-#: quantum/wsgi.py:643
+#: quantum/wsgi.py:645
 msgid "Cannot understand XML"
 msgstr ""
 
-#: quantum/wsgi.py:754
+#: quantum/wsgi.py:756
 msgid "Unrecognized Content-Type provided in request"
 msgstr ""
 
-#: quantum/wsgi.py:758
+#: quantum/wsgi.py:760
 msgid "No Content-Type provided in request"
 msgstr ""
 
-#: quantum/wsgi.py:762
+#: quantum/wsgi.py:764
 msgid "Empty body provided in request"
 msgstr ""
 
-#: quantum/wsgi.py:768
+#: quantum/wsgi.py:770
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr ""
 
-#: quantum/wsgi.py:864
+#: quantum/wsgi.py:866
 msgid "You must implement __call__"
 msgstr ""
 
-#: quantum/wsgi.py:1006
+#: quantum/wsgi.py:1003
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr ""
 
-#: quantum/wsgi.py:1012
+#: quantum/wsgi.py:1009
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: quantum/wsgi.py:1013
+#: quantum/wsgi.py:1010
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr ""
 
-#: quantum/wsgi.py:1017
+#: quantum/wsgi.py:1014
 msgid "Malformed request body"
 msgstr ""
 
-#: quantum/wsgi.py:1018
+#: quantum/wsgi.py:1015
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr ""
 
-#: quantum/wsgi.py:1025
+#: quantum/wsgi.py:1022
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: quantum/wsgi.py:1030
+#: quantum/wsgi.py:1027
 msgid "Internal error"
 msgstr ""
 
-#: quantum/wsgi.py:1045 quantum/wsgi.py:1149
+#: quantum/wsgi.py:1042 quantum/wsgi.py:1144
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: quantum/wsgi.py:1048
+#: quantum/wsgi.py:1045
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: quantum/wsgi.py:1226
+#: quantum/wsgi.py:1221
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -3538,7 +3559,7 @@ msgstr ""
 
 #: quantum/plugins/bigswitch/plugin.py:437
 #: quantum/plugins/bigswitch/plugin.py:485
-#: quantum/plugins/bigswitch/plugin.py:1196
+#: quantum/plugins/bigswitch/plugin.py:1217
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote network: %s"
 msgstr ""
@@ -3547,130 +3568,130 @@ msgstr ""
 msgid "QuantumRestProxyV2: delete_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:515
+#: quantum/plugins/bigswitch/plugin.py:536
 msgid "QuantumRestProxyV2: create_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:546
-#: quantum/plugins/bigswitch/plugin.py:634
+#: quantum/plugins/bigswitch/plugin.py:567
+#: quantum/plugins/bigswitch/plugin.py:655
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:601
+#: quantum/plugins/bigswitch/plugin.py:622
 msgid "QuantumRestProxyV2: update_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:655
+#: quantum/plugins/bigswitch/plugin.py:676
 msgid "QuantumRestProxyV2: delete_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:684
-#: quantum/plugins/bigswitch/plugin.py:742
+#: quantum/plugins/bigswitch/plugin.py:705
+#: quantum/plugins/bigswitch/plugin.py:763
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:701
+#: quantum/plugins/bigswitch/plugin.py:722
 msgid "QuantumRestProxyV2: _plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:719
+#: quantum/plugins/bigswitch/plugin.py:740
 #, python-format
 msgid "QuantumRestProxyV2:Unable to update remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:733
+#: quantum/plugins/bigswitch/plugin.py:754
 msgid "QuantumRestProxyV2: _unplug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:746
+#: quantum/plugins/bigswitch/plugin.py:767
 msgid "QuantumRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:767
+#: quantum/plugins/bigswitch/plugin.py:788
 msgid "QuantumRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:790
+#: quantum/plugins/bigswitch/plugin.py:811
 msgid "QuantumRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:805
+#: quantum/plugins/bigswitch/plugin.py:826
 msgid "QuantumRestProxyV2: create_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:826
+#: quantum/plugins/bigswitch/plugin.py:847
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:837
+#: quantum/plugins/bigswitch/plugin.py:858
 msgid "QuantumRestProxyV2.update_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:859
+#: quantum/plugins/bigswitch/plugin.py:880
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:871
+#: quantum/plugins/bigswitch/plugin.py:892
 msgid "QuantumRestProxyV2: delete_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:902
+#: quantum/plugins/bigswitch/plugin.py:923
 #, python-format
 msgid "QuantumRestProxyV2: Unable to delete remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:908
+#: quantum/plugins/bigswitch/plugin.py:929
 msgid "QuantumRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:936
+#: quantum/plugins/bigswitch/plugin.py:957
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create interface: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:947
+#: quantum/plugins/bigswitch/plugin.py:968
 msgid "QuantumRestProxyV2: remove_router_interface() called"
-msgstr ""
-
-#: quantum/plugins/bigswitch/plugin.py:980
-#, python-format
-msgid "QuantumRestProxyV2:Unable to delete remote intf: %s"
-msgstr ""
-
-#: quantum/plugins/bigswitch/plugin.py:988
-msgid "QuantumRestProxyV2: create_floatingip() called"
 msgstr ""
 
 #: quantum/plugins/bigswitch/plugin.py:1001
 #, python-format
+msgid "QuantumRestProxyV2:Unable to delete remote intf: %s"
+msgstr ""
+
+#: quantum/plugins/bigswitch/plugin.py:1009
+msgid "QuantumRestProxyV2: create_floatingip() called"
+msgstr ""
+
+#: quantum/plugins/bigswitch/plugin.py:1022
+#, python-format
 msgid "QuantumRestProxyV2: Unable to create remote floatin IP: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1011
+#: quantum/plugins/bigswitch/plugin.py:1032
 msgid "QuantumRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1034
+#: quantum/plugins/bigswitch/plugin.py:1055
 msgid "QuantumRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1117
+#: quantum/plugins/bigswitch/plugin.py:1138
 #, python-format
 msgid "QuantumRestProxy: Unable to update remote topology: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1213
+#: quantum/plugins/bigswitch/plugin.py:1234
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1219
+#: quantum/plugins/bigswitch/plugin.py:1240
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
