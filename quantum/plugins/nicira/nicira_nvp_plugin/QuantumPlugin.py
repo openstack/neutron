@@ -2141,7 +2141,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if not security_group:
                 raise ext_sg.SecurityGroupNotFound(id=security_group_id)
 
-            if security_group['name'] == 'default':
+            if security_group['name'] == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
 
             filters = {'security_group_id': [security_group['id']]}
