@@ -134,7 +134,7 @@ class Controller(object):
                         "RESOURCE_ATTRIBUTE_MAP; unable to perform authZ "
                         "check for attribute %(attr)s"),
                       {'resource': self._collection,
-                       'attr': attr})
+                       'attr': attr_name})
         except exceptions.PolicyRuleNotFound:
             LOG.debug(_("Policy rule:%(action)s not found. Assuming no "
                         "authZ check is defined for %(attr)s"),
