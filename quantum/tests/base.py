@@ -17,6 +17,7 @@
 
 """Base Test Case for all Unit Tests"""
 
+import logging
 import os
 
 import fixtures
@@ -28,6 +29,7 @@ from quantum.openstack.common import exception
 
 CONF = cfg.CONF
 TRUE_STRING = ['True', '1']
+LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
 
 class BaseTestCase(testtools.TestCase):
@@ -35,8 +37,11 @@ class BaseTestCase(testtools.TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
-        self.useFixture(fixtures.FakeLogger(
-            format="%(asctime)s %(levelname)8s [%(name)s] %(message)s"))
+        if os.environ.get('OS_DEBUG') in TRUE_STRING:
+            _level = logging.DEBUG
+        else:
+            _level = logging.INFO
+        self.useFixture(fixtures.FakeLogger(format=LOG_FORMAT, level=_level))
 
         test_timeout = int(os.environ.get('OS_TEST_TIMEOUT', 0))
         if test_timeout == -1:
