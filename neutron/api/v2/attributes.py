@@ -261,6 +261,23 @@ def _validate_subnet(data, valid_values=None):
     return msg
 
 
+def _validate_subnet_list(data, valid_values=None):
+    if not isinstance(data, list):
+        msg = _("'%s' is not a list") % data
+        LOG.debug(msg)
+        return msg
+
+    if len(set(data)) != len(data):
+        msg = _("Duplicate items in the list: '%s'") % ', '.join(data)
+        LOG.debug(msg)
+        return msg
+
+    for item in data:
+        msg = _validate_subnet(item)
+        if msg:
+            return msg
+
+
 def _validate_regex(data, valid_values=None):
     try:
         if re.match(valid_values, data):
@@ -474,6 +491,7 @@ validators = {'type:dict': _validate_dict,
               'type:regex': _validate_regex,
               'type:string': _validate_string,
               'type:subnet': _validate_subnet,
+              'type:subnet_list': _validate_subnet_list,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
               'type:uuid_list': _validate_uuid_list,
