@@ -19,6 +19,20 @@ Common utilities and helper functions for Openstack Networking Plugins.
 """
 
 from quantum.common import exceptions as q_exc
+from quantum.common import utils
+
+
+def verify_vlan_range(vlan_range):
+    """Raise an exception for invalid tags or malformed range."""
+    for vlan_tag in vlan_range:
+        if not utils.is_valid_vlan_tag(vlan_tag):
+            raise q_exc.NetworkVlanRangeError(
+                vlan_range=vlan_range,
+                error=_("%s is not a valid VLAN tag") % vlan_tag)
+    if vlan_range[1] < vlan_range[0]:
+        raise q_exc.NetworkVlanRangeError(
+            vlan_range=vlan_range,
+            error=_("End of VLAN range is less than start of VLAN range"))
 
 
 def parse_network_vlan_range(network_vlan_range):
@@ -27,10 +41,11 @@ def parse_network_vlan_range(network_vlan_range):
     if ':' in entry:
         try:
             network, vlan_min, vlan_max = entry.split(':')
-            vlan_min, vlan_max = int(vlan_min), int(vlan_max)
+            vlan_range = (int(vlan_min), int(vlan_max))
         except ValueError as ex:
-            raise q_exc.NetworkVlanRangeError(range=entry, error=ex)
-        return network, (vlan_min, vlan_max)
+            raise q_exc.NetworkVlanRangeError(vlan_range=entry, error=ex)
+        verify_vlan_range(vlan_range)
+        return network, vlan_range
     else:
         return entry, None
 

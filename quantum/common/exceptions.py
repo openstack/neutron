@@ -264,4 +264,10 @@ class GatewayConflictWithAllocationPools(InUse):
 
 
 class NetworkVlanRangeError(QuantumException):
-    message = _("Invalid network VLAN range: '%(range)s' - '%(error)s'")
+    message = _("Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'")
+
+    def __init__(self, **kwargs):
+        # Convert vlan_range tuple to 'start:end' format for display
+        if isinstance(kwargs['vlan_range'], tuple):
+            kwargs['vlan_range'] = "%d:%d" % kwargs['vlan_range']
+        super(NetworkVlanRangeError, self).__init__(**kwargs)

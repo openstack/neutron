@@ -48,7 +48,7 @@ from quantum.plugins.openvswitch.common import constants
 LOG = logging.getLogger(__name__)
 
 # A placeholder for dead vlans.
-DEAD_VLAN_TAG = "4095"
+DEAD_VLAN_TAG = str(q_const.MAX_VLAN_TAG + 1)
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -140,12 +140,6 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     modifying, or stripping VLAN tags as necessary.
     '''
 
-    # Lower bound on available vlans.
-    MIN_VLAN_TAG = 1
-
-    # Upper bound on available vlans.
-    MAX_VLAN_TAG = 4094
-
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
@@ -165,9 +159,8 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         :param enable_tunneling: if True enable GRE networks.
         '''
         self.root_helper = root_helper
-        self.available_local_vlans = set(
-            xrange(OVSQuantumAgent.MIN_VLAN_TAG,
-                   OVSQuantumAgent.MAX_VLAN_TAG))
+        self.available_local_vlans = set(xrange(q_const.MIN_VLAN_TAG,
+                                                q_const.MAX_VLAN_TAG))
         self.int_br = self.setup_integration_br(integ_br)
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}

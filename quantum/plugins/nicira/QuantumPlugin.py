@@ -34,6 +34,7 @@ from quantum.common import constants
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum.common import utils
 from quantum import context as q_context
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
@@ -693,8 +694,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 err_msg = _("Segmentation ID must be specified with "
                             "vlan network type")
             elif (segmentation_id_set and
-                  (segmentation_id < 1 or segmentation_id > 4094)):
-                err_msg = _("%s out of range (1 to 4094)") % segmentation_id
+                  not utils.is_valid_vlan_tag(segmentation_id)):
+                err_msg = (_("%(segmentation_id)s out of range "
+                             "(%(min_id)s through %(max_id)s)") %
+                           {'segmentation_id': segmentation_id,
+                            'min_id': constants.MIN_VLAN_TAG,
+                            'max_id': constants.MAX_VLAN_TAG})
             else:
                 # Verify segment is not already allocated
                 binding = nicira_db.get_network_binding_by_vlanid(
@@ -704,8 +709,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                             physical_network=physical_network)
         elif network_type == NetworkTypes.L3_EXT:
             if (segmentation_id_set and
-                (segmentation_id < 1 or segmentation_id > 4094)):
-                err_msg = _("%s out of range (1 to 4094)") % segmentation_id
+                not utils.is_valid_vlan_tag(segmentation_id)):
+                err_msg = (_("%(segmentation_id)s out of range "
+                             "(%(min_id)s through %(max_id)s)") %
+                           {'segmentation_id': segmentation_id,
+                            'min_id': constants.MIN_VLAN_TAG,
+                            'max_id': constants.MAX_VLAN_TAG})
         else:
             err_msg = _("%(net_type_param)s %(net_type_value)s not "
                         "supported") % {'net_type_param': pnet.NETWORK_TYPE,

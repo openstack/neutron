@@ -32,6 +32,7 @@ from quantum.common import constants as q_const
 from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
+from quantum.common import utils
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
 from quantum.db import db_base_plugin_v2
@@ -365,9 +366,11 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
                 raise q_exc.InvalidInput(error_message=msg)
-            if segmentation_id < 1 or segmentation_id > 4094:
-                msg = _("provider:segmentation_id out of range "
-                        "(1 through 4094)")
+            if not utils.is_valid_vlan_tag(segmentation_id):
+                msg = (_("provider:segmentation_id out of range "
+                         "(%(min_id)s through %(max_id)s)") %
+                       {'min_id': q_const.MIN_VLAN_TAG,
+                        'max_id': q_const.MAX_VLAN_TAG})
                 raise q_exc.InvalidInput(error_message=msg)
         elif network_type == constants.TYPE_GRE:
             if not self.enable_tunneling:

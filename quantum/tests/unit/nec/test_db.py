@@ -17,6 +17,7 @@
 
 import random
 
+from quantum.common import constants as q_const
 from quantum.db import api as db_api
 from quantum.openstack.common import uuidutils
 from quantum.plugins.nec.common import exceptions as nexc
@@ -47,7 +48,7 @@ class NECPluginV2DBTestBase(base.BaseTestCase):
         port_id = uuidutils.generate_uuid()
         datapath_id = hex(random.randint(0, 0xffffffff))
         port_no = random.randint(1, 100)
-        vlan_id = random.randint(0, 4095)
+        vlan_id = random.randint(q_const.MIN_VLAN_TAG, q_const.MAX_VLAN_TAG)
         mac = ':'.join(["%02x" % random.randint(0, 0xff) for x in range(6)])
         none = uuidutils.generate_uuid()
         return port_id, datapath_id, port_no, vlan_id, mac, none
