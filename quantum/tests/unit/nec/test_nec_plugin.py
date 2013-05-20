@@ -19,6 +19,7 @@ from quantum.common import topics
 from quantum import context as q_context
 from quantum.extensions import portbindings
 from quantum import manager
+from quantum.plugins.nec.common import exceptions as nexc
 from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec import nec_plugin
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
@@ -26,16 +27,24 @@ from quantum.tests.unit import test_db_plugin as test_plugin
 from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
-OFC_MANAGER = 'quantum.plugins.nec.nec_plugin.ofc_manager.OFCManager'
 PLUGIN_NAME = 'quantum.plugins.nec.nec_plugin.NECPluginV2'
+OFC_MANAGER = 'quantum.plugins.nec.nec_plugin.ofc_manager.OFCManager'
+OFC_DRIVER = 'quantum.tests.unit.nec.stub_ofc_driver.StubOFCDriver'
 
 
 class NecPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
 
     _plugin_name = PLUGIN_NAME
+    PACKET_FILTER_ENABLE = False
 
     def setUp(self):
+        self.addCleanup(mock.patch.stopall)
+        ofc_manager_cls = mock.patch(OFC_MANAGER).start()
+        ofc_driver = ofc_manager_cls.return_value.driver
+        ofc_driver.filter_supported.return_value = self.PACKET_FILTER_ENABLE
         super(NecPluginV2TestCase, self).setUp(self._plugin_name)
+        self.context = q_context.get_admin_context()
+        self.plugin = manager.QuantumManager.get_plugin()
 
 
 class TestNecBasicGet(test_plugin.TestBasicGet, NecPluginV2TestCase):
@@ -76,18 +85,12 @@ class TestNecPortBindingNoSG(TestNecPortBinding):
 class TestNecPortsV2Callback(NecPluginV2TestCase):
 
     def setUp(self):
-        self.addCleanup(mock.patch.stopall)
-        ofc_manager_p = mock.patch(OFC_MANAGER)
-        ofc_manager_cls = ofc_manager_p.start()
-        self.ofc = mock.Mock()
-        ofc_manager_cls.return_value = self.ofc
+        super(TestNecPortsV2Callback, self).setUp()
+        self.callbacks = nec_plugin.NECPluginV2RPCCallbacks(self.plugin)
+
+        self.ofc = self.plugin.ofc
         self.ofc_port_exists = False
         self._setup_side_effects()
-
-        super(TestNecPortsV2Callback, self).setUp()
-        self.context = q_context.get_admin_context()
-        self.plugin = manager.QuantumManager.get_plugin()
-        self.callbacks = nec_plugin.NECPluginV2RPCCallbacks(self.plugin)
 
     def _setup_side_effects(self):
         def _create_ofc_port_called(*args, **kwargs):
@@ -192,3 +195,297 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.ofc.assert_has_calls(expected)
             self.assertEqual(2, self.ofc.create_ofc_port.call_count)
             self.assertEqual(1, self.ofc.delete_ofc_port.call_count)
+
+
+class TestNecPluginDbTest(NecPluginV2TestCase):
+
+    def test_update_resource(self):
+        with self.network() as network:
+            self.assertEqual("ACTIVE", network['network']['status'])
+            net_id = network['network']['id']
+            for status in ["DOWN", "BUILD", "ERROR", "ACTIVE"]:
+                self.plugin._update_resource_status(
+                    self.context, 'network', net_id,
+                    getattr(nec_plugin.OperationalStatus, status))
+                n = self.plugin._get_network(self.context, net_id)
+                self.assertEqual(status, n.status)
+
+
+class TestNecPluginOfcManager(NecPluginV2TestCase):
+    def setUp(self):
+        super(TestNecPluginOfcManager, self).setUp()
+        self.ofc = self.plugin.ofc
+
+    def _update_resource(self, resource, id, data):
+        collection = resource + 's'
+        data = {resource: data}
+        req = self.new_update_request(collection, data, id)
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        return res[resource]
+
+    def _show_resource(self, resource, id):
+        collection = resource + 's'
+        req = self.new_show_request(collection, id)
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        return res[resource]
+
+    def _list_resource(self, resource):
+        collection = resource + 's'
+        req = self.new_list_request(collection)
+        res = req.get_response(self.api)
+        return res[collection]
+
+    def _delete_resource(self, resource, id):
+        collection = resource + 's'
+        req = self.new_delete_request(collection, id)
+        res = req.get_response(self.api)
+        return res.status_int
+
+    def test_create_network(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        net = None
+        ctx = mock.ANY
+        with self.network() as network:
+            net = network['network']
+            self.assertEqual(network['network']['status'], 'ACTIVE')
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_create_network_with_admin_state_down(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        net = None
+        ctx = mock.ANY
+        with self.network(admin_state_up=False) as network:
+            net = network['network']
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_create_two_network(self):
+        self.ofc.exists_ofc_tenant.side_effect = [False, True]
+        nets = []
+        ctx = mock.ANY
+        with self.network() as net1:
+            nets.append(net1['network'])
+            self.assertEqual(net1['network']['status'], 'ACTIVE')
+            with self.network() as net2:
+                nets.append(net2['network'])
+                self.assertEqual(net2['network']['status'], 'ACTIVE')
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, nets[0]['id'],
+                                         nets[0]['name']),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, nets[1]['id'],
+                                         nets[1]['name']),
+            mock.call.delete_ofc_network(ctx, nets[1]['id'], mock.ANY),
+            mock.call.delete_ofc_network(ctx, nets[0]['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_create_network_fail(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        self.ofc.create_ofc_network.side_effect = nexc.OFCException(
+            reason='hoge')
+
+        net = None
+        ctx = mock.ANY
+        with self.network() as network:
+            net = network['network']
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_update_network(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+
+        net = None
+        ctx = mock.ANY
+        with self.network() as network:
+            net = network['network']
+            self.assertEqual(network['network']['status'], 'ACTIVE')
+
+            # Set admin_state_up to False
+            res = self._update_resource('network', net['id'],
+                                        {'admin_state_up': False})
+            self.assertFalse(res['admin_state_up'])
+
+            # Set admin_state_up to True
+            res = self._update_resource('network', net['id'],
+                                        {'admin_state_up': True})
+            self.assertTrue(res['admin_state_up'])
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def _rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
+                             datapath_id="0xabc", added=[], removed=[]):
+        kwargs = {'topic': topics.AGENT,
+                  'agent_id': agent_id,
+                  'datapath_id': datapath_id,
+                  'port_added': added, 'port_removed': removed}
+        self.plugin.callback_nec.update_ports(self.context, **kwargs)
+
+    def test_create_port_no_ofc_creation(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        self.ofc.exists_ofc_port.return_value = False
+
+        net = None
+        p1 = None
+        ctx = mock.ANY
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                p1 = port['port']
+                net_id = port['port']['network_id']
+                net = self._show_resource('network', net_id)
+                self.assertEqual(net['status'], 'ACTIVE')
+                self.assertEqual(p1['status'], 'ACTIVE')
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_create_port_with_ofc_creation(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        self.ofc.exists_ofc_port.side_effect = [False, True]
+
+        net = None
+        p1 = None
+        ctx = mock.ANY
+        with self.subnet() as subnet:
+            with self.port(subnet=subnet) as port:
+                p1 = port['port']
+                net_id = port['port']['network_id']
+                net = self._show_resource('network', net_id)
+                self.assertEqual(net['status'], 'ACTIVE')
+                self.assertEqual(p1['status'], 'ACTIVE')
+
+                # Check the port is not created on OFC
+                self.assertFalse(self.ofc.create_ofc_port.call_count)
+
+                # Register portinfo, then the port is created on OFC
+                portinfo = {'id': p1['id'], 'port_no': 123}
+                self._rpcapi_update_ports(added=[portinfo])
+                self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.create_ofc_port(ctx, p1['id'], mock.ANY),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.delete_ofc_port(ctx, p1['id'], mock.ANY),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
+
+    def test_update_port(self):
+        self._test_update_port_with_admin_state(resource='port')
+
+    def test_update_network_with_ofc_port(self):
+        self._test_update_port_with_admin_state(resource='network')
+
+    def _test_update_port_with_admin_state(self, resource='port'):
+        self.ofc.exists_ofc_tenant.return_value = False
+        self.ofc.exists_ofc_port.side_effect = [False, True, False]
+
+        net = None
+        p1 = None
+        ctx = mock.ANY
+
+        if resource == 'network':
+            net_ini_admin_state = False
+            port_ini_admin_state = True
+        else:
+            net_ini_admin_state = True
+            port_ini_admin_state = False
+
+        with self.network(admin_state_up=net_ini_admin_state) as network:
+            with self.subnet(network=network) as subnet:
+                with self.port(subnet=subnet,
+                               admin_state_up=port_ini_admin_state) as port:
+                    p1 = port['port']
+                    net_id = port['port']['network_id']
+                    res_id = net_id if resource == 'network' else p1['id']
+
+                    net = self._show_resource('network', net_id)
+
+                    # Check the port is not created on OFC
+                    self.assertFalse(self.ofc.create_ofc_port.call_count)
+
+                    # Register portinfo, then the port is created on OFC
+                    portinfo = {'id': p1['id'], 'port_no': 123}
+                    self._rpcapi_update_ports(added=[portinfo])
+                    self.assertFalse(self.ofc.create_ofc_port.call_count)
+
+                    self._update_resource(resource, res_id,
+                                          {'admin_state_up': True})
+                    self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+                    self.assertFalse(self.ofc.delete_ofc_port.call_count)
+
+                    self._update_resource(resource, res_id,
+                                          {'admin_state_up': False})
+                    self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
+                                         net['name']),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.create_ofc_port(ctx, p1['id'], mock.ANY),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.delete_ofc_port(ctx, p1['id'], mock.ANY),
+
+            mock.call.exists_ofc_port(ctx, p1['id']),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)

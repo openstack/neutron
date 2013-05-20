@@ -15,6 +15,8 @@
 #    under the License.
 # @author: Ryota MIBU
 
+import random
+
 import mox
 
 from quantum import context
@@ -48,13 +50,39 @@ class TremaDriverTestBase(base.BaseTestCase):
         tenant_id = uuidutils.generate_uuid()
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
+        mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
         portinfo = nmodels.PortInfo(id=port_id, datapath_id="0x123456789",
                                     port_no=1234, vlan_id=321,
-                                    mac="11:22:33:44:55:66")
+                                    mac=mac)
         return tenant_id, network_id, portinfo
 
 
 class TremaDriverNetworkTestBase(TremaDriverTestBase):
+
+    def test_create_tenant(self):
+        t, n, p = self.get_ofc_item_random_params()
+        # There is no API call.
+        self.mox.ReplayAll()
+        ret = self.driver.create_tenant('dummy_desc', t)
+        self.mox.VerifyAll()
+        ofc_t_path = "/tenants/%s" % t
+        self.assertEqual(ofc_t_path, ret)
+
+    def test_update_tenant(self):
+        t, n, p = self.get_ofc_item_random_params()
+        path = "/tenants/%s" % t
+        # There is no API call.
+        self.mox.ReplayAll()
+        self.driver.update_tenant(path, 'dummy_desc')
+        self.mox.VerifyAll()
+
+    def testc_delete_tenant(self):
+        t, n, p = self.get_ofc_item_random_params()
+        path = "/tenants/%s" % t
+        # There is no API call.
+        self.mox.ReplayAll()
+        self.driver.delete_tenant(path)
+        self.mox.VerifyAll()
 
     def testa_create_network(self):
         t, n, p = self.get_ofc_item_random_params()
@@ -82,6 +110,9 @@ class TremaDriverNetworkTestBase(TremaDriverTestBase):
 class TremaPortBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_port"
+
+    def test_filter_supported(self):
+        self.assertTrue(self.driver.filter_supported())
 
     def testd_create_port(self):
         _t, n, p = self.get_ofc_item_random_params()
@@ -113,6 +144,9 @@ class TremaPortBaseDriverTest(TremaDriverNetworkTestBase):
 class TremaPortMACBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_portmac"
+
+    def test_filter_supported(self):
+        self.assertTrue(self.driver.filter_supported())
 
     def testd_create_port(self):
         t, n, p = self.get_ofc_item_random_params()
@@ -154,6 +188,9 @@ class TremaMACBaseDriverTest(TremaDriverNetworkTestBase):
 
     driver_name = "trema_mac"
 
+    def test_filter_supported(self):
+        self.assertFalse(self.driver.filter_supported())
+
     def testd_create_port(self):
         t, n, p = self.get_ofc_item_random_params()
 
@@ -179,38 +216,43 @@ class TremaMACBaseDriverTest(TremaDriverNetworkTestBase):
 
 
 class TremaFilterDriverTest(TremaDriverTestBase):
+    def _test_create_filter(self, filter_dict=None, filter_post=None,
+                            filter_wildcards=None, no_portinfo=False):
+        t, n, p = self.get_ofc_item_random_params()
+        src_mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
+        if filter_wildcards is None:
+            filter_wildcards = []
 
-    def get_ofc_item_random_params(self):
-        """create random parameters for ofc_item test."""
-        t, n, p = (super(TremaFilterDriverTest, self).
-                   get_ofc_item_random_params())
-        filter_id = uuidutils.generate_uuid()
-        filter_dict = {'tenant_id': t,
-                       'id': filter_id,
-                       'network_id': n,
-                       'priority': 123,
-                       'action': "ACCEPT",
-                       'in_port': p.id,
-                       'src_mac': p.mac,
-                       'dst_mac': "",
-                       'eth_type': 0,
-                       'src_cidr': "",
-                       'dst_cidr': "",
-                       'src_port': 0,
-                       'dst_port': 0,
-                       'protocol': "TCP",
-                       'admin_state_up': True,
-                       'status': "ACTIVE"}
-        filter_item = nmodels.PacketFilter(**filter_dict)
-        return t, n, p, filter_item
-
-    def testa_create_filter(self):
-        t, n, p, f = self.get_ofc_item_random_params()
+        f = {'tenant_id': t,
+             'id': uuidutils.generate_uuid(),
+             'network_id': n,
+             'priority': 123,
+             'action': "ACCEPT",
+             'in_port': p.id,
+             'src_mac': src_mac,
+             'dst_mac': "",
+             'eth_type': 0,
+             'src_cidr': "",
+             'dst_cidr': "",
+             'src_port': 0,
+             'dst_port': 0,
+             'protocol': "TCP",
+             'admin_state_up': True,
+             'status': "ACTIVE"}
+        if filter_dict:
+            f.update(filter_dict)
+        print 'filter=%s' % f
 
         net_path = "/networks/%s" % n
-        ofp_wildcards = 'dl_vlan,dl_vlan_pcp,nw_tos,dl_dst,' + \
-                        'nw_src:32,nw_dst:32,tp_src,tp_dst'
-        body = {'id': f.id,
+
+        all_wildcards_ofp = ['dl_vlan', 'dl_vlan_pcp', 'nw_tos',
+                             'in_port', 'dl_src', 'dl_dst',
+                             'nw_src', 'nw_dst',
+                             'dl_type', 'nw_proto',
+                             'tp_src', 'tp_dst']
+        all_wildcards_non_ofp = ['in_datapath_id', 'slice']
+
+        body = {'id': f['id'],
                 'action': 'ALLOW',
                 'priority': 123,
                 'slice': n,
@@ -218,19 +260,117 @@ class TremaFilterDriverTest(TremaDriverTestBase):
                 'in_port': 1234,
                 'nw_proto': '0x6',
                 'dl_type': '0x800',
-                'dl_src': p.mac,
-                'ofp_wildcards': ofp_wildcards}
+                'dl_src': src_mac}
+        if filter_post:
+            body.update(filter_post)
+
+        if no_portinfo:
+            filter_wildcards += ['in_datapath_id', 'in_port']
+            p = None
+
+        for field in filter_wildcards:
+            if field in body:
+                del body[field]
+
+        ofp_wildcards = ["%s:32" % _f if _f in ['nw_src', 'nw_dst'] else _f
+                         for _f in all_wildcards_ofp if _f not in body]
+        body['ofp_wildcards'] = ','.join(ofp_wildcards)
+
+        non_ofp_wildcards = [_f for _f in all_wildcards_non_ofp
+                             if _f not in body]
+        if non_ofp_wildcards:
+            body['wildcards'] = ','.join(non_ofp_wildcards)
+
         ofc_client.OFCClient.do_request("POST", "/filters", body=body)
         self.mox.ReplayAll()
 
-        ret = self.driver.create_filter(net_path, f, p, f.id)
+        ret = self.driver.create_filter(net_path, f, p, f['id'])
         self.mox.VerifyAll()
-        self.assertEqual(ret, '/filters/%s' % f.id)
+        self.assertEqual(ret, '/filters/%s' % f['id'])
+
+    def test_create_filter_accept(self):
+        self._test_create_filter(filter_dict={'action': 'ACCEPT'})
+
+    def test_create_filter_allow(self):
+        self._test_create_filter(filter_dict={'action': 'ALLOW'})
+
+    def test_create_filter_deny(self):
+        self._test_create_filter(filter_dict={'action': 'DENY'},
+                                 filter_post={'action': 'DENY'})
+
+    def test_create_filter_drop(self):
+        self._test_create_filter(filter_dict={'action': 'DROP'},
+                                 filter_post={'action': 'DENY'})
+
+    def test_create_filter_no_port(self):
+        self._test_create_filter(no_portinfo=True)
+
+    def test_create_filter_src_mac_wildcard(self):
+        self._test_create_filter(filter_dict={'src_mac': ''},
+                                 filter_wildcards=['dl_src'])
+
+    def test_create_filter_dst_mac(self):
+        dst_mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
+        self._test_create_filter(filter_dict={'dst_mac': dst_mac},
+                                 filter_post={'dl_dst': dst_mac})
+
+    def test_create_filter_src_cidr(self):
+        src_cidr = '10.2.0.0/24'
+        self._test_create_filter(filter_dict={'src_cidr': src_cidr},
+                                 filter_post={'nw_src': src_cidr})
+
+    def test_create_filter_dst_cidr(self):
+        dst_cidr = '192.168.10.0/24'
+        self._test_create_filter(filter_dict={'dst_cidr': dst_cidr},
+                                 filter_post={'nw_dst': dst_cidr})
+
+    def test_create_filter_proto_icmp(self):
+        self._test_create_filter(
+            filter_dict={'protocol': 'icmp'},
+            filter_post={'dl_type': '0x800', 'nw_proto': '0x1'})
+
+    def test_create_filter_proto_tcp(self):
+        self._test_create_filter(
+            filter_dict={'protocol': 'tcp'},
+            filter_post={'dl_type': '0x800', 'nw_proto': '0x6'})
+
+    def test_create_filter_proto_udp(self):
+        self._test_create_filter(
+            filter_dict={'protocol': 'udp'},
+            filter_post={'dl_type': '0x800', 'nw_proto': '0x11'})
+
+    def test_create_filter_proto_arp(self):
+        self._test_create_filter(
+            filter_dict={'protocol': 'arp'},
+            filter_post={'dl_type': '0x806'},
+            filter_wildcards=['nw_proto'])
+
+    def test_create_filter_proto_misc(self):
+        self._test_create_filter(
+            filter_dict={'protocol': '0x33', 'eth_type': '0x900'},
+            filter_post={'dl_type': '0x900', 'nw_proto': '0x33'})
+
+    def test_create_filter_proto_misc_dl_type_wildcard(self):
+        self._test_create_filter(
+            filter_dict={'protocol': '0x33', 'ether_type': ''},
+            filter_post={'nw_proto': '0x33'},
+            filter_wildcards=['dl_type'])
+
+    def test_create_filter_proto_wildcard(self):
+        self._test_create_filter(
+            filter_dict={'protocol': ''},
+            filter_wildcards=['dl_type', 'nw_proto'])
+
+    def test_create_filter_src_dst_port(self):
+        self._test_create_filter(filter_dict={'src_port': 8192,
+                                              'dst_port': 4096},
+                                 filter_post={'tp_src': '0x2000',
+                                              'tp_dst': '0x1000'})
 
     def testb_delete_filter(self):
-        t, n, p, f = self.get_ofc_item_random_params()
+        t, n, p = self.get_ofc_item_random_params()
 
-        f_path = "/filters/%s" % f.id
+        f_path = "/filters/%s" % uuidutils.generate_uuid()
         ofc_client.OFCClient.do_request("DELETE", f_path)
         self.mox.ReplayAll()
 

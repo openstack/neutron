@@ -166,6 +166,9 @@ class PFCDriverTestBase(base.BaseTestCase):
         self.driver.delete_port(port_path)
         self.mox.VerifyAll()
 
+    def test_filter_supported(self):
+        self.assertFalse(self.driver.filter_supported())
+
 
 class PFCDriverBaseTest(PFCDriverTestBase):
     pass
@@ -185,7 +188,14 @@ class PFCV3DriverTest(PFCDriverTestBase):
         self.assertEqual(ofc_t_path, ret)
 
     def testc_delete_tenant(self):
-        pass
+        t, n, p = self.get_ofc_item_random_params()
+
+        path = "/tenants/%s" % _ofc(t)
+        # There is no API call.
+        self.mox.ReplayAll()
+
+        self.driver.delete_tenant(path)
+        self.mox.VerifyAll()
 
 
 class PFCV4DriverTest(PFCDriverTestBase):

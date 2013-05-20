@@ -23,30 +23,30 @@ from quantum.api.v2 import attributes
 from quantum.extensions import securitygroup as ext_sg
 from quantum import manager
 from quantum.plugins.nec.db import api as ndb  # noqa
+from quantum.tests.unit.nec import test_nec_plugin
 from quantum.tests.unit import test_extension_security_group as test_sg
 from quantum.tests.unit import test_security_groups_rpc as test_sg_rpc
 
-PLUGIN_NAME = ('quantum.plugins.nec.nec_plugin.NECPluginV2')
+PLUGIN_NAME = test_nec_plugin.PLUGIN_NAME
+OFC_MANAGER = test_nec_plugin.OFC_MANAGER
 AGENT_NAME = ('quantum.plugins.nec.agent.nec_quantum_agent.NECQuantumAgent')
 NOTIFIER = ('quantum.plugins.nec.nec_plugin.NECPluginV2AgentNotifierApi')
 
 
 class NecSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
-    _plugin_name = PLUGIN_NAME
 
     def setUp(self, plugin=None):
         test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
         self.addCleanup(mock.patch.stopall)
-        notifier_p = mock.patch(NOTIFIER)
-        notifier_cls = notifier_p.start()
-        self.notifier = mock.Mock()
-        notifier_cls.return_value = self.notifier
+        mock.patch(NOTIFIER).start()
+        mock.patch(OFC_MANAGER).start()
         self._attribute_map_bk_ = {}
         for item in attributes.RESOURCE_ATTRIBUTE_MAP:
             self._attribute_map_bk_[item] = (attributes.
                                              RESOURCE_ATTRIBUTE_MAP[item].
                                              copy())
         super(NecSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
+        self.notifier = manager.QuantumManager.get_plugin().notifier
 
     def tearDown(self):
         super(NecSecurityGroupsTestCase, self).tearDown()
