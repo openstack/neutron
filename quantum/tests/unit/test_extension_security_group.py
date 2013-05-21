@@ -448,6 +448,12 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self._delete('security-groups', sg['security_groups'][0]['id'],
                          409, quantum_context=quantum_context)
 
+    def test_security_group_list_creates_default_security_group(self):
+        quantum_context = context.Context('', 'test-tenant')
+        sg = self._list('security-groups',
+                        quantum_context=quantum_context).get('security_groups')
+        self.assertEqual(len(sg), 1)
+
     def test_default_security_group_rules(self):
         with self.network():
             res = self.new_list_request('security-groups')
