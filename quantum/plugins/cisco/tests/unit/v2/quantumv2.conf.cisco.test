@@ -22,7 +22,7 @@ core_plugin = quantum.plugins.cisco.network_plugin.PluginV2
 # The messaging module to use, defaults to kombu.
 rpc_backend = quantum.openstack.common.rpc.impl_fake
 
-[QUOTAS]
+[quotas]
 # resource name(s) that are supported in quota features
 quota_items = network,subnet,port
 

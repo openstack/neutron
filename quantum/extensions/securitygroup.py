@@ -212,7 +212,7 @@ security_group_quota_opts = [
                help=_('Number of security rules allowed per tenant, '
                       '-1 for unlimited')),
 ]
-cfg.CONF.register_opts(security_group_quota_opts, 'QUOTAS')
+cfg.CONF.register_opts(security_group_quota_opts, 'quotas')
 
 
 class Securitygroup(extensions.ExtensionDescriptor):

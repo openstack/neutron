@@ -1949,7 +1949,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 4
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        cfg.CONF.set_override('quota_network', quota, group='quotas')
         res = self._create_network_bulk(self.fmt, quota + 1, 'test', True)
         self._validate_behavior_on_bulk_failure(res, 'networks', errcode=409)
 
@@ -1957,7 +1957,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        cfg.CONF.set_override('quota_network', quota, group='quotas')
         networks = [{'network': {'name': 'n1',
                                  'tenant_id': self._tenant_id}},
                     {'network': {'name': 'n2',
@@ -1974,7 +1974,7 @@ class TestNetworksV2(QuantumDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        cfg.CONF.set_override('quota_network', quota, group='quotas')
         networks = [{'network': {'name': 'n1',
                                  'tenant_id': self._tenant_id}},
                     {'network': {'name': 'n2',

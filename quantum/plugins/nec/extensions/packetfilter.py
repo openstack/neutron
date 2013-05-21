@@ -34,7 +34,7 @@ quota_packet_filter_opts = [
                       "-1 for unlimited"))
 ]
 # Register the configuration options
-cfg.CONF.register_opts(quota_packet_filter_opts, 'QUOTAS')
+cfg.CONF.register_opts(quota_packet_filter_opts, 'quotas')
 
 
 PACKET_FILTER_ACTION_REGEX = "(?i)^(allow|accept|drop|deny)$"
