@@ -47,6 +47,10 @@ class SecurityGroupCannotRemoveDefault(qexception.InUse):
     message = _("Removing default security group not allowed.")
 
 
+class SecurityGroupCannotUpdateDefault(qexception.InUse):
+    message = _("Updating default security group not allowed.")
+
+
 class SecurityGroupDefaultAlreadyExists(qexception.InUse):
     message = _("Default security group already exists.")
 
@@ -149,10 +153,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                'validate': {'type:uuid': None},
                'is_visible': True,
                'primary_key': True},
-        'name': {'allow_post': True, 'allow_put': False,
+        'name': {'allow_post': True, 'allow_put': True,
                  'is_visible': True, 'default': '',
                  'validate': {'type:name_not_default': None}},
-        'description': {'allow_post': True, 'allow_put': False,
+        'description': {'allow_post': True, 'allow_put': True,
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
@@ -276,6 +280,10 @@ class SecurityGroupPluginBase(object):
 
     @abstractmethod
     def create_security_group(self, context, security_group):
+        pass
+
+    @abstractmethod
+    def update_security_group(self, context, id, security_group):
         pass
 
     @abstractmethod

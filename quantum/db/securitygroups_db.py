@@ -200,6 +200,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         with context.session.begin(subtransactions=True):
             context.session.delete(sg)
 
+    def update_security_group(self, context, id, security_group):
+        s = security_group['security_group']
+        with context.session.begin(subtransactions=True):
+            sg = self._get_security_group(context, id)
+            if sg['name'] == 'default' and 'name' in s:
+                raise ext_sg.SecurityGroupCannotUpdateDefault()
+            sg.update(s)
+        return self._make_security_group_dict(sg)
+
     def _make_security_group_dict(self, security_group, fields=None):
         res = {'id': security_group['id'],
                'name': security_group['name'],
