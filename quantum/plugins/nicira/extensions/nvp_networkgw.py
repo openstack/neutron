@@ -28,8 +28,9 @@ from quantum import quota
 
 
 RESOURCE_NAME = "network_gateway"
-COLLECTION_NAME = "%ss" % RESOURCE_NAME
-EXT_ALIAS = RESOURCE_NAME
+# Use dash for alias and collection name
+EXT_ALIAS = RESOURCE_NAME.replace('_', '-')
+COLLECTION_NAME = "%ss" % EXT_ALIAS
 DEVICE_ID_ATTR = 'id'
 IFACE_NAME_ATTR = 'interface_name'
 
