@@ -252,7 +252,7 @@ class ServiceTypeManagerTestCase(ServiceTypeTestCaseBase):
         servicetype_db.ServiceTypeManager._instance = None
         plugin_name = "%s.%s" % (dp.__name__, dp.DummyServicePlugin.__name__)
         cfg.CONF.set_override('service_definition', ['dummy:%s' % plugin_name],
-                              group='DEFAULT_SERVICETYPE')
+                              group='default_servicetype')
         self.addCleanup(db_api.clear_db)
         super(ServiceTypeManagerTestCase, self).setUp()
 
