@@ -263,7 +263,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         ovs_db_v2.initialize()
         self._parse_network_vlan_ranges()
         ovs_db_v2.sync_vlan_allocations(self.network_vlan_ranges)
-        self.tenant_network_type = cfg.CONF.OVS.tenant_network_type
+        self.tenant_network_type = cfg.CONF.ovs.tenant_network_type
         if self.tenant_network_type not in [constants.TYPE_LOCAL,
                                             constants.TYPE_VLAN,
                                             constants.TYPE_GRE,
@@ -272,7 +272,7 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       "Agent terminated!"),
                       self.tenant_network_type)
             sys.exit(1)
-        self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
+        self.enable_tunneling = cfg.CONF.ovs.enable_tunneling
         self.tunnel_id_ranges = []
         if self.enable_tunneling:
             self._parse_tunnel_id_ranges()
@@ -304,14 +304,14 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _parse_network_vlan_ranges(self):
         try:
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
-                cfg.CONF.OVS.network_vlan_ranges)
+                cfg.CONF.ovs.network_vlan_ranges)
         except Exception as ex:
             LOG.error(_("%s. Agent terminated!"), ex)
             sys.exit(1)
         LOG.info(_("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
     def _parse_tunnel_id_ranges(self):
-        for entry in cfg.CONF.OVS.tunnel_id_ranges:
+        for entry in cfg.CONF.ovs.tunnel_id_ranges:
             entry = entry.strip()
             try:
                 tun_min, tun_max = entry.split(':')

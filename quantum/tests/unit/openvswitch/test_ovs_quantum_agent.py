@@ -40,7 +40,7 @@ class CreateAgentConfigMap(base.BaseTestCase):
     def test_create_agent_config_map_fails_for_invalid_tunnel_config(self):
         self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default
-        cfg.CONF.set_override('enable_tunneling', True, group='OVS')
+        cfg.CONF.set_override('enable_tunneling', True, group='ovs')
         with testtools.ExpectedException(ValueError):
             ovs_quantum_agent.create_agent_config_map(cfg.CONF)
 

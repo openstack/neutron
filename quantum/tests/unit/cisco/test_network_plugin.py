@@ -96,7 +96,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
         config = {
             ovs_config: {
-                'OVS': {'bridge_mappings': 'physnet1:br-eth1',
+                'ovs': {'bridge_mappings': 'physnet1:br-eth1',
                         'network_vlan_ranges': [range_str],
                         'tenant_network_type': 'vlan'}
             },

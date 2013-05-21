@@ -22,12 +22,12 @@ from quantum.tests import base
 class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
-        self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
-        self.assertFalse(cfg.CONF.OVS.enable_tunneling)
-        self.assertEqual('br-tun', cfg.CONF.OVS.tunnel_bridge)
+        self.assertEqual('br-int', cfg.CONF.ovs.integration_bridge)
+        self.assertFalse(cfg.CONF.ovs.enable_tunneling)
+        self.assertEqual('br-tun', cfg.CONF.ovs.tunnel_bridge)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
-        self.assertEqual('local', cfg.CONF.OVS.tenant_network_type)
-        self.assertEqual(0, len(cfg.CONF.OVS.bridge_mappings))
-        self.assertEqual(0, len(cfg.CONF.OVS.network_vlan_ranges))
-        self.assertEqual(0, len(cfg.CONF.OVS.tunnel_id_ranges))
+        self.assertEqual('local', cfg.CONF.ovs.tenant_network_type)
+        self.assertEqual(0, len(cfg.CONF.ovs.bridge_mappings))
+        self.assertEqual(0, len(cfg.CONF.ovs.network_vlan_ranges))
+        self.assertEqual(0, len(cfg.CONF.ovs.tunnel_id_ranges))

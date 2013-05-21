@@ -494,7 +494,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.ovs', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -511,7 +511,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.ovs', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -530,7 +530,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch('oslo.config.cfg.CONF.ovs', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -564,8 +564,8 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         self.assertEqual(ip, '1.2.3.4')
 
     def mock_main(self):
-        cfg_attrs = {'OVS.integration_bridge': 'integ_br',
-                     'OVS.ovsdb_port': 16634,
+        cfg_attrs = {'ovs.integration_bridge': 'integ_br',
+                     'ovs.ovsdb_port': 16634,
                      'AGENT.root_helper': 'helper'}
         with nested(
             mock.patch('oslo.config.cfg.CONF', **cfg_attrs),
