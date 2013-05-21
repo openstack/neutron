@@ -26,7 +26,6 @@ from webob import exc as web_exc
 from quantum.api.v2 import attributes
 from quantum.api.v2 import base
 from quantum.common import exceptions
-from quantum.db import db_base_plugin_v2
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.openstack.common import log as logging
@@ -267,7 +266,7 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
                                                   network_mapping_info):
                 raise GatewayConnectionInUse(mapping=network_mapping_info,
                                              gateway_id=network_gateway_id)
-            # TODO(salvatore-orlando): This will give the port a fixed_ip,
+            # TODO(salvatore-orlando): Creating a port will give it an IP,
             # but we actually do not need any. Instead of wasting an IP we
             # should have a way to say a port shall not be associated with
             # any subnet
@@ -313,12 +312,11 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
             gw_db.network_connections.append(
                 NetworkConnection(**network_mapping_info))
             port_id = port['id']
-            # now deallocate the ip from the port
+            # now deallocate and recycle ip from the port
             for fixed_ip in port.get('fixed_ips', []):
-                db_base_plugin_v2.QuantumDbPluginV2._delete_ip_allocation(
-                    context, network_id,
-                    fixed_ip['subnet_id'],
-                    fixed_ip['ip_address'])
+                self._recycle_ip(context, network_id,
+                                 fixed_ip['subnet_id'],
+                                 fixed_ip['ip_address'])
             LOG.debug(_("Ensured no Ip addresses are configured on port %s"),
                       port_id)
             return {'connection_info':
