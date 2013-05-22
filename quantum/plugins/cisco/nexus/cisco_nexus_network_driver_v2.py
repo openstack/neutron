@@ -36,7 +36,7 @@ LOG = logging.getLogger(__name__)
 class CiscoNEXUSDriver():
     """Nexus Driver Main Class."""
     def __init__(self):
-        pass
+        self.connections = {}
 
     def _edit_config(self, mgr, target='running', config='',
                      allowed_exc_strs=None):
@@ -68,16 +68,21 @@ class CiscoNEXUSDriver():
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
         """Make SSH connection to the Nexus Switch."""
+        if getattr(self.connections.get(nexus_host), 'connected', None):
+            return self.connections[nexus_host]
+
         try:
-            man = manager.connect(host=nexus_host, port=nexus_ssh_port,
+            man = manager.connect(host=nexus_host,
+                                  port=nexus_ssh_port,
                                   username=nexus_user,
                                   password=nexus_password)
+            self.connections[nexus_host] = man
         except Exception as e:
             # Raise a Quantum exception. Include a description of
             # the original ncclient exception.
             raise cexc.NexusConnectFailed(nexus_host=nexus_host, exc=e)
 
-        return man
+        return self.connections[nexus_host]
 
     def create_xml_snippet(self, cutomized_config):
         """Create XML snippet.
@@ -227,3 +232,23 @@ class CiscoNEXUSDriver():
                                 nexus_user, nexus_password)
         for ports in nexus_ports:
             self.disable_vlan_on_trunk_int(man, ports, vlan_id)
+
+    def create_vlan_svi(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                        nexus_ssh_port, gateway_ip):
+        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
+                                nexus_user, nexus_password)
+
+        confstr = snipp.CMD_VLAN_SVI_SNIPPET % (vlan_id, gateway_ip)
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
+        man.edit_config(target='running', config=confstr)
+
+    def delete_vlan_svi(self, vlan_id, nexus_host, nexus_user, nexus_password,
+                        nexus_ssh_port):
+        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
+                                nexus_user, nexus_password)
+
+        confstr = snipp.CMD_NO_VLAN_SVI_SNIPPET % vlan_id
+        confstr = self.create_xml_snippet(confstr)
+        LOG.debug(_("NexusDriver: %s"), confstr)
+        man.edit_config(target='running', config=confstr)

@@ -392,6 +392,69 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         return ovs_output[0]
 
+    def add_router_interface(self, context, router_id, interface_info):
+        """Add a router interface on a subnet.
+
+        Only invoke the Nexus plugin to create SVI if a Nexus
+        plugin is loaded, otherwise send it to the vswitch plugin
+        """
+        nexus_driver = cfg.CONF.CISCO.nexus_driver
+        if nexus_driver.endswith('CiscoNEXUSDriver'):
+            LOG.debug(_("Nexus plugin loaded, creating SVI on switch"))
+            if 'subnet_id' not in interface_info:
+                raise cexc.SubnetNotSpecified()
+            if 'port_id' in interface_info:
+                raise cexc.PortIdForNexusSvi()
+            subnet = self.get_subnet(context, interface_info['subnet_id'])
+            gateway_ip = subnet['gateway_ip']
+            # Get gateway IP address and netmask
+            cidr = subnet['cidr']
+            netmask = cidr.split('/', 1)[1]
+            gateway_ip = gateway_ip + '/' + netmask
+            network_id = subnet['network_id']
+            vlan_id = self._get_segmentation_id(network_id)
+            vlan_name = conf.CISCO.vlan_name_prefix + str(vlan_id)
+
+            n_args = [vlan_name, vlan_id, subnet['id'], gateway_ip, router_id]
+            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                          self._func_name(),
+                                                          n_args)
+            return nexus_output
+        else:
+            LOG.debug(_("No Nexus plugin, sending to vswitch"))
+            n_args = [context, router_id, interface_info]
+            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                        self._func_name(),
+                                                        n_args)
+            return ovs_output
+
+    def remove_router_interface(self, context, router_id, interface_info):
+        """Remove a router interface.
+
+        Only invoke the Nexus plugin to delete SVI if a Nexus
+        plugin is loaded, otherwise send it to the vswitch plugin
+        """
+        nexus_driver = cfg.CONF.CISCO.nexus_driver
+        if nexus_driver.endswith('CiscoNEXUSDriver'):
+            LOG.debug(_("Nexus plugin loaded, deleting SVI from switch"))
+
+            subnet = self.get_subnet(context, interface_info['subnet_id'])
+            network_id = subnet['network_id']
+            vlan_id = self._get_segmentation_id(network_id)
+            n_args = [vlan_id, router_id]
+
+            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                          self._func_name(),
+                                                          n_args)
+            return nexus_output
+        else:
+            LOG.debug(_("No Nexus plugin, sending to vswitch"))
+            n_args = [context, router_id, interface_info]
+            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                        self._func_name(),
+                                                        n_args)
+            return ovs_output
+
     def create_subnet(self, context, subnet):
         """For this model this method will be delegated to vswitch plugin."""
         pass

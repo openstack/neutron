@@ -103,6 +103,11 @@ class NexusPortBindingNotFound(exceptions.QuantumException):
         super(NexusPortBindingNotFound, self).__init__(filters=filters)
 
 
+class NoNexusSviSwitch(exceptions.QuantumException):
+    """No usable nexus switch found."""
+    message = _("No usable Nexus switch found to create SVI interface")
+
+
 class PortVnicBindingAlreadyExists(exceptions.QuantumException):
     """PortVnic Binding already exists."""
     message = _("PortVnic Binding %(port_id)s already exists")
@@ -111,3 +116,18 @@ class PortVnicBindingAlreadyExists(exceptions.QuantumException):
 class PortVnicNotFound(exceptions.QuantumException):
     """PortVnic Binding is not present."""
     message = _("PortVnic Binding %(port_id)s is not present")
+
+
+class SubnetNotSpecified(exceptions.QuantumException):
+    """Subnet id not specified."""
+    message = _("No subnet_id specified for router gateway")
+
+
+class SubnetInterfacePresent(exceptions.QuantumException):
+    """Subnet SVI interface already exists."""
+    message = _("Subnet %(subnet_id)s has an interface on %(router_id)s")
+
+
+class PortIdForNexusSvi(exceptions.QuantumException):
+        """Port Id specified for Nexus SVI."""
+        message = _('Nexus hardware router gateway only uses Subnet Ids')

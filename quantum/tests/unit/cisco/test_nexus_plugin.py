@@ -18,6 +18,7 @@ import mock
 from quantum.db import api as db
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
+from quantum.plugins.cisco.common import cisco_exceptions as cisco_exc
 from quantum.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from quantum.tests import base
 
@@ -122,3 +123,40 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             INSTANCE, self.vlan_id)
 
         self.assertEqual(expected_instance_id, INSTANCE)
+
+    def test_nexus_add_remove_router_interface(self):
+        """Tests addition of a router interface."""
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        gateway_ip = '10.0.0.1/24'
+        router_id = '00000R1'
+        subnet_id = '00001'
+
+        result = self._cisco_nexus_plugin.add_router_interface(vlan_name,
+                                                               vlan_id,
+                                                               subnet_id,
+                                                               gateway_ip,
+                                                               router_id)
+        self.assertTrue(result)
+        result = self._cisco_nexus_plugin.remove_router_interface(vlan_id,
+                                                                  router_id)
+        self.assertEqual(result, router_id)
+
+    def test_nexus_add_router_interface_fail(self):
+        """Tests deletion of a router interface."""
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        gateway_ip = '10.0.0.1/24'
+        router_id = '00000R1'
+        subnet_id = '00001'
+
+        self._cisco_nexus_plugin.add_router_interface(vlan_name,
+                                                      vlan_id,
+                                                      subnet_id,
+                                                      gateway_ip,
+                                                      router_id)
+
+        self.assertRaises(
+            cisco_exc.SubnetInterfacePresent,
+            self._cisco_nexus_plugin.add_router_interface,
+            vlan_name, vlan_id, subnet_id, gateway_ip, router_id)

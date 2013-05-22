@@ -183,3 +183,32 @@ FILTER_SHOW_VLAN_BRIEF_SNIPPET = """
         </vlan>
       </show>
 """
+
+
+CMD_VLAN_SVI_SNIPPET = """
+<interface>
+    <vlan>
+        <vlan>%s</vlan>
+        <__XML__MODE_vlan>
+            <no>
+              <shutdown/>
+            </no>
+            <ip>
+                <address>
+                    <address>%s</address>
+                </address>
+            </ip>
+        </__XML__MODE_vlan>
+    </vlan>
+</interface>
+"""
+
+CMD_NO_VLAN_SVI_SNIPPET = """
+<no>
+    <interface>
+        <vlan>
+            <vlan>%s</vlan>
+        </vlan>
+    </interface>
+</no>
+"""

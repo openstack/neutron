@@ -148,3 +148,17 @@ def get_port_switch_bindings(port_id, switch_ip):
         return binding
     except exc.NoResultFound:
         return
+
+
+def get_nexussvi_bindings():
+    """Lists nexus svi bindings."""
+    LOG.debug(_("get_nexussvi_bindings() called"))
+    session = db.get_session()
+
+    filters = {'port_id': 'router'}
+    bindings = (session.query(nexus_models_v2.NexusPortBinding).
+                filter_by(**filters).all())
+    if not bindings:
+        raise c_exc.NexusPortBindingNotFound(**filters)
+
+    return bindings

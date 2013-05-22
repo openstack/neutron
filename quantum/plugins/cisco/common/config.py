@@ -44,6 +44,8 @@ cisco_opts = [
                help=_("Maximum Port Profile value")),
     cfg.StrOpt('max_networks', default='65568',
                help=_("Maximum Network value")),
+    cfg.BoolOpt('svi_round_robin', default=False,
+                help=_("Distribute SVI interfaces over all switches")),
     cfg.StrOpt('model_class',
                default='quantum.plugins.cisco.models.virt_phy_sw_v2.'
                        'VirtualPhysicalSwitchModelV2',
