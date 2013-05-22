@@ -161,7 +161,9 @@ function copy_subunit_log {
 }
 
 function run_pep8 {
-  bash -c "${wrapper} tools/run_pep8.sh"
+  echo "Running flake8 ..."
+
+  ${wrapper} flake8
 }
 
 
