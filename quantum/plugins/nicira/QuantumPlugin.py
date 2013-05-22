@@ -22,6 +22,7 @@
 
 import hashlib
 import logging
+import os
 
 from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
@@ -71,6 +72,7 @@ LOG = logging.getLogger("QuantumPlugin")
 NVP_NOSNAT_RULES_ORDER = 10
 NVP_FLOATINGIP_NAT_RULES_ORDER = 224
 NVP_EXTGW_NAT_RULES_ORDER = 255
+NVP_EXT_PATH = os.path.join(os.path.dirname(__file__), 'extensions')
 
 
 # Provider network extension - allowed network types for the NVP Plugin
@@ -177,6 +179,9 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                        'default': self._nvp_delete_port}
         }
 
+        # If no api_extensions_path is provided set the following
+        if not cfg.CONF.api_extensions_path:
+            cfg.CONF.set_override('api_extensions_path', NVP_EXT_PATH)
         self.nvp_opts = cfg.CONF.NVP
         self.cluster = create_nvp_cluster(cfg.CONF,
                                           self.nvp_opts.concurrent_connections,

@@ -28,6 +28,8 @@ from quantum.plugins.nicira import nvp_cluster
 
 BASE_CONF_PATH = os.path.join(os.path.dirname(__file__),
                               '../../etc/quantum.conf.test')
+NVP_BASE_CONF_PATH = os.path.join(os.path.dirname(__file__),
+                                  'etc/quantum.conf.test')
 NVP_INI_PATH = os.path.join(os.path.dirname(__file__),
                             'etc/nvp.ini.basic.test')
 NVP_INI_FULL_PATH = os.path.join(os.path.dirname(__file__),
@@ -135,6 +137,14 @@ class ConfigurationTest(testtools.TestCase):
         self.assertIsNone(cfg.CONF.default_l3_gw_service_uuid)
         self.assertIsNone(cfg.CONF.default_l2_gw_service_uuid)
         self.assertEqual('breth0', cfg.CONF.default_interface_name)
+
+    def test_load_api_extensions(self):
+        q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
+                        '--config-file', NVP_INI_FULL_PATH])
+        cfg.CONF.set_override('core_plugin', NVP_PLUGIN_PATH)
+        # Load the configuration, and initialize the plugin
+        QuantumManager().get_plugin()
+        self.assertIn('extensions', cfg.CONF.api_extensions_path)
 
 
 class OldConfigurationTest(testtools.TestCase):
