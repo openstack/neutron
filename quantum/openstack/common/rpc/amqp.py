@@ -197,8 +197,9 @@ class ReplyProxy(ConnectionContext):
         msg_id = message_data.pop('_msg_id', None)
         waiter = self._call_waiters.get(msg_id)
         if not waiter:
-            LOG.warn(_('no calling threads waiting for msg_id : %s'
-                       ', message : %s') % (msg_id, message_data))
+            LOG.warn(_('no calling threads waiting for msg_id : %(msg_id)s'
+                       ', message : %(data)s'), {'msg_id': msg_id,
+                                                 'data': message_data})
         else:
             waiter.put(message_data)
 

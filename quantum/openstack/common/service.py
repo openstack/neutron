@@ -52,7 +52,7 @@ class Launcher(object):
 
         """
         self._services = threadgroup.ThreadGroup()
-        eventlet_backdoor.initialize_if_enabled()
+        self.backdoor_port = eventlet_backdoor.initialize_if_enabled()
 
     @staticmethod
     def run_service(service):
@@ -72,6 +72,7 @@ class Launcher(object):
         :returns: None
 
         """
+        service.backdoor_port = self.backdoor_port
         self._services.add_thread(self.run_service, service)
 
     def stop(self):

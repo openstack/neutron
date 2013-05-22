@@ -180,7 +180,7 @@ class ZmqSocket(object):
             return
 
         # We must unsubscribe, or we'll leak descriptors.
-        if len(self.subscriptions) > 0:
+        if self.subscriptions:
             for f in self.subscriptions:
                 try:
                     self.sock.setsockopt(zmq.UNSUBSCRIBE, f)
@@ -763,7 +763,7 @@ def _multi_send(method, context, topic, msg, timeout=None,
     LOG.debug(_("Sending message(s) to: %s"), queues)
 
     # Don't stack if we have no matchmaker results
-    if len(queues) == 0:
+    if not queues:
         LOG.warn(_("No matchmaker results. Not casting."))
         # While not strictly a timeout, callers know how to handle
         # this exception and a timeout isn't too big a lie.
@@ -846,6 +846,11 @@ def _get_ctxt():
 def _get_matchmaker(*args, **kwargs):
     global matchmaker
     if not matchmaker:
-        matchmaker = importutils.import_object(
-            CONF.rpc_zmq_matchmaker, *args, **kwargs)
+        mm = CONF.rpc_zmq_matchmaker
+        if mm.endswith('matchmaker.MatchMakerRing'):
+            mm.replace('matchmaker', 'matchmaker_ring')
+            LOG.warn(_('rpc_zmq_matchmaker = %(orig)s is deprecated; use'
+                       ' %(new)s instead') % dict(
+                     orig=CONF.rpc_zmq_matchmaker, new=mm))
+        matchmaker = importutils.import_object(mm, *args, **kwargs)
     return matchmaker

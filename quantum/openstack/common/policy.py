@@ -60,6 +60,7 @@ import abc
 import re
 import urllib
 
+import six
 import urllib2
 
 from quantum.openstack.common.gettextutils import _
@@ -436,7 +437,7 @@ def _parse_list_rule(rule):
             or_list.append(AndCheck(and_list))
 
     # If we have only one check, omit the "or"
-    if len(or_list) == 0:
+    if not or_list:
         return FalseCheck()
     elif len(or_list) == 1:
         return or_list[0]
@@ -738,6 +739,7 @@ class RuleCheck(Check):
 class RoleCheck(Check):
     def __call__(self, target, creds):
         """Check that there is a matching role in the cred dict."""
+
         return self.match.lower() in [x.lower() for x in creds['roles']]
 
 
@@ -774,5 +776,5 @@ class GenericCheck(Check):
         # TODO(termie): do dict inspection via dot syntax
         match = self.match % target
         if self.kind in creds:
-            return match == unicode(creds[self.kind])
+            return match == six.text_type(creds[self.kind])
         return False
