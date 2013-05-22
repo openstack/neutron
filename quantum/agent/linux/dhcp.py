@@ -100,6 +100,12 @@ class DhcpBase(object):
 
         raise NotImplementedError
 
+    @classmethod
+    def check_version(cls):
+        """Execute version checks on DHCP server."""
+
+        raise NotImplementedError
+
 
 class DhcpLocalProcess(DhcpBase):
     PORTS = []
@@ -220,6 +226,26 @@ class Dnsmasq(DhcpLocalProcess):
 
     QUANTUM_NETWORK_ID_KEY = 'QUANTUM_NETWORK_ID'
     QUANTUM_RELAY_SOCKET_PATH_KEY = 'QUANTUM_RELAY_SOCKET_PATH'
+    MINIMUM_VERSION = 2.59
+
+    @classmethod
+    def check_version(cls):
+        is_valid_version = None
+        try:
+            cmd = ['dnsmasq', '--version']
+            out = utils.execute(cmd)
+            ver = re.findall("\d+.\d+", out)[0]
+            is_valid_version = float(ver) >= cls.MINIMUM_VERSION
+            if not is_valid_version:
+                LOG.warning(_('FAILED VERSION REQUIREMENT FOR DNSMASQ. '
+                              'DHCP AGENT MAY NOT RUN CORRECTLY! '
+                              'Please ensure that its version is %s '
+                              'or above!'), cls.MINIMUM_VERSION)
+        except (OSError, RuntimeError, IndexError, ValueError):
+            LOG.warning(_('Unable to determine dnsmasq version. '
+                          'Please ensure that its version is %s '
+                          'or above!'), cls.MINIMUM_VERSION)
+        return is_valid_version
 
     @classmethod
     def existing_dhcp_networks(cls, conf, root_helper):
