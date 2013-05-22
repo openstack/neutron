@@ -45,9 +45,29 @@ CMD_VLAN_CONF_SNIPPET = """
                   <name>
                     <vlan-name>%s</vlan-name>
                   </name>
+                </__XML__MODE_vlan>
+              </vlan-id-create-delete>
+            </vlan>
+"""
+
+CMD_VLAN_ACTIVE_SNIPPET = """
+            <vlan>
+              <vlan-id-create-delete>
+                <__XML__PARAM_value>%s</__XML__PARAM_value>
+                <__XML__MODE_vlan>
                   <state>
                     <vstate>active</vstate>
                   </state>
+                </__XML__MODE_vlan>
+              </vlan-id-create-delete>
+            </vlan>
+"""
+
+CMD_VLAN_NO_SHUTDOWN_SNIPPET = """
+            <vlan>
+              <vlan-id-create-delete>
+                <__XML__PARAM_value>%s</__XML__PARAM_value>
+                <__XML__MODE_vlan>
                   <no>
                     <shutdown/>
                   </no>
