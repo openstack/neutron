@@ -59,6 +59,30 @@ class Manager(periodic_task.PeriodicTasks):
         pass
 
 
+def validate_post_plugin_load():
+    """Checks if the configuration variables are valid.
+
+    If the configuration is invalid then the method will return an error
+    message. If all is OK then it will return None.
+    """
+    if ('dhcp_agents_per_network' in cfg.CONF and
+        cfg.CONF.dhcp_agents_per_network <= 0):
+        msg = _("dhcp_agents_per_network must be >= 1. '%s' "
+                "is invalid.") % cfg.CONF.dhcp_agents_per_network
+        return msg
+
+
+def validate_pre_plugin_load():
+    """Checks if the configuration variables are valid.
+
+    If the configuration is invalid then the method will return an error
+    message. If all is OK then it will return None.
+    """
+    if cfg.CONF.core_plugin is None:
+        msg = _('Quantum core_plugin not configured!')
+        return msg
+
+
 class QuantumManager(object):
     """Quantum's Manager class.
 
@@ -74,8 +98,8 @@ class QuantumManager(object):
         if not options:
             options = {}
 
-        if cfg.CONF.core_plugin is None:
-            msg = _('Quantum core_plugin not configured!')
+        msg = validate_pre_plugin_load()
+        if msg:
             LOG.critical(msg)
             raise Exception(msg)
 
@@ -95,6 +119,11 @@ class QuantumManager(object):
                             "plugin with: pip install <plugin-name>\n"
                             "Example: pip install quantum-sample-plugin"))
         self.plugin = plugin_klass()
+
+        msg = validate_post_plugin_load()
+        if msg:
+            LOG.critical(msg)
+            raise Exception(msg)
 
         # core plugin as a part of plugin collection simplifies
         # checking extensions

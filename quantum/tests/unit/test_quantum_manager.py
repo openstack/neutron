@@ -25,6 +25,8 @@ from oslo.config import cfg
 from quantum.common import config
 from quantum.common.test_lib import test_config
 from quantum.manager import QuantumManager
+from quantum.manager import validate_post_plugin_load
+from quantum.manager import validate_pre_plugin_load
 from quantum.openstack.common import log as logging
 from quantum.plugins.common import constants
 from quantum.tests import base
@@ -102,3 +104,17 @@ class QuantumManagerTestCase(base.BaseTestCase):
         self.assertIn(constants.CORE, svc_plugins.keys())
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
         self.assertIn(constants.DUMMY, svc_plugins.keys())
+
+    def test_post_plugin_validation(self):
+        self.assertIsNone(validate_post_plugin_load())
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        self.assertIsNone(validate_post_plugin_load())
+        cfg.CONF.set_override('dhcp_agents_per_network', 0)
+        self.assertIsNotNone(validate_post_plugin_load())
+        cfg.CONF.set_override('dhcp_agents_per_network', -1)
+        self.assertIsNotNone(validate_post_plugin_load())
+
+    def test_pre_plugin_validation(self):
+        self.assertIsNotNone(validate_pre_plugin_load())
+        cfg.CONF.set_override('core_plugin', 'dummy.plugin')
+        self.assertIsNone(validate_pre_plugin_load())
