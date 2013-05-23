@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-22 12:11+0000\n"
+"POT-Creation-Date: 2013-05-23 12:11+0000\n"
 "PO-Revision-Date: 2013-04-28 05:13+0000\n"
 "Last-Translator: ujuc Gang <potopro@gmail.com>\n"
 "Language-Team: ko_KR <LL@li.org>\n"
@@ -6496,109 +6496,109 @@ msgid ""
 "found"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:48
+#: quantum/plugins/nicira/nicira_networkgw_db.py:47
 #, python-format
 msgid ""
 "Network Gateway '%(gateway_id)s' still has active mappings with one or "
 "more quantum networks."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:53
+#: quantum/plugins/nicira/nicira_networkgw_db.py:52
 #, python-format
 msgid ""
 "Port '%(port_id)s' is owned by '%(device_owner)s' and therefore cannot be"
 " deleted directly via the port API."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:58
+#: quantum/plugins/nicira/nicira_networkgw_db.py:57
 #, python-format
 msgid ""
 "The specified mapping '%(mapping)s' is already in use on network gateway "
 "'%(gateway_id)s'."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:63
+#: quantum/plugins/nicira/nicira_networkgw_db.py:62
 #, python-format
 msgid ""
 "Multiple network connections found on '%(gateway_id)s' with provided "
 "criteria."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:68
+#: quantum/plugins/nicira/nicira_networkgw_db.py:67
 #, python-format
 msgid ""
 "The connection %(network_mapping_info)s was not found on the network "
 "gateway '%(network_gateway_id)s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:73
+#: quantum/plugins/nicira/nicira_networkgw_db.py:72
 #, python-format
 msgid "The network gateway %(gateway_id)s cannot be updated or deleted"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:153
+#: quantum/plugins/nicira/nicira_networkgw_db.py:152
 msgid ""
 "A network identifier must be specified when connecting a network to a "
 "network gateway. Unable to complete operation"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:159
+#: quantum/plugins/nicira/nicira_networkgw_db.py:158
 #, python-format
 msgid ""
 "Invalid keys found among the ones provided in request body: "
 "%(connection_attrs)s."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:165
+#: quantum/plugins/nicira/nicira_networkgw_db.py:164
 msgid ""
 "In order to specify a segmentation id the segmentation type must be "
 "specified as well"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:169
+#: quantum/plugins/nicira/nicira_networkgw_db.py:168
 msgid "Cannot specify a segmentation id when the segmentation type is flat"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:218
+#: quantum/plugins/nicira/nicira_networkgw_db.py:217
 #, python-format
 msgid "Created network gateway with id:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:231
+#: quantum/plugins/nicira/nicira_networkgw_db.py:230
 #, python-format
 msgid "Updated network gateway with id:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:246
+#: quantum/plugins/nicira/nicira_networkgw_db.py:245
 #, python-format
 msgid "Network gateway '%s' was destroyed."
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:256
+#: quantum/plugins/nicira/nicira_networkgw_db.py:255
 #, python-format
 msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:297
+#: quantum/plugins/nicira/nicira_networkgw_db.py:296
 #, python-format
 msgid ""
 "Requested network '%(network_id)s' not found.Unable to create network "
 "connection on gateway '%(network_gateway_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:305
+#: quantum/plugins/nicira/nicira_networkgw_db.py:304
 #, python-format
 msgid ""
 "Gateway port for '%(network_gateway_id)s' created on network "
 "'%(network_id)s':%(port_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:322
+#: quantum/plugins/nicira/nicira_networkgw_db.py:320
 #, python-format
 msgid "Ensured no Ip addresses are configured on port %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:332
+#: quantum/plugins/nicira/nicira_networkgw_db.py:330
 #, python-format
 msgid ""
 "Disconnecting network '%(network_id)s' from gateway "
@@ -7969,29 +7969,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "Invalid network VLAN range: '%(range)s' - '%(error)s'"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [DEFAULT_SERVICETYPE] section"
-#~ msgstr ""
-
-#~ msgid "provider:segmentation_id out of range (1 through 4094)"
-#~ msgstr ""
-
-#~ msgid "%s out of range (1 to 4094)"
-#~ msgstr ""
-
-#~ msgid "No enabled DHCP agents"
-#~ msgstr ""
-
-#~ msgid "No active DHCP agents"
-#~ msgstr ""
-
-#~ msgid "No enabled DHCP agent on host %s"
-#~ msgstr ""
 
