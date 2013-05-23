@@ -929,6 +929,10 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                 self.assertEqual(res[key][2]['name'],
                                  gw2[self.resource]['name'])
 
+    def test_list_network_gateway_with_multiple_connections(self):
+        self._test_list_network_gateway_with_multiple_connections(
+            expected_gateways=2)
+
     def test_delete_network_gateway(self):
         # The default gateway must still be there
         self._test_delete_network_gateway(1)

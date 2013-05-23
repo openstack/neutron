@@ -380,6 +380,45 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                 self.assertEqual(res[key][1]['name'],
                                  gw2[self.resource]['name'])
 
+    def _test_list_network_gateway_with_multiple_connections(
+        self, expected_gateways=1):
+        with self._network_gateway() as gw:
+            with self.network() as net_1:
+                self._gateway_action('connect',
+                                     gw[self.resource]['id'],
+                                     net_1['network']['id'],
+                                     'vlan', 555)
+                self._gateway_action('connect',
+                                     gw[self.resource]['id'],
+                                     net_1['network']['id'],
+                                     'vlan', 777)
+                req = self.new_list_request(networkgw.COLLECTION_NAME)
+                res = self.deserialize('json', req.get_response(self.ext_api))
+                key = self.resource + 's'
+                self.assertEqual(len(res[key]), expected_gateways)
+                for item in res[key]:
+                    self.assertIn('ports', item)
+                    if item['id'] == gw[self.resource]['id']:
+                        gw_ports = item['ports']
+                self.assertEqual(len(gw_ports), 2)
+                segmentation_ids = [555, 777]
+                for gw_port in gw_ports:
+                    self.assertEqual('vlan', gw_port['segmentation_type'])
+                    self.assertIn(gw_port['segmentation_id'], segmentation_ids)
+                    segmentation_ids.remove(gw_port['segmentation_id'])
+                # Required cleanup
+                self._gateway_action('disconnect',
+                                     gw[self.resource]['id'],
+                                     net_1['network']['id'],
+                                     'vlan', 555)
+                self._gateway_action('disconnect',
+                                     gw[self.resource]['id'],
+                                     net_1['network']['id'],
+                                     'vlan', 777)
+
+    def test_list_network_gateway_with_multiple_connections(self):
+        self._test_list_network_gateway_with_multiple_connections()
+
     def test_connect_and_disconnect_network(self):
         self._test_connect_and_disconnect_network('flat')
 

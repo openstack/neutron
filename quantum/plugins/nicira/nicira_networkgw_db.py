@@ -122,7 +122,7 @@ class NetworkGateway(model_base.BASEV2, models_v2.HasId,
     devices = orm.relationship(NetworkGatewayDevice,
                                backref='networkgateways',
                                cascade='all,delete')
-    network_connections = orm.relationship(NetworkConnection)
+    network_connections = orm.relationship(NetworkConnection, lazy='joined')
 
 
 class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
@@ -131,6 +131,11 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
 
     def _get_network_gateway(self, context, gw_id):
         return self._get_by_id(context, NetworkGateway, gw_id)
+
+    def _make_gw_connection_dict(self, gw_conn):
+        return {'port_id': gw_conn['port_id'],
+                'segmentation_type': gw_conn['segmentation_type'],
+                'segmentation_id': gw_conn['segmentation_id']}
 
     def _make_network_gateway_dict(self, network_gateway, fields=None):
         device_list = []
@@ -142,7 +147,10 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
                'default': network_gateway['default'],
                'devices': device_list,
                'tenant_id': network_gateway['tenant_id']}
-        # NOTE(salvatore-orlando):perhaps return list of connected networks
+        # Query gateway connections only if needed
+        if (fields and 'ports' in fields) or not fields:
+            res['ports'] = [self._make_gw_connection_dict(conn)
+                            for conn in network_gateway.network_connections]
         return self._fields(res, fields)
 
     def _validate_network_mapping_info(self, network_mapping_info):
@@ -170,8 +178,8 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
             raise exceptions.InvalidInput(error_message=msg)
         return network_id
 
-    def _retrieve_gateway_connections(self, context, gateway_id, mapping_info,
-                                      only_one=False):
+    def _retrieve_gateway_connections(self, context, gateway_id,
+                                      mapping_info={}, only_one=False):
         filters = {'network_gateway_id': [gateway_id]}
         for k, v in mapping_info.iteritems():
             if v and k != NETWORK_ID:
@@ -224,8 +232,7 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
             if gw_db.default:
                 raise NetworkGatewayUnchangeable(gateway_id=id)
             # Ensure there is something to update before doing it
-            db_values_set = set([v for (k, v) in gw_db.iteritems()])
-            if not set(gw_data.values()).issubset(db_values_set):
+            if any([gw_db[k] != gw_data[k] for k in gw_data]):
                 gw_db.update(gw_data)
         LOG.debug(_("Updated network gateway with id:%s"), id)
         return self._make_network_gateway_dict(gw_db)
