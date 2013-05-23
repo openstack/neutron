@@ -83,19 +83,6 @@ class NetworkBinding(model_base.BASEV2):
                                                   self.segmentation_id)
 
 
-class TunnelIP(model_base.BASEV2):
-    """Represents tunnel endpoint in DB mode."""
-    __tablename__ = 'ovs_tunnel_ips'
-
-    ip_address = Column(String(255), primary_key=True)
-
-    def __init__(self, ip_address):
-        self.ip_address = ip_address
-
-    def __repr__(self):
-        return "<TunnelIP(%s)>" % (self.ip_address)
-
-
 class TunnelEndpoint(model_base.BASEV2):
     """Represents tunnel endpoint in RPC mode."""
     __tablename__ = 'ovs_tunnel_endpoints'
