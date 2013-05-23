@@ -422,6 +422,9 @@ class NetworkGatewayDbTestCase(test_db_plugin.QuantumDbPluginV2TestCase):
     def test_connect_and_disconnect_network(self):
         self._test_connect_and_disconnect_network('flat')
 
+    def test_connect_and_disconnect_network_no_seg_type(self):
+        self._test_connect_and_disconnect_network(None)
+
     def test_connect_and_disconnect_network_with_segmentation_id(self):
         self._test_connect_and_disconnect_network('vlan', 999)
 
