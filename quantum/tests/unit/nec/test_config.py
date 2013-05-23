@@ -23,12 +23,21 @@ class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
         self.assertEqual('br-int', config.CONF.ovs.integration_bridge)
+
         self.assertEqual(2, config.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', config.CONF.AGENT.root_helper)
+
         self.assertEqual('127.0.0.1', config.CONF.OFC.host)
         self.assertEqual('8888', config.CONF.OFC.port)
         self.assertEqual('trema', config.CONF.OFC.driver)
         self.assertTrue(config.CONF.OFC.enable_packet_filter)
         self.assertFalse(config.CONF.OFC.use_ssl)
-        self.assertEqual(None, config.CONF.OFC.key_file)
-        self.assertEqual(None, config.CONF.OFC.cert_file)
+        self.assertIsNone(config.CONF.OFC.key_file)
+        self.assertIsNone(config.CONF.OFC.cert_file)
+
+    def test_shortcuts(self):
+        self.assertEqual(config.CONF.ovs.integration_bridge,
+                         config.OVS.integration_bridge)
+        self.assertEqual(config.CONF.AGENT.polling_interval,
+                         config.AGENT.polling_interval)
+        self.assertEqual(config.CONF.OFC.host, config.OFC.host)

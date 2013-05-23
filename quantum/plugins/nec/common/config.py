@@ -61,5 +61,5 @@ cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 # shortcuts
 CONF = cfg.CONF
 OVS = cfg.CONF.ovs
-aGENT = cfg.CONF.AGENT
+AGENT = cfg.CONF.AGENT
 OFC = cfg.CONF.OFC
