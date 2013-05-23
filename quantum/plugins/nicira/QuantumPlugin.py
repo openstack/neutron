@@ -57,6 +57,8 @@ from quantum.plugins.nicira.common import config  # noqa
 from quantum.plugins.nicira.common import exceptions as nvp_exc
 from quantum.plugins.nicira.common import metadata_access as nvp_meta
 from quantum.plugins.nicira.common import securitygroups as nvp_sec
+from quantum.plugins.nicira.dbexts import maclearning as mac_db
+from quantum.plugins.nicira.extensions import maclearning as mac_ext
 from quantum.plugins.nicira.extensions import nvp_networkgw as networkgw
 from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
 from quantum.plugins.nicira import nicira_db
@@ -125,6 +127,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                   l3_db.L3_NAT_db_mixin,
                   portsecurity_db.PortSecurityDbMixin,
                   securitygroups_db.SecurityGroupDbMixin,
+                  mac_db.MacLearningDbMixin,
                   networkgw_db.NetworkGatewayMixin,
                   qos_db.NVPQoSDbMixin,
                   nvp_sec.NVPSecurityGroups,
@@ -136,7 +139,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["network-gateway",
+    supported_extension_aliases = ["mac-learning",
+                                   "network-gateway",
                                    "nvp-qos",
                                    "port-security",
                                    "provider",
@@ -363,7 +367,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                    port_data['fixed_ips'],
                                    port_data[psec.PORTSECURITY],
                                    port_data[ext_sg.SECURITYGROUPS],
-                                   port_data[ext_qos.QUEUE])
+                                   port_data[ext_qos.QUEUE],
+                                   port_data.get(mac_ext.MAC_LEARNING))
 
     def _nvp_create_port(self, context, port_data):
         """Driver for creating a logical switch port on NVP platform."""
@@ -1056,6 +1061,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, filters)
             for quantum_lport in quantum_lports:
                 self._extend_port_port_security_dict(context, quantum_lport)
+                self._extend_port_mac_learning_state(context, quantum_lport)
         if (filters.get('network_id') and len(filters.get('network_id')) and
             self._network_is_external(context, filters['network_id'][0])):
             # Do not perform check on NVP platform
@@ -1192,6 +1198,10 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port_data[ext_qos.QUEUE] = self._check_for_queue_and_create(
                 context, port_data)
             self._process_port_queue_mapping(context, port_data)
+            if (isinstance(port_data.get(mac_ext.MAC_LEARNING), bool)):
+                self._create_mac_learning_state(context, port_data)
+            elif mac_ext.MAC_LEARNING in port_data:
+                port_data.pop(mac_ext.MAC_LEARNING)
             # provider networking extension checks
             # Fetch the network and network binding from Quantum db
             try:
@@ -1274,6 +1284,17 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
             ret_port[ext_qos.QUEUE] = self._check_for_queue_and_create(
                 context, ret_port)
+            # Populate the mac learning attribute
+            new_mac_learning_state = port['port'].get(mac_ext.MAC_LEARNING)
+            old_mac_learning_state = self._get_mac_learning_state(context, id)
+            if (new_mac_learning_state is not None and
+                old_mac_learning_state != new_mac_learning_state):
+                self._update_mac_learning_state(context, id,
+                                                new_mac_learning_state)
+                ret_port[mac_ext.MAC_LEARNING] = new_mac_learning_state
+            elif (new_mac_learning_state is None and
+                  old_mac_learning_state is not None):
+                ret_port[mac_ext.MAC_LEARNING] = old_mac_learning_state
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port)
             self._extend_port_port_security_dict(context, ret_port)
@@ -1291,7 +1312,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                        ret_port['fixed_ips'],
                                        ret_port[psec.PORTSECURITY],
                                        ret_port[ext_sg.SECURITYGROUPS],
-                                       ret_port[ext_qos.QUEUE])
+                                       ret_port[ext_qos.QUEUE],
+                                       ret_port.get(mac_ext.MAC_LEARNING))
 
                     # Update the port status from nvp. If we fail here hide it
                     # since the port was successfully updated but we were not
@@ -1365,6 +1387,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                                 id, fields)
             self._extend_port_port_security_dict(context, quantum_db_port)
             self._extend_port_qos_queue(context, quantum_db_port)
+            self._extend_port_mac_learning_state(context, quantum_db_port)
 
             if self._network_is_external(context,
                                          quantum_db_port['network_id']):
