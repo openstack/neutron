@@ -362,7 +362,7 @@ class TestLogArgs(base.BaseTestCase):
                      'log_dir': None,
                      'log_file': None}
         conf = dhcp_agent.DictModel(conf_dict)
-        expected_args = ['--debug']
+        expected_args = ['--debug', '--use-syslog']
         args = config.get_log_args(conf, 'log_file_name')
         self.assertEqual(expected_args, args)
 
