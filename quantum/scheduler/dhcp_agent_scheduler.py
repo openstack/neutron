@@ -100,7 +100,6 @@ class ChanceScheduler(object):
                     dhcp_agent.heartbeat_timestamp):
                     LOG.warn(_('DHCP agent %s is not active'), dhcp_agent.id)
                     continue
-                #TODO(gongysh) consider the disabled agent's network
                 fields = ['network_id', 'enable_dhcp']
                 subnets = plugin.get_subnets(context, fields=fields)
                 net_ids = set(s['network_id'] for s in subnets
@@ -112,6 +111,8 @@ class ChanceScheduler(object):
                     agents = plugin.get_dhcp_agents_hosting_networks(
                         context, [net_id], active=True)
                     if len(agents) >= agents_per_network:
+                        continue
+                    if any(dhcp_agent.id == agent.id for agent in agents):
                         continue
                     binding = agentschedulers_db.NetworkDhcpAgentBinding()
                     binding.dhcp_agent = dhcp_agent

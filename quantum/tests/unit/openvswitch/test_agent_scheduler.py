@@ -291,6 +291,17 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.assertEqual(2, num_hosta_nets)
         self.assertEqual(2, num_hostc_nets)
 
+    def test_network_auto_schedule_restart_dhcp_agent(self):
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
+        with self.subnet() as sub1:
+            dhcp_rpc = dhcp_rpc_base.DhcpRpcCallbackMixin()
+            self._register_agent_states()
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_rpc.get_active_networks(self.adminContext, host=DHCP_HOSTA)
+            dhcp_agents = self._list_dhcp_agents_hosting_network(
+                sub1['subnet']['network_id'])
+        self.assertEqual(1, len(dhcp_agents['agents']))
+
     def test_network_auto_schedule_with_hosted(self):
         # one agent hosts all the networks, other hosts none
         cfg.CONF.set_override('allow_overlapping_ips', True)
@@ -562,6 +573,13 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 router['router']['id'])
         self.assertEqual(1, len(l3_agents['agents']))
         self.assertEqual(L3_HOSTA, l3_agents['agents'][0]['host'])
+
+    def test_router_auto_schedule_restart_l3_agent(self):
+        with self.router():
+            l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+            self._register_agent_states()
+            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
 
     def test_router_auto_schedule_with_hosted_2(self):
         # one agent hosts one router
