@@ -15,6 +15,7 @@
 
 import datetime
 import time
+
 from oslo.config import cfg
 
 from quantum.openstack.common.gettextutils import _

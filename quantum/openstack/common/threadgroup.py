@@ -61,6 +61,13 @@ class ThreadGroup(object):
         self.threads = []
         self.timers = []
 
+    def add_dynamic_timer(self, callback, initial_delay=None,
+                          periodic_interval_max=None, *args, **kwargs):
+        timer = loopingcall.DynamicLoopingCall(callback, *args, **kwargs)
+        timer.start(initial_delay=initial_delay,
+                    periodic_interval_max=periodic_interval_max)
+        self.timers.append(timer)
+
     def add_timer(self, interval, callback, initial_delay=None,
                   *args, **kwargs):
         pulse = loopingcall.FixedIntervalLoopingCall(callback, *args, **kwargs)

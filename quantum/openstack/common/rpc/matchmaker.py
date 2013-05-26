@@ -19,8 +19,6 @@ return keys for direct exchanges, per (approximate) AMQP parlance.
 """
 
 import contextlib
-import itertools
-import json
 
 import eventlet
 from oslo.config import cfg
@@ -30,10 +28,6 @@ from quantum.openstack.common import log as logging
 
 
 matchmaker_opts = [
-    # Matchmaker ring file
-    cfg.StrOpt('matchmaker_ringfile',
-               default='/etc/nova/matchmaker_ring.json',
-               help='Matchmaker ring file (JSON)'),
     cfg.IntOpt('matchmaker_heartbeat_freq',
                default=300,
                help='Heartbeat frequency'),
@@ -236,7 +230,8 @@ class HeartbeatMatchMakerBase(MatchMakerBase):
         self.hosts.discard(host)
         self.backend_unregister(key, '.'.join((key, host)))
 
-        LOG.info(_("Matchmaker unregistered: %s, %s" % (key, host)))
+        LOG.info(_("Matchmaker unregistered: %(key)s, %(host)s"),
+                 {'key': key, 'host': host})
 
     def start_heartbeat(self):
         """
@@ -245,7 +240,7 @@ class HeartbeatMatchMakerBase(MatchMakerBase):
         yielding for CONF.matchmaker_heartbeat_freq seconds
         between iterations.
         """
-        if len(self.hosts) == 0:
+        if not self.hosts:
             raise MatchMakerException(
                 _("Register before starting heartbeat."))
 
@@ -304,67 +299,6 @@ class StubExchange(Exchange):
         return [(key, None)]
 
 
-class RingExchange(Exchange):
-    """
-    Match Maker where hosts are loaded from a static file containing
-    a hashmap (JSON formatted).
-
-    __init__ takes optional ring dictionary argument, otherwise
-    loads the ringfile from CONF.mathcmaker_ringfile.
-    """
-    def __init__(self, ring=None):
-        super(RingExchange, self).__init__()
-
-        if ring:
-            self.ring = ring
-        else:
-            fh = open(CONF.matchmaker_ringfile, 'r')
-            self.ring = json.load(fh)
-            fh.close()
-
-        self.ring0 = {}
-        for k in self.ring.keys():
-            self.ring0[k] = itertools.cycle(self.ring[k])
-
-    def _ring_has(self, key):
-        if key in self.ring0:
-            return True
-        return False
-
-
-class RoundRobinRingExchange(RingExchange):
-    """A Topic Exchange based on a hashmap."""
-    def __init__(self, ring=None):
-        super(RoundRobinRingExchange, self).__init__(ring)
-
-    def run(self, key):
-        if not self._ring_has(key):
-            LOG.warn(
-                _("No key defining hosts for topic '%s', "
-                  "see ringfile") % (key, )
-            )
-            return []
-        host = next(self.ring0[key])
-        return [(key + '.' + host, host)]
-
-
-class FanoutRingExchange(RingExchange):
-    """Fanout Exchange based on a hashmap."""
-    def __init__(self, ring=None):
-        super(FanoutRingExchange, self).__init__(ring)
-
-    def run(self, key):
-        # Assume starts with "fanout~", strip it for lookup.
-        nkey = key.split('fanout~')[1:][0]
-        if not self._ring_has(nkey):
-            LOG.warn(
-                _("No key defining hosts for topic '%s', "
-                  "see ringfile") % (nkey, )
-            )
-            return []
-        return map(lambda x: (key + '.' + x, x), self.ring[nkey])
-
-
 class LocalhostExchange(Exchange):
     """Exchange where all direct topics are local."""
     def __init__(self, host='localhost'):
@@ -386,17 +320,6 @@ class DirectExchange(Exchange):
     def run(self, key):
         e = key.split('.', 1)[1]
         return [(key, e)]
-
-
-class MatchMakerRing(MatchMakerBase):
-    """
-    Match Maker where hosts are loaded from a static hashmap.
-    """
-    def __init__(self, ring=None):
-        super(MatchMakerRing, self).__init__()
-        self.add_binding(FanoutBinding(), FanoutRingExchange(ring))
-        self.add_binding(DirectBinding(), DirectExchange())
-        self.add_binding(TopicBinding(), RoundRobinRingExchange(ring))
 
 
 class MatchMakerLocalhost(MatchMakerBase):
