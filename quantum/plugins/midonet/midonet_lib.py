@@ -276,7 +276,7 @@ class RuleManager:
         # create an accept rule
         properties = self._properties(rule_id)
         LOG.debug(_("RuleManager.create_for_sg_rule: adding accept rule "
-                    "%(rule_id) in portgroup %(port_group_id)s"),
+                    "%(rule_id)s in portgroup %(port_group_id)s"),
                   {'rule_id': rule_id, 'port_group_id': port_group_id})
         chain.add_rule().port_group(port_group_id).type('accept').nw_proto(
             nw_proto).nw_src_address(nw_src_address).nw_src_length(
