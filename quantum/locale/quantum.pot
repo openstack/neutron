@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: quantum "
-"jenkins.quantum.propose.translation.update.115\n"
+"jenkins.quantum.propose.translation.update.118\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-23 12:11+0000\n"
+"POT-Creation-Date: 2013-05-26 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7898,7 +7898,7 @@ msgstr ""
 msgid "DHCP agent %s is not active"
 msgstr ""
 
-#: quantum/scheduler/dhcp_agent_scheduler.py:109
+#: quantum/scheduler/dhcp_agent_scheduler.py:108
 msgid "No non-hosted networks"
 msgstr ""
 

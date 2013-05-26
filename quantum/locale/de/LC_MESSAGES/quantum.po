@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-23 12:11+0000\n"
+"POT-Creation-Date: 2013-05-26 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -8536,7 +8536,7 @@ msgstr ""
 msgid "DHCP agent %s is not active"
 msgstr "DHCP-Agent %s ist nicht aktiv"
 
-#: quantum/scheduler/dhcp_agent_scheduler.py:109
+#: quantum/scheduler/dhcp_agent_scheduler.py:108
 msgid "No non-hosted networks"
 msgstr "Keine nicht gehosteten Netze"
 
