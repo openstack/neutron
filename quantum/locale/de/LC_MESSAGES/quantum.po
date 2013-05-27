@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-26 12:11+0000\n"
+"POT-Creation-Date: 2013-05-27 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -2408,7 +2408,7 @@ msgstr ""
 "bestimmten IP-Adresse bei Zuweisung einer dynamischen IP-Adresse "
 "erforderlich"
 
-#: quantum/db/l3_db.py:594 quantum/plugins/nicira/QuantumPlugin.py:1773
+#: quantum/db/l3_db.py:594 quantum/plugins/nicira/QuantumPlugin.py:1778
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "'fixed_ip_address' kann nicht ohne 'port_id' angegeben werden"
 
@@ -3056,7 +3056,7 @@ msgid "Was expecting a dict for service definition, found the following: %s"
 msgstr "Verzeichnis für Servicedefinition erwartet, Folgendes gefunden: %s"
 
 #: quantum/extensions/servicetype.py:160
-#: quantum/plugins/nicira/extensions/nvp_networkgw.py:83
+#: quantum/plugins/nicira/extensions/nvp_networkgw.py:86
 #, python-format
 msgid "%s: provided data are not iterable"
 msgstr "%s: angegebene Daten sind nicht wiederholbar"
@@ -3082,51 +3082,51 @@ msgstr "Nicht abgefangene Ausnahme"
 msgid "Original exception being dropped: %s"
 msgstr "Ursprüngliche Ausnahme wird gelöscht: %s"
 
-#: quantum/openstack/common/lockutils.py:98
+#: quantum/openstack/common/lockutils.py:102
 #, python-format
 msgid "Could not release the acquired lock `%s`"
 msgstr "Angeforderte Sperre '%s' konnte nicht freigegeben werden"
 
-#: quantum/openstack/common/lockutils.py:184
+#: quantum/openstack/common/lockutils.py:188
 #, python-format
 msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
 msgstr "Semaphor \"%(lock)s\" für Methode \"%(method)s\" erhalten..."
 
-#: quantum/openstack/common/lockutils.py:195
+#: quantum/openstack/common/lockutils.py:199
 #, python-format
 msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
 msgstr "Versuch, Dateisperre \"%(lock)s\" für Methode \"%(method)s\" zu greifen..."
 
-#: quantum/openstack/common/lockutils.py:222
+#: quantum/openstack/common/lockutils.py:226
 #, python-format
 msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
 msgstr ""
 "Dateisperre \"%(lock)s\" unter %(path)s für Methode \"%(method)s\" "
 "erhalten..."
 
-#: quantum/openstack/common/lockutils.py:230
+#: quantum/openstack/common/lockutils.py:234
 #, python-format
 msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
 msgstr ""
 "Dateisperre \"%(lock)s\" unter %(path)s für Methode \"%(method)s\" "
 "freigegeben..."
 
-#: quantum/openstack/common/log.py:226
+#: quantum/openstack/common/log.py:244
 #, python-format
 msgid "Deprecated: %s"
 msgstr "Veraltet: %s"
 
-#: quantum/openstack/common/log.py:329
+#: quantum/openstack/common/log.py:336
 #, python-format
 msgid "Error loading logging config %(log_config)s: %(err_msg)s"
 msgstr ""
 
-#: quantum/openstack/common/log.py:379
+#: quantum/openstack/common/log.py:386
 #, python-format
 msgid "syslog facility must be one of: %s"
 msgstr "syslog-Funktion muss einer der folgenden Werte sein: %s"
 
-#: quantum/openstack/common/log.py:537
+#: quantum/openstack/common/log.py:555
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr "Schwerwiegender Aufruf an veraltete Konfiguration: %(msg)s"
@@ -3149,120 +3149,134 @@ msgstr ""
 msgid "in dynamic looping call"
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:41
+#: quantum/openstack/common/periodic_task.py:42
 #, python-format
 msgid "Unexpected argument for periodic task creation: %(arg)s."
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:132
+#: quantum/openstack/common/periodic_task.py:133
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:137
+#: quantum/openstack/common/periodic_task.py:138
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr ""
 
-#: quantum/openstack/common/periodic_task.py:175
+#: quantum/openstack/common/periodic_task.py:176
 #, python-format
 msgid "Running periodic task %(full_task_name)s"
 msgstr "Regelmäßige Task %(full_task_name)s wird ausgeführt"
 
-#: quantum/openstack/common/periodic_task.py:183
+#: quantum/openstack/common/periodic_task.py:184
 #, python-format
 msgid "Error during %(full_task_name)s: %(e)s"
 msgstr "Fehler bei %(full_task_name)s: %(e)s"
 
-#: quantum/openstack/common/policy.py:394
+#: quantum/openstack/common/policy.py:395
 #, python-format
 msgid "Failed to understand rule %(rule)s"
 msgstr "Regel %(rule)s konnte nicht verstanden werden"
 
-#: quantum/openstack/common/policy.py:404
+#: quantum/openstack/common/policy.py:405
 #, python-format
 msgid "No handler for matches of kind %s"
 msgstr "Kein Handler für Übereinstimmungen des Typs %s"
 
-#: quantum/openstack/common/policy.py:679
+#: quantum/openstack/common/policy.py:680
 #, python-format
 msgid "Failed to understand rule %(rule)r"
 msgstr "Regel %(rule)r konnte nicht verstanden werden"
 
-#: quantum/openstack/common/processutils.py:122
+#: quantum/openstack/common/processutils.py:127
 #, python-format
 msgid "Got unknown keyword args to utils.execute: %r"
 msgstr "Unbekannte Schlüsselwortargumente für 'utils.execute' erhalten: %r"
 
-#: quantum/openstack/common/processutils.py:137
+#: quantum/openstack/common/processutils.py:142
 #, python-format
 msgid "Running cmd (subprocess): %s"
 msgstr "CMD wird ausgeführt (Unterprozess): %s"
 
-#: quantum/openstack/common/processutils.py:162
+#: quantum/openstack/common/processutils.py:167
+#: quantum/openstack/common/processutils.py:240
 #, python-format
 msgid "Result was %s"
 msgstr "Ergebnis war %s"
 
-#: quantum/openstack/common/processutils.py:174
+#: quantum/openstack/common/processutils.py:179
 #, python-format
 msgid "%r failed. Retrying."
 msgstr "%r fehlgeschlagen. Neuversuch."
 
-#: quantum/openstack/common/service.py:112
-#: quantum/openstack/common/service.py:275
+#: quantum/openstack/common/processutils.py:219
+#, fuzzy, python-format
+msgid "Running cmd (SSH): %s"
+msgstr "CMD wird ausgeführt (Unterprozess): %s"
+
+#: quantum/openstack/common/processutils.py:221
+msgid "Environment not supported over SSH"
+msgstr ""
+
+#: quantum/openstack/common/processutils.py:225
+msgid "process_input not supported over SSH"
+msgstr ""
+
+#: quantum/openstack/common/service.py:113
+#: quantum/openstack/common/service.py:276
 msgid "Full set of CONF:"
 msgstr "Vollständiger Satz von CONF:"
 
-#: quantum/openstack/common/service.py:121
-#: quantum/openstack/common/service.py:218
+#: quantum/openstack/common/service.py:122
+#: quantum/openstack/common/service.py:219
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "%s abgefangen; Vorgang wird beendet"
 
-#: quantum/openstack/common/service.py:164
+#: quantum/openstack/common/service.py:165
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "Übergeordneter Prozess wurde unerwartet abgebrochen; Vorgang wird beendet"
 
-#: quantum/openstack/common/service.py:200
+#: quantum/openstack/common/service.py:201
 msgid "Forking too fast, sleeping"
 msgstr "Verzweigung zu schnell; im Ruhemodus"
 
-#: quantum/openstack/common/service.py:223
+#: quantum/openstack/common/service.py:224
 msgid "Unhandled exception"
 msgstr "Nicht behandelte Ausnahme"
 
-#: quantum/openstack/common/service.py:230
+#: quantum/openstack/common/service.py:231
 #, python-format
 msgid "Started child %d"
 msgstr "Untergeordnetes Element %d gestartet"
 
-#: quantum/openstack/common/service.py:240
+#: quantum/openstack/common/service.py:241
 #, python-format
 msgid "Starting %d workers"
 msgstr "Starten von %d Workers"
 
-#: quantum/openstack/common/service.py:257
+#: quantum/openstack/common/service.py:258
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "Untergeordnetes Element %(pid)d durch Signal %(sig)d abgebrochen"
 
-#: quantum/openstack/common/service.py:261
+#: quantum/openstack/common/service.py:262
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "Untergeordnete %(pid)s mit Status %(code)d beendet"
 
-#: quantum/openstack/common/service.py:265
+#: quantum/openstack/common/service.py:266
 #, python-format
 msgid "pid %d not in child list"
 msgstr "PID %d nicht in Liste untergeordneter Elemente vorhanden"
 
-#: quantum/openstack/common/service.py:293
+#: quantum/openstack/common/service.py:294
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "%s abgefangen, untergeordnete Elemente werden gestoppt"
 
-#: quantum/openstack/common/service.py:304
+#: quantum/openstack/common/service.py:305
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "Warten auf Beenden von %d untergeordneten Elementen"
@@ -3318,11 +3332,11 @@ msgid "Pool creating new connection"
 msgstr "Pool erstellt neue Verbindung"
 
 #: quantum/openstack/common/rpc/amqp.py:200
-#, python-format
-msgid "no calling threads waiting for msg_id : %s, message : %s"
+#, fuzzy, python-format
+msgid "no calling threads waiting for msg_id : %(msg_id)s, message : %(data)s"
 msgstr "Keine aufrufenden Threads ausstehend für 'msg_id' : %s, Nachricht : %s "
 
-#: quantum/openstack/common/rpc/amqp.py:208
+#: quantum/openstack/common/rpc/amqp.py:209
 #, python-format
 msgid ""
 "Number of call waiters is greater than warning threshhold: %d. There "
@@ -3332,75 +3346,75 @@ msgstr ""
 "Warnungsbegrenzung: %d. Möglicherweise gibt es ein Leck in "
 "'MulticallProxyWaiter'."
 
-#: quantum/openstack/common/rpc/amqp.py:291
+#: quantum/openstack/common/rpc/amqp.py:292
 #, python-format
 msgid "unpacked context: %s"
 msgstr "Entpackter Kontext: %s"
 
-#: quantum/openstack/common/rpc/amqp.py:337
+#: quantum/openstack/common/rpc/amqp.py:338
 #, python-format
 msgid "UNIQUE_ID is %s."
 msgstr "'UNIQUE_ID' ist %s."
 
-#: quantum/openstack/common/rpc/amqp.py:406
+#: quantum/openstack/common/rpc/amqp.py:407
 #, python-format
 msgid "received %s"
 msgstr "%s erhalten"
 
-#: quantum/openstack/common/rpc/amqp.py:414
+#: quantum/openstack/common/rpc/amqp.py:415
 #, python-format
 msgid "no method for message: %s"
 msgstr "Keine Methode für Nachricht: %s"
 
-#: quantum/openstack/common/rpc/amqp.py:415
+#: quantum/openstack/common/rpc/amqp.py:416
 #, python-format
 msgid "No method for message: %s"
 msgstr "Keine Methode für Nachricht: %s"
 
-#: quantum/openstack/common/rpc/amqp.py:443
+#: quantum/openstack/common/rpc/amqp.py:444
 #: quantum/openstack/common/rpc/impl_zmq.py:286
 #, python-format
 msgid "Expected exception during message handling (%s)"
 msgstr "Erwartete Ausnahme bei Nachrichtenbehandlung (%s)"
 
-#: quantum/openstack/common/rpc/amqp.py:451
+#: quantum/openstack/common/rpc/amqp.py:452
 #: quantum/openstack/common/rpc/impl_zmq.py:292
 msgid "Exception during message handling"
 msgstr "Ausnahme bei Nachrichtenbehandlung"
 
-#: quantum/openstack/common/rpc/amqp.py:586
+#: quantum/openstack/common/rpc/amqp.py:587
 #, python-format
 msgid "Making synchronous call on %s ..."
 msgstr "Synchroner Aufruf bei %s ..."
 
-#: quantum/openstack/common/rpc/amqp.py:589
+#: quantum/openstack/common/rpc/amqp.py:590
 #, python-format
 msgid "MSG_ID is %s"
 msgstr "'MSG_ID' ist %s"
 
-#: quantum/openstack/common/rpc/amqp.py:623
+#: quantum/openstack/common/rpc/amqp.py:624
 #, python-format
 msgid "Making asynchronous cast on %s..."
 msgstr "Asynchroner Cast bei %s..."
 
-#: quantum/openstack/common/rpc/amqp.py:632
+#: quantum/openstack/common/rpc/amqp.py:633
 msgid "Making asynchronous fanout cast..."
 msgstr "Asynchroner Fan-out-Cast..."
 
-#: quantum/openstack/common/rpc/amqp.py:660
+#: quantum/openstack/common/rpc/amqp.py:661
 #, python-format
 msgid "Sending %(event_type)s on %(topic)s"
 msgstr "%(event_type)s wird gesendet auf %(topic)s"
 
-#: quantum/openstack/common/rpc/common.py:74
+#: quantum/openstack/common/rpc/common.py:75
 msgid "An unknown RPC related exception occurred."
 msgstr "Eine unbekannte Ausnahme in Zusammenhang mit RPC ist aufgetreten."
 
-#: quantum/openstack/common/rpc/common.py:86
+#: quantum/openstack/common/rpc/common.py:87
 msgid "Exception in string format operation"
 msgstr "Ausnahme bei Zeichenfolgeformatoperation"
 
-#: quantum/openstack/common/rpc/common.py:104
+#: quantum/openstack/common/rpc/common.py:105
 #, python-format
 msgid ""
 "Remote error: %(exc_type)s %(value)s\n"
@@ -3409,36 +3423,36 @@ msgstr ""
 "Ferner Fehler: %(exc_type)s %(value)s\n"
 "%(traceback)s."
 
-#: quantum/openstack/common/rpc/common.py:121
+#: quantum/openstack/common/rpc/common.py:122
 #, python-format
 msgid ""
 "Timeout while waiting on RPC response - topic: \"%(topic)s\", RPC method:"
 " \"%(method)s\" info: \"%(info)s\""
 msgstr ""
 
-#: quantum/openstack/common/rpc/common.py:137
 #: quantum/openstack/common/rpc/common.py:138
 #: quantum/openstack/common/rpc/common.py:139
+#: quantum/openstack/common/rpc/common.py:140
 msgid "<unknown>"
 msgstr ""
 
-#: quantum/openstack/common/rpc/common.py:143
+#: quantum/openstack/common/rpc/common.py:144
 #, python-format
 msgid "Found duplicate message(%(msg_id)s). Skipping it."
 msgstr "Doppelte Nachricht (%(msg_id)s) gefunden. Wird übersprungen."
 
-#: quantum/openstack/common/rpc/common.py:147
+#: quantum/openstack/common/rpc/common.py:148
 msgid "Invalid reuse of an RPC connection."
 msgstr "Ungültige Wiederverwendung einer RPC-Verbindung."
 
-#: quantum/openstack/common/rpc/common.py:151
+#: quantum/openstack/common/rpc/common.py:152
 #, python-format
 msgid "Specified RPC version, %(version)s, not supported by this endpoint."
 msgstr ""
 "Angegebene RPC-Version %(version)s wird von diesem Endpunkt nicht "
 "unterstützt. "
 
-#: quantum/openstack/common/rpc/common.py:156
+#: quantum/openstack/common/rpc/common.py:157
 #, python-format
 msgid ""
 "Specified RPC envelope version, %(version)s, not supported by this "
@@ -3447,12 +3461,17 @@ msgstr ""
 "Angegebene RPC-Umschlagsversion %(version)s wird von diesem Endpunkt "
 "nicht unterstützt."
 
-#: quantum/openstack/common/rpc/common.py:280
+#: quantum/openstack/common/rpc/common.py:162
+#, python-format
+msgid "Specified RPC version cap, %(version_cap)s, is too low"
+msgstr ""
+
+#: quantum/openstack/common/rpc/common.py:285
 #, python-format
 msgid "Failed to sanitize %(item)s. Key error %(err)s"
 msgstr "%(item)s konnte nicht bereinigt werden. Zentraler Fehler %(err)s"
 
-#: quantum/openstack/common/rpc/common.py:302
+#: quantum/openstack/common/rpc/common.py:307
 #, python-format
 msgid "Returning exception %s to caller"
 msgstr "Ausnahme %s wird an Aufrufenden zurückgegeben"
@@ -3727,25 +3746,30 @@ msgstr "Keine MatchMaker-Ergebnisse. Kein Casting. "
 msgid "No match from matchmaker."
 msgstr "Keine Übereinstimmung von MatchMaker."
 
-#: quantum/openstack/common/rpc/matchmaker.py:53
+#: quantum/openstack/common/rpc/impl_zmq.py:852
+#, python-format
+msgid "rpc_zmq_matchmaker = %(orig)s is deprecated; use %(new)s instead"
+msgstr ""
+
+#: quantum/openstack/common/rpc/matchmaker.py:47
 msgid "Match not found by MatchMaker."
 msgstr "Keine Übereinstimmung von MatchMaker gefunden."
 
-#: quantum/openstack/common/rpc/matchmaker.py:89
+#: quantum/openstack/common/rpc/matchmaker.py:83
 msgid "Matchmaker does not implement registration or heartbeat."
 msgstr "MatchMaker implementiert keine Registrierung und kein Überwachungssignal."
 
-#: quantum/openstack/common/rpc/matchmaker.py:239
-#, python-format
-msgid "Matchmaker unregistered: %s, %s"
+#: quantum/openstack/common/rpc/matchmaker.py:233
+#, fuzzy, python-format
+msgid "Matchmaker unregistered: %(key)s, %(host)s"
 msgstr "MatchMaker nicht registriert: %s, %s"
 
-#: quantum/openstack/common/rpc/matchmaker.py:250
+#: quantum/openstack/common/rpc/matchmaker.py:245
 msgid "Register before starting heartbeat."
 msgstr "Registrierung vor Start des Überwachungssignals nötig."
 
-#: quantum/openstack/common/rpc/matchmaker.py:343
-#: quantum/openstack/common/rpc/matchmaker.py:361
+#: quantum/openstack/common/rpc/matchmaker_ring.py:81
+#: quantum/openstack/common/rpc/matchmaker_ring.py:99
 #, python-format
 msgid "No key defining hosts for topic '%s', see ringfile"
 msgstr "Keine schlüsseldefinierenden Hosts für Topic '%s', siehe Ringdatei"
@@ -5492,9 +5516,9 @@ msgid "Don't know what to do with rule=%r"
 msgstr "Maßnahme für 'rule=%r' nicht bekannt"
 
 #: quantum/plugins/midonet/midonet_lib.py:278
-#, python-format
+#, fuzzy, python-format
 msgid ""
-"RuleManager.create_for_sg_rule: adding accept rule %(rule_id) in "
+"RuleManager.create_for_sg_rule: adding accept rule %(rule_id)s in "
 "portgroup %(port_group_id)s"
 msgstr ""
 "RuleManager.create_for_sg_rule: Bestätigungsregel %(rule_id) in "
@@ -5602,7 +5626,7 @@ msgstr ""
 "network=%(network)r"
 
 #: quantum/plugins/midonet/plugin.py:319
-#: quantum/plugins/nicira/QuantumPlugin.py:1025
+#: quantum/plugins/nicira/QuantumPlugin.py:1030
 msgid "admin_state_up=False networks are not supported."
 msgstr "Netze mit 'admin_state_up=False' werden nicht unterstützt."
 
@@ -6527,22 +6551,22 @@ msgstr "Der Anforderung wird der Zugang zur referenzierten Ressource verweigert.
 msgid "The request has timed out."
 msgstr "Die Anforderung hat das zulässige Zeitlimit überschritten."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:223
+#: quantum/plugins/nicira/QuantumPlugin.py:228
 #, python-format
 msgid "Unable to process default l2 gw service:%s"
 msgstr "Der Standardservice des L2-Gateways kann nicht verarbeitet werden: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:258
+#: quantum/plugins/nicira/QuantumPlugin.py:263
 #, python-format
 msgid "Created NVP router port:%s"
 msgstr "NVP-Routerport erstellt: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:260
+#: quantum/plugins/nicira/QuantumPlugin.py:265
 #, python-format
 msgid "Unable to create port on NVP logical router %s"
 msgstr "Erstellung von Port auf logischem NVP-Router %s nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:263
+#: quantum/plugins/nicira/QuantumPlugin.py:268
 #, python-format
 msgid ""
 "Unable to create logical router port for quantum port id %(port_id)s on "
@@ -6551,12 +6575,12 @@ msgstr ""
 "Erstellung eines Ports für den logischen Router für Quantum-Port-ID "
 "%(port_id)s auf Router %(router_id)s nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:285
+#: quantum/plugins/nicira/QuantumPlugin.py:290
 #, python-format
 msgid "Attached %(att)s to NVP router port %(port)s"
 msgstr "'%(att)s' dem NVP-Routerport %(port)s zugeordnet"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:291
+#: quantum/plugins/nicira/QuantumPlugin.py:296
 #, python-format
 msgid ""
 "Unable to plug attachment in NVP logical router port %(r_port_id)s, "
@@ -6566,7 +6590,7 @@ msgstr ""
 "%(r_port_id)s, der Quantum %(q_port_id)s zugeordnet ist, ist nicht "
 "möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:297
+#: quantum/plugins/nicira/QuantumPlugin.py:302
 #, python-format
 msgid ""
 "Unable to plug attachment in router port %(r_port_id)s for quantum port "
@@ -6575,13 +6599,13 @@ msgstr ""
 "Verbinden der Zusatzeinheit mit Routerport %(r_port_id)s für Quantum-"
 "Port-ID %(q_port_id)s auf Router %(router_id)s ist nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:342
+#: quantum/plugins/nicira/QuantumPlugin.py:347
 msgid "An exception occured while selecting logical switch for the port"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:367
-#: quantum/plugins/nicira/QuantumPlugin.py:402
-#: quantum/plugins/nicira/QuantumPlugin.py:592
+#: quantum/plugins/nicira/QuantumPlugin.py:372
+#: quantum/plugins/nicira/QuantumPlugin.py:407
+#: quantum/plugins/nicira/QuantumPlugin.py:597
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
@@ -6590,9 +6614,9 @@ msgstr ""
 "Das NVP-Plug-in unterstützt keine VIF-Standardports in externen Netzen. "
 "Port %s wird inaktiv sein."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:387
-#: quantum/plugins/nicira/QuantumPlugin.py:468
-#: quantum/plugins/nicira/QuantumPlugin.py:612
+#: quantum/plugins/nicira/QuantumPlugin.py:392
+#: quantum/plugins/nicira/QuantumPlugin.py:473
+#: quantum/plugins/nicira/QuantumPlugin.py:617
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
@@ -6601,28 +6625,28 @@ msgstr ""
 "'_nvp_create_port' für Port %(name)s in Netz %(network_id)s "
 "abgeschlossen. Die neue Port-ID lautet %(id)s."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:391
+#: quantum/plugins/nicira/QuantumPlugin.py:396
 #, python-format
 msgid "An exception occured while plugging the interface into network:%s"
 msgstr "Ausnahme bei Verbindung der Schnittstelle mit Netz %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:409
+#: quantum/plugins/nicira/QuantumPlugin.py:414
 #, python-format
 msgid "Port '%s' was already deleted on NVP platform"
 msgstr "Port '%s' wurde von der NVP-Plattform bereits gelöscht"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:418
+#: quantum/plugins/nicira/QuantumPlugin.py:423
 #, python-format
 msgid "_nvp_delete_port completed for port %(port_id)s on network %(net_id)s"
 msgstr "'_nvp_delete_port' für Port %(port_id)s in Netz %(net_id)s abgeschlossen"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:424
+#: quantum/plugins/nicira/QuantumPlugin.py:429
 #, python-format
 msgid "port %s not found in NVP"
 msgstr "Port %s in NVP nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:443
-#: quantum/plugins/nicira/QuantumPlugin.py:876
+#: quantum/plugins/nicira/QuantumPlugin.py:448
+#: quantum/plugins/nicira/QuantumPlugin.py:881
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
@@ -6631,7 +6655,7 @@ msgstr ""
 "Ausnahme wird ignoriert, da dies bedeutet, dass der Peer für Port '%s' "
 "bereits gelöscht wurde."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:455
+#: quantum/plugins/nicira/QuantumPlugin.py:460
 #, python-format
 msgid ""
 "It is not allowed to create router interface ports on external networks "
@@ -6640,11 +6664,11 @@ msgstr ""
 "Die Erstellung von Routerschnittstellenports in externen Netzen wie %s "
 "ist nicht zulässig"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:473
+#: quantum/plugins/nicira/QuantumPlugin.py:478
 msgid "An exception occured while plugging the interface"
 msgstr "Beim Verbinden der Schnittstelle ist ein Fehler aufgetreten"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:481
+#: quantum/plugins/nicira/QuantumPlugin.py:486
 #, python-format
 msgid ""
 "device_id field must be populated in order to create an external gateway "
@@ -6653,12 +6677,12 @@ msgstr ""
 "Das Feld 'device_id' muss ausgefüllt sein, damit ein externer Gateway-"
 "Port für Netz %s erstellt werden kann"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:489
+#: quantum/plugins/nicira/QuantumPlugin.py:494
 #, python-format
 msgid "The gateway port for the router %s was not found on the NVP backend"
 msgstr "Der Gateway-Port für Router %s wurde auf der Back-End-NVP nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:535
+#: quantum/plugins/nicira/QuantumPlugin.py:540
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
@@ -6667,19 +6691,19 @@ msgstr ""
 "'_nvp_create_ext_gw_port' im externen Netz %(ext_net_id)s, angehängt an "
 "Router: %(router_id)s, abgeschlossen. NVP-Port-ID ist %(nvp_port_id)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:573
+#: quantum/plugins/nicira/QuantumPlugin.py:578
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 "Die Ressource %s des logischen Routers auf der NVP-Plattform nicht "
 "gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:577
-#: quantum/plugins/nicira/QuantumPlugin.py:1718
+#: quantum/plugins/nicira/QuantumPlugin.py:582
+#: quantum/plugins/nicira/QuantumPlugin.py:1723
 msgid "Unable to update logical routeron NVP Platform"
 msgstr "Logischer Router kann auf der NVP-Plattform nicht aktualisiert werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:579
+#: quantum/plugins/nicira/QuantumPlugin.py:584
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
@@ -6688,51 +6712,51 @@ msgstr ""
 "'_nvp_delete_ext_gw_port' im externen Netz %(ext_net_id)s, angehängt an "
 "Router: %(router_id)s, abgeschlossen"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:617
+#: quantum/plugins/nicira/QuantumPlugin.py:622
 #, python-format
 msgid "An exception occured while plugging the gateway interface into network:%s"
 msgstr "Ausnahme bei Verbindung der Gateway-Schnittstelle mit Netz: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:657
+#: quantum/plugins/nicira/QuantumPlugin.py:662
 #, python-format
 msgid "Unable to find NVP uuid for Quantum port %s"
 msgstr "NVP-UUID für Quantum-Port %s kann nicht gefunden werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:686
+#: quantum/plugins/nicira/QuantumPlugin.py:691
 #, python-format
 msgid "%s required"
 msgstr "%s erforderlich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:690
+#: quantum/plugins/nicira/QuantumPlugin.py:695
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr "Segmentations-ID kann bei einfachem Netztyp nicht angegeben werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:694
+#: quantum/plugins/nicira/QuantumPlugin.py:699
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr "Segmentations-ID muss bei VLAN-Netztyp angegeben werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:698
-#: quantum/plugins/nicira/QuantumPlugin.py:713
+#: quantum/plugins/nicira/QuantumPlugin.py:703
+#: quantum/plugins/nicira/QuantumPlugin.py:718
 #, python-format
 msgid "%(segmentation_id)s out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:719
+#: quantum/plugins/nicira/QuantumPlugin.py:724
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr "%(net_type_param)s %(net_type_value)s nicht unterstützt"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:750
+#: quantum/plugins/nicira/QuantumPlugin.py:755
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr "Kein Switch hat verfügbare Ports (%d geprüft)"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:772
+#: quantum/plugins/nicira/QuantumPlugin.py:777
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr "Maximale Anzahl an logischen Ports für logisches Netz %s erreicht"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:799
+#: quantum/plugins/nicira/QuantumPlugin.py:804
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
@@ -6741,22 +6765,22 @@ msgstr ""
 "Netze, für die 'admin_state_up=False' gilt, werden von diesem Plug-in "
 "noch nicht unterstützt. Einstellungen für Netz %s werden ignoriert"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:858
+#: quantum/plugins/nicira/QuantumPlugin.py:863
 #, python-format
 msgid "A nvp lport identifier was not found for quantum port '%s'"
 msgstr "Es wurde keine ID für den NVP-Loop-Port für Quantum-Port '%s' gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:886
+#: quantum/plugins/nicira/QuantumPlugin.py:891
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr "'delete_network' für Nutzer abgeschlossen: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:889
+#: quantum/plugins/nicira/QuantumPlugin.py:894
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr "Es wurde kein lSwitch %s in NVP gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:915
+#: quantum/plugins/nicira/QuantumPlugin.py:920
 #, python-format
 msgid ""
 "Current network status:%(nvp_net_status)s; Status in Quantum "
@@ -6765,19 +6789,19 @@ msgstr ""
 "Aktueller Netzstatus: %(nvp_net_status)s; Status in der Quantum-"
 "Datenbank: %(quantum_status)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:925
-#: quantum/plugins/nicira/QuantumPlugin.py:975
+#: quantum/plugins/nicira/QuantumPlugin.py:930
+#: quantum/plugins/nicira/QuantumPlugin.py:980
 msgid "Unable to get logical switches"
 msgstr "Abrufen logischer Switches nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:989
+#: quantum/plugins/nicira/QuantumPlugin.py:994
 #, python-format
 msgid "Logical Switch %s found in quantum database but not in NVP."
 msgstr ""
 "Logischer Switch %s wurde in Quantum-Datenbank gefunden, aber nicht in "
 "NVP. "
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1004
+#: quantum/plugins/nicira/QuantumPlugin.py:1009
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Quantum networks. Quantum and NVP "
@@ -6786,26 +6810,26 @@ msgstr ""
 "%s logische Switches gefunden, die nicht an Quantum-Netze gebunden sind. "
 "Quantum und NVP sind möglicherweise nicht synchron"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1008
+#: quantum/plugins/nicira/QuantumPlugin.py:1013
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr "'get_networks()' für Nutzer %s abgeschlossen"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1091
+#: quantum/plugins/nicira/QuantumPlugin.py:1096
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr "LSwitch %s in NVP nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1100
+#: quantum/plugins/nicira/QuantumPlugin.py:1105
 msgid "Unable to get ports"
 msgstr "Abrufen von Ports nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1127
+#: quantum/plugins/nicira/QuantumPlugin.py:1132
 #, python-format
 msgid "Quantum logical port %s was not found on NVP"
 msgstr "Logischer Quantum-Port %s wurde auf NVP nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1134
+#: quantum/plugins/nicira/QuantumPlugin.py:1139
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Quantum ports. Quantum and NVP are "
@@ -6814,61 +6838,61 @@ msgstr ""
 "%s logische Ports gefunden, die nicht an Quantum-Ports gebunden sind. "
 "Quantum und NVP sind möglicherweise nicht synchron"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1196
+#: quantum/plugins/nicira/QuantumPlugin.py:1201
 #, python-format
 msgid "Network %s was not found in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1202
+#: quantum/plugins/nicira/QuantumPlugin.py:1207
 msgid "Unable to create port or set port attachment in NVP."
 msgstr ""
 "Erstellung eines Ports oder Einrichtung einer Zusatzeinheit des Ports in "
 "NVP nicht möglich."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1207
+#: quantum/plugins/nicira/QuantumPlugin.py:1212
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr "'create_port' auf NVP für Nutzer %(tenant_id)s fertig gestellt: (%(id)s)"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1271
+#: quantum/plugins/nicira/QuantumPlugin.py:1276
 #, python-format
 msgid "Update port request: %s"
 msgstr "Portanforderung aktualisieren: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1296
+#: quantum/plugins/nicira/QuantumPlugin.py:1301
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1410
-#: quantum/plugins/nicira/QuantumPlugin.py:1455
+#: quantum/plugins/nicira/QuantumPlugin.py:1415
+#: quantum/plugins/nicira/QuantumPlugin.py:1460
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr "Netz '%s' ist kein gültiges externes Netz"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1423
+#: quantum/plugins/nicira/QuantumPlugin.py:1428
 msgid "Unable to create logical router on NVP Platform"
 msgstr "Logischer Router kann auf der NVP-Plattform nicht erstellt werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1465
+#: quantum/plugins/nicira/QuantumPlugin.py:1470
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr "Logischer Router %s auf der NVP-Plattform nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1468
+#: quantum/plugins/nicira/QuantumPlugin.py:1473
 msgid "Unable to update logical router on NVP Platform"
 msgstr "Logischer Router kann auf der NVP-Plattform nicht aktualisiert werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1488
+#: quantum/plugins/nicira/QuantumPlugin.py:1493
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr "Logischer Router '%s' auf der NVP-Plattform nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1492
+#: quantum/plugins/nicira/QuantumPlugin.py:1497
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr "Logischer Router kann auf der NVP-Plattform nicht gelöscht werden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1513
+#: quantum/plugins/nicira/QuantumPlugin.py:1518
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Quantum "
@@ -6877,15 +6901,15 @@ msgstr ""
 "Aktueller Routerstatus: %(router_status)s; Status in der Quantum-"
 "Datenbank: %(db_router_status)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1521
+#: quantum/plugins/nicira/QuantumPlugin.py:1526
 msgid "Unable to get logical router"
 msgstr "Abrufen des logischen Routers nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1544
+#: quantum/plugins/nicira/QuantumPlugin.py:1549
 msgid "Unable to get logical routers from NVP controller"
 msgstr "Abrufen des logischen Routers vom NVP-Controller nicht möglich"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1566
+#: quantum/plugins/nicira/QuantumPlugin.py:1571
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Quantum routers. Quantum and NVP "
@@ -6894,7 +6918,7 @@ msgstr ""
 "%s logische Router gefunden, die nicht an Quantum-Router gebunden sind. "
 "Quantum und NVP sind möglicherweise nicht synchron"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1593
+#: quantum/plugins/nicira/QuantumPlugin.py:1598
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
@@ -6903,7 +6927,7 @@ msgstr ""
 "Port %(port_id)s, verbunden mit Router %(router_id)s, wurde auf der Back-"
 "End-NVP nicht gefunden."
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1628
+#: quantum/plugins/nicira/QuantumPlugin.py:1633
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
@@ -6912,7 +6936,7 @@ msgstr ""
 "'Add_router_interface' für Teilnetz: %(subnet_id)s und Router: "
 "%(router_id)s abgeschlossen"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1673
+#: quantum/plugins/nicira/QuantumPlugin.py:1678
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
@@ -6921,7 +6945,7 @@ msgstr ""
 "Port %(port_id)s, verbunden mit Router %(router_id)s, wurde auf der Back-"
 "End-NVP nicht gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1685
+#: quantum/plugins/nicira/QuantumPlugin.py:1690
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Quantum port id:%s. Was this "
@@ -6931,14 +6955,14 @@ msgstr ""
 "gefunden werden: %s. War dieser Ports jemals paarweise mit einem "
 "logischen Router verbunden?"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1714
+#: quantum/plugins/nicira/QuantumPlugin.py:1719
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr ""
 "Port-Ressource %s des logischen Routers auf der NVP-Plattform nicht "
 "gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1740
+#: quantum/plugins/nicira/QuantumPlugin.py:1745
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
@@ -6947,18 +6971,18 @@ msgstr ""
 "Fehler beim Entfernen von NAT-Regeln auf der NVP-Plattform für dynamische"
 " IP-Adresse: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1746
+#: quantum/plugins/nicira/QuantumPlugin.py:1751
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 "Eine falsche Anzahl an übereinstimmenden NAT-Regeln wurde auf der NVP-"
 "Plattform gefunden"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1812
+#: quantum/plugins/nicira/QuantumPlugin.py:1817
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr "Adressliste für Port des logischen Routers von NVP: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1836
+#: quantum/plugins/nicira/QuantumPlugin.py:1841
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
@@ -6968,17 +6992,17 @@ msgstr ""
 " IP-Adresse: %(floating_ip)s, zugeordnet zu interner IP-Adresse: "
 "%(internal_ip)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1878
+#: quantum/plugins/nicira/QuantumPlugin.py:1883
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr "Port '%s' ist keinen dynamischen IP-Adressen zugeordnet"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1881
+#: quantum/plugins/nicira/QuantumPlugin.py:1886
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1907
+#: quantum/plugins/nicira/QuantumPlugin.py:1912
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
@@ -6987,7 +7011,7 @@ msgstr ""
 "'Create_l2_gw_service' hat keine UUID für die neu erstellte Ressource "
 "zurückgegeben: %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1929
+#: quantum/plugins/nicira/QuantumPlugin.py:1934
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -7047,7 +7071,7 @@ msgstr ""
 "Das Netzgateway %(gateway_id)s kann nicht aktualisiert oder gelöscht "
 "werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:152
+#: quantum/plugins/nicira/nicira_networkgw_db.py:160
 msgid ""
 "A network identifier must be specified when connecting a network to a "
 "network gateway. Unable to complete operation"
@@ -7055,7 +7079,7 @@ msgstr ""
 "Eine Netz-ID muss bei Verbindung eines Netzes mit einem Netzgateway "
 "angegeben werden. Operation kann nicht abgeschlossen werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:158
+#: quantum/plugins/nicira/nicira_networkgw_db.py:166
 #, python-format
 msgid ""
 "Invalid keys found among the ones provided in request body: "
@@ -7064,7 +7088,7 @@ msgstr ""
 "Ungültige Schlüssel unter den im Anforderungshauptteil angegebenen "
 "gefunden: %(connection_attrs)s."
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:164
+#: quantum/plugins/nicira/nicira_networkgw_db.py:172
 msgid ""
 "In order to specify a segmentation id the segmentation type must be "
 "specified as well"
@@ -7072,33 +7096,33 @@ msgstr ""
 "Damit eine Segmentierungs-ID angegeben werden kann, muss auch der "
 "Segmentierungstyp angegeben werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:168
+#: quantum/plugins/nicira/nicira_networkgw_db.py:176
 msgid "Cannot specify a segmentation id when the segmentation type is flat"
 msgstr ""
 "Segmentierungs-ID kann nicht angegeben werden, wenn der Segmentierungstyp"
 " 'flat' ist"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:217
+#: quantum/plugins/nicira/nicira_networkgw_db.py:225
 #, python-format
 msgid "Created network gateway with id:%s"
 msgstr "Netzgateway mit ID erstellt: %s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:230
+#: quantum/plugins/nicira/nicira_networkgw_db.py:237
 #, python-format
 msgid "Updated network gateway with id:%s"
 msgstr "Netzgateway mit ID aktualisiert: %s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:245
+#: quantum/plugins/nicira/nicira_networkgw_db.py:252
 #, python-format
 msgid "Network gateway '%s' was destroyed."
 msgstr "Netzgateway '%s' gelöscht."
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:255
+#: quantum/plugins/nicira/nicira_networkgw_db.py:262
 #, python-format
 msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
 msgstr "Netz '%(network_id)s' wird mit Gateway '%(network_gateway_id)s' verbunden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:296
+#: quantum/plugins/nicira/nicira_networkgw_db.py:303
 #, python-format
 msgid ""
 "Requested network '%(network_id)s' not found.Unable to create network "
@@ -7107,7 +7131,7 @@ msgstr ""
 "Angefordertes Netz '%(network_id)s' nicht gefunden. Netzverbindung auf "
 "Gateway '%(network_gateway_id)s' kann nicht erstellt werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:304
+#: quantum/plugins/nicira/nicira_networkgw_db.py:311
 #, python-format
 msgid ""
 "Gateway port for '%(network_gateway_id)s' created on network "
@@ -7116,12 +7140,12 @@ msgstr ""
 "Gateway-Port für '%(network_gateway_id)s' in Netz '%(network_id)s' "
 "erstellt: %(port_id)s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:320
+#: quantum/plugins/nicira/nicira_networkgw_db.py:327
 #, python-format
 msgid "Ensured no Ip addresses are configured on port %s"
 msgstr "Sichergestellt, dass auf Port %s keine IP-Adressen konfiguriert sind"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:330
+#: quantum/plugins/nicira/nicira_networkgw_db.py:337
 #, python-format
 msgid ""
 "Disconnecting network '%(network_id)s' from gateway "
@@ -7826,11 +7850,11 @@ msgid ""
 "router:'%s'"
 msgstr "Fehler beim Arbeiten im Metadatenzugriffsnetz für Router: '%s'"
 
-#: quantum/plugins/nicira/extensions/nvp_networkgw.py:63
+#: quantum/plugins/nicira/extensions/nvp_networkgw.py:66
 msgid "Cannot create a gateway with an empty device list"
 msgstr "Gateway kann nicht mit einer leeren Einheitenliste erstellt werden"
 
-#: quantum/plugins/nicira/extensions/nvp_networkgw.py:89
+#: quantum/plugins/nicira/extensions/nvp_networkgw.py:92
 msgid "number of network gateways allowed per tenant, -1 for unlimited"
 msgstr "Anzahl an zulässigen Gateways pro Nutzer, -1 für unbegrenzt"
 
