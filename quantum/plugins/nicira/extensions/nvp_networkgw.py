@@ -93,7 +93,7 @@ nw_gw_quota_opts = [
                       '-1 for unlimited'))
 ]
 
-cfg.CONF.register_opts(nw_gw_quota_opts, 'quotas')
+cfg.CONF.register_opts(nw_gw_quota_opts, 'QUOTAS')
 
 attributes.validators['type:device_list'] = _validate_device_list
 

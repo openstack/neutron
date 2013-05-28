@@ -25,7 +25,7 @@ lock_path = $state_path/lock
 [DATABASE]
 sql_connection = 'sqlite:///:memory:'
 
-[default_servicetype]
+[DEFAULT_SERVICETYPE]
 description = "default service type"
 service_definition=dummy:quantum.tests.unit.dummy_plugin.QuantumDummyPlugin
 

@@ -47,6 +47,6 @@ agent_opts = [
 ]
 
 
-cfg.CONF.register_opts(ovs_opts, "ovs")
+cfg.CONF.register_opts(ovs_opts, "OVS")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 config.register_root_helper(cfg.CONF)

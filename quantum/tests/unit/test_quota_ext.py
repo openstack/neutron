@@ -50,7 +50,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override(
             'quota_items',
             ['network', 'subnet', 'port', 'extra1'],
-            group='quotas')
+            group='QUOTAS')
         quota.QUOTAS = quota.QuotaEngine()
         quota.register_resources_from_config()
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
@@ -85,7 +85,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         cfg.CONF.set_override(
             'quota_driver',
             'quantum.db.quota_db.DbQuotaDriver',
-            group='quotas')
+            group='QUOTAS')
         super(QuotaExtensionDbTestCase, self).setUp()
 
     def test_quotas_loaded_right(self):
