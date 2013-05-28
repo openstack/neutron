@@ -20,6 +20,7 @@
 
 import re
 
+from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.openstack.common import log as logging
 
@@ -282,6 +283,15 @@ class OVSBridge:
 
         for port_name in port_names:
             self.delete_port(port_name)
+
+    def get_local_port_mac(self):
+        """Retrieve the mac of the bridge's local port."""
+        address = ip_lib.IPDevice(self.br_name, self.root_helper).link.address
+        if address:
+            return address
+        else:
+            msg = _('Unable to determine mac address for %s') % self.br_name
+            raise Exception(msg)
 
 
 def get_bridge_for_iface(root_helper, iface):
