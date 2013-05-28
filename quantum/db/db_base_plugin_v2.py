@@ -1379,9 +1379,9 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                         ip_address=ip['ip_address'], subnet_id=ip['subnet_id'],
                         expiration=self._default_allocation_expiration())
                     context.session.add(allocated)
-        # Remove all attributes in p which are not in the port DB model
-        # and then update the port
-        port.update(self._filter_non_model_columns(p, models_v2.Port))
+            # Remove all attributes in p which are not in the port DB model
+            # and then update the port
+            port.update(self._filter_non_model_columns(p, models_v2.Port))
 
         return self._make_port_dict(port)
 
