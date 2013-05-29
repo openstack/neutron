@@ -1299,7 +1299,7 @@ class NotificationTest(APIv2TestBase):
 
 class QuotaTest(APIv2TestBase):
     def test_create_network_quota(self):
-        cfg.CONF.set_override('quota_network', 1, group='quotas')
+        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         full_input = {'network': {'admin_state_up': True, 'subnets': []}}
         full_input['network'].update(initial_input['network'])
@@ -1314,7 +1314,7 @@ class QuotaTest(APIv2TestBase):
                         res.json['QuantumError'])
 
     def test_create_network_quota_no_counts(self):
-        cfg.CONF.set_override('quota_network', 1, group='quotas')
+        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         full_input = {'network': {'admin_state_up': True, 'subnets': []}}
         full_input['network'].update(initial_input['network'])
@@ -1331,7 +1331,7 @@ class QuotaTest(APIv2TestBase):
                         res.json['QuantumError'])
 
     def test_create_network_quota_without_limit(self):
-        cfg.CONF.set_override('quota_network', -1, group='quotas')
+        cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
         instance = self.plugin.return_value
         instance.get_networks_count.return_value = 3

@@ -69,7 +69,7 @@ def _get_my_ip():
 def _get_ip(cfg_ip_str, cfg_interface_str):
     ip = None
     try:
-        ip = getattr(cfg.CONF.ovs, cfg_ip_str)
+        ip = getattr(cfg.CONF.OVS, cfg_ip_str)
     except (cfg.NoSuchOptError, cfg.NoSuchGroupError):
         pass
     if ip:
@@ -77,7 +77,7 @@ def _get_ip(cfg_ip_str, cfg_interface_str):
 
     iface = None
     try:
-        iface = getattr(cfg.CONF.ovs, cfg_interface_str)
+        iface = getattr(cfg.CONF.OVS, cfg_interface_str)
     except (cfg.NoSuchOptError, cfg.NoSuchGroupError):
         pass
     if iface:
@@ -278,13 +278,13 @@ def main():
 
     logging_config.setup_logging(cfg.CONF)
 
-    integ_br = cfg.CONF.ovs.integration_bridge
+    integ_br = cfg.CONF.OVS.integration_bridge
     polling_interval = cfg.CONF.AGENT.polling_interval
     root_helper = cfg.CONF.AGENT.root_helper
 
     tunnel_ip = _get_tunnel_ip()
     LOG.debug(_('tunnel_ip %s'), tunnel_ip)
-    ovsdb_port = cfg.CONF.ovs.ovsdb_port
+    ovsdb_port = cfg.CONF.OVS.ovsdb_port
     LOG.debug(_('ovsdb_port %s'), ovsdb_port)
     ovsdb_ip = _get_ovsdb_ip()
     LOG.debug(_('ovsdb_ip %s'), ovsdb_ip)

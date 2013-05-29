@@ -24,10 +24,10 @@ from quantum.tests import base
 class ConfigurationTest(base.BaseTestCase):
     """Configuration file Tests."""
     def test_defaults(self):
-        self.assertEqual('br-int', cfg.CONF.ovs.integration_bridge)
+        self.assertEqual('br-int', cfg.CONF.OVS.integration_bridge)
         self.assertEqual(2, cfg.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', cfg.CONF.AGENT.root_helper)
-        self.assertEqual('127.0.0.1:8080', cfg.CONF.ovs.openflow_rest_api)
-        self.assertEqual(1, cfg.CONF.ovs.tunnel_key_min)
-        self.assertEqual(0xffffff, cfg.CONF.ovs.tunnel_key_max)
-        self.assertEqual(6634, cfg.CONF.ovs.ovsdb_port)
+        self.assertEqual('127.0.0.1:8080', cfg.CONF.OVS.openflow_rest_api)
+        self.assertEqual(1, cfg.CONF.OVS.tunnel_key_min)
+        self.assertEqual(0xffffff, cfg.CONF.OVS.tunnel_key_max)
+        self.assertEqual(6634, cfg.CONF.OVS.ovsdb_port)

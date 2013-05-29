@@ -45,7 +45,7 @@ _db_opts = [
 CONF = cfg.ConfigOpts()
 CONF.register_opts(_core_opts)
 CONF.register_opts(_db_opts, 'DATABASE')
-CONF.register_opts(_quota_opts, 'quotas')
+CONF.register_opts(_quota_opts, 'QUOTAS')
 
 
 def do_alembic_command(config, cmd, *args, **kwargs):

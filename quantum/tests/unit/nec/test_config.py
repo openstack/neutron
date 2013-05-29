@@ -22,8 +22,7 @@ from quantum.tests import base
 class ConfigurationTest(base.BaseTestCase):
 
     def test_defaults(self):
-        self.assertEqual('br-int', config.CONF.ovs.integration_bridge)
-
+        self.assertEqual('br-int', config.CONF.OVS.integration_bridge)
         self.assertEqual(2, config.CONF.AGENT.polling_interval)
         self.assertEqual('sudo', config.CONF.AGENT.root_helper)
 
@@ -36,7 +35,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertIsNone(config.CONF.OFC.cert_file)
 
     def test_shortcuts(self):
-        self.assertEqual(config.CONF.ovs.integration_bridge,
+        self.assertEqual(config.CONF.OVS.integration_bridge,
                          config.OVS.integration_bridge)
         self.assertEqual(config.CONF.AGENT.polling_interval,
                          config.AGENT.polling_interval)

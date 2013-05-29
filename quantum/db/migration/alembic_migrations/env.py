@@ -91,7 +91,7 @@ def build_options():
 
 
 def is_db_quota_enabled():
-    return quantum_config.quotas.quota_driver == DATABASE_QUOTA_DRIVER
+    return quantum_config.QUOTAS.quota_driver == DATABASE_QUOTA_DRIVER
 
 
 if context.is_offline_mode():

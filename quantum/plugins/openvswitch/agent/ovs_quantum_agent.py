@@ -500,7 +500,7 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         :returns: the integration bridge
         '''
         int_br = ovs_lib.OVSBridge(bridge_name, self.root_helper)
-        int_br.delete_port(cfg.CONF.ovs.int_peer_patch_port)
+        int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
         int_br.remove_all_flows()
         # switch all traffic using L2 learning
         int_br.add_flow(priority=1, actions="normal")
@@ -517,9 +517,9 @@ class OVSQuantumAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.tun_br = ovs_lib.OVSBridge(tun_br, self.root_helper)
         self.tun_br.reset_bridge()
         self.patch_tun_ofport = self.int_br.add_patch_port(
-            cfg.CONF.ovs.int_peer_patch_port, cfg.CONF.ovs.tun_peer_patch_port)
+            cfg.CONF.OVS.int_peer_patch_port, cfg.CONF.OVS.tun_peer_patch_port)
         self.patch_int_ofport = self.tun_br.add_patch_port(
-            cfg.CONF.ovs.tun_peer_patch_port, cfg.CONF.ovs.int_peer_patch_port)
+            cfg.CONF.OVS.tun_peer_patch_port, cfg.CONF.OVS.int_peer_patch_port)
         if int(self.patch_tun_ofport) < 0 or int(self.patch_int_ofport) < 0:
             LOG.error(_("Failed to create OVS patch port. Cannot have "
                         "tunneling enabled on this agent, since this version "
@@ -735,18 +735,18 @@ def create_agent_config_map(config):
     :returns: a map of agent configuration parameters
     """
     try:
-        bridge_mappings = q_utils.parse_mappings(config.ovs.bridge_mappings)
+        bridge_mappings = q_utils.parse_mappings(config.OVS.bridge_mappings)
     except ValueError as e:
         raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
 
     kwargs = dict(
-        integ_br=config.ovs.integration_bridge,
-        tun_br=config.ovs.tunnel_bridge,
-        local_ip=config.ovs.local_ip,
+        integ_br=config.OVS.integration_bridge,
+        tun_br=config.OVS.tunnel_bridge,
+        local_ip=config.OVS.local_ip,
         bridge_mappings=bridge_mappings,
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
-        enable_tunneling=config.ovs.enable_tunneling,
+        enable_tunneling=config.OVS.enable_tunneling,
     )
 
     if kwargs['enable_tunneling'] and not kwargs['local_ip']:

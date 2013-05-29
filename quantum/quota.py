@@ -50,7 +50,7 @@ quota_opts = [
                help=_('Default driver to use for quota checks')),
 ]
 # Register the configuration options
-cfg.CONF.register_opts(quota_opts, 'quotas')
+cfg.CONF.register_opts(quota_opts, 'QUOTAS')
 
 
 class ConfDriver(object):
@@ -164,9 +164,9 @@ class BaseResource(object):
     @property
     def default(self):
         """Return the default value of the quota."""
-        return getattr(cfg.CONF.quotas,
+        return getattr(cfg.CONF.QUOTAS,
                        self.flag,
-                       cfg.CONF.quotas.default_quota)
+                       cfg.CONF.QUOTAS.default_quota)
 
 
 class CountableResource(BaseResource):
@@ -206,7 +206,7 @@ class QuotaEngine(object):
         """Initialize a Quota object."""
 
         if not quota_driver_class:
-            quota_driver_class = cfg.CONF.quotas.quota_driver
+            quota_driver_class = cfg.CONF.QUOTAS.quota_driver
 
         if isinstance(quota_driver_class, basestring):
             quota_driver_class = importutils.import_object(quota_driver_class)
@@ -306,7 +306,7 @@ def _count_resource(context, plugin, resources, tenant_id):
 
 def register_resources_from_config():
     resources = []
-    for resource_item in cfg.CONF.quotas.quota_items:
+    for resource_item in cfg.CONF.QUOTAS.quota_items:
         resources.append(CountableResource(resource_item, _count_resource,
                                            'quota_' + resource_item))
     QUOTAS.register_resources(resources)

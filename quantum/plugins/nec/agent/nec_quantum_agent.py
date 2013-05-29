@@ -233,7 +233,7 @@ def main():
     logging_config.setup_logging(config.CONF)
 
     # Determine which agent type to use.
-    integ_br = config.ovs.integration_bridge
+    integ_br = config.OVS.integration_bridge
     root_helper = config.AGENT.root_helper
     polling_interval = config.AGENT.polling_interval
 

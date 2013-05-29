@@ -101,8 +101,8 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     def __init__(self, configfile=None):
         db.configure_db()
         self.tunnel_key = db_api_v2.TunnelKey(
-            cfg.CONF.ovs.tunnel_key_min, cfg.CONF.ovs.tunnel_key_max)
-        self.ofp_api_host = cfg.CONF.ovs.openflow_rest_api
+            cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)
+        self.ofp_api_host = cfg.CONF.OVS.openflow_rest_api
         if not self.ofp_api_host:
             raise q_exc.Invalid(_('Invalid configuration. check ryu.ini'))
 
