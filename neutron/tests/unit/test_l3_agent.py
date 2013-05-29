@@ -732,55 +732,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent._process_router_delete()
         self.assertFalse(list(agent.removed_routers))
 
-    def test_destroy_namespace(self):
-
-        class FakeDev(object):
-            def __init__(self, name):
-                self.name = name
-
-        self.mock_ip.get_namespaces.return_value = ['qrouter-foo',
-                                                    'qrouter-bar']
-        self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
-                                                 FakeDev('qgw-aaaa')]
-
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-
-        pm = self.external_process.return_value
-        pm.reset_mock()
-
-        agent._destroy_router_namespace = mock.MagicMock()
-        agent._destroy_router_namespaces()
-
-        self.assertEqual(pm.disable.call_count, 2)
-
-        self.assertEqual(agent._destroy_router_namespace.call_count, 2)
-
-    def test_destroy_namespace_with_router_id(self):
-
-        class FakeDev(object):
-            def __init__(self, name):
-                self.name = name
-
-        self.conf.router_id = _uuid()
-
-        namespaces = ['qrouter-foo', 'qrouter-' + self.conf.router_id]
-
-        self.mock_ip.get_namespaces.return_value = namespaces
-        self.mock_ip.get_devices.return_value = [FakeDev('qr-aaaa'),
-                                                 FakeDev('qgw-aaaa')]
-
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-
-        pm = self.external_process.return_value
-        pm.reset_mock()
-
-        agent._destroy_router_namespace = mock.MagicMock()
-        agent._destroy_router_namespaces(self.conf.router_id)
-
-        self.assertEqual(pm.disable.call_count, 1)
-
-        self.assertEqual(agent._destroy_router_namespace.call_count, 1)
-
     def test_destroy_router_namespace_skips_ns_removal(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._destroy_router_namespace("fakens")
@@ -842,6 +793,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.set_override('router_id', '1234')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual(['1234'], agent._router_ids())
+        self.assertFalse(agent._delete_stale_namespaces)
 
     def test_process_routers_with_no_ext_net_in_conf(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -939,6 +891,69 @@ class TestBasicRouterOperations(base.BaseTestCase):
         rules = ('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
                  '-p tcp -m tcp --dport 8775 -j ACCEPT')
         self.assertEqual([rules], agent.metadata_filter_rules())
+
+    def _cleanup_namespace_test(self,
+                                stale_namespace_list,
+                                router_list,
+                                other_namespaces):
+        self.conf.set_override('router_delete_namespaces', True)
+
+        good_namespace_list = [l3_agent.NS_PREFIX + r['id']
+                               for r in router_list]
+        self.mock_ip.get_namespaces.return_value = (stale_namespace_list +
+                                                    good_namespace_list +
+                                                    other_namespaces)
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        self.assertTrue(agent._delete_stale_namespaces)
+
+        pm = self.external_process.return_value
+        pm.reset_mock()
+
+        agent._destroy_router_namespace = mock.MagicMock()
+        agent._cleanup_namespaces(router_list)
+
+        self.assertEqual(pm.disable.call_count, len(stale_namespace_list))
+        self.assertEqual(agent._destroy_router_namespace.call_count,
+                         len(stale_namespace_list))
+        expected_args = [mock.call(ns) for ns in stale_namespace_list]
+        agent._destroy_router_namespace.assert_has_calls(expected_args,
+                                                         any_order=True)
+        self.assertFalse(agent._delete_stale_namespaces)
+
+    def test_cleanup_namespace(self):
+        self.conf.set_override('router_id', None)
+        stale_namespaces = [l3_agent.NS_PREFIX + 'foo',
+                            l3_agent.NS_PREFIX + 'bar']
+        other_namespaces = ['unknown']
+
+        self._cleanup_namespace_test(stale_namespaces,
+                                     [],
+                                     other_namespaces)
+
+    def test_cleanup_namespace_with_registered_router_ids(self):
+        self.conf.set_override('router_id', None)
+        stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
+                            l3_agent.NS_PREFIX + 'eeeee']
+        router_list = [{'id': 'foo'}, {'id': 'aaaa'}]
+        other_namespaces = ['qdhcp-aabbcc', 'unknown']
+
+        self._cleanup_namespace_test(stale_namespaces,
+                                     router_list,
+                                     other_namespaces)
+
+    def test_cleanup_namespace_with_conf_router_id(self):
+        self.conf.set_override('router_id', 'bbbbb')
+        stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
+                            l3_agent.NS_PREFIX + 'eeeee',
+                            l3_agent.NS_PREFIX + self.conf.router_id]
+        router_list = [{'id': 'foo'}, {'id': 'aaaa'}]
+        other_namespaces = ['qdhcp-aabbcc', 'unknown']
+
+        self._cleanup_namespace_test(stale_namespaces,
+                                     router_list,
+                                     other_namespaces)
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):

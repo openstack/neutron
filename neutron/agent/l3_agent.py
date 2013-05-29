@@ -216,8 +216,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.updated_routers = set()
         self.removed_routers = set()
         self.sync_progress = False
-        if self.conf.use_namespaces:
-            self._destroy_router_namespaces(self.conf.router_id)
+
+        self._delete_stale_namespaces = (self.conf.use_namespaces and
+                                         self.conf.router_delete_namespaces)
 
         self.rpc_loop = loopingcall.FixedIntervalLoopingCall(
             self._rpc_loop)
@@ -240,28 +241,46 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             LOG.error(msg)
             raise SystemExit(msg)
 
-    def _destroy_router_namespaces(self, only_router_id=None):
-        """Destroy router namespaces on the host to eliminate all stale
-        linux devices, iptables rules, and namespaces.
+    def _cleanup_namespaces(self, routers):
+        """Destroy stale router namespaces on host when L3 agent restarts
 
-        If only_router_id is passed, only destroy single namespace, to allow
-        for multiple l3 agents on the same host, without stepping on each
-        other's toes on init.  This only makes sense if only_router_id is set.
+        This routine is called when self._delete_stale_namespaces is True.
+
+        The argument routers is the list of routers that are recorded in
+        the database as being hosted on this node.
         """
-        root_ip = ip_lib.IPWrapper(self.root_helper)
-        for ns in root_ip.get_namespaces(self.root_helper):
-            if ns.startswith(NS_PREFIX):
-                router_id = ns[len(NS_PREFIX):]
-                if only_router_id and not only_router_id == router_id:
-                    continue
+        try:
+            root_ip = ip_lib.IPWrapper(self.root_helper)
 
-                if self.conf.enable_metadata_proxy:
-                    self._destroy_metadata_proxy(router_id, ns)
+            host_namespaces = root_ip.get_namespaces(self.root_helper)
+            router_namespaces = set(ns for ns in host_namespaces
+                                    if ns.startswith(NS_PREFIX))
+            ns_to_ignore = set(NS_PREFIX + r['id'] for r in routers)
+            ns_to_destroy = router_namespaces - ns_to_ignore
+        except RuntimeError:
+            LOG.exception(_('RuntimeError in obtaining router list '
+                            'for namespace cleanup.'))
+        else:
+            self._destroy_stale_router_namespaces(ns_to_destroy)
 
-                try:
-                    self._destroy_router_namespace(ns)
-                except Exception:
-                    LOG.exception(_("Failed deleting namespace '%s'"), ns)
+    def _destroy_stale_router_namespaces(self, router_namespaces):
+        """Destroys the stale router namespaces
+
+        The argumenet router_namespaces is a list of stale router namespaces
+
+        As some stale router namespaces may not be able to be deleted, only
+        one attempt will be made to delete them.
+        """
+        for ns in router_namespaces:
+            if self.conf.enable_metadata_proxy:
+                self._destroy_metadata_proxy(ns[len(NS_PREFIX):], ns)
+
+            try:
+                self._destroy_router_namespace(ns)
+            except RuntimeError:
+                LOG.exception(_('Failed to destroy stale router namespace '
+                                '%s'), ns)
+        self._delete_stale_namespaces = False
 
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=namespace)
@@ -759,9 +778,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self._process_routers(routers, all_routers=True)
             self.fullsync = False
             LOG.debug(_("_sync_routers_task successfully completed"))
+        except rpc_common.RPCException:
+            LOG.exception(_("Failed synchronizing routers due to RPC error"))
+            self.fullsync = True
+            return
         except Exception:
             LOG.exception(_("Failed synchronizing routers"))
             self.fullsync = True
+
+        # Resync is not necessary for the cleanup of stale
+        # namespaces.
+        if self._delete_stale_namespaces:
+            self._cleanup_namespaces(routers)
 
     def after_start(self):
         LOG.info(_("L3 agent started"))
