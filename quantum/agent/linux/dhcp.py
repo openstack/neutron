@@ -66,12 +66,13 @@ class DhcpBase(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, conf, network, root_helper='sudo',
-                 device_delegate=None, namespace=None):
+                 device_delegate=None, namespace=None, version=None):
         self.conf = conf
         self.network = network
         self.root_helper = root_helper
         self.device_delegate = device_delegate
         self.namespace = namespace
+        self.version = version
 
     @abc.abstractmethod
     def enable(self):
@@ -230,7 +231,7 @@ class Dnsmasq(DhcpLocalProcess):
 
     @classmethod
     def check_version(cls):
-        is_valid_version = None
+        ver = 0
         try:
             cmd = ['dnsmasq', '--version']
             out = utils.execute(cmd)
@@ -245,7 +246,7 @@ class Dnsmasq(DhcpLocalProcess):
             LOG.warning(_('Unable to determine dnsmasq version. '
                           'Please ensure that its version is %s '
                           'or above!'), cls.MINIMUM_VERSION)
-        return is_valid_version
+        return float(ver)
 
     @classmethod
     def existing_dhcp_networks(cls, conf, root_helper):
@@ -299,8 +300,12 @@ class Dnsmasq(DhcpLocalProcess):
                 # TODO (mark): how do we indicate other options
                 # ra-only, slaac, ra-nameservers, and ra-stateless.
                 mode = 'static'
-            cmd.append('--dhcp-range=set:%s,%s,%s,%ss' %
-                       (self._TAG_PREFIX % i,
+            if self.version >= self.MINIMUM_VERSION:
+                set_tag = 'set:'
+            else:
+                set_tag = ''
+            cmd.append('--dhcp-range=%s%s,%s,%s,%ss' %
+                       (set_tag, self._TAG_PREFIX % i,
                         netaddr.IPNetwork(subnet.cidr).network,
                         mode,
                         self.conf.dhcp_lease_time))
@@ -434,7 +439,11 @@ class Dnsmasq(DhcpLocalProcess):
                             'quantum-dhcp-agent-dnsmasq-lease-update')
 
     def _format_option(self, index, option_name, *args):
-        return ','.join(('tag:' + self._TAG_PREFIX % index,
+        if self.version >= self.MINIMUM_VERSION:
+            set_tag = 'tag:'
+        else:
+            set_tag = ''
+        return ','.join((set_tag + self._TAG_PREFIX % index,
                          'option:%s' % option_name) + args)
 
     @classmethod
