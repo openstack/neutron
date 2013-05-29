@@ -10,5 +10,5 @@
 
 # This is needed because we should ping
 # from inside a namespace which requires root
-ping: RegExpFilter, /bin/ping, root, ping, -w, \d+, -c, \d+, [0-9\.]+
-ping6: RegExpFilter, /bin/ping6, root, ping6, -w, \d+, -c, \d+, [0-9A-Fa-f:]+
+ping: RegExpFilter, ping, root, ping, -w, \d+, -c, \d+, [0-9\.]+
+ping6: RegExpFilter, ping6, root, ping6, -w, \d+, -c, \d+, [0-9A-Fa-f:]+

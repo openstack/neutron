@@ -14,12 +14,8 @@
 
 # quantum/plugins/ryu/agent/ryu_quantum_agent.py:
 #   "ovs-vsctl", "--timeout=2", ...
-ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
-ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
-ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
-ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+ovs-vsctl: CommandFilter, ovs-vsctl, root
 
 # quantum/plugins/ryu/agent/ryu_quantum_agent.py:
 #   "xe", "vif-param-get", ...
-xe: CommandFilter, /bin/xe, root
-xe_usr: CommandFilter, /usr/bin/xe, root
+xe: CommandFilter, xe, root

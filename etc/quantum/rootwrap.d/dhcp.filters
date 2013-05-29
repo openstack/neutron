@@ -9,7 +9,7 @@
 [Filters]
 
 # dhcp-agent
-ip_exec_dnsmasq: DnsmasqNetnsFilter, /sbin/ip, root
+ip_exec_dnsmasq: DnsmasqNetnsFilter, ip, root
 dnsmasq: DnsmasqFilter, /sbin/dnsmasq, root
 dnsmasq_usr: DnsmasqFilter, /usr/sbin/dnsmasq, root
 # dhcp-agent uses kill as well, that's handled by the generic KillFilter
@@ -19,14 +19,11 @@ kill_dnsmasq: KillFilter, root, /sbin/dnsmasq, -9, -HUP
 kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP
 
 # dhcp-agent uses cat
-cat: RegExpFilter, /bin/cat, root, cat, /proc/\d+/cmdline
-ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
-ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
-ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
-ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+cat: RegExpFilter, cat, root, cat, /proc/\d+/cmdline
+ovs-vsctl: CommandFilter, ovs-vsctl, root
 
 # metadata proxy
-metadata_proxy: CommandFilter, /usr/bin/quantum-ns-metadata-proxy, root
+metadata_proxy: CommandFilter, quantum-ns-metadata-proxy, root
 # If installed from source (say, by devstack), the prefix will be
 # /usr/local instead of /usr/bin.
 metadata_proxy_local: CommandFilter, /usr/local/bin/quantum-ns-metadata-proxy, root
@@ -36,7 +33,5 @@ kill_metadata7: KillFilter, root, /usr/bin/python2.7, -9
 kill_metadata6: KillFilter, root, /usr/bin/python2.6, -9
 
 # ip_lib
-ip: IpFilter, /sbin/ip, root
-ip_usr: IpFilter, /usr/sbin/ip, root
-ip_exec: IpNetnsExecFilter, /sbin/ip, root
-ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root

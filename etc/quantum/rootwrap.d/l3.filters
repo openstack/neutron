@@ -9,15 +9,14 @@
 [Filters]
 
 # arping
-arping: CommandFilter, /usr/bin/arping, root
-arping_sbin: CommandFilter, /sbin/arping, root
+arping: CommandFilter, arping, root
 
 # l3_agent
-sysctl: CommandFilter, /sbin/sysctl, root
-route: CommandFilter, /sbin/route, root
+sysctl: CommandFilter, sysctl, root
+route: CommandFilter, route, root
 
 # metadata proxy
-metadata_proxy: CommandFilter, /usr/bin/quantum-ns-metadata-proxy, root
+metadata_proxy: CommandFilter, quantum-ns-metadata-proxy, root
 # If installed from source (say, by devstack), the prefix will be
 # /usr/local instead of /usr/bin.
 metadata_proxy_local: CommandFilter, /usr/local/bin/quantum-ns-metadata-proxy, root
@@ -27,19 +26,14 @@ kill_metadata7: KillFilter, root, /usr/bin/python2.7, -9
 kill_metadata6: KillFilter, root, /usr/bin/python2.6, -9
 
 # ip_lib
-ip: IpFilter, /sbin/ip, root
-ip_usr: IpFilter, /usr/sbin/ip, root
-ip_exec: IpNetnsExecFilter, /sbin/ip, root
-ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root
 
 # ovs_lib (if OVSInterfaceDriver is used)
-ovs-vsctl: CommandFilter, /bin/ovs-vsctl, root
-ovs-vsctl_usr: CommandFilter, /usr/bin/ovs-vsctl, root
-ovs-vsctl_sbin: CommandFilter, /sbin/ovs-vsctl, root
-ovs-vsctl_sbin_usr: CommandFilter, /usr/sbin/ovs-vsctl, root
+ovs-vsctl: CommandFilter, ovs-vsctl, root
 
 # iptables_manager
-iptables-save: CommandFilter, /sbin/iptables-save, root
-iptables-restore: CommandFilter, /sbin/iptables-restore, root
-ip6tables-save: CommandFilter, /sbin/ip6tables-save, root
-ip6tables-restore: CommandFilter, /sbin/ip6tables-restore, root
+iptables-save: CommandFilter, iptables-save, root
+iptables-restore: CommandFilter, iptables-restore, root
+ip6tables-save: CommandFilter, ip6tables-save, root
+ip6tables-restore: CommandFilter, ip6tables-restore, root

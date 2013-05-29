@@ -11,11 +11,8 @@
 # linuxbridge-agent
 # unclear whether both variants are necessary, but I'm transliterating
 # from the old mechanism
-brctl: CommandFilter, /sbin/brctl, root
-brctl_usr: CommandFilter, /usr/sbin/brctl, root
+brctl: CommandFilter, brctl, root
 
 # ip_lib
-ip: IpFilter, /sbin/ip, root
-ip_usr: IpFilter, /usr/sbin/ip, root
-ip_exec: IpNetnsExecFilter, /sbin/ip, root
-ip_exec_usr: IpNetnsExecFilter, /usr/sbin/ip, root
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root
