@@ -121,9 +121,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             router = self._get_by_id(context, Router, id)
         except exc.NoResultFound:
             raise l3.RouterNotFound(router_id=id)
-        except exc.MultipleResultsFound:
-            LOG.error(_('Multiple routers match for %s'), id)
-            raise l3.RouterNotFound(router_id=id)
         return router
 
     def _make_router_dict(self, router, fields=None,
@@ -471,9 +468,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         try:
             floatingip = self._get_by_id(context, FloatingIP, id)
         except exc.NoResultFound:
-            raise l3.FloatingIPNotFound(floatingip_id=id)
-        except exc.MultipleResultsFound:
-            LOG.error(_('Multiple floating ips match for %s'), id)
             raise l3.FloatingIPNotFound(floatingip_id=id)
         return floatingip
 
