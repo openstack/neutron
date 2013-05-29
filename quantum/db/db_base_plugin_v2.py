@@ -169,18 +169,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             network = self._get_by_id(context, models_v2.Network, id)
         except exc.NoResultFound:
             raise q_exc.NetworkNotFound(net_id=id)
-        except exc.MultipleResultsFound:
-            LOG.error(_('Multiple networks match for %s'), id)
-            raise q_exc.NetworkNotFound(net_id=id)
         return network
 
     def _get_subnet(self, context, id):
         try:
             subnet = self._get_by_id(context, models_v2.Subnet, id)
         except exc.NoResultFound:
-            raise q_exc.SubnetNotFound(subnet_id=id)
-        except exc.MultipleResultsFound:
-            LOG.error(_('Multiple subnets match for %s'), id)
             raise q_exc.SubnetNotFound(subnet_id=id)
         return subnet
 
@@ -191,9 +185,6 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # NOTE(jkoelker) The PortNotFound exceptions requires net_id
             #                kwarg in order to set the message correctly
             raise q_exc.PortNotFound(port_id=id, net_id=None)
-        except exc.MultipleResultsFound:
-            LOG.error(_('Multiple ports match for %s'), id)
-            raise q_exc.PortNotFound(port_id=id)
         return port
 
     def _get_dns_by_subnet(self, context, subnet_id):
