@@ -21,9 +21,12 @@ import weakref
 from oslo.config import cfg
 
 from neutron.agent.common import config
+from neutron.agent import rpc as agent_rpc
+from neutron.common import constants
 from neutron import context
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.services.loadbalancer.drivers.haproxy import (
     agent_api,
@@ -110,6 +113,12 @@ class LogicalDeviceCache(object):
 
 
 class LbaasAgentManager(periodic_task.PeriodicTasks):
+
+    # history
+    #   1.0 Initial version
+    #   1.1 Support agent_updated call
+    RPC_API_VERSION = '1.1'
+
     def __init__(self, conf):
         self.conf = conf
         try:
@@ -131,14 +140,45 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
         except ImportError:
             msg = _('Error importing loadbalancer device driver: %s')
             raise SystemExit(msg % conf.device_driver)
-        ctx = context.get_admin_context_without_session()
-        self.plugin_rpc = agent_api.LbaasAgentApi(
-            plugin_driver.TOPIC_PROCESS_ON_HOST,
-            ctx,
-            conf.host
-        )
+
+        self.agent_state = {
+            'binary': 'neutron-loadbalancer-agent',
+            'host': conf.host,
+            'topic': plugin_driver.TOPIC_LOADBALANCER_AGENT,
+            'configurations': {'device_driver': conf.device_driver,
+                               'interface_driver': conf.interface_driver},
+            'agent_type': constants.AGENT_TYPE_LOADBALANCER,
+            'start_flag': True}
+        self.admin_state_up = True
+
+        self.context = context.get_admin_context_without_session()
+        self._setup_rpc()
         self.needs_resync = False
         self.cache = LogicalDeviceCache()
+
+    def _setup_rpc(self):
+        self.plugin_rpc = agent_api.LbaasAgentApi(
+            plugin_driver.TOPIC_PROCESS_ON_HOST,
+            self.context,
+            self.conf.host
+        )
+        self.state_rpc = agent_rpc.PluginReportStateAPI(
+            plugin_driver.TOPIC_PROCESS_ON_HOST)
+        report_interval = self.conf.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            heartbeat.start(interval=report_interval)
+
+    def _report_state(self):
+        try:
+            device_count = len(self.cache.devices)
+            self.agent_state['configurations']['devices'] = device_count
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception("Failed reporting state!")
 
     def initialize_service_hook(self, started_by):
         self.sync_state()
@@ -228,3 +268,14 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
         """Handle RPC cast from plugin to destroy a pool if known to agent."""
         if self.cache.get_by_pool_id(pool_id):
             self.destroy_device(pool_id)
+
+    def agent_updated(self, context, payload):
+        """Handle the agent_updated notification event."""
+        if payload['admin_state_up'] != self.admin_state_up:
+            self.admin_state_up = payload['admin_state_up']
+            if self.admin_state_up:
+                self.needs_resync = True
+            else:
+                for pool_id in self.cache.get_pool_ids():
+                    self.destroy_device(pool_id)
+            LOG.info(_("agent_updated by server side %s!"), payload)

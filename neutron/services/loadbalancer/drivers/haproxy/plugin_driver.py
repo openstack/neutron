@@ -20,9 +20,13 @@ import uuid
 
 from oslo.config import cfg
 
+from neutron.common import constants as q_const
 from neutron.common import exceptions as q_exc
 from neutron.common import rpc as q_rpc
+from neutron.db import agents_db
 from neutron.db.loadbalancer import loadbalancer_db
+from neutron.extensions import lbaas_agentscheduler
+from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
@@ -37,19 +41,31 @@ ACTIVE_PENDING = (
     constants.PENDING_UPDATE
 )
 
+AGENT_SCHEDULER_OPTS = [
+    cfg.StrOpt('loadbalancer_pool_scheduler_driver',
+               default='neutron.services.loadbalancer.agent_scheduler'
+                       '.ChanceScheduler',
+               help=_('Driver to use for scheduling '
+                      'pool to a default loadbalancer agent')),
+]
+
+cfg.CONF.register_opts(AGENT_SCHEDULER_OPTS)
+
 # topic name for this particular agent implementation
 TOPIC_PROCESS_ON_HOST = 'q-lbaas-process-on-host'
 TOPIC_LOADBALANCER_AGENT = 'lbaas_process_on_host_agent'
 
 
 class LoadBalancerCallbacks(object):
+
     RPC_API_VERSION = '1.0'
 
     def __init__(self, plugin):
         self.plugin = plugin
 
     def create_rpc_dispatcher(self):
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher(
+            [self, agents_db.AgentExtRpcCallback(self.plugin)])
 
     def get_ready_devices(self, context, host=None):
         with context.session.begin(subtransactions=True):
@@ -61,6 +77,17 @@ class LoadBalancerCallbacks(object):
             up = True  # makes pep8 and sqlalchemy happy
             qry = qry.filter(loadbalancer_db.Vip.admin_state_up == up)
             qry = qry.filter(loadbalancer_db.Pool.admin_state_up == up)
+            agents = self.plugin.get_lbaas_agents(context,
+                                                  filters={'host': [host]})
+            if not agents:
+                return []
+            elif len(agents) > 1:
+                LOG.warning(_('Multiple lbaas agents found on host %s') % host)
+
+            pools = self.plugin.list_pools_on_lbaas_agent(context,
+                                                          agents[0].id)
+            pool_ids = [pool['id'] for pool in pools['pools']]
+            qry = qry.filter(loadbalancer_db.Pool.id.in_(pool_ids))
             return [id for id, in qry]
 
     def get_logical_device(self, context, pool_id=None, activate=True,
@@ -185,40 +212,50 @@ class LoadBalancerCallbacks(object):
 class LoadBalancerAgentApi(proxy.RpcProxy):
     """Plugin side of plugin to agent RPC API."""
 
-    API_VERSION = '1.0'
+    BASE_RPC_API_VERSION = '1.0'
+    # history
+    #   1.0 Initial version
+    #   1.1 Support agent_updated call
 
-    def __init__(self, topic, host):
-        super(LoadBalancerAgentApi, self).__init__(topic, self.API_VERSION)
-        self.host = host
+    def __init__(self, topic):
+        super(LoadBalancerAgentApi, self).__init__(
+            topic, default_version=self.BASE_RPC_API_VERSION)
 
-    def reload_pool(self, context, pool_id):
+    def reload_pool(self, context, pool_id, host):
         return self.cast(
             context,
-            self.make_msg('reload_pool', pool_id=pool_id, host=self.host),
-            topic=self.topic
+            self.make_msg('reload_pool', pool_id=pool_id, host=host),
+            topic='%s.%s' % (self.topic, host)
         )
 
-    def destroy_pool(self, context, pool_id):
+    def destroy_pool(self, context, pool_id, host):
         return self.cast(
             context,
-            self.make_msg('destroy_pool', pool_id=pool_id, host=self.host),
-            topic=self.topic
+            self.make_msg('destroy_pool', pool_id=pool_id, host=host),
+            topic='%s.%s' % (self.topic, host)
         )
 
-    def modify_pool(self, context, pool_id):
+    def modify_pool(self, context, pool_id, host):
         return self.cast(
             context,
-            self.make_msg('modify_pool', pool_id=pool_id, host=self.host),
-            topic=self.topic
+            self.make_msg('modify_pool', pool_id=pool_id, host=host),
+            topic='%s.%s' % (self.topic, host)
+        )
+
+    def agent_updated(self, context, admin_state_up, host):
+        return self.cast(
+            context,
+            self.make_msg('agent_updated',
+                          payload={'admin_state_up': admin_state_up}),
+            topic='%s.%s' % (self.topic, host),
+            version='1.1'
         )
 
 
 class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
+
     def __init__(self, plugin):
-        self.agent_rpc = LoadBalancerAgentApi(
-            TOPIC_LOADBALANCER_AGENT,
-            cfg.CONF.host
-        )
+        self.agent_rpc = LoadBalancerAgentApi(TOPIC_LOADBALANCER_AGENT)
         self.callbacks = LoadBalancerCallbacks(plugin)
 
         self.conn = rpc.create_connection(new=True)
@@ -228,56 +265,85 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
             fanout=False)
         self.conn.consume_in_thread()
         self.plugin = plugin
+        self.plugin.agent_notifiers.update(
+            {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
+
+        self.pool_scheduler = importutils.import_object(
+            cfg.CONF.loadbalancer_pool_scheduler_driver)
+
+    def get_pool_agent(self, context, pool_id):
+        agent = self.plugin.get_lbaas_agent_hosting_pool(context, pool_id)
+        if not agent:
+            raise lbaas_agentscheduler.NoActiveLbaasAgent(pool_id=pool_id)
+        return agent['agent']
 
     def create_vip(self, context, vip):
-        self.agent_rpc.reload_pool(context, vip['pool_id'])
+        agent = self.get_pool_agent(context, vip['pool_id'])
+        self.agent_rpc.reload_pool(context, vip['pool_id'], agent['host'])
 
     def update_vip(self, context, old_vip, vip):
+        agent = self.get_pool_agent(context, vip['pool_id'])
         if vip['status'] in ACTIVE_PENDING:
-            self.agent_rpc.reload_pool(context, vip['pool_id'])
+            self.agent_rpc.reload_pool(context, vip['pool_id'], agent['host'])
         else:
-            self.agent_rpc.destroy_pool(context, vip['pool_id'])
+            self.agent_rpc.destroy_pool(context, vip['pool_id'], agent['host'])
 
     def delete_vip(self, context, vip):
         self.plugin._delete_db_vip(context, vip['id'])
-        self.agent_rpc.destroy_pool(context, vip['pool_id'])
+        agent = self.get_pool_agent(context, vip['pool_id'])
+        self.agent_rpc.destroy_pool(context, vip['pool_id'], agent['host'])
 
     def create_pool(self, context, pool):
+        if not self.pool_scheduler.schedule(self.plugin, context, pool):
+            raise lbaas_agentscheduler.NoEligibleLbaasAgent(pool_id=pool['id'])
         # don't notify here because a pool needs a vip to be useful
-        pass
 
     def update_pool(self, context, old_pool, pool):
+        agent = self.get_pool_agent(context, pool['id'])
         if pool['status'] in ACTIVE_PENDING:
             if pool['vip_id'] is not None:
-                self.agent_rpc.reload_pool(context, pool['id'])
+                self.agent_rpc.reload_pool(context, pool['id'], agent['host'])
         else:
-            self.agent_rpc.destroy_pool(context, pool['id'])
+            self.agent_rpc.destroy_pool(context, pool['id'], agent['host'])
 
     def delete_pool(self, context, pool):
+        agent = self.plugin.get_lbaas_agent_hosting_pool(context, pool['id'])
+        if agent:
+            self.agent_rpc.destroy_pool(context, pool['id'],
+                                        agent['agent']['host'])
         self.plugin._delete_db_pool(context, pool['id'])
-        self.agent_rpc.destroy_pool(context, pool['id'])
 
     def create_member(self, context, member):
-        self.agent_rpc.modify_pool(context, member['pool_id'])
+        agent = self.get_pool_agent(context, member['pool_id'])
+        self.agent_rpc.modify_pool(context, member['pool_id'], agent['host'])
 
     def update_member(self, context, old_member, member):
         # member may change pool id
         if member['pool_id'] != old_member['pool_id']:
-            self.agent_rpc.modify_pool(context, old_member['pool_id'])
-        self.agent_rpc.modify_pool(context, member['pool_id'])
+            agent = self.plugin.get_lbaas_agent_hosting_pool(
+                context, old_member['pool_id'])
+            if agent:
+                self.agent_rpc.modify_pool(context,
+                                           old_member['pool_id'],
+                                           agent['agent']['host'])
+        agent = self.get_pool_agent(context, member['pool_id'])
+        self.agent_rpc.modify_pool(context, member['pool_id'], agent['host'])
 
     def delete_member(self, context, member):
         self.plugin._delete_db_member(context, member['id'])
-        self.agent_rpc.modify_pool(context, member['pool_id'])
+        agent = self.get_pool_agent(context, member['pool_id'])
+        self.agent_rpc.modify_pool(context, member['pool_id'], agent['host'])
 
     def update_health_monitor(self, context, old_health_monitor,
                               health_monitor, pool_id):
         # monitors are unused here because agent will fetch what is necessary
-        self.agent_rpc.modify_pool(context, pool_id)
+        agent = self.get_pool_agent(context, pool_id)
+        self.agent_rpc.modify_pool(context, pool_id, agent['host'])
 
     def create_pool_health_monitor(self, context, healthmon, pool_id):
         # healthmon is not used here
-        self.agent_rpc.modify_pool(context, pool_id)
+        agent = self.get_pool_agent(context, pool_id)
+        self.agent_rpc.modify_pool(context, pool_id, agent['host'])
 
     def delete_pool_health_monitor(self, context, health_monitor, pool_id):
         self.plugin._delete_db_pool_health_monitor(
@@ -285,7 +351,8 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
         )
 
         # healthmon_id is not used here
-        self.agent_rpc.modify_pool(context, pool_id)
+        agent = self.get_pool_agent(context, pool_id)
+        self.agent_rpc.modify_pool(context, pool_id, agent['host'])
 
     def create_health_monitor(self, context, health_monitor):
         pass

@@ -45,6 +45,8 @@ DHCP_HOSTA = 'hosta'
 L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
 DHCP_HOST1 = 'host1'
+LBAAS_HOSTA = 'hosta'
+LBAAS_HOSTB = 'hostb'
 
 
 class AgentTestExtensionManager(object):
@@ -83,7 +85,7 @@ class AgentDBTestMixIn(object):
             self.assertEqual(agent_res.status_int, expected_res_status)
         return agent_res
 
-    def _register_agent_states(self):
+    def _register_agent_states(self, lbaas_agents=False):
         """Register two L3 agents and two DHCP agents."""
         l3_hosta = {
             'binary': 'neutron-l3-agent',
@@ -110,6 +112,16 @@ class AgentDBTestMixIn(object):
             'agent_type': constants.AGENT_TYPE_DHCP}
         dhcp_hostc = copy.deepcopy(dhcp_hosta)
         dhcp_hostc['host'] = DHCP_HOSTC
+        lbaas_hosta = {
+            'binary': 'neutron-loadbalancer-agent',
+            'host': LBAAS_HOSTA,
+            'topic': 'LOADBALANCER_AGENT',
+            'configurations': {'device_driver': 'device_driver',
+                               'interface_driver': 'interface_driver',
+                               },
+            'agent_type': constants.AGENT_TYPE_LOADBALANCER}
+        lbaas_hostb = copy.deepcopy(lbaas_hosta)
+        lbaas_hostb['host'] = LBAAS_HOSTB
         callback = agents_db.AgentExtRpcCallback()
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': l3_hosta},
@@ -123,7 +135,18 @@ class AgentDBTestMixIn(object):
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': dhcp_hostc},
                               time=timeutils.strtime())
-        return [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
+
+        res = [l3_hosta, l3_hostb, dhcp_hosta, dhcp_hostc]
+        if lbaas_agents:
+            callback.report_state(self.adminContext,
+                                  agent_state={'agent_state': lbaas_hosta},
+                                  time=timeutils.strtime())
+            callback.report_state(self.adminContext,
+                                  agent_state={'agent_state': lbaas_hostb},
+                                  time=timeutils.strtime())
+            res += [lbaas_hosta, lbaas_hostb]
+
+        return res
 
     def _register_one_dhcp_agent(self):
         """Register one DHCP agent."""

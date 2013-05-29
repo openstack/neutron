@@ -79,6 +79,8 @@
     "get_l3-routers": "rule:admin_only",
     "get_dhcp-agents": "rule:admin_only",
     "get_l3-agents": "rule:admin_only",
+    "get_loadbalancer-agent": "rule:admin_only",
+    "get_loadbalancer-pools": "rule:admin_only",
 
     "create_router": "rule:regular_user",
     "get_router": "rule:admin_or_owner",

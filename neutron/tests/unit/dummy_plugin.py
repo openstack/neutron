@@ -95,6 +95,7 @@ class DummyServicePlugin(ServicePluginBase):
     """
 
     supported_extension_aliases = ['dummy', servicetype.EXT_ALIAS]
+    agent_notifiers = {'dummy': 'dummy_agent_notifier'}
 
     def __init__(self):
         self.svctype_mgr = servicetype_db.ServiceTypeManager.get_instance()

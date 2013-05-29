@@ -162,6 +162,9 @@ class AgentExtRpcCallback(object):
     RPC_API_VERSION = '1.0'
     START_TIME = timeutils.utcnow()
 
+    def __init__(self, plugin=None):
+        self.plugin = plugin
+
     def report_state(self, context, **kwargs):
         """Report state from agent to server."""
         time = kwargs['time']
@@ -170,5 +173,6 @@ class AgentExtRpcCallback(object):
             LOG.debug(_("Message with invalid timestamp received"))
             return
         agent_state = kwargs['agent_state']['agent_state']
-        plugin = manager.NeutronManager.get_plugin()
-        plugin.create_or_update_agent(context, agent_state)
+        if not self.plugin:
+            self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin.create_or_update_agent(context, agent_state)

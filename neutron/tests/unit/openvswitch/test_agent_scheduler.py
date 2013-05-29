@@ -1106,7 +1106,8 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
 
     def test_router_add_to_l3_agent_notification(self):
         plugin = manager.NeutronManager.get_plugin()
-        with mock.patch.object(plugin.l3_agent_notifier, 'cast') as mock_l3:
+        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             with self.router() as router1:
                 self._register_agent_states()
                 hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
@@ -1116,14 +1117,15 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 routers = [router1['router']['id']]
             mock_l3.assert_called_with(
                 mock.ANY,
-                plugin.l3_agent_notifier.make_msg(
+                l3_notifier.make_msg(
                     'router_added_to_agent',
                     payload=routers),
                 topic='l3_agent.hosta')
 
     def test_router_remove_from_l3_agent_notification(self):
         plugin = manager.NeutronManager.get_plugin()
-        with mock.patch.object(plugin.l3_agent_notifier, 'cast') as mock_l3:
+        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             with self.router() as router1:
                 self._register_agent_states()
                 hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
@@ -1133,22 +1135,22 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                 self._remove_router_from_l3_agent(hosta_id,
                                                   router1['router']['id'])
             mock_l3.assert_called_with(
-                mock.ANY, plugin.l3_agent_notifier.make_msg(
+                mock.ANY, l3_notifier.make_msg(
                     'router_removed_from_agent',
                     payload={'router_id': router1['router']['id']}),
                 topic='l3_agent.hosta')
 
     def test_agent_updated_l3_agent_notification(self):
         plugin = manager.NeutronManager.get_plugin()
-        with mock.patch.object(plugin.l3_agent_notifier, 'cast') as mock_l3:
+        l3_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_L3]
+        with mock.patch.object(l3_notifier, 'cast') as mock_l3:
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
                                           L3_HOSTA)
             self._disable_agent(hosta_id, admin_state_up=False)
             mock_l3.assert_called_with(
-                mock.ANY, plugin.l3_agent_notifier.make_msg(
-                    'agent_updated',
-                    payload={'admin_state_up': False}),
+                mock.ANY, l3_notifier.make_msg(
+                    'agent_updated', payload={'admin_state_up': False}),
                 topic='l3_agent.hosta')
 
 

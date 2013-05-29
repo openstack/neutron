@@ -23,6 +23,7 @@ from neutron.db.loadbalancer import loadbalancer_db
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
+from neutron.services.loadbalancer import agent_scheduler
 
 LOG = logging.getLogger(__name__)
 
@@ -39,7 +40,8 @@ cfg.CONF.register_opts(lbaas_plugin_opts, "LBAAS")
 legacy.override_config(cfg.CONF, [('LBAAS', 'driver_fqn')])
 
 
-class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
+class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb,
+                         agent_scheduler.LbaasAgentSchedulerDbMixin):
 
     """Implementation of the Neutron Loadbalancer Service Plugin.
 
@@ -47,7 +49,12 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
     Most DB related works are implemented in class
     loadbalancer_db.LoadBalancerPluginDb.
     """
-    supported_extension_aliases = ["lbaas"]
+    supported_extension_aliases = ["lbaas", "lbaas_agent_scheduler"]
+
+    # lbaas agent notifiers to handle agent update operations;
+    # can be updated by plugin drivers while loading;
+    # will be extracted by neutron manager when loading service plugins;
+    agent_notifiers = {}
 
     def __init__(self):
         """Initialization for the loadbalancer service plugin."""
@@ -213,7 +220,7 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
         # update the db and return the value from db
         # else - return what we have in db
         if stats_data:
-            super(LoadBalancerPlugin, self)._update_pool_stats(
+            super(LoadBalancerPlugin, self).update_pool_stats(
                 context,
                 pool_id,
                 stats_data
