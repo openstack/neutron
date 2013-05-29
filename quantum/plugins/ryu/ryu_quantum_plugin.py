@@ -29,6 +29,7 @@ from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
+from quantum.db import l3_gwmode_db
 from quantum.db import l3_rpc_base
 from quantum.db import models_v2
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
@@ -86,9 +87,11 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
+                         l3_gwmode_db.L3_NAT_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin):
 
-    _supported_extension_aliases = ["router", "extraroute", "security-group"]
+    _supported_extension_aliases = ["router", "ext-gw-mode",
+                                    "extraroute", "security-group"]
 
     @property
     def supported_extension_aliases(self):

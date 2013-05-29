@@ -41,6 +41,7 @@ LOG = logging.getLogger(__name__)
 DEVICE_OWNER_ROUTER_INTF = l3_constants.DEVICE_OWNER_ROUTER_INTF
 DEVICE_OWNER_ROUTER_GW = l3_constants.DEVICE_OWNER_ROUTER_GW
 DEVICE_OWNER_FLOATINGIP = l3_constants.DEVICE_OWNER_FLOATINGIP
+EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Maps API field to DB column
 # API parameter name and Database column names may differ.
@@ -130,11 +131,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                'tenant_id': router['tenant_id'],
                'admin_state_up': router['admin_state_up'],
                'status': router['status'],
-               'external_gateway_info': None,
+               EXTERNAL_GW_INFO: None,
                'gw_port_id': router['gw_port_id']}
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
-            res['external_gateway_info'] = {'network_id': nw_id}
+            res[EXTERNAL_GW_INFO] = {'network_id': nw_id}
         if process_extensions:
             for func in self._dict_extend_functions.get(l3.ROUTERS, []):
                 func(self, res, router)
@@ -143,10 +144,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def create_router(self, context, router):
         r = router['router']
         has_gw_info = False
-        if 'external_gateway_info' in r:
+        if EXTERNAL_GW_INFO in r:
             has_gw_info = True
-            gw_info = r['external_gateway_info']
-            del r['external_gateway_info']
+            gw_info = r[EXTERNAL_GW_INFO]
+            del r[EXTERNAL_GW_INFO]
         tenant_id = self._get_tenant_id_for_create(context, r)
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
@@ -164,10 +165,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def update_router(self, context, id, router):
         r = router['router']
         has_gw_info = False
-        if 'external_gateway_info' in r:
+        if EXTERNAL_GW_INFO in r:
             has_gw_info = True
-            gw_info = r['external_gateway_info']
-            del r['external_gateway_info']
+            gw_info = r[EXTERNAL_GW_INFO]
+            del r[EXTERNAL_GW_INFO]
         with context.session.begin(subtransactions=True):
             if has_gw_info:
                 self._update_router_gw_info(context, id, gw_info)
@@ -180,14 +181,38 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
         return self._make_router_dict(router_db)
 
-    def _update_router_gw_info(self, context, router_id, info):
+    def _create_router_gw_port(self, context, router, network_id):
+        # Port has no 'tenant-id', as it is hidden from user
+        gw_port = self.create_port(context.elevated(), {
+            'port': {'tenant_id': '',  # intentionally not set
+                     'network_id': network_id,
+                     'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                     'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                     'device_id': router['id'],
+                     'device_owner': DEVICE_OWNER_ROUTER_GW,
+                     'admin_state_up': True,
+                     'name': ''}})
+
+        if not gw_port['fixed_ips']:
+            self.delete_port(context.elevated(), gw_port['id'],
+                             l3_port_check=False)
+            msg = (_('No IPs available for external network %s') %
+                   network_id)
+            raise q_exc.BadRequest(resource='router', msg=msg)
+
+        with context.session.begin(subtransactions=True):
+            router.gw_port = self._get_port(context.elevated(),
+                                            gw_port['id'])
+            context.session.add(router)
+
+    def _update_router_gw_info(self, context, router_id, info, router=None):
         # TODO(salvatore-orlando): guarantee atomic behavior also across
         # operations that span beyond the model classes handled by this
         # class (e.g.: delete_port)
-        router = self._get_router(context, router_id)
+        router = router or self._get_router(context, router_id)
         gw_port = router.gw_port
-
-        network_id = info.get('network_id', None) if info else None
+        # network_id attribute is required by API, so it must be present
+        network_id = info['network_id'] if info else None
         if network_id:
             self._get_network(context, network_id)
             if not self._network_is_external(context, network_id):
@@ -202,11 +227,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if fip_count:
                 raise l3.RouterExternalGatewayInUseByFloatingIp(
                     router_id=router_id, net_id=gw_port['network_id'])
-            with context.session.begin(subtransactions=True):
-                router.gw_port = None
-                context.session.add(router)
-            self.delete_port(context.elevated(), gw_port['id'],
-                             l3_port_check=False)
+            if gw_port and gw_port['network_id'] != network_id:
+                with context.session.begin(subtransactions=True):
+                    router.gw_port = None
+                    context.session.add(router)
+                self.delete_port(context.elevated(), gw_port['id'],
+                                 l3_port_check=False)
 
         if network_id is not None and (gw_port is None or
                                        gw_port['network_id'] != network_id):
@@ -216,30 +242,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 self._check_for_dup_router_subnet(context, router_id,
                                                   network_id, subnet['id'],
                                                   subnet['cidr'])
-
-            # Port has no 'tenant-id', as it is hidden from user
-            gw_port = self.create_port(context.elevated(), {
-                'port':
-                {'tenant_id': '',  # intentionally not set
-                 'network_id': network_id,
-                 'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                 'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                 'device_id': router_id,
-                 'device_owner': DEVICE_OWNER_ROUTER_GW,
-                 'admin_state_up': True,
-                 'name': ''}})
-
-            if not gw_port['fixed_ips']:
-                self.delete_port(context.elevated(), gw_port['id'],
-                                 l3_port_check=False)
-                msg = (_('No IPs available for external network %s') %
-                       network_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
-
-            with context.session.begin(subtransactions=True):
-                router.gw_port = self._get_port(context.elevated(),
-                                                gw_port['id'])
-                context.session.add(router)
+            self._create_router_gw_port(context, router, network_id)
 
     def delete_router(self, context, id):
         with context.session.begin(subtransactions=True):
@@ -512,14 +515,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             external_network_id=external_network_id,
             port_id=internal_port['id'])
 
-    def get_assoc_data(self, context, fip, floating_network_id):
-        """Determine/extract data associated with the internal port.
+    def _internal_fip_assoc_data(self, context, fip):
+        """Retrieve internal port data for floating IP.
 
-        When a floating IP is associated with an internal port,
-        we need to extract/determine some data associated with the
-        internal port, including the internal_ip_address, and router_id.
-        We also need to confirm that this internal port is owned by the
-        tenant who owns the floating IP.
+        Retrieve information concerning the internal port where
+        the floating IP should be associated to.
         """
         internal_port = self._get_port(context, fip['port_id'])
         if not internal_port['tenant_id'] == fip['tenant_id']:
@@ -561,7 +561,19 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise q_exc.BadRequest(resource='floatingip', msg=msg)
             internal_ip_address = internal_port['fixed_ips'][0]['ip_address']
             internal_subnet_id = internal_port['fixed_ips'][0]['subnet_id']
+        return internal_port, internal_subnet_id, internal_ip_address
 
+    def get_assoc_data(self, context, fip, floating_network_id):
+        """Determine/extract data associated with the internal port.
+
+        When a floating IP is associated with an internal port,
+        we need to extract/determine some data associated with the
+        internal port, including the internal_ip_address, and router_id.
+        We also need to confirm that this internal port is owned by the
+        tenant who owns the floating IP.
+        """
+        (internal_port, internal_subnet_id,
+         internal_ip_address) = self._internal_fip_assoc_data(context, fip)
         router_id = self._get_router_for_floatingip(context,
                                                     internal_port,
                                                     internal_subnet_id,
@@ -838,6 +850,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         else:
             return [n for n in nets if n['id'] not in ext_nets]
 
+    def _build_routers_list(self, routers, gw_ports):
+        gw_port_id_gw_port_dict = dict((gw_port['id'], gw_port)
+                                       for gw_port in gw_ports)
+        for router in routers:
+            gw_port_id = router['gw_port_id']
+            if gw_port_id:
+                router['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
+        return routers
+
     def _get_sync_routers(self, context, router_ids=None, active=None):
         """Query routers and their gw ports for l3 agent.
 
@@ -865,14 +886,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         gw_ports = []
         if gw_port_ids:
             gw_ports = self.get_sync_gw_ports(context, gw_port_ids)
-        gw_port_id_gw_port_dict = {}
-        for gw_port in gw_ports:
-            gw_port_id_gw_port_dict[gw_port['id']] = gw_port
-        for router_dict in router_dicts:
-            gw_port_id = router_dict['gw_port_id']
-            if gw_port_id:
-                router_dict['gw_port'] = gw_port_id_gw_port_dict[gw_port_id]
-        return router_dicts
+        return self._build_routers_list(router_dicts, gw_ports)
 
     def _get_sync_floating_ips(self, context, router_ids):
         """Query floating_ips that relate to list of router_ids."""

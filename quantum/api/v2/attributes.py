@@ -84,6 +84,15 @@ def _validate_string(data, max_len=None):
         return msg
 
 
+def _validate_boolean(data, valid_values=None):
+    try:
+        convert_to_boolean(data)
+    except q_exc.InvalidInput:
+        msg = _("'%s' is not a valid boolean value") % data
+        LOG.debug(msg)
+        return msg
+
+
 def _validate_range(data, valid_values=None):
     min_value = valid_values[0]
     max_value = valid_values[1]
@@ -294,7 +303,6 @@ def _validate_dict(data, key_specs=None):
         msg = _("'%s' is not a dictionary") % data
         LOG.debug(msg)
         return msg
-
     # Do not perform any further validation, if no constraints are supplied
     if not key_specs:
         return
@@ -337,6 +345,11 @@ def _validate_dict_or_none(data, key_specs=None):
 
 def _validate_dict_or_empty(data, key_specs=None):
     if data != {}:
+        return _validate_dict(data, key_specs)
+
+
+def _validate_dict_or_nodata(data, key_specs=None):
+    if data:
         return _validate_dict(data, key_specs)
 
 
@@ -443,6 +456,7 @@ MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 validators = {'type:dict': _validate_dict,
               'type:dict_or_none': _validate_dict_or_none,
               'type:dict_or_empty': _validate_dict_or_empty,
+              'type:dict_or_nodata': _validate_dict_or_nodata,
               'type:fixed_ips': _validate_fixed_ips,
               'type:hostroutes': _validate_hostroutes,
               'type:ip_address': _validate_ip_address,
@@ -458,7 +472,8 @@ validators = {'type:dict': _validate_dict,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
               'type:uuid_list': _validate_uuid_list,
-              'type:values': _validate_values}
+              'type:values': _validate_values,
+              'type:boolean': _validate_boolean}
 
 # Define constants for base resource name
 NETWORK = 'network'

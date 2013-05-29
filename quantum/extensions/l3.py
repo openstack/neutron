@@ -88,8 +88,8 @@ class RouterExternalGatewayInUseByFloatingIp(qexception.InUse):
                 "more floating IPs.")
 
 ROUTERS = 'routers'
+EXTERNAL_GW_INFO = 'external_gateway_info'
 
-# Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
     ROUTERS: {
         'id': {'allow_post': False, 'allow_put': False,
@@ -109,8 +109,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'required_by_policy': True,
                       'validate': {'type:string': None},
                       'is_visible': True},
-        'external_gateway_info': {'allow_post': True, 'allow_put': True,
-                                  'is_visible': True, 'default': None}
+        EXTERNAL_GW_INFO: {'allow_post': True, 'allow_put': True,
+                           'is_visible': True, 'default': None}
     },
     'floatingips': {
         'id': {'allow_post': False, 'allow_put': False,

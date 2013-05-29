@@ -15,11 +15,11 @@
 #    under the License.
 
 from quantum.db import db_base_plugin_v2
-from quantum.db import l3_db
+from quantum.db import l3_gwmode_db
 
 
 class Fake1(db_base_plugin_v2.QuantumDbPluginV2,
-            l3_db.L3_NAT_db_mixin):
+            l3_gwmode_db.L3_NAT_db_mixin):
     supported_extension_aliases = ['router']
 
     def fake_func(self):

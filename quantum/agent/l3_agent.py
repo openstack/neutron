@@ -92,10 +92,13 @@ class RouterInfo(object):
     def __init__(self, router_id, root_helper, use_namespaces, router):
         self.router_id = router_id
         self.ex_gw_port = None
+        self._snat_enabled = None
+        self._snat_action = None
         self.internal_ports = []
         self.floating_ips = []
         self.root_helper = root_helper
         self.use_namespaces = use_namespaces
+        # Invoke the setter for establishing initial SNAT action
         self.router = router
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
@@ -104,9 +107,36 @@ class RouterInfo(object):
 
         self.routes = []
 
+    @property
+    def router(self):
+        return self._router
+
+    @router.setter
+    def router(self, value):
+        self._router = value
+        if not self._router:
+            return
+        # Set a SNAT action for the router
+        if self._router.get('gw_port'):
+            if (self._router.get('enable_snat') and not self._snat_enabled):
+                self._snat_action = 'add_rule'
+            elif (self._snat_enabled and
+                  not self._router.get('enable_snat')):
+                self._snat_action = 'remove_rule'
+        elif self.ex_gw_port:
+            self._snat_action = 'remove_rule'
+        self._snat_enabled = self._router.get('enable_snat')
+
     def ns_name(self):
         if self.use_namespaces:
             return NS_PREFIX + self.router_id
+
+    def perform_snat_action(self, snat_callback, *args):
+        # Process SNAT rules for attached subnets
+        if self._snat_action:
+            snat_callback(self, self._router.get('gw_port'),
+                          *args, action=self._snat_action)
+            self._snat_action = None
 
 
 class L3NATAgent(manager.Manager):
@@ -291,7 +321,6 @@ class L3NATAgent(manager.Manager):
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
     def process_router(self, ri):
-
         ex_gw_port = self._get_ex_gw_port(ri)
         internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
         existing_port_ids = set([p['id'] for p in ri.internal_ports])
@@ -306,30 +335,52 @@ class L3NATAgent(manager.Manager):
         for p in new_ports:
             self._set_subnet_info(p)
             ri.internal_ports.append(p)
-            self.internal_network_added(ri, ex_gw_port,
-                                        p['network_id'], p['id'],
+            self.internal_network_added(ri, p['network_id'], p['id'],
                                         p['ip_cidr'], p['mac_address'])
 
         for p in old_ports:
             ri.internal_ports.remove(p)
-            self.internal_network_removed(ri, ex_gw_port, p['id'],
-                                          p['ip_cidr'])
+            self.internal_network_removed(ri, p['id'], p['ip_cidr'])
 
         internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
+        # TODO(salv-orlando): RouterInfo would be a better place for
+        # this logic too
+        ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
+                         ri.ex_gw_port and ri.ex_gw_port['id'])
 
+        if ex_gw_port_id:
+            interface_name = self.get_external_device_name(ex_gw_port_id)
         if ex_gw_port and not ri.ex_gw_port:
             self._set_subnet_info(ex_gw_port)
-            self.external_gateway_added(ri, ex_gw_port, internal_cidrs)
+            self.external_gateway_added(ri, ex_gw_port,
+                                        interface_name, internal_cidrs)
         elif not ex_gw_port and ri.ex_gw_port:
             self.external_gateway_removed(ri, ri.ex_gw_port,
-                                          internal_cidrs)
+                                          interface_name, internal_cidrs)
 
-        if ri.ex_gw_port or ex_gw_port:
+        # Process SNAT rules for external gateway
+        if ex_gw_port_id:
+            ri.perform_snat_action(self._handle_router_snat_rules,
+                                   internal_cidrs, interface_name)
+
+        # Process DNAT rules for floating IPs
+        if ex_gw_port or ri.ex_gw_port:
             self.process_router_floating_ips(ri, ex_gw_port)
 
         ri.ex_gw_port = ex_gw_port
-
+        ri.enable_snat = ri.router.get('enable_snat')
         self.routes_updated(ri)
+
+    def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
+                                  interface_name, action):
+        ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
+        for rule in self.external_gateway_nat_rules(ex_gw_ip,
+                                                    internal_cidrs,
+                                                    interface_name):
+            # This is an internal method so we can assume the caller
+            # knows which actions are valid and which not
+            getattr(ri.iptables_manager.ipv4['nat'], action)(*rule)
+        ri.iptables_manager.apply()
 
     def process_router_floating_ips(self, ri, ex_gw_port):
         floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
@@ -398,10 +449,9 @@ class L3NATAgent(manager.Manager):
     def get_external_device_name(self, port_id):
         return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
-    def external_gateway_added(self, ri, ex_gw_port, internal_cidrs):
+    def external_gateway_added(self, ri, ex_gw_port,
+                               interface_name, internal_cidrs):
 
-        interface_name = self.get_external_device_name(ex_gw_port['id'])
-        ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.root_helper,
                                     namespace=ri.ns_name()):
@@ -427,15 +477,9 @@ class L3NATAgent(manager.Manager):
                 utils.execute(cmd, check_exit_code=False,
                               root_helper=self.root_helper)
 
-        for (c, r) in self.external_gateway_nat_rules(ex_gw_ip,
-                                                      internal_cidrs,
-                                                      interface_name):
-            ri.iptables_manager.ipv4['nat'].add_rule(c, r)
-        ri.iptables_manager.apply()
+    def external_gateway_removed(self, ri, ex_gw_port,
+                                 interface_name, internal_cidrs):
 
-    def external_gateway_removed(self, ri, ex_gw_port, internal_cidrs):
-
-        interface_name = self.get_external_device_name(ex_gw_port['id'])
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.root_helper,
                                 namespace=ri.ns_name()):
@@ -443,12 +487,6 @@ class L3NATAgent(manager.Manager):
                                bridge=self.conf.external_network_bridge,
                                namespace=ri.ns_name(),
                                prefix=EXTERNAL_DEV_PREFIX)
-
-        ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-        for c, r in self.external_gateway_nat_rules(ex_gw_ip, internal_cidrs,
-                                                    interface_name):
-            ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
-        ri.iptables_manager.apply()
 
     def metadata_filter_rules(self):
         rules = []
@@ -474,7 +512,7 @@ class L3NATAgent(manager.Manager):
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
 
-    def internal_network_added(self, ri, ex_gw_port, network_id, port_id,
+    def internal_network_added(self, ri, network_id, port_id,
                                internal_cidr, mac_address):
         interface_name = self.get_internal_device_name(port_id)
         if not ip_lib.device_exists(interface_name,
@@ -489,27 +527,13 @@ class L3NATAgent(manager.Manager):
         ip_address = internal_cidr.split('/')[0]
         self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
 
-        if ex_gw_port:
-            ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-            for c, r in self.internal_network_nat_rules(ex_gw_ip,
-                                                        internal_cidr):
-                ri.iptables_manager.ipv4['nat'].add_rule(c, r)
-            ri.iptables_manager.apply()
-
-    def internal_network_removed(self, ri, ex_gw_port, port_id, internal_cidr):
+    def internal_network_removed(self, ri, port_id, internal_cidr):
         interface_name = self.get_internal_device_name(port_id)
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.root_helper,
                                 namespace=ri.ns_name()):
             self.driver.unplug(interface_name, namespace=ri.ns_name(),
                                prefix=INTERNAL_DEV_PREFIX)
-
-        if ex_gw_port:
-            ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-            for c, r in self.internal_network_nat_rules(ex_gw_ip,
-                                                        internal_cidr):
-                ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
-            ri.iptables_manager.apply()
 
     def internal_network_nat_rules(self, ex_gw_ip, internal_cidr):
         rules = [('snat', '-s %s -j SNAT --to-source %s' %
@@ -610,11 +634,9 @@ class L3NATAgent(manager.Manager):
             if (not self.conf.use_namespaces and
                 r['id'] != self.conf.router_id):
                 continue
-
             ex_net_id = (r['external_gateway_info'] or {}).get('network_id')
             if not ex_net_id and not self.conf.handle_internal_only_routers:
                 continue
-
             if ex_net_id and ex_net_id != target_ex_net_id:
                 continue
             cur_router_ids.add(r['id'])

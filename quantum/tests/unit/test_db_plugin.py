@@ -45,7 +45,6 @@ from quantum.tests import base
 from quantum.tests.unit import test_extensions
 from quantum.tests.unit import testlib_api
 
-
 DB_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
 ETCDIR = os.path.join(ROOTDIR, 'etc')
