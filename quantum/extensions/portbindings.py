@@ -35,6 +35,8 @@ PROFILE = 'binding:profile'
 CAPABILITIES = 'binding:capabilities'
 CAP_PORT_FILTER = 'port_filter'
 
+VIF_TYPE_UNBOUND = 'unbound'
+VIF_TYPE_BINDING_FAILED = 'binding_failed'
 VIF_TYPE_OVS = 'ovs'
 VIF_TYPE_BRIDGE = 'bridge'
 VIF_TYPE_802_QBG = '802.1qbg'

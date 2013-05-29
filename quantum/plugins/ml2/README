@@ -1,0 +1,82 @@
+The Modular Layer 2 (ml2) plugin is a framework allowing OpenStack
+Networking to simultaneously utilize the variety of layer 2 networking
+technologies found in complex real-world data centers. It currently
+works with the existing openvswitch, linuxbridge, and hyperv L2
+agents, and is intended to replace and deprecate the monolithic
+plugins associated with those L2 agents. The ml2 framework is also
+intended to greatly simplify adding support for new L2 networking
+technologies, requiring much less initial and ongoing effort than
+would be required to add a new monolithic core plugin.
+
+Drivers within ml2 implement separately extensible sets of network
+types and of mechanisms for accessing networks of those types. Unlike
+with the metaplugin, multiple mechanisms can be used simultaneously to
+access different ports of the same virtual network. Mechanisms can
+utilize L2 agents via RPC and/or use mechanism drivers to interact
+with external devices or controllers. Virtual networks can be composed
+of multiple segments of the same or different types. Type and
+mechanism drivers are loaded as python entrypoints using the stevedore
+library.
+
+Each available network type is managed by an ml2
+TypeDriver. TypeDrivers maintain any needed type-specific network
+state, and perform provider network validation and tenant network
+allocation. The initial ml2 version includes drivers for the local,
+flat, and vlan network types. Additional TypeDrivers for gre and vxlan
+network types are expected before the havana release.
+
+RPC callback and notification interfaces support interaction with L2,
+DHCP, and L3 agents. This version has been tested with the existing
+openvswitch and linuxbridge plugins' L2 agents, and should also work
+with the hyperv L2 agent. A modular agent may be developed as a
+follow-on effort.
+
+Support for mechanism drivers is currently skeletal. The
+MechanismDriver interface is currently a stub, with details to be
+defined in future versions. MechanismDrivers will be called both
+inside and following DB transactions for network and port
+create/update/delete operations. They will also be called to establish
+a port binding, determining the VIF type and network segment to be
+used.
+
+The database schema and driver APIs support multi-segment networks,
+but the client API for multi-segment networks is not yet implemented.
+
+A devstack patch supporting use of the ml2 plugin with either the
+openvswitch or linuxbridge L2 agent for the local, flat and vlan
+network types is under review at
+https://review.openstack.org/#/c/27576/. Note that the gre network
+type and the tunnel-related RPCs are not yet implemented, so use the
+vlan network type for multi-node testing. Also note that ml2 does not
+yet work with nova's GenericVIFDriver, so it is necessary to configure
+nova to use a specific driver compatible with the L2 agent deployed on
+each compute node.
+
+Note that the ml2 plugin is new and should be conidered experimental
+at this point. It is undergoing rapid development, so driver APIs and
+other details are likely to change during the havana development
+cycle.
+
+Follow-on tasks required for full ml2 support in havana, including
+parity with the existing monolithic openvswitch, linuxbridge, and
+hyperv plugins:
+
+- Additional unit tests
+
+- Implement MechanismDriver port binding so that a useful
+  binding:vif_type value is returned for nova's GenericVIFDriver based
+  on the binding:host_id value and information from the agents_db
+
+- Implement TypeDriver for GRE networks
+
+- Implement GRE tunnel endpoint management RPCs
+
+
+Additional follow-on tasks expected for the havana release:
+
+- Extend MechanismDriver API to support integration with external
+  devices such as SDN controllers and top-of-rack switches
+
+- Implement TypeDriver for VXLAN networks
+
+- Extend providernet extension API to support multi-segment networks
