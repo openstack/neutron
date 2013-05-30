@@ -22,6 +22,7 @@ from sqlalchemy.orm import exc
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
+from quantum.db import db_base_plugin_v2 as base_db
 from quantum.db import model_base
 from quantum.db import models_v2
 from quantum.extensions import loadbalancer
@@ -151,7 +152,8 @@ class PoolMonitorAssociation(model_base.BASEV2):
                            primary_key=True)
 
 
-class LoadBalancerPluginDb(LoadBalancerPluginBase):
+class LoadBalancerPluginDb(LoadBalancerPluginBase,
+                           base_db.CommonDbMixin):
     """Wraps loadbalancer with SQLAlchemy models.
 
     A class that wraps the implementation of the Quantum loadbalancer
@@ -161,68 +163,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase):
     @property
     def _core_plugin(self):
         return manager.QuantumManager.get_plugin()
-
-    # TODO(lcui):
-    # A set of internal facility methods are borrowed from QuantumDbPluginV2
-    # class and hence this is duplicate. We need to pull out those methods
-    # into a seperate class which can be used by both QuantumDbPluginV2 and
-    # this class (and others).
-    def _get_tenant_id_for_create(self, context, resource):
-        if context.is_admin and 'tenant_id' in resource:
-            tenant_id = resource['tenant_id']
-        elif ('tenant_id' in resource and
-              resource['tenant_id'] != context.tenant_id):
-            reason = _('Cannot create resource for another tenant')
-            raise q_exc.AdminRequired(reason=reason)
-        else:
-            tenant_id = context.tenant_id
-        return tenant_id
-
-    def _fields(self, resource, fields):
-        if fields:
-            return dict((key, item) for key, item in resource.iteritems()
-                        if key in fields)
-        return resource
-
-    def _apply_filters_to_query(self, query, model, filters):
-        if filters:
-            for key, value in filters.iteritems():
-                column = getattr(model, key, None)
-                if column:
-                    query = query.filter(column.in_(value))
-        return query
-
-    def _get_collection_query(self, context, model, filters=None):
-        collection = self._model_query(context, model)
-        collection = self._apply_filters_to_query(collection, model, filters)
-        return collection
-
-    def _get_collection(self, context, model, dict_func, filters=None,
-                        fields=None, sorts=None, limit=None, marker_obj=None,
-                        page_reverse=False):
-        query = self._get_collection_query(context, model, filters)
-        return [dict_func(c, fields) for c in query]
-
-    def _get_collection_count(self, context, model, filters=None):
-        return self._get_collection_query(context, model, filters).count()
-
-    def _model_query(self, context, model):
-        query = context.session.query(model)
-        query_filter = None
-        if not context.is_admin and hasattr(model, 'tenant_id'):
-            if hasattr(model, 'shared'):
-                query_filter = ((model.tenant_id == context.tenant_id) |
-                                (model.shared))
-            else:
-                query_filter = (model.tenant_id == context.tenant_id)
-
-        if query_filter is not None:
-            query = query.filter(query_filter)
-        return query
-
-    def _get_by_id(self, context, model, id):
-        query = self._model_query(context, model)
-        return query.filter(model.id == id).one()
 
     def update_status(self, context, model, id, status):
         with context.session.begin(subtransactions=True):

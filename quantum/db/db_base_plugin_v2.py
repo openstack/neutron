@@ -49,49 +49,39 @@ AGENT_OWNER_PREFIX = 'network:'
 AUTO_DELETE_PORT_OWNERS = ['network:dhcp']
 
 
-class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
-    """V2 Quantum plugin interface implementation using SQLAlchemy models.
-
-    Whenever a non-read call happens the plugin will call an event handler
-    class method (e.g., network_created()).  The result is that this class
-    can be sub-classed by other classes that add custom behaviors on certain
-    events.
-    """
-
-    # This attribute specifies whether the plugin supports or not
-    # bulk/pagination/sorting operations. Name mangling is used in
-    # order to ensure it is qualified by class
-    __native_bulk_support = True
-    __native_pagination_support = True
-    __native_sorting_support = True
+class CommonDbMixin(object):
+    """Common methods used in core and service plugins."""
     # Plugins, mixin classes implementing extension will register
     # hooks into the dict below for "augmenting" the "core way" of
     # building a query for retrieving objects from a model class.
     # To this aim, the register_model_query_hook and unregister_query_hook
     # from this class should be invoked
     _model_query_hooks = {}
-    # This dictionary will store methods for extending attributes of
-    # api resources. Mixins can use this dict for adding their own methods
-    # TODO(salvatore-orlando): Avoid using class-level variables
-    _dict_extend_functions = {}
 
-    def __init__(self):
-        # NOTE(jkoelker) This is an incomlete implementation. Subclasses
-        #                must override __init__ and setup the database
-        #                and not call into this class's __init__.
-        #                This connection is setup as memory for the tests.
-        db.configure_db()
+    @classmethod
+    def register_model_query_hook(cls, model, name, query_hook, filter_hook,
+                                  result_filters=None):
+        """Register a hook to be invoked when a query is executed.
 
-    def _get_tenant_id_for_create(self, context, resource):
-        if context.is_admin and 'tenant_id' in resource:
-            tenant_id = resource['tenant_id']
-        elif ('tenant_id' in resource and
-              resource['tenant_id'] != context.tenant_id):
-            reason = _('Cannot create resource for another tenant')
-            raise q_exc.AdminRequired(reason=reason)
-        else:
-            tenant_id = context.tenant_id
-        return tenant_id
+        Add the hooks to the _model_query_hooks dict. Models are the keys
+        of this dict, whereas the value is another dict mapping hook names to
+        callables performing the hook.
+        Each hook has a "query" component, used to build the query expression
+        and a "filter" component, which is used to build the filter expression.
+
+        Query hooks take as input the query being built and return a
+        transformed query expression.
+
+        Filter hooks take as input the filter expression being built and return
+        a transformed filter expression
+        """
+        model_hooks = cls._model_query_hooks.get(model)
+        if not model_hooks:
+            # add key to dict
+            model_hooks = {}
+            cls._model_query_hooks[model] = model_hooks
+        model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
+                             'result_filters': result_filters}
 
     def _model_query(self, context, model):
         query = context.session.query(model)
@@ -121,94 +111,26 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             query = query.filter(query_filter)
         return query
 
-    @classmethod
-    def register_dict_extend_funcs(cls, resource, funcs):
-        cur_funcs = cls._dict_extend_functions.get(resource, [])
-        cur_funcs.extend(funcs)
-        cls._dict_extend_functions[resource] = cur_funcs
+    def _fields(self, resource, fields):
+        if fields:
+            return dict(((key, item) for key, item in resource.items()
+                         if key in fields))
+        return resource
 
-    @classmethod
-    def register_model_query_hook(cls, model, name, query_hook, filter_hook,
-                                  result_filters=None):
-        """Register a hook to be invoked when a query is executed.
-
-        Add the hooks to the _model_query_hooks dict. Models are the keys
-        of this dict, whereas the value is another dict mapping hook names to
-        callables performing the hook.
-        Each hook has a "query" component, used to build the query expression
-        and a "filter" component, which is used to build the filter expression.
-
-        Query hooks take as input the query being built and return a
-        transformed query expression.
-
-        Filter hooks take as input the filter expression being built and return
-        a transformed filter expression
-        """
-        model_hooks = cls._model_query_hooks.get(model)
-        if not model_hooks:
-            # add key to dict
-            model_hooks = {}
-            cls._model_query_hooks[model] = model_hooks
-        model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
-                             'result_filters': result_filters}
-
-    def _filter_non_model_columns(self, data, model):
-        """Remove all the attributes from data which are not columns of
-        the model passed as second parameter.
-        """
-        columns = [c.name for c in model.__table__.columns]
-        return dict((k, v) for (k, v) in
-                    data.iteritems() if k in columns)
+    def _get_tenant_id_for_create(self, context, resource):
+        if context.is_admin and 'tenant_id' in resource:
+            tenant_id = resource['tenant_id']
+        elif ('tenant_id' in resource and
+              resource['tenant_id'] != context.tenant_id):
+            reason = _('Cannot create resource for another tenant')
+            raise q_exc.AdminRequired(reason=reason)
+        else:
+            tenant_id = context.tenant_id
+        return tenant_id
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
         return query.filter(model.id == id).one()
-
-    def _get_network(self, context, id):
-        try:
-            network = self._get_by_id(context, models_v2.Network, id)
-        except exc.NoResultFound:
-            raise q_exc.NetworkNotFound(net_id=id)
-        return network
-
-    def _get_subnet(self, context, id):
-        try:
-            subnet = self._get_by_id(context, models_v2.Subnet, id)
-        except exc.NoResultFound:
-            raise q_exc.SubnetNotFound(subnet_id=id)
-        return subnet
-
-    def _get_port(self, context, id):
-        try:
-            port = self._get_by_id(context, models_v2.Port, id)
-        except exc.NoResultFound:
-            # NOTE(jkoelker) The PortNotFound exceptions requires net_id
-            #                kwarg in order to set the message correctly
-            raise q_exc.PortNotFound(port_id=id, net_id=None)
-        return port
-
-    def _get_dns_by_subnet(self, context, subnet_id):
-        dns_qry = context.session.query(models_v2.DNSNameServer)
-        return dns_qry.filter_by(subnet_id=subnet_id).all()
-
-    def _get_route_by_subnet(self, context, subnet_id):
-        route_qry = context.session.query(models_v2.SubnetRoute)
-        return route_qry.filter_by(subnet_id=subnet_id).all()
-
-    def _get_subnets_by_network(self, context, network_id):
-        subnet_qry = context.session.query(models_v2.Subnet)
-        return subnet_qry.filter_by(network_id=network_id).all()
-
-    def _get_all_subnets(self, context):
-        # NOTE(salvatore-orlando): This query might end up putting
-        # a lot of stress on the db. Consider adding a cache layer
-        return context.session.query(models_v2.Subnet).all()
-
-    def _fields(self, resource, fields):
-        if fields:
-            return dict(((key, item) for key, item in resource.iteritems()
-                         if key in fields))
-        return resource
 
     def _apply_filters_to_query(self, query, model, filters):
         if filters:
@@ -250,6 +172,90 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _get_collection_count(self, context, model, filters=None):
         return self._get_collection_query(context, model, filters).count()
+
+
+class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
+                        CommonDbMixin):
+    """V2 Quantum plugin interface implementation using SQLAlchemy models.
+
+    Whenever a non-read call happens the plugin will call an event handler
+    class method (e.g., network_created()).  The result is that this class
+    can be sub-classed by other classes that add custom behaviors on certain
+    events.
+    """
+
+    # This attribute specifies whether the plugin supports or not
+    # bulk/pagination/sorting operations. Name mangling is used in
+    # order to ensure it is qualified by class
+    __native_bulk_support = True
+    __native_pagination_support = True
+    __native_sorting_support = True
+
+    # This dictionary will store methods for extending attributes of
+    # api resources. Mixins can use this dict for adding their own methods
+    # TODO(salvatore-orlando): Avoid using class-level variables
+    _dict_extend_functions = {}
+
+    def __init__(self):
+        # NOTE(jkoelker) This is an incomlete implementation. Subclasses
+        #                must override __init__ and setup the database
+        #                and not call into this class's __init__.
+        #                This connection is setup as memory for the tests.
+        db.configure_db()
+
+    @classmethod
+    def register_dict_extend_funcs(cls, resource, funcs):
+        cur_funcs = cls._dict_extend_functions.get(resource, [])
+        cur_funcs.extend(funcs)
+        cls._dict_extend_functions[resource] = cur_funcs
+
+    def _filter_non_model_columns(self, data, model):
+        """Remove all the attributes from data which are not columns of
+        the model passed as second parameter.
+        """
+        columns = [c.name for c in model.__table__.columns]
+        return dict((k, v) for (k, v) in
+                    data.iteritems() if k in columns)
+
+    def _get_network(self, context, id):
+        try:
+            network = self._get_by_id(context, models_v2.Network, id)
+        except exc.NoResultFound:
+            raise q_exc.NetworkNotFound(net_id=id)
+        return network
+
+    def _get_subnet(self, context, id):
+        try:
+            subnet = self._get_by_id(context, models_v2.Subnet, id)
+        except exc.NoResultFound:
+            raise q_exc.SubnetNotFound(subnet_id=id)
+        return subnet
+
+    def _get_port(self, context, id):
+        try:
+            port = self._get_by_id(context, models_v2.Port, id)
+        except exc.NoResultFound:
+            # NOTE(jkoelker) The PortNotFound exceptions requires net_id
+            #                kwarg in order to set the message correctly
+            raise q_exc.PortNotFound(port_id=id, net_id=None)
+        return port
+
+    def _get_dns_by_subnet(self, context, subnet_id):
+        dns_qry = context.session.query(models_v2.DNSNameServer)
+        return dns_qry.filter_by(subnet_id=subnet_id).all()
+
+    def _get_route_by_subnet(self, context, subnet_id):
+        route_qry = context.session.query(models_v2.SubnetRoute)
+        return route_qry.filter_by(subnet_id=subnet_id).all()
+
+    def _get_subnets_by_network(self, context, network_id):
+        subnet_qry = context.session.query(models_v2.Subnet)
+        return subnet_qry.filter_by(network_id=network_id).all()
+
+    def _get_all_subnets(self, context):
+        # NOTE(salvatore-orlando): This query might end up putting
+        # a lot of stress on the db. Consider adding a cache layer
+        return context.session.query(models_v2.Subnet).all()
 
     @staticmethod
     def _generate_mac(context, network_id):
