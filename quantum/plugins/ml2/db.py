@@ -42,7 +42,10 @@ def add_network_segment(session, network_id, segment):
         )
         session.add(record)
     LOG.info(_("Added segment %(id)s of type %(network_type)s for network"
-               " %(network_id)s"), record)
+               " %(network_id)s"),
+             {'id': record.id,
+              'network_type': record.network_type,
+              'network_id': record.network_id})
 
 
 def get_network_segments(session, network_id):
