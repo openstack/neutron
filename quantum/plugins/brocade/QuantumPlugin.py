@@ -38,6 +38,7 @@ from quantum.db import agentschedulers_db
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
+from quantum.db import extraroute_db
 from quantum.db import l3_rpc_base
 from quantum.db import securitygroups_rpc_base as sg_db_rpc
 from quantum.extensions import portbindings
@@ -194,6 +195,7 @@ class AgentNotifierApi(proxy.RpcProxy,
 
 
 class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
+                      extraroute_db.ExtraRoute_db_mixin,
                       sg_db_rpc.SecurityGroupServerRpcMixin,
                       agentschedulers_db.AgentSchedulerDbMixin):
     """BrocadePluginV2 is a Quantum plugin.
@@ -210,6 +212,7 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         """
 
         self.supported_extension_aliases = ["binding", "security-group",
+                                            "router", "extraroute",
                                             "agent", "agent_scheduler"]
 
         self.physical_interface = (cfg.CONF.PHYSICAL_INTERFACE.
@@ -277,6 +280,8 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 raise Exception("Brocade plugin raised exception, check logs")
 
             brocade_db.create_network(context, net_uuid, vlan_id)
+            self._process_l3_create(context, network['network'], net['id'])
+            self._extend_network_dict_l3(context, net)
 
         LOG.info(_("Allocated vlan (%d) from the pool"), vlan_id)
         return net
@@ -321,6 +326,37 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # relinquish vlan in bitmap
         self._vlan_bitmap.release_vlan(int(vlan_id))
         return result
+
+    def update_network(self, context, id, network):
+
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(BrocadePluginV2, self).update_network(context, id,
+                                                              network)
+            self._process_l3_update(context, network['network'], id)
+            self._extend_network_dict_l3(context, net)
+        return net
+
+    def get_network(self, context, id, fields=None):
+        session = context.session
+        with session.begin(subtransactions=True):
+            net = super(BrocadePluginV2, self).get_network(context,
+                                                           id, None)
+            self._extend_network_dict_l3(context, net)
+
+        return self._fields(net, fields)
+
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None, page_reverse=False):
+        session = context.session
+        with session.begin(subtransactions=True):
+            nets = super(BrocadePluginV2,
+                         self).get_networks(context, filters, None, sorts,
+                                            limit, marker, page_reverse)
+            for net in nets:
+                self._extend_network_dict_l3(context, net)
+
+        return [self._fields(net, fields) for net in nets]
 
     def create_port(self, context, port):
         """Create logical port on the switch."""
