@@ -403,8 +403,12 @@ class OVSQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         else:
             msg = _("provider:network_type %s not supported") % network_type
             raise q_exc.InvalidInput(error_message=msg)
-
-        if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+        if network_type is onstants.TYPE_FLAT:
+            if physical_network_set:
+               physical_network = physical_network_set
+            else
+               physical_network = 'default'
+        if network_type is constants.TYPE_VLAN:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
                     msg = _("Unknown provider:physical_network "
