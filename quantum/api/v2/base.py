@@ -510,7 +510,7 @@ class Controller(object):
             if context.tenant_id:
                 res_dict['tenant_id'] = context.tenant_id
             else:
-                msg = _("Running without keystyone AuthN requires "
+                msg = _("Running without keystone AuthN requires "
                         " that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
