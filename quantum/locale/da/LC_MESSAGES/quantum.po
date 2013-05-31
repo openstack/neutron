@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-30 12:11+0000\n"
+"POT-Creation-Date: 2013-05-31 12:11+0000\n"
 "PO-Revision-Date: 2013-05-16 09:23+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Danish "
@@ -1065,77 +1065,84 @@ msgstr ""
 msgid "Initializing extension manager."
 msgstr ""
 
-#: quantum/api/extensions.py:466
+#: quantum/api/extensions.py:480
 #, python-format
 msgid "Error fetching extended attributes for extension '%s'"
 msgstr ""
 
-#: quantum/api/extensions.py:476
+#: quantum/api/extensions.py:489
+#, python-format
+msgid ""
+"It was impossible to process the following extensions: %s because of "
+"missing requirements."
+msgstr ""
+
+#: quantum/api/extensions.py:500
 #, python-format
 msgid "Ext name: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:477
+#: quantum/api/extensions.py:501
 #, python-format
 msgid "Ext alias: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:478
+#: quantum/api/extensions.py:502
 #, python-format
 msgid "Ext description: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:479
+#: quantum/api/extensions.py:503
 #, python-format
 msgid "Ext namespace: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:480
+#: quantum/api/extensions.py:504
 #, python-format
 msgid "Ext updated: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:482 quantum/api/extensions.py:488
+#: quantum/api/extensions.py:506 quantum/api/extensions.py:512
 #, python-format
 msgid "Exception loading extension: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:508
+#: quantum/api/extensions.py:532
 #, python-format
 msgid "Extension path '%s' doesn't exist!"
 msgstr ""
 
-#: quantum/api/extensions.py:513
+#: quantum/api/extensions.py:537
 #, python-format
 msgid "Loading extension file: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:521
+#: quantum/api/extensions.py:545
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
 msgstr ""
 
-#: quantum/api/extensions.py:529
+#: quantum/api/extensions.py:553
 #, python-format
 msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
 msgstr ""
 
-#: quantum/api/extensions.py:538
+#: quantum/api/extensions.py:562
 #, python-format
 msgid "Loaded extension: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:541
+#: quantum/api/extensions.py:565
 #, python-format
 msgid "Found duplicate extension: %s"
 msgstr ""
 
-#: quantum/api/extensions.py:571
+#: quantum/api/extensions.py:595
 #, python-format
 msgid "Extension %s not supported by any of loaded plugins"
 msgstr ""
 
-#: quantum/api/extensions.py:582
+#: quantum/api/extensions.py:606
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr ""
@@ -4165,6 +4172,13 @@ msgstr ""
 msgid "get_port_vlan_switch_binding() called"
 msgstr ""
 
+#: quantum/plugins/cisco/db/nexus_db_v2.py:140
+#, python-format
+msgid ""
+"get_port_switch_bindings() called, port:'%(port_id)s', "
+"switch:'%(switch_ip)s'"
+msgstr ""
+
 #: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
 #, python-format
 msgid "Loaded device plugin %s\n"
@@ -4195,15 +4209,15 @@ msgstr ""
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:128
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:135
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:146
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:157
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:129
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:136
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:153
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:164
 #, python-format
 msgid "NexusDriver: %s"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:173
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:180
 #, python-format
 msgid "NexusDriver VLAN IDs: %s"
 msgstr ""
@@ -8242,29 +8256,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "Multiple networks match for %s"
-#~ msgstr ""
-
-#~ msgid "Multiple subnets match for %s"
-#~ msgstr ""
-
-#~ msgid "Multiple ports match for %s"
-#~ msgstr ""
-
-#~ msgid "Multiple routers match for %s"
-#~ msgstr ""
-
-#~ msgid "Multiple floating ips match for %s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [default_servicetype] section"
-#~ msgstr ""
-
-#~ msgid "Multiple packet_filters match for %s"
-#~ msgstr ""
 
