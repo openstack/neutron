@@ -86,7 +86,7 @@ CMD_NO_VLAN_CONF_SNIPPET = """
           </no>
 """
 
-CMD_VLAN_INT_SNIPPET = """
+CMD_INT_VLAN_HEADER = """
           <interface>
             <ethernet>
               <interface>%s</interface>
@@ -94,10 +94,16 @@ CMD_VLAN_INT_SNIPPET = """
                 <switchport>
                   <trunk>
                     <allowed>
-                      <vlan>
-                        <add>
-                          <add_vlans>%s</add_vlans>
-                        </add>
+                      <vlan>"""
+
+CMD_VLAN_ID = """
+                          <vlan_id>%s</vlan_id>"""
+
+CMD_VLAN_ADD_ID = """
+                        <add>%s
+                        </add>""" % CMD_VLAN_ID
+
+CMD_INT_VLAN_TRAILER = """
                       </vlan>
                     </allowed>
                   </trunk>
@@ -106,6 +112,14 @@ CMD_VLAN_INT_SNIPPET = """
             </ethernet>
           </interface>
 """
+
+CMD_INT_VLAN_SNIPPET = (CMD_INT_VLAN_HEADER +
+                        CMD_VLAN_ID +
+                        CMD_INT_VLAN_TRAILER)
+
+CMD_INT_VLAN_ADD_SNIPPET = (CMD_INT_VLAN_HEADER +
+                            CMD_VLAN_ADD_ID +
+                            CMD_INT_VLAN_TRAILER)
 
 CMD_PORT_TRUNK = """
           <interface>

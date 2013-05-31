@@ -133,3 +133,18 @@ def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
         raise c_exc.NexusPortBindingNotFound(**filters)
 
     return bindings
+
+
+def get_port_switch_bindings(port_id, switch_ip):
+    """List all vm/vlan bindings on a Nexus switch port."""
+    LOG.debug(_("get_port_switch_bindings() called, "
+                "port:'%(port_id)s', switch:'%(switch_ip)s'"),
+              {'port_id': port_id, 'switch_ip': switch_ip})
+    session = db.get_session()
+    try:
+        binding = (session.query(nexus_models_v2.NexusPortBinding).
+                   filter_by(port_id=port_id).
+                   filter_by(switch_ip=switch_ip).all())
+        return binding
+    except exc.NoResultFound:
+        return
