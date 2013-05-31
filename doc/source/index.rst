@@ -44,6 +44,7 @@ Development Documents
 .. toctree::
    :maxdepth: 1
 
+   devref/plugin-api
    devref/index
    devref/common
 
