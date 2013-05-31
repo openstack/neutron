@@ -73,5 +73,16 @@
     "delete_l3-router": "rule:admin_only",
     "get_l3-routers": "rule:admin_only",
     "get_dhcp-agents": "rule:admin_only",
-    "get_l3-agents": "rule:admin_only"
+    "get_l3-agents": "rule:admin_only",
+
+    "create_router": "rule:regular_user",
+    "get_router": "rule:admin_or_owner",
+    "update_router:add_router_interface": "rule:admin_or_owner",
+    "update_router:remove_router_interface": "rule:admin_or_owner",
+    "delete_router": "rule:admin_or_owner",
+
+    "create_floatingip": "rule:regular_user",
+    "update_floatingip": "rule:admin_or_owner",
+    "delete_floatingip": "rule:admin_or_owner",
+    "get_floatingip": "rule:admin_or_owner"
 }
