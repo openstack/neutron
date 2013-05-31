@@ -33,6 +33,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                  'allow_put': True,
                  'is_visible': True,
                  'default': None,
+                 'enforce_policy': True,
                  'validate':
                  {'type:dict_or_nodata':
                   {'network_id': {'type:uuid': None, 'required': True},
