@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-30 12:11+0000\n"
+"POT-Creation-Date: 2013-05-31 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -1113,77 +1113,84 @@ msgstr "Erweiterte Anforderung: %s"
 msgid "Initializing extension manager."
 msgstr "Erweiterungsmanager wird initialisiert."
 
-#: quantum/api/extensions.py:466
+#: quantum/api/extensions.py:480
 #, python-format
 msgid "Error fetching extended attributes for extension '%s'"
 msgstr "Fehler beim Abrufen erweiterter Attribute für Erweiterung '%s'"
 
-#: quantum/api/extensions.py:476
+#: quantum/api/extensions.py:489
+#, python-format
+msgid ""
+"It was impossible to process the following extensions: %s because of "
+"missing requirements."
+msgstr ""
+
+#: quantum/api/extensions.py:500
 #, python-format
 msgid "Ext name: %s"
 msgstr "Erweiterungsname: %s"
 
-#: quantum/api/extensions.py:477
+#: quantum/api/extensions.py:501
 #, python-format
 msgid "Ext alias: %s"
 msgstr "Erweiterungsalias: %s"
 
-#: quantum/api/extensions.py:478
+#: quantum/api/extensions.py:502
 #, python-format
 msgid "Ext description: %s"
 msgstr "Erweiterungsbeschreibung: %s"
 
-#: quantum/api/extensions.py:479
+#: quantum/api/extensions.py:503
 #, python-format
 msgid "Ext namespace: %s"
 msgstr "Erweiterungsnamensbereich: %s"
 
-#: quantum/api/extensions.py:480
+#: quantum/api/extensions.py:504
 #, python-format
 msgid "Ext updated: %s"
 msgstr "Erweiterung aktualisiert: %s"
 
-#: quantum/api/extensions.py:482 quantum/api/extensions.py:488
+#: quantum/api/extensions.py:506 quantum/api/extensions.py:512
 #, python-format
 msgid "Exception loading extension: %s"
 msgstr "Ausnahme beim Laden von Erweiterung: %s"
 
-#: quantum/api/extensions.py:508
+#: quantum/api/extensions.py:532
 #, python-format
 msgid "Extension path '%s' doesn't exist!"
 msgstr "Erweiterungspfad '%s' ist nicht vorhanden!"
 
-#: quantum/api/extensions.py:513
+#: quantum/api/extensions.py:537
 #, python-format
 msgid "Loading extension file: %s"
 msgstr "Laden von Erweiterungsdatei: %s"
 
-#: quantum/api/extensions.py:521
+#: quantum/api/extensions.py:545
 #, python-format
 msgid "Did not find expected name \"%(ext_name)s\" in %(file)s"
 msgstr "Erwarteter Name \"%(ext_name)s\" konnte in %(file)s nicht gefunden werden"
 
-#: quantum/api/extensions.py:529
+#: quantum/api/extensions.py:553
 #, python-format
 msgid "Extension file %(f)s wasn't loaded due to %(exception)s"
 msgstr "Erweiterungsdatei %(f)s wurde aufgrund von %(exception)s nicht geladen"
 
-#: quantum/api/extensions.py:538
+#: quantum/api/extensions.py:562
 #, python-format
 msgid "Loaded extension: %s"
 msgstr "Geladene Erweiterung: %s"
 
-#: quantum/api/extensions.py:541
+#: quantum/api/extensions.py:565
 #, python-format
 msgid "Found duplicate extension: %s"
 msgstr "Doppelte Erweiterung gefunden: %s"
 
-#: quantum/api/extensions.py:571
+#: quantum/api/extensions.py:595
 #, python-format
 msgid "Extension %s not supported by any of loaded plugins"
 msgstr "Erweiterung %s von keinem der geladenen Plug-ins unterstützt"
 
-#: quantum/api/extensions.py:582
+#: quantum/api/extensions.py:606
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr "Geladene Plug-ins implementieren Schnittstelle für Erweiterung %s nicht"
@@ -4479,6 +4486,13 @@ msgstr "Aufruf von 'get_nexusvm_binding()'"
 msgid "get_port_vlan_switch_binding() called"
 msgstr "Aufruf von 'get_port_vlan_switch_binding()'"
 
+#: quantum/plugins/cisco/db/nexus_db_v2.py:140
+#, python-format
+msgid ""
+"get_port_switch_bindings() called, port:'%(port_id)s', "
+"switch:'%(switch_ip)s'"
+msgstr ""
+
 #: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
 #, python-format
 msgid "Loaded device plugin %s\n"
@@ -4509,15 +4523,15 @@ msgstr ""
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:128
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:135
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:146
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:157
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:129
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:136
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:153
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:164
 #, python-format
 msgid "NexusDriver: %s"
 msgstr "NexusDriver: %s"
 
-#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:173
+#: quantum/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:180
 #, python-format
 msgid "NexusDriver VLAN IDs: %s"
 msgstr "NexusDriver-VLAN-IDs: %s"
@@ -5995,7 +6009,7 @@ msgid "Network %s has no segments"
 msgstr "Netz %s für Agent nicht verwendet."
 
 #: quantum/plugins/ml2/plugin.py:180
-#, fuzzy, python-format
+#, fuzzy
 msgid ""
 "In _notify_port_updated() for port %(port_id), network %(network_id) has "
 "no segments"
@@ -6064,7 +6078,7 @@ msgid "ML2 FlatTypeDriver initialization complete"
 msgstr "Plug-in-Initialisierung abgeschlossen"
 
 #: quantum/plugins/ml2/drivers/type_flat.py:86
-#, fuzzy, python-format
+#, fuzzy
 msgid "physical_network required for flat provider network"
 msgstr "'physical_network' für %s-Netz angegeben"
 
@@ -6112,7 +6126,7 @@ msgid ""
 msgstr ""
 
 #: quantum/plugins/ml2/drivers/type_vlan.py:91
-#, fuzzy, python-format
+#, fuzzy
 msgid "Failed to parse network_vlan_ranges. Service terminated!"
 msgstr "Ungültiger Wert für 'tenant_network_type': %s. Service beendet!"
 
@@ -6122,7 +6136,7 @@ msgid "VlanTypeDriver initialization complete"
 msgstr "Plug-in-Initialisierung abgeschlossen"
 
 #: quantum/plugins/ml2/drivers/type_vlan.py:166
-#, fuzzy, python-format
+#, fuzzy
 msgid "physical_network required for VLAN provider network"
 msgstr "'physical_network' für %s-Netz angegeben"
 
@@ -6132,7 +6146,7 @@ msgid "physical_network '%s' unknown for VLAN provider network"
 msgstr "'physical_network' für %s-Netz angegeben"
 
 #: quantum/plugins/ml2/drivers/type_vlan.py:175
-#, fuzzy, python-format
+#, fuzzy
 msgid "segmentation_id required for VLAN provider network"
 msgstr "'segmentation_id' für %s-Netz angegeben"
 
@@ -8898,29 +8912,4 @@ msgstr "lSwitch: %s nicht gefunden"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "lRouter: %s nicht gefunden"
-
-#~ msgid "Multiple networks match for %s"
-#~ msgstr "Mehrere Netzübereinstimmungen für %s"
-
-#~ msgid "Multiple subnets match for %s"
-#~ msgstr "Mehrere Teilnetzübereinstimmungen für %s"
-
-#~ msgid "Multiple ports match for %s"
-#~ msgstr "Mehrere Portübereinstimmungen für %s"
-
-#~ msgid "Multiple routers match for %s"
-#~ msgstr "Mehrere Router-Übereinstimmungen für %s"
-
-#~ msgid "Multiple floating ips match for %s"
-#~ msgstr "Mehrere dynamische IP-Adressen stimmen mit %s überein"
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [default_servicetype] section"
-#~ msgstr ""
-
-#~ msgid "Multiple packet_filters match for %s"
-#~ msgstr "Mehrere 'packet_filters'-Übereinstimmungen für %s"
 
