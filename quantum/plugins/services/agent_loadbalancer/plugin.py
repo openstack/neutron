@@ -275,7 +275,8 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
             pool['pool']['status'] = constants.PENDING_UPDATE
         p = super(LoadBalancerPlugin, self).update_pool(context, id, pool)
         if p['status'] in ACTIVE_PENDING:
-            self.agent_rpc.reload_pool(context, p['id'])
+            if p['vip_id'] is not None:
+                self.agent_rpc.reload_pool(context, p['id'])
         else:
             self.agent_rpc.destroy_pool(context, p['id'])
         return p
