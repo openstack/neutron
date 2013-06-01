@@ -115,7 +115,6 @@ CONFIGURE_ALLOWED_VLANS_FOR_VLAN_PROFILE = """
                                 <add>{vlan_id}</add>
                             </vlan>
                         </allowed>
-                        <native-vlan>{vlan_id}</native-vlan>
                     </trunk>
                 </switchport>
             </vlan-profile>
