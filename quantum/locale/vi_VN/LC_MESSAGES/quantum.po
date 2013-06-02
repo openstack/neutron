@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-31 12:11+0000\n"
+"POT-Creation-Date: 2013-06-02 12:11+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Vietnamese (Viet Nam) "
@@ -1357,7 +1357,7 @@ msgid ""
 msgstr ""
 
 #: quantum/api/v2/base.py:513
-msgid "Running without keystyone AuthN requires  that tenant_id is specified"
+msgid "Running without keystone AuthN requires  that tenant_id is specified"
 msgstr ""
 
 #: quantum/api/v2/base.py:531
@@ -3444,7 +3444,7 @@ msgid "RPC Message Invalid."
 msgstr ""
 
 #: quantum/openstack/common/rpc/impl_zmq.py:760
-#: quantum/plugins/midonet/plugin.py:52
+#: quantum/plugins/midonet/plugin.py:42
 #, python-format
 msgid "%(msg)s"
 msgstr ""
@@ -3737,7 +3737,7 @@ msgid ""
 "status=%s."
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:124
+#: quantum/plugins/brocade/QuantumPlugin.py:125
 #: quantum/plugins/hyperv/rpc_callbacks.py:53
 #: quantum/plugins/linuxbridge/lb_quantum_plugin.py:85
 #: quantum/plugins/openvswitch/ovs_quantum_plugin.py:94
@@ -3745,8 +3745,8 @@ msgstr ""
 msgid "Device %(device)s details requested from %(agent_id)s"
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:138
-#: quantum/plugins/brocade/QuantumPlugin.py:155
+#: quantum/plugins/brocade/QuantumPlugin.py:139
+#: quantum/plugins/brocade/QuantumPlugin.py:156
 #: quantum/plugins/hyperv/rpc_callbacks.py:69
 #: quantum/plugins/hyperv/rpc_callbacks.py:88
 #: quantum/plugins/linuxbridge/lb_quantum_plugin.py:108
@@ -3761,25 +3761,25 @@ msgstr ""
 msgid "%s can not be found in database"
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:272
-#: quantum/plugins/brocade/QuantumPlugin.py:314
-#: quantum/plugins/brocade/QuantumPlugin.py:355
+#: quantum/plugins/brocade/QuantumPlugin.py:275
+#: quantum/plugins/brocade/QuantumPlugin.py:319
+#: quantum/plugins/brocade/QuantumPlugin.py:391
 msgid "Brocade NOS driver:"
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:273
-#: quantum/plugins/brocade/QuantumPlugin.py:315
-#: quantum/plugins/brocade/QuantumPlugin.py:356
+#: quantum/plugins/brocade/QuantumPlugin.py:276
+#: quantum/plugins/brocade/QuantumPlugin.py:320
+#: quantum/plugins/brocade/QuantumPlugin.py:392
 #, python-format
 msgid "%s"
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:274
+#: quantum/plugins/brocade/QuantumPlugin.py:277
 #, python-format
 msgid "Returning the allocated vlan (%d) to the pool"
 msgstr ""
 
-#: quantum/plugins/brocade/QuantumPlugin.py:281
+#: quantum/plugins/brocade/QuantumPlugin.py:286
 #, python-format
 msgid "Allocated vlan (%d) from the pool"
 msgstr ""
@@ -5076,425 +5076,551 @@ msgstr ""
 msgid "Operational mode. Internal dev use only."
 msgstr ""
 
-#: quantum/plugins/midonet/midonet_lib.py:62
-#, python-format
-msgid ""
-"ChainManager.create_for_sg called: tenant_id=%(tenant_id)s "
-"sg_id=%(sg_id)s sg_name=%(sg_name)s "
-msgstr ""
-
 #: quantum/plugins/midonet/midonet_lib.py:79
-#, python-format
-msgid ""
-"ChainManager.delete_for_sg called: tenant_id=%(tenant_id)s "
-"sg_id=%(sg_id)s sg_name=%(sg_name)s "
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:88
-#, python-format
-msgid "ChainManager.delete_for_sg: deleting chain=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:99
-#, python-format
-msgid ""
-"ChainManager.get_router_chains called: tenant_id=%(tenant_id)s "
-"router_id=%(router_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:118
-#, python-format
-msgid ""
-"ChainManager.create_router_chains called: tenant_id=%(tenant_id)s "
-"router_id=%(router_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:133
-#, python-format
-msgid "ChainManager.get_sg_chains called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:152
-#, python-format
-msgid "ChainManager.get_router_chain_names called: router_id=%(router_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:167
-#, python-format
-msgid ""
-"PortGroupManager.create called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-"sg_name=%(sg_name)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:176
-#, python-format
-msgid ""
-"PortGroupManager.delete called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-"sg_name=%(sg_name)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:184
-#, python-format
-msgid "PortGroupManager.delete: deleting pg=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:188
-#, python-format
-msgid ""
-"PortGroupManager.get_for_sg called: tenant_id=%(tenant_id)s "
-"sg_id=%(sg_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:197
-#, python-format
-msgid "PortGroupManager.get_for_sg exiting: pg=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:215
-#, python-format
-msgid "RuleManager.create_for_sg_rule called: rule=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:241
-#: quantum/plugins/midonet/midonet_lib.py:274
-#, python-format
-msgid "Don't know what to do with rule=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:278
-#, python-format
-msgid ""
-"RuleManager.create_for_sg_rule: adding accept rule %(rule_id)s in "
-"portgroup %(port_group_id)s"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:288
-#, python-format
-msgid "RuleManager.delete_for_sg_rule called: rule=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/midonet_lib.py:301
-#, python-format
-msgid "RuleManager.delete_for_sg_rule: deleting rule %r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:48
 #, python-format
 msgid "MidoNet %(resource_type)s %(id)s could not be found"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:84
+#: quantum/plugins/midonet/midonet_lib.py:83
+#, python-format
+msgid "MidoNet API error: %(msg)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:99
+#, python-format
+msgid "MidoClient.create_bridge called: tenant_id=%(tenant_id)s, name=%(name)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:111
+#, python-format
+msgid "MidoClient.delete_bridge called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:121
+#, python-format
+msgid "MidoClient.get_bridge called: id=%s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:135
+#, python-format
+msgid "MidoClient.update_bridge called: id=%(id)s, name=%(name)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:152
+#, python-format
+msgid ""
+"MidoClient.create_dhcp called: bridge=%s(bridge)s, net_addr=%(net_addr)s,"
+" net_len=%(net_len)s, gateway_ip=%(gateway_ip)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:169
+#, python-format
+msgid ""
+"MidoClient.create_dhcp_hosts called: bridge=%s(bridge), ip=%(ip)s, "
+"mac=%(mac)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:186
+#, python-format
+msgid ""
+"MidoClient.delete_dhcp_hosts called: bridge_id=%s(bridge_id), ip=%(ip)s, "
+"mac=%(mac)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:202
+#, python-format
+msgid "MidoClient.delete_dhcp called: bridge=%s(bridge), "
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:215
+#, python-format
+msgid "MidoClient.delete_port called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:225
+#, python-format
+msgid "MidoClient.get_port called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:238
+#, python-format
+msgid "MidoClient.create_exterior_bridge_port called: bridge=%(bridge)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:249
+#, python-format
+msgid "MidoClient.create_interior_bridge_port called: bridge=%(bridge)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:261
+#, python-format
+msgid "MidoClient.create_router called: tenant_id=%(tenant_id)s, name=%(name)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:276
+#, python-format
+msgid ""
+"MidoClient.create_tenant_router called: tenant_id=%(tenant_id)s, "
+"name=%(name)smetadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:292
+#, python-format
+msgid ""
+"MidoClient.delete_tenant_router called: id=%(id)s, "
+"metadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:307
+#, python-format
+msgid "MidoClient.delete_router called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:317
+#, python-format
+msgid "MidoClient.get_router called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:331
+#, python-format
+msgid "MidoClient.update_router called: id=%(id)s, name=%(name)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:350
+#, python-format
+msgid ""
+"MidoClient.link_bridge_port_to_router called: port_id=%(port_id)s, "
+"router_id=%(router_id)s, gateway_ip=%(gateway_ip)s net_addr=%(net_addr)s,"
+" net_len=%(net_len)s, metadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:382
+#, python-format
+msgid "Couldn't find a md router port for the router=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:399
+#, python-format
+msgid ""
+"MidoClient.unlink_bridge_port_from_router called: port_id=%(port_id)s, "
+"net_addr=%(net_addr)s, net_len=%(net_len)s, "
+"metadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:414
+#, python-format
+msgid "Deleting route=%r ..."
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:429
+#, python-format
+msgid ""
+"MidoClient.link_bridge_to_provider_router called: bridge=%(bridge)s, "
+"provider_router=%(provider_router)s, gateway_ip=%(gateway_ip)s, "
+"net_addr=%(net_addr)s, net_len=%(net_len)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:458
+#, python-format
+msgid ""
+"MidoClient.unlink_bridge_from_provider_router called: bridge=%(bridge)s, "
+"provider_router=%(provider_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:489
+#, python-format
+msgid ""
+"MidoClient.set_router_external_gateway called: id=%(id)s, "
+"provider_router=%(provider_router)s, snat_ip=%s(snat_ip)s)"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:548
+#, python-format
+msgid "MidoClient.clear_router_external_gateway called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:591
+#, python-format
+msgid ""
+"MidoClient.get_router_chains called: tenant_id=%(tenant_id)s "
+"router_id=%(router_id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:613
+#, python-format
+msgid "MidoClient.create_router_chains called: router=%(router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:637
+#, python-format
+msgid "MidoClient.destroy_router_chains called: id=%(id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:652
+#, python-format
+msgid ""
+"MidoClient.link_router_to_metadata_router called: router=%(router)s, "
+"metadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:678
+#, python-format
+msgid ""
+"MidoClient.unlink_router_from_metadata_router called: id=%(id)s, "
+"metadata_router=%(metadata_router)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:701
+#, python-format
+msgid ""
+"MidoClient.setup_floating_ip called: router_id=%(router_id)s, "
+"provider_router=%(provider_router)sfloating_ip=%(floating_ip)s, "
+"fixed_ip=%(fixed_ip)sidentifier=%(identifier)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:765
+#, python-format
+msgid ""
+"MidoClient.clear_floating_ip called: router_id=%(router_id)s, "
+"provider_router=%(provider_router)sfloating_ip=%(floating_ip)s, "
+"identifier=%(identifier)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:786
+#: quantum/plugins/midonet/midonet_lib.py:793
+#, python-format
+msgid "deleting rule=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:804
+#, python-format
+msgid ""
+"MidoClient.create_for_sg called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
+"sg_name=%(sg_name)s "
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:826
+#, python-format
+msgid ""
+"MidoClient.delete_for_sg called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
+"sg_name=%(sg_name)s "
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:835
+#, python-format
+msgid "MidoClient.delete_for_sg: deleting chain=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:843
+#, python-format
+msgid "MidoClient.delete_for_sg: deleting pg=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:850
+#, python-format
+msgid "MidoClient.get_sg_chains called: tenant_id=%(tenant_id)s sg_id=%(sg_id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:870
+#, python-format
+msgid ""
+"MidoClient.get_port_groups_for_sg called: tenant_id=%(tenant_id)s "
+"sg_id=%(sg_id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:879
+#, python-format
+msgid "MidoClient.get_port_groups_for_sg exiting: pg=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:886
+#, python-format
+msgid "MidoClient.create_for_sg_rule called: rule=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:912
+#: quantum/plugins/midonet/midonet_lib.py:945
+#, python-format
+msgid "Don't know what to do with rule=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:949
+#, python-format
+msgid ""
+"MidoClient.create_for_sg_rule: adding accept rule %(rule_id)s in "
+"portgroup %(port_group_id)s"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:960
+#, python-format
+msgid "MidoClient.delete_for_sg_rule called: rule=%r"
+msgstr ""
+
+#: quantum/plugins/midonet/midonet_lib.py:973
+#, python-format
+msgid "MidoClient.delete_for_sg_rule: deleting rule %r"
+msgstr ""
+
+#: quantum/plugins/midonet/plugin.py:76
 msgid ""
 "No provider router and metadata device ids found. But skipping because "
 "running in dev env."
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:88
+#: quantum/plugins/midonet/plugin.py:80
 msgid ""
 "provider_router_id and metadata_router_id should be configured in the "
 "plugin config file"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:104
+#: quantum/plugins/midonet/plugin.py:92
 #, python-format
 msgid "MidonetPluginV2.create_subnet called: subnet=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:108
+#: quantum/plugins/midonet/plugin.py:96
 msgid "MidoNet doesn't support IPv6."
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:114
+#: quantum/plugins/midonet/plugin.py:102
 msgid "MidoNet doesn't support multiple subnets on the same network."
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:157
+#: quantum/plugins/midonet/plugin.py:126
 #, python-format
 msgid "MidonetPluginV2.create_subnet exiting: sn_entry=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:167
-#, python-format
-msgid "MidonetPluginV2.get_subnet called: id=%(id)s fields=%(fields)s"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:189
-#, python-format
-msgid "MidonetPluginV2.get_subnet exiting: qsubnet=%s"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:198
-#, python-format
-msgid "MidonetPluginV2.get_subnets called: filters=%(filters)r, fields=%(fields)r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:226
-msgid "MidonetPluginV2.create_subnet exiting"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:234
+#: quantum/plugins/midonet/plugin.py:135
 #, python-format
 msgid "MidonetPluginV2.delete_subnet called: id=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:273
+#: quantum/plugins/midonet/plugin.py:151
 msgid "MidonetPluginV2.delete_subnet exiting"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:280
+#: quantum/plugins/midonet/plugin.py:158
 #, python-format
 msgid "MidonetPluginV2.create_network called: network=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:284
+#: quantum/plugins/midonet/plugin.py:162
 #, python-format
-msgid "Ignoring admin_state_up=False for network=%rOverriding with True"
+msgid ""
+"Ignoring admin_state_up=False for network=%r because it is not yet "
+"supported"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:304
+#: quantum/plugins/midonet/plugin.py:181
 #, python-format
 msgid "MidonetPluginV2.create_network exiting: net=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:313
+#: quantum/plugins/midonet/plugin.py:190
 #, python-format
 msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:319
+#: quantum/plugins/midonet/plugin.py:196
 #: quantum/plugins/nicira/QuantumPlugin.py:1030
 msgid "admin_state_up=False networks are not supported."
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:334
+#: quantum/plugins/midonet/plugin.py:207
 #, python-format
 msgid "MidonetPluginV2.update_network exiting: net=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:342
+#: quantum/plugins/midonet/plugin.py:215
 #, python-format
 msgid "MidonetPluginV2.get_network called: id=%(id)r, fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:354
+#: quantum/plugins/midonet/plugin.py:224
 #, python-format
 msgid "MidonetPluginV2.get_network exiting: qnet=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:359
+#: quantum/plugins/midonet/plugin.py:229
 #, python-format
 msgid ""
 "MidonetPluginV2.get_networks called: filters=%(filters)r, "
 "fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:380
+#: quantum/plugins/midonet/plugin.py:244
 #, python-format
 msgid "MidonetPluginV2.delete_network called: id=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:386
+#: quantum/plugins/midonet/plugin.py:249
 #, python-format
 msgid "Failed to delete quantum db, while Midonet bridge=%rhad been deleted"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:392
+#: quantum/plugins/midonet/plugin.py:255
 #, python-format
 msgid "MidonetPluginV2.create_port called: port=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:440
+#: quantum/plugins/midonet/plugin.py:296
 #, python-format
 msgid "MidonetPluginV2.create_port exiting: port_db_entry=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:446
-#, python-format
-msgid "MidonetPluginV2.update_port called: id=%(id)s port=%(port)r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:452
+#: quantum/plugins/midonet/plugin.py:302
 #, python-format
 msgid "MidonetPluginV2.get_port called: id=%(id)s fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:464
+#: quantum/plugins/midonet/plugin.py:311
 #, python-format
 msgid "MidonetPluginV2.get_port exiting: port_db_entry=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:470
+#: quantum/plugins/midonet/plugin.py:317
 #, python-format
 msgid "MidonetPluginV2.get_ports called: filters=%(filters)s fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:487
+#: quantum/plugins/midonet/plugin.py:331
 #, python-format
 msgid ""
 "MidonetPluginV2.delete_port called: id=%(id)s "
 "l3_port_check=%(l3_port_check)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:521
+#: quantum/plugins/midonet/plugin.py:361
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:524
+#: quantum/plugins/midonet/plugin.py:364
 #, python-format
 msgid "Ignoring admin_state_up=False for router=%r.  Overriding with True"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:565
+#: quantum/plugins/midonet/plugin.py:382
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: qrouter=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:570
+#: quantum/plugins/midonet/plugin.py:387
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:574
+#: quantum/plugins/midonet/plugin.py:391
 msgid "admin_state_up=False routers are not supported."
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:695
+#: quantum/plugins/midonet/plugin.py:441
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: qrouter=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:700
+#: quantum/plugins/midonet/plugin.py:446
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:724
+#: quantum/plugins/midonet/plugin.py:451
 #, python-format
 msgid "MidonetPluginV2.delete_router exiting: result=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:729
-#, python-format
-msgid "MidonetPluginV2.get_router called: id=%(id)s fields=%(fields)r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:738
-#, python-format
-msgid "MidonetPluginV2.get_router exiting: qrouter=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:743
-#, python-format
-msgid "MidonetPluginV2.get_routers called: filters=%(filters)s fields=%(fields)r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:758
+#: quantum/plugins/midonet/plugin.py:456
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:803
+#: quantum/plugins/midonet/plugin.py:478
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: qport=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:809
+#: quantum/plugins/midonet/plugin.py:484
 #, python-format
 msgid ""
 "MidonetPluginV2.remove_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:865
-#, python-format
-msgid "Deleting route=%r ..."
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:873
+#: quantum/plugins/midonet/plugin.py:531
 msgid "MidonetPluginV2.remove_router_interface exiting"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:877
+#: quantum/plugins/midonet/plugin.py:535
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
 "floatingip=%(floatingip)s "
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:955
-#, python-format
-msgid "chains=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:960 quantum/plugins/midonet/plugin.py:967
-#, python-format
-msgid "deleting rule=%r"
-msgstr ""
-
-#: quantum/plugins/midonet/plugin.py:974
+#: quantum/plugins/midonet/plugin.py:559
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:983
+#: quantum/plugins/midonet/plugin.py:568
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
 "security_group=%(security_group)s default_sg=%(default_sg)s "
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1001
+#: quantum/plugins/midonet/plugin.py:584
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg_db_entry=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1007
+#: quantum/plugins/midonet/plugin.py:590
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1037
+#: quantum/plugins/midonet/plugin.py:619
 #, python-format
 msgid ""
 "MidonetPluginV2.get_security_groups called: filters=%(filters)r "
 "fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1044
+#: quantum/plugins/midonet/plugin.py:626
 #, python-format
 msgid ""
 "MidonetPluginV2.get_security_group called: id=%(id)s fields=%(fields)r "
 "tenant_id=%(tenant_id)s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1051
+#: quantum/plugins/midonet/plugin.py:633
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
 "security_group_rule=%(security_group_rule)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1061
+#: quantum/plugins/midonet/plugin.py:643
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule_db_entry=%r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1066
+#: quantum/plugins/midonet/plugin.py:648
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sgrid=%s"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1081
+#: quantum/plugins/midonet/plugin.py:663
 #, python-format
 msgid ""
 "MidonetPluginV2.get_security_group_rules called: filters=%(filters)r "
 "fields=%(fields)r"
 msgstr ""
 
-#: quantum/plugins/midonet/plugin.py:1088
+#: quantum/plugins/midonet/plugin.py:670
 #, python-format
 msgid ""
 "MidonetPluginV2.get_security_group_rule called: id=%(id)s "
@@ -8256,4 +8382,107 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid "Running without keystyone AuthN requires  that tenant_id is specified"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ChainManager.create_for_sg called: tenant_id=%(tenant_id)s"
+#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s "
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ChainManager.delete_for_sg called: tenant_id=%(tenant_id)s"
+#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s "
+#~ msgstr ""
+
+#~ msgid "ChainManager.delete_for_sg: deleting chain=%r"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ChainManager.get_router_chains called: "
+#~ "tenant_id=%(tenant_id)s router_id=%(router_id)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ChainManager.create_router_chains called: "
+#~ "tenant_id=%(tenant_id)s router_id=%(router_id)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "ChainManager.get_sg_chains called: tenant_id=%(tenant_id)s"
+#~ " sg_id=%(sg_id)s"
+#~ msgstr ""
+
+#~ msgid "ChainManager.get_router_chain_names called: router_id=%(router_id)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "PortGroupManager.create called: tenant_id=%(tenant_id)s"
+#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "PortGroupManager.delete called: tenant_id=%(tenant_id)s"
+#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
+#~ msgstr ""
+
+#~ msgid "PortGroupManager.delete: deleting pg=%r"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "PortGroupManager.get_for_sg called: "
+#~ "tenant_id=%(tenant_id)s sg_id=%(sg_id)s"
+#~ msgstr ""
+
+#~ msgid "PortGroupManager.get_for_sg exiting: pg=%r"
+#~ msgstr ""
+
+#~ msgid "RuleManager.create_for_sg_rule called: rule=%r"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "RuleManager.create_for_sg_rule: adding accept rule"
+#~ " %(rule_id)s in portgroup %(port_group_id)s"
+#~ msgstr ""
+
+#~ msgid "RuleManager.delete_for_sg_rule called: rule=%r"
+#~ msgstr ""
+
+#~ msgid "RuleManager.delete_for_sg_rule: deleting rule %r"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.get_subnet called: id=%(id)s fields=%(fields)s"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.get_subnet exiting: qsubnet=%s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "MidonetPluginV2.get_subnets called: filters=%(filters)r,"
+#~ " fields=%(fields)r"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.create_subnet exiting"
+#~ msgstr ""
+
+#~ msgid "Ignoring admin_state_up=False for network=%rOverriding with True"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.update_port called: id=%(id)s port=%(port)r"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.get_router called: id=%(id)s fields=%(fields)r"
+#~ msgstr ""
+
+#~ msgid "MidonetPluginV2.get_router exiting: qrouter=%r"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "MidonetPluginV2.get_routers called: filters=%(filters)s"
+#~ " fields=%(fields)r"
+#~ msgstr ""
+
+#~ msgid "chains=%r"
+#~ msgstr ""
 
