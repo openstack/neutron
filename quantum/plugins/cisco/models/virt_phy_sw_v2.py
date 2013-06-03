@@ -21,6 +21,7 @@
 
 import inspect
 import logging
+import sys
 
 from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
@@ -213,31 +214,20 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
         Perform this operation in the context of the configured device
         plugins.
+
+        Note that the Nexus sub-plugin does not need to be notified
+        (and the Nexus switch does not need to be [re]configured)
+        for an update network operation because the Nexus sub-plugin
+        is agnostic of all network-level attributes except the
+        segmentation ID. Furthermore, updating of the segmentation ID
+        is not supported by the OVS plugin since it is considered a
+        provider attribute, so it is not supported by this method.
         """
         LOG.debug(_("update_network() called"))
         args = [context, id, network]
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
-        try:
-            vlan_id = self._get_segmentation_id(ovs_output[0]['id'])
-            if not self._validate_vlan_id(vlan_id):
-                return ovs_output[0]
-            vlan_ids = self._get_all_segmentation_ids()
-            args = [ovs_output[0]['tenant_id'], id, {'vlan_id': vlan_id},
-                    {'net_admin_state': ovs_output[0]['admin_state_up']},
-                    {'vlan_ids': vlan_ids}]
-            self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                           self._func_name(),
-                                           args)
-        except Exception:
-            # TODO(dane): The call to the nexus plugin update network
-            # failed, so the OVS plugin should be rolled back, that is,
-            # "re-updated" back to the original network config.
-            LOG.exception(_("Unable to update network '%s' on Nexus switch"),
-                          network['network']['name'])
-            raise
-
         return ovs_output[0]
 
     def delete_network(self, context, id):
@@ -304,9 +294,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                 self._invoke_nexus_for_net_create(
                     context, tenant_id, net_id, instance_id)
 
-        except Exception as e:
+        except Exception:
             # Create network on the Nexus plugin has failed, so we need
             # to rollback the port creation on the VSwitch plugin.
+            exc_info = sys.exc_info()
             try:
                 id = ovs_output[0]['id']
                 args = [context, id]
@@ -316,7 +307,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                     args)
             finally:
                 # Re-raise the original exception
-                raise e
+                raise exc_info[0], exc_info[1], exc_info[2]
         return ovs_output[0]
 
     def get_port(self, context, id, fields=None):
@@ -354,12 +345,19 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
             return ovs_output[0]
         except Exception:
-            # TODO(dane): The call to the nexus plugin create network
-            # failed, so the OVS plugin should be rolled back, that is,
-            # "re-updated" back to the original port config.
-            LOG.exception(_("Unable to update port '%s' on Nexus switch"),
-                          port['port']['name'])
-            raise
+            exc_info = sys.exc_info()
+            LOG.error(_("Unable to update port '%s' on Nexus switch"),
+                      old_port['name'], exc_info=exc_info)
+            try:
+                # Roll back vSwitch plugin to original port attributes.
+                args = [context, id, {'port': old_port}]
+                ovs_output = self._invoke_plugin_per_device(
+                    const.VSWITCH_PLUGIN,
+                    self._func_name(),
+                    args)
+            finally:
+                # Re-raise the original exception
+                raise exc_info[0], exc_info[1], exc_info[2]
 
     def delete_port(self, context, id):
         """Delete port.
@@ -379,7 +377,8 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                         self._func_name(),
                                                         args)
-        except Exception as e:
+        except Exception:
+            exc_info = sys.exc_info()
             # Roll back the delete port on the Nexus plugin
             try:
                 tenant_id = port['tenant_id']
@@ -389,7 +388,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
                                                   net_id, instance_id)
             finally:
                 # Raise the original exception.
-                raise e
+                raise exc_info[0], exc_info[1], exc_info[2]
 
         return ovs_output[0]
 

@@ -23,6 +23,7 @@ import webob.exc as wexc
 from quantum.api.v2 import base
 from quantum.common import exceptions as q_exc
 from quantum import context
+from quantum.db import db_base_plugin_v2 as base_plugin
 from quantum.db import l3_db
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_constants as const
@@ -406,6 +407,41 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                     self._is_in_last_nexus_cfg(['<vlan>', '<remove>'])
                 )
                 self._assertExpectedHTTP(res.status_int, KeyError)
+
+    def test_model_update_port_rollback(self):
+        """Test for proper rollback for Cisco model layer update port failure.
+
+        Test that the vSwitch plugin port configuration is rolled back
+        (restored) by the Cisco plugin model layer when there is a
+        failure in the Nexus sub-plugin for an update port operation.
+
+        """
+        with self.port(fmt=self.fmt) as orig_port:
+
+            inserted_exc = ValueError
+            with mock.patch.object(
+                virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                '_invoke_nexus_for_net_create',
+                side_effect=inserted_exc):
+
+                # Send an update port request with a new device ID
+                device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
+                if orig_port['port']['device_id'] == device_id:
+                    device_id = "600df00d-e4a8-4a3a-8906-feed600df00d"
+                data = {'port': {'device_id': device_id}}
+                port_id = orig_port['port']['id']
+                req = self.new_update_request('ports', data, port_id)
+                res = req.get_response(self.api)
+
+                # Sanity check failure result code
+                self._assertExpectedHTTP(res.status_int, inserted_exc)
+
+                # Check that the port still has the original device ID
+                plugin = base_plugin.QuantumDbPluginV2()
+                ctx = context.get_admin_context()
+                db_port = plugin._get_port(ctx, port_id)
+                self.assertEqual(db_port['device_id'],
+                                 orig_port['port']['device_id'])
 
     def test_model_delete_port_rollback(self):
         """Test for proper rollback for OVS plugin delete port failure.
