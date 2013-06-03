@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-02 12:11+0000\n"
+"POT-Creation-Date: 2013-06-03 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -4107,12 +4107,12 @@ msgid "Plugin initialization complete"
 msgstr "Plug-in-Initialisierung abgeschlossen"
 
 #: quantum/plugins/cisco/network_plugin.py:134
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:204
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:205
 msgid "create_network() called"
 msgstr "Aufruf von 'create_network()'"
 
 #: quantum/plugins/cisco/network_plugin.py:151
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:217
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:226
 msgid "update_network() called"
 msgstr "Aufruf von 'update_network()'"
 
@@ -4129,17 +4129,17 @@ msgid "get_networks() called"
 msgstr "Aufruf von 'get_networks()'"
 
 #: quantum/plugins/cisco/network_plugin.py:197
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:292
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:282
 msgid "create_port() called"
 msgstr "Aufruf von 'create_port()'"
 
 #: quantum/plugins/cisco/network_plugin.py:207
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:370
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:368
 msgid "delete_port() called"
 msgstr "Aufruf von 'delete_port()'"
 
 #: quantum/plugins/cisco/network_plugin.py:226
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:336
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:327
 msgid "update_port() called"
 msgstr "Aufruf von 'update_port()'"
 
@@ -4494,32 +4494,27 @@ msgid ""
 "switch:'%(switch_ip)s'"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:73
 #, python-format
 msgid "Loaded device plugin %s\n"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:90
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:91
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr "%(module)s. Initialisierung von %(name)s abgeschlossen"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr "Kein %s-Plug-in geladen"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:132
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr "%(plugin_key)s: %(function_name)s mit Argumenten %(args)s ignoriert"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:237
-#, python-format
-msgid "Unable to update network '%s' on Nexus switch"
-msgstr ""
-
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:360
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:349
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
@@ -9036,59 +9031,6 @@ msgstr "lSwitch: %s nicht gefunden"
 msgid "lrouter:%s not found"
 msgstr "lRouter: %s nicht gefunden"
 
-#~ msgid "ChainManager.get_router_chain_names called: router_id=%(router_id)s"
+#~ msgid "Unable to update network '%s' on Nexus switch"
 #~ msgstr ""
-#~ "Aufruf von 'ChainManager.get_router_chain_names': "
-#~ "router_id=%(router_id)s"
-
-#~ msgid ""
-#~ "PortGroupManager.create called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
-#~ msgstr ""
-#~ "Aufruf von 'PortGroupManager.create': "
-#~ "tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-#~ "sg_name=%(sg_name)s"
-
-#~ msgid ""
-#~ "PortGroupManager.delete called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
-#~ msgstr ""
-#~ "Aufruf von 'PortGroupManager.delete': "
-#~ "tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-#~ "sg_name=%(sg_name)s"
-
-#~ msgid "PortGroupManager.delete: deleting pg=%r"
-#~ msgstr "PortGroupManager.delete: 'pg=%r' wird gelöscht"
-
-#~ msgid "MidonetPluginV2.get_subnet called: id=%(id)s fields=%(fields)s"
-#~ msgstr "Aufruf von 'MidonetPluginV2.get_subnet': id=%(id)s fields=%(fields)s"
-
-#~ msgid "MidonetPluginV2.get_subnet exiting: qsubnet=%s"
-#~ msgstr "MidonetPluginV2.get_subnet wird beendet: qsubnet=%s"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_subnets called: filters=%(filters)r,"
-#~ " fields=%(fields)r"
-#~ msgstr ""
-#~ "Aufruf von 'MidonetPluginV2.get_subnets': "
-#~ "filters=%(filters)r, fields=%(fields)r"
-
-#~ msgid "MidonetPluginV2.create_subnet exiting"
-#~ msgstr "MwidonetPluginV2.create_subnet wird beendet"
-
-#~ msgid "MidonetPluginV2.update_port called: id=%(id)s port=%(port)r"
-#~ msgstr "Aufruf von 'MidonetPluginV2.update_port': id=%(id)s port=%(port)r"
-
-#~ msgid "MidonetPluginV2.get_router exiting: qrouter=%r"
-#~ msgstr "MidonetPluginV2.get_router wird beendet: qrouter=%r"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_routers called: filters=%(filters)s"
-#~ " fields=%(fields)r"
-#~ msgstr ""
-#~ "Aufruf von 'MidonetPluginV2.get_routers': "
-#~ "filters=%(filters)s fields=%(fields)r"
-
-#~ msgid "chains=%r"
-#~ msgstr "chains=%r"
 

@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: quantum "
-"jenkins.quantum.propose.translation.update.125\n"
+"jenkins.quantum.propose.translation.update.126\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-02 12:11+0000\n"
+"POT-Creation-Date: 2013-06-03 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3804,12 +3804,12 @@ msgid "Plugin initialization complete"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:134
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:204
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:205
 msgid "create_network() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:151
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:217
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:226
 msgid "update_network() called"
 msgstr ""
 
@@ -3826,17 +3826,17 @@ msgid "get_networks() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:197
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:292
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:282
 msgid "create_port() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:207
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:370
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:368
 msgid "delete_port() called"
 msgstr ""
 
 #: quantum/plugins/cisco/network_plugin.py:226
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:336
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:327
 msgid "update_port() called"
 msgstr ""
 
@@ -4179,32 +4179,27 @@ msgid ""
 "switch:'%(switch_ip)s'"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:73
 #, python-format
 msgid "Loaded device plugin %s\n"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:90
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:91
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:132
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:237
-#, python-format
-msgid "Unable to update network '%s' on Nexus switch"
-msgstr ""
-
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:360
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:349
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""

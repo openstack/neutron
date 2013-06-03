@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-02 12:11+0000\n"
+"POT-Creation-Date: 2013-06-03 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -3830,12 +3830,12 @@ msgid "Plugin initialization complete"
 msgstr "已完成外掛程式起始設定"
 
 #: quantum/plugins/cisco/network_plugin.py:134
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:204
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:205
 msgid "create_network() called"
 msgstr "已呼叫 create_network()"
 
 #: quantum/plugins/cisco/network_plugin.py:151
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:217
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:226
 msgid "update_network() called"
 msgstr "已呼叫 update_network()"
 
@@ -3852,17 +3852,17 @@ msgid "get_networks() called"
 msgstr "已呼叫 get_networks()"
 
 #: quantum/plugins/cisco/network_plugin.py:197
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:292
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:282
 msgid "create_port() called"
 msgstr "已呼叫 create_port()"
 
 #: quantum/plugins/cisco/network_plugin.py:207
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:370
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:368
 msgid "delete_port() called"
 msgstr "已呼叫 delete_port()"
 
 #: quantum/plugins/cisco/network_plugin.py:226
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:336
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:327
 msgid "update_port() called"
 msgstr "已呼叫 update_port()"
 
@@ -4205,32 +4205,27 @@ msgid ""
 "switch:'%(switch_ip)s'"
 msgstr ""
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:72
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:73
 #, python-format
 msgid "Loaded device plugin %s\n"
 msgstr "已載入裝置外掛程式 %s\n"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:90
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:91
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr "已完成 %(module)s.%(name)s 起始設定"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:130
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr "未載入 %s 外掛程式"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:131
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:132
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr "%(plugin_key)s：已忽略帶有引數 %(args)s 的 %(function_name)s"
 
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:237
-#, python-format
-msgid "Unable to update network '%s' on Nexus switch"
-msgstr ""
-
-#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:360
+#: quantum/plugins/cisco/models/virt_phy_sw_v2.py:349
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
@@ -8470,58 +8465,6 @@ msgstr "找不到 lswitch：%s"
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
 
-#~ msgid "ChainManager.get_router_chain_names called: router_id=%(router_id)s"
-#~ msgstr "已呼叫 ChainManager.get_router_chain_names：router_id = %(router_id)s"
-
-#~ msgid ""
-#~ "PortGroupManager.create called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
+#~ msgid "Unable to update network '%s' on Nexus switch"
 #~ msgstr ""
-#~ "已呼叫 PortGroupManager.create：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s sg_name "
-#~ "= %(sg_name)s"
-
-#~ msgid ""
-#~ "PortGroupManager.delete called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s"
-#~ msgstr ""
-#~ "已呼叫 PortGroupManager.delete：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s sg_name "
-#~ "= %(sg_name)s"
-
-#~ msgid "PortGroupManager.delete: deleting pg=%r"
-#~ msgstr "PortGroupManager.delete：正在刪除 pg = %r"
-
-#~ msgid ""
-#~ "RuleManager.create_for_sg_rule: adding accept rule"
-#~ " %(rule_id)s in portgroup %(port_group_id)s"
-#~ msgstr ""
-
-#~ msgid "MidonetPluginV2.get_subnet called: id=%(id)s fields=%(fields)s"
-#~ msgstr "已呼叫 MidonetPluginV2.get_subnet：ID = %(id)s 欄位 = %(fields)s"
-
-#~ msgid "MidonetPluginV2.get_subnet exiting: qsubnet=%s"
-#~ msgstr "MidonetPluginV2.get_subnet 正在結束：qsubnet = %s"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_subnets called: filters=%(filters)r,"
-#~ " fields=%(fields)r"
-#~ msgstr "已呼叫 MidonetPluginV2.get_subnets：過濾器 = %(filters)r，欄位 = %(fields)r"
-
-#~ msgid "MidonetPluginV2.create_subnet exiting"
-#~ msgstr "MidonetPluginV2.create_subnet 正在結束"
-
-#~ msgid "MidonetPluginV2.update_port called: id=%(id)s port=%(port)r"
-#~ msgstr "已呼叫 MidonetPluginV2.update_port：ID = %(id)s 埠 = %(port)r"
-
-#~ msgid "MidonetPluginV2.get_router exiting: qrouter=%r"
-#~ msgstr "MidonetPluginV2.get_router 正在結束：qrouter = %r"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_routers called: filters=%(filters)s"
-#~ " fields=%(fields)r"
-#~ msgstr "已呼叫 MidonetPluginV2.get_routers：過濾器 = %(filters)s 欄位 = %(fields)r"
-
-#~ msgid "chains=%r"
-#~ msgstr "鏈 = %r"
 
