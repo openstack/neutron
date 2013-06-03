@@ -422,6 +422,11 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
             'quantum.plugins.nicira.'
             'QuantumPlugin.NvpPluginV2')
 
+    def test_floatingip_with_invalid_create_port(self):
+        self._test_floatingip_with_invalid_create_port(
+            'quantum.plugins.nicira.'
+            'QuantumPlugin.NvpPluginV2')
+
     def _nvp_metadata_setup(self):
         cfg.CONF.set_override('metadata_mode', 'access_network', 'NVP')
 

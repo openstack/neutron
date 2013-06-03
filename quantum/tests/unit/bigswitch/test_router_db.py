@@ -152,6 +152,10 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                     # remove extra port created
                     self._delete('ports', p2['port']['id'])
 
+    def test_floatingip_with_invalid_create_port(self):
+        self._test_floatingip_with_invalid_create_port(
+            'quantum.plugins.bigswitch.plugin.QuantumRestProxyV2')
+
     def test_create_floatingip_no_ext_gateway_return_404(self):
         with self.subnet(cidr='10.0.10.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
