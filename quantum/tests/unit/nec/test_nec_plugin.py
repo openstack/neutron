@@ -19,6 +19,7 @@ from quantum.common import topics
 from quantum import context as q_context
 from quantum.extensions import portbindings
 from quantum import manager
+from quantum.plugins.nec.db import api as ndb
 from quantum.plugins.nec import nec_plugin
 from quantum.tests.unit import _test_extension_portbindings as test_bindings
 from quantum.tests.unit import test_db_plugin as test_plugin
@@ -110,17 +111,22 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
                   'port_added': added, 'port_removed': removed}
         self.callbacks.update_ports(self.context, **kwargs)
 
+    def _get_portinfo(self, port_id):
+        return ndb.get_portinfo(self.context.session, port_id)
+
     def test_port_create(self):
         with self.port() as port:
             port_id = port['port']['id']
             sport = self.plugin.get_port(self.context, port_id)
             self.assertEqual(sport['status'], 'DOWN')
+            self.assertIsNone(self._get_portinfo(port_id))
 
             portinfo = {'id': port_id, 'port_no': 123}
             self._rpcapi_update_ports(added=[portinfo])
 
             sport = self.plugin.get_port(self.context, port_id)
             self.assertEqual(sport['status'], 'ACTIVE')
+            self.assertIsNotNone(self._get_portinfo(port_id))
 
             expected = [
                 mock.call.exists_ofc_port(mock.ANY, port_id),
@@ -132,7 +138,13 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
         with self.port() as port:
             port_id = port['port']['id']
             portinfo = {'id': port_id, 'port_no': 456}
+            self.assertIsNone(self._get_portinfo(port_id))
+
             self._rpcapi_update_ports(added=[portinfo])
+            self.assertIsNotNone(self._get_portinfo(port_id))
+
+            self._rpcapi_update_ports(removed=[port_id])
+            self.assertIsNone(self._get_portinfo(port_id))
 
         expected = [
             mock.call.exists_ofc_port(mock.ANY, port_id),
