@@ -689,7 +689,7 @@ class NECPluginV2RPCCallbacks(object):
                             "due to portinfo for port_id=%s was not "
                             "registered"), id)
                 continue
-            if portinfo.datapath_id is not datapath_id:
+            if portinfo.datapath_id != datapath_id:
                 LOG.debug(_("update_ports(): ignore port_removed message "
                             "received from different host "
                             "(registered_datapath_id=%(registered)s, "
