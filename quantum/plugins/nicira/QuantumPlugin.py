@@ -136,9 +136,13 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["provider", "quotas", "port-security",
-                                   "router", "security-group", "nvp-qos",
-                                   "network-gateway"]
+    supported_extension_aliases = ["network-gateway",
+                                   "nvp-qos",
+                                   "port-security",
+                                   "provider",
+                                   "quotas",
+                                   "router",
+                                   "security-group", ]
 
     __native_bulk_support = True
 
