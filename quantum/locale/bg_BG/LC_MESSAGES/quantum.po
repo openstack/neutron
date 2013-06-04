@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-03 12:11+0000\n"
+"POT-Creation-Date: 2013-06-04 12:11+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bulgarian (Bulgaria) "
@@ -501,7 +501,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:929
+#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:918
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
@@ -1762,20 +1762,25 @@ msgid "Invalid extension environment: %(reason)s"
 msgstr ""
 
 #: quantum/common/exceptions.py:253
-msgid "More than one external network exists"
+#, python-format
+msgid "Unable to find any IP address on external network %(net_id)s."
 msgstr ""
 
-#: quantum/common/exceptions.py:257
-#, python-format
-msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
+#: quantum/common/exceptions.py:258
+msgid "More than one external network exists"
 msgstr ""
 
 #: quantum/common/exceptions.py:262
 #, python-format
-msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
+msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr ""
 
 #: quantum/common/exceptions.py:267
+#, python-format
+msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
+msgstr ""
+
+#: quantum/common/exceptions.py:272
 #, python-format
 msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
 msgstr ""
@@ -2234,31 +2239,19 @@ msgstr ""
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: quantum/db/l3_db.py:652
-msgid "Unable to find any IP address on external network"
-msgstr ""
-
-#: quantum/db/l3_db.py:673
-msgid "Unable to create Floating ip due to a malformed request"
-msgstr ""
-
-#: quantum/db/l3_db.py:677
-msgid "Floating IP association failed"
-msgstr ""
-
-#: quantum/db/l3_db.py:768
+#: quantum/db/l3_db.py:757
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: quantum/db/l3_db.py:786
+#: quantum/db/l3_db.py:775
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: quantum/db/l3_db.py:935
+#: quantum/db/l3_db.py:924
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -2661,11 +2654,11 @@ msgstr ""
 msgid "Port does not have port security binding."
 msgstr ""
 
-#: quantum/extensions/quotasv2.py:81
+#: quantum/extensions/quotasv2.py:85
 msgid "Non-admin is not authorised to access quotas for another tenant"
 msgstr ""
 
-#: quantum/extensions/quotasv2.py:86
+#: quantum/extensions/quotasv2.py:90
 msgid "Only admin can view or configure quota"
 msgstr ""
 
@@ -8378,6 +8371,12 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "Unable to update network '%s' on Nexus switch"
+#~ msgid "Unable to find any IP address on external network"
+#~ msgstr ""
+
+#~ msgid "Unable to create Floating ip due to a malformed request"
+#~ msgstr ""
+
+#~ msgid "Floating IP association failed"
 #~ msgstr ""
 
