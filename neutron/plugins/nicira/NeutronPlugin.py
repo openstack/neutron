@@ -46,11 +46,13 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
+from neutron.db import portbindings_db
 from neutron.db import portsecurity_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
+from neutron.extensions import portbindings as pbin
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
@@ -130,6 +132,7 @@ class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
+                  portbindings_db.PortBindingMixin,
                   portsecurity_db.PortSecurityDbMixin,
                   securitygroups_db.SecurityGroupDbMixin,
                   mac_db.MacLearningDbMixin,
@@ -145,6 +148,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     """
 
     supported_extension_aliases = ["agent",
+                                   "binding",
                                    "dhcp_agent_scheduler",
                                    "ext_gw_mode",
                                    "extraroute",
@@ -195,6 +199,12 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.cluster = create_nvp_cluster(cfg.CONF,
                                           self.nvp_opts.concurrent_connections,
                                           self.nvp_opts.nvp_gen_timeout)
+
+        self.extra_binding_dict = {
+            pbin.VIF_TYPE: pbin.VIF_TYPE_OVS,
+            pbin.CAPABILITIES: {
+                pbin.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}}
 
         db.configure_db()
         # Extend the fault map
@@ -1079,8 +1089,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def get_ports(self, context, filters=None, fields=None):
-        if filters is None:
-            filters = {}
+        filters = filters or {}
         with context.session.begin(subtransactions=True):
             neutron_lports = super(NvpPluginV2, self).get_ports(
                 context, filters)
@@ -1256,6 +1265,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             del port_data[ext_qos.QUEUE]
             self._extend_port_port_security_dict(context, port_data)
             self._extend_port_qos_queue(context, port_data)
+            self._process_portbindings_create_and_update(context,
+                                                         port, port_data)
         net = self.get_network(context, port_data['network_id'])
         self.schedule_network(context, net)
         if notify_dhcp_agent:
@@ -1360,6 +1371,9 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # remove since it will be added in extend based on policy
             del ret_port[ext_qos.QUEUE]
             self._extend_port_qos_queue(context, ret_port)
+            self._process_portbindings_create_and_update(context,
+                                                         port['port'],
+                                                         port)
         return ret_port
 
     def delete_port(self, context, id, l3_port_check=True,
