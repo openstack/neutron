@@ -13,6 +13,7 @@ httplib2
 requests>=1.1
 iso8601>=0.1.4
 jsonrpclib
+Jinja2
 kombu>=2.4.8
 netaddr
 python-neutronclient>=2.2.3,<3

@@ -86,7 +86,10 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                 '', kwargs['tenant_id'])
         return network_req.get_response(self.api)
 
-    def setUp(self, plugin=None, ext_mgr=None):
+    def setUp(self,
+              plugin=PLUGIN_NAME,
+              ext_mgr=None,
+              service_plugins=None):
         test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)

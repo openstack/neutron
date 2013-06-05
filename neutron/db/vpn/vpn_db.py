@@ -21,7 +21,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.common import constants as q_constants
+from neutron.common import constants as n_constants
 from neutron.db import agentschedulers_db as agent_db
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2 as base_db
@@ -34,6 +34,7 @@ from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
+from neutron.plugins.common import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -190,7 +191,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
 
     def assert_update_allowed(self, obj):
         status = getattr(obj, 'status', None)
-        if status != constants.ACTIVE:
+        if utils.in_pending_status(status):
             raise vpnaas.VPNStateInvalid(id=id, state=status)
 
     def _make_ipsec_site_connection_dict(self, ipsec_site_conn, fields=None):
@@ -330,11 +331,15 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
             )
             context.session.delete(ipsec_site_conn_db)
 
+    def _get_ipsec_site_connection(
+            self, context, ipsec_site_conn_id):
+        return self._get_resource(
+            context, IPsecSiteConnection, ipsec_site_conn_id)
+
     def get_ipsec_site_connection(self, context,
                                   ipsec_site_conn_id, fields=None):
-        ipsec_site_conn_db = self._get_resource(
-            context, IPsecSiteConnection, ipsec_site_conn_id
-        )
+        ipsec_site_conn_db = self._get_ipsec_site_connection(
+            context, ipsec_site_conn_id)
         return self._make_ipsec_site_connection_dict(
             ipsec_site_conn_db, fields)
 
@@ -533,10 +538,6 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
     def update_vpnservice(self, context, vpnservice_id, vpnservice):
         vpns = vpnservice['vpnservice']
         with context.session.begin(subtransactions=True):
-            vpnservice = context.session.query(IPsecSiteConnection).filter_by(
-                vpnservice_id=vpnservice_id).first()
-            if vpnservice:
-                raise vpnaas.VPNServiceInUse(vpnservice_id=vpnservice_id)
             vpns_db = self._get_resource(context, VPNService, vpnservice_id)
             self.assert_update_allowed(vpns_db)
             if vpns:
@@ -570,7 +571,7 @@ class VPNPluginRpcDbMixin():
 
         plugin = manager.NeutronManager.get_plugin()
         agent = plugin._get_agent_by_type_and_host(
-            context, q_constants.AGENT_TYPE_L3, host)
+            context, n_constants.AGENT_TYPE_L3, host)
         if not agent.admin_state_up:
             return []
         query = context.session.query(VPNService)
@@ -585,14 +586,44 @@ class VPNPluginRpcDbMixin():
             agent_db.RouterL3AgentBinding.l3_agent_id == agent.id)
         return query
 
-    def update_status_on_host(self, context, host, active_services):
+    def update_status_by_agent(self, context, service_status_info_list):
+        """Updating vpnservice and vpnconnection status.
+
+        :param context: context variable
+        :param service_status_info_list: list of status
+        The structure is
+        [{id: vpnservice_id,
+          status: ACTIVE|DOWN|ERROR,
+          updated_pending_status: True|False
+          ipsec_site_connections: {
+              ipsec_site_connection_id: {
+                  status: ACTIVE|DOWN|ERROR,
+                  updated_pending_status: True|False
+              }
+          }]
+        The agent will set updated_pending_status as True,
+        when agent update any pending status.
+        """
         with context.session.begin(subtransactions=True):
-            vpnservices = self._get_agent_hosting_vpn_services(
-                context, host)
-            for vpnservice in vpnservices:
-                if vpnservice.id in active_services:
-                    if vpnservice.status != constants.ACTIVE:
-                        vpnservice.status = constants.ACTIVE
-                else:
-                    if vpnservice.status != constants.ERROR:
-                        vpnservice.status = constants.ERROR
+            for vpnservice in service_status_info_list:
+                try:
+                    vpnservice_db = self._get_vpnservice(
+                        context, vpnservice['id'])
+                except vpnaas.VPNServiceNotFound:
+                    LOG.warn(_('vpnservice %s in db is already deleted'),
+                             vpnservice['id'])
+                    continue
+
+                if (not utils.in_pending_status(vpnservice_db.status)
+                    or vpnservice['updated_pending_status']):
+                    vpnservice_db.status = vpnservice['status']
+                for conn_id, conn in vpnservice[
+                    'ipsec_site_connections'].items():
+                    try:
+                        conn_db = self._get_ipsec_site_connection(
+                            context, conn_id)
+                    except vpnaas.IPsecSiteConnectionNotFound:
+                        continue
+                    if (not utils.in_pending_status(conn_db.status)
+                        or conn['updated_pending_status']):
+                        conn_db.status = conn['status']
