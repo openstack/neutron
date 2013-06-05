@@ -671,6 +671,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                              new_ips):
         """Add or remove IPs from the port."""
         ips = []
+        # These ips are still on the port and haven't been removed
+        prev_ips = []
 
         # the new_ips contain all of the fixed_ips that are to be updated
         if len(new_ips) > cfg.CONF.max_fixed_ips_per_port:
@@ -684,6 +686,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                     original_ip['ip_address'] == new_ip['ip_address']):
                     original_ips.remove(original_ip)
                     new_ips.remove(new_ip)
+                    prev_ips.append(original_ip)
 
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips)
@@ -699,7 +702,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
             LOG.debug(_("Port update. Adding %s"), to_add)
             network = self._get_network(context, network_id)
             ips = self._allocate_fixed_ips(context, network, to_add)
-        return ips
+        return ips, prev_ips
 
     def _allocate_ips_for_port(self, context, network, port):
         """Allocate IP addresses for the port.
@@ -1186,6 +1189,8 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
         dns lease or we support gratuitous DHCP offers
         """
         s = subnet['subnet']
+        changed_host_routes = False
+        changed_dns = False
         db_subnet = self._get_subnet(context, id)
         # Fill 'ip_version' and 'allocation_pools' fields with the current
         # value since _validate_subnet() expects subnet spec has 'ip_version'
@@ -1201,11 +1206,13 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
 
         with context.session.begin(subtransactions=True):
             if "dns_nameservers" in s:
+                changed_dns = True
                 old_dns_list = self._get_dns_by_subnet(context, id)
                 new_dns_addr_set = set(s["dns_nameservers"])
                 old_dns_addr_set = set([dns['address']
                                         for dns in old_dns_list])
 
+                new_dns = list(new_dns_addr_set)
                 for dns_addr in old_dns_addr_set - new_dns_addr_set:
                     for dns in old_dns_list:
                         if dns['address'] == dns_addr:
@@ -1221,6 +1228,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                 return ht['destination'] + "_" + ht['nexthop']
 
             if "host_routes" in s:
+                changed_host_routes = True
                 old_route_list = self._get_route_by_subnet(context, id)
 
                 new_route_set = set([_combine(route)
@@ -1239,11 +1247,24 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                         nexthop=route_str.partition("_")[2],
                         subnet_id=id)
                     context.session.add(route)
+
+                # Gather host routes for result
+                new_routes = []
+                for route_str in new_route_set:
+                    new_routes.append(
+                        {'destination': route_str.partition("_")[0],
+                         'nexthop': route_str.partition("_")[2]})
                 del s["host_routes"]
 
             subnet = self._get_subnet(context, id)
             subnet.update(s)
-        return self._make_subnet_dict(subnet)
+        result = self._make_subnet_dict(subnet)
+        # Keep up with fields that changed
+        if changed_dns:
+            result['dns_nameservers'] = new_dns
+        if changed_host_routes:
+            result['host_routes'] = new_routes
+        return result
 
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
@@ -1357,20 +1378,21 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
     def update_port(self, context, id, port):
         p = port['port']
 
+        changed_ips = False
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
             # Check if the IPs need to be updated
             if 'fixed_ips' in p:
+                changed_ips = True
                 self._recycle_expired_ip_allocations(context,
                                                      port['network_id'])
                 original = self._make_port_dict(port, process_extensions=False)
-                ips = self._update_ips_for_port(context,
-                                                port["network_id"],
-                                                id,
-                                                original["fixed_ips"],
-                                                p['fixed_ips'])
+                added_ips, prev_ips = self._update_ips_for_port(
+                    context, port["network_id"], id, original["fixed_ips"],
+                    p['fixed_ips'])
+
                 # Update ips if necessary
-                for ip in ips:
+                for ip in added_ips:
                     allocated = models_v2.IPAllocation(
                         network_id=port['network_id'], port_id=port.id,
                         ip_address=ip['ip_address'], subnet_id=ip['subnet_id'],
@@ -1380,7 +1402,11 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
             # and then update the port
             port.update(self._filter_non_model_columns(p, models_v2.Port))
 
-        return self._make_port_dict(port)
+        result = self._make_port_dict(port)
+        # Keep up with fields that changed
+        if changed_ips:
+            result['fixed_ips'] = prev_ips + added_ips
+        return result
 
     def delete_port(self, context, id):
         with context.session.begin(subtransactions=True):

@@ -2976,6 +2976,35 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             self.assertEqual(res['subnet']['gateway_ip'],
                              data['subnet']['gateway_ip'])
 
+    def test_update_subnet_adding_additional_host_routes_and_dns(self):
+        host_routes = [{'destination': '172.16.0.0/24',
+                        'nexthop': '10.0.2.2'}]
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.0/24',
+                               'ip_version': 4,
+                               'dns_nameservers': ['192.168.0.1'],
+                               'host_routes': host_routes,
+                               'tenant_id': network['network']['tenant_id']}}
+            subnet_req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, subnet_req.get_response(self.api))
+
+            host_routes = [{'destination': '172.16.0.0/24',
+                            'nexthop': '10.0.2.2'},
+                           {'destination': '192.168.0.0/24',
+                            'nexthop': '10.0.2.3'}]
+
+            dns_nameservers = ['192.168.0.1', '192.168.0.2']
+            data = {'subnet': {'host_routes': host_routes,
+                               'dns_nameservers': dns_nameservers}}
+            req = self.new_update_request('subnets', data,
+                                          res['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEquals(sorted(res['subnet']['host_routes']),
+                              sorted(host_routes))
+            self.assertEquals(sorted(res['subnet']['dns_nameservers']),
+                              sorted(dns_nameservers))
+
     def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
             with self.subnet(network=network) as subnet:
