@@ -18,14 +18,14 @@
 """ext_gw_mode
 
 Revision ID: 128e042a2b68
-Revises: 176a85fc7d79
+Revises: 32b517556ec9
 Create Date: 2013-03-27 00:35:17.323280
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '128e042a2b68'
-down_revision = '176a85fc7d79'
+down_revision = '32b517556ec9'
 
 # Change to ['*'] if this migration applies to all plugins
 

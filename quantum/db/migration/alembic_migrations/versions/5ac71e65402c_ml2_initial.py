@@ -18,14 +18,14 @@
 """ml2_initial
 
 Revision ID: 5ac71e65402c
-Revises: 32b517556ec9
+Revises: 128e042a2b68
 Create Date: 2013-05-27 16:08:40.853821
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '5ac71e65402c'
-down_revision = '32b517556ec9'
+down_revision = '128e042a2b68'
 
 # Change to ['*'] if this migration applies to all plugins
 
