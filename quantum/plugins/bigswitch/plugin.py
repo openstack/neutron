@@ -76,12 +76,18 @@ LOG = logging.getLogger(__name__)
 
 restproxy_opts = [
     cfg.StrOpt('servers', default='localhost:8800',
-               help=_("A comma separated list of servers and port numbers "
-                      "to proxy request to.")),
+               help=_("A comma separated list of BigSwitch or Floodlight "
+                      "servers and port numbers. The plugin proxies the "
+                      "requests to the BigSwitch/Floodlight server, "
+                      "which performs the networking configuration. Note that "
+                      "only one server is needed per deployment, but you may "
+                      "wish to deploy multiple servers to support failover.")),
     cfg.StrOpt('server_auth', default='username:password', secret=True,
-               help=_("Server authentication")),
+               help=_("The username and password for authenticating against "
+                      " the BigSwitch or Floodlight controller.")),
     cfg.BoolOpt('server_ssl', default=False,
-                help=_("Use SSL to connect")),
+                help=_("If True, Use SSL when connecting to the BigSwitch or "
+                       "Floodlight controller.")),
     cfg.BoolOpt('sync_data', default=False,
                 help=_("Sync data on connect")),
     cfg.IntOpt('server_timeout', default=10,
