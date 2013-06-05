@@ -38,7 +38,8 @@ LOG = logging.getLogger(__name__)
 
 DB_CORE_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 DB_LB_PLUGIN_KLASS = (
-    "quantum.plugins.services.agent_loadbalancer.plugin.LoadBalancerPlugin"
+    "quantum.plugins.services.agent_loadbalancer."
+    "lbaas_plugin.LoadBalancerPlugin"
 )
 ROOTDIR = os.path.dirname(__file__) + '../../../..'
 ETCDIR = os.path.join(ROOTDIR, 'etc')
@@ -922,6 +923,31 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             self._test_list_with_pagination_reverse('health_monitor',
                                                     (m1, m2, m3),
                                                     ('delay', 'asc'), 2, 2)
+
+    def test_update_pool_stats_with_no_stats(self):
+        keys = ["bytes_in", "bytes_out",
+                "active_connections",
+                "total_connections"]
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            ctx = context.get_admin_context()
+            self.plugin._update_pool_stats(ctx, pool_id)
+            pool_obj = ctx.session.query(ldb.Pool).filter_by(id=pool_id).one()
+            for key in keys:
+                self.assertEqual(pool_obj.stats.__dict__[key], 0)
+
+    def test_update_pool_stats(self):
+        stats_data = {"bytes_in": 1,
+                      "bytes_out": 2,
+                      "active_connections": 3,
+                      "total_connections": 4}
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            ctx = context.get_admin_context()
+            self.plugin._update_pool_stats(ctx, pool_id, stats_data)
+            pool_obj = ctx.session.query(ldb.Pool).filter_by(id=pool_id).one()
+            for k, v in stats_data.items():
+                self.assertEqual(pool_obj.stats.__dict__[k], v)
 
     def test_get_pool_stats(self):
         keys = [("bytes_in", 0),

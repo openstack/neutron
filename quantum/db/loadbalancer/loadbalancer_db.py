@@ -449,15 +449,24 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
         return self._fields(res, fields)
 
-    def _create_pool_stats(self, context, pool_id):
+    def _update_pool_stats(self, context, pool_id, data=None):
+        """Update a pool with new stats structure."""
+        with context.session.begin(subtransactions=True):
+            pool_db = self._get_resource(context, Pool, pool_id)
+            self.assert_modification_allowed(pool_db)
+            pool_db.stats = self._create_pool_stats(context, pool_id, data)
+
+    def _create_pool_stats(self, context, pool_id, data=None):
         # This is internal method to add pool statistics. It won't
         # be exposed to API
+        if not data:
+            data = {}
         stats_db = PoolStatistics(
             pool_id=pool_id,
-            bytes_in=0,
-            bytes_out=0,
-            active_connections=0,
-            total_connections=0
+            bytes_in=data.get("bytes_in", 0),
+            bytes_out=data.get("bytes_out", 0),
+            active_connections=data.get("active_connections", 0),
+            total_connections=data.get("total_connections", 0)
         )
         return stats_db
 
