@@ -19,3 +19,5 @@ subunit.log
 .tox/
 .venv/
 *.mo
+*.swp
+*.swo
