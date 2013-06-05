@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-03 12:11+0000\n"
+"POT-Creation-Date: 2013-06-04 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -524,7 +524,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr "Routerport %s verfügt über keine IP-Adresse"
 
-#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:929
+#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:918
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "Ignorieren mehrerer IP-Adressen auf Routerport %s"
@@ -1878,20 +1878,25 @@ msgid "Invalid extension environment: %(reason)s"
 msgstr "Ungültige Erweiterungsumgebung: %(reason)s"
 
 #: quantum/common/exceptions.py:253
+#, fuzzy, python-format
+msgid "Unable to find any IP address on external network %(net_id)s."
+msgstr "Es können keine IP-Adressen auf externem Netz gefunden werden"
+
+#: quantum/common/exceptions.py:258
 msgid "More than one external network exists"
 msgstr "Es sind mehrere externe Netze vorhanden"
 
-#: quantum/common/exceptions.py:257
+#: quantum/common/exceptions.py:262
 #, python-format
 msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "Ein ungültiger Wert wurde für %(opt_name)s angegeben: %(opt_value)s"
 
-#: quantum/common/exceptions.py:262
+#: quantum/common/exceptions.py:267
 #, python-format
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
 msgstr "Gateway-IP '%(ip_address)s' steht im Konflikt mit Zuordnungspool %(pool)s"
 
-#: quantum/common/exceptions.py:267
+#: quantum/common/exceptions.py:272
 #, python-format
 msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
 msgstr ""
@@ -2408,21 +2413,7 @@ msgstr ""
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "'fixed_ip_address' kann nicht ohne 'port_id' angegeben werden"
 
-#: quantum/db/l3_db.py:652
-msgid "Unable to find any IP address on external network"
-msgstr "Es können keine IP-Adressen auf externem Netz gefunden werden"
-
-#: quantum/db/l3_db.py:673
-msgid "Unable to create Floating ip due to a malformed request"
-msgstr ""
-"Erstellen einer dynamischen IP-Adresse aufgrund einer fehlerhaften "
-"Anforderung nicht möglich"
-
-#: quantum/db/l3_db.py:677
-msgid "Floating IP association failed"
-msgstr "Zuordnung von dynamischer IP-Adresse fehlgeschlagen"
-
-#: quantum/db/l3_db.py:768
+#: quantum/db/l3_db.py:757
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
@@ -2431,12 +2422,12 @@ msgstr ""
 "Port %(port_id)s hat Eigentümer %(port_owner)s, aber keine IP-Adresse und"
 " kann daher gelöscht werden"
 
-#: quantum/db/l3_db.py:786
+#: quantum/db/l3_db.py:775
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr "Mehrere dynamische IP-Adressen für Port %s gefunden"
 
-#: quantum/db/l3_db.py:935
+#: quantum/db/l3_db.py:924
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Port %s wird übersprungen, da keine IP-Adresse auf ihm konfiguriert ist"
@@ -2900,13 +2891,13 @@ msgstr ""
 msgid "Port does not have port security binding."
 msgstr "Port verfügt nicht über Portsicherheitsbindung."
 
-#: quantum/extensions/quotasv2.py:81
+#: quantum/extensions/quotasv2.py:85
 msgid "Non-admin is not authorised to access quotas for another tenant"
 msgstr ""
 "Nicht-Admins sind nicht dazu berechtigt, auf Quoten für andere Nutzer "
 "zuzugreifen"
 
-#: quantum/extensions/quotasv2.py:86
+#: quantum/extensions/quotasv2.py:90
 msgid "Only admin can view or configure quota"
 msgstr "Nur Admins können Quoten anzeigen oder konfigurieren"
 
@@ -9031,6 +9022,12 @@ msgstr "lSwitch: %s nicht gefunden"
 msgid "lrouter:%s not found"
 msgstr "lRouter: %s nicht gefunden"
 
-#~ msgid "Unable to update network '%s' on Nexus switch"
+#~ msgid "Unable to create Floating ip due to a malformed request"
 #~ msgstr ""
+#~ "Erstellen einer dynamischen IP-Adresse "
+#~ "aufgrund einer fehlerhaften Anforderung nicht"
+#~ " möglich"
+
+#~ msgid "Floating IP association failed"
+#~ msgstr "Zuordnung von dynamischer IP-Adresse fehlgeschlagen"
 

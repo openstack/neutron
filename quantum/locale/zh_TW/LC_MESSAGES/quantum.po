@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-03 12:11+0000\n"
+"POT-Creation-Date: 2013-06-04 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -503,7 +503,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr "路由器埠 %s 沒有 IP 位址"
 
-#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:929
+#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:918
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
@@ -1774,20 +1774,25 @@ msgid "Invalid extension environment: %(reason)s"
 msgstr "無效的延伸環境：%(reason)s"
 
 #: quantum/common/exceptions.py:253
+#, fuzzy, python-format
+msgid "Unable to find any IP address on external network %(net_id)s."
+msgstr "在外部網路上找不到任何 IP 位址"
+
+#: quantum/common/exceptions.py:258
 msgid "More than one external network exists"
 msgstr "多個外部網路已存在"
 
-#: quantum/common/exceptions.py:257
+#: quantum/common/exceptions.py:262
 #, python-format
 msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr "提供給 %(opt_name)s 的值 %(opt_value)s 無效"
 
-#: quantum/common/exceptions.py:262
+#: quantum/common/exceptions.py:267
 #, python-format
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
 msgstr "閘道 IP %(ip_address)s 與配置儲存區 %(pool)s 相衝突"
 
-#: quantum/common/exceptions.py:267
+#: quantum/common/exceptions.py:272
 #, python-format
 msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
 msgstr ""
@@ -2248,31 +2253,19 @@ msgstr "埠 %s 具有多個固定 IP。指派浮動 IP 時必須提供特定 IP"
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "如果未指定 port_id，則無法指定 fixed_ip_address"
 
-#: quantum/db/l3_db.py:652
-msgid "Unable to find any IP address on external network"
-msgstr "在外部網路上找不到任何 IP 位址"
-
-#: quantum/db/l3_db.py:673
-msgid "Unable to create Floating ip due to a malformed request"
-msgstr "無法建立浮動 IP，因為要求的格式不正確"
-
-#: quantum/db/l3_db.py:677
-msgid "Floating IP association failed"
-msgstr "浮動 IP 關聯失敗"
-
-#: quantum/db/l3_db.py:768
+#: quantum/db/l3_db.py:757
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr "埠 %(port_id)s 具有擁有者 %(port_owner)s，但沒有 IP 位址，因此可以刪除"
 
-#: quantum/db/l3_db.py:786
+#: quantum/db/l3_db.py:775
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr "找到埠 %s 的多個浮動 IP"
 
-#: quantum/db/l3_db.py:935
+#: quantum/db/l3_db.py:924
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "正在跳過埠 %s，因為其上沒有配置 IP"
@@ -2681,11 +2674,11 @@ msgstr "埠安全必須加以啟用，而且埠必須具有 IP 位址，才能�
 msgid "Port does not have port security binding."
 msgstr "埠沒有埠安全連結。"
 
-#: quantum/extensions/quotasv2.py:81
+#: quantum/extensions/quotasv2.py:85
 msgid "Non-admin is not authorised to access quotas for another tenant"
 msgstr "非管理者未獲授權來存取另一個 Tenant 的配額"
 
-#: quantum/extensions/quotasv2.py:86
+#: quantum/extensions/quotasv2.py:90
 msgid "Only admin can view or configure quota"
 msgstr "只有管理者才能檢視或配置配額"
 
@@ -8465,6 +8458,9 @@ msgstr "找不到 lswitch：%s"
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
 
-#~ msgid "Unable to update network '%s' on Nexus switch"
-#~ msgstr ""
+#~ msgid "Unable to create Floating ip due to a malformed request"
+#~ msgstr "無法建立浮動 IP，因為要求的格式不正確"
+
+#~ msgid "Floating IP association failed"
+#~ msgstr "浮動 IP 關聯失敗"
 
