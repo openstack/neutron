@@ -234,7 +234,8 @@ class L3NATAgent(manager.Manager):
         for c, r in self.metadata_nat_rules():
             ri.iptables_manager.ipv4['nat'].add_rule(c, r)
         ri.iptables_manager.apply()
-        self._spawn_metadata_proxy(ri)
+        if self.conf.use_namespaces:
+            self._spawn_metadata_proxy(ri)
 
     def _router_removed(self, router_id):
         ri = self.router_info[router_id]
