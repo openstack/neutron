@@ -404,11 +404,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule = self._build_security_group_rule(
                 security_group_id, 'ingress', 'tcp', '22', '22', None, None,
                 ethertype=ethertype)
-            res = self._create_security_group_rule('json', rule)
-            self.deserialize('json', res)
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
-    def test_create_security_group_rule_protocol_invalid_as_number(self):
+    def test_create_security_group_rule_protocol_as_number(self):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
@@ -417,9 +417,9 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule = self._build_security_group_rule(
                 security_group_id, 'ingress', protocol, '22', '22',
                 None, None)
-            res = self._create_security_group_rule('json', rule)
-            self.deserialize('json', res)
-            self.assertEqual(res.status_int, 400)
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, 201)
 
     def test_create_security_group_rule_case_insensitive(self):
         name = 'webservers'

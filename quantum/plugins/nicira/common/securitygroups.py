@@ -45,7 +45,11 @@ class NVPSecurityGroups(object):
             elif param == 'remote_group_id':
                 nvp_rule['profile_uuid'] = rule['remote_group_id']
             elif param == 'protocol':
-                nvp_rule['protocol'] = protocol_num_look_up[rule['protocol']]
+                try:
+                    nvp_rule['protocol'] = int(rule['protocol'])
+                except (ValueError, TypeError):
+                    nvp_rule['protocol'] = (
+                        protocol_num_look_up[rule['protocol']])
             else:
                 nvp_rule[param] = value
         return nvp_rule
