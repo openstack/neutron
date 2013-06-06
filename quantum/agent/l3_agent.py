@@ -161,7 +161,7 @@ class L3NATAgent(manager.Manager):
                     help=_("Allow overlapping IP.")),
         cfg.StrOpt('router_id', default='',
                    help=_("If namespaces is disabled, the l3 agent can only"
-                          " confgure a router that has the matching router "
+                          " configure a router that has the matching router "
                           "ID.")),
         cfg.BoolOpt('handle_internal_only_routers',
                     default=True,
