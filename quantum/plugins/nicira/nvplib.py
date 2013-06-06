@@ -738,7 +738,8 @@ def get_port(cluster, network, port, relations=None):
 
 
 def _configure_extensions(lport_obj, mac_address, fixed_ips,
-                          port_security_enabled, security_profiles, queue_id):
+                          port_security_enabled, security_profiles,
+                          queue_id, mac_learning_enabled):
     lport_obj['allowed_address_pairs'] = []
     if port_security_enabled:
         for fixed_ip in fixed_ips:
@@ -753,12 +754,16 @@ def _configure_extensions(lport_obj, mac_address, fixed_ips,
              "ip_address": "0.0.0.0"})
     lport_obj['security_profiles'] = list(security_profiles or [])
     lport_obj['queue_uuid'] = queue_id
+    if mac_learning_enabled is not None:
+        lport_obj["mac_learning"] = mac_learning_enabled
+        lport_obj["type"] = "LogicalSwitchPortConfig"
 
 
 def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
                 display_name, device_id, admin_status_enabled,
                 mac_address=None, fixed_ips=None, port_security_enabled=None,
-                security_profiles=None, queue_id=None):
+                security_profiles=None, queue_id=None,
+                mac_learning_enabled=None):
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
     lport_obj = dict(
@@ -771,7 +776,7 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
                           port_security_enabled, security_profiles,
-                          queue_id)
+                          queue_id, mac_learning_enabled)
 
     path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
@@ -791,7 +796,8 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
 def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
                  display_name, device_id, admin_status_enabled,
                  mac_address=None, fixed_ips=None, port_security_enabled=None,
-                 security_profiles=None, queue_id=None):
+                 security_profiles=None, queue_id=None,
+                 mac_learning_enabled=None):
     """Creates a logical port on the assigned logical switch."""
     # device_id can be longer than 40 so we rehash it
     hashed_device_id = hashlib.sha1(device_id).hexdigest()
@@ -807,7 +813,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
                           port_security_enabled, security_profiles,
-                          queue_id)
+                          queue_id, mac_learning_enabled)
 
     path = _build_uri_path(LSWITCHPORT_RESOURCE,
                            parent_resource_id=lswitch_uuid)

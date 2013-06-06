@@ -41,6 +41,7 @@
     "create_port:fixed_ips": "rule:admin_or_network_owner",
     "create_port:port_security_enabled": "rule:admin_or_network_owner",
     "create_port:binding:host_id": "rule:admin_only",
+    "create_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "get_port": "rule:admin_or_owner",
     "get_port:queue_id": "rule:admin_only",
     "get_port:binding:vif_type": "rule:admin_only",
@@ -51,6 +52,7 @@
     "update_port:fixed_ips": "rule:admin_or_network_owner",
     "update_port:port_security_enabled": "rule:admin_or_network_owner",
     "update_port:binding:host_id": "rule:admin_only",
+    "update_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "delete_port": "rule:admin_or_owner",
 
     "create_service_type": "rule:admin_only",
