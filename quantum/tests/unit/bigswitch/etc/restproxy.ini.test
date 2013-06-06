@@ -31,3 +31,11 @@ serverssl=False
 #   default: ovs
 vif_type = ovs
 
+[ROUTER]
+# Specify the default router rules installed in newly created tenant routers
+# Specify multiple times for multiple rules
+# Use an * to specify default for all tenants
+# Default is any any allow for all tenants
+#tenant_default_router_rule=*:any:any:permit
+# Maximum number of rules that a single router may have
+max_router_rules=200

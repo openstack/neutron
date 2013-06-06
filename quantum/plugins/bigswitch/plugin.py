@@ -48,6 +48,7 @@ import base64
 import copy
 import httplib
 import json
+import os
 import socket
 
 from oslo.config import cfg
@@ -67,11 +68,16 @@ from quantum.extensions import l3
 from quantum.extensions import portbindings
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
+from quantum.plugins.bigswitch import routerrule_db
 from quantum.plugins.bigswitch.version import version_string_with_vcs
-
 
 LOG = logging.getLogger(__name__)
 
+# Include the BigSwitch Extensions path in the api_extensions
+EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), 'extensions')
+if not cfg.CONF.api_extensions_path:
+    cfg.CONF.set_override('api_extensions_path',
+                          EXTENSIONS_PATH)
 
 restproxy_opts = [
     cfg.StrOpt('servers', default='localhost:8800',
@@ -102,6 +108,17 @@ restproxy_opts = [
 
 cfg.CONF.register_opts(restproxy_opts, "RESTPROXY")
 
+router_opts = [
+    cfg.MultiStrOpt('tenant_default_router_rule', default=['*:any:any:permit'],
+                    help=_("The default router rules installed in new tenant "
+                           "routers. Repeat the config option for each rule. "
+                           "Format is <tenant>:<source>:<destination>:<action>"
+                           " Use an * to specify default for all tenants.")),
+    cfg.IntOpt('max_router_rules', default=200,
+               help=_("Maximum number of router rules")),
+]
+
+cfg.CONF.register_opts(router_opts, "ROUTER")
 
 nova_opts = [
     cfg.StrOpt('vif_type', default='ovs',
@@ -302,9 +319,9 @@ class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 
 class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
-                         l3_db.L3_NAT_db_mixin):
+                         routerrule_db.RouterRule_db_mixin):
 
-    supported_extension_aliases = ["router", "binding"]
+    supported_extension_aliases = ["router", "binding", "router_rules"]
 
     def __init__(self):
         LOG.info(_('QuantumRestProxy: Starting plugin. Version=%s'),
@@ -842,12 +859,42 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
             # TODO(Sumit): rollback deletion of subnet
             raise
 
+    def _get_tenant_default_router_rules(self, tenant):
+        rules = cfg.CONF.ROUTER.tenant_default_router_rule
+        defaultset = []
+        tenantset = []
+        for rule in rules:
+            items = rule.split(':')
+            if len(items) == 5:
+                (tenantid, source, destination, action, nexthops) = items
+            elif len(items) == 4:
+                (tenantid, source, destination, action) = items
+                nexthops = ''
+            else:
+                continue
+            parsedrule = {'source': source,
+                          'destination': destination, 'action': action,
+                          'nexthops': nexthops.split(',')}
+            if parsedrule['nexthops'][0] == '':
+                parsedrule['nexthops'] = []
+            if tenantid == '*':
+                defaultset.append(parsedrule)
+            if tenantid == tenant:
+                tenantset.append(parsedrule)
+        if tenantset:
+            return tenantset
+        return defaultset
+
     def create_router(self, context, router):
         LOG.debug(_("QuantumRestProxyV2: create_router() called"))
 
         self._warn_on_state_status(router['router'])
 
         tenant_id = self._get_tenant_id_for_create(context, router["router"])
+
+        # set default router rules
+        rules = self._get_tenant_default_router_rules(tenant_id)
+        router['router']['router_rules'] = rules
 
         # create router in DB
         new_router = super(QuantumRestProxyV2, self).create_router(context,
