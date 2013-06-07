@@ -2,6 +2,7 @@
    "_relations":
    {"LogicalPortStatus":
       {"type": "LogicalSwitchPortStatus",
+       "admin_status_enabled": true,
        "fabric_status_up": false,
        "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s/status",
        "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"}
