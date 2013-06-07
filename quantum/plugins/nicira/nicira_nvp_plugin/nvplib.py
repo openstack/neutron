@@ -641,23 +641,6 @@ def delete_port(cluster, switch, port):
         raise exception.QuantumException()
 
 
-def get_logical_port_status(cluster, switch, port):
-    query = ("/ws.v1/lswitch/" + switch + "/lport/"
-             + port + "?relations=LogicalPortStatus")
-    try:
-        res_obj = do_single_request(HTTP_GET, query, cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port, net_id=switch)
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
-    res = json.loads(res_obj)
-    # copy over admin_status_enabled
-    res["_relations"]["LogicalPortStatus"]["admin_status_enabled"] = (
-        res["admin_status_enabled"])
-    return res["_relations"]["LogicalPortStatus"]
-
-
 def get_port_by_display_name(clusters, lswitch, display_name):
     """Return (url, cluster_id) of port or raises ResourceNotFound
     """

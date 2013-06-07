@@ -1513,20 +1513,28 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # If there's no nvp IP do not bother going to NVP and put
             # the port in error state
             if nvp_id:
-                #TODO: pass the appropriate cluster here
-                try:
-                    port = nvplib.get_logical_port_status(
-                        self.default_cluster, quantum_db_port['network_id'],
-                        nvp_id)
+                # Find the NVP port corresponding to quantum port_id
+                # Do not query by nvp id as the port might be on
+                # an extended switch and we do not store the extended
+                # swiwtch uuid
+                results = nvplib.query_lswitch_lports(
+                    self.default_cluster, '*',
+                    relations='LogicalPortStatus',
+                    filters={'tag': id, 'tag_scope': 'q_port_id'})
+                if results:
+                    port = results[0]
+                    port_status = port["_relations"]["LogicalPortStatus"]
                     quantum_db_port["admin_state_up"] = (
                         port["admin_status_enabled"])
-                    if port["fabric_status_up"]:
+                    if port_status["fabric_status_up"]:
                         quantum_db_port["status"] = (
                             constants.PORT_STATUS_ACTIVE)
                     else:
-                        quantum_db_port["status"] = constants.PORT_STATUS_DOWN
-                except q_exc.NotFound:
-                    quantum_db_port["status"] = constants.PORT_STATUS_ERROR
+                        quantum_db_port["status"] = (
+                            constants.PORT_STATUS_DOWN)
+                else:
+                    quantum_db_port["status"] = (
+                        constants.PORT_STATUS_ERROR)
             else:
                 quantum_db_port["status"] = constants.PORT_STATUS_ERROR
         return quantum_db_port
