@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-05 12:11+0000\n"
+"POT-Creation-Date: 2013-06-07 12:10+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French "
@@ -465,7 +465,7 @@ msgstr ""
 
 #: quantum/agent/l3_agent.py:163
 msgid ""
-"If namespaces is disabled, the l3 agent can only confgure a router that "
+"If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr ""
 
@@ -2235,7 +2235,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: quantum/db/l3_db.py:600 quantum/plugins/nicira/QuantumPlugin.py:1778
+#: quantum/db/l3_db.py:600 quantum/plugins/nicira/QuantumPlugin.py:1805
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -5419,7 +5419,7 @@ msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
 #: quantum/plugins/midonet/plugin.py:196
-#: quantum/plugins/nicira/QuantumPlugin.py:1030
+#: quantum/plugins/nicira/QuantumPlugin.py:1039
 msgid "admin_state_up=False networks are not supported."
 msgstr ""
 
@@ -6502,408 +6502,408 @@ msgstr ""
 msgid "The request has timed out."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:228
+#: quantum/plugins/nicira/QuantumPlugin.py:236
 #, python-format
 msgid "Unable to process default l2 gw service:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:263
+#: quantum/plugins/nicira/QuantumPlugin.py:271
 #, python-format
 msgid "Created NVP router port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:265
+#: quantum/plugins/nicira/QuantumPlugin.py:273
 #, python-format
 msgid "Unable to create port on NVP logical router %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:268
+#: quantum/plugins/nicira/QuantumPlugin.py:276
 #, python-format
 msgid ""
 "Unable to create logical router port for quantum port id %(port_id)s on "
 "router %(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:290
+#: quantum/plugins/nicira/QuantumPlugin.py:298
 #, python-format
 msgid "Attached %(att)s to NVP router port %(port)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:296
+#: quantum/plugins/nicira/QuantumPlugin.py:304
 #, python-format
 msgid ""
 "Unable to plug attachment in NVP logical router port %(r_port_id)s, "
 "associated with Quantum %(q_port_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:302
+#: quantum/plugins/nicira/QuantumPlugin.py:310
 #, python-format
 msgid ""
 "Unable to plug attachment in router port %(r_port_id)s for quantum port "
 "id %(q_port_id)s on router %(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:347
+#: quantum/plugins/nicira/QuantumPlugin.py:355
 msgid "An exception occured while selecting logical switch for the port"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:372
-#: quantum/plugins/nicira/QuantumPlugin.py:407
-#: quantum/plugins/nicira/QuantumPlugin.py:597
+#: quantum/plugins/nicira/QuantumPlugin.py:381
+#: quantum/plugins/nicira/QuantumPlugin.py:416
+#: quantum/plugins/nicira/QuantumPlugin.py:606
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
 "%s will be down."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:392
-#: quantum/plugins/nicira/QuantumPlugin.py:473
-#: quantum/plugins/nicira/QuantumPlugin.py:617
+#: quantum/plugins/nicira/QuantumPlugin.py:401
+#: quantum/plugins/nicira/QuantumPlugin.py:482
+#: quantum/plugins/nicira/QuantumPlugin.py:626
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
 "The new port id is %(id)s."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:396
+#: quantum/plugins/nicira/QuantumPlugin.py:405
 #, python-format
 msgid "An exception occured while plugging the interface into network:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:414
+#: quantum/plugins/nicira/QuantumPlugin.py:423
 #, python-format
 msgid "Port '%s' was already deleted on NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:423
+#: quantum/plugins/nicira/QuantumPlugin.py:432
 #, python-format
 msgid "_nvp_delete_port completed for port %(port_id)s on network %(net_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:429
+#: quantum/plugins/nicira/QuantumPlugin.py:438
 #, python-format
 msgid "port %s not found in NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:448
-#: quantum/plugins/nicira/QuantumPlugin.py:881
+#: quantum/plugins/nicira/QuantumPlugin.py:457
+#: quantum/plugins/nicira/QuantumPlugin.py:890
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
 "deleted."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:460
+#: quantum/plugins/nicira/QuantumPlugin.py:469
 #, python-format
 msgid ""
 "It is not allowed to create router interface ports on external networks "
 "as '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:478
+#: quantum/plugins/nicira/QuantumPlugin.py:487
 msgid "An exception occured while plugging the interface"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:486
+#: quantum/plugins/nicira/QuantumPlugin.py:495
 #, python-format
 msgid ""
 "device_id field must be populated in order to create an external gateway "
 "port for network %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:494
+#: quantum/plugins/nicira/QuantumPlugin.py:503
 #, python-format
 msgid "The gateway port for the router %s was not found on the NVP backend"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:540
+#: quantum/plugins/nicira/QuantumPlugin.py:549
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s. NVP port id is %(nvp_port_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:578
+#: quantum/plugins/nicira/QuantumPlugin.py:587
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:582
-#: quantum/plugins/nicira/QuantumPlugin.py:1723
+#: quantum/plugins/nicira/QuantumPlugin.py:591
+#: quantum/plugins/nicira/QuantumPlugin.py:1750
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:584
+#: quantum/plugins/nicira/QuantumPlugin.py:593
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:622
+#: quantum/plugins/nicira/QuantumPlugin.py:631
 #, python-format
 msgid "An exception occured while plugging the gateway interface into network:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:662
+#: quantum/plugins/nicira/QuantumPlugin.py:671
 #, python-format
 msgid "Unable to find NVP uuid for Quantum port %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:691
+#: quantum/plugins/nicira/QuantumPlugin.py:700
 #, python-format
 msgid "%s required"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:695
+#: quantum/plugins/nicira/QuantumPlugin.py:704
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:699
+#: quantum/plugins/nicira/QuantumPlugin.py:708
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:703
-#: quantum/plugins/nicira/QuantumPlugin.py:718
+#: quantum/plugins/nicira/QuantumPlugin.py:712
+#: quantum/plugins/nicira/QuantumPlugin.py:727
 #, python-format
 msgid "%(segmentation_id)s out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:724
+#: quantum/plugins/nicira/QuantumPlugin.py:733
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:755
+#: quantum/plugins/nicira/QuantumPlugin.py:764
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:777
+#: quantum/plugins/nicira/QuantumPlugin.py:786
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:804
+#: quantum/plugins/nicira/QuantumPlugin.py:813
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
 "Ignoring setting for network %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:863
+#: quantum/plugins/nicira/QuantumPlugin.py:872
 #, python-format
 msgid "A nvp lport identifier was not found for quantum port '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:891
+#: quantum/plugins/nicira/QuantumPlugin.py:900
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:894
+#: quantum/plugins/nicira/QuantumPlugin.py:903
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:920
+#: quantum/plugins/nicira/QuantumPlugin.py:929
 #, python-format
 msgid ""
 "Current network status:%(nvp_net_status)s; Status in Quantum "
 "DB:%(quantum_status)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:930
-#: quantum/plugins/nicira/QuantumPlugin.py:980
+#: quantum/plugins/nicira/QuantumPlugin.py:939
+#: quantum/plugins/nicira/QuantumPlugin.py:989
 msgid "Unable to get logical switches"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:994
+#: quantum/plugins/nicira/QuantumPlugin.py:1003
 #, python-format
 msgid "Logical Switch %s found in quantum database but not in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1009
+#: quantum/plugins/nicira/QuantumPlugin.py:1018
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Quantum networks. Quantum and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1013
+#: quantum/plugins/nicira/QuantumPlugin.py:1022
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1096
+#: quantum/plugins/nicira/QuantumPlugin.py:1106
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1105
+#: quantum/plugins/nicira/QuantumPlugin.py:1115
 msgid "Unable to get ports"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1132
+#: quantum/plugins/nicira/QuantumPlugin.py:1142
 #, python-format
 msgid "Quantum logical port %s was not found on NVP"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1139
+#: quantum/plugins/nicira/QuantumPlugin.py:1149
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Quantum ports. Quantum and NVP are "
 "potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1201
+#: quantum/plugins/nicira/QuantumPlugin.py:1215
 #, python-format
 msgid "Network %s was not found in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1207
+#: quantum/plugins/nicira/QuantumPlugin.py:1221
 msgid "Unable to create port or set port attachment in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1212
+#: quantum/plugins/nicira/QuantumPlugin.py:1226
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1276
+#: quantum/plugins/nicira/QuantumPlugin.py:1301
 #, python-format
 msgid "Update port request: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1301
+#: quantum/plugins/nicira/QuantumPlugin.py:1327
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1415
-#: quantum/plugins/nicira/QuantumPlugin.py:1460
+#: quantum/plugins/nicira/QuantumPlugin.py:1442
+#: quantum/plugins/nicira/QuantumPlugin.py:1487
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1428
+#: quantum/plugins/nicira/QuantumPlugin.py:1455
 msgid "Unable to create logical router on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1470
+#: quantum/plugins/nicira/QuantumPlugin.py:1497
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1473
+#: quantum/plugins/nicira/QuantumPlugin.py:1500
 msgid "Unable to update logical router on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1493
+#: quantum/plugins/nicira/QuantumPlugin.py:1520
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1497
+#: quantum/plugins/nicira/QuantumPlugin.py:1524
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1518
+#: quantum/plugins/nicira/QuantumPlugin.py:1545
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Quantum "
 "DB:%(db_router_status)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1526
+#: quantum/plugins/nicira/QuantumPlugin.py:1553
 msgid "Unable to get logical router"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1549
+#: quantum/plugins/nicira/QuantumPlugin.py:1576
 msgid "Unable to get logical routers from NVP controller"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1571
+#: quantum/plugins/nicira/QuantumPlugin.py:1598
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Quantum routers. Quantum and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1598
+#: quantum/plugins/nicira/QuantumPlugin.py:1625
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1633
+#: quantum/plugins/nicira/QuantumPlugin.py:1660
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1678
+#: quantum/plugins/nicira/QuantumPlugin.py:1705
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1690
+#: quantum/plugins/nicira/QuantumPlugin.py:1717
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Quantum port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1719
+#: quantum/plugins/nicira/QuantumPlugin.py:1746
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1745
+#: quantum/plugins/nicira/QuantumPlugin.py:1772
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1751
+#: quantum/plugins/nicira/QuantumPlugin.py:1778
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1817
+#: quantum/plugins/nicira/QuantumPlugin.py:1844
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1841
+#: quantum/plugins/nicira/QuantumPlugin.py:1868
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1883
+#: quantum/plugins/nicira/QuantumPlugin.py:1910
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1886
+#: quantum/plugins/nicira/QuantumPlugin.py:1913
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1912
+#: quantum/plugins/nicira/QuantumPlugin.py:1939
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1934
+#: quantum/plugins/nicira/QuantumPlugin.py:1961
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -7105,7 +7105,7 @@ msgstr ""
 
 #: quantum/plugins/nicira/nvplib.py:648 quantum/plugins/nicira/nvplib.py:660
 #: quantum/plugins/nicira/nvplib.py:687 quantum/plugins/nicira/nvplib.py:733
-#: quantum/plugins/nicira/nvplib.py:781
+#: quantum/plugins/nicira/nvplib.py:786
 #, python-format
 msgid "Port or Network not found, Error: %s"
 msgstr ""
@@ -7138,164 +7138,164 @@ msgstr ""
 msgid "get_port() %(network)s %(port)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:786
+#: quantum/plugins/nicira/nvplib.py:791
 #, python-format
 msgid "Updated logical port %(result)s on logical swtich %(uuid)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:819
+#: quantum/plugins/nicira/nvplib.py:825
 #, python-format
 msgid "Logical switch not found, Error: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:823
+#: quantum/plugins/nicira/nvplib.py:829
 #, python-format
 msgid "Created logical port %(result)s on logical swtich %(uuid)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:849 quantum/plugins/nicira/nvplib.py:902
+#: quantum/plugins/nicira/nvplib.py:855 quantum/plugins/nicira/nvplib.py:908
 #, python-format
 msgid "Logical router not found, Error: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:853
+#: quantum/plugins/nicira/nvplib.py:859
 #, python-format
 msgid "Created logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:885
+#: quantum/plugins/nicira/nvplib.py:891
 #, python-format
 msgid "Logical router or router port not found, Error: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:890
+#: quantum/plugins/nicira/nvplib.py:896
 #, python-format
 msgid "Updated logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:904
+#: quantum/plugins/nicira/nvplib.py:910
 #, python-format
 msgid ""
 "Delete logical router port %(lport_uuid)s on logical router "
 "%(lrouter_uuid)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:922
+#: quantum/plugins/nicira/nvplib.py:928
 #, python-format
 msgid ""
 "Unable to fetch and delete peer logical router port for logical switch "
 "port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:964
+#: quantum/plugins/nicira/nvplib.py:970
 #, python-format
 msgid "Invalid NVP attachment type '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:970
+#: quantum/plugins/nicira/nvplib.py:976
 #, python-format
 msgid "Router Port not found, Error: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:973
+#: quantum/plugins/nicira/nvplib.py:979
 msgid "Conflict while setting router port attachment"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:976
+#: quantum/plugins/nicira/nvplib.py:982
 msgid "Unable to plug attachment into logical router port"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:990
+#: quantum/plugins/nicira/nvplib.py:996
 #, python-format
 msgid "Port not found, Error: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1007
+#: quantum/plugins/nicira/nvplib.py:1013
 #, python-format
 msgid ""
 "Exception while plugging an attachment:%(att)s into NVP port:%(port)s for"
 " NVP logical switch %(net)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1127
+#: quantum/plugins/nicira/nvplib.py:1133
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1152
+#: quantum/plugins/nicira/nvplib.py:1158
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1170
+#: quantum/plugins/nicira/nvplib.py:1176
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1176
+#: quantum/plugins/nicira/nvplib.py:1182
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1182
+#: quantum/plugins/nicira/nvplib.py:1188
 #, python-format
 msgid "NVP Logical Router %s not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1185
+#: quantum/plugins/nicira/nvplib.py:1191
 msgid "An error occurred while creating the NAT rule on the NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1200
+#: quantum/plugins/nicira/nvplib.py:1206
 msgid ""
 "No SNAT rules cannot be applied as they are not available in this version"
 " of the NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1310
+#: quantum/plugins/nicira/nvplib.py:1316
 #, python-format
 msgid ""
 "An error occurred while removing NAT rule '%(nat_rule_uuid)s' for logical"
 " router '%(lrouter_uuid)s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1322
+#: quantum/plugins/nicira/nvplib.py:1328
 #, python-format
 msgid "NAT rule %s not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1325
+#: quantum/plugins/nicira/nvplib.py:1331
 #, python-format
 msgid "An error occured while retrieving NAT rule '%s'from NVP platform"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1338
+#: quantum/plugins/nicira/nvplib.py:1344
 #, python-format
 msgid "NVP Logical Router '%s' not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1341
+#: quantum/plugins/nicira/nvplib.py:1347
 #, python-format
 msgid "An error occured while retrieving NAT rules for NVP logical router '%s'"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1365
+#: quantum/plugins/nicira/nvplib.py:1371
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1370
+#: quantum/plugins/nicira/nvplib.py:1376
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1397
+#: quantum/plugins/nicira/nvplib.py:1403
 msgid "Failed to create logical queue"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:1409
+#: quantum/plugins/nicira/nvplib.py:1415
 msgid "Failed to delete logical queue"
 msgstr ""
 
@@ -8189,6 +8189,10 @@ msgstr ""
 msgid "Transaction retry exhausted (%d). Abandoned tunnel key allocation."
 msgstr ""
 
+#: quantum/plugins/services/agent_loadbalancer/lbaas_plugin.py:35
+msgid "LBaaS driver Fully Qualified Name"
+msgstr ""
+
 #: quantum/plugins/services/agent_loadbalancer/plugin.py:87
 msgid "Expected active pool and vip"
 msgstr ""
@@ -8267,6 +8271,13 @@ msgstr ""
 #: quantum/plugins/services/agent_loadbalancer/drivers/haproxy/namespace_driver.py:218
 #, python-format
 msgid "Unable to kill haproxy process: %s"
+msgstr ""
+
+#: quantum/plugins/services/agent_loadbalancer/drivers/noop/noop_driver.py:31
+#, python-format
+msgid ""
+"NoopLbaaSDriver method %(method_name)scalled with arguments %(args)s "
+"%(kwargs)s "
 msgstr ""
 
 #: quantum/scheduler/__init__.py:25
@@ -8365,10 +8376,10 @@ msgstr ""
 msgid "ERROR: %s"
 msgstr ""
 
-#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:179
-#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:203
-#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:224
-#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:249
+#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:180
+#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:204
+#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:225
+#: quantum/tests/unit/db/loadbalancer/test_db_loadbalancer.py:250
 #, python-format
 msgid "Unexpected error code: %s"
 msgstr ""
@@ -8383,9 +8394,9 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "A comma separated list of servers and port numbers to proxy request to."
-#~ msgstr ""
-
-#~ msgid "Server authentication"
+#~ msgid ""
+#~ "If namespaces is disabled, the l3 "
+#~ "agent can only confgure a router "
+#~ "that has the matching router ID."
 #~ msgstr ""
 
