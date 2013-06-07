@@ -62,10 +62,6 @@ class PolicyNotAuthorized(NotAuthorized):
     message = _("Policy doesn't allow %(action)s to be performed.")
 
 
-class ClassNotFound(NotFound):
-    message = _("Class %(class_name)s could not be found")
-
-
 class NetworkNotFound(NotFound):
     message = _("Network %(net_id)s could not be found")
 

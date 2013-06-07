@@ -83,7 +83,7 @@ class QuantumManagerTestCase(base.BaseTestCase):
         cfg.CONF.set_override("core_plugin",
                               test_config.get('plugin_name_v2',
                                               DB_PLUGIN_KLASS))
-        self.assertRaises(Exception, QuantumManager.get_instance)
+        self.assertRaises(ValueError, QuantumManager.get_instance)
 
     def test_service_plugin_conflicts_with_core_plugin(self):
         cfg.CONF.set_override("service_plugins",
@@ -92,7 +92,7 @@ class QuantumManagerTestCase(base.BaseTestCase):
         cfg.CONF.set_override("core_plugin",
                               "quantum.tests.unit.test_quantum_manager."
                               "MultiServiceCorePlugin")
-        self.assertRaises(Exception, QuantumManager.get_instance)
+        self.assertRaises(ValueError, QuantumManager.get_instance)
 
     def test_core_plugin_supports_services(self):
         cfg.CONF.set_override("core_plugin",

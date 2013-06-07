@@ -18,7 +18,6 @@
 
 from oslo.config import cfg
 
-from quantum.common.exceptions import ClassNotFound
 from quantum.openstack.common import importutils
 from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
@@ -113,7 +112,7 @@ class QuantumManager(object):
         try:
             LOG.info(_("Loading Plugin: %s"), plugin_provider)
             plugin_klass = importutils.import_class(plugin_provider)
-        except ClassNotFound:
+        except ImportError:
             LOG.exception(_("Error loading plugin"))
             raise Exception(_("Plugin not found.  You can install a "
                             "plugin with: pip install <plugin-name>\n"
@@ -163,18 +162,18 @@ class QuantumManager(object):
             try:
                 LOG.info(_("Loading Plugin: %s"), provider)
                 plugin_class = importutils.import_class(provider)
-            except ClassNotFound:
+            except ImportError:
                 LOG.exception(_("Error loading plugin"))
-                raise Exception(_("Plugin not found."))
+                raise ImportError(_("Plugin not found."))
             plugin_inst = plugin_class()
 
             # only one implementation of svc_type allowed
             # specifying more than one plugin
             # for the same type is a fatal exception
             if plugin_inst.get_plugin_type() in self.service_plugins:
-                raise Exception(_("Multiple plugins for service "
-                                "%s were configured"),
-                                plugin_inst.get_plugin_type())
+                raise ValueError(_("Multiple plugins for service "
+                                   "%s were configured"),
+                                 plugin_inst.get_plugin_type())
 
             self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
 

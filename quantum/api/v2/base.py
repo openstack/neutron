@@ -74,8 +74,9 @@ class Controller(object):
         if self._allow_pagination and self._native_pagination:
             # Native pagination need native sorting support
             if not self._native_sorting:
-                raise Exception(_("Native pagination depend on native "
-                                  "sorting"))
+                raise exceptions.Invalid(
+                    _("Native pagination depend on native sorting")
+                )
             if not self._allow_sorting:
                 LOG.info(_("Allow sorting is enabled because native "
                            "pagination requires native sorting"))
