@@ -19,6 +19,7 @@
 from quantum.agent import securitygroups_rpc as sg_rpc
 from quantum.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from quantum.api.rpc.agentnotifiers import l3_rpc_agent_api
+from quantum.common import exceptions as q_exc
 from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import agents_db
@@ -654,13 +655,16 @@ class NECPluginV2RPCCallbacks(object):
         session = rpc_context.session
         for p in kwargs.get('port_added', []):
             id = p['id']
-            port = self.plugin.get_port(rpc_context, id)
-            if port and ndb.get_portinfo(session, id):
+            portinfo = ndb.get_portinfo(session, id)
+            if portinfo:
                 ndb.del_portinfo(session, id)
-                self.plugin.deactivate_port(rpc_context, port)
             ndb.add_portinfo(session, id, datapath_id, p['port_no'],
                              mac=p.get('mac', ''))
-            self.plugin.activate_port_if_ready(rpc_context, port)
+            port = self._get_port(rpc_context, id)
+            if port:
+                if portinfo:
+                    self.plugin.deactivate_port(rpc_context, port)
+                self.plugin.activate_port_if_ready(rpc_context, port)
         for id in kwargs.get('port_removed', []):
             portinfo = ndb.get_portinfo(session, id)
             if not portinfo:
@@ -676,7 +680,13 @@ class NECPluginV2RPCCallbacks(object):
                           {'registered': portinfo.datapath_id,
                            'received': datapath_id})
                 continue
-            port = self.plugin.get_port(rpc_context, id)
+            ndb.del_portinfo(session, id)
+            port = self._get_port(rpc_context, id)
             if port:
-                ndb.del_portinfo(session, id)
                 self.plugin.deactivate_port(rpc_context, port)
+
+    def _get_port(self, context, port_id):
+        try:
+            return self.plugin.get_port(context, port_id)
+        except q_exc.PortNotFound:
+            return None
