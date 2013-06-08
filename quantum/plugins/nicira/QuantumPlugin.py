@@ -1622,7 +1622,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         # The owner of the router port is always the same as the owner of the
         # router. Use tenant_id from the port instead of fetching more records
         # from the Quantum database
-        port = self._get_port(context, port_id)
         # Find the NVP port corresponding to quantum port_id
         results = nvplib.query_lswitch_lports(
             self.cluster, '*',
@@ -1636,6 +1635,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                            "backend.") % {'port_id': port_id,
                                           'router_id': router_id}))
 
+        port = self._get_port(context, port_id)
         # Create logical router port and patch attachment
         self._create_and_attach_router_port(
             self.cluster, context, router_id, port,
@@ -1651,7 +1651,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # In that case we will consider only the first one
             if gw_port.get('fixed_ips'):
                 snat_ip = gw_port['fixed_ips'][0]['ip_address']
-                subnet = self._get_subnet(context, subnet_id)
                 cidr_prefix = int(subnet['cidr'].split('/')[1])
                 nvplib.create_lrouter_snat_rule(
                     self.cluster, router_id, snat_ip, snat_ip,
