@@ -308,7 +308,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                 agent.UnixDomainMetadataProxy(mock.Mock())
 
                 isdir.assert_called_once_with('/the')
-                makedirs.assert_called_once_with('/the', 0755)
+                makedirs.assert_called_once_with('/the', 0o755)
 
     def test_init_exists(self):
         with mock.patch('os.path.isdir') as isdir:
@@ -359,7 +359,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                         p.run()
 
                         isdir.assert_called_once_with('/the')
-                        makedirs.assert_called_once_with('/the', 0755)
+                        makedirs.assert_called_once_with('/the', 0o755)
                         server.assert_has_calls([
                             mock.call('quantum-metadata-agent'),
                             mock.call().start(handler.return_value,

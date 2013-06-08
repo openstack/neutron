@@ -157,7 +157,7 @@ class DhcpLocalProcess(DhcpBase):
         conf_dir = os.path.join(confs_dir, self.network.id)
         if ensure_conf_dir:
             if not os.path.isdir(conf_dir):
-                os.makedirs(conf_dir, 0755)
+                os.makedirs(conf_dir, 0o755)
 
         return os.path.join(conf_dir, kind)
 

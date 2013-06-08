@@ -87,5 +87,5 @@ def replace_file(file_name, data):
     tmp_file = tempfile.NamedTemporaryFile('w+', dir=base_dir, delete=False)
     tmp_file.write(data)
     tmp_file.close()
-    os.chmod(tmp_file.name, 0644)
+    os.chmod(tmp_file.name, 0o644)
     os.rename(tmp_file.name, file_name)

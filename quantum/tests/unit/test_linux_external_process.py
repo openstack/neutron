@@ -134,7 +134,7 @@ class TestProcessManager(base.BaseTestCase):
                 manager = ep.ProcessManager(self.conf, 'uuid')
                 retval = manager.get_pid_file_name(ensure_pids_dir=True)
                 self.assertEqual(retval, '/var/path/uuid.pid')
-                makedirs.assert_called_once_with('/var/path', 0755)
+                makedirs.assert_called_once_with('/var/path', 0o755)
 
     def test_get_pid_file_name_default(self):
         with mock.patch.object(ep.os.path, 'isdir') as isdir:

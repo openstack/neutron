@@ -73,7 +73,7 @@ class ProcessManager(object):
         """Returns the file name for a given kind of config file."""
         pids_dir = os.path.abspath(os.path.normpath(self.conf.external_pids))
         if ensure_pids_dir and not os.path.isdir(pids_dir):
-            os.makedirs(pids_dir, 0755)
+            os.makedirs(pids_dir, 0o755)
 
         return os.path.join(pids_dir, self.uuid + '.pid')
 
