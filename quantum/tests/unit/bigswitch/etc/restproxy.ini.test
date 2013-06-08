@@ -24,3 +24,10 @@ reconnect_interval = 2
 servers=localhost:8899
 serverssl=False
 #serverauth=username:password
+
+[NOVA]
+# Specify the VIF_TYPE that will be controlled on the Nova compute instances
+#   options: ivs or ovs
+#   default: ovs
+vif_type = ovs
+
