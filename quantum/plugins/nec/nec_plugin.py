@@ -117,8 +117,9 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
 
         # NOTE: callback_sg is referred to from the sg unit test.
+        self.callback_nec = NECPluginV2RPCCallbacks(self)
         self.callback_sg = SecurityGroupServerRpcCallback()
-        callbacks = [NECPluginV2RPCCallbacks(self),
+        callbacks = [self.callback_nec,
                      DhcpRpcCallback(), L3RpcCallback(),
                      self.callback_sg,
                      agents_db.AgentExtRpcCallback()]
