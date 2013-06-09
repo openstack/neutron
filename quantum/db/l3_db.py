@@ -749,7 +749,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                        DEVICE_OWNER_FLOATINGIP]:
             # Raise port in use only if the port has IP addresses
             # Otherwise it's a stale port that can be removed
-            fixed_ips = port_db['fixed_ips'].all()
+            fixed_ips = port_db['fixed_ips']
             if fixed_ips:
                 raise l3.L3PortInUse(port_id=port_id,
                                      device_owner=port_db['device_owner'])
