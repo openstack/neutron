@@ -500,7 +500,7 @@ class APIv2TestCase(APIv2TestBase):
     def test_native_pagination_without_native_sorting(self):
         instance = self.plugin.return_value
         instance._QuantumPluginBaseV2__native_sorting_support = False
-        self.assertRaises(Exception, router.APIRouter)
+        self.assertRaises(q_exc.Invalid, router.APIRouter)
 
     def test_native_pagination_without_allow_sorting(self):
         cfg.CONF.set_override('allow_sorting', False)

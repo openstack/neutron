@@ -84,7 +84,7 @@ class LoadBalancerCallbacks(object):
 
             if (pool.status != constants.ACTIVE
                 or pool.vip.status != constants.ACTIVE):
-                raise Exception(_('Expected active pool and vip'))
+                raise q_exc.Invalid(_('Expected active pool and vip'))
 
             retval = {}
             retval['pool'] = self.plugin._make_pool_dict(pool)

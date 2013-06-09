@@ -19,6 +19,7 @@
 
 import mock
 
+from quantum.common import exceptions
 from quantum import context
 from quantum.db.loadbalancer import loadbalancer_db as ldb
 from quantum import manager
@@ -152,7 +153,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             with self.vip(pool=pool) as vip:
                 with self.member(pool_id=vip['vip']['pool_id']):
                     self.assertRaises(
-                        Exception,
+                        exceptions.Invalid,
                         self.callbacks.get_logical_device,
                         context.get_admin_context(),
                         pool['pool']['id'],
