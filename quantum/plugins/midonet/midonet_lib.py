@@ -903,7 +903,7 @@ class MidoClient:
         port_group_id = None
 
         # handle source
-        if not remote_ip_prefix is None:
+        if remote_ip_prefix is not None:
             nw_src_address, nw_src_length = remote_ip_prefix.split('/')
         elif not remote_group_id is None:  # security group as a srouce
             source_pg = self.pg_manager.get_for_sg(tenant_id, remote_group_id)

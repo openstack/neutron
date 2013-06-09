@@ -99,7 +99,7 @@ def _set_rules(data):
                 for actual_policy in ['_'.join(item) for item in
                                       itertools.product(new_actions,
                                                         new_policies)]:
-                    if not actual_policy in policies:
+                    if actual_policy not in policies:
                         # New policy, same rule
                         LOG.info(_("Inserting policy:%(new_policy)s in place "
                                    "of deprecated policy:%(old_policy)s"),
