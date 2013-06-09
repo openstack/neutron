@@ -1543,6 +1543,26 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 400)
 
+    def test_fixed_ip_valid_ip_non_root_cidr(self):
+        with self.subnet(cidr='10.0.0.254/24') as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.0.2'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(res.status_int, 201)
+            port = self.deserialize(self.fmt, res)
+            self._delete('ports', port['port']['id'])
+
+    def test_fixed_ip_invalid_ip_non_root_cidr(self):
+        with self.subnet(cidr='10.0.0.254/24') as subnet:
+            # Allocate specific IP
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '10.0.1.2'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(res.status_int, 400)
+
     def test_requested_ips_only(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
