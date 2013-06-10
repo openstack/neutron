@@ -367,8 +367,13 @@ class Dnsmasq(DhcpLocalProcess):
                     self._format_option(i, 'dns-server',
                                         ','.join(subnet.dns_nameservers)))
 
-            host_routes = ["%s,%s" % (hr.destination, hr.nexthop)
-                           for hr in subnet.host_routes]
+            gateway = subnet.gateway_ip
+            host_routes = []
+            for hr in subnet.host_routes:
+                if hr.destination == "0.0.0.0/0":
+                    gateway = hr.nexthop
+                else:
+                    host_routes.append("%s,%s" % (hr.destination, hr.nexthop))
 
             # Add host routes for isolated network segments
             enable_metadata = (
@@ -388,9 +393,8 @@ class Dnsmasq(DhcpLocalProcess):
                                         ','.join(host_routes)))
 
             if subnet.ip_version == 4:
-                if subnet.gateway_ip:
-                    options.append(self._format_option(i, 'router',
-                                                       subnet.gateway_ip))
+                if gateway:
+                    options.append(self._format_option(i, 'router', gateway))
                 else:
                     options.append(self._format_option(i, 'router'))
 
