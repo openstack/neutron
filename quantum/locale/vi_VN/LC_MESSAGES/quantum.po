@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-09 12:11+0000\n"
+"POT-Creation-Date: 2013-06-10 12:11+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Vietnamese (Viet Nam) "
@@ -2690,54 +2690,55 @@ msgstr ""
 #, python-format
 msgid ""
 "Security group rule protocol %(protocol)s not supported. Only protocol "
-"values %(values)s supported."
+"values %(values)s and their integer representation (0 to 255) are "
+"supported."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:64
+#: quantum/extensions/securitygroup.py:65
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:69
+#: quantum/extensions/securitygroup.py:70
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:74
+#: quantum/extensions/securitygroup.py:75
 msgid "Must also specifiy protocol if port range is given."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:78
+#: quantum/extensions/securitygroup.py:79
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:83
+#: quantum/extensions/securitygroup.py:84
 #, python-format
 msgid "Security group %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:87
+#: quantum/extensions/securitygroup.py:88
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:91
+#: quantum/extensions/securitygroup.py:92
 msgid "Duplicate Security Group Rule in POST."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:95
+#: quantum/extensions/securitygroup.py:96
 #, python-format
 msgid "Security group rule already exists. Group id is %(id)s."
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:134
+#: quantum/extensions/securitygroup.py:144
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:212
+#: quantum/extensions/securitygroup.py:221
 msgid "Number of security groups allowed per tenant,-1 for unlimited"
 msgstr ""
 
-#: quantum/extensions/securitygroup.py:216
+#: quantum/extensions/securitygroup.py:225
 msgid "Number of security rules allowed per tenant, -1 for unlimited"
 msgstr ""
 
@@ -8400,6 +8401,9 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "Class %(class_name)s could not be found"
+#~ msgid ""
+#~ "Security group rule protocol %(protocol)s "
+#~ "not supported. Only protocol values "
+#~ "%(values)s supported."
 #~ msgstr ""
 

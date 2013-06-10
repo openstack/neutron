@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-09 12:11+0000\n"
+"POT-Creation-Date: 2013-06-10 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2708,57 +2708,58 @@ msgid "Default security group already exists."
 msgstr "預設安全群組已存在。"
 
 #: quantum/extensions/securitygroup.py:59
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "Security group rule protocol %(protocol)s not supported. Only protocol "
-"values %(values)s supported."
+"values %(values)s and their integer representation (0 to 255) are "
+"supported."
 msgstr "不支援安全群組規則通訊協定 %(protocol)s。僅支援通訊協定值 %(values)s。"
 
-#: quantum/extensions/securitygroup.py:64
+#: quantum/extensions/securitygroup.py:65
 msgid "Multiple tenant_ids in bulk security group rule create not allowed"
 msgstr "不容許主體安全群組規則建立作業中存在多個 tenant_id"
 
-#: quantum/extensions/securitygroup.py:69
+#: quantum/extensions/securitygroup.py:70
 msgid "Only remote_ip_prefix or remote_group_id may be provided."
 msgstr "只能提供 remote_ip_prefix 或 remote_group_id。"
 
-#: quantum/extensions/securitygroup.py:74
+#: quantum/extensions/securitygroup.py:75
 msgid "Must also specifiy protocol if port range is given."
 msgstr "如果給定埠範圍，則也必須指定通訊協定。"
 
-#: quantum/extensions/securitygroup.py:78
+#: quantum/extensions/securitygroup.py:79
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "一次只容許更新一個安全設定檔的規則"
 
-#: quantum/extensions/securitygroup.py:83
+#: quantum/extensions/securitygroup.py:84
 #, python-format
 msgid "Security group %(id)s does not exist"
 msgstr "安全群組 %(id)s 不存在"
 
-#: quantum/extensions/securitygroup.py:87
+#: quantum/extensions/securitygroup.py:88
 #, python-format
 msgid "Security group rule %(id)s does not exist"
 msgstr "安全群組規則 %(id)s 不存在"
 
-#: quantum/extensions/securitygroup.py:91
+#: quantum/extensions/securitygroup.py:92
 msgid "Duplicate Security Group Rule in POST."
 msgstr "POST 中的安全群組規則重複。"
 
-#: quantum/extensions/securitygroup.py:95
+#: quantum/extensions/securitygroup.py:96
 #, python-format
 msgid "Security group rule already exists. Group id is %(id)s."
 msgstr "安全群組規則已存在。群組 ID 為 %(id)s。"
 
-#: quantum/extensions/securitygroup.py:134
+#: quantum/extensions/securitygroup.py:144
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr "'%s' 不是整數或 UUID"
 
-#: quantum/extensions/securitygroup.py:212
+#: quantum/extensions/securitygroup.py:221
 msgid "Number of security groups allowed per tenant,-1 for unlimited"
 msgstr "每個 Tenant 所容許的安全群組數目，-1 表示無限制"
 
-#: quantum/extensions/securitygroup.py:216
+#: quantum/extensions/securitygroup.py:225
 msgid "Number of security rules allowed per tenant, -1 for unlimited"
 msgstr "每個 Tenant 所容許的安全規則數目，-1 表示無限制"
 
@@ -8487,7 +8488,4 @@ msgstr "找不到 lswitch：%s"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
-
-#~ msgid "Class %(class_name)s could not be found"
-#~ msgstr "找不到類別 %(class_name)s"
 
