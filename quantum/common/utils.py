@@ -30,11 +30,14 @@ from eventlet.green import subprocess
 from oslo.config import cfg
 
 from quantum.common import constants as q_const
+from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
+
+synchronized = lockutils.synchronized_with_prefix('quantum-')
 
 
 def read_cached_file(filename, cache_info, reload_func=None):

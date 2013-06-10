@@ -24,8 +24,8 @@
 import inspect
 import os
 
-from quantum.agent.linux import utils
-from quantum.openstack.common import lockutils
+from quantum.agent.linux import utils as linux_utils
+from quantum.common import utils
 from quantum.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -228,7 +228,7 @@ class IptablesManager(object):
         if _execute:
             self.execute = _execute
         else:
-            self.execute = utils.execute
+            self.execute = linux_utils.execute
 
         self.use_ipv6 = use_ipv6
         self.root_helper = root_helper
@@ -307,7 +307,7 @@ class IptablesManager(object):
 
         self._apply()
 
-    @lockutils.synchronized('iptables', 'quantum-', external=True)
+    @utils.synchronized('iptables', external=True)
     def _apply(self):
         """Apply the current in-memory set of iptables rules.
 

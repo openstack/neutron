@@ -18,8 +18,8 @@
 
 from oslo.config import cfg
 
+from quantum.common import utils
 from quantum.openstack.common import importutils
-from quantum.openstack.common import lockutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import periodic_task
 from quantum.plugins.common import constants
@@ -183,7 +183,7 @@ class QuantumManager(object):
                        "desc": plugin_inst.get_plugin_description()})
 
     @classmethod
-    @lockutils.synchronized("qmlock", "qml-")
+    @utils.synchronized("manager")
     def _create_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
