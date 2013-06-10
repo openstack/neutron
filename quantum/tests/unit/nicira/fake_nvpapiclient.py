@@ -260,7 +260,7 @@ class FakeClient:
         return fake_gwservice
 
     def _build_relation(self, src, dst, resource_type, relation):
-        if not relation in self.MANAGED_RELATIONS[resource_type]:
+        if relation not in self.MANAGED_RELATIONS[resource_type]:
             return  # Relation is not desired in output
         if not '_relations' in src or not src['_relations'].get(relation):
             return  # Item does not have relation
