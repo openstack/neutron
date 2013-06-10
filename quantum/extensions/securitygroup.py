@@ -57,7 +57,8 @@ class SecurityGroupDefaultAlreadyExists(qexception.InUse):
 
 class SecurityGroupRuleInvalidProtocol(qexception.InvalidInput):
     message = _("Security group rule protocol %(protocol)s not supported. "
-                "Only protocol values %(values)s supported.")
+                "Only protocol values %(values)s and their integer "
+                "representation (0 to 255) are supported.")
 
 
 class SecurityGroupRulesNotSingleTenant(qexception.InvalidInput):
@@ -95,11 +96,20 @@ class SecurityGroupRuleExists(qexception.InUse):
     message = _("Security group rule already exists. Group id is %(id)s.")
 
 
-def convert_protocol_to_case_insensitive(value):
+def convert_protocol(value):
     if value is None:
-        return value
+        return
     try:
-        return value.lower()
+        val = int(value)
+        if val >= 0 and val <= 255:
+            return val
+        raise SecurityGroupRuleInvalidProtocol(
+            protocol=value, values=sg_supported_protocols)
+    except (ValueError, TypeError):
+        if value.lower() in sg_supported_protocols:
+            return value.lower()
+        raise SecurityGroupRuleInvalidProtocol(
+            protocol=value, values=sg_supported_protocols)
     except AttributeError:
         raise SecurityGroupRuleInvalidProtocol(
             protocol=value, values=sg_supported_protocols)
@@ -178,8 +188,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:values': ['ingress', 'egress']}},
         'protocol': {'allow_post': True, 'allow_put': False,
                      'is_visible': True, 'default': None,
-                     'convert_to': convert_protocol_to_case_insensitive,
-                     'validate': {'type:values': sg_supported_protocols}},
+                     'convert_to': convert_protocol},
         'port_range_min': {'allow_post': True, 'allow_put': False,
                            'convert_to': convert_validate_port_value,
                            'default': None, 'is_visible': True},
