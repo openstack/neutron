@@ -381,8 +381,9 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
             json.dumps(gwservice_obj), cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to create L2 Gateway Service "
+                        "%(name)s for tenant %(id)s.")
+                      % {'name': display_name, 'id': tenant_id})
         raise
 
 
@@ -419,8 +420,9 @@ def create_lrouter(cluster, tenant_id, display_name, nexthop):
                                             cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to create Router "
+                        "%(name)s for tenant %(id)s.")
+                      % {'name': display_name, 'id': tenant_id})
         raise
 
 
@@ -432,8 +434,8 @@ def delete_lrouter(cluster, lrouter_id):
                           cluster=cluster)
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to delete Router "
+                        "Service %s."), lrouter_id)
         raise
 
 
@@ -445,8 +447,8 @@ def delete_l2_gw_service(cluster, gateway_id):
                           cluster=cluster)
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to delete L2 Gateway "
+                        "Service %s."), gateway_id)
         raise
 
 
@@ -459,8 +461,8 @@ def get_lrouter(cluster, lrouter_id):
                           cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to get Router "
+                        "Service %s."), lrouter_id)
         raise
 
 
@@ -472,8 +474,8 @@ def get_l2_gw_service(cluster, gateway_id):
                           cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to get L2 Gateway "
+                        "Service %s."), gateway_id)
         raise
 
 
@@ -520,8 +522,9 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
                           cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to update L2 Gateway Service "
+                        "%(id)s with name %(name)s.") %
+                      {'id': gateway_id, 'name': display_name})
         raise
 
 
@@ -546,8 +549,9 @@ def update_lrouter(cluster, lrouter_id, display_name, nexthop):
                           cluster=cluster))
     except NvpApiClient.NvpApiException:
         # just log and re-raise - let the caller handle it
-        LOG.exception(_("An exception occured while communicating with "
-                        "the NVP controller for cluster:%s"), cluster.name)
+        LOG.exception(_("Unable to update Router "
+                        "%(id)s with name %(name)s.") %
+                      {'id': lrouter_id, 'name': display_name})
         raise
 
 
