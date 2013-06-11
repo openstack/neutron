@@ -8,7 +8,6 @@ Babel>=0.9.6
 cliff
 coverage>=3.6
 discover
-distribute>=0.6.24
 fixtures>=0.3.12
 mock>=1.0b1
 mox==0.5.3
