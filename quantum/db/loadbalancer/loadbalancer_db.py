@@ -19,6 +19,7 @@ import sqlalchemy as sa
 from sqlalchemy import exc as sa_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
+from sqlalchemy.orm import validates
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions as q_exc
@@ -58,6 +59,16 @@ class PoolStatistics(model_base.BASEV2):
     bytes_out = sa.Column(sa.Integer, nullable=False)
     active_connections = sa.Column(sa.Integer, nullable=False)
     total_connections = sa.Column(sa.Integer, nullable=False)
+
+    @validates('bytes_in', 'bytes_out',
+               'active_connections', 'total_connections')
+    def validate_non_negative_int(self, key, value):
+        if value < 0:
+            data = {'key': key, 'value': value}
+            raise ValueError(_('The %(key)s field can not have '
+                               'negative value. '
+                               'Current value is %(value)d.') % data)
+        return value
 
 
 class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):

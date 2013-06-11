@@ -936,6 +936,21 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for key in keys:
                 self.assertEqual(pool_obj.stats.__dict__[key], 0)
 
+    def test_update_pool_stats_with_negative_values(self):
+        stats_data = {"bytes_in": -1,
+                      "bytes_out": -2,
+                      "active_connections": -3,
+                      "total_connections": -4}
+        for k, v in stats_data.items():
+            self._test_update_pool_stats_with_negative_value(k, v)
+
+    def _test_update_pool_stats_with_negative_value(self, k, v):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            ctx = context.get_admin_context()
+            self.assertRaises(ValueError, self.plugin._update_pool_stats,
+                              ctx, pool_id, {k: v})
+
     def test_update_pool_stats(self):
         stats_data = {"bytes_in": 1,
                       "bytes_out": 2,
