@@ -86,10 +86,30 @@ def main(argv):
         print "\tController endpoint: %s" % controller
         nvplib.check_cluster_connectivity(cluster)
         gateway_services = get_gateway_services(cluster)
-        for svc_type in ["L2GatewayServiceConfig",
-                         "L3GatewayServiceConfig"]:
+        default_gateways = {
+            "L2GatewayServiceConfig": cfg.CONF.default_l2_gw_service_uuid,
+            "L3GatewayServiceConfig": cfg.CONF.default_l3_gw_service_uuid}
+        errors = 0
+        for svc_type in default_gateways.keys():
             for uuid in gateway_services[svc_type]:
                 print "\t\tGateway(%s) uuid: %s" % (svc_type, uuid)
+            if (default_gateways[svc_type] and
+                default_gateways[svc_type] not in gateway_services):
+                print ("\t\t\tError: specified default %s gateway (%s) is "
+                       "missing from NVP Gateway Services!" % (svc_type,
+                       default_gateways[svc_type]))
+                errors += 1
         transport_zones = get_transport_zones(cluster)
         print "\tTransport zones: %s" % transport_zones
-    print "Done."
+        if cfg.CONF.default_tz_uuid not in transport_zones:
+            print ("\t\tError: specified default transport zone "
+                   "(%s) is missing from NVP transport zones!"
+                   % cfg.CONF.default_tz_uuid)
+            errors += 1
+
+    if errors:
+        print ("\nThere are %d errors with your configuration. "
+               " Please, revise!" % errors)
+        sys.exit(1)
+    else:
+        print "Done."
