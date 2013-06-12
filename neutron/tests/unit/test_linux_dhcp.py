@@ -503,11 +503,13 @@ class TestDnsmasq(TestBase):
         expected = """
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,249,20.0.0.1/24,20.0.0.1
 tag:tag0,option:router,192.168.0.1
 tag:tag1,option:dns-server,%s
-tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
-                                                            fake_v6_cidr,
-                                                            fake_v6)
+tag:tag1,option:classless-static-route,%s,%s
+tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
+                                  fake_v6_cidr, fake_v6,
+                                  fake_v6_cidr, fake_v6)
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
@@ -524,9 +526,10 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:router,10.0.0.1
 tag:tag1,option:dns-server,%s
-tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
-                                                            fake_v6_cidr,
-                                                            fake_v6)
+tag:tag1,option:classless-static-route,%s,%s
+tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
+                                  fake_v6_cidr, fake_v6,
+                                  fake_v6_cidr, fake_v6)
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
@@ -540,6 +543,7 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
         expected = """
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,249,20.0.0.1/24,20.0.0.1
 tag:tag0,option:router,192.168.0.1""".lstrip()
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
@@ -553,6 +557,7 @@ tag:tag0,option:router,192.168.0.1""".lstrip()
         expected = """
 tag0,option:dns-server,8.8.8.8
 tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag0,249,20.0.0.1/24,20.0.0.1
 tag0,option:router,192.168.0.1""".lstrip()
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/opts'
@@ -565,6 +570,7 @@ tag0,option:router,192.168.0.1""".lstrip()
     def test_output_opts_file_no_gateway(self):
         expected = """
 tag:tag0,option:classless-static-route,169.254.169.254/32,192.168.1.1
+tag:tag0,249,169.254.169.254/32,192.168.1.1
 tag:tag0,option:router""".lstrip()
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
@@ -594,11 +600,13 @@ tag:tag0,option:router""".lstrip()
         exp_opt_data = """
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,249,20.0.0.1/24,20.0.0.1
 tag:tag0,option:router,192.168.0.1
 tag:tag1,option:dns-server,%s
-tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
-                                                            fake_v6_cidr,
-                                                            fake_v6)
+tag:tag1,option:classless-static-route,%s,%s
+tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
+                                  fake_v6_cidr, fake_v6,
+                                  fake_v6_cidr, fake_v6)
 
         exp_args = ['kill', '-HUP', 5]
 
@@ -638,11 +646,13 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
         exp_opt_data = """
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
+tag:tag0,249,20.0.0.1/24,20.0.0.1
 tag:tag0,option:router,192.168.0.1
 tag:tag1,option:dns-server,%s
-tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
-                                                            fake_v6_cidr,
-                                                            fake_v6)
+tag:tag1,option:classless-static-route,%s,%s
+tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
+                                  fake_v6_cidr, fake_v6,
+                                  fake_v6_cidr, fake_v6)
 
         exp_args = ['cat', '/proc/5/cmdline']
 
