@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-11 12:11+0000\n"
+"POT-Creation-Date: 2013-06-12 12:10+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2366,11 +2366,16 @@ msgid ""
 "sort '%(resource)s'"
 msgstr "屬性 '%(attr)s' 是對其他資源的參照，無法由排序 '%(resource)s' 使用"
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:232
+#: quantum/db/loadbalancer/loadbalancer_db.py:68
+#, python-format
+msgid "The %(key)s field can not have negative value. Current value is %(value)d."
+msgstr ""
+
+#: quantum/db/loadbalancer/loadbalancer_db.py:243
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr "應該給這種類型的階段作業持續性指定 'cookie_name'。"
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:236
+#: quantum/db/loadbalancer/loadbalancer_db.py:247
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr "這種類型的階段作業持續性不接受 'cookie_name'"
 
