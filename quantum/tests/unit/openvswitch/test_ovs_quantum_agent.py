@@ -25,6 +25,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import ovs_lib
 from quantum.openstack.common.rpc import common as rpc_common
 from quantum.plugins.openvswitch.agent import ovs_quantum_agent
+from quantum.plugins.openvswitch.common import constants
 from quantum.tests import base
 
 
@@ -41,6 +42,7 @@ class CreateAgentConfigMap(base.BaseTestCase):
         self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
+        cfg.CONF.set_override('tunnel_type', 'gre', group='AGENT')
         with testtools.ExpectedException(ValueError):
             ovs_quantum_agent.create_agent_config_map(cfg.CONF)
 
@@ -310,3 +312,43 @@ class TestOvsQuantumAgent(base.BaseTestCase):
             lvm.vif_ports = {"vif1": mock.Mock()}
             self.agent.port_unbound("vif3", "netuid12345")
             self.assertEqual(reclvl_fn.call_count, 2)
+
+    def _check_ovs_vxlan_version(self, installed_version, min_vers,
+                                 expecting_ok):
+        with mock.patch(
+                'quantum.agent.linux.ovs_lib.get_installed_ovs_klm_version'
+        ) as klm_cmd:
+            with mock.patch(
+                'quantum.agent.linux.ovs_lib.get_installed_ovs_usr_version'
+            ) as usr_cmd:
+                try:
+                    klm_cmd.return_value = installed_version
+                    usr_cmd.return_value = installed_version
+                    self.agent.tunnel_type = 'vxlan'
+                    ovs_quantum_agent.check_ovs_version(min_vers,
+                                                        root_helper='sudo')
+                    version_ok = True
+                except SystemExit as e:
+                    self.assertEquals(e.code, 1)
+                    version_ok = False
+            self.assertEqual(version_ok, expecting_ok)
+
+    def test_check_minimum_version(self):
+        self._check_ovs_vxlan_version('1.10',
+                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+                                      expecting_ok=True)
+
+    def test_check_future_version(self):
+        self._check_ovs_vxlan_version('1.11',
+                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+                                      expecting_ok=True)
+
+    def test_check_fail_version(self):
+        self._check_ovs_vxlan_version('1.9',
+                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+                                      expecting_ok=False)
+
+    def test_check_fail_no_version(self):
+        self._check_ovs_vxlan_version(None,
+                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+                                      expecting_ok=False)

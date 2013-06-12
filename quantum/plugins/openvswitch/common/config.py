@@ -17,6 +17,7 @@
 from oslo.config import cfg
 
 from quantum.agent.common import config
+from quantum.plugins.openvswitch.common import constants
 from quantum import scheduler
 
 
@@ -44,7 +45,7 @@ ovs_opts = [
                 help=_("List of <physical_network>:<bridge>")),
     cfg.StrOpt('tenant_network_type', default='local',
                help=_("Network type for tenant networks "
-                      "(local, vlan, gre, or none)")),
+                      "(local, vlan, gre, vxlan, or none)")),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
                 help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
@@ -58,6 +59,11 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
+    cfg.StrOpt('tunnel_type', default=None,
+               help=_("Network type for agent tunnel networks "
+                      "(gre or vxlan)")),
+    cfg.IntOpt('vxlan_udp_port', default=constants.VXLAN_UDP_PORT,
+               help=_("The UDP port to use for VXLAN tunnels.")),
 ]
 
 
