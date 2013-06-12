@@ -220,7 +220,7 @@ class UnixDomainMetadataProxy(object):
                 if os.path.exists(cfg.CONF.metadata_proxy_socket):
                     raise
         else:
-            os.makedirs(dirname, 0755)
+            os.makedirs(dirname, 0o755)
 
     def run(self):
         server = UnixDomainWSGIServer('quantum-metadata-agent')

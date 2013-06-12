@@ -40,11 +40,11 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         super(TestCiscoNexusPlugin, self).setUp()
         self.tenant_id = "test_tenant_cisco1"
         self.net_name = "test_network_cisco1"
-        self.net_id = 000007
+        self.net_id = 7
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 267
         self.second_net_name = "test_network_cisco2"
-        self.second_net_id = 000005
+        self.second_net_id = 5
         self.second_vlan_name = "q-" + str(self.second_net_id) + "vlan"
         self.second_vlan_id = 265
         self._nexus_switches = {

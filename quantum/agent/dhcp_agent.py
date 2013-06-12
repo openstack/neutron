@@ -638,7 +638,7 @@ class DhcpLeaseRelay(object):
                 if os.path.exists(cfg.CONF.dhcp_lease_relay_socket):
                     raise
         else:
-            os.makedirs(dirname, 0755)
+            os.makedirs(dirname, 0o755)
 
     def _handler(self, client_sock, client_addr):
         """Handle incoming lease relay stream connection.

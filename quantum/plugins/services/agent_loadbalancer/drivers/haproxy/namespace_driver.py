@@ -150,7 +150,7 @@ class HaproxyNSDriver(object):
         conf_dir = os.path.join(confs_dir, pool_id)
         if ensure_state_dir:
             if not os.path.isdir(conf_dir):
-                os.makedirs(conf_dir, 0755)
+                os.makedirs(conf_dir, 0o755)
         return os.path.join(conf_dir, kind)
 
     def _plug(self, namespace, port, reuse_existing=True):

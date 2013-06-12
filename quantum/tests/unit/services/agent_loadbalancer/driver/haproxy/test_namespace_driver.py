@@ -286,4 +286,4 @@ class TestHaproxyNSDriver(base.BaseTestCase):
         with mock.patch('os.makedirs') as mkdir:
             path = self.driver._get_state_file_path('pool_id', 'conf')
             self.assertEqual('/the/path/pool_id/conf', path)
-            mkdir.assert_called_once_with('/the/path/pool_id', 0755)
+            mkdir.assert_called_once_with('/the/path/pool_id', 0o755)
