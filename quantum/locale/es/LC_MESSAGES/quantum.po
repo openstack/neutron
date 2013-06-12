@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-11 12:11+0000\n"
+"POT-Creation-Date: 2013-06-12 12:10+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish "
@@ -2349,11 +2349,16 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:232
+#: quantum/db/loadbalancer/loadbalancer_db.py:68
+#, python-format
+msgid "The %(key)s field can not have negative value. Current value is %(value)d."
+msgstr ""
+
+#: quantum/db/loadbalancer/loadbalancer_db.py:243
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr ""
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:236
+#: quantum/db/loadbalancer/loadbalancer_db.py:247
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr ""
 

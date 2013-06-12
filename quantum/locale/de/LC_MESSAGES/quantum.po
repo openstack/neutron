@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-11 12:11+0000\n"
+"POT-Creation-Date: 2013-06-12 12:10+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -2540,11 +2540,16 @@ msgstr ""
 "Das Attribut %(attr)s ist ein Verweis auf eine andere Ressource und kann "
 "bei der Sortierung von %(resource)s nicht verwendet werden"
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:232
+#: quantum/db/loadbalancer/loadbalancer_db.py:68
+#, python-format
+msgid "The %(key)s field can not have negative value. Current value is %(value)d."
+msgstr ""
+
+#: quantum/db/loadbalancer/loadbalancer_db.py:243
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr "'cookie_name' sollte für diesen Sitzungspersistenztyp angegeben werden."
 
-#: quantum/db/loadbalancer/loadbalancer_db.py:236
+#: quantum/db/loadbalancer/loadbalancer_db.py:247
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr "'cookie_name' ist für diesen Sitzungspersistenztyp nicht zulässig"
 
