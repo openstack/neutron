@@ -63,6 +63,18 @@ database_opts = [
     cfg.BoolOpt('sql_dbpool_enable',
                 default=False,
                 help=_("Enable the use of eventlet's db_pool for MySQL")),
+    cfg.IntOpt('sqlalchemy_pool_size',
+               default=None,
+               help=_("Maximum number of SQL connections to keep open in a "
+                      "QueuePool in SQLAlchemy")),
+    cfg.IntOpt('sqlalchemy_max_overflow',
+               default=None,
+               help=_("If set, use this value for max_overflow with "
+                      "sqlalchemy")),
+    cfg.IntOpt('sqlalchemy_pool_timeout',
+               default=None,
+               help=_("If set, use this value for pool_timeout with "
+                      "sqlalchemy")),
 ]
 
 cfg.CONF.register_opts(database_opts, "DATABASE")
@@ -124,6 +136,16 @@ def configure_db():
             'echo': False,
             'convert_unicode': True,
         }
+
+        if cfg.CONF.DATABASE.sqlalchemy_pool_size is not None:
+            pool_size = cfg.CONF.DATABASE.sqlalchemy_pool_size
+            engine_args['pool_size'] = pool_size
+        if cfg.CONF.DATABASE.sqlalchemy_max_overflow is not None:
+            max_overflow = cfg.CONF.DATABASE.sqlalchemy_max_overflow
+            engine_args['max_overflow'] = max_overflow
+        if cfg.CONF.DATABASE.sqlalchemy_pool_timeout is not None:
+            pool_timeout = cfg.CONF.DATABASE.sqlalchemy_pool_timeout
+            engine_args['pool_timeout'] = pool_timeout
 
         if 'mysql' in connection_dict.drivername:
             engine_args['listeners'] = [MySQLPingListener()]
