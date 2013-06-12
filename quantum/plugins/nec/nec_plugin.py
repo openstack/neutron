@@ -24,6 +24,7 @@ from quantum.common import rpc as q_rpc
 from quantum.common import topics
 from quantum.db import agents_db
 from quantum.db import agentschedulers_db
+from quantum.db import db_base_plugin_v2
 from quantum.db import dhcp_rpc_base
 from quantum.db import extraroute_db
 from quantum.db import l3_gwmode_db
@@ -316,6 +317,15 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         LOG.debug(_("NECPluginV2.delete_network() called, id=%s ."), id)
         net = super(NECPluginV2, self).get_network(context, id)
         tenant_id = net['tenant_id']
+
+        # Make sure auto-delete ports on OFC are deleted.
+        filter = {'network_id': [id],
+                  'device_owner': db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS}
+        auto_delete_ports = self.get_ports(context, filters=filter)
+        for port in auto_delete_ports:
+            LOG.debug(_('delete_network(): deleting auto-delete port'
+                        ' from OFC: %s'), port)
+            self.deactivate_port(context, port)
 
         # get packet_filters associated with the network
         if self.packet_filter_enabled:
