@@ -20,7 +20,7 @@ import contextlib
 import mock
 from oslo.config import cfg
 
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import agent
+from quantum.services.loadbalancer.drivers.haproxy import agent
 from quantum.tests import base
 
 

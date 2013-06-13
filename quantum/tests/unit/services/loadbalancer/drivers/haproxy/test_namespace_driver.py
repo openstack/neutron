@@ -20,7 +20,7 @@ import contextlib
 import mock
 
 from quantum.common import exceptions
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     namespace_driver
 )
 from quantum.tests import base

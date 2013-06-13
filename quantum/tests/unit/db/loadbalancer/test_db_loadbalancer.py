@@ -28,7 +28,7 @@ from quantum.db.loadbalancer import loadbalancer_db as ldb
 import quantum.extensions
 from quantum.extensions import loadbalancer
 from quantum.plugins.common import constants
-from quantum.plugins.services.agent_loadbalancer import (
+from quantum.services.loadbalancer import (
     plugin as loadbalancer_plugin
 )
 from quantum.tests.unit import test_db_plugin
@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 
 DB_CORE_PLUGIN_KLASS = 'quantum.db.db_base_plugin_v2.QuantumDbPluginV2'
 DB_LB_PLUGIN_KLASS = (
-    "quantum.plugins.services.agent_loadbalancer."
+    "quantum.services.loadbalancer."
     "plugin.LoadBalancerPlugin"
 )
 ROOTDIR = os.path.dirname(__file__) + '../../../..'

@@ -22,20 +22,20 @@ import mock
 
 from oslo.config import cfg as config
 
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import cfg
+from quantum.services.loadbalancer.drivers.haproxy import cfg
 from quantum.tests import base
 
 
 class TestHaproxyCfg(base.BaseTestCase):
     def test_save_config(self):
         with contextlib.nested(
-                mock.patch('quantum.plugins.services.agent_loadbalancer.'
+                mock.patch('quantum.services.loadbalancer.'
                            'drivers.haproxy.cfg._build_global'),
-                mock.patch('quantum.plugins.services.agent_loadbalancer.'
+                mock.patch('quantum.services.loadbalancer.'
                            'drivers.haproxy.cfg._build_defaults'),
-                mock.patch('quantum.plugins.services.agent_loadbalancer.'
+                mock.patch('quantum.services.loadbalancer.'
                            'drivers.haproxy.cfg._build_frontend'),
-                mock.patch('quantum.plugins.services.agent_loadbalancer.'
+                mock.patch('quantum.services.loadbalancer.'
                            'drivers.haproxy.cfg._build_backend'),
                 mock.patch('quantum.agent.linux.utils.replace_file')
         ) as (b_g, b_d, b_f, b_b, replace):

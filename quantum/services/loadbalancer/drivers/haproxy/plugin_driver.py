@@ -27,9 +27,7 @@ from quantum.openstack.common import log as logging
 from quantum.openstack.common import rpc
 from quantum.openstack.common.rpc import proxy
 from quantum.plugins.common import constants
-from quantum.plugins.services.agent_loadbalancer.drivers import (
-    abstract_driver
-)
+from quantum.services.loadbalancer.drivers import abstract_driver
 
 LOG = logging.getLogger(__name__)
 

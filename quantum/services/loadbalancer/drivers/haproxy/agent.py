@@ -23,7 +23,7 @@ from quantum.agent.common import config
 from quantum.agent.linux import interface
 from quantum.openstack.common.rpc import service as rpc_service
 from quantum.openstack.common import service
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     agent_manager as manager,
     plugin_driver
 )

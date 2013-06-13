@@ -24,7 +24,7 @@ from quantum.db.loadbalancer import loadbalancer_db as ldb
 from quantum import manager
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     plugin_driver
 )
 from quantum.tests import base
