@@ -264,3 +264,67 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.ofc.assert_has_calls(expected)
             self.assertEqual(2, self.ofc.create_ofc_port.call_count)
             self.assertEqual(1, self.ofc.delete_ofc_port.call_count)
+
+
+class TestNecPluginOfcManager(NecPluginV2TestCase):
+
+    def setUp(self):
+        self.addCleanup(mock.patch.stopall)
+        ofc_manager_cls = mock.patch(OFC_MANAGER).start()
+        ofc_driver = ofc_manager_cls.return_value.driver
+        ofc_driver.filter_supported.return_value = False
+
+        super(TestNecPluginOfcManager, self).setUp()
+
+        self.context = q_context.get_admin_context()
+        plugin = manager.QuantumManager.get_plugin()
+        self.ofc = plugin.ofc
+        self.callbacks = nec_plugin.NECPluginV2RPCCallbacks(plugin)
+
+    def _create_resource(self, resource, data):
+        collection = resource + 's'
+        data = {resource: data}
+        req = self.new_create_request(collection, data)
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        return res[resource]
+
+    def _rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
+                             datapath_id="0xabc", added=[], removed=[]):
+        kwargs = {'topic': topics.AGENT,
+                  'agent_id': agent_id,
+                  'datapath_id': datapath_id,
+                  'port_added': added, 'port_removed': removed}
+        self.callbacks.update_ports(self.context, **kwargs)
+
+    def test_delete_network_with_dhcp_port(self):
+        self.ofc.exists_ofc_tenant.return_value = False
+        self.ofc.exists_ofc_port.side_effect = [False, True]
+
+        ctx = mock.ANY
+        with self.network() as network:
+            with self.subnet(network=network):
+                net = network['network']
+                p = self._create_resource('port',
+                                          {'network_id': net['id'],
+                                           'tenant_id': net['tenant_id'],
+                                           'device_owner': 'network:dhcp',
+                                           'device_id': 'dhcp-port1'})
+                # Make sure that the port is created on OFC.
+                portinfo = {'id': p['id'], 'port_no': 123}
+                self._rpcapi_update_ports(added=[portinfo])
+                # In a case of dhcp port, the port is deleted automatically
+                # when delete_network.
+
+        expected = [
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_tenant(ctx, self._tenant_id),
+            mock.call.create_ofc_network(ctx, self._tenant_id,
+                                         net['id'], net['name']),
+            mock.call.exists_ofc_port(ctx, p['id']),
+            mock.call.create_ofc_port(ctx, p['id'], mock.ANY),
+            mock.call.exists_ofc_port(ctx, p['id']),
+            mock.call.delete_ofc_port(ctx, p['id'], mock.ANY),
+            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+        ]
+        self.ofc.assert_has_calls(expected)
