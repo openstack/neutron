@@ -166,7 +166,8 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
                 loadbalancer_db.PoolMonitorAssociation
             ).filter_by(monitor_id=hm['id'])
             for assoc in qry:
-                self.driver.update_health_monitor(context, old_hm, hm, assoc)
+                self.driver.update_health_monitor(context, old_hm,
+                                                  hm, assoc['pool_id'])
         return hm
 
     def _delete_db_pool_health_monitor(self, context, hm_id, pool_id):

@@ -321,3 +321,41 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                         mock.ANY,
                         vip['vip']['pool_id']
                     )
+
+    def test_update_health_monitor_associated_with_pool(self):
+        with self.health_monitor(type='HTTP') as monitor:
+            with self.pool() as pool:
+                data = {
+                    'health_monitor': {
+                        'id': monitor['health_monitor']['id'],
+                        'tenant_id': self._tenant_id
+                    }
+                }
+                req = self.new_create_request(
+                    'pools',
+                    data,
+                    fmt=self.fmt,
+                    id=pool['pool']['id'],
+                    subresource='health_monitors')
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 201)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY,
+                    pool['pool']['id']
+                )
+
+                self.mock_api.reset_mock()
+                data = {'health_monitor': {'delay': 20,
+                                           'timeout': 20,
+                                           'max_retries': 2,
+                                           'admin_state_up': False}}
+                req = self.new_update_request("health_monitors",
+                                              data,
+                                              monitor['health_monitor']['id'])
+                req.get_response(self.ext_api)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY,
+                    pool['pool']['id']
+                )
+
+    # TODO(obondarev): improve plugin_driver test coverage (bug 1191007)

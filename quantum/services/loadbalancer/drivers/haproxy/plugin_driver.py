@@ -271,8 +271,9 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
         self.plugin._delete_db_member(context, member['id'])
         self.agent_rpc.modify_pool(context, member['pool_id'])
 
-    def update_health_monitor(self, context, healthmon, pool_id):
-        # healthmon is unused here because agent will fetch what is necessary
+    def update_health_monitor(self, context, old_health_monitor,
+                              health_monitor, pool_id):
+        # monitors are unused here because agent will fetch what is necessary
         self.agent_rpc.modify_pool(context, pool_id)
 
     def delete_health_monitor(self, context, healthmon_id, pool_id):
