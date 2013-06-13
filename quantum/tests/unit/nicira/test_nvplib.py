@@ -94,6 +94,91 @@ class TestNvplibNatRules(NvplibTestCase):
                          resp_obj['match']['destination_ip_addresses'])
 
 
+class NvplibNegativeTests(base.BaseTestCase):
+
+    def setUp(self):
+        # mock nvp api client
+        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
+        self.fc = fake_nvpapiclient.FakeClient(etc_path)
+        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
+                                      % NICIRA_PKG_PATH, autospec=True)
+        instance = self.mock_nvpapi.start()
+        instance.return_value.login.return_value = "the_cookie"
+
+        def _faulty_request(*args, **kwargs):
+            raise nvplib.NvpApiClient.NvpApiException
+
+        instance.return_value.request.side_effect = _faulty_request
+        self.fake_cluster = nvp_cluster.NVPCluster(
+            name='fake-cluster', nvp_controllers=['1.1.1.1:999'],
+            default_tz_uuid=_uuid(), nvp_user='foo', nvp_password='bar')
+        self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
+            ('1.1.1.1', '999', True),
+            self.fake_cluster.nvp_user, self.fake_cluster.nvp_password,
+            self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
+            self.fake_cluster.retries, self.fake_cluster.redirects)
+
+        super(NvplibNegativeTests, self).setUp()
+        self.addCleanup(self.fc.reset_all)
+        self.addCleanup(self.mock_nvpapi.stop)
+
+    def test_create_l2_gw_service_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.create_l2_gw_service,
+                          self.fake_cluster,
+                          'fake-tenant',
+                          'fake-gateway',
+                          [{'id': _uuid(),
+                          'interface_name': 'xxx'}])
+
+    def test_delete_l2_gw_service_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.delete_l2_gw_service,
+                          self.fake_cluster,
+                          'fake-gateway')
+
+    def test_get_l2_gw_service_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.get_l2_gw_service,
+                          self.fake_cluster,
+                          'fake-gateway')
+
+    def test_update_l2_gw_service_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.update_l2_gw_service,
+                          self.fake_cluster,
+                          'fake-gateway',
+                          'pluto')
+
+    def test_create_lrouter_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.create_lrouter,
+                          self.fake_cluster,
+                          'pluto',
+                          'fake_router',
+                          'my_hop')
+
+    def test_delete_lrouter_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.delete_lrouter,
+                          self.fake_cluster,
+                          'fake_router')
+
+    def test_get_lrouter_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.get_lrouter,
+                          self.fake_cluster,
+                          'fake_router')
+
+    def test_update_lrouter_on_failure(self):
+        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+                          nvplib.update_lrouter,
+                          self.fake_cluster,
+                          'fake_router',
+                          'pluto',
+                          'new_hop')
+
+
 class NvplibL2GatewayTestCase(NvplibTestCase):
 
     def _create_gw_service(self, node_uuid, display_name):
