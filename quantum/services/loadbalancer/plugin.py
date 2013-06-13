@@ -25,8 +25,7 @@ from quantum.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_DRIVER = ("quantum.plugins.services.agent_loadbalancer"
-                  ".drivers.haproxy"
+DEFAULT_DRIVER = ("quantum.services.loadbalancer.drivers.haproxy"
                   ".plugin_driver.HaproxyOnHostPluginDriver")
 
 lbaas_plugin_opts = [

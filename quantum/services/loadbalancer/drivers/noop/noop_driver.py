@@ -18,7 +18,7 @@
 
 
 from quantum.openstack.common import log as logging
-from quantum.plugins.services.agent_loadbalancer.drivers import (
+from quantum.services.loadbalancer.drivers import (
     abstract_driver
 )
 

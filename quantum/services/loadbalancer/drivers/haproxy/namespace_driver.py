@@ -25,9 +25,7 @@ from quantum.agent.linux import ip_lib
 from quantum.agent.linux import utils
 from quantum.common import exceptions
 from quantum.openstack.common import log as logging
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
-    cfg as hacfg
-)
+from quantum.services.loadbalancer.drivers.haproxy import cfg as hacfg
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qlbaas-'

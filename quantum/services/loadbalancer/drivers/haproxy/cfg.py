@@ -22,7 +22,7 @@ from oslo.config import cfg
 
 from quantum.agent.linux import utils
 from quantum.plugins.common import constants as qconstants
-from quantum.plugins.services.agent_loadbalancer import constants
+from quantum.services.loadbalancer import constants
 
 
 PROTOCOL_MAP = {

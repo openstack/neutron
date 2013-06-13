@@ -18,7 +18,7 @@
 
 import mock
 
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     agent_api as api
 )
 from quantum.tests import base

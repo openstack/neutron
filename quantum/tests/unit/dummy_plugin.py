@@ -23,7 +23,7 @@ from quantum.extensions import servicetype
 from quantum import manager
 from quantum.openstack.common import uuidutils
 from quantum.plugins.common import constants
-from quantum.plugins.services.service_base import ServicePluginBase
+from quantum.services.service_base import ServicePluginBase
 
 
 DUMMY_PLUGIN_NAME = "dummy_plugin"

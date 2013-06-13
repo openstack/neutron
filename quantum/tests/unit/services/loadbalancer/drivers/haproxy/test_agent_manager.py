@@ -20,7 +20,7 @@ import contextlib
 
 import mock
 
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     agent_manager as manager
 )
 from quantum.tests import base
@@ -147,7 +147,7 @@ class TestManager(base.BaseTestCase):
         self.mock_importer = mock.patch.object(manager, 'importutils').start()
 
         rpc_mock_cls = mock.patch(
-            'quantum.plugins.services.agent_loadbalancer.drivers'
+            'quantum.services.loadbalancer.drivers'
             '.haproxy.agent_api.LbaasAgentApi'
         ).start()
 

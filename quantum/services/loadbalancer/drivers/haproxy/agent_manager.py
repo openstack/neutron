@@ -25,7 +25,7 @@ from quantum import context
 from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import periodic_task
-from quantum.plugins.services.agent_loadbalancer.drivers.haproxy import (
+from quantum.services.loadbalancer.drivers.haproxy import (
     agent_api,
     plugin_driver
 )
