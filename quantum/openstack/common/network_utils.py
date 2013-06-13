@@ -26,8 +26,8 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_host_port(address, default_port=None):
-    """
-    Interpret a string as a host:port pair.
+    """Interpret a string as a host:port pair.
+
     An IPv6 address MUST be escaped if accompanied by a port,
     because otherwise ambiguity ensues: 2001:db8:85a3::8a2e:370:7334
     means both [2001:db8:85a3::8a2e:370:7334] and

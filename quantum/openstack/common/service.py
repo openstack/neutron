@@ -271,7 +271,7 @@ class ProcessLauncher(object):
         return wrap
 
     def wait(self):
-        """Loop waiting on children to die and respawning as necessary"""
+        """Loop waiting on children to die and respawning as necessary."""
 
         LOG.debug(_('Full set of CONF:'))
         CONF.log_opt_values(LOG, std_logging.DEBUG)

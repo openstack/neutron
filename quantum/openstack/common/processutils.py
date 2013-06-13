@@ -74,9 +74,9 @@ def _subprocess_setup():
 
 
 def execute(*cmd, **kwargs):
-    """
-    Helper method to shell out and execute a command through subprocess with
-    optional retry.
+    """Helper method to shell out and execute a command through subprocess.
+
+    Allows optional retry.
 
     :param cmd:             Passed to subprocess.Popen.
     :type cmd:              string
@@ -187,8 +187,7 @@ def execute(*cmd, **kwargs):
 
 
 def trycmd(*args, **kwargs):
-    """
-    A wrapper around execute() to more easily handle warnings and errors.
+    """A wrapper around execute() to more easily handle warnings and errors.
 
     Returns an (out, err) tuple of strings containing the output of
     the command's stdout and stderr.  If 'err' is not empty then the
@@ -203,7 +202,7 @@ def trycmd(*args, **kwargs):
     try:
         out, err = execute(*args, **kwargs)
         failed = False
-    except ProcessExecutionError, exn:
+    except ProcessExecutionError as exn:
         out, err = '', str(exn)
         failed = True
 

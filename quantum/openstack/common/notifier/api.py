@@ -56,7 +56,7 @@ class BadPriorityException(Exception):
 
 
 def notify_decorator(name, fn):
-    """ decorator for notify which is used from utils.monkey_patch()
+    """Decorator for notify which is used from utils.monkey_patch().
 
         :param name: name of the function
         :param function: - object of the function

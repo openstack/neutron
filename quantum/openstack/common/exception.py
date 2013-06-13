@@ -110,8 +110,7 @@ def wrap_exception(f):
 
 
 class OpenstackException(Exception):
-    """
-    Base Exception
+    """Base Exception class.
 
     To correctly use this class, inherit from it and define
     a 'message' property. That message will get printf'd

@@ -459,10 +459,11 @@ def getLogger(name='unknown', version='unknown'):
 
 
 def getLazyLogger(name='unknown', version='unknown'):
-    """
-    create a pass-through logger that does not create the real logger
+    """Returns lazy logger.
+
+    Creates a pass-through logger that does not create the real logger
     until it is really needed and delegates all calls to the real logger
-    once it is created
+    once it is created.
     """
     return LazyAdapter(name, version)
 
