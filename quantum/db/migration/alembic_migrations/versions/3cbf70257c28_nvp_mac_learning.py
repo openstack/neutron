@@ -18,14 +18,14 @@
 """nvp_mac_learning
 
 Revision ID: 3cbf70257c28
-Revises: 176a85fc7d79
+Revises: 5ac71e65402c
 Create Date: 2013-05-15 10:15:50.875314
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '3cbf70257c28'
-down_revision = '176a85fc7d79'
+down_revision = '5ac71e65402c'
 
 # Change to ['*'] if this migration applies to all plugins
 
