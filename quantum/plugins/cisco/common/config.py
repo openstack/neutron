@@ -55,7 +55,7 @@ cisco_opts = [
                        'l2network_vlan_mgr_v2.L2NetworkVLANMgr',
                help=_("Manager Class")),
     cfg.StrOpt('nexus_driver',
-               default='quantum.plugins.cisco.tests.unit.v2.nexus.'
+               default='quantum.plugins.cisco.test.nexus.'
                        'fake_nexus_driver.CiscoNEXUSFakeDriver',
                help=_("Nexus Driver Name")),
 ]
