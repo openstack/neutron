@@ -114,5 +114,13 @@
     "get_network_profile": "",
     "update_policy_profiles": "rule:admin_only",
     "get_policy_profiles": "",
-    "get_policy_profile": ""
+    "get_policy_profile": "",
+
+    "create_metering_label": "rule:admin_only",
+    "delete_metering_label": "rule:admin_only",
+    "get_metering_label": "rule:admin_only",
+
+    "create_metering_label_rule": "rule:admin_only",
+    "delete_metering_label_rule": "rule:admin_only",
+    "get_metering_label_rule": "rule:admin_only"
 }
