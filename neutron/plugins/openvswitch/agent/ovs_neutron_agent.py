@@ -150,7 +150,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
-                 polling_interval, tunnel_type=constants.TYPE_NONE):
+                 polling_interval, tunnel_types=None):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -159,8 +159,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         :param bridge_mappings: mappings from physical network name to bridge.
         :param root_helper: utility to use when running shell cmds.
         :param polling_interval: interval (secs) to poll DB.
-        :param tunnel_type: Either gre or vxlan. If set, will automatically
-               set enable_tunneling to True.
+        :param tunnel_types: A list of tunnel types to enable support for in
+               the agent. If set, will automatically set enable_tunneling to
+               True.
         '''
         self.root_helper = root_helper
         self.available_local_vlans = set(xrange(q_const.MIN_VLAN_TAG,
@@ -171,13 +172,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         self.polling_interval = polling_interval
 
-        if tunnel_type in constants.TUNNEL_NETWORK_TYPES:
+        if tunnel_types:
             self.enable_tunneling = True
         else:
             self.enable_tunneling = False
         self.local_ip = local_ip
         self.tunnel_count = 0
-        self.tunnel_type = tunnel_type
+        self.tunnel_types = tunnel_types or []
         self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
         self._check_ovs_version()
         if self.enable_tunneling:
@@ -188,7 +189,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             'topic': q_const.L2_AGENT_TOPIC,
             'configurations': bridge_mappings,
             'agent_type': q_const.AGENT_TYPE_OVS,
-            'tunnel_type': self.tunnel_type,
+            'tunnel_types': self.tunnel_types,
             'start_flag': True}
         self.setup_rpc()
 
@@ -198,7 +199,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                               root_helper)
 
     def _check_ovs_version(self):
-        if self.enable_tunneling and self.tunnel_type == constants.TYPE_VXLAN:
+        if constants.TYPE_VXLAN in self.tunnel_types:
             check_ovs_version(constants.MINIMUM_OVS_VXLAN_VERSION,
                               self.root_helper)
 
@@ -289,10 +290,17 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             return
         tunnel_ip = kwargs.get('tunnel_ip')
         tunnel_id = kwargs.get('tunnel_id')
+        tunnel_type = kwargs.get('tunnel_type')
+        if not tunnel_type:
+            LOG.error(_("No tunnel_type specified, cannot create tunnels"))
+            return
+        if tunnel_type not in self.tunnel_types:
+            LOG.error(_("tunnel_type %s not supported by agent"), tunnel_type)
+            return
         if tunnel_ip == self.local_ip:
             return
-        tun_name = '%s-%s' % (self.tunnel_type, tunnel_id)
-        self.tun_br.add_tunnel_port(tun_name, tunnel_ip, self.tunnel_type,
+        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+        self.tun_br.add_tunnel_port(tun_name, tunnel_ip, tunnel_type,
                                     self.vxlan_udp_port)
 
     def create_rpc_dispatcher(self):
@@ -696,9 +704,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             tunnels = details['tunnels']
             for tunnel in tunnels:
                 if self.local_ip != tunnel['ip_address']:
-                    tun_name = '%s-%s' % (self.tunnel_type, tunnel['id'])
+                    tunnel_type = tunnel.get('tunnel_type')
+                    if not tunnel_type:
+                        LOG.error(_('No tunnel_type specified, cannot add '
+                                    'tunnel port'))
+                        return
+                    tun_name = '%s-%s' % (tunnel_type, tunnel['id'])
                     self.tun_br.add_tunnel_port(tun_name, tunnel['ip_address'],
-                                                self.tunnel_type,
+                                                tunnel_type,
                                                 self.vxlan_udp_port)
         except Exception as e:
             LOG.debug(_("Unable to sync tunnel IP %(local_ip)s: %(e)s"),
@@ -777,17 +790,17 @@ def check_ovs_version(min_required_version, root_helper):
                             'VXLAN tunnels with OVS, please ensure '
                             'the OVS version is %s or newer!'),
                           min_required_version)
-                sys.exti(1)
-            else:
-                LOG.warning(_('Cannot determine kernel Open vSwitch version, '
-                              'please ensure your Open vSwitch kernel module '
-                              'is at least version %s to support VXLAN '
-                              'tunnels.'), min_required_version)
+                raise SystemExit(1)
+        else:
+            LOG.warning(_('Cannot determine kernel Open vSwitch version, '
+                          'please ensure your Open vSwitch kernel module '
+                          'is at least version %s to support VXLAN '
+                          'tunnels.'), min_required_version)
     else:
         LOG.warning(_('Unable to determine Open vSwitch version. Please '
                       'ensure that its version is %s or newer to use VXLAN '
                       'tunnels with OVS.'), min_required_version)
-        sys.exit(1)
+        raise SystemExit(1)
 
 
 def create_agent_config_map(config):
@@ -808,14 +821,18 @@ def create_agent_config_map(config):
         bridge_mappings=bridge_mappings,
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
-        tunnel_type=config.AGENT.tunnel_type,
+        tunnel_types=config.AGENT.tunnel_types,
     )
 
     # If enable_tunneling is TRUE, set tunnel_type to default to GRE
-    if config.OVS.enable_tunneling and not kwargs['tunnel_type']:
-        kwargs['tunnel_type'] = constants.TYPE_GRE
+    if config.OVS.enable_tunneling and not kwargs['tunnel_types']:
+        kwargs['tunnel_types'] = [constants.TYPE_GRE]
 
-    if kwargs['tunnel_type'] in constants.TUNNEL_NETWORK_TYPES:
+    # Verify the tunnel_types specified are valid
+    for tun in kwargs['tunnel_types']:
+        if tun not in constants.TUNNEL_NETWORK_TYPES:
+            msg = _('Invalid tunnel type specificed: %s'), tun
+            raise ValueError(msg)
         if not kwargs['local_ip']:
             msg = _('Tunneling cannot be enabled without a valid local_ip.')
             raise ValueError(msg)
