@@ -36,6 +36,8 @@ NS_PREFIX = 'qlbaas-'
 OPTS = [
     cfg.StrOpt(
         'device_driver',
+        default=('quantum.services.loadbalancer.drivers'
+                 '.haproxy.namespace_driver.HaproxyNSDriver'),
         help=_('The driver used to manage the loadbalancing device'),
     ),
     cfg.StrOpt(
