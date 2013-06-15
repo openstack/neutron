@@ -1,7 +1,7 @@
 {
     "context_is_admin":  "role:admin",
     "admin_or_owner": "rule:context_is_admin or tenant_id:%(tenant_id)s",
-    "admin_or_network_owner": "rule:context_is_admin or tenant_id:%(network_tenant_id)s",
+    "admin_or_network_owner": "rule:context_is_admin or tenant_id:%(network:tenant_id)s",
     "admin_only": "rule:context_is_admin",
     "regular_user": "",
     "shared": "field:networks:shared=True",

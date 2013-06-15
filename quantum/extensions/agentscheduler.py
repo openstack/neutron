@@ -42,8 +42,7 @@ class NetworkSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % DHCP_NETS,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.list_networks_on_dhcp_agent(
             request.context, kwargs['agent_id'])
 
@@ -51,8 +50,7 @@ class NetworkSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "create_%s" % DHCP_NET,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.add_network_to_dhcp_agent(
             request.context, kwargs['agent_id'], body['network_id'])
 
@@ -60,8 +58,7 @@ class NetworkSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % DHCP_NET,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.remove_network_from_dhcp_agent(
             request.context, kwargs['agent_id'], id)
 
@@ -71,8 +68,7 @@ class RouterSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % L3_ROUTERS,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.list_routers_on_l3_agent(
             request.context, kwargs['agent_id'])
 
@@ -80,8 +76,7 @@ class RouterSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "create_%s" % L3_ROUTER,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.add_router_to_l3_agent(
             request.context,
             kwargs['agent_id'],
@@ -91,8 +86,7 @@ class RouterSchedulerController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % L3_ROUTER,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.remove_router_from_l3_agent(
             request.context, kwargs['agent_id'], id)
 
@@ -102,8 +96,7 @@ class DhcpAgentsHostingNetworkController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % DHCP_AGENTS,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.list_dhcp_agents_hosting_network(
             request.context, kwargs['network_id'])
 
@@ -113,8 +106,7 @@ class L3AgentsHostingRouterController(wsgi.Controller):
         plugin = manager.QuantumManager.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % L3_AGENTS,
-                       {},
-                       plugin=plugin)
+                       {})
         return plugin.list_l3_agents_hosting_router(
             request.context, kwargs['router_id'])
 

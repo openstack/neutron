@@ -19,12 +19,15 @@
 Policy engine for quantum.  Largely copied from nova.
 """
 import itertools
+import re
 
 from oslo.config import cfg
 
 from quantum.api.v2 import attributes
 from quantum.common import exceptions
 import quantum.common.utils as utils
+from quantum import manager
+from quantum.openstack.common import importutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import policy
 
@@ -123,27 +126,6 @@ def _is_attribute_explicitly_set(attribute_name, resource, target):
             target[attribute_name] != resource[attribute_name]['default'])
 
 
-def _build_target(action, original_target, plugin, context):
-    """Augment dictionary of target attributes for policy engine.
-
-    This routine adds to the dictionary attributes belonging to the
-    "parent" resource of the targeted one.
-    """
-    target = original_target.copy()
-    resource, _a = get_resource_and_action(action)
-    hierarchy_info = attributes.RESOURCE_HIERARCHY_MAP.get(resource, None)
-    if hierarchy_info and plugin:
-        # use the 'singular' version of the resource name
-        parent_resource = hierarchy_info['parent'][:-1]
-        parent_id = hierarchy_info['identified_by']
-        f = getattr(plugin, 'get_%s' % parent_resource)
-        # f *must* exist, if not found it is better to let quantum explode
-        # Note: we do not use admin context
-        data = f(context, target[parent_id], fields=['tenant_id'])
-        target['%s_tenant_id' % parent_resource] = data['tenant_id']
-    return target
-
-
 def _build_match_rule(action, target):
     """Create the rule to match for a given action.
 
@@ -175,6 +157,92 @@ def _build_match_rule(action, target):
     return match_rule
 
 
+# This check is registered as 'tenant_id' so that it can override
+# GenericCheck which was used for validating parent resource ownership.
+# This will prevent us from having to handling backward compatibility
+# for policy.json
+# TODO(salv-orlando): Reinstate GenericCheck for simple tenant_id checks
+@policy.register('tenant_id')
+class OwnerCheck(policy.Check):
+    """Resource ownership check.
+
+    This check verifies the owner of the current resource, or of another
+    resource referenced by the one under analysis.
+    In the former case it falls back to a regular GenericCheck, whereas
+    in the latter case it leverages the plugin to load the referenced
+    resource and perform the check.
+    """
+    def __init__(self, kind, match):
+        # Process the match
+        try:
+            self.target_field = re.findall('^\%\((.*)\)s$',
+                                           match)[0]
+        except IndexError:
+            err_reason = (_("Unable to identify a target field from:%s."
+                            "match should be in the form %%(<field_name>)s"),
+                          match)
+            LOG.exception(err_reason)
+            raise exceptions.PolicyInitError(
+                policy="%s:%s" % (kind, match),
+                reason=err_reason)
+        super(OwnerCheck, self).__init__(kind, match)
+
+    def __call__(self, target, creds):
+        if self.target_field not in target:
+            # policy needs a plugin check
+            # target field is in the form resource:field
+            # however if they're not separated by a colon, use an underscore
+            # as a separator for backward compatibility
+
+            def do_split(separator):
+                parent_res, parent_field = self.target_field.split(
+                    separator, 1)
+                return parent_res, parent_field
+
+            for separator in (':', '_'):
+                try:
+                    parent_res, parent_field = do_split(separator)
+                    break
+                except ValueError:
+                    LOG.debug(_("Unable to find ':' as separator in %s."),
+                              self.target_field)
+            else:
+                # If we are here split failed with both separators
+                err_reason = (_("Unable to find resource name in %s") %
+                              self.target_field)
+                LOG.exception(err_reason)
+                raise exceptions.PolicyCheckError(
+                    policy="%s:%s" % (self.kind, self.match),
+                    reason=err_reason)
+            parent_foreign_key = attributes.RESOURCE_FOREIGN_KEYS.get(
+                "%ss" % parent_res, None)
+            if not parent_foreign_key:
+                err_reason = (_("Unable to verify match:%(match)s as the "
+                                "parent resource: %(res)s was not found") %
+                              {'match': self.match, 'res': parent_res})
+                LOG.exception(err_reason)
+                raise exceptions.PolicyCheckError(
+                    policy="%s:%s" % (self.kind, self.match),
+                    reason=err_reason)
+            # NOTE(salv-orlando): This check currently assumes the parent
+            # resource is handled by the core plugin. It might be worth
+            # having a way to map resources to plugins so to make this
+            # check more general
+            f = getattr(manager.QuantumManager.get_instance().plugin,
+                        'get_%s' % parent_res)
+            # f *must* exist, if not found it is better to let quantum
+            # explode. Check will be performed with admin context
+            context = importutils.import_module('quantum.context')
+            data = f(context.get_admin_context(),
+                     target[parent_foreign_key],
+                     fields=[parent_field])
+            target[self.target_field] = data[parent_field]
+        match = self.match % target
+        if self.kind in creds:
+            return match == unicode(creds[self.kind])
+        return False
+
+
 @policy.register('field')
 class FieldCheck(policy.Check):
     def __init__(self, kind, match):
@@ -204,19 +272,15 @@ class FieldCheck(policy.Check):
                       {'field': self.field,
                        'target_dict': target_dict})
             return False
-
         return target_value == self.value
 
 
-def _prepare_check(context, action, target, plugin=None):
+def _prepare_check(context, action, target):
     """Prepare rule, target, and credentials for the policy engine."""
     init()
     # Compare with None to distinguish case in which target is {}
     if target is None:
         target = {}
-    # Update target only if plugin is provided
-    if plugin:
-        target = _build_target(action, target, plugin, context)
     match_rule = _build_match_rule(action, target)
     credentials = context.to_dict()
     return match_rule, target, credentials
@@ -231,12 +295,12 @@ def check(context, action, target, plugin=None):
     :param target: dictionary representing the object of the action
         for object creation this should be a dictionary representing the
         location of the object e.g. ``{'project_id': context.project_id}``
-    :param plugin: quantum plugin used to retrieve information required
-        for augmenting the target
+    :param plugin: currently unused and deprecated.
+        Kept for backward compatibility.
 
     :return: Returns True if access is permitted else False.
     """
-    return policy.check(*(_prepare_check(context, action, target, plugin)))
+    return policy.check(*(_prepare_check(context, action, target)))
 
 
 def check_if_exists(context, action, target):
@@ -264,21 +328,16 @@ def enforce(context, action, target, plugin=None):
     :param target: dictionary representing the object of the action
         for object creation this should be a dictionary representing the
         location of the object e.g. ``{'project_id': context.project_id}``
-    :param plugin: quantum plugin used to retrieve information required
-        for augmenting the target
+    :param plugin: currently unused and deprecated.
+        Kept for backward compatibility.
 
     :raises quantum.exceptions.PolicyNotAllowed: if verification fails.
     """
 
     init()
-    # Compare with None to distinguish case in which target is {}
-    if target is None:
-        target = {}
-    real_target = _build_target(action, target, plugin, context)
-    match_rule = _build_match_rule(action, real_target)
-    credentials = context.to_dict()
-    return policy.check(match_rule, real_target, credentials,
-                        exceptions.PolicyNotAuthorized, action=action)
+    rule, target, credentials = _prepare_check(context, action, target)
+    return policy.check(rule, target, credentials,
+                        exc=exceptions.PolicyNotAuthorized, action=action)
 
 
 def check_is_admin(context):
