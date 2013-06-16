@@ -545,12 +545,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
     def stats(self, context, pool_id):
         with context.session.begin(subtransactions=True):
-            pool_qry = context.session.query(Pool)
-            try:
-                pool = pool_qry.filter_by(id=pool_id).one()
-                stats = pool['stats']
-            except exc.NoResultFound:
-                raise loadbalancer.PoolStatsNotFound(pool_id=pool_id)
+            pool = self._get_resource(context, Pool, pool_id)
+            stats = pool['stats']
 
         res = {'bytes_in': stats['bytes_in'],
                'bytes_out': stats['bytes_out'],
@@ -561,11 +557,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
     def create_pool_health_monitor(self, context, health_monitor, pool_id):
         monitor_id = health_monitor['health_monitor']['id']
         with context.session.begin(subtransactions=True):
-            try:
-                qry = context.session.query(Pool)
-                pool = qry.filter_by(id=pool_id).one()
-            except exc.NoResultFound:
-                raise loadbalancer.PoolNotFound(pool_id=pool_id)
+            pool = self._get_resource(context, Pool, pool_id)
 
             assoc = PoolMonitorAssociation(pool_id=pool_id,
                                            monitor_id=monitor_id)
@@ -577,11 +569,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
     def delete_pool_health_monitor(self, context, id, pool_id):
         with context.session.begin(subtransactions=True):
-            try:
-                pool_qry = context.session.query(Pool)
-                pool = pool_qry.filter_by(id=pool_id).one()
-            except exc.NoResultFound:
-                raise loadbalancer.PoolNotFound(pool_id=pool_id)
+            pool = self._get_resource(context, Pool, pool_id)
             try:
                 monitor_qry = context.session.query(PoolMonitorAssociation)
                 monitor = monitor_qry.filter_by(monitor_id=id,
@@ -613,11 +601,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         tenant_id = self._get_tenant_id_for_create(context, v)
 
         with context.session.begin(subtransactions=True):
-            try:
-                qry = context.session.query(Pool)
-                qry.filter_by(id=v['pool_id']).one()
-            except exc.NoResultFound:
-                raise loadbalancer.PoolNotFound(pool_id=v['pool_id'])
+            # ensuring that pool exists
+            self._get_resource(context, Pool, v['pool_id'])
 
             member_db = Member(id=uuidutils.generate_uuid(),
                                tenant_id=tenant_id,
