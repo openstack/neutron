@@ -44,12 +44,7 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
 
     def _agent_notification(self, context, method, routers,
                             operation, data):
-        """Notify changed routers to hosting l3 agents.
-
-        Adjust routers according to l3 agents' role and
-        related dhcp agents.
-        Notify dhcp agent to get right subnet's gateway ips.
-        """
+        """Notify changed routers to hosting l3 agents."""
         adminContext = context.is_admin and context or context.elevated()
         plugin = manager.QuantumManager.get_plugin()
         for router in routers:
@@ -88,7 +83,7 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
         """Fanout the deleted router to all L3 agents."""
         LOG.debug(_('Fanout notify agent at %(topic)s the message '
                     '%(method)s on router %(router_id)s'),
-                  {'topic': topics.DHCP_AGENT,
+                  {'topic': topics.L3_AGENT,
                    'method': method,
                    'router_id': router_id})
         self.fanout_cast(
