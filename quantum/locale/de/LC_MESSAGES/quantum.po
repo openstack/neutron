@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-15 12:10+0000\n"
+"POT-Creation-Date: 2013-06-16 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -2860,11 +2860,11 @@ msgstr ""
 "Gateway zum externen Netz %(net_id)s für eine oder mehrere dynamische IP-"
 "Adressen erforderlich ist. "
 
-#: quantum/extensions/l3.py:155
+#: quantum/extensions/l3.py:156
 msgid "Number of routers allowed per tenant, -1 for unlimited"
 msgstr "Anzahl an zulässigen Routern pro Nutzer, -1 für unbegrenzt"
 
-#: quantum/extensions/l3.py:159
+#: quantum/extensions/l3.py:160
 msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
 msgstr "Anzahl an zulässigen dynamischen IP-Adressen pro Nutzer, -1 für unbegrenzt"
 
@@ -7583,7 +7583,7 @@ msgstr ""
 "Das Netzgateway %(gateway_id)s kann nicht aktualisiert oder gelöscht "
 "werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:160
+#: quantum/plugins/nicira/nicira_networkgw_db.py:167
 msgid ""
 "A network identifier must be specified when connecting a network to a "
 "network gateway. Unable to complete operation"
@@ -7591,7 +7591,7 @@ msgstr ""
 "Eine Netz-ID muss bei Verbindung eines Netzes mit einem Netzgateway "
 "angegeben werden. Operation kann nicht abgeschlossen werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:166
+#: quantum/plugins/nicira/nicira_networkgw_db.py:173
 #, python-format
 msgid ""
 "Invalid keys found among the ones provided in request body: "
@@ -7600,7 +7600,7 @@ msgstr ""
 "Ungültige Schlüssel unter den im Anforderungshauptteil angegebenen "
 "gefunden: %(connection_attrs)s."
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:172
+#: quantum/plugins/nicira/nicira_networkgw_db.py:179
 msgid ""
 "In order to specify a segmentation id the segmentation type must be "
 "specified as well"
@@ -7608,33 +7608,33 @@ msgstr ""
 "Damit eine Segmentierungs-ID angegeben werden kann, muss auch der "
 "Segmentierungstyp angegeben werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:176
+#: quantum/plugins/nicira/nicira_networkgw_db.py:183
 msgid "Cannot specify a segmentation id when the segmentation type is flat"
 msgstr ""
 "Segmentierungs-ID kann nicht angegeben werden, wenn der Segmentierungstyp"
 " 'flat' ist"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:225
+#: quantum/plugins/nicira/nicira_networkgw_db.py:232
 #, python-format
 msgid "Created network gateway with id:%s"
 msgstr "Netzgateway mit ID erstellt: %s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:237
+#: quantum/plugins/nicira/nicira_networkgw_db.py:244
 #, python-format
 msgid "Updated network gateway with id:%s"
 msgstr "Netzgateway mit ID aktualisiert: %s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:252
+#: quantum/plugins/nicira/nicira_networkgw_db.py:259
 #, python-format
 msgid "Network gateway '%s' was destroyed."
 msgstr "Netzgateway '%s' gelöscht."
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:262
+#: quantum/plugins/nicira/nicira_networkgw_db.py:269
 #, python-format
 msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
 msgstr "Netz '%(network_id)s' wird mit Gateway '%(network_gateway_id)s' verbunden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:303
+#: quantum/plugins/nicira/nicira_networkgw_db.py:310
 #, python-format
 msgid ""
 "Requested network '%(network_id)s' not found.Unable to create network "
@@ -7643,7 +7643,7 @@ msgstr ""
 "Angefordertes Netz '%(network_id)s' nicht gefunden. Netzverbindung auf "
 "Gateway '%(network_gateway_id)s' kann nicht erstellt werden"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:311
+#: quantum/plugins/nicira/nicira_networkgw_db.py:318
 #, python-format
 msgid ""
 "Gateway port for '%(network_gateway_id)s' created on network "
@@ -7652,12 +7652,12 @@ msgstr ""
 "Gateway-Port für '%(network_gateway_id)s' in Netz '%(network_id)s' "
 "erstellt: %(port_id)s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:327
+#: quantum/plugins/nicira/nicira_networkgw_db.py:334
 #, python-format
 msgid "Ensured no Ip addresses are configured on port %s"
 msgstr "Sichergestellt, dass auf Port %s keine IP-Adressen konfiguriert sind"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:337
+#: quantum/plugins/nicira/nicira_networkgw_db.py:344
 #, python-format
 msgid ""
 "Disconnecting network '%(network_id)s' from gateway "
@@ -9135,46 +9135,46 @@ msgstr ""
 msgid "Seconds between periodic task runs"
 msgstr "Sekunden zwischen Ausführungen regelmäßig wiederkehrender Tasks"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:39
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:41
 msgid "The driver used to manage the loadbalancing device"
 msgstr "Der für die Verwaltung der Lastverteilung verwendete Treiber."
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:44
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:46
 msgid "Location to store config and state files"
 msgstr "Position zum Speichern der Konfigurations- und Statusdateien"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:48
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:50
 msgid "The driver used to manage the virtual interface"
 msgstr "Der für die Verwaltung der virtuellen Schnittstelle verwendete Treiber"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:53
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:55
 msgid "The user group"
 msgstr "Die Benutzergruppe"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:117
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:119
 #, python-format
 msgid "Error importing interface driver: %s"
 msgstr "Fehler beim Importieren von Schnittstellentreiber: %s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:130
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:132
 #, python-format
 msgid "Error importing loadbalancer device driver: %s"
 msgstr "Fehler beim Importieren von Lastverteilungstreiber: %s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:158
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:160
 msgid "Error upating stats"
 msgstr "Fehler beim Aktualisieren der Statistiken"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:179
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:181
 msgid "Unable to retrieve ready devices"
 msgstr "Abrufen von bereiten Einheiten nicht möglich"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:194
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:196
 #, python-format
 msgid "Unable to refresh device for pool: %s"
 msgstr "Einheit für Pool kann nicht aktualisiert werden: %s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:205
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:207
 #, python-format
 msgid "Unable to destroy device for pool: %s"
 msgstr "Einheit für Pool kann nicht gelöscht werden: %s"

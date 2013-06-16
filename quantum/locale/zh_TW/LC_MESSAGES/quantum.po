@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-15 12:10+0000\n"
+"POT-Creation-Date: 2013-06-16 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2652,11 +2652,11 @@ msgid ""
 "external network %(net_id)s is required by one or more floating IPs."
 msgstr "無法更新路由器 %(router_id)s 的閘道，因為一個以上的浮動 IP 需要外部網路 %(net_id)s 的閘道。"
 
-#: quantum/extensions/l3.py:155
+#: quantum/extensions/l3.py:156
 msgid "Number of routers allowed per tenant, -1 for unlimited"
 msgstr "每個 Tenant 所容許的路由器數目，-1 表示無限制"
 
-#: quantum/extensions/l3.py:159
+#: quantum/extensions/l3.py:160
 msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
 msgstr "每個 Tenant 所容許的浮動 IP 數目，-1 表示無限制"
 
@@ -7141,69 +7141,69 @@ msgstr "在網路閘道 '%(network_gateway_id)s' 上找不到連線 %(network_ma
 msgid "The network gateway %(gateway_id)s cannot be updated or deleted"
 msgstr "無法更新或刪除網路閘道 %(gateway_id)s"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:160
+#: quantum/plugins/nicira/nicira_networkgw_db.py:167
 msgid ""
 "A network identifier must be specified when connecting a network to a "
 "network gateway. Unable to complete operation"
 msgstr "將網路連接至網路閘道時必須指定網路 ID。無法完成作業"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:166
+#: quantum/plugins/nicira/nicira_networkgw_db.py:173
 #, python-format
 msgid ""
 "Invalid keys found among the ones provided in request body: "
 "%(connection_attrs)s."
 msgstr "在要求內文 %(connection_attrs)s 所提供的索引鍵中找到無效的索引鍵。"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:172
+#: quantum/plugins/nicira/nicira_networkgw_db.py:179
 msgid ""
 "In order to specify a segmentation id the segmentation type must be "
 "specified as well"
 msgstr "必須同時指定分段類型才能指定分段 ID"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:176
+#: quantum/plugins/nicira/nicira_networkgw_db.py:183
 msgid "Cannot specify a segmentation id when the segmentation type is flat"
 msgstr "當分段類型為平面時，無法指定分段 ID"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:225
+#: quantum/plugins/nicira/nicira_networkgw_db.py:232
 #, python-format
 msgid "Created network gateway with id:%s"
 msgstr "已建立 ID 為 %s 的網路閘道"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:237
+#: quantum/plugins/nicira/nicira_networkgw_db.py:244
 #, python-format
 msgid "Updated network gateway with id:%s"
 msgstr "已更新 ID 為 %s 的網路閘道"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:252
+#: quantum/plugins/nicira/nicira_networkgw_db.py:259
 #, python-format
 msgid "Network gateway '%s' was destroyed."
 msgstr "已毀損網路閘道 '%s'。"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:262
+#: quantum/plugins/nicira/nicira_networkgw_db.py:269
 #, python-format
 msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
 msgstr "正在將網路 '%(network_id)s' 連接至閘道 '%(network_gateway_id)s'"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:303
+#: quantum/plugins/nicira/nicira_networkgw_db.py:310
 #, python-format
 msgid ""
 "Requested network '%(network_id)s' not found.Unable to create network "
 "connection on gateway '%(network_gateway_id)s"
 msgstr "找不到所要求的網路 '%(network_id)s'。無法在閘道 '%(network_gateway_id)s 上建立網路連線"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:311
+#: quantum/plugins/nicira/nicira_networkgw_db.py:318
 #, python-format
 msgid ""
 "Gateway port for '%(network_gateway_id)s' created on network "
 "'%(network_id)s':%(port_id)s"
 msgstr "已在網路 '%(network_id)s':%(port_id)s 上給 '%(network_gateway_id)s' 建立了閘道埠"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:327
+#: quantum/plugins/nicira/nicira_networkgw_db.py:334
 #, python-format
 msgid "Ensured no Ip addresses are configured on port %s"
 msgstr "已確定沒有在埠 %s 上配置 IP 位址"
 
-#: quantum/plugins/nicira/nicira_networkgw_db.py:337
+#: quantum/plugins/nicira/nicira_networkgw_db.py:344
 #, python-format
 msgid ""
 "Disconnecting network '%(network_id)s' from gateway "
@@ -8579,46 +8579,46 @@ msgstr ""
 msgid "Seconds between periodic task runs"
 msgstr "定期執行作業的間隔秒數"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:39
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:41
 msgid "The driver used to manage the loadbalancing device"
 msgstr "用於管理負載平衡裝置的驅動程式"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:44
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:46
 msgid "Location to store config and state files"
 msgstr "配置檔及狀態檔的儲存位置"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:48
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:50
 msgid "The driver used to manage the virtual interface"
 msgstr "用於管理虛擬介面的驅動程式"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:53
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:55
 msgid "The user group"
 msgstr "使用者群組"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:117
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:119
 #, python-format
 msgid "Error importing interface driver: %s"
 msgstr "匯入介面驅動程式時發生錯誤：%s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:130
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:132
 #, python-format
 msgid "Error importing loadbalancer device driver: %s"
 msgstr "匯入負載平衡器裝置驅動程式時發生錯誤：%s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:158
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:160
 msgid "Error upating stats"
 msgstr "更新統計資料時發生錯誤"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:179
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:181
 msgid "Unable to retrieve ready devices"
 msgstr "無法擷取備妥的裝置"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:194
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:196
 #, python-format
 msgid "Unable to refresh device for pool: %s"
 msgstr "無法重新整理儲存區的裝置：%s"
 
-#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:205
+#: quantum/services/loadbalancer/drivers/haproxy/agent_manager.py:207
 #, python-format
 msgid "Unable to destroy device for pool: %s"
 msgstr "無法毀損儲存區的裝置：%s"
