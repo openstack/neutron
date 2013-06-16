@@ -20,7 +20,7 @@ python-keystoneclient>=0.2.0
 alembic>=0.4.1
 oslo.config>=1.1.0
 six
-stevedore>=0.7
+stevedore>=0.9
 
 # Cisco plugin dependencies
 python-novaclient
