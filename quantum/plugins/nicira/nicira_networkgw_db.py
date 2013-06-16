@@ -153,7 +153,14 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
                             for conn in network_gateway.network_connections]
         return self._fields(res, fields)
 
+    def _set_mapping_info_defaults(self, mapping_info):
+        if not mapping_info.get('segmentation_type'):
+            mapping_info['segmentation_type'] = 'flat'
+        if not mapping_info.get('segmentation_id'):
+            mapping_info['segmentation_id'] = 0
+
     def _validate_network_mapping_info(self, network_mapping_info):
+        self._set_mapping_info_defaults(network_mapping_info)
         network_id = network_mapping_info.get(NETWORK_ID)
         if not network_id:
             raise exceptions.InvalidInput(
