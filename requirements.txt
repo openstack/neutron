@@ -1,5 +1,5 @@
 d2to1>=0.2.10,<0.3
-pbr>=0.5,<0.6
+pbr>=0.5.16,<0.6
 Paste
 PasteDeploy>=1.5.0
 Routes>=1.12.3
