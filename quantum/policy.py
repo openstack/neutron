@@ -149,7 +149,7 @@ def _build_match_rule(action, target):
                                                 res_map[resource],
                                                 target):
                     attribute = res_map[resource][attribute_name]
-                    if 'enforce_policy' in attribute and is_write:
+                    if 'enforce_policy' in attribute:
                         attr_rule = policy.RuleCheck('rule', '%s:%s' %
                                                      (action, attribute_name))
                         match_rule = policy.AndCheck([match_rule, attr_rule])
