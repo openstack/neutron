@@ -163,7 +163,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                 agent_mgr)
                             state_rpc.assert_has_calls(
                                 [mock.call(mock.ANY),
-                                 mock.call().report_state(mock.ANY, mock.ANY)])
+                                 mock.call().report_state(mock.ANY, mock.ANY,
+                                                          mock.ANY)])
                             mock_lease_relay.assert_has_calls(
                                 [mock.call(mock.ANY),
                                  mock.call().start()])

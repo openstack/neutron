@@ -48,13 +48,14 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
 
 class AgentPluginReportState(base.BaseTestCase):
-    def test_plugin_report_state(self):
+    def test_plugin_report_state_use_call(self):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
         expected_agent_state = {'agent': 'test'}
         with mock.patch.object(reportStateAPI, 'call') as call:
             ctxt = context.RequestContext('fake_user', 'fake_project')
-            reportStateAPI.report_state(ctxt, expected_agent_state)
+            reportStateAPI.report_state(ctxt, expected_agent_state,
+                                        use_call=True)
             self.assertEqual(call.call_args[0][0], ctxt)
             self.assertEqual(call.call_args[0][1]['method'],
                              'report_state')
@@ -63,6 +64,22 @@ class AgentPluginReportState(base.BaseTestCase):
             self.assertIsInstance(call.call_args[0][1]['args']['time'],
                                   str)
             self.assertEqual(call.call_args[1]['topic'], topic)
+
+    def test_plugin_report_state_cast(self):
+        topic = 'test'
+        reportStateAPI = rpc.PluginReportStateAPI(topic)
+        expected_agent_state = {'agent': 'test'}
+        with mock.patch.object(reportStateAPI, 'cast') as cast:
+            ctxt = context.RequestContext('fake_user', 'fake_project')
+            reportStateAPI.report_state(ctxt, expected_agent_state)
+            self.assertEqual(cast.call_args[0][0], ctxt)
+            self.assertEqual(cast.call_args[0][1]['method'],
+                             'report_state')
+            self.assertEqual(cast.call_args[0][1]['args']['agent_state'],
+                             {'agent_state': expected_agent_state})
+            self.assertIsInstance(cast.call_args[0][1]['args']['time'],
+                                  str)
+            self.assertEqual(cast.call_args[1]['topic'], topic)
 
 
 class AgentRPCMethods(base.BaseTestCase):

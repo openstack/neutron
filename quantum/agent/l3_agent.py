@@ -695,6 +695,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'start_flag': True,
             'agent_type': l3_constants.AGENT_TYPE_L3}
         report_interval = cfg.CONF.AGENT.report_interval
+        self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.LoopingCall(self._report_state)
             self.heartbeat.start(interval=report_interval)
@@ -719,9 +720,10 @@ class L3NATAgentWithStateReport(L3NATAgent):
         configurations['interfaces'] = num_interfaces
         configurations['floating_ips'] = num_floating_ips
         try:
-            self.state_rpc.report_state(self.context,
-                                        self.agent_state)
+            self.state_rpc.report_state(self.context, self.agent_state,
+                                        self.use_call)
             self.agent_state.pop('start_flag', None)
+            self.use_call = False
         except AttributeError:
             # This means the server does not support report_state
             LOG.warn(_("Quantum server does not support state report."
