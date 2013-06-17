@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-16 12:11+0000\n"
+"POT-Creation-Date: 2013-06-17 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -1197,12 +1197,12 @@ msgstr "所載入的外掛程式未實作延伸 %s 介面"
 msgid "Nofity agent at %(host)s the message %(method)s"
 msgstr "將訊息通知 %(method)s 傳送給位於 %(host)s 處的代理程式"
 
-#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:61
+#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:56
 #, python-format
 msgid "Notify agent at %(topic)s.%(host)s the message %(method)s"
 msgstr "將訊息通知 %(method)s 傳送給位於 %(topic)s.%(host)s 處的代理程式"
 
-#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:89
+#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:84
 #, python-format
 msgid ""
 "Fanout notify agent at %(topic)s the message %(method)s on router "

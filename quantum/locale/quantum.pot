@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: quantum "
-"jenkins.quantum.propose.translation.update.139\n"
+"jenkins.quantum.propose.translation.update.140\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-16 12:11+0000\n"
+"POT-Creation-Date: 2013-06-17 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1187,12 +1187,12 @@ msgstr ""
 msgid "Nofity agent at %(host)s the message %(method)s"
 msgstr ""
 
-#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:61
+#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:56
 #, python-format
 msgid "Notify agent at %(topic)s.%(host)s the message %(method)s"
 msgstr ""
 
-#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:89
+#: quantum/api/rpc/agentnotifiers/l3_rpc_agent_api.py:84
 #, python-format
 msgid ""
 "Fanout notify agent at %(topic)s the message %(method)s on router "
