@@ -233,10 +233,14 @@ class OwnerCheck(policy.Check):
             # f *must* exist, if not found it is better to let quantum
             # explode. Check will be performed with admin context
             context = importutils.import_module('quantum.context')
-            data = f(context.get_admin_context(),
-                     target[parent_foreign_key],
-                     fields=[parent_field])
-            target[self.target_field] = data[parent_field]
+            try:
+                data = f(context.get_admin_context(),
+                         target[parent_foreign_key],
+                         fields=[parent_field])
+                target[self.target_field] = data[parent_field]
+            except Exception:
+                LOG.exception(_('Policy check error while calling %s!'), f)
+                raise
         match = self.match % target
         if self.kind in creds:
             return match == unicode(creds[self.kind])

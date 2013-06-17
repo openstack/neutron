@@ -344,6 +344,24 @@ class QuantumPolicyTestCase(base.BaseTestCase):
             result = policy.enforce(self.context, action, target)
             self.assertTrue(result)
 
+    def test_enforce_plugin_failure(self):
+
+        def fakegetnetwork(*args, **kwargs):
+            raise NotImplementedError('Blast!')
+
+        # the policy check and plugin method we use in this test are irrelevant
+        # so long that we verify that, if *f* blows up, the behavior of the
+        # policy engine to propagate the exception is preserved
+        action = "create_port:mac"
+        with mock.patch.object(manager.QuantumManager.get_instance().plugin,
+                               'get_network', new=fakegetnetwork):
+            target = {'network_id': 'whatever'}
+            self.assertRaises(NotImplementedError,
+                              policy.enforce,
+                              self.context,
+                              action,
+                              target)
+
     def test_enforce_tenant_id_check_parent_resource_bw_compatibility(self):
 
         def fakegetnetwork(*args, **kwargs):
