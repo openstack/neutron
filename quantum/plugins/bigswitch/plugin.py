@@ -681,17 +681,22 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
     def _delete_port(self, context, port_id):
         # Delete from DB
         port = super(QuantumRestProxyV2, self).get_port(context, port_id)
+        tenant_id = port['tenant_id']
+        if tenant_id == '':
+            net = super(QuantumRestProxyV2,
+                        self).get_network(context, port['network_id'])
+            tenant_id = net['tenant_id']
 
         # delete from network ctrl. Remote error on delete is ignored
         try:
-            resource = PORTS_PATH % (port["tenant_id"], port["network_id"],
+            resource = PORTS_PATH % (tenant_id, port["network_id"],
                                      port_id)
             ret = self.servers.delete(resource)
             if not self.servers.action_success(ret):
                 raise RemoteRestError(ret[2])
 
             if port.get("device_id"):
-                self._unplug_interface(context, port["tenant_id"],
+                self._unplug_interface(context, tenant_id,
                                        port["network_id"], port["id"])
             ret_val = super(QuantumRestProxyV2, self)._delete_port(context,
                                                                    port_id)
