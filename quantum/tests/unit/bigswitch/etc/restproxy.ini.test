@@ -1,6 +1,6 @@
 # Test config file for quantum-proxy-plugin.
 
-[DATABASE]
+[database]
 # This line MUST be changed to actually run the plugin.
 # Example:
 # sql_connection = mysql://root:pass@127.0.0.1:3306/restproxy_quantum
@@ -13,7 +13,7 @@ sql_connection = sqlite://
 # Database reconnection interval in seconds - in event connectivity is lost
 reconnect_interval = 2
 
-[RESTPROXY]
+[restproxy]
 # All configuration for this plugin is in section '[restproxy]'
 #
 # The following parameters are supported:
@@ -25,7 +25,7 @@ servers=localhost:8899
 serverssl=False
 #serverauth=username:password
 
-[NOVA]
+[nova]
 # Specify the VIF_TYPE that will be controlled on the Nova compute instances
 #   options: ivs or ovs
 #   default: ovs

@@ -120,6 +120,10 @@ def register_deprecated(conf):
 
     for parsed_file in multi_parser.parsed:
         for section in parsed_file.keys():
-            if section not in conf and section.startswith("CLUSTER:"):
+            if not section.lower().startswith("cluster:"):
+                continue
+
+            section = 'CLUSTER:' + section.split(':', 1)[1]
+            if section not in conf:
                 conf.register_opts(cluster_opts + [controller_depr], section)
 # ### END

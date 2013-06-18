@@ -1,4 +1,4 @@
-[MIDONET]
+[midonet]
 
 # MidoNet API server URI
 midonet_uri = http://localhost:8080/midonet-api

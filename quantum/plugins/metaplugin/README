@@ -6,7 +6,7 @@ flavor:network corresponds to specific l2 plugin ( flavor-plugin mapping could b
 flavor:router corresponds to specific l3 plugin ( flavor-plugin mapping could be configureable by l3_plugin_list config. Note that Metaplugin can provide l3 functionaliteis for l2 plugin which didn't support l3 extension yet.
 This plugin also support extensions. We can map extension to plugin by using extension_map config.
 
-[DATABASE]
+[database]
 # This line MUST be changed to actually run the plugin.
 # Example:
 # sql_connection = mysql://root:nova@127.0.0.1:3306/ovs_quantum
@@ -20,7 +20,7 @@ sql_connection = mysql://root:password@localhost/quantum_metaplugin?charset=utf8
 # Database reconnection interval in seconds - in event connectivity is lost
 reconnect_interval = 2
 
-[META]
+[meta]
 ## This is list of flavor:quantum_plugins
 # extension method is used in the order of this list
 plugin_list= 'openvswitch:quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2,linuxbridge:quantum.plugins.linuxbridge.lb_quantum_plugin.LinuxBridgePluginV2'
@@ -47,7 +47,7 @@ meta_flavor_driver_mappings = openvswitch:quantum.agent.linux.interface.OVSInter
 # interface driver for MetaPlugin
 interface_driver = quantum.agent.linux.interface.MetaInterfaceDriver
 
-[Proxy]
+[proxy]
 auth_url = http://10.0.0.1:35357/v2.0
 auth_region = RegionOne
 admin_tenant_name = service

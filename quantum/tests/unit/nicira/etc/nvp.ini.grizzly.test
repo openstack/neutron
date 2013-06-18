@@ -1,7 +1,7 @@
 [DEFAULT]
 metadata_dhcp_host_route = False
 
-[CLUSTER:fake]
+[cluster:fake]
 default_tz_uuid = fake_tz_uuid
 nova_zone_id = whatever
 nvp_cluster_uuid = fake_cluster_uuid
