@@ -43,13 +43,13 @@ default_servicetype_opts = [
                            'using the format: <service>:<plugin>[:<driver>]'))
 ]
 
-cfg.CONF.register_opts(default_servicetype_opts, 'DEFAULT_SERVICETYPE')
+cfg.CONF.register_opts(default_servicetype_opts, 'default_servicetype')
 
 
 def parse_service_definition_opt():
     """Parse service definition opts and returns result."""
     results = []
-    svc_def_opt = cfg.CONF.DEFAULT_SERVICETYPE.service_definition
+    svc_def_opt = cfg.CONF.default_servicetype.service_definition
     try:
         for svc_def_str in svc_def_opt:
             split = svc_def_str.split(':')
@@ -72,7 +72,7 @@ def parse_service_definition_opt():
 class NoDefaultServiceDefinition(q_exc.QuantumException):
     message = _("No default service definition in configuration file. "
                 "Please add service definitions using the service_definition "
-                "variable in the [DEFAULT_SERVICETYPE] section")
+                "variable in the [default_servicetype] section")
 
 
 class ServiceTypeNotFound(q_exc.NotFound):
@@ -129,12 +129,12 @@ class ServiceTypeManager(object):
         self._initialize_db()
         ctx = context.get_admin_context()
         # Init default service type from configuration file
-        svc_defs = cfg.CONF.DEFAULT_SERVICETYPE.service_definition
+        svc_defs = cfg.CONF.default_servicetype.service_definition
         if not svc_defs:
             raise NoDefaultServiceDefinition()
         def_service_type = {'name': DEFAULT_SVCTYPE_NAME,
                             'description':
-                            cfg.CONF.DEFAULT_SERVICETYPE.description,
+                            cfg.CONF.default_servicetype.description,
                             'service_definitions':
                             parse_service_definition_opt(),
                             'default': True}
