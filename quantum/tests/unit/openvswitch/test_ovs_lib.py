@@ -17,7 +17,9 @@
 
 import mox
 
-from quantum.agent.linux import ovs_lib, utils
+from quantum.agent.linux import ovs_lib
+from quantum.agent.linux import utils
+from quantum.openstack.common import jsonutils
 from quantum.openstack.common import uuidutils
 from quantum.tests import base
 
@@ -262,11 +264,91 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertEqual(ports[0].switch.br_name, self.BR_NAME)
         self.mox.VerifyAll()
 
+    def _encode_ovs_json(self, headings, data):
+        # See man ovs-vsctl(8) for the encoding details.
+        r = {"data": [],
+             "headings": headings}
+        for row in data:
+            ovs_row = []
+            r["data"].append(ovs_row)
+            for cell in row:
+                if isinstance(cell, str):
+                    ovs_row.append(cell)
+                elif isinstance(cell, dict):
+                    ovs_row.append(["map", cell.items()])
+                else:
+                    raise TypeError('%r not str or dict' % type(cell))
+        return jsonutils.dumps(r)
+
+    def _test_get_vif_port_set(self, is_xen):
+        utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                      root_helper=self.root_helper).AndReturn('tap99\ntun22')
+
+        if is_xen:
+            id_key = 'xs-vif-uuid'
+        else:
+            id_key = 'iface-id'
+
+        headings = ['name', 'external_ids']
+        data = [
+            # A vif port on this bridge:
+            ['tap99', {id_key: 'tap99id', 'attached-mac': 'tap99mac'}],
+            # A vif port on another bridge:
+            ['tap88', {id_key: 'tap88id', 'attached-mac': 'tap88id'}],
+            # Non-vif port on this bridge:
+            ['tun22', {}],
+        ]
+
+        utils.execute(["ovs-vsctl", self.TO, "--format=json",
+                       "--", "--columns=name,external_ids",
+                       "list", "Interface"],
+                      root_helper=self.root_helper).AndReturn(
+                          self._encode_ovs_json(headings, data))
+
+        if is_xen:
+            self.mox.StubOutWithMock(self.br, 'get_xapi_iface_id')
+            self.br.get_xapi_iface_id('tap99id').AndReturn('tap99id')
+
+        self.mox.ReplayAll()
+
+        port_set = self.br.get_vif_port_set()
+        self.assertEqual(set(['tap99id']), port_set)
+        self.mox.VerifyAll()
+
     def test_get_vif_ports_nonxen(self):
         self._test_get_vif_ports(False)
 
     def test_get_vif_ports_xen(self):
         self._test_get_vif_ports(True)
+
+    def test_get_vif_port_set_nonxen(self):
+        self._test_get_vif_port_set(False)
+
+    def test_get_vif_port_set_xen(self):
+        self._test_get_vif_port_set(True)
+
+    def test_get_vif_port_set_list_ports_error(self):
+        utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                      root_helper=self.root_helper).AndRaise(RuntimeError())
+        utils.execute(["ovs-vsctl", self.TO, "--format=json",
+                       "--", "--columns=name,external_ids",
+                       "list", "Interface"],
+                      root_helper=self.root_helper).AndReturn(
+                          self._encode_ovs_json(['name', 'external_ids'], []))
+        self.mox.ReplayAll()
+        self.assertEqual(set(), self.br.get_vif_port_set())
+        self.mox.VerifyAll()
+
+    def test_get_vif_port_set_list_interface_error(self):
+        utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                      root_helper=self.root_helper).AndRaise('tap99\n')
+        utils.execute(["ovs-vsctl", self.TO, "--format=json",
+                       "--", "--columns=name,external_ids",
+                       "list", "Interface"],
+                      root_helper=self.root_helper).AndRaise(RuntimeError())
+        self.mox.ReplayAll()
+        self.assertEqual(set(), self.br.get_vif_port_set())
+        self.mox.VerifyAll()
 
     def test_clear_db_attribute(self):
         pname = "tap77"
