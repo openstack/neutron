@@ -1035,6 +1035,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return quantum_lswitches
 
     def update_network(self, context, id, network):
+        pnet._raise_if_updates_provider_attributes(network['network'])
         if network["network"].get("admin_state_up"):
             if network['network']["admin_state_up"] is False:
                 raise q_exc.NotImplementedError(_("admin_state_up=False "

@@ -134,13 +134,6 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
             value = None
         return value
 
-    def _check_provider_update(self, context, attrs):
-        if (attributes.is_attr_set(attrs.get(provider.NETWORK_TYPE)) or
-            attributes.is_attr_set(attrs.get(provider.PHYSICAL_NETWORK)) or
-            attributes.is_attr_set(attrs.get(provider.SEGMENTATION_ID))):
-            msg = _("Plugin does not support updating provider attributes")
-            raise exc.InvalidInput(error_message=msg)
-
     def _extend_network_dict_provider(self, context, network):
         id = network['id']
         segments = db.get_network_segments(context.session, id)
@@ -213,14 +206,13 @@ class Ml2Plugin(db_base_plugin_v2.QuantumDbPluginV2,
         return result
 
     def update_network(self, context, id, network):
-        attrs = network['network']
-        self._check_provider_update(context, attrs)
+        provider._raise_if_updates_provider_attributes(network['network'])
 
         session = context.session
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).update_network(context, id,
                                                            network)
-            self._process_l3_update(context, attrs, id)
+            self._process_l3_update(context, network['network'], id)
             self._extend_network_dict_provider(context, result)
             self._extend_network_dict_l3(context, result)
 
