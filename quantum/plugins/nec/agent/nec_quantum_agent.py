@@ -23,7 +23,6 @@
 # @author: Akihiro MOTOKI
 
 import socket
-import sys
 import time
 
 import eventlet
@@ -241,8 +240,6 @@ def main():
 
     # Start everything.
     agent.daemon_loop()
-
-    sys.exit(0)
 
 
 if __name__ == "__main__":

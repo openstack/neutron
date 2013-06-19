@@ -290,12 +290,12 @@ class TestNecAgentMain(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(nec_quantum_agent, 'NECQuantumAgent'),
             mock.patch('eventlet.monkey_patch'),
-            mock.patch('quantum.common.config'),
+            mock.patch.object(nec_quantum_agent, 'logging_config'),
             mock.patch.object(nec_quantum_agent, 'config')
         ) as (agent, eventlet, logging_config, cfg):
-            cfg.CONF.ovs.integration_bridge = 'br-int-x'
-            cfg.CONF.AGENT.root_helper = 'dummy-helper'
-            cfg.CONF.AGENT.polling_interval = 10
+            cfg.OVS.integration_bridge = 'br-int-x'
+            cfg.AGENT.root_helper = 'dummy-helper'
+            cfg.AGENT.polling_interval = 10
 
             nec_quantum_agent.main()
 
