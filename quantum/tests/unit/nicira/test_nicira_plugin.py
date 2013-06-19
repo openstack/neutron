@@ -903,6 +903,65 @@ class NiciraQuantumNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
         self.assertEqual(router['router']['status'],
                          constants.NET_STATUS_ERROR)
 
+    def _create_network_and_subnet(self, cidr, external=False):
+        net_res = self._create_network('json', 'ext_net', True)
+        net = self.deserialize('json', net_res)
+        net_id = net['network']['id']
+        if external:
+            self._update('networks', net_id,
+                         {'network': {l3.EXTERNAL: True}})
+        sub_res = self._create_subnet('json', net_id, cidr)
+        sub = self.deserialize('json', sub_res)
+        return net_id, sub['subnet']['id']
+
+    def test_clear_gateway_nat_rule_not_in_nvp(self):
+        # Create external network and subnet
+        ext_net_id = self._create_network_and_subnet('1.1.1.0/24', True)[0]
+        # Create internal network and subnet
+        int_sub_id = self._create_network_and_subnet('10.0.0.0/24')[1]
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        # Add interface to router (needed to generate NAT rule)
+        req = self.new_action_request(
+            'routers',
+            {'subnet_id': int_sub_id},
+            router['router']['id'],
+            "add_router_interface")
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 200)
+        # Set gateway for router
+        req = self.new_update_request(
+            'routers',
+            {'router': {'external_gateway_info':
+                        {'network_id': ext_net_id}}},
+            router['router']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 200)
+        # Delete NAT rule from NVP, clear gateway
+        # and verify operation still succeeds
+        self.fc._fake_lrouter_nat_dict.clear()
+        req = self.new_update_request(
+            'routers',
+            {'router': {'external_gateway_info': {}}},
+            router['router']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 200)
+
+    def test_update_router_not_in_nvp(self):
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        self.fc._fake_lrouter_dict.clear()
+        req = self.new_update_request(
+            'routers',
+            {'router': {'name': 'goo'}},
+            router['router']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 500)
+        req = self.new_show_request('routers', router['router']['id'])
+        router = self.deserialize('json', req.get_response(self.ext_api))
+        self.assertEqual(router['router']['status'],
+                         constants.NET_STATUS_ERROR)
+
 
 class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                                NiciraPluginV2TestCase):
