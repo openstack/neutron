@@ -25,26 +25,18 @@ from neutron.plugins.nicira.dbexts import nicira_networkgw_db
 LOG = logging.getLogger(__name__)
 
 
-def get_network_binding(session, network_id):
+def get_network_bindings(session, network_id):
     session = session or db.get_session()
-    try:
-        binding = (session.query(nicira_models.NvpNetworkBinding).
-                   filter_by(network_id=network_id).
-                   one())
-        return binding
-    except exc.NoResultFound:
-        return
+    return (session.query(nicira_models.NvpNetworkBinding).
+            filter_by(network_id=network_id).
+            all())
 
 
-def get_network_binding_by_vlanid(session, vlan_id):
+def get_network_bindings_by_vlanid(session, vlan_id):
     session = session or db.get_session()
-    try:
-        binding = (session.query(nicira_models.NvpNetworkBinding).
-                   filter_by(vlan_id=vlan_id).
-                   one())
-        return binding
-    except exc.NoResultFound:
-        return
+    return (session.query(nicira_models.NvpNetworkBinding).
+            filter_by(vlan_id=vlan_id).
+            all())
 
 
 def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
@@ -88,3 +80,18 @@ def set_default_network_gateway(session, gw_id):
         gw = (session.query(nicira_networkgw_db.NetworkGateway).
               filter_by(id=gw_id).one())
         gw['default'] = True
+
+
+def set_multiprovider_network(session, network_id):
+    with session.begin(subtransactions=True):
+        multiprovider_network = nicira_models.MultiProviderNetworks(
+            network_id)
+        session.add(multiprovider_network)
+        return multiprovider_network
+
+
+def is_multiprovider_network(session, network_id):
+    with session.begin(subtransactions=True):
+        return bool(
+            session.query(nicira_models.MultiProviderNetworks).filter_by(
+                network_id=network_id).first())

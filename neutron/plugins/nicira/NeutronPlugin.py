@@ -52,6 +52,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
+from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings as pbin
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
@@ -91,6 +92,7 @@ class NetworkTypes:
     GRE = 'gre'
     FLAT = 'flat'
     VLAN = 'vlan'
+    BRIDGE = 'bridge'
 
 
 def create_nvp_cluster(cluster_opts, concurrent_connections,
@@ -153,6 +155,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                    "ext-gw-mode",
                                    "extraroute",
                                    "mac-learning",
+                                   "multi-provider",
                                    "network-gateway",
                                    "nvp-qos",
                                    "port-security",
@@ -401,18 +404,19 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _nvp_find_lswitch_for_port(self, context, port_data):
         network = self._get_network(context, port_data['network_id'])
-        network_binding = nicira_db.get_network_binding(
+        network_bindings = nicira_db.get_network_bindings(
             context.session, port_data['network_id'])
         max_ports = self.nvp_opts.max_lp_per_overlay_ls
         allow_extra_lswitches = False
-        if (network_binding and
-            network_binding.binding_type in (NetworkTypes.FLAT,
-                                             NetworkTypes.VLAN)):
-            max_ports = self.nvp_opts.max_lp_per_bridged_ls
-            allow_extra_lswitches = True
+        for network_binding in network_bindings:
+            if network_binding.binding_type in (NetworkTypes.FLAT,
+                                                NetworkTypes.VLAN):
+                max_ports = self.nvp_opts.max_lp_per_bridged_ls
+                allow_extra_lswitches = True
+                break
         try:
             return self._handle_lswitch_selection(self.cluster, network,
-                                                  network_binding, max_ports,
+                                                  network_bindings, max_ports,
                                                   allow_extra_lswitches)
         except NvpApiClient.NvpApiException:
             err_desc = _("An exception occured while selecting logical "
@@ -761,76 +765,89 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                nvp_exc.MaintenanceInProgress:
                                webob.exc.HTTPServiceUnavailable})
 
-    def _handle_provider_create(self, context, attrs):
-        # NOTE(salvatore-orlando): This method has been borrowed from
-        # the OpenvSwtich plugin, altough changed to match NVP specifics.
-        network_type = attrs.get(pnet.NETWORK_TYPE)
-        physical_network = attrs.get(pnet.PHYSICAL_NETWORK)
-        segmentation_id = attrs.get(pnet.SEGMENTATION_ID)
-        network_type_set = attr.is_attr_set(network_type)
-        physical_network_set = attr.is_attr_set(physical_network)
-        segmentation_id_set = attr.is_attr_set(segmentation_id)
-        if not (network_type_set or physical_network_set or
-                segmentation_id_set):
+    def _validate_provider_create(self, context, network):
+        if not attr.is_attr_set(network.get(mpnet.SEGMENTS)):
             return
 
-        err_msg = None
-        if not network_type_set:
-            err_msg = _("%s required") % pnet.NETWORK_TYPE
-        elif network_type in (NetworkTypes.GRE, NetworkTypes.STT,
-                              NetworkTypes.FLAT):
-            if segmentation_id_set:
-                err_msg = _("Segmentation ID cannot be specified with "
-                            "flat network type")
-        elif network_type == NetworkTypes.VLAN:
-            if not segmentation_id_set:
-                err_msg = _("Segmentation ID must be specified with "
-                            "vlan network type")
-            elif (segmentation_id_set and
-                  not utils.is_valid_vlan_tag(segmentation_id)):
-                err_msg = (_("%(segmentation_id)s out of range "
-                             "(%(min_id)s through %(max_id)s)") %
-                           {'segmentation_id': segmentation_id,
-                            'min_id': constants.MIN_VLAN_TAG,
-                            'max_id': constants.MAX_VLAN_TAG})
-            else:
-                # Verify segment is not already allocated
-                binding = nicira_db.get_network_binding_by_vlanid(
-                    context.session, segmentation_id)
-                if binding:
-                    raise q_exc.VlanIdInUse(vlan_id=segmentation_id,
-                                            physical_network=physical_network)
-        elif network_type == NetworkTypes.L3_EXT:
-            if (segmentation_id_set and
-                not utils.is_valid_vlan_tag(segmentation_id)):
-                err_msg = (_("%(segmentation_id)s out of range "
-                             "(%(min_id)s through %(max_id)s)") %
-                           {'segmentation_id': segmentation_id,
-                            'min_id': constants.MIN_VLAN_TAG,
-                            'max_id': constants.MAX_VLAN_TAG})
-        else:
-            err_msg = _("%(net_type_param)s %(net_type_value)s not "
-                        "supported") % {'net_type_param': pnet.NETWORK_TYPE,
-                                        'net_type_value': network_type}
-        if err_msg:
-            raise q_exc.InvalidInput(error_message=err_msg)
-        # TODO(salvatore-orlando): Validate tranport zone uuid
-        # which should be specified in physical_network
+        for segment in network[mpnet.SEGMENTS]:
+            network_type = segment.get(pnet.NETWORK_TYPE)
+            physical_network = segment.get(pnet.PHYSICAL_NETWORK)
+            segmentation_id = segment.get(pnet.SEGMENTATION_ID)
+            network_type_set = attr.is_attr_set(network_type)
+            segmentation_id_set = attr.is_attr_set(segmentation_id)
 
-    def _extend_network_dict_provider(self, context, network, binding=None):
-        if not binding:
-            binding = nicira_db.get_network_binding(context.session,
-                                                    network['id'])
+            err_msg = None
+            if not network_type_set:
+                err_msg = _("%s required") % pnet.NETWORK_TYPE
+            elif network_type in (NetworkTypes.GRE, NetworkTypes.STT,
+                                  NetworkTypes.FLAT):
+                if segmentation_id_set:
+                    err_msg = _("Segmentation ID cannot be specified with "
+                                "flat network type")
+            elif network_type == NetworkTypes.VLAN:
+                if not segmentation_id_set:
+                    err_msg = _("Segmentation ID must be specified with "
+                                "vlan network type")
+                elif (segmentation_id_set and
+                      not utils.is_valid_vlan_tag(segmentation_id)):
+                    err_msg = (_("%(segmentation_id)s out of range "
+                                 "(%(min_id)s through %(max_id)s)") %
+                               {'segmentation_id': segmentation_id,
+                                'min_id': constants.MIN_VLAN_TAG,
+                                'max_id': constants.MAX_VLAN_TAG})
+                else:
+                    # Verify segment is not already allocated
+                    bindings = nicira_db.get_network_bindings_by_vlanid(
+                        context.session, segmentation_id)
+                    if bindings:
+                        raise q_exc.VlanIdInUse(
+                            vlan_id=segmentation_id,
+                            physical_network=physical_network)
+            elif network_type == NetworkTypes.L3_EXT:
+                if (segmentation_id_set and
+                    not utils.is_valid_vlan_tag(segmentation_id)):
+                    err_msg = (_("%(segmentation_id)s out of range "
+                                 "(%(min_id)s through %(max_id)s)") %
+                               {'segmentation_id': segmentation_id,
+                                'min_id': constants.MIN_VLAN_TAG,
+                                'max_id': constants.MAX_VLAN_TAG})
+            else:
+                err_msg = (_("%(net_type_param)s %(net_type_value)s not "
+                             "supported") %
+                           {'net_type_param': pnet.NETWORK_TYPE,
+                            'net_type_value': network_type})
+            if err_msg:
+                raise q_exc.InvalidInput(error_message=err_msg)
+            # TODO(salvatore-orlando): Validate tranport zone uuid
+            # which should be specified in physical_network
+
+    def _extend_network_dict_provider(self, context, network,
+                                      multiprovider=None, bindings=None):
+        if not bindings:
+            bindings = nicira_db.get_network_bindings(context.session,
+                                                      network['id'])
+        if not multiprovider:
+            multiprovider = nicira_db.is_multiprovider_network(context.session,
+                                                               network['id'])
         # With NVP plugin 'normal' overlay networks will have no binding
         # TODO(salvatore-orlando) make sure users can specify a distinct
         # phy_uuid as 'provider network' for STT net type
-        if binding:
-            network[pnet.NETWORK_TYPE] = binding.binding_type
-            network[pnet.PHYSICAL_NETWORK] = binding.phy_uuid
-            network[pnet.SEGMENTATION_ID] = binding.vlan_id
+        if bindings:
+            if not multiprovider:
+                # network came in through provider networks api
+                network[pnet.NETWORK_TYPE] = bindings[0].binding_type
+                network[pnet.PHYSICAL_NETWORK] = bindings[0].phy_uuid
+                network[pnet.SEGMENTATION_ID] = bindings[0].vlan_id
+            else:
+                # network come in though multiprovider networks api
+                network[mpnet.SEGMENTS] = [
+                    {pnet.NETWORK_TYPE: binding.binding_type,
+                     pnet.PHYSICAL_NETWORK: binding.phy_uuid,
+                     pnet.SEGMENTATION_ID: binding.vlan_id}
+                    for binding in bindings]
 
     def _handle_lswitch_selection(self, cluster, network,
-                                  network_binding, max_ports,
+                                  network_bindings, max_ports,
                                   allow_extra_lswitches):
         lswitches = nvplib.get_lswitches(cluster, network.id)
         try:
@@ -853,12 +870,12 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                       main_ls[0]['display_name'],
                                       network['tenant_id'],
                                       tags=tags)
+            transport_zone_config = self._convert_to_nvp_transport_zones(
+                cluster, bindings=network_bindings)
             selected_lswitch = nvplib.create_lswitch(
                 cluster, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
-                network_binding.binding_type,
-                network_binding.phy_uuid,
-                network_binding.vlan_id,
+                transport_zone_config,
                 network.id)
             return selected_lswitch
         else:
@@ -878,12 +895,86 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 
+    def _convert_to_nvp_transport_zones(self, cluster, network=None,
+                                        bindings=None):
+        nvp_transport_zones_config = []
+
+        # Convert fields from provider request to nvp format
+        if (network and not attr.is_attr_set(
+            network.get(mpnet.SEGMENTS))):
+            return [{"zone_uuid": cluster.default_tz_uuid,
+                     "transport_type": cfg.CONF.NVP.default_transport_type}]
+
+        # Convert fields from db to nvp format
+        if bindings:
+            transport_entry = {}
+            for binding in bindings:
+                if binding.binding_type in [NetworkTypes.FLAT,
+                                            NetworkTypes.VLAN]:
+                    transport_entry['transport_type'] = NetworkTypes.BRIDGE
+                    transport_entry['binding_config'] = {}
+                    vlan_id = binding.vlan_id
+                    if vlan_id:
+                        transport_entry['binding_config'] = (
+                            {'vlan_translation': [{'transport': vlan_id}]})
+                else:
+                    transport_entry['transport_type'] = binding.binding_type
+                transport_entry['zone_uuid'] = binding.phy_uuid
+                nvp_transport_zones_config.append(transport_entry)
+            return nvp_transport_zones_config
+
+        for transport_zone in network.get(mpnet.SEGMENTS):
+            for value in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
+                          pnet.SEGMENTATION_ID]:
+                if transport_zone.get(value) == attr.ATTR_NOT_SPECIFIED:
+                    transport_zone[value] = None
+
+            transport_entry = {}
+            transport_type = transport_zone.get(pnet.NETWORK_TYPE)
+            if transport_type in [NetworkTypes.FLAT, NetworkTypes.VLAN]:
+                transport_entry['transport_type'] = NetworkTypes.BRIDGE
+                transport_entry['binding_config'] = {}
+                vlan_id = transport_zone.get(pnet.SEGMENTATION_ID)
+                if vlan_id:
+                    transport_entry['binding_config'] = (
+                        {'vlan_translation': [{'transport': vlan_id}]})
+            else:
+                transport_entry['transport_type'] = transport_type
+            transport_entry['zone_uuid'] = (
+                transport_zone[pnet.PHYSICAL_NETWORK] or
+                cluster.deafult_tz_uuid)
+            nvp_transport_zones_config.append(transport_entry)
+        return nvp_transport_zones_config
+
+    def _convert_to_transport_zones_dict(self, network):
+        """Converts the provider request body to multiprovider.
+        Returns: True if request is multiprovider False if provider
+        and None if neither.
+        """
+        if any(attr.is_attr_set(network.get(f))
+               for f in (pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
+                         pnet.SEGMENTATION_ID)):
+            if attr.is_attr_set(network.get(mpnet.SEGMENTS)):
+                raise mpnet.SegmentsSetInConjunctionWithProviders()
+            # convert to transport zone list
+            network[mpnet.SEGMENTS] = [
+                {pnet.NETWORK_TYPE: network[pnet.NETWORK_TYPE],
+                 pnet.PHYSICAL_NETWORK: network[pnet.PHYSICAL_NETWORK],
+                 pnet.SEGMENTATION_ID: network[pnet.SEGMENTATION_ID]}]
+            del network[pnet.NETWORK_TYPE]
+            del network[pnet.PHYSICAL_NETWORK]
+            del network[pnet.SEGMENTATION_ID]
+            return False
+        if attr.is_attr_set(mpnet.SEGMENTS):
+            return True
+
     def create_network(self, context, network):
         net_data = network['network']
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         self._ensure_default_security_group(context, tenant_id)
         # Process the provider network extension
-        self._handle_provider_create(context, net_data)
+        provider_type = self._convert_to_transport_zones_dict(net_data)
+        self._validate_provider_create(context, net_data)
         # Replace ATTR_NOT_SPECIFIED with None before sending to NVP
         for key, value in network['network'].iteritems():
             if value is attr.ATTR_NOT_SPECIFIED:
@@ -893,16 +984,14 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.warning(_("Network with admin_state_up=False are not yet "
                           "supported by this plugin. Ignoring setting for "
                           "network %s"), net_data.get('name', '<unknown>'))
+        transport_zone_config = self._convert_to_nvp_transport_zones(
+            self.cluster, net_data)
         external = net_data.get(l3.EXTERNAL)
         if (not attr.is_attr_set(external) or
             attr.is_attr_set(external) and not external):
-            nvp_binding_type = net_data.get(pnet.NETWORK_TYPE)
-            if nvp_binding_type in ('flat', 'vlan'):
-                nvp_binding_type = 'bridge'
             lswitch = nvplib.create_lswitch(
                 self.cluster, tenant_id, net_data.get('name'),
-                nvp_binding_type, net_data.get(pnet.PHYSICAL_NETWORK),
-                net_data.get(pnet.SEGMENTATION_ID),
+                transport_zone_config,
                 shared=net_data.get(attr.SHARED))
             net_data['id'] = lswitch['uuid']
 
@@ -924,14 +1013,21 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_network_queue_mapping(context, new_net)
                 self._extend_network_qos_queue(context, new_net)
 
-            if net_data.get(pnet.NETWORK_TYPE):
-                net_binding = nicira_db.add_network_binding(
-                    context.session, new_net['id'],
-                    net_data.get(pnet.NETWORK_TYPE),
-                    net_data.get(pnet.PHYSICAL_NETWORK),
-                    net_data.get(pnet.SEGMENTATION_ID, 0))
+            if (net_data.get(mpnet.SEGMENTS) and
+                isinstance(provider_type, bool)):
+                net_bindings = []
+                for tz in net_data[mpnet.SEGMENTS]:
+                    net_bindings.append(nicira_db.add_network_binding(
+                        context.session, new_net['id'],
+                        tz.get(pnet.NETWORK_TYPE),
+                        tz.get(pnet.PHYSICAL_NETWORK),
+                        tz.get(pnet.SEGMENTATION_ID, 0)))
+                if provider_type:
+                    nicira_db.set_multiprovider_network(context.session,
+                                                        new_net['id'])
                 self._extend_network_dict_provider(context, new_net,
-                                                   net_binding)
+                                                   provider_type,
+                                                   net_bindings)
         self.schedule_network(context, new_net)
         return new_net
 

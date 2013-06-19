@@ -24,8 +24,6 @@ import hashlib
 import inspect
 import json
 
-from oslo.config import cfg
-
 #FIXME(danwent): I'd like this file to get to the point where it has
 # no neutron-specific logic in it
 from neutron.common import constants
@@ -217,27 +215,14 @@ def get_lswitches(cluster, neutron_net_id):
 
 
 def create_lswitch(cluster, tenant_id, display_name,
-                   transport_type=None,
-                   transport_zone_uuid=None,
-                   vlan_id=None,
+                   transport_zones_config,
                    neutron_net_id=None,
                    shared=None,
                    **kwargs):
-    nvp_binding_type = transport_type
-    if transport_type in ('flat', 'vlan'):
-        nvp_binding_type = 'bridge'
-    transport_zone_config = (
-        {"zone_uuid": (transport_zone_uuid or
-                       cluster.default_tz_uuid),
-         "transport_type": (nvp_binding_type or
-                            cfg.CONF.NVP.default_transport_type)})
     lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
-                   "transport_zones": [transport_zone_config],
+                   "transport_zones": transport_zones_config,
                    "tags": [{"tag": tenant_id, "scope": "os_tid"},
                             {"tag": NEUTRON_VERSION, "scope": "quantum"}]}
-    if nvp_binding_type == 'bridge' and vlan_id:
-        transport_zone_config["binding_config"] = {"vlan_translation":
-                                                   [{"transport": vlan_id}]}
     if neutron_net_id:
         lswitch_obj["tags"].append({"tag": neutron_net_id,
                                     "scope": "quantum_net_id"})

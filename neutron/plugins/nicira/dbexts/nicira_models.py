@@ -29,15 +29,18 @@ class NvpNetworkBinding(model_base.BASEV2):
     """
     __tablename__ = 'nvp_network_bindings'
 
+    # TODO(arosen) - it might be worth while refactoring the how this data
+    # is stored later so every column does not need to be a primary key.
     network_id = Column(String(36),
                         ForeignKey('networks.id', ondelete="CASCADE"),
                         primary_key=True)
     # 'flat', 'vlan', stt' or 'gre'
     binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
                                name='nvp_network_bindings_binding_type'),
-                          nullable=False)
-    phy_uuid = Column(String(36))
-    vlan_id = Column(Integer)
+                          nullable=False, primary_key=True)
+    phy_uuid = Column(String(36), primary_key=True, nullable=True)
+    vlan_id = Column(Integer, primary_key=True, nullable=True,
+                     autoincrement=False)
 
     def __init__(self, network_id, binding_type, phy_uuid, vlan_id):
         self.network_id = network_id
@@ -64,3 +67,15 @@ class NeutronNvpPortMapping(model_base.BASEV2):
     def __init__(self, quantum_id, nvp_id):
         self.quantum_id = quantum_id
         self.nvp_id = nvp_id
+
+
+class MultiProviderNetworks(model_base.BASEV2):
+    """Networks that were provision through multiprovider extension."""
+
+    __tablename__ = 'nvp_multi_provider_networks'
+    network_id = Column(String(36),
+                        ForeignKey('networks.id', ondelete="CASCADE"),
+                        primary_key=True)
+
+    def __init__(self, network_id):
+        self.network_id = network_id
