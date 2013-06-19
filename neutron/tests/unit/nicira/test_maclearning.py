@@ -27,6 +27,7 @@ from neutron import context
 from neutron.extensions import agent
 from neutron.openstack.common import log as logging
 import neutron.plugins.nicira as nvp_plugin
+from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit.nicira import fake_nvpapiclient
 from neutron.tests.unit import test_db_plugin
 
@@ -84,7 +85,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             return self.fc.fake_request(*args, **kwargs)
 
         # Emulate tests against NVP 2.x
-        instance.return_value.get_nvp_version.return_value = "2.999"
+        instance.return_value.get_nvp_version.return_value = NVPVersion("3.0")
         instance.return_value.request.side_effect = _fake_request
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)

@@ -30,6 +30,7 @@ from oslo.config import cfg
 # no neutron-specific logic in it
 from neutron.common import constants
 from neutron.common import exceptions as exception
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log
 from neutron.plugins.nicira.common import (
     exceptions as nvp_exc)
@@ -48,11 +49,12 @@ URI_PREFIX = "/ws.v1"
 LSWITCH_RESOURCE = "lswitch"
 LSWITCHPORT_RESOURCE = "lport/%s" % LSWITCH_RESOURCE
 LROUTER_RESOURCE = "lrouter"
-# Current neutron version
 LROUTERPORT_RESOURCE = "lport/%s" % LROUTER_RESOURCE
+LROUTERRIB_RESOURCE = "rib/%s" % LROUTER_RESOURCE
 LROUTERNAT_RESOURCE = "nat/lrouter"
 LQUEUE_RESOURCE = "lqueue"
 GWSERVICE_RESOURCE = "gateway-service"
+# Current neutron version
 NEUTRON_VERSION = "2013.1"
 # Other constants for NVP resource
 MAX_DISPLAY_NAME_LEN = 40
@@ -74,16 +76,29 @@ taken_context_ids = []
 _lqueue_cache = {}
 
 
-def version_dependent(func):
-    func_name = func.__name__
+def version_dependent(wrapped_func):
+    func_name = wrapped_func.__name__
 
     def dispatch_version_dependent_function(cluster, *args, **kwargs):
-        nvp_ver = cluster.api_client.get_nvp_version()
-        if nvp_ver:
-            ver_major = int(nvp_ver.split('.')[0])
-            real_func = NVPLIB_FUNC_DICT[func_name][ver_major]
+        # Call the wrapper function, in case we need to
+        # run validation checks regarding versions. It
+        # should return the NVP version
+        v = (wrapped_func(cluster, *args, **kwargs) or
+             cluster.api_client.get_nvp_version())
+        if v:
+            func = (NVPLIB_FUNC_DICT[func_name][v.major].get(v.minor) or
+                    NVPLIB_FUNC_DICT[func_name][v.major]['default'])
+            if func is None:
+                LOG.error(_('NVP version %(ver)s does not support method '
+                          '%(fun)s.') % {'ver': v, 'fun': func_name})
+                raise NotImplementedError()
+        else:
+            raise NvpApiClient.ServiceUnavailable('NVP version is not set. '
+                                                  'Unable to complete request'
+                                                  'correctly. Check log for '
+                                                  'NVP communication errors.')
         func_kwargs = kwargs
-        arg_spec = inspect.getargspec(real_func)
+        arg_spec = inspect.getargspec(func)
         if not arg_spec.keywords and not arg_spec.varargs:
             # drop args unknown to function from func_args
             arg_set = set(func_kwargs.keys())
@@ -91,7 +106,7 @@ def version_dependent(func):
                 del func_kwargs[arg]
         # NOTE(salvatore-orlando): shall we fail here if a required
         # argument is not passed, or let the called function raise?
-        real_func(cluster, *args, **func_kwargs)
+        return func(cluster, *args, **func_kwargs)
 
     return dispatch_version_dependent_function
 
@@ -284,7 +299,22 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         json.dumps(gwservice_obj), cluster=cluster)
 
 
-def create_lrouter(cluster, tenant_id, display_name, nexthop):
+def _prepare_lrouter_body(name, tenant_id, router_type, **kwargs):
+    body = {
+        "display_name": _check_and_truncate_name(name),
+        "tags": [{"tag": tenant_id, "scope": "os_tid"},
+                 {"tag": NEUTRON_VERSION, "scope": "quantum"}],
+        "routing_config": {
+            "type": router_type
+        },
+        "type": "LogicalRouterConfig"
+    }
+    if kwargs:
+        body["routing_config"].update(kwargs)
+    return body
+
+
+def create_implicit_routing_lrouter(cluster, tenant_id, display_name, nexthop):
     """Create a NVP logical router on the specified cluster.
 
         :param cluster: The target NVP cluster
@@ -295,23 +325,34 @@ def create_lrouter(cluster, tenant_id, display_name, nexthop):
         :raise NvpApiException: if there is a problem while communicating
         with the NVP controller
     """
-    display_name = _check_and_truncate_name(display_name)
-    tags = [{"tag": tenant_id, "scope": "os_tid"},
-            {"tag": NEUTRON_VERSION, "scope": "quantum"}]
-    lrouter_obj = {
-        "display_name": display_name,
-        "tags": tags,
-        "routing_config": {
-            "default_route_next_hop": {
-                "gateway_ip_address": nexthop,
-                "type": "RouterNextHop"
-            },
-            "type": "SingleDefaultRouteImplicitRoutingConfig"
+    implicit_routing_config = {
+        "default_route_next_hop": {
+            "gateway_ip_address": nexthop,
+            "type": "RouterNextHop"
         },
-        "type": "LogicalRouterConfig"
     }
+    lrouter_obj = _prepare_lrouter_body(
+        display_name, tenant_id,
+        "SingleDefaultRouteImplicitRoutingConfig",
+        **implicit_routing_config)
     return do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
                       json.dumps(lrouter_obj), cluster=cluster)
+
+
+def create_explicit_routing_lrouter(cluster, tenant_id,
+                                    display_name, nexthop):
+    lrouter_obj = _prepare_lrouter_body(
+        display_name, tenant_id, "RoutingTableRoutingConfig")
+    router = do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
+                        json.dumps(lrouter_obj), cluster=cluster)
+    default_gw = {'prefix': '0.0.0.0/0', 'next_hop_ip': nexthop}
+    create_explicit_route_lrouter(cluster, router['uuid'], default_gw)
+    return router
+
+
+@version_dependent
+def create_lrouter(cluster, *args, **kwargs):
+    pass
 
 
 def delete_lrouter(cluster, lrouter_id):
@@ -381,8 +422,8 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
                       json.dumps(gwservice_obj), cluster=cluster)
 
 
-def update_lrouter(cluster, lrouter_id, display_name, nexthop):
-    lrouter_obj = get_lrouter(cluster, lrouter_id)
+def update_implicit_routing_lrouter(cluster, r_id, display_name, nexthop):
+    lrouter_obj = get_lrouter(cluster, r_id)
     if not display_name and not nexthop:
         # Nothing to update
         return lrouter_obj
@@ -395,9 +436,148 @@ def update_lrouter(cluster, lrouter_id, display_name, nexthop):
         if nh_element:
             nh_element["gateway_ip_address"] = nexthop
     return do_request(HTTP_PUT, _build_uri_path(LROUTER_RESOURCE,
-                                                resource_id=lrouter_id),
+                                                resource_id=r_id),
                       json.dumps(lrouter_obj),
                       cluster=cluster)
+
+
+def get_explicit_routes_lrouter(cluster, router_id, protocol_type='static'):
+    static_filter = {'protocol': protocol_type}
+    existing_routes = do_request(
+        HTTP_GET,
+        _build_uri_path(LROUTERRIB_RESOURCE,
+                        filters=static_filter,
+                        fields="*",
+                        parent_resource_id=router_id),
+        cluster=cluster)['results']
+    return existing_routes
+
+
+def delete_explicit_route_lrouter(cluster, router_id, route_id):
+    do_request(HTTP_DELETE,
+               _build_uri_path(LROUTERRIB_RESOURCE,
+                               resource_id=route_id,
+                               parent_resource_id=router_id),
+               cluster=cluster)
+
+
+def create_explicit_route_lrouter(cluster, router_id, route):
+    next_hop_ip = route.get("nexthop") or route.get("next_hop_ip")
+    prefix = route.get("destination") or route.get("prefix")
+    uuid = do_request(
+        HTTP_POST,
+        _build_uri_path(LROUTERRIB_RESOURCE,
+                        parent_resource_id=router_id),
+        json.dumps({
+            "action": "accept",
+            "next_hop_ip": next_hop_ip,
+            "prefix": prefix,
+            "protocol": "static"
+        }),
+        cluster=cluster)['uuid']
+    return uuid
+
+
+def update_explicit_routes_lrouter(cluster, router_id, routes):
+    # Update in bulk: delete them all, and add the ones specified
+    # but keep track of what is been modified to allow roll-backs
+    # in case of failures
+    nvp_routes = get_explicit_routes_lrouter(cluster, router_id)
+    try:
+        deleted_routes = []
+        added_routes = []
+        # omit the default route (0.0.0.0/0) from the processing;
+        # this must be handled through the nexthop for the router
+        for route in nvp_routes:
+            prefix = route.get("destination") or route.get("prefix")
+            if prefix != '0.0.0.0/0':
+                delete_explicit_route_lrouter(cluster,
+                                              router_id,
+                                              route['uuid'])
+                deleted_routes.append(route)
+        for route in routes:
+            prefix = route.get("destination") or route.get("prefix")
+            if prefix != '0.0.0.0/0':
+                uuid = create_explicit_route_lrouter(cluster,
+                                                     router_id, route)
+                added_routes.append(uuid)
+    except NvpApiClient.NvpApiException:
+        LOG.exception(_('Cannot update NVP routes %(routes)s for'
+                      'router %(router_id)s') % {'routes': routes,
+                                                 'router_id': router_id})
+        # Roll back to keep NVP in consistent state
+        with excutils.save_and_reraise_exception():
+            if nvp_routes:
+                if deleted_routes:
+                    for route in deleted_routes:
+                        create_explicit_route_lrouter(cluster,
+                                                      router_id, route)
+                if added_routes:
+                    for route_id in added_routes:
+                        delete_explicit_route_lrouter(cluster,
+                                                      router_id, route_id)
+    return nvp_routes
+
+
+@version_dependent
+def get_default_route_explicit_routing_lrouter(cluster, *args, **kwargs):
+    pass
+
+
+def get_default_route_explicit_routing_lrouter_v33(cluster, router_id):
+    static_filter = {"protocol": "static",
+                     "prefix": "0.0.0.0/0"}
+    default_route = do_request(
+        HTTP_GET,
+        _build_uri_path(LROUTERRIB_RESOURCE,
+                        filters=static_filter,
+                        fields="*",
+                        parent_resource_id=router_id),
+        cluster=cluster)["results"][0]
+    return default_route
+
+
+def get_default_route_explicit_routing_lrouter_v32(cluster, router_id):
+    # Scan all routes because 3.2 does not support query by prefix
+    all_routes = get_explicit_routes_lrouter(cluster, router_id)
+    for route in all_routes:
+        if route['prefix'] == '0.0.0.0/0':
+            return route
+
+
+def update_default_gw_explicit_routing_lrouter(cluster, router_id, next_hop):
+    default_route = get_default_route_explicit_routing_lrouter(cluster,
+                                                               router_id)
+    if next_hop != default_route["next_hop_ip"]:
+        new_default_route = {"action": "accept",
+                             "next_hop_ip": next_hop,
+                             "prefix": "0.0.0.0/0",
+                             "protocol": "static"}
+        do_request(HTTP_PUT,
+                   _build_uri_path(LROUTERRIB_RESOURCE,
+                                   resource_id=default_route['uuid'],
+                                   parent_resource_id=router_id),
+                   json.dumps(new_default_route),
+                   cluster=cluster)
+
+
+def update_explicit_routing_lrouter(cluster, router_id,
+                                    display_name, next_hop, routes=None):
+    update_implicit_routing_lrouter(cluster, router_id, display_name, next_hop)
+    if next_hop:
+        update_default_gw_explicit_routing_lrouter(cluster,
+                                                   router_id, next_hop)
+    if routes:
+        return update_explicit_routes_lrouter(cluster, router_id, routes)
+
+
+@version_dependent
+def update_lrouter(cluster, *args, **kwargs):
+    if kwargs.get('routes', None):
+        v = cluster.api_client.get_nvp_version()
+        if (v.major < 3) or (v.major >= 3 and v.minor < 2):
+            raise nvp_exc.NvpInvalidVersion(version=v)
+        return v
 
 
 def delete_network(cluster, net_id, lswitch_id):
@@ -1027,14 +1207,27 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         raise nvp_exc.NvpPluginException(err_msg=msg)
 
 
-# TODO(salvatore-orlando): Also handle changes in minor versions
 NVPLIB_FUNC_DICT = {
-    'create_lrouter_dnat_rule': {2: create_lrouter_dnat_rule_v2,
-                                 3: create_lrouter_dnat_rule_v3},
-    'create_lrouter_snat_rule': {2: create_lrouter_snat_rule_v2,
-                                 3: create_lrouter_snat_rule_v3},
-    'create_lrouter_nosnat_rule': {2: create_lrouter_nosnat_rule_v2,
-                                   3: create_lrouter_nosnat_rule_v3}
+    'create_lrouter': {
+        2: {'default': create_implicit_routing_lrouter, },
+        3: {'default': create_implicit_routing_lrouter,
+            2: create_explicit_routing_lrouter, }, },
+    'update_lrouter': {
+        2: {'default': update_implicit_routing_lrouter, },
+        3: {'default': update_implicit_routing_lrouter,
+            2: update_explicit_routing_lrouter, }, },
+    'create_lrouter_dnat_rule': {
+        2: {'default': create_lrouter_dnat_rule_v2, },
+        3: {'default': create_lrouter_dnat_rule_v3, }, },
+    'create_lrouter_snat_rule': {
+        2: {'default': create_lrouter_snat_rule_v2, },
+        3: {'default': create_lrouter_snat_rule_v3, }, },
+    'create_lrouter_nosnat_rule': {
+        2: {'default': create_lrouter_nosnat_rule_v2, },
+        3: {'default': create_lrouter_nosnat_rule_v3, }, },
+    'get_default_route_explicit_routing_lrouter': {
+        3: {2: get_default_route_explicit_routing_lrouter_v32,
+            3: get_default_route_explicit_routing_lrouter_v33, }, },
 }
 
 
