@@ -307,3 +307,13 @@ def get_bridges(root_helper):
     except Exception, e:
         LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
         return []
+
+
+def get_bridge_external_bridge_id(root_helper, bridge):
+    args = ["ovs-vsctl", "--timeout=2", "br-get-external-id",
+            bridge, "bridge-id"]
+    try:
+        return utils.execute(args, root_helper=root_helper).strip()
+    except Exception:
+        LOG.exception(_("Bridge %s not found."), bridge)
+        return None
