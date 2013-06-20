@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-19 12:11+0000\n"
+"POT-Creation-Date: 2013-06-20 12:11+0000\n"
 "PO-Revision-Date: 2013-05-16 09:23+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Danish "
@@ -140,7 +140,12 @@ msgid ""
 "found"
 msgstr ""
 
-#: quantum/policy.py:270
+#: quantum/policy.py:242
+#, python-format
+msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: quantum/policy.py:274
 #, python-format
 msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
 msgstr ""
@@ -463,7 +468,7 @@ msgstr ""
 
 #: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:759
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:185
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr ""
@@ -2342,7 +2347,7 @@ msgstr ""
 msgid ""
 "No default service definition in configuration file. Please add service "
 "definitions using the service_definition variable in the "
-"[DEFAULT_SERVICETYPE] section"
+"[default_servicetype] section"
 msgstr ""
 
 #: quantum/db/servicetype_db.py:79
@@ -4926,7 +4931,7 @@ msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr ""
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:528
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:146
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:145
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr ""
@@ -6427,21 +6432,21 @@ msgid ""
 "received_datapath_id=%(received)s)."
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:55
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:54
 #, python-format
 msgid "Update ports: added=%(added)s, removed=%(removed)s"
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:67
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:66
 msgid "update_ports() failed."
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:81
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:80
 #, python-format
 msgid "port_update received: %s"
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:222
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:221
 msgid "No port changed."
 msgstr ""
 
@@ -8591,4 +8596,11 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid ""
+#~ "No default service definition in "
+#~ "configuration file. Please add service "
+#~ "definitions using the service_definition "
+#~ "variable in the [DEFAULT_SERVICETYPE] section"
+#~ msgstr ""
 

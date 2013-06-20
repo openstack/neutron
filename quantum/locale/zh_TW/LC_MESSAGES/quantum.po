@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-19 12:11+0000\n"
+"POT-Creation-Date: 2013-06-20 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -142,7 +142,12 @@ msgid ""
 "found"
 msgstr ""
 
-#: quantum/policy.py:270
+#: quantum/policy.py:242
+#, python-format
+msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: quantum/policy.py:274
 #, python-format
 msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
 msgstr "在目標 %(target_dict)s 中找不到所要求的欄位：%(field)s"
@@ -465,7 +470,7 @@ msgstr "Quantum 伺服器不支援狀態報告。將停用此代理程式的狀�
 
 #: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:759
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:185
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
@@ -2359,7 +2364,7 @@ msgstr "預設服務類型 - 服務 %(service_class)s 及外掛程式 %(plugin)s
 msgid ""
 "No default service definition in configuration file. Please add service "
 "definitions using the service_definition variable in the "
-"[DEFAULT_SERVICETYPE] section"
+"[default_servicetype] section"
 msgstr ""
 
 #: quantum/db/servicetype_db.py:79
@@ -4955,7 +4960,7 @@ msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr "無法取得唯一 ID 的 MAC 位址。已終止代理程式！"
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:528
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:146
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:145
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr "RPC agent_id：%s"
@@ -6501,21 +6506,21 @@ msgid ""
 "received_datapath_id=%(received)s)."
 msgstr ""
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:55
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:54
 #, python-format
 msgid "Update ports: added=%(added)s, removed=%(removed)s"
 msgstr "更新埠：已新增 = %(added)s，已移除 = %(removed)s"
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:67
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:66
 msgid "update_ports() failed."
 msgstr "update_ports() 失敗。"
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:81
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:80
 #, python-format
 msgid "port_update received: %s"
 msgstr "收到 port_update：%s"
 
-#: quantum/plugins/nec/agent/nec_quantum_agent.py:222
+#: quantum/plugins/nec/agent/nec_quantum_agent.py:221
 msgid "No port changed."
 msgstr "未變更埠。"
 
@@ -8679,4 +8684,11 @@ msgstr "找不到 lswitch：%s"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
+
+#~ msgid ""
+#~ "No default service definition in "
+#~ "configuration file. Please add service "
+#~ "definitions using the service_definition "
+#~ "variable in the [DEFAULT_SERVICETYPE] section"
+#~ msgstr ""
 
