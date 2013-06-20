@@ -19,7 +19,7 @@
       "lport_admin_up_count": %(lport_count)d,
       "_schema": "/ws.v1/schema/LogicalRouterStatus",
       "lport_count": %(lport_count)d,
-      "fabric_status": true,
+      "fabric_status": %(status)s,
       "type": "LogicalRouterStatus",
       "lport_link_up_count": %(lport_count)d
     }

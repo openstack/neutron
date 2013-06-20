@@ -53,7 +53,24 @@ nvp_opts = [
                help=_("The default network tranport type to use (stt, gre, "
                       "bridge, ipsec_gre, or ipsec_stt)")),
     cfg.StrOpt('agent_mode', default=AgentModes.AGENT,
-               help=_("The mode used to implement DHCP/metadata services.")),
+               help=_("The mode used to implement DHCP/metadata services."))
+]
+
+sync_opts = [
+    cfg.IntOpt('state_sync_interval', default=120,
+               help=_("Interval in seconds between runs of the state "
+                      "synchronization task. Set it to 0 to disable it")),
+    cfg.IntOpt('max_random_sync_delay', default=0,
+               help=_("Maximum value for the additional random "
+                      "delay in seconds between runs of the state "
+                      "synchronization task")),
+    cfg.IntOpt('min_sync_req_delay', default=10,
+               help=_('Minimum delay, in seconds, between two state '
+                      'synchronization queries to NVP. It must not '
+                      'exceed state_sync_interval')),
+    cfg.IntOpt('min_chunk_size', default=500,
+               help=_('Minimum number of resources to be retrieved from NVP '
+                      'during state synchronization'))
 ]
 
 connection_opts = [
@@ -107,6 +124,8 @@ cluster_opts = [
 cfg.CONF.register_opts(connection_opts)
 cfg.CONF.register_opts(cluster_opts)
 cfg.CONF.register_opts(nvp_opts, "NVP")
+cfg.CONF.register_opts(sync_opts, "NVP_SYNC")
+
 # NOTE(armando-migliaccio): keep the following code until we support
 # NVP configuration files in older format (Grizzly or older).
 # ### BEGIN

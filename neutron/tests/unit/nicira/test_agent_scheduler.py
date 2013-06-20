@@ -16,6 +16,7 @@
 import mock
 
 from neutron.common.test_lib import test_config
+from neutron.plugins.nicira.common import sync
 from neutron.tests.unit.nicira import fake_nvpapiclient
 from neutron.tests.unit.nicira import get_fake_conf
 from neutron.tests.unit.nicira import NVPAPI_NAME
@@ -35,6 +36,9 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
+        # Avoid runs of the synchronizer looping call
+        patch_sync = mock.patch.object(sync, '_start_loopingcall')
+        patch_sync.start()
 
         def _fake_request(*args, **kwargs):
             return self.fc.fake_request(*args, **kwargs)
@@ -44,6 +48,7 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         instance.return_value.request.side_effect = _fake_request
         super(NVPDhcpAgentNotifierTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
+        self.addCleanup(patch_sync.stop)
         self.addCleanup(self.mock_nvpapi.stop)
 
     def _notification_mocks(self, hosts, mock_dhcp, net, subnet, port):

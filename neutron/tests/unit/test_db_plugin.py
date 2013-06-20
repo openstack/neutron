@@ -202,10 +202,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             'GET', resource, None, fmt, params=params, subresource=subresource
         )
 
-    def new_show_request(self, resource, id, fmt=None, subresource=None):
-        return self._req(
-            'GET', resource, None, fmt, id=id, subresource=subresource
-        )
+    def new_show_request(self, resource, id, fmt=None,
+                         subresource=None, fields=None):
+        if fields:
+            params = "&".join(["fields=%s" % x for x in fields])
+        else:
+            params = None
+        return self._req('GET', resource, None, fmt, id=id,
+                         params=params, subresource=subresource)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
                            sub_id=None):

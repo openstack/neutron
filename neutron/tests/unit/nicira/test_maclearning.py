@@ -24,6 +24,7 @@ from neutron.api.v2 import attributes
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.extensions import agent
+from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit.nicira import fake_nvpapiclient
 from neutron.tests.unit.nicira import get_fake_conf
@@ -70,6 +71,9 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
+        # Avoid runs of the synchronizer looping call
+        patch_sync = mock.patch.object(sync, '_start_loopingcall')
+        patch_sync.start()
 
         def _fake_request(*args, **kwargs):
             return self.fc.fake_request(*args, **kwargs)
@@ -80,6 +84,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
+        self.addCleanup(patch_sync.stop)
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(cfg.CONF.reset)
         super(MacLearningDBTestCase, self).setUp()

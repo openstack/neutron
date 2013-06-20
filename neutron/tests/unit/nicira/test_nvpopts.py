@@ -16,6 +16,7 @@
 import fixtures
 import testtools
 
+import mock
 from oslo.config import cfg
 
 from neutron.common import config as q_config
@@ -23,6 +24,7 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions
+from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira import nvp_cluster
 from neutron.tests.unit.nicira import get_fake_conf
 from neutron.tests.unit.nicira import PLUGIN_NAME
@@ -81,6 +83,10 @@ class ConfigurationTest(testtools.TestCase):
         self.useFixture(fixtures.MonkeyPatch(
                         'neutron.manager.NeutronManager._instance',
                         None))
+        # Avoid runs of the synchronizer looping call
+        patch_sync = mock.patch.object(sync, '_start_loopingcall')
+        patch_sync.start()
+        self.addCleanup(patch_sync.stop)
 
     def _assert_required_options(self, cluster):
         self.assertEqual(cluster.nvp_controllers, ['fake_1:443', 'fake_2:443'])
@@ -175,6 +181,10 @@ class OldConfigurationTest(testtools.TestCase):
         self.useFixture(fixtures.MonkeyPatch(
                         'neutron.manager.NeutronManager._instance',
                         None))
+        # Avoid runs of the synchronizer looping call
+        patch_sync = mock.patch.object(sync, '_start_loopingcall')
+        patch_sync.start()
+        self.addCleanup(patch_sync.stop)
 
     def _assert_required_options(self, cluster):
         self.assertEqual(cluster.nvp_controllers, ['fake_1:443', 'fake_2:443'])
