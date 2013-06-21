@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-20 12:11+0000\n"
+"POT-Creation-Date: 2013-06-21 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -393,7 +393,7 @@ msgstr ""
 "Der DHCP-Treiber '%s' unterstützt das Abrufen einer Liste mit bestehenden"
 " Netzen nicht"
 
-#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:722
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:777
 msgid "DHCP agent started"
 msgstr "DHCP-Agent gestartet"
 
@@ -419,7 +419,7 @@ msgstr "Netzstatus kann nicht synchronisiert werden."
 msgid "Network %s RPC info call failed."
 msgstr "RPC-Informationsaufruf von Netz %s fehlgeschlagen."
 
-#: quantum/agent/dhcp_agent.py:307
+#: quantum/agent/dhcp_agent.py:310
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
@@ -428,55 +428,65 @@ msgstr ""
 "%(port_num)d Routerports auf dem Zugangsnetz für Metadaten gefunden. Nur "
 "Port '%(port_id)s' für Router '%(router_id)s' wird berücksichtigt"
 
-#: quantum/agent/dhcp_agent.py:496 quantum/agent/l3_agent.py:149
+#: quantum/agent/dhcp_agent.py:499 quantum/agent/l3_agent.py:149
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr "Der für die Verwaltung der virtuellen Schnittstelle verwendete Treiber."
 
-#: quantum/agent/dhcp_agent.py:504
+#: quantum/agent/dhcp_agent.py:507
 msgid "You must specify an interface driver"
 msgstr "Sie müssen einen Schnittstellentreiber angeben"
 
-#: quantum/agent/dhcp_agent.py:509 quantum/agent/l3_agent.py:190
+#: quantum/agent/dhcp_agent.py:512 quantum/agent/l3_agent.py:190
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr "Fehler beim Importieren von Schnittstellentreiber '%s'"
 
-#: quantum/agent/dhcp_agent.py:547 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:561
+#, python-format
+msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:571
+#, python-format
+msgid "Removing gateway for dhcp netns on net %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:595 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "Wiederverwendung von vorhandenem Gerät: %s."
 
-#: quantum/agent/dhcp_agent.py:627
+#: quantum/agent/dhcp_agent.py:682
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr "Position des durch DHCP-Leaserelais erstellten UNIX-Domänensockets"
 
-#: quantum/agent/dhcp_agent.py:657
+#: quantum/agent/dhcp_agent.py:712
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr "Netz-ID %s ist keine gültige UUID"
 
-#: quantum/agent/dhcp_agent.py:663
+#: quantum/agent/dhcp_agent.py:718
 msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 "Parsing von Lease-Relais-Nachricht an Verzeichnis kann nicht durchgeführt"
 " werden."
 
-#: quantum/agent/dhcp_agent.py:664
+#: quantum/agent/dhcp_agent.py:719
 #, python-format
 msgid "Exception value: %s"
 msgstr "Ausnahmewert: %s"
 
-#: quantum/agent/dhcp_agent.py:665
+#: quantum/agent/dhcp_agent.py:720
 #, python-format
 msgid "Message representation: %s"
 msgstr "Nachrichtendarstellung: %s"
 
-#: quantum/agent/dhcp_agent.py:667
+#: quantum/agent/dhcp_agent.py:722
 msgid "Unable update lease. Exception"
 msgstr "Lease kann nicht aktualisiert werden. Ausnahme"
 
-#: quantum/agent/dhcp_agent.py:705 quantum/agent/l3_agent.py:754
+#: quantum/agent/dhcp_agent.py:760 quantum/agent/l3_agent.py:754
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
@@ -484,14 +494,14 @@ msgstr ""
 "Der Quantum-Server unterstützt keine Statusberichte. Statusberichte für "
 "diesen Agenten werden inaktiviert."
 
-#: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:759
+#: quantum/agent/dhcp_agent.py:766 quantum/agent/l3_agent.py:759
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr "Erstellung des Statusberichts fehlgeschlagen!"
 
-#: quantum/agent/dhcp_agent.py:719 quantum/agent/l3_agent.py:764
+#: quantum/agent/dhcp_agent.py:774 quantum/agent/l3_agent.py:764
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "'agent_updated' (Agent aktualisiert) durch Serverseite %s!"
@@ -899,27 +909,27 @@ msgstr ""
 msgid "No namespace defined for parent"
 msgstr "Kein Namensbereich für übergeordnetes Element definiert"
 
-#: quantum/agent/linux/iptables_firewall.py:54
+#: quantum/agent/linux/iptables_firewall.py:56
 #, python-format
 msgid "Preparing device (%s) filter"
 msgstr "Vorbereitung von Filter für Gerät (%s)"
 
-#: quantum/agent/linux/iptables_firewall.py:62
+#: quantum/agent/linux/iptables_firewall.py:64
 #, python-format
 msgid "Updating device (%s) filter"
 msgstr "Aktualisieren von Filter für Gerät (%s)"
 
-#: quantum/agent/linux/iptables_firewall.py:64
+#: quantum/agent/linux/iptables_firewall.py:66
 #, python-format
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr "Versuch, ungefilterten Portfilter %s zu aktualisieren"
 
-#: quantum/agent/linux/iptables_firewall.py:73
+#: quantum/agent/linux/iptables_firewall.py:75
 #, python-format
 msgid "Removing device (%s) filter"
 msgstr "Entfernen von Filter für Gerät (%s)"
 
-#: quantum/agent/linux/iptables_firewall.py:75
+#: quantum/agent/linux/iptables_firewall.py:77
 #, python-format
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr "Versuch, ungefilterten Portfilter %r zu entfernen"
@@ -9242,11 +9252,4 @@ msgstr "lSwitch: %s nicht gefunden"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "lRouter: %s nicht gefunden"
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [DEFAULT_SERVICETYPE] section"
-#~ msgstr ""
 

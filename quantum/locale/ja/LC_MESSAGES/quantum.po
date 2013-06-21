@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-20 12:11+0000\n"
+"POT-Creation-Date: 2013-06-21 12:11+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -382,7 +382,7 @@ msgid ""
 "networks"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:722
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:777
 msgid "DHCP agent started"
 msgstr ""
 
@@ -408,73 +408,83 @@ msgstr ""
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:307
+#: quantum/agent/dhcp_agent.py:310
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:496 quantum/agent/l3_agent.py:149
+#: quantum/agent/dhcp_agent.py:499 quantum/agent/l3_agent.py:149
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:504
+#: quantum/agent/dhcp_agent.py:507
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:509 quantum/agent/l3_agent.py:190
+#: quantum/agent/dhcp_agent.py:512 quantum/agent/l3_agent.py:190
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:547 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:561
+#, python-format
+msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:571
+#, python-format
+msgid "Removing gateway for dhcp netns on net %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:595 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:627
+#: quantum/agent/dhcp_agent.py:682
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:657
+#: quantum/agent/dhcp_agent.py:712
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:663
+#: quantum/agent/dhcp_agent.py:718
 msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:664
+#: quantum/agent/dhcp_agent.py:719
 #, python-format
 msgid "Exception value: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:665
+#: quantum/agent/dhcp_agent.py:720
 #, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:667
+#: quantum/agent/dhcp_agent.py:722
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:705 quantum/agent/l3_agent.py:754
+#: quantum/agent/dhcp_agent.py:760 quantum/agent/l3_agent.py:754
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:759
+#: quantum/agent/dhcp_agent.py:766 quantum/agent/l3_agent.py:759
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:719 quantum/agent/l3_agent.py:764
+#: quantum/agent/dhcp_agent.py:774 quantum/agent/l3_agent.py:764
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -871,27 +881,27 @@ msgstr ""
 msgid "No namespace defined for parent"
 msgstr ""
 
-#: quantum/agent/linux/iptables_firewall.py:54
+#: quantum/agent/linux/iptables_firewall.py:56
 #, python-format
 msgid "Preparing device (%s) filter"
 msgstr ""
 
-#: quantum/agent/linux/iptables_firewall.py:62
+#: quantum/agent/linux/iptables_firewall.py:64
 #, python-format
 msgid "Updating device (%s) filter"
 msgstr ""
 
-#: quantum/agent/linux/iptables_firewall.py:64
+#: quantum/agent/linux/iptables_firewall.py:66
 #, python-format
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr ""
 
-#: quantum/agent/linux/iptables_firewall.py:73
+#: quantum/agent/linux/iptables_firewall.py:75
 #, python-format
 msgid "Removing device (%s) filter"
 msgstr ""
 
-#: quantum/agent/linux/iptables_firewall.py:75
+#: quantum/agent/linux/iptables_firewall.py:77
 #, python-format
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
@@ -8597,11 +8607,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [DEFAULT_SERVICETYPE] section"
-#~ msgstr ""
 
