@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-20 12:11+0000\n"
+"POT-Creation-Date: 2013-06-21 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -383,7 +383,7 @@ msgid ""
 "networks"
 msgstr "'%s' DHCP-driver 不支援擷取現有網路清單"
 
-#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:722
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:777
 msgid "DHCP agent started"
 msgstr "已啟動 DHCP 代理程式"
 
@@ -409,73 +409,83 @@ msgstr "無法同步網路狀態。"
 msgid "Network %s RPC info call failed."
 msgstr "呼叫網路 %s RPC 資訊失敗。"
 
-#: quantum/agent/dhcp_agent.py:307
+#: quantum/agent/dhcp_agent.py:310
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: quantum/agent/dhcp_agent.py:496 quantum/agent/l3_agent.py:149
+#: quantum/agent/dhcp_agent.py:499 quantum/agent/l3_agent.py:149
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr "用於管理虛擬介面的驅動程式。"
 
-#: quantum/agent/dhcp_agent.py:504
+#: quantum/agent/dhcp_agent.py:507
 msgid "You must specify an interface driver"
 msgstr "必須指定介面驅動程式"
 
-#: quantum/agent/dhcp_agent.py:509 quantum/agent/l3_agent.py:190
+#: quantum/agent/dhcp_agent.py:512 quantum/agent/l3_agent.py:190
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: quantum/agent/dhcp_agent.py:547 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:561
+#, python-format
+msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:571
+#, python-format
+msgid "Removing gateway for dhcp netns on net %s"
+msgstr ""
+
+#: quantum/agent/dhcp_agent.py:595 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "正在重複使用現有裝置：%s。"
 
-#: quantum/agent/dhcp_agent.py:627
+#: quantum/agent/dhcp_agent.py:682
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr "DHCP 租賃中繼 UNIX 網域 Socket 的位置"
 
-#: quantum/agent/dhcp_agent.py:657
+#: quantum/agent/dhcp_agent.py:712
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr "網路 ID %s 不是有效的 UUID"
 
-#: quantum/agent/dhcp_agent.py:663
+#: quantum/agent/dhcp_agent.py:718
 msgid "Unable to parse lease relay msg to dict."
 msgstr "無法將租賃中繼訊息剖析為字典。"
 
-#: quantum/agent/dhcp_agent.py:664
+#: quantum/agent/dhcp_agent.py:719
 #, python-format
 msgid "Exception value: %s"
 msgstr "異常狀況值：%s"
 
-#: quantum/agent/dhcp_agent.py:665
+#: quantum/agent/dhcp_agent.py:720
 #, python-format
 msgid "Message representation: %s"
 msgstr "訊息表示法：%s"
 
-#: quantum/agent/dhcp_agent.py:667
+#: quantum/agent/dhcp_agent.py:722
 msgid "Unable update lease. Exception"
 msgstr "無法更新租賃。異常狀況"
 
-#: quantum/agent/dhcp_agent.py:705 quantum/agent/l3_agent.py:754
+#: quantum/agent/dhcp_agent.py:760 quantum/agent/l3_agent.py:754
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr "Quantum 伺服器不支援狀態報告。將停用此代理程式的狀態報告。"
 
-#: quantum/agent/dhcp_agent.py:711 quantum/agent/l3_agent.py:759
+#: quantum/agent/dhcp_agent.py:766 quantum/agent/l3_agent.py:759
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: quantum/agent/dhcp_agent.py:719 quantum/agent/l3_agent.py:764
+#: quantum/agent/dhcp_agent.py:774 quantum/agent/l3_agent.py:764
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated 是由伺服器端 %s 執行！"
@@ -875,27 +885,27 @@ msgstr ""
 msgid "No namespace defined for parent"
 msgstr "未給母項定義名稱空間"
 
-#: quantum/agent/linux/iptables_firewall.py:54
+#: quantum/agent/linux/iptables_firewall.py:56
 #, python-format
 msgid "Preparing device (%s) filter"
 msgstr "正在準備裝置 (%s) 過濾器"
 
-#: quantum/agent/linux/iptables_firewall.py:62
+#: quantum/agent/linux/iptables_firewall.py:64
 #, python-format
 msgid "Updating device (%s) filter"
 msgstr "正在更新裝置 (%s) 過濾器"
 
-#: quantum/agent/linux/iptables_firewall.py:64
+#: quantum/agent/linux/iptables_firewall.py:66
 #, python-format
 msgid "Attempted to update port filter which is not filtered %s"
 msgstr "已嘗試更新未過濾的埠過濾器 %s"
 
-#: quantum/agent/linux/iptables_firewall.py:73
+#: quantum/agent/linux/iptables_firewall.py:75
 #, python-format
 msgid "Removing device (%s) filter"
 msgstr "正在移除裝置 (%s) 過濾器"
 
-#: quantum/agent/linux/iptables_firewall.py:75
+#: quantum/agent/linux/iptables_firewall.py:77
 #, python-format
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr "已嘗試移除未過濾的埠過濾器 %r"
@@ -8684,11 +8694,4 @@ msgstr "找不到 lswitch：%s"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [DEFAULT_SERVICETYPE] section"
-#~ msgstr ""
 
