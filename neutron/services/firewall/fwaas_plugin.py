@@ -21,6 +21,7 @@ from oslo.config import cfg
 
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
+from neutron import context as neutron_context
 from neutron.db import api as qdbapi
 from neutron.db.firewall import firewall_db
 from neutron.extensions import firewall as fw_ext
@@ -82,6 +83,14 @@ class FirewallCallbacks(object):
         LOG.debug(_("get_firewalls_for_tenant_without_rules() called"))
         fw_list = [fw for fw in self.plugin.get_firewalls(context)]
         return fw_list
+
+    def get_tenants_with_firewalls(self, context, **kwargs):
+        """Agent uses this to get all tenants that have firewalls."""
+        LOG.debug(_("get_tenants_with_firewalls() called"))
+        ctx = neutron_context.get_admin_context()
+        fw_list = self.plugin.get_firewalls(ctx)
+        fw_tenant_list = list(set(fw['tenant_id'] for fw in fw_list))
+        return fw_tenant_list
 
 
 class FirewallAgentApi(proxy.RpcProxy):
