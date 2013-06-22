@@ -838,6 +838,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_rule('sg-chain', '-j ACCEPT'),
                  call.ensure_remove_chain('ifake_dev'),
                  call.ensure_remove_chain('ofake_dev'),
+                 call.ensure_remove_chain('sfake_dev'),
                  call.ensure_remove_chain('sg-chain'),
                  call.add_chain('sg-chain'),
                  call.add_chain('ifake_dev'),
@@ -888,6 +889,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_rule('sg-chain', '-j ACCEPT'),
                  call.ensure_remove_chain('ifake_dev'),
                  call.ensure_remove_chain('ofake_dev'),
+                 call.ensure_remove_chain('sfake_dev'),
                  call.ensure_remove_chain('sg-chain'),
                  call.add_chain('sg-chain')]
 
@@ -913,3 +915,62 @@ class IptablesFirewallTestCase(base.BaseTestCase):
             pass
         self.iptables_inst.assert_has_calls([call.defer_apply_on(),
                                              call.defer_apply_off()])
+
+    def test_ip_spoofing_filter_with_multiple_ips(self):
+        port = {'device': 'tapfake_dev',
+                'mac_address': 'ff:ff:ff:ff',
+                'fixed_ips': ['10.0.0.1', 'fe80::1', '10.0.0.2']}
+        self.firewall.prepare_port_filter(port)
+        calls = [call.add_chain('sg-fallback'),
+                 call.add_rule('sg-fallback', '-j DROP'),
+                 call.ensure_remove_chain('sg-chain'),
+                 call.add_chain('sg-chain'),
+                 call.add_chain('ifake_dev'),
+                 call.add_rule('FORWARD',
+                               '-m physdev --physdev-is-bridged '
+                               '--physdev-out tapfake_dev '
+                               '-j $sg-chain'),
+                 call.add_rule('sg-chain',
+                               '-m physdev --physdev-is-bridged '
+                               '--physdev-out tapfake_dev '
+                               '-j $ifake_dev'),
+                 call.add_rule(
+                     'ifake_dev', '-m state --state INVALID -j DROP'),
+                 call.add_rule(
+                     'ifake_dev',
+                     '-m state --state ESTABLISHED,RELATED -j RETURN'),
+                 call.add_rule('ifake_dev', '-j $sg-fallback'),
+                 call.add_chain('ofake_dev'),
+                 call.add_rule('FORWARD',
+                               '-m physdev --physdev-is-bridged '
+                               '--physdev-in tapfake_dev '
+                               '-j $sg-chain'),
+                 call.add_rule('sg-chain',
+                               '-m physdev --physdev-is-bridged '
+                               '--physdev-in tapfake_dev '
+                               '-j $ofake_dev'),
+                 call.add_rule('INPUT',
+                               '-m physdev --physdev-is-bridged '
+                               '--physdev-in tapfake_dev '
+                               '-j $ofake_dev'),
+                 call.add_chain('sfake_dev'),
+                 call.add_rule('sfake_dev', '-s 10.0.0.1 -j RETURN'),
+                 call.add_rule('sfake_dev', '-s 10.0.0.2 -j RETURN'),
+                 call.add_rule('sfake_dev', '-j DROP'),
+                 call.add_rule(
+                     'ofake_dev', '-m mac ! --mac-source ff:ff:ff:ff -j DROP'),
+                 call.add_rule(
+                     'ofake_dev',
+                     '-p udp --sport 68 --dport 67 -j RETURN'),
+                 call.add_rule('ofake_dev', '-j $sfake_dev'),
+                 call.add_rule(
+                     'ofake_dev',
+                     '-p udp --sport 67 --dport 68 -j DROP'),
+                 call.add_rule(
+                     'ofake_dev', '-m state --state INVALID -j DROP'),
+                 call.add_rule(
+                     'ofake_dev',
+                     '-m state --state ESTABLISHED,RELATED -j RETURN'),
+                 call.add_rule('ofake_dev', '-j $sg-fallback'),
+                 call.add_rule('sg-chain', '-j ACCEPT')]
+        self.v4filter_inst.assert_has_calls(calls)
