@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-21 12:11+0000\n"
+"POT-Creation-Date: 2013-06-23 12:11+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: French "
@@ -3552,7 +3552,7 @@ msgstr ""
 msgid "Creating Consumer connection for Service %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:78
+#: quantum/plugins/bigswitch/plugin.py:84
 msgid ""
 "A comma separated list of BigSwitch or Floodlight servers and port "
 "numbers. The plugin proxies the requests to the BigSwitch/Floodlight "
@@ -3561,254 +3561,298 @@ msgid ""
 "servers to support failover."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:85
+#: quantum/plugins/bigswitch/plugin.py:91
 msgid ""
 "The username and password for authenticating against  the BigSwitch or "
 "Floodlight controller."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:88
+#: quantum/plugins/bigswitch/plugin.py:94
 msgid ""
 "If True, Use SSL when connecting to the BigSwitch or Floodlight "
 "controller."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:91
+#: quantum/plugins/bigswitch/plugin.py:97
 msgid "Sync data on connect"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:93
+#: quantum/plugins/bigswitch/plugin.py:99
 msgid ""
 "Maximum number of seconds to wait for proxy request to connect and "
 "complete."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:96
+#: quantum/plugins/bigswitch/plugin.py:102
 msgid "User defined identifier for this Quantum deployment"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:98
+#: quantum/plugins/bigswitch/plugin.py:104
 msgid ""
 "Flag to decide if a route to the metadata server should be injected into "
 "the VM"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:108
+#: quantum/plugins/bigswitch/plugin.py:113
+msgid ""
+"The default router rules installed in new tenant routers. Repeat the "
+"config option for each rule. Format is "
+"<tenant>:<source>:<destination>:<action> Use an * to specify default for "
+"all tenants."
+msgstr ""
+
+#: quantum/plugins/bigswitch/plugin.py:118
+msgid "Maximum number of router rules"
+msgstr ""
+
+#: quantum/plugins/bigswitch/plugin.py:125
 msgid "Virtual interface type to configure on Nova compute nodes"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:140
+#: quantum/plugins/bigswitch/plugin.py:157
 msgid "Error in REST call to remote network controller"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:176
+#: quantum/plugins/bigswitch/plugin.py:193
 #, python-format
 msgid ""
 "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r, "
 "action=%(action)s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:180
+#: quantum/plugins/bigswitch/plugin.py:197
 #, python-format
 msgid "ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:189
+#: quantum/plugins/bigswitch/plugin.py:206
 msgid "ServerProxy: Could not establish HTTPS connection"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:196
+#: quantum/plugins/bigswitch/plugin.py:213
 msgid "ServerProxy: Could not establish HTTP connection"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:213
+#: quantum/plugins/bigswitch/plugin.py:230
 #, python-format
 msgid "ServerProxy: %(action)s failure, %(e)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:217
+#: quantum/plugins/bigswitch/plugin.py:234
 #, python-format
 msgid ""
 "ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
 "data=%(data)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:267
+#: quantum/plugins/bigswitch/plugin.py:284
 #, python-format
 msgid "ServerProxy: %(action)s failure for servers: %(server)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:275
+#: quantum/plugins/bigswitch/plugin.py:292
 #, python-format
 msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:310
+#: quantum/plugins/bigswitch/plugin.py:327
 #, python-format
 msgid "QuantumRestProxy: Starting plugin. Version=%s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:350
+#: quantum/plugins/bigswitch/plugin.py:367
 msgid "QuantumRestProxyV2: initialization done"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:376
+#: quantum/plugins/bigswitch/plugin.py:393
 msgid "QuantumRestProxyV2: create_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:402
+#: quantum/plugins/bigswitch/plugin.py:419
 #, python-format
 msgid "QuantumRestProxyV2:Unable to create remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:434
+#: quantum/plugins/bigswitch/plugin.py:451
 msgid "QuantumRestProxyV2.update_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:452
-#: quantum/plugins/bigswitch/plugin.py:500
-#: quantum/plugins/bigswitch/plugin.py:1232
+#: quantum/plugins/bigswitch/plugin.py:469
+#: quantum/plugins/bigswitch/plugin.py:517
+#: quantum/plugins/bigswitch/plugin.py:1284
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:473
+#: quantum/plugins/bigswitch/plugin.py:490
 msgid "QuantumRestProxyV2: delete_network() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:551
+#: quantum/plugins/bigswitch/plugin.py:568
 msgid "QuantumRestProxyV2: create_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:582
-#: quantum/plugins/bigswitch/plugin.py:670
+#: quantum/plugins/bigswitch/plugin.py:599
+#: quantum/plugins/bigswitch/plugin.py:687
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:637
+#: quantum/plugins/bigswitch/plugin.py:654
 msgid "QuantumRestProxyV2: update_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:691
+#: quantum/plugins/bigswitch/plugin.py:708
 msgid "QuantumRestProxyV2: delete_port() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:720
-#: quantum/plugins/bigswitch/plugin.py:778
+#: quantum/plugins/bigswitch/plugin.py:742
+#: quantum/plugins/bigswitch/plugin.py:800
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote port: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:737
+#: quantum/plugins/bigswitch/plugin.py:759
 msgid "QuantumRestProxyV2: _plug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:755
+#: quantum/plugins/bigswitch/plugin.py:777
 #, python-format
 msgid "QuantumRestProxyV2:Unable to update remote network: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:769
+#: quantum/plugins/bigswitch/plugin.py:791
 msgid "QuantumRestProxyV2: _unplug_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:782
+#: quantum/plugins/bigswitch/plugin.py:804
 msgid "QuantumRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:803
+#: quantum/plugins/bigswitch/plugin.py:825
 msgid "QuantumRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:826
+#: quantum/plugins/bigswitch/plugin.py:848
 msgid "QuantumRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:841
+#: quantum/plugins/bigswitch/plugin.py:889
 msgid "QuantumRestProxyV2: create_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:862
+#: quantum/plugins/bigswitch/plugin.py:914
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:873
+#: quantum/plugins/bigswitch/plugin.py:925
 msgid "QuantumRestProxyV2.update_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:895
+#: quantum/plugins/bigswitch/plugin.py:947
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:907
+#: quantum/plugins/bigswitch/plugin.py:959
 msgid "QuantumRestProxyV2: delete_router() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:938
+#: quantum/plugins/bigswitch/plugin.py:990
 #, python-format
 msgid "QuantumRestProxyV2: Unable to delete remote router: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:944
+#: quantum/plugins/bigswitch/plugin.py:996
 msgid "QuantumRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:972
+#: quantum/plugins/bigswitch/plugin.py:1024
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create interface: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:983
+#: quantum/plugins/bigswitch/plugin.py:1035
 msgid "QuantumRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1016
+#: quantum/plugins/bigswitch/plugin.py:1068
 #, python-format
 msgid "QuantumRestProxyV2:Unable to delete remote intf: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1024
+#: quantum/plugins/bigswitch/plugin.py:1076
 msgid "QuantumRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1037
+#: quantum/plugins/bigswitch/plugin.py:1089
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote floatin IP: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1047
+#: quantum/plugins/bigswitch/plugin.py:1099
 msgid "QuantumRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1070
+#: quantum/plugins/bigswitch/plugin.py:1122
 msgid "QuantumRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1153
+#: quantum/plugins/bigswitch/plugin.py:1205
 #, python-format
 msgid "QuantumRestProxy: Unable to update remote topology: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1249
+#: quantum/plugins/bigswitch/plugin.py:1301
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1255
+#: quantum/plugins/bigswitch/plugin.py:1307
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
 "status=%s."
 msgstr ""
 
-#: quantum/plugins/bigswitch/plugin.py:1282
+#: quantum/plugins/bigswitch/plugin.py:1334
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:30
+#, python-format
+msgid "Invalid format for router rules: %(rule)s, %(reason)s"
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:34
+#, python-format
+msgid ""
+"Unable to complete rules update for %(router_id)s. The number of rules "
+"exceeds the maximum %(quota)s."
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:50
+#, python-format
+msgid "Invalid data format for router rule: '%s'"
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:82
+#, python-format
+msgid "Duplicate nexthop in rule '%s'"
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:90
+#, python-format
+msgid "Action must be either permit or deny. '%s' was provided"
+msgstr ""
+
+#: quantum/plugins/bigswitch/extensions/routerrule.py:102
+#, python-format
+msgid "Duplicate router rules (src,dst)  found '%s'"
 msgstr ""
 
 #: quantum/plugins/brocade/QuantumPlugin.py:125
