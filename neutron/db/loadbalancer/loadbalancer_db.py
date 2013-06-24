@@ -71,7 +71,8 @@ class PoolStatistics(model_base.BASEV2):
         return value
 
 
-class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
+          models_v2.HasStatusDescription):
     """Represents a v2 neutron loadbalancer vip."""
 
     name = sa.Column(sa.String(255))
@@ -85,13 +86,13 @@ class Vip(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                            uselist=False,
                                            backref="vips",
                                            cascade="all, delete-orphan")
-    status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     connection_limit = sa.Column(sa.Integer)
     port = orm.relationship(models_v2.Port)
 
 
-class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
+             models_v2.HasStatusDescription):
     """Represents a v2 neutron loadbalancer member."""
 
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
@@ -99,11 +100,11 @@ class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     address = sa.Column(sa.String(64), nullable=False)
     protocol_port = sa.Column(sa.Integer, nullable=False)
     weight = sa.Column(sa.Integer, nullable=False)
-    status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
 
 
-class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
+           models_v2.HasStatusDescription):
     """Represents a v2 neutron loadbalancer pool."""
 
     vip_id = sa.Column(sa.String(36), sa.ForeignKey("vips.id"))
@@ -117,7 +118,6 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                   "SOURCE_IP",
                                   name="pools_lb_method"),
                           nullable=False)
-    status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     stats = orm.relationship(PoolStatistics,
                              uselist=False,
@@ -130,7 +130,8 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     vip = orm.relationship(Vip, backref='pool')
 
 
-class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
+                    models_v2.HasStatusDescription):
     """Represents a v2 neutron loadbalancer healthmonitor."""
 
     type = sa.Column(sa.Enum("PING", "TCP", "HTTP", "HTTPS",
@@ -142,7 +143,6 @@ class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     http_method = sa.Column(sa.String(16))
     url_path = sa.Column(sa.String(255))
     expected_codes = sa.Column(sa.String(64))
-    status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
 
     pools = orm.relationship(
@@ -175,10 +175,16 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
     def _core_plugin(self):
         return manager.NeutronManager.get_plugin()
 
-    def update_status(self, context, model, id, status):
+    def update_status(self, context, model, id, status,
+                      status_description=None):
         with context.session.begin(subtransactions=True):
             v_db = self._get_resource(context, model, id)
-            v_db.update({'status': status})
+            v_db.status = status
+            # update status_description in two cases:
+            # - new value is passed
+            # - old value is not None (needs to be updated anyway)
+            if status_description or v_db['status_description']:
+                v_db.status_description = status_description
 
     def _get_resource(self, context, model, id):
         try:
@@ -219,7 +225,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'pool_id': vip['pool_id'],
                'connection_limit': vip['connection_limit'],
                'admin_state_up': vip['admin_state_up'],
-               'status': vip['status']}
+               'status': vip['status'],
+               'status_description': vip['status_description']}
 
         if vip['session_persistence']:
             s_p = {
@@ -448,7 +455,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'vip_id': pool['vip_id'],
                'lb_method': pool['lb_method'],
                'admin_state_up': pool['admin_state_up'],
-               'status': pool['status']}
+               'status': pool['status'],
+               'status_description': pool['status_description']}
 
         # Get the associated members
         res['members'] = [member['id'] for member in pool['members']]
@@ -593,7 +601,9 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'protocol_port': member['protocol_port'],
                'weight': member['weight'],
                'admin_state_up': member['admin_state_up'],
-               'status': member['status']}
+               'status': member['status'],
+               'status_description': member['status_description']}
+
         return self._fields(res, fields)
 
     def create_member(self, context, member):
@@ -650,7 +660,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'timeout': health_monitor['timeout'],
                'max_retries': health_monitor['max_retries'],
                'admin_state_up': health_monitor['admin_state_up'],
-               'status': health_monitor['status']}
+               'status': health_monitor['status'],
+               'status_description': health_monitor['status_description']}
         # no point to add the values below to
         # the result if the 'type' is not HTTP/S
         if res['type'] in ['HTTP', 'HTTPS']:

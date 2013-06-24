@@ -124,7 +124,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
-                   'is_visible': True}
+                   'is_visible': True},
+        'status_description': {'allow_post': False, 'allow_put': False,
+                               'is_visible': True}
     },
     'pools': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -165,7 +167,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
-                   'is_visible': True}
+                   'is_visible': True},
+        'status_description': {'allow_post': False, 'allow_put': False,
+                               'is_visible': True}
     },
     'members': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -196,7 +200,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
-                   'is_visible': True}
+                   'is_visible': True},
+        'status_description': {'allow_post': False, 'allow_put': False,
+                               'is_visible': True}
     },
     'health_monitors': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -240,7 +246,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
-                   'is_visible': True}
+                   'is_visible': True},
+        'status_description': {'allow_post': False, 'allow_put': False,
+                               'is_visible': True}
     }
 }
 

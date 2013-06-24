@@ -1179,6 +1179,26 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                               "123-456-789"
                               )
 
+    def test_update_status(self):
+        with self.pool() as pool:
+            self.assertEqual(pool['pool']['status'], 'PENDING_CREATE')
+            self.assertFalse(pool['pool']['status_description'])
+
+            self.plugin.update_status(context.get_admin_context(), ldb.Pool,
+                                      pool['pool']['id'], 'ERROR', 'unknown')
+            updated_pool = self.plugin.get_pool(context.get_admin_context(),
+                                                pool['pool']['id'])
+            self.assertEqual(updated_pool['status'], 'ERROR')
+            self.assertEqual(updated_pool['status_description'], 'unknown')
+
+            # update status to ACTIVE, status_description should be cleared
+            self.plugin.update_status(context.get_admin_context(), ldb.Pool,
+                                      pool['pool']['id'], 'ACTIVE')
+            updated_pool = self.plugin.get_pool(context.get_admin_context(),
+                                                pool['pool']['id'])
+            self.assertEqual(updated_pool['status'], 'ACTIVE')
+            self.assertFalse(pool['pool']['status_description'])
+
 
 class TestLoadBalancerXML(TestLoadBalancer):
     fmt = 'xml'
