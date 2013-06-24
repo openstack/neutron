@@ -31,7 +31,7 @@ serverssl=False
 #   default: ovs
 vif_type = ovs
 
-[ROUTER]
+[router]
 # Specify the default router rules installed in newly created tenant routers
 # Specify multiple times for multiple rules
 # Use an * to specify default for all tenants
