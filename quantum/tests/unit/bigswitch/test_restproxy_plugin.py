@@ -19,6 +19,7 @@ import os
 
 from mock import patch
 from oslo.config import cfg
+import webob.exc
 
 import quantum.common.test_lib as test_lib
 from quantum.extensions import portbindings
@@ -104,6 +105,38 @@ class TestBigSwitchProxyPortsV2IVS(test_plugin.TestPortsV2,
         super(TestBigSwitchProxyPortsV2IVS,
               self).setUp()
         cfg.CONF.set_override('vif_type', 'ivs', 'NOVA')
+
+
+class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
+                               BigSwitchProxyPluginV2TestCase,
+                               test_bindings.PortBindingsTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = False
+
+    def setUp(self):
+        super(TestBigSwitchVIFOverride,
+              self).setUp()
+        cfg.CONF.set_override('vif_type', 'ovs', 'NOVA')
+
+    def test_port_vif_details(self):
+        kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
+                  'device_id': 'override_dev'}
+        with self.port(**kwargs) as port:
+            self.assertEqual(port['port']['binding:vif_type'],
+                             portbindings.VIF_TYPE_IVS)
+        kwargs = {'name': 'name2', 'binding:host_id': 'someotherhost',
+                  'device_id': 'other_dev'}
+        with self.port(**kwargs) as port:
+            self.assertEqual(port['port']['binding:vif_type'], self.VIF_TYPE)
+
+    def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
+        res = self._create_port(fmt, net_id, expected_res_status,
+                                ('binding:host_id', ), **kwargs)
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
 
 
 class TestBigSwitchProxyNetworksV2(test_plugin.TestNetworksV2,
