@@ -29,6 +29,7 @@ from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.db import models_v2
 from quantum.db import sqlalchemyutils
+from quantum.openstack.common import excutils
 from quantum.openstack.common import log as logging
 from quantum.openstack.common import timeutils
 from quantum.openstack.common import uuidutils
@@ -958,12 +959,12 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
                 obj_creator = getattr(self, 'create_%s' % resource)
                 objects.append(obj_creator(context, item))
             context.session.commit()
-        except Exception as e:
-            LOG.exception(_("An exception occured while creating "
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("An exception occured while creating "
                             "the %(resource)s:%(item)s"),
                           {'resource': resource, 'item': item})
-            context.session.rollback()
-            raise e
+                context.session.rollback()
         return objects
 
     def _get_marker_obj(self, context, resource, limit, marker):

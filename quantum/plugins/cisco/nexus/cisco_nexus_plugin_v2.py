@@ -27,6 +27,7 @@ PlugIn for Nexus OS driver
 import logging
 
 from quantum.common import exceptions as exc
+from quantum.openstack.common import excutils
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
@@ -125,8 +126,8 @@ class NexusPlugin(L2DevicePluginBase):
         try:
             nxos_db.add_nexusport_binding(port_id, str(vlan_id),
                                           switch_ip, instance)
-        except Exception as e:
-            try:
+        except Exception:
+            with excutils.save_and_reraise_exception():
                 # Add binding failed, roll back any vlan creation/enabling
                 if vlan_created:
                     self._client.delete_vlan(
@@ -137,9 +138,6 @@ class NexusPlugin(L2DevicePluginBase):
                     self._client.disable_vlan_on_trunk_int(man,
                                                            port_id,
                                                            vlan_id)
-            finally:
-                # Raise the original exception
-                raise e
 
         new_net_dict = {const.NET_ID: net_id,
                         const.NET_NAME: net_name,
@@ -303,19 +301,16 @@ class NexusPlugin(L2DevicePluginBase):
                     str(row['vlan_id']), _nexus_ip,
                     _nexus_username, _nexus_password,
                     _nexus_ports, _nexus_ssh_port)
-            except Exception as e:
+            except Exception:
                 # The delete vlan operation on the Nexus failed,
                 # so this delete_port request has failed. For
                 # consistency, roll back the Nexus database to what
                 # it was before this request.
-                try:
+                with excutils.save_and_reraise_exception():
                     nxos_db.add_nexusport_binding(row['port_id'],
                                                   row['vlan_id'],
                                                   row['switch_ip'],
                                                   row['instance_id'])
-                finally:
-                    # Raise the original exception
-                    raise e
 
         return row['instance_id']
 

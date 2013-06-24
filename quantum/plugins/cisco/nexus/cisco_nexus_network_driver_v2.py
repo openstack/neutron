@@ -25,6 +25,7 @@ import logging
 
 from ncclient import manager
 
+from quantum.openstack.common import excutils
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import nexus_db_v2
@@ -113,13 +114,9 @@ class CiscoNEXUSDriver():
                     config=confstr,
                     allowed_exc_strs=["Can't modify state for extended",
                                       "Command is only allowed on VLAN"])
-            except cexc.NexusConfigFailed as e:
-                # Rollback VLAN creation
-                try:
+            except cexc.NexusConfigFailed:
+                with excutils.save_and_reraise_exception():
                     self.disable_vlan(mgr, vlanid)
-                finally:
-                    # Re-raise original exception
-                    raise e
 
     def disable_vlan(self, mgr, vlanid):
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
