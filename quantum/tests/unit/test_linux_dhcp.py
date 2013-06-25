@@ -23,6 +23,7 @@ from oslo.config import cfg
 
 from quantum.agent.common import config
 from quantum.agent.linux import dhcp
+from quantum.common import config as base_config
 from quantum.openstack.common import jsonutils
 from quantum.tests import base
 
@@ -195,6 +196,7 @@ class TestBase(base.BaseTestCase):
         args = ['--config-file',
                 os.path.join(root, 'etc', 'quantum.conf.test')]
         self.conf = config.setup_conf()
+        self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp.OPTS)
         self.conf.register_opt(
             cfg.StrOpt('dhcp_lease_relay_socket',

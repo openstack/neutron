@@ -38,9 +38,6 @@ OPTS = [
     cfg.StrOpt('dhcp_confs',
                default='$state_path/dhcp',
                help=_('Location to store DHCP server config files')),
-    cfg.IntOpt('dhcp_lease_time',
-               default=120,
-               help=_('Lifetime of a DHCP lease in seconds')),
     cfg.StrOpt('dhcp_domain',
                default='openstacklocal',
                help=_('Domain to use for building the hostnames')),
@@ -303,7 +300,7 @@ class Dnsmasq(DhcpLocalProcess):
                        (set_tag, self._TAG_PREFIX % i,
                         netaddr.IPNetwork(subnet.cidr).network,
                         mode,
-                        self.conf.dhcp_lease_time))
+                        self.conf.dhcp_lease_duration))
 
         cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
         if self.conf.dnsmasq_dns_server:

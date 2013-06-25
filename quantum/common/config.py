@@ -71,6 +71,7 @@ core_opts = [
     cfg.IntOpt('max_fixed_ips_per_port', default=5,
                help=_("Maximum number of fixed ips per port")),
     cfg.IntOpt('dhcp_lease_duration', default=120,
+               deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration")),
     cfg.BoolOpt('dhcp_agent_notification', default=True,
                 help=_("Allow sending resource operation"
