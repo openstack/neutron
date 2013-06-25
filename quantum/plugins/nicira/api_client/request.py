@@ -26,8 +26,10 @@ import logging
 import time
 import urlparse
 
+from quantum.openstack.common import excutils
 from quantum.plugins.nicira.api_client.common import (
     _conn_str)
+
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -122,9 +124,10 @@ class NvpApiRequest(object):
                 try:
                     conn.request(self._method, url, self._body, headers)
                 except Exception as e:
-                    LOG.warn(_("[%(rid)d] Exception issuing request: %(e)s"),
-                             {'rid': self._rid(), 'e': e})
-                    raise e
+                    with excutils.save_and_reraise_exception():
+                        LOG.warn(_("[%(rid)d] Exception issuing request: "
+                                   "%(e)s"),
+                                 {'rid': self._rid(), 'e': e})
 
                 response = conn.getresponse()
                 response.body = response.read()

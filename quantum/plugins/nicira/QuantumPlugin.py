@@ -51,6 +51,7 @@ from quantum.extensions import l3
 from quantum.extensions import portsecurity as psec
 from quantum.extensions import providernet as pnet
 from quantum.extensions import securitygroup as ext_sg
+from quantum.openstack.common import excutils
 from quantum.openstack.common import importutils
 from quantum.openstack.common import rpc
 from quantum.plugins.nicira.common import config  # noqa
@@ -1215,13 +1216,14 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 LOG.warning(_("Network %s was not found in NVP."),
                             port_data['network_id'])
                 port_data['status'] = constants.PORT_STATUS_ERROR
-            except Exception as e:
-                # FIXME (arosen) or the plugin_interface call failed in which
-                # case we need to garbage collect the left over port in nvp.
-                err_msg = _("Unable to create port or set port attachment "
-                            "in NVP.")
-                LOG.exception(err_msg)
-                raise e
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    # FIXME (arosen) or the plugin_interface call failed in
+                    # which case we need to garbage collect the left over
+                    # port in nvp.
+                    err_msg = _("Unable to create port or set port "
+                                "attachment in NVP.")
+                    LOG.error(err_msg)
 
             LOG.debug(_("create_port completed on NVP for tenant "
                         "%(tenant_id)s: (%(id)s)"), port_data)
