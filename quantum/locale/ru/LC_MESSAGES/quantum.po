@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-24 12:11+0000\n"
+"POT-Creation-Date: 2013-06-25 12:11+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Russian "
@@ -722,71 +722,67 @@ msgid "Location to store DHCP server config files"
 msgstr ""
 
 #: quantum/agent/linux/dhcp.py:43
-msgid "Lifetime of a DHCP lease in seconds"
-msgstr ""
-
-#: quantum/agent/linux/dhcp.py:46
 msgid "Domain to use for building the hostnames"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:49
+#: quantum/agent/linux/dhcp.py:46
 msgid "Override the default dnsmasq settings with this file"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:51
+#: quantum/agent/linux/dhcp.py:48
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:142
+#: quantum/agent/linux/dhcp.py:139
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:145
+#: quantum/agent/linux/dhcp.py:142
 #, python-format
 msgid "No DHCP started for %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:167 quantum/agent/linux/external_process.py:84
+#: quantum/agent/linux/dhcp.py:164 quantum/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:174 quantum/agent/linux/external_process.py:92
+#: quantum/agent/linux/dhcp.py:171 quantum/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:176 quantum/agent/linux/external_process.py:90
+#: quantum/agent/linux/dhcp.py:173 quantum/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:236
+#: quantum/agent/linux/dhcp.py:233
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:241
+#: quantum/agent/linux/dhcp.py:238
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:329
+#: quantum/agent/linux/dhcp.py:326
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:339
+#: quantum/agent/linux/dhcp.py:336
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: quantum/agent/linux/dhcp.py:340
+#: quantum/agent/linux/dhcp.py:337
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
@@ -1531,41 +1527,41 @@ msgstr ""
 msgid "Maximum number of fixed ips per port"
 msgstr ""
 
-#: quantum/common/config.py:74
+#: quantum/common/config.py:75
 msgid "DHCP lease duration"
 msgstr ""
 
-#: quantum/common/config.py:76
+#: quantum/common/config.py:77
 msgid "Allow sending resource operation notification to DHCP agent"
 msgstr ""
 
-#: quantum/common/config.py:79
+#: quantum/common/config.py:80
 msgid "Allow overlapping IP support in Quantum"
 msgstr ""
 
-#: quantum/common/config.py:81
+#: quantum/common/config.py:82
 msgid "The hostname Quantum is running on"
 msgstr ""
 
-#: quantum/common/config.py:83
+#: quantum/common/config.py:84
 msgid "Ensure that configured gateway is on subnet"
 msgstr ""
 
-#: quantum/common/config.py:106
+#: quantum/common/config.py:107
 #, python-format
 msgid "Base MAC: %s"
 msgstr ""
 
-#: quantum/common/config.py:117
+#: quantum/common/config.py:118
 msgid "Logging enabled!"
 msgstr ""
 
-#: quantum/common/config.py:130
+#: quantum/common/config.py:131
 #, python-format
 msgid "Config paste file: %s"
 msgstr ""
 
-#: quantum/common/config.py:135
+#: quantum/common/config.py:136
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
@@ -8651,4 +8647,7 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid "Lifetime of a DHCP lease in seconds"
+#~ msgstr ""
 
