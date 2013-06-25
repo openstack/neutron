@@ -118,13 +118,12 @@ class RouterInfo(object):
             return
         # Set a SNAT action for the router
         if self._router.get('gw_port'):
-            if (self._router.get('enable_snat') and not self._snat_enabled):
-                self._snat_action = 'add_rule'
-            elif (self._snat_enabled and
-                  not self._router.get('enable_snat')):
-                self._snat_action = 'remove_rule'
+            self._snat_action = (
+                'add_rules' if self._router.get('enable_snat')
+                else 'remove_rules')
         elif self.ex_gw_port:
-            self._snat_action = 'remove_rule'
+            # Gateway port was removed, remove rules
+            self._snat_action = 'remove_rules'
         self._snat_enabled = self._router.get('enable_snat')
 
     def ns_name(self):
@@ -136,7 +135,7 @@ class RouterInfo(object):
         if self._snat_action:
             snat_callback(self, self._router.get('gw_port'),
                           *args, action=self._snat_action)
-            self._snat_action = None
+        self._snat_action = None
 
 
 class L3NATAgent(manager.Manager):
@@ -331,7 +330,6 @@ class L3NATAgent(manager.Manager):
                      p['id'] not in existing_port_ids]
         old_ports = [p for p in ri.internal_ports if
                      p['id'] not in current_port_ids]
-
         for p in new_ports:
             self._set_subnet_info(p)
             ri.internal_ports.append(p)
@@ -348,6 +346,7 @@ class L3NATAgent(manager.Manager):
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
                          ri.ex_gw_port and ri.ex_gw_port['id'])
 
+        interface_name = None
         if ex_gw_port_id:
             interface_name = self.get_external_device_name(ex_gw_port_id)
         if ex_gw_port and not ri.ex_gw_port:
@@ -359,9 +358,8 @@ class L3NATAgent(manager.Manager):
                                           interface_name, internal_cidrs)
 
         # Process SNAT rules for external gateway
-        if ex_gw_port_id:
-            ri.perform_snat_action(self._handle_router_snat_rules,
-                                   internal_cidrs, interface_name)
+        ri.perform_snat_action(self._handle_router_snat_rules,
+                               internal_cidrs, interface_name)
 
         # Process DNAT rules for floating IPs
         if ex_gw_port or ri.ex_gw_port:
@@ -373,13 +371,20 @@ class L3NATAgent(manager.Manager):
 
     def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
                                   interface_name, action):
-        ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-        for rule in self.external_gateway_nat_rules(ex_gw_ip,
-                                                    internal_cidrs,
-                                                    interface_name):
-            # This is an internal method so we can assume the caller
-            # knows which actions are valid and which not
-            getattr(ri.iptables_manager.ipv4['nat'], action)(*rule)
+        # Remove all the rules
+        # This is safe because if use_namespaces is set as False
+        # then the agent can only configure one router, otherwise
+        # each router's SNAT rules will be in their own namespace
+        ri.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        ri.iptables_manager.ipv4['nat'].empty_chain('snat')
+        # And add them back if the action if add_rules
+        if action == 'add_rules':
+            # ex_gw_port should not be None in this case
+            ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
+            for rule in self.external_gateway_nat_rules(ex_gw_ip,
+                                                        internal_cidrs,
+                                                        interface_name):
+                ri.iptables_manager.ipv4['nat'].add_rule(*rule)
         ri.iptables_manager.apply()
 
     def process_router_floating_ips(self, ri, ex_gw_port):

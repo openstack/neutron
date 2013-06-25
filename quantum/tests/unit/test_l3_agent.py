@@ -330,7 +330,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                     'via', '10.100.10.30']]
         self._check_agent_method_called(agent, expected, namespace)
 
-    def _verify_snat_rules(self, rules, router):
+    def _verify_snat_rules(self, rules, router, negate=False):
         interfaces = router[l3_constants.INTERFACE_KEY]
         source_cidrs = []
         for interface in interfaces:
@@ -349,9 +349,12 @@ class TestBasicRouterOperations(base.BaseTestCase):
             expected_rules.append('-s %(source_cidr)s -j SNAT --to-source '
                                   '%(source_nat_ip)s' % value_dict)
         for r in rules:
-            self.assertIn(r.rule, expected_rules)
+            if negate:
+                self.assertNotIn(r.rule, expected_rules)
+            else:
+                self.assertIn(r.rule, expected_rules)
 
-    def _prepare_router_data(self, enable_snat=True):
+    def _prepare_router_data(self, enable_snat=True, num_internal_ports=1):
         router_id = _uuid()
         ex_gw_port = {'id': _uuid(),
                       'network_id': _uuid(),
@@ -359,18 +362,20 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                      'subnet_id': _uuid()}],
                       'subnet': {'cidr': '19.4.4.0/24',
                                  'gateway_ip': '19.4.4.1'}}
-        internal_port = {'id': _uuid(),
-                         'network_id': _uuid(),
-                         'admin_state_up': True,
-                         'fixed_ips': [{'ip_address': '35.4.4.4',
-                                        'subnet_id': _uuid()}],
-                         'mac_address': 'ca:fe:de:ad:be:ef',
-                         'subnet': {'cidr': '35.4.4.0/24',
-                                    'gateway_ip': '35.4.4.1'}}
+        int_ports = []
+        for i in range(0, num_internal_ports):
+            int_ports.append({'id': _uuid(),
+                              'network_id': _uuid(),
+                              'admin_state_up': True,
+                              'fixed_ips': [{'ip_address': '35.4.%s.4' % i,
+                                             'subnet_id': _uuid()}],
+                              'mac_address': 'ca:fe:de:ad:be:ef',
+                              'subnet': {'cidr': '35.4.%s.0/24' % i,
+                                         'gateway_ip': '35.4.%s.1' % i}})
 
         router = {
             'id': router_id,
-            l3_constants.INTERFACE_KEY: [internal_port],
+            l3_constants.INTERFACE_KEY: int_ports,
             'enable_snat': enable_snat,
             'routes': [],
             'gw_port': ex_gw_port}
@@ -405,7 +410,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router(ri)
 
     def test_process_router_snat_disabled(self):
-
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = self._prepare_router_data()
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
@@ -418,13 +422,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # Reassign the router object to RouterInfo
         ri.router = router
         agent.process_router(ri)
-        nat_rules_delta = (set(orig_nat_rules) -
-                           set(ri.iptables_manager.ipv4['nat'].rules))
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in orig_nat_rules
+                           if r not in ri.iptables_manager.ipv4['nat'].rules]
         self.assertEqual(len(nat_rules_delta), 2)
         self._verify_snat_rules(nat_rules_delta, router)
 
     def test_process_router_snat_enabled(self):
-
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = self._prepare_router_data(enable_snat=False)
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
@@ -437,10 +442,60 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # Reassign the router object to RouterInfo
         ri.router = router
         agent.process_router(ri)
-        nat_rules_delta = (set(ri.iptables_manager.ipv4['nat'].rules) -
-                           set(orig_nat_rules))
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
+                           if r not in orig_nat_rules]
         self.assertEqual(len(nat_rules_delta), 2)
         self._verify_snat_rules(nat_rules_delta, router)
+
+    def test_process_router_interface_added(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Add an interface and reprocess
+        router[l3_constants.INTERFACE_KEY].append(
+            {'id': _uuid(),
+             'network_id': _uuid(),
+             'admin_state_up': True,
+             'fixed_ips': [{'ip_address': '35.4.1.4',
+                            'subnet_id': _uuid()}],
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'subnet': {'cidr': '35.4.1.0/24',
+                        'gateway_ip': '35.4.1.1'}})
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
+                           if r not in orig_nat_rules]
+        self.assertEqual(len(nat_rules_delta), 1)
+        self._verify_snat_rules(nat_rules_delta, router)
+
+    def test_process_router_interface_removed(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data(num_internal_ports=2)
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Add an interface and reprocess
+        del router[l3_constants.INTERFACE_KEY][1]
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in orig_nat_rules
+                           if r not in ri.iptables_manager.ipv4['nat'].rules]
+        self.assertEqual(len(nat_rules_delta), 1)
+        self._verify_snat_rules(nat_rules_delta, router, negate=True)
 
     def testRoutersWithAdminStateDown(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
