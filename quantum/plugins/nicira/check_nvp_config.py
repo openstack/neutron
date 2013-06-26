@@ -56,9 +56,9 @@ def main(argv):
     args.append(argv[1])
     config.parse(args)
     print "------------------------ Database Options ------------------------"
-    print "\tsql_connection: %s" % cfg.CONF.DATABASE.sql_connection
-    print "\treconnect_interval: %d" % cfg.CONF.DATABASE.reconnect_interval
-    print "\tsql_max_retries: %d" % cfg.CONF.DATABASE.sql_max_retries
+    print "\tconnection: %s" % cfg.CONF.database.connection
+    print "\tretry_interval: %d" % cfg.CONF.database.retry_interval
+    print "\tmax_retries: %d" % cfg.CONF.database.max_retries
     print "------------------------    NVP Options   ------------------------"
     print "\tNVP Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout
     print ("\tNumber of concurrent connections to each controller %d" %

@@ -13,9 +13,9 @@ NVP Plugin configuration
     1) Database configuration
     The NVP plugin leverages the Quantum database. The following connection
     parameters should be specified:
-    - sql_connection: Database connection string
-    - sql_max_retries: Maximum number of connection attempts (default 10)
-    - reconnect_interval: Gap between connection attempts (default 2 seconds)
+    - connection: Database connection string
+    - max_retries: Maximum number of connection attempts (default 10)
+    - retry_interval: Gap between connection attempts (default 2 seconds)
     2) NVP (general)
     - max_lp_per_bridged_ls: Maximum number of ports of a logical switch on a
     bridged transport zone (default 64)

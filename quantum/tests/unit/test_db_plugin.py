@@ -79,10 +79,6 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
     def setUp(self, plugin=None, service_plugins=None):
         super(QuantumDbPluginV2TestCase, self).setUp()
 
-        # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
-        #                doesn't like when the plugin changes ;)
-        db._ENGINE = None
-        db._MAKER = None
         # Make sure at each test a new instance of the plugin is returned
         QuantumManager._instance = None
         # Make sure at each test according extensions for the plugin is loaded
@@ -167,8 +163,6 @@ class QuantumDbPluginV2TestCase(testlib_api.WebTestCase):
         # NOTE(jkoelker) for a 'pluggable' framework, Quantum sure
         #                doesn't like when the plugin changes ;)
         db.clear_db()
-        db._ENGINE = None
-        db._MAKER = None
         cfg.CONF.reset()
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk

@@ -175,9 +175,6 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         # Ensure 'stale' patched copies of the plugin are never returned
         quantum.manager.QuantumManager._instance = None
 
-        # Ensure the database is reset between tests
-        db._ENGINE = None
-        db._MAKER = None
         # Ensure existing ExtensionManager is not used
 
         ext_mgr = extensions.PluginAwareExtensionManager(
@@ -200,6 +197,12 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
     # FIXME (markmcclain):  The test setup makes it difficult to add core
     # via the api. In the interim we'll create directly using the plugin with
     # the side effect of polluting the fixture database until tearDown.
+
+    def tearDown(self):
+        self.api = None
+        db.clear_db()
+        cfg.CONF.reset()
+        super(RouterServiceInsertionTestCase, self).tearDown()
 
     def _setup_core_resources(self):
         core_plugin = quantum.manager.QuantumManager.get_plugin()

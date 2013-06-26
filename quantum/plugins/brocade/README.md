@@ -75,8 +75,8 @@ the configuration file specified in the brocade.ini files:
         address  = <switch mgmt ip address>
         ostype   = NOS
 
-        [DATABASE]
-        sql_connection = mysql://root:pass@localhost/brocade_quantum?charset=utf8
+        [database]
+        connection = mysql://root:pass@localhost/brocade_quantum?charset=utf8
 
         (please see list of more configuration parameters in the brocade.ini file)
 
