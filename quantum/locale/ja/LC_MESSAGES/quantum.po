@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-26 12:11+0000\n"
+"POT-Creation-Date: 2013-06-27 12:11+0000\n"
 "PO-Revision-Date: 2013-01-30 10:28+0000\n"
 "Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese "
@@ -8608,58 +8608,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "The SQLAlchemy connection string used to connect to the database"
-#~ msgstr ""
-
-#~ msgid "Database reconnection retry times"
-#~ msgstr ""
-
-#~ msgid "Database reconnection interval in seconds"
-#~ msgstr ""
-
-#~ msgid "Minimum number of SQL connections to keep open in a pool"
-#~ msgstr ""
-
-#~ msgid "Maximum number of SQL connections to keep open in a pool"
-#~ msgstr ""
-
-#~ msgid "Timeout in seconds before idle sql connections are reaped"
-#~ msgstr ""
-
-#~ msgid "Enable the use of eventlet's db_pool for MySQL"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Maximum number of SQL connections to "
-#~ "keep open in a QueuePool in "
-#~ "SQLAlchemy"
-#~ msgstr ""
-
-#~ msgid "If set, use this value for max_overflow with sqlalchemy"
-#~ msgstr ""
-
-#~ msgid "If set, use this value for pool_timeout with sqlalchemy"
-#~ msgstr ""
-
-#~ msgid "Database server went away"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Option 'sql_connection' not specified in "
-#~ "any config file - using default "
-#~ "value '%s'"
-#~ msgstr ""
-
-#~ msgid "Eventlet connection pooling will not work without python-mysqldb!"
-#~ msgstr ""
-
-#~ msgid "Database connection lost, exit..."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Unable to connect to database, "
-#~ "%(remaining)s attempts left. Retrying in "
-#~ "%(reconnect_interval)s seconds"
-#~ msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-26 12:11+0000\n"
+"POT-Creation-Date: 2013-06-27 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -8695,58 +8695,4 @@ msgstr "找不到 lswitch：%s"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
-
-#~ msgid "The SQLAlchemy connection string used to connect to the database"
-#~ msgstr "用於連接資料庫的 SQLAlchemy 連線字串"
-
-#~ msgid "Database reconnection retry times"
-#~ msgstr "資料庫重新連線重試次數"
-
-#~ msgid "Database reconnection interval in seconds"
-#~ msgstr "資料庫重新連線間隔（以秒為單位）"
-
-#~ msgid "Minimum number of SQL connections to keep open in a pool"
-#~ msgstr "在儲存區中保持開啟的 SQL 連線數目下限"
-
-#~ msgid "Maximum number of SQL connections to keep open in a pool"
-#~ msgstr "在儲存區中保持開啟的 SQL 連線數目上限"
-
-#~ msgid "Timeout in seconds before idle sql connections are reaped"
-#~ msgstr "回收閒置 SQL 連線之前的逾時時間（以秒為單位）"
-
-#~ msgid "Enable the use of eventlet's db_pool for MySQL"
-#~ msgstr "對 MySQL 啟用 eventlet 的 db_pool"
-
-#~ msgid ""
-#~ "Maximum number of SQL connections to "
-#~ "keep open in a QueuePool in "
-#~ "SQLAlchemy"
-#~ msgstr ""
-
-#~ msgid "If set, use this value for max_overflow with sqlalchemy"
-#~ msgstr ""
-
-#~ msgid "If set, use this value for pool_timeout with sqlalchemy"
-#~ msgstr ""
-
-#~ msgid "Database server went away"
-#~ msgstr "資料庫伺服器已斷線"
-
-#~ msgid ""
-#~ "Option 'sql_connection' not specified in "
-#~ "any config file - using default "
-#~ "value '%s'"
-#~ msgstr "未在任何配置檔中指定選項 'sql_connection' - 正在使用預設值 '%s'"
-
-#~ msgid "Eventlet connection pooling will not work without python-mysqldb!"
-#~ msgstr "如果未指定 python-mysqldb，則 eventlet 連線儲存區將無法運作！"
-
-#~ msgid "Database connection lost, exit..."
-#~ msgstr "資料庫連線已中斷，結束..."
-
-#~ msgid ""
-#~ "Unable to connect to database, "
-#~ "%(remaining)s attempts left. Retrying in "
-#~ "%(reconnect_interval)s seconds"
-#~ msgstr "無法連接至資料庫，還可以嘗試 %(remaining)s 次。將在 %(reconnect_interval)s 秒鐘後重試"
 
