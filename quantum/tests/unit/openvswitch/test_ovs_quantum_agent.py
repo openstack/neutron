@@ -41,8 +41,24 @@ class CreateAgentConfigMap(base.BaseTestCase):
     def test_create_agent_config_map_fails_for_invalid_tunnel_config(self):
         self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default
+        cfg.CONF.set_override('tunnel_type', constants.TYPE_GRE,
+                              group='AGENT')
+        with testtools.ExpectedException(ValueError):
+            ovs_quantum_agent.create_agent_config_map(cfg.CONF)
+
+    def test_create_agent_config_map_enable_tunneling(self):
+        self.addCleanup(cfg.CONF.reset)
+        # Verify setting only enable_tunneling will default tunnel_type to GRE
+        cfg.CONF.set_override('tunnel_type', None, group='AGENT')
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
-        cfg.CONF.set_override('tunnel_type', 'gre', group='AGENT')
+        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
+        cfgmap = ovs_quantum_agent.create_agent_config_map(cfg.CONF)
+        self.assertEqual(cfgmap['tunnel_type'], constants.TYPE_GRE)
+
+    def test_create_agent_config_map_fails_no_local_ip(self):
+        self.addCleanup(cfg.CONF.reset)
+        # An ip address is required for tunneling but there is no default
+        cfg.CONF.set_override('enable_tunneling', True, group='OVS')
         with testtools.ExpectedException(ValueError):
             ovs_quantum_agent.create_agent_config_map(cfg.CONF)
 

@@ -810,6 +810,10 @@ def create_agent_config_map(config):
         tunnel_type=config.AGENT.tunnel_type,
     )
 
+    # If enable_tunneling is TRUE, set tunnel_type to default to GRE
+    if config.OVS.enable_tunneling and not kwargs['tunnel_type']:
+        kwargs['tunnel_type'] = constants.TYPE_GRE
+
     if kwargs['tunnel_type'] in constants.TUNNEL_NETWORK_TYPES:
         if not kwargs['local_ip']:
             msg = _('Tunneling cannot be enabled without a valid local_ip.')
