@@ -52,15 +52,8 @@ class Providernet(extensions.ExtensionDescriptor):
     the existing network resource's request and response messages are
     extended with attributes in the provider namespace.
 
-    To create a provider VLAN network using the CLI with admin rights:
-
-       (shell) net-create --tenant_id <tenant-id> <net-name> \
-       --provider:network_type vlan \
-       --provider:physical_network <physical-net> \
-       --provider:segmentation_id <vlan-id>
-
-    With admin rights, network dictionaries returned from CLI commands
-    will also include provider attributes.
+    With admin rights, network dictionaries returned will also include
+    provider attributes.
     """
 
     @classmethod
