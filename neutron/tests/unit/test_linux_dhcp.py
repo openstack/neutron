@@ -428,12 +428,13 @@ class TestDnsmasq(TestBase):
                 raise IndexError
 
         expected = [
-            'NEUTRON_RELAY_SOCKET_PATH=/dhcp/lease_relay',
-            'NEUTRON_NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
             'ip',
             'netns',
             'exec',
             'qdhcp-ns',
+            'env',
+            'NEUTRON_RELAY_SOCKET_PATH=/dhcp/lease_relay',
+            'NEUTRON_NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
             'dnsmasq',
             '--no-hosts',
             '--no-resolv',

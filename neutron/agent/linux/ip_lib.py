@@ -424,9 +424,13 @@ class IpNetnsCommand(IpCommandBase):
         elif not self._parent.namespace:
             raise Exception(_('No namespace defined for parent'))
         else:
+            env_params = []
+            if addl_env:
+                env_params = (['env'] +
+                              ['%s=%s' % pair for pair in addl_env.items()])
             return utils.execute(
-                ['%s=%s' % pair for pair in addl_env.items()] +
-                ['ip', 'netns', 'exec', self._parent.namespace] + list(cmds),
+                ['ip', 'netns', 'exec', self._parent.namespace] +
+                env_params + list(cmds),
                 root_helper=self._parent.root_helper,
                 check_exit_code=check_exit_code)
 
