@@ -1227,7 +1227,7 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_set_default_route_no_subnet_delete_gateway(self):
         device = mock.Mock()
-        device.route.get_gateway.return_value = '192.168.0.1'
+        device.route.get_gateway.return_value = dict(gateway='192.168.0.1')
 
         # Try a namespace but no subnet where a gateway needs to be deleted.
         dh = self._get_device_manager_with_mock_device(cfg.CONF, device)
@@ -1241,7 +1241,7 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_set_default_route_no_gateway(self):
         device = mock.Mock()
-        device.route.get_gateway.return_value = '192.168.0.1'
+        device.route.get_gateway.return_value = dict(gateway='192.168.0.1')
 
         # Try a subnet with no gateway
         dh = self._get_device_manager_with_mock_device(cfg.CONF, device)
@@ -1255,7 +1255,7 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_set_default_route_do_nothing(self):
         device = mock.Mock()
-        device.route.get_gateway.return_value = '192.168.0.1'
+        device.route.get_gateway.return_value = dict(gateway='192.168.0.1')
 
         # Try a subnet where the gateway doesn't change.  Should do nothing.
         dh = self._get_device_manager_with_mock_device(cfg.CONF, device)
@@ -1269,7 +1269,7 @@ class TestDeviceManager(base.BaseTestCase):
 
     def test_set_default_route_change_gateway(self):
         device = mock.Mock()
-        device.route.get_gateway.return_value = '192.168.0.2'
+        device.route.get_gateway.return_value = dict(gateway='192.168.0.2')
 
         # Try a subnet with a gateway this is different than the current.
         dh = self._get_device_manager_with_mock_device(cfg.CONF, device)

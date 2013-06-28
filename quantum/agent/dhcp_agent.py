@@ -547,6 +547,8 @@ class DeviceManager(object):
         """
         device = self._get_device(network)
         gateway = device.route.get_gateway()
+        if gateway:
+            gateway = gateway['gateway']
 
         for subnet in network.subnets:
             skip_subnet = (
