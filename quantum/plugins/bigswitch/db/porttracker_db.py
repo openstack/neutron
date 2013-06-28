@@ -17,6 +17,7 @@
 
 import sqlalchemy as sa
 
+from quantum.api.v2 import attributes
 from quantum.db import model_base
 from quantum.openstack.common import log as logging
 
@@ -38,6 +39,9 @@ def get_port_hostid(context, port_id):
 
 
 def put_port_hostid(context, port_id, host_id):
+    if not attributes.is_attr_set(host_id):
+        LOG.warning(_("No host_id in port request to track port location."))
+        return
     if port_id == '':
         LOG.warning(_("Received an empty port ID for host '%s'"), host_id)
         return

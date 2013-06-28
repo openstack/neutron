@@ -107,6 +107,23 @@ class TestBigSwitchProxyPortsV2IVS(test_plugin.TestPortsV2,
         cfg.CONF.set_override('vif_type', 'ivs', 'NOVA')
 
 
+class TestNoHostIDVIFOverride(test_plugin.TestPortsV2,
+                              BigSwitchProxyPluginV2TestCase,
+                              test_bindings.PortBindingsTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = False
+
+    def setUp(self):
+        super(TestNoHostIDVIFOverride, self).setUp()
+        cfg.CONF.set_override('vif_type', 'ovs', 'NOVA')
+
+    def test_port_vif_details(self):
+        kwargs = {'name': 'name', 'device_id': 'override_dev'}
+        with self.port(**kwargs) as port:
+            self.assertEqual(port['port']['binding:vif_type'],
+                             portbindings.VIF_TYPE_OVS)
+
+
 class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
                                BigSwitchProxyPluginV2TestCase,
                                test_bindings.PortBindingsTestCase):
