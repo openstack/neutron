@@ -332,11 +332,7 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             instance_id = port['port']['device_id']
             device_owner = port['port']['device_owner']
 
-            if hasattr(conf, 'TEST'):
-                host = conf.TEST['host']
-            elif device_owner == 'network:dhcp':
-                return ovs_output[0]
-            elif instance_id:
+            if instance_id and device_owner != 'network:dhcp':
                 net_id = port['port']['network_id']
                 tenant_id = port['port']['tenant_id']
                 self._invoke_nexus_for_net_create(
