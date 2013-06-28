@@ -51,13 +51,22 @@ def parse_args():
     return exec_name, config_file, user_args
 
 
+def _xenapi_section_name(config):
+    sections = [sect for sect in config.sections() if sect.lower() == "xenapi"]
+    if len(sections) == 1:
+        return sections[0]
+
+    print "Multiple [xenapi] sections or no [xenapi] section found!"
+    sys.exit(RC_BADCONFIG)
+
+
 def load_configuration(exec_name, config_file):
     config = ConfigParser.RawConfigParser()
     config.read(config_file)
     try:
         exec_dirs = config.get("DEFAULT", "exec_dirs").split(",")
         filters_path = config.get("DEFAULT", "filters_path").split(",")
-        section = 'XENAPI'
+        section = _xenapi_section_name(config)
         url = config.get(section, "xenapi_connection_url")
         username = config.get(section, "xenapi_connection_username")
         password = config.get(section, "xenapi_connection_password")
