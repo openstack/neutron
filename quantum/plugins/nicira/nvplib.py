@@ -1406,34 +1406,32 @@ def delete_lqueue(cluster, id):
 # -----------------------------------------------------------------------------
 # NVP API Calls for check_nvp_config utility
 # -----------------------------------------------------------------------------
-def check_cluster_connectivity(cluster):
-    """Make sure that we can issue a request to each of the cluster nodes."""
+def config_helper(http_method, http_uri, cluster):
     try:
-        resp = do_single_request(HTTP_GET, "/ws.v1/control-cluster",
+        resp = do_single_request(http_method,
+                                 http_uri,
                                  cluster=cluster)
     except Exception as e:
-        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
+        msg = ("Error '%s' when connecting to controller(s): %s."
+               % (str(e), ', '.join(cluster.nvp_controllers)))
         raise Exception(msg)
     return json.loads(resp)
+
+
+def check_cluster_connectivity(cluster):
+    """Make sure that we can issue a request to each of the cluster nodes."""
+    return config_helper(HTTP_GET,
+                         "/ws.v1/control-cluster",
+                         cluster)
 
 
 def get_gateway_services(cluster):
-    try:
-        resp = do_single_request(HTTP_GET,
-                                 "/ws.v1/gateway-service?fields=uuid",
-                                 cluster=cluster)
-    except Exception as e:
-        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
-        raise Exception(msg)
-    return json.loads(resp)
+    return config_helper(HTTP_GET,
+                         "/ws.v1/gateway-service?fields=uuid",
+                         cluster)
 
 
 def get_transport_zones(cluster):
-    try:
-        resp = do_single_request(HTTP_GET,
-                                 "/ws.v1/transport-zone?fields=uuid",
-                                 cluster=cluster)
-    except Exception as e:
-        msg = "Failed to connect to cluster %s: %s" % (cluster, str(e))
-        raise Exception(msg)
-    return json.loads(resp)
+    return config_helper(HTTP_GET,
+                         "/ws.v1/transport-zone?fields=uuid",
+                         cluster)
