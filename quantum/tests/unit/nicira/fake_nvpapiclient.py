@@ -70,6 +70,8 @@ class FakeClient:
         LROUTER_LPORT_ATT: "fake_get_lrouter_lport_att.json",
         LROUTER_STATUS: "fake_get_lrouter_status.json",
         LROUTER_NAT_RESOURCE: "fake_get_lrouter_nat.json",
+        SECPROF_RESOURCE: "fake_get_security_profile.json",
+        LQUEUE_RESOURCE: "fake_get_lqueue.json",
         GWSERVICE_RESOURCE: "fake_get_gwservice.json"
     }
 
@@ -157,16 +159,22 @@ class FakeClient:
         fake_lswitch['lport_count'] = 0
         return fake_lswitch
 
-    def _add_lrouter(self, body):
+    def _build_lrouter(self, body, uuid=None):
         fake_lrouter = json.loads(body)
-        fake_lrouter['uuid'] = uuidutils.generate_uuid()
-        self._fake_lrouter_dict[fake_lrouter['uuid']] = fake_lrouter
+        if uuid:
+            fake_lrouter['uuid'] = uuid
         fake_lrouter['tenant_id'] = self._get_tag(fake_lrouter, 'os_tid')
-        fake_lrouter['lport_count'] = 0
         default_nexthop = fake_lrouter['routing_config'].get(
             'default_route_next_hop')
         fake_lrouter['default_next_hop'] = default_nexthop.get(
             'gateway_ip_address', '0.0.0.0')
+        return fake_lrouter
+
+    def _add_lrouter(self, body):
+        fake_lrouter = self._build_lrouter(body,
+                                           uuidutils.generate_uuid())
+        self._fake_lrouter_dict[fake_lrouter['uuid']] = fake_lrouter
+        fake_lrouter['lport_count'] = 0
         return fake_lrouter
 
     def _add_lqueue(self, body):
@@ -198,13 +206,14 @@ class FakeClient:
         self._fake_lswitch_lportstatus_dict[new_uuid] = fake_lport_status
         return fake_lport
 
-    def _add_lrouter_lport(self, body, lr_uuid):
+    def _build_lrouter_lport(self, body, new_uuid=None, lr_uuid=None):
         fake_lport = json.loads(body)
-        new_uuid = uuidutils.generate_uuid()
-        fake_lport['uuid'] = new_uuid
-        # put the tenant_id and the ls_uuid in the main dict
+        if new_uuid:
+            fake_lport['uuid'] = new_uuid
+        # put the tenant_id and the le_uuid in the main dict
         # for simplyfying templating
-        fake_lport['lr_uuid'] = lr_uuid
+        if lr_uuid:
+            fake_lport['lr_uuid'] = lr_uuid
         fake_lport['tenant_id'] = self._get_tag(fake_lport, 'os_tid')
         fake_lport['quantum_port_id'] = self._get_tag(fake_lport,
                                                       'q_port_id')
@@ -212,8 +221,16 @@ class FakeClient:
         if 'ip_addresses' in fake_lport:
             ip_addresses_json = json.dumps(fake_lport['ip_addresses'])
             fake_lport['ip_addresses_json'] = ip_addresses_json
+        return fake_lport
+
+    def _add_lrouter_lport(self, body, lr_uuid):
+        new_uuid = uuidutils.generate_uuid()
+        fake_lport = self._build_lrouter_lport(body, new_uuid, lr_uuid)
         self._fake_lrouter_lport_dict[fake_lport['uuid']] = fake_lport
-        fake_lrouter = self._fake_lrouter_dict[lr_uuid]
+        try:
+            fake_lrouter = self._fake_lrouter_dict[lr_uuid]
+        except KeyError:
+            raise NvpApiClient.ResourceNotFound()
         fake_lrouter['lport_count'] += 1
         fake_lport_status = fake_lport.copy()
         fake_lport_status['lr_tenant_id'] = fake_lrouter['tenant_id']
@@ -412,6 +429,15 @@ class FakeClient:
             for item in res_dict.itervalues():
                 if 'tags' in item:
                     item['tags_json'] = json.dumps(item['tags'])
+
+                # replace sec prof rules with their json dump
+                def jsonify_rules(rule_key):
+                    if rule_key in item:
+                        rules_json = json.dumps(item[rule_key])
+                        item['%s_json' % rule_key] = rules_json
+                jsonify_rules('logical_port_egress_rules')
+                jsonify_rules('logical_port_ingress_rules')
+
             items = [json.loads(response_template % res_dict[res_uuid])
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:
@@ -436,6 +462,7 @@ class FakeClient:
         elif ('lswitch' in res_type or
               'lrouter' in res_type or
               self.SECPROF_RESOURCE in res_type or
+              self.LQUEUE_RESOURCE in res_type or
               'gatewayservice' in res_type):
             LOG.debug("UUIDS:%s", uuids)
             if uuids:
@@ -485,8 +512,14 @@ class FakeClient:
             val_func = self._validators.get(res_type)
             if val_func:
                 val_func(body_json)
-            resource = res_dict[uuids[-1]]
+            try:
+                resource = res_dict[uuids[-1]]
+            except KeyError:
+                raise NvpApiClient.ResourceNotFound()
             if not is_attachment:
+                edit_resource = getattr(self, '_build_%s' % res_type, None)
+                if edit_resource:
+                    body_json = edit_resource(body)
                 resource.update(body_json)
             else:
                 relations = resource.get("_relations", {})

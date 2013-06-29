@@ -1,5 +1,6 @@
 {
   "display_name": "%(display_name)s",
+  "admin_status_enabled": "%(admin_status_enabled)s",
   "_href": "/ws.v1/lrouter/%(lr_uuid)s/lport/%(uuid)s",
   "tags":
     [{"scope": "q_port_id", "tag": "%(quantum_port_id)s"},

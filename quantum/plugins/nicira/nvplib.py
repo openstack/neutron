@@ -20,11 +20,9 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 
 
-from copy import copy
 import hashlib
 import inspect
 import json
-import logging
 
 from oslo.config import cfg
 
@@ -32,11 +30,13 @@ from oslo.config import cfg
 # no quantum-specific logic in it
 from quantum.common import constants
 from quantum.common import exceptions as exception
+from quantum.openstack.common import log
 from quantum.plugins.nicira.common import (
     exceptions as nvp_exc)
 from quantum.plugins.nicira import NvpApiClient
 
 
+LOG = log.getLogger(__name__)
 # HTTP METHODS CONSTANTS
 HTTP_GET = "GET"
 HTTP_POST = "POST"
@@ -67,25 +67,9 @@ SNAT_KEYS = ["to_src_port_min", "to_src_port_max", "to_src_ip_min",
 DNAT_KEYS = ["to_dst_port", "to_dst_ip_min", "to_dst_ip_max"]
 
 
-LOCAL_LOGGING = False
-if LOCAL_LOGGING:
-    from logging.handlers import SysLogHandler
-    FORMAT = ("|%(levelname)s|%(filename)s|%(funcName)s|%(lineno)s"
-              "|%(message)s")
-    LOG = logging.getLogger(__name__)
-    formatter = logging.Formatter(FORMAT)
-    syslog = SysLogHandler(address="/dev/log")
-    syslog.setFormatter(formatter)
-    LOG.addHandler(syslog)
-    LOG.setLevel(logging.DEBUG)
-else:
-    LOG = logging.getLogger(__name__)
-    LOG.setLevel(logging.DEBUG)
-
 # TODO(bgh): it would be more efficient to use a bitmap
 taken_context_ids = []
 
-_net_type_cache = {}  # cache of {net_id: network_type}
 # XXX Only cache default for now
 _lqueue_cache = {}
 
@@ -156,22 +140,14 @@ def get_cluster_version(cluster):
     """Return major/minor version #."""
     # Get control-cluster nodes
     uri = "/ws.v1/control-cluster/node?_page_length=1&fields=uuid"
-    try:
-        res = do_single_request(HTTP_GET, uri, cluster=cluster)
-        res = json.loads(res)
-    except NvpApiClient.NvpApiException:
-        raise exception.QuantumException()
+    res = do_request(HTTP_GET, uri, cluster=cluster)
     if res["result_count"] == 0:
         return None
     node_uuid = res["results"][0]["uuid"]
     # Get control-cluster node status.  It's unsupported to have controllers
     # running different version so we just need the first node version.
     uri = "/ws.v1/control-cluster/node/%s/status" % node_uuid
-    try:
-        res = do_single_request(HTTP_GET, uri, cluster=cluster)
-        res = json.loads(res)
-    except NvpApiClient.NvpApiException:
-        raise exception.QuantumException()
+    res = do_request(HTTP_GET, uri, cluster=cluster)
     version_parts = res["version"].split(".")
     version = "%s.%s" % tuple(version_parts[:2])
     LOG.info(_("NVP controller cluster version: %s"), version)
@@ -186,10 +162,9 @@ def get_all_query_pages(path, c):
     while need_more_results:
         page_cursor_str = (
             "_page_cursor=%s" % page_cursor if page_cursor else "")
-        res = do_single_request(HTTP_GET, "%s%s%s" %
-                                (path, query_marker, page_cursor_str),
-                                cluster=c)
-        body = json.loads(res)
+        body = do_request(HTTP_GET,
+                          "%s%s%s" % (path, query_marker, page_cursor_str),
+                          cluster=c)
         page_cursor = body.get('page_cursor')
         if not page_cursor:
             need_more_results = False
@@ -197,70 +172,15 @@ def get_all_query_pages(path, c):
     return result_list
 
 
-def do_single_request(*args, **kwargs):
-    """Issue a request to a specified cluster if specified via kwargs
-       (cluster=<cluster>).
-    """
-    cluster = kwargs["cluster"]
-    try:
-        req = cluster.api_client.request(*args)
-    except NvpApiClient.ResourceNotFound:
-        raise exception.NotFound()
-    return req
-
-
-def do_multi_request(*args, **kwargs):
-    """Issue a request to all clusters."""
-    results = []
-    clusters = kwargs["clusters"]
-    for x in clusters:
-        LOG.debug(_("Issuing request to cluster: %s"), x.name)
-        rv = x.api_client.request(*args)
-        results.append(rv)
-    return results
-
-
 # -------------------------------------------------------------------
 # Network functions
 # -------------------------------------------------------------------
-def find_port_and_cluster(clusters, port_id):
-    """Find port and cluster.
-
-    Returns (url, cluster_id) of port or (None, None) if port does not exist.
-    """
-    for c in clusters:
-        query = "/ws.v1/lswitch/*/lport?uuid=%s&fields=*" % port_id
-        LOG.debug(_("Looking for lswitch with port id "
-                    "'%(port_id)s' on: %(c)s"),
-                  {'port_id': port_id, 'c': c})
-        try:
-            res = do_single_request(HTTP_GET, query, cluster=c)
-        except Exception as e:
-            LOG.error(_("get_port_cluster_and_url, exception: %s"), str(e))
-            continue
-        res = json.loads(res)
-        if len(res["results"]) == 1:
-            return (res["results"][0], c)
-    return (None, None)
-
-
-def find_lswitch_by_portid(clusters, port_id):
-    port, cluster = find_port_and_cluster(clusters, port_id)
-    if port and cluster:
-        href = port["_href"].split('/')
-        return (href[3], cluster)
-    return (None, None)
-
-
 def get_lswitches(cluster, quantum_net_id):
     lswitch_uri_path = _build_uri_path(LSWITCH_RESOURCE, quantum_net_id,
                                        relations="LogicalSwitchStatus")
     results = []
     try:
-        resp_obj = do_single_request(HTTP_GET,
-                                     lswitch_uri_path,
-                                     cluster=cluster)
-        ls = json.loads(resp_obj)
+        ls = do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
         results.append(ls)
         for tag in ls['tags']:
             if (tag['scope'] == "multi_lswitch" and
@@ -276,14 +196,8 @@ def get_lswitches(cluster, quantum_net_id):
                                                      cluster)
                 results.extend(extra_switches)
         return results
-    except NvpApiClient.ResourceNotFound:
+    except exception.NotFound:
         raise exception.NetworkNotFound(net_id=quantum_net_id)
-    except NvpApiClient.NvpApiException:
-        # TODO(salvatore-olrando): Do a better exception handling
-        # and re-raising
-        LOG.exception(_("An error occured while fetching logical switches "
-                        "for Quantum network %s"), quantum_net_id)
-        raise exception.QuantumException()
 
 
 def create_lswitch(cluster, tenant_id, display_name,
@@ -317,13 +231,8 @@ def create_lswitch(cluster, tenant_id, display_name,
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
     uri = _build_uri_path(LSWITCH_RESOURCE)
-    try:
-        lswitch_res = do_single_request(HTTP_POST, uri,
-                                        json.dumps(lswitch_obj),
-                                        cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        raise exception.QuantumException()
-    lswitch = json.loads(lswitch_res)
+    lswitch = do_request(HTTP_POST, uri, json.dumps(lswitch_obj),
+                         cluster=cluster)
     LOG.debug(_("Created logical switch: %s"), lswitch['uuid'])
     return lswitch
 
@@ -337,16 +246,11 @@ def update_lswitch(cluster, lswitch_id, display_name,
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
     try:
-        resp_obj = do_single_request(HTTP_PUT, uri, json.dumps(lswitch_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
+        return do_request(HTTP_PUT, uri, json.dumps(lswitch_obj),
+                          cluster=cluster)
+    except exception.NotFound as e:
         LOG.error(_("Network not found, Error: %s"), str(e))
         raise exception.NetworkNotFound(net_id=lswitch_id)
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
-
-    obj = json.loads(resp_obj)
-    return obj
 
 
 def create_l2_gw_service(cluster, tenant_id, display_name, devices):
@@ -375,16 +279,9 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         "gateways": gateways,
         "type": "L2GatewayServiceConfig"
     }
-    try:
-        return json.loads(do_single_request(
-            "POST", _build_uri_path(GWSERVICE_RESOURCE),
-            json.dumps(gwservice_obj), cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to create L2 Gateway Service "
-                        "%(name)s for tenant %(id)s.")
-                      % {'name': display_name, 'id': tenant_id})
-        raise
+    return do_request(
+        "POST", _build_uri_path(GWSERVICE_RESOURCE),
+        json.dumps(gwservice_obj), cluster=cluster)
 
 
 def create_lrouter(cluster, tenant_id, display_name, nexthop):
@@ -413,70 +310,35 @@ def create_lrouter(cluster, tenant_id, display_name, nexthop):
         },
         "type": "LogicalRouterConfig"
     }
-    try:
-        return json.loads(do_single_request(HTTP_POST,
-                                            _build_uri_path(LROUTER_RESOURCE),
-                                            json.dumps(lrouter_obj),
-                                            cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to create Router "
-                        "%(name)s for tenant %(id)s.")
-                      % {'name': display_name, 'id': tenant_id})
-        raise
+    return do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
+                      json.dumps(lrouter_obj), cluster=cluster)
 
 
 def delete_lrouter(cluster, lrouter_id):
-    try:
-        do_single_request(HTTP_DELETE,
-                          _build_uri_path(LROUTER_RESOURCE,
-                                          resource_id=lrouter_id),
-                          cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to delete Router "
-                        "Service %s."), lrouter_id)
-        raise
+    do_request(HTTP_DELETE, _build_uri_path(LROUTER_RESOURCE,
+                                            resource_id=lrouter_id),
+               cluster=cluster)
 
 
 def delete_l2_gw_service(cluster, gateway_id):
-    try:
-        do_single_request("DELETE",
-                          _build_uri_path(GWSERVICE_RESOURCE,
-                                          resource_id=gateway_id),
-                          cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to delete L2 Gateway "
-                        "Service %s."), gateway_id)
-        raise
+    do_request("DELETE", _build_uri_path(GWSERVICE_RESOURCE,
+                                         resource_id=gateway_id),
+               cluster=cluster)
 
 
 def get_lrouter(cluster, lrouter_id):
-    try:
-        return json.loads(do_single_request(HTTP_GET,
-                          _build_uri_path(LROUTER_RESOURCE,
-                                          resource_id=lrouter_id,
-                                          relations='LogicalRouterStatus'),
-                          cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to get Router "
-                        "Service %s."), lrouter_id)
-        raise
+    return do_request(HTTP_GET,
+                      _build_uri_path(LROUTER_RESOURCE,
+                                      resource_id=lrouter_id,
+                                      relations='LogicalRouterStatus'),
+                      cluster=cluster)
 
 
 def get_l2_gw_service(cluster, gateway_id):
-    try:
-        return json.loads(do_single_request("GET",
-                          _build_uri_path(GWSERVICE_RESOURCE,
-                                          resource_id=gateway_id),
-                          cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to get L2 Gateway "
-                        "Service %s."), gateway_id)
-        raise
+    return do_request(
+        "GET", _build_uri_path(GWSERVICE_RESOURCE,
+                               resource_id=gateway_id),
+        cluster=cluster)
 
 
 def get_lrouters(cluster, tenant_id, fields=None, filters=None):
@@ -514,18 +376,9 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
         # Nothing to update
         return gwservice_obj
     gwservice_obj["display_name"] = _check_and_truncate_name(display_name)
-    try:
-        return json.loads(do_single_request("PUT",
-                          _build_uri_path(GWSERVICE_RESOURCE,
-                                          resource_id=gateway_id),
-                          json.dumps(gwservice_obj),
-                          cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to update L2 Gateway Service "
-                        "%(id)s with name %(name)s.") %
-                      {'id': gateway_id, 'name': display_name})
-        raise
+    return do_request("PUT", _build_uri_path(GWSERVICE_RESOURCE,
+                                             resource_id=gateway_id),
+                      json.dumps(gwservice_obj), cluster=cluster)
 
 
 def update_lrouter(cluster, lrouter_id, display_name, nexthop):
@@ -541,71 +394,25 @@ def update_lrouter(cluster, lrouter_id, display_name, nexthop):
             "default_route_next_hop")
         if nh_element:
             nh_element["gateway_ip_address"] = nexthop
-    try:
-        return json.loads(do_single_request(HTTP_PUT,
-                          _build_uri_path(LROUTER_RESOURCE,
-                                          resource_id=lrouter_id),
-                          json.dumps(lrouter_obj),
-                          cluster=cluster))
-    except NvpApiClient.NvpApiException:
-        # just log and re-raise - let the caller handle it
-        LOG.exception(_("Unable to update Router "
-                        "%(id)s with name %(name)s.") %
-                      {'id': lrouter_id, 'name': display_name})
-        raise
-
-
-def get_all_networks(cluster, tenant_id, networks):
-    """Get all networks.
-
-    Append the quantum network uuids we can find in the given cluster
-    to "networks".
-    """
-    uri = "/ws.v1/lswitch?fields=*&tag=%s&tag_scope=os_tid" % tenant_id
-    try:
-        resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        raise exception.QuantumException()
-    if not resp_obj:
-        return []
-    networks_result = copy(networks)
-    return networks_result
-
-
-def query_networks(cluster, tenant_id, fields="*", tags=None):
-    uri = "/ws.v1/lswitch?fields=%s" % fields
-    if tags:
-        for t in tags:
-            uri += "&tag=%s&tag_scope=%s" % (t[0], t[1])
-    try:
-        resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        raise exception.QuantumException()
-    if not resp_obj:
-        return []
-    lswitches = json.loads(resp_obj)["results"]
-    nets = [{'net-id': lswitch["uuid"], 'net-name': lswitch["display_name"]}
-            for lswitch in lswitches]
-    return nets
+    return do_request(HTTP_PUT, _build_uri_path(LROUTER_RESOURCE,
+                                                resource_id=lrouter_id),
+                      json.dumps(lrouter_obj),
+                      cluster=cluster)
 
 
 def delete_network(cluster, net_id, lswitch_id):
     delete_networks(cluster, net_id, [lswitch_id])
 
 
+#TODO(salvatore-orlando): Simplify and harmonize
 def delete_networks(cluster, net_id, lswitch_ids):
-    if net_id in _net_type_cache:
-        del _net_type_cache[net_id]
     for ls_id in lswitch_ids:
         path = "/ws.v1/lswitch/%s" % ls_id
-
         try:
-            do_single_request(HTTP_DELETE, path, cluster=cluster)
-        except NvpApiClient.ResourceNotFound as e:
+            do_request(HTTP_DELETE, path, cluster=cluster)
+        except exception.NotFound as e:
             LOG.error(_("Network not found, Error: %s"), str(e))
             raise exception.NetworkNotFound(net_id=ls_id)
-        except NvpApiClient.NvpApiException as e:
-            raise exception.QuantumException()
 
 
 def query_lswitch_lports(cluster, ls_uuid, fields="*",
@@ -616,63 +423,26 @@ def query_lswitch_lports(cluster, ls_uuid, fields="*",
         del filters['attachment']
     uri = _build_uri_path(LSWITCHPORT_RESOURCE, parent_resource_id=ls_uuid,
                           fields=fields, filters=filters, relations=relations)
-    try:
-        resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except NvpApiClient.ResourceNotFound:
-        LOG.exception(_("Logical switch: %s not found"), ls_uuid)
-        raise
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occurred while querying logical ports on "
-                        "the NVP platform"))
-        raise
-    return json.loads(resp_obj)["results"]
+    return do_request(HTTP_GET, uri, cluster=cluster)['results']
 
 
 def query_lrouter_lports(cluster, lr_uuid, fields="*",
                          filters=None, relations=None):
     uri = _build_uri_path(LROUTERPORT_RESOURCE, parent_resource_id=lr_uuid,
                           fields=fields, filters=filters, relations=relations)
-    try:
-        resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except NvpApiClient.ResourceNotFound:
-        LOG.exception(_("Logical router: %s not found"), lr_uuid)
-        raise
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occured while querying logical router "
-                        "ports on the NVP platfom"))
-        raise
-    return json.loads(resp_obj)["results"]
+    return do_request(HTTP_GET, uri, cluster=cluster)['results']
 
 
 def delete_port(cluster, switch, port):
     uri = "/ws.v1/lswitch/" + switch + "/lport/" + port
     try:
-        do_single_request(HTTP_DELETE, uri, cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port['uuid'])
-    except NvpApiClient.NvpApiException as e:
+        do_request(HTTP_DELETE, uri, cluster=cluster)
+    except exception.NotFound:
+        LOG.exception(_("Port or Network not found"))
+        raise exception.PortNotFound(net_id=switch,
+                                     port_id=port)
+    except NvpApiClient.NvpApiException:
         raise exception.QuantumException()
-
-
-def get_port_by_display_name(clusters, lswitch, display_name):
-    """Return (url, cluster_id) of port or raises PortNotFound."""
-    query = ("/ws.v1/lswitch/%s/lport?display_name=%s&fields=*" %
-             (lswitch, display_name))
-    LOG.debug(_("Looking for port with display_name "
-                "'%(display_name)s' on: %(lswitch)s"),
-              {'display_name': display_name, 'lswitch': lswitch})
-    for c in clusters:
-        try:
-            res_obj = do_single_request(HTTP_GET, query, cluster=c)
-        except Exception as e:
-            continue
-        res = json.loads(res_obj)
-        if len(res["results"]) == 1:
-            return (res["results"][0], c)
-
-    LOG.error(_("Port or Network not found, Error: %s"), str(e))
-    raise exception.PortNotFound(port_id=display_name, net_id=lswitch)
 
 
 def get_port_by_quantum_tag(cluster, lswitch_uuid, quantum_port_id):
@@ -690,12 +460,7 @@ def get_port_by_quantum_tag(cluster, lswitch_uuid, quantum_port_id):
                 "on: '%(lswitch_uuid)s'") %
               {'quantum_port_id': quantum_port_id,
                'lswitch_uuid': lswitch_uuid})
-    try:
-        res_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except Exception:
-        LOG.exception(_("An exception occurred while querying NVP ports"))
-        raise
-    res = json.loads(res_obj)
+    res = do_request(HTTP_GET, uri, cluster=cluster)
     num_results = len(res["results"])
     if num_results >= 1:
         if num_results > 1:
@@ -714,14 +479,10 @@ def get_port(cluster, network, port, relations=None):
     if relations:
         uri += "relations=%s" % relations
     try:
-        resp_obj = do_single_request(HTTP_GET, uri, cluster=cluster)
-        port = json.loads(resp_obj)
-    except NvpApiClient.ResourceNotFound as e:
+        return do_request(HTTP_GET, uri, cluster=cluster)
+    except exception.NotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port, net_id=network)
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
-    return port
 
 
 def _configure_extensions(lport_obj, mac_address, fixed_ips,
@@ -767,17 +528,15 @@ def update_port(cluster, lswitch_uuid, lport_uuid, quantum_port_id, tenant_id,
 
     path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
-        resp_obj = do_single_request(HTTP_PUT, path, json.dumps(lport_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
+        result = do_request(HTTP_PUT, path, json.dumps(lport_obj),
+                            cluster=cluster)
+        LOG.debug(_("Updated logical port %(result)s "
+                    "on logical switch %(uuid)s"),
+                  {'result': result['uuid'], 'uuid': lswitch_uuid})
+        return result
+    except exception.NotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=lport_uuid, net_id=lswitch_uuid)
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
-    result = json.loads(resp_obj)
-    LOG.debug(_("Updated logical port %(result)s on logical swtich %(uuid)s"),
-              {'result': result['uuid'], 'uuid': lswitch_uuid})
-    return result
 
 
 def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
@@ -804,15 +563,9 @@ def create_lport(cluster, lswitch_uuid, tenant_id, quantum_port_id,
 
     path = _build_uri_path(LSWITCHPORT_RESOURCE,
                            parent_resource_id=lswitch_uuid)
-    try:
-        resp_obj = do_single_request(HTTP_POST, path,
-                                     json.dumps(lport_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Logical switch not found, Error: %s"), str(e))
-        raise
+    result = do_request(HTTP_POST, path, json.dumps(lport_obj),
+                        cluster=cluster)
 
-    result = json.loads(resp_obj)
     LOG.debug(_("Created logical port %(result)s on logical swtich %(uuid)s"),
               {'result': result['uuid'], 'uuid': lswitch_uuid})
     return result
@@ -834,15 +587,9 @@ def create_router_lport(cluster, lrouter_uuid, tenant_id, quantum_port_id,
     )
     path = _build_uri_path(LROUTERPORT_RESOURCE,
                            parent_resource_id=lrouter_uuid)
-    try:
-        resp_obj = do_single_request(HTTP_POST, path,
-                                     json.dumps(lport_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Logical router not found, Error: %s"), str(e))
-        raise
+    result = do_request(HTTP_POST, path, json.dumps(lport_obj),
+                        cluster=cluster)
 
-    result = json.loads(resp_obj)
     LOG.debug(_("Created logical port %(lport_uuid)s on "
                 "logical router %(lrouter_uuid)s"),
               {'lport_uuid': result['uuid'],
@@ -870,16 +617,9 @@ def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
     path = _build_uri_path(LROUTERPORT_RESOURCE,
                            lrouter_port_uuid,
                            parent_resource_id=lrouter_uuid)
-    try:
-        resp_obj = do_single_request(HTTP_PUT, path,
-                                     json.dumps(lport_obj),
-                                     cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Logical router or router port not found, "
-                    "Error: %s"), str(e))
-        raise
-
-    result = json.loads(resp_obj)
+    result = do_request(HTTP_PUT, path,
+                        json.dumps(lport_obj),
+                        cluster=cluster)
     LOG.debug(_("Updated logical port %(lport_uuid)s on "
                 "logical router %(lrouter_uuid)s"),
               {'lport_uuid': lrouter_port_uuid, 'lrouter_uuid': lrouter_uuid})
@@ -889,11 +629,7 @@ def update_router_lport(cluster, lrouter_uuid, lrouter_port_uuid,
 def delete_router_lport(cluster, lrouter_uuid, lport_uuid):
     """Creates a logical port on the assigned logical router."""
     path = _build_uri_path(LROUTERPORT_RESOURCE, lport_uuid, lrouter_uuid)
-    try:
-        do_single_request(HTTP_DELETE, path, cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.error(_("Logical router not found, Error: %s"), str(e))
-        raise
+    do_request(HTTP_DELETE, path, cluster=cluster)
     LOG.debug(_("Delete logical router port %(lport_uuid)s on "
                 "logical router %(lrouter_uuid)s"),
               {'lport_uuid': lport_uuid,
@@ -903,19 +639,13 @@ def delete_router_lport(cluster, lrouter_uuid, lport_uuid):
 def delete_peer_router_lport(cluster, lr_uuid, ls_uuid, lp_uuid):
     nvp_port = get_port(cluster, ls_uuid, lp_uuid,
                         relations="LogicalPortAttachment")
-    try:
-        relations = nvp_port.get('_relations')
-        if relations:
-            att_data = relations.get('LogicalPortAttachment')
-            if att_data:
-                lrp_uuid = att_data.get('peer_port_uuid')
-                if lrp_uuid:
-                    delete_router_lport(cluster, lr_uuid, lrp_uuid)
-    except (NvpApiClient.NvpApiException, NvpApiClient.ResourceNotFound):
-        LOG.exception(_("Unable to fetch and delete peer logical "
-                        "router port for logical switch port:%s"),
-                      lp_uuid)
-        raise
+    relations = nvp_port.get('_relations')
+    if relations:
+        att_data = relations.get('LogicalPortAttachment')
+        if att_data:
+            lrp_uuid = att_data.get('peer_port_uuid')
+            if lrp_uuid:
+                delete_router_lport(cluster, lr_uuid, lrp_uuid)
 
 
 def find_router_gw_port(context, cluster, router_id):
@@ -954,36 +684,21 @@ def plug_router_port_attachment(cluster, router_id, port_id,
         if attachment_vlan:
             attach_obj['vlan_id'] = attachment_vlan
     else:
+        # TODO(salv-orlando): avoid raising generic exception
         raise Exception(_("Invalid NVP attachment type '%s'"),
                         nvp_attachment_type)
-    try:
-        resp_obj = do_single_request(
-            HTTP_PUT, uri, json.dumps(attach_obj), cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
-        LOG.exception(_("Router Port not found, Error: %s"), str(e))
-        raise
-    except NvpApiClient.Conflict as e:
-        LOG.exception(_("Conflict while setting router port attachment"))
-        raise
-    except NvpApiClient.NvpApiException as e:
-        LOG.exception(_("Unable to plug attachment into logical router port"))
-        raise
-    result = json.loads(resp_obj)
-    return result
+    return do_request(HTTP_PUT, uri, json.dumps(attach_obj), cluster=cluster)
 
 
 def get_port_status(cluster, lswitch_id, port_id):
     """Retrieve the operational status of the port."""
     try:
-        r = do_single_request(HTTP_GET,
-                              "/ws.v1/lswitch/%s/lport/%s/status" %
-                              (lswitch_id, port_id), cluster=cluster)
-        r = json.loads(r)
-    except NvpApiClient.ResourceNotFound as e:
+        r = do_request(HTTP_GET,
+                       "/ws.v1/lswitch/%s/lport/%s/status" %
+                       (lswitch_id, port_id), cluster=cluster)
+    except exception.NotFound as e:
         LOG.error(_("Port not found, Error: %s"), str(e))
         raise exception.PortNotFound(port_id=port_id, net_id=lswitch_id)
-    except NvpApiClient.NvpApiException as e:
-        raise exception.QuantumException()
     if r['link_status_up'] is True:
         return constants.PORT_STATUS_ACTIVE
     else:
@@ -993,19 +708,8 @@ def get_port_status(cluster, lswitch_id, port_id):
 def _plug_interface(cluster, lswitch_id, lport_id, att_obj):
     uri = _build_uri_path(LSWITCHPORT_RESOURCE, lport_id, lswitch_id,
                           is_attachment=True)
-    try:
-        resp_obj = do_single_request(HTTP_PUT, uri, json.dumps(att_obj),
-                                     cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("Exception while plugging an attachment:%(att)s "
-                        "into NVP port:%(port)s for NVP logical switch "
-                        "%(net)s"), {'net': lswitch_id,
-                                     'port': lport_id,
-                                     'att': att_obj})
-        raise
-
-    result = json.dumps(resp_obj)
-    return result
+    return do_request(HTTP_PUT, uri, json.dumps(att_obj),
+                      cluster=cluster)
 
 
 def plug_l2_gw_service(cluster, lswitch_id, lport_id,
@@ -1034,37 +738,36 @@ EXT_SECURITY_PROFILE_ID_SCOPE = 'nova_spid'
 TENANT_ID_SCOPE = 'os_tid'
 
 
-def format_exception(etype, e, execption_locals, request=None):
+def format_exception(etype, e, exception_locals):
     """Consistent formatting for exceptions.
 
     :param etype: a string describing the exception type.
     :param e: the exception.
-    :param request: the request object.
     :param execption_locals: calling context local variable dict.
     :returns: a formatted string.
     """
     msg = ["Error. %s exception: %s." % (etype, e)]
-    if request:
-        msg.append("request=[%s]" % request)
-        if request.body:
-            msg.append("request.body=[%s]" % str(request.body))
-    l = dict((k, v) for k, v in execption_locals if k != 'request')
+    l = dict((k, v) for k, v in exception_locals.iteritems()
+             if k != 'request')
     msg.append("locals=[%s]" % str(l))
     return ' '.join(msg)
 
 
 def do_request(*args, **kwargs):
-    """Convenience function wraps do_single_request.
+    """Issue a request to the cluster specified in kwargs.
 
     :param args: a list of positional arguments.
     :param kwargs: a list of keyworkds arguments.
-    :returns: the result of do_single_request loaded into a python object
-        or None.
+    :returns: the result of the operation loaded into a python
+        object or None.
     """
-    res = do_single_request(*args, **kwargs)
-    if res:
-        return json.loads(res)
-    return res
+    cluster = kwargs["cluster"]
+    try:
+        res = cluster.api_client.request(*args)
+        if res:
+            return json.loads(res)
+    except NvpApiClient.ResourceNotFound:
+        raise exception.NotFound()
 
 
 def mk_body(**kwargs):
@@ -1093,18 +796,14 @@ def create_security_profile(cluster, tenant_id, security_profile):
                      {'ethertype': 'IPv6'}]}
     tags = [dict(scope='os_tid', tag=tenant_id),
             dict(scope='quantum', tag=QUANTUM_VERSION)]
-    try:
-        display_name = _check_and_truncate_name(security_profile.get('name'))
-        body = mk_body(
-            tags=tags, display_name=display_name,
-            logical_port_ingress_rules=(
-                hidden_rules['logical_port_ingress_rules']),
-            logical_port_egress_rules=hidden_rules['logical_port_egress_rules']
-        )
-        rsp = do_request(HTTP_POST, path, body, cluster=cluster)
-    except NvpApiClient.NvpApiException as e:
-        LOG.error(format_exception("Unknown", e, locals()))
-        raise exception.QuantumException()
+    display_name = _check_and_truncate_name(security_profile.get('name'))
+    body = mk_body(
+        tags=tags, display_name=display_name,
+        logical_port_ingress_rules=(
+            hidden_rules['logical_port_ingress_rules']),
+        logical_port_egress_rules=hidden_rules['logical_port_egress_rules']
+    )
+    rsp = do_request(HTTP_POST, path, body, cluster=cluster)
     if security_profile.get('name') == 'default':
         # If security group is default allow ip traffic between
         # members of the same security profile is allowed and ingress traffic
@@ -1139,8 +838,9 @@ def update_security_group_rules(cluster, spid, rules):
             logical_port_ingress_rules=rules['logical_port_ingress_rules'],
             logical_port_egress_rules=rules['logical_port_egress_rules'])
         rsp = do_request(HTTP_PUT, path, body, cluster=cluster)
-    except NvpApiClient.NvpApiException as e:
+    except exception.NotFound as e:
         LOG.error(format_exception("Unknown", e, locals()))
+        #FIXME(salvatore-orlando): This should not raise QuantumException
         raise exception.QuantumException()
     LOG.debug(_("Updated Security Profile: %s"), rsp)
     return rsp
@@ -1151,7 +851,8 @@ def delete_security_profile(cluster, spid):
 
     try:
         do_request(HTTP_DELETE, path, cluster=cluster)
-    except NvpApiClient.NvpApiException as e:
+    except exception.NotFound as e:
+        # FIXME(salv-orlando): should not raise QuantumException
         LOG.error(format_exception("Unknown", e, locals()))
         raise exception.QuantumException()
 
@@ -1168,18 +869,8 @@ def _create_nat_match_obj(**kwargs):
 def _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj):
     LOG.debug(_("Creating NAT rule: %s"), nat_rule_obj)
     uri = _build_uri_path(LROUTERNAT_RESOURCE, parent_resource_id=router_id)
-    try:
-        resp = do_single_request(HTTP_POST, uri, json.dumps(nat_rule_obj),
-                                 cluster=cluster)
-    except NvpApiClient.ResourceNotFound:
-        LOG.exception(_("NVP Logical Router %s not found"), router_id)
-        raise
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occurred while creating the NAT rule "
-                        "on the NVP platform"))
-        raise
-    rule = json.loads(resp)
-    return rule
+    return do_request(HTTP_POST, uri, json.dumps(nat_rule_obj),
+                      cluster=cluster)
 
 
 def _build_snat_rule_obj(min_src_ip, max_src_ip, nat_match_obj):
@@ -1297,44 +988,13 @@ def delete_nat_rules_by_match(cluster, router_id, rule_type,
 
 def delete_router_nat_rule(cluster, router_id, rule_id):
     uri = _build_uri_path(LROUTERNAT_RESOURCE, rule_id, router_id)
-    try:
-        do_single_request(HTTP_DELETE, uri, cluster=cluster)
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occurred while removing NAT rule "
-                        "'%(nat_rule_uuid)s' for logical "
-                        "router '%(lrouter_uuid)s'"),
-                      {'nat_rule_uuid': rule_id, 'lrouter_uuid': router_id})
-        raise
-
-
-def get_router_nat_rule(cluster, tenant_id, router_id, rule_id):
-    uri = _build_uri_path(LROUTERNAT_RESOURCE, rule_id, router_id)
-    try:
-        resp = do_single_request(HTTP_GET, uri, cluster=cluster)
-    except NvpApiClient.ResourceNotFound:
-        LOG.exception(_("NAT rule %s not found"), rule_id)
-        raise
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occured while retrieving NAT rule '%s'"
-                        "from NVP platform"), rule_id)
-        raise
-    res = json.loads(resp)
-    return res
+    do_request(HTTP_DELETE, uri, cluster=cluster)
 
 
 def query_nat_rules(cluster, router_id, fields="*", filters=None):
     uri = _build_uri_path(LROUTERNAT_RESOURCE, parent_resource_id=router_id,
                           fields=fields, filters=filters)
-    try:
-        result = get_all_query_pages(uri, cluster)
-    except NvpApiClient.ResourceNotFound:
-        LOG.exception(_("NVP Logical Router '%s' not found"), router_id)
-        raise
-    except NvpApiClient.NvpApiException:
-        LOG.exception(_("An error occured while retrieving NAT rules for "
-                        "NVP logical router '%s'"), router_id)
-        raise
-    return result
+    return get_all_query_pages(uri, cluster)
 
 
 # NOTE(salvatore-orlando): The following FIXME applies in general to
@@ -1344,7 +1004,7 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
                             ips_to_add, ips_to_remove):
     uri = _build_uri_path(LROUTERPORT_RESOURCE, lport_id, lrouter_id)
     try:
-        port = json.loads(do_single_request(HTTP_GET, uri, cluster=cluster))
+        port = do_request(HTTP_GET, uri, cluster=cluster)
         # TODO(salvatore-orlando): Enforce ips_to_add intersection with
         # ips_to_remove is empty
         ip_address_set = set(port['ip_addresses'])
@@ -1352,8 +1012,9 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         ip_address_set = ip_address_set | set(ips_to_add)
         # Set is not JSON serializable - convert to list
         port['ip_addresses'] = list(ip_address_set)
-        do_single_request(HTTP_PUT, uri, json.dumps(port), cluster=cluster)
-    except NvpApiClient.ResourceNotFound as e:
+        do_request(HTTP_PUT, uri, json.dumps(port), cluster=cluster)
+    except exception.NotFound as e:
+        # FIXME(salv-orlando):avoid raising different exception
         data = {'lport_id': lport_id, 'lrouter_id': lrouter_id}
         msg = (_("Router Port %(lport_id)s not found on router "
                  "%(lrouter_id)s") % data)
@@ -1384,21 +1045,21 @@ def create_lqueue(cluster, lqueue):
     uri = _build_uri_path(LQUEUE_RESOURCE)
     lqueue['tags'] = [{'tag': QUANTUM_VERSION, 'scope': 'quantum'}]
     try:
-        resp_obj = do_single_request(HTTP_POST, uri, json.dumps(lqueue),
-                                     cluster=cluster)
+        return do_request(HTTP_POST, uri, json.dumps(lqueue),
+                          cluster=cluster)['uuid']
     except NvpApiClient.NvpApiException:
+        # FIXME(salv-orlando): This should not raise QauntumException
         LOG.exception(_("Failed to create logical queue"))
         raise exception.QuantumException()
-    return json.loads(resp_obj)['uuid']
 
 
 def delete_lqueue(cluster, id):
     try:
-        do_single_request(HTTP_DELETE,
-                          _build_uri_path(LQUEUE_RESOURCE,
-                                          resource_id=id),
-                          cluster=cluster)
+        do_request(HTTP_DELETE, _build_uri_path(LQUEUE_RESOURCE,
+                                                resource_id=id),
+                   cluster=cluster)
     except Exception:
+        # FIXME(salv-orlando): This should not raise QauntumException
         LOG.exception(_("Failed to delete logical queue"))
         raise exception.QuantumException()
 
@@ -1408,14 +1069,13 @@ def delete_lqueue(cluster, id):
 # -----------------------------------------------------------------------------
 def config_helper(http_method, http_uri, cluster):
     try:
-        resp = do_single_request(http_method,
-                                 http_uri,
-                                 cluster=cluster)
+        return do_request(http_method,
+                          http_uri,
+                          cluster=cluster)
     except Exception as e:
         msg = ("Error '%s' when connecting to controller(s): %s."
                % (str(e), ', '.join(cluster.nvp_controllers)))
         raise Exception(msg)
-    return json.loads(resp)
 
 
 def check_cluster_connectivity(cluster):
