@@ -333,7 +333,7 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     supported_extension_aliases = ["router", "binding", "router_rules"]
 
-    def __init__(self):
+    def __init__(self, server_timeout=None):
         LOG.info(_('QuantumRestProxy: Starting plugin. Version=%s'),
                  version_string_with_vcs())
 
@@ -347,9 +347,11 @@ class QuantumRestProxyV2(db_base_plugin_v2.QuantumDbPluginV2,
         server_auth = cfg.CONF.RESTPROXY.server_auth
         server_ssl = cfg.CONF.RESTPROXY.server_ssl
         sync_data = cfg.CONF.RESTPROXY.sync_data
-        timeout = cfg.CONF.RESTPROXY.server_timeout
         quantum_id = cfg.CONF.RESTPROXY.quantum_id
         self.add_meta_server_route = cfg.CONF.RESTPROXY.add_meta_server_route
+        timeout = cfg.CONF.RESTPROXY.server_timeout
+        if server_timeout is not None:
+            timeout = server_timeout
 
         # validate config
         assert servers is not None, 'Servers not defined. Aborting plugin'
