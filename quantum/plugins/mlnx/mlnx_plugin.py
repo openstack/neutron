@@ -219,21 +219,6 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                 raise q_exc.InvalidInput(error_message=msg)
         return physical_network
 
-    def _check_provider_update(self, context, attrs):
-        network_type = attrs.get(provider.NETWORK_TYPE)
-        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
-        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
-
-        network_type_set = attributes.is_attr_set(network_type)
-        physical_network_set = attributes.is_attr_set(physical_network)
-        segmentation_id_set = attributes.is_attr_set(segmentation_id)
-
-        if not (network_type_set or physical_network_set or
-                segmentation_id_set):
-            return
-        msg = _("Plugin does not support updating provider attributes")
-        raise q_exc.InvalidInput(error_message=msg)
-
     def _process_port_binding_create(self, context, attrs):
         binding_profile = attrs.get(portbindings.PROFILE)
         binding_profile_set = attributes.is_attr_set(binding_profile)
@@ -288,7 +273,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             return net
 
     def update_network(self, context, net_id, network):
-        self._check_provider_update(context, network['network'])
+        provider._raise_if_updates_provider_attributes(network['network'])
         session = context.session
         with session.begin(subtransactions=True):
             net = super(MellanoxEswitchPlugin, self).update_network(context,

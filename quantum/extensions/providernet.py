@@ -17,6 +17,8 @@
 
 from quantum.api import extensions
 from quantum.api.v2 import attributes
+from quantum.common import exceptions as q_exc
+
 
 NETWORK_TYPE = 'provider:network_type'
 PHYSICAL_NETWORK = 'provider:physical_network'
@@ -41,6 +43,18 @@ EXTENDED_ATTRIBUTES_2_0 = {
                           'is_visible': True},
     }
 }
+
+
+def _raise_if_updates_provider_attributes(attrs):
+    """Raise exception if provider attributes are present.
+
+    This method is used for plugins that do not support
+    updating provider networks.
+    """
+    immutable = (NETWORK_TYPE, PHYSICAL_NETWORK, SEGMENTATION_ID)
+    if any(attributes.is_attr_set(attrs.get(a)) for a in immutable):
+        msg = _("plugin does not support updating provider attributes")
+        raise q_exc.InvalidInput(error_message=msg)
 
 
 class Providernet(extensions.ExtensionDescriptor):
