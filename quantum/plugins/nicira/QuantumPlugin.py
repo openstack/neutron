@@ -570,11 +570,12 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                        port_data['name'],
                                        True,
                                        ['0.0.0.0/31'])
-            # Delete the SNAT rule for each subnet
+            # Delete the SNAT rule for each subnet, keep in mind
+            # that the rule might have already been removed from NVP
             for cidr in self._find_router_subnets_cidrs(context, router_id):
                 nvplib.delete_nat_rules_by_match(
                     self.cluster, router_id, "SourceNatRule",
-                    max_num_expected=1, min_num_expected=1,
+                    max_num_expected=1, min_num_expected=0,
                     source_ip_addresses=cidr)
             # Reset attachment
             self._update_router_port_attachment(
@@ -1481,29 +1482,36 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         return self._make_router_dict(router_db)
 
     def update_router(self, context, id, router):
+        # Either nexthop is updated or should be kept as it was before
+        r = router['router']
+        nexthop = None
+        if 'external_gateway_info' in r and r.get('external_gateway_info'):
+            gw_info = r['external_gateway_info']
+            # The following DB read will be performed again when updating
+            # gateway info. This is not great, but still better than
+            # creating NVP router here and updating it later
+            network_id = (gw_info.get('network_id', None) if gw_info
+                          else None)
+            if network_id:
+                ext_net = self._get_network(context, network_id)
+                if not self._network_is_external(context, network_id):
+                    msg = (_("Network '%s' is not a valid external "
+                             "network") % network_id)
+                    raise q_exc.BadRequest(resource='router', msg=msg)
+                if ext_net.subnets:
+                    ext_subnet = ext_net.subnets[0]
+                    nexthop = ext_subnet.gateway_ip
         try:
-            # Either nexthop is updated or should be kept as it was before
-            r = router['router']
-            nexthop = None
-            if 'external_gateway_info' in r and r.get('external_gateway_info'):
-                gw_info = r['external_gateway_info']
-                # The following DB read will be performed again when updating
-                # gateway info. This is not great, but still better than
-                # creating NVP router here and updating it later
-                network_id = (gw_info.get('network_id', None) if gw_info
-                              else None)
-                if network_id:
-                    ext_net = self._get_network(context, network_id)
-                    if not self._network_is_external(context, network_id):
-                        msg = (_("Network '%s' is not a valid external "
-                                 "network") % network_id)
-                        raise q_exc.BadRequest(resource='router', msg=msg)
-                    if ext_net.subnets:
-                        ext_subnet = ext_net.subnets[0]
-                        nexthop = ext_subnet.gateway_ip
             nvplib.update_lrouter(self.cluster, id,
                                   router['router'].get('name'), nexthop)
-        except NvpApiClient.ResourceNotFound:
+        # NOTE(salv-orlando): The exception handling below is not correct, but
+        # unfortunately nvplib raises a quantum notfound exception when an
+        # object is not found in the underlying backend
+        except q_exc.NotFound:
+            # Put the router in ERROR status
+            with context.session.begin(subtransactions=True):
+                router_db = self._get_router(context, id)
+                router_db['status'] = constants.NET_STATUS_ERROR
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Logical router %s not found on NVP Platform") % id)
         except NvpApiClient.NvpApiException:
