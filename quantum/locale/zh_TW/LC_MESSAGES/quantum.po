@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-28 12:11+0000\n"
+"POT-Creation-Date: 2013-06-30 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -362,7 +362,7 @@ msgstr "重新同步的間隔。"
 msgid "The driver used to manage the DHCP server."
 msgstr "用於管理 DHCP 伺服器的驅動程式。"
 
-#: quantum/agent/dhcp_agent.py:62 quantum/agent/l3_agent.py:161
+#: quantum/agent/dhcp_agent.py:62 quantum/agent/l3_agent.py:160
 msgid "Allow overlapping IP."
 msgstr "容許重疊的 IP。"
 
@@ -383,7 +383,7 @@ msgid ""
 "networks"
 msgstr "'%s' DHCP-driver 不支援擷取現有網路清單"
 
-#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:778
+#: quantum/agent/dhcp_agent.py:108 quantum/agent/dhcp_agent.py:780
 msgid "DHCP agent started"
 msgstr "已啟動 DHCP 代理程式"
 
@@ -416,7 +416,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: quantum/agent/dhcp_agent.py:499 quantum/agent/l3_agent.py:149
+#: quantum/agent/dhcp_agent.py:499 quantum/agent/l3_agent.py:148
 #: quantum/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr "用於管理虛擬介面的驅動程式。"
@@ -425,162 +425,162 @@ msgstr "用於管理虛擬介面的驅動程式。"
 msgid "You must specify an interface driver"
 msgstr "必須指定介面驅動程式"
 
-#: quantum/agent/dhcp_agent.py:512 quantum/agent/l3_agent.py:190
+#: quantum/agent/dhcp_agent.py:512 quantum/agent/l3_agent.py:189
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: quantum/agent/dhcp_agent.py:561
+#: quantum/agent/dhcp_agent.py:563
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:571
+#: quantum/agent/dhcp_agent.py:573
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: quantum/agent/dhcp_agent.py:595 quantum/debug/debug_agent.py:75
+#: quantum/agent/dhcp_agent.py:597 quantum/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "正在重複使用現有裝置：%s。"
 
-#: quantum/agent/dhcp_agent.py:682
+#: quantum/agent/dhcp_agent.py:684
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr "DHCP 租賃中繼 UNIX 網域 Socket 的位置"
 
-#: quantum/agent/dhcp_agent.py:712
+#: quantum/agent/dhcp_agent.py:714
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr "網路 ID %s 不是有效的 UUID"
 
-#: quantum/agent/dhcp_agent.py:718
+#: quantum/agent/dhcp_agent.py:720
 msgid "Unable to parse lease relay msg to dict."
 msgstr "無法將租賃中繼訊息剖析為字典。"
 
-#: quantum/agent/dhcp_agent.py:719
+#: quantum/agent/dhcp_agent.py:721
 #, python-format
 msgid "Exception value: %s"
 msgstr "異常狀況值：%s"
 
-#: quantum/agent/dhcp_agent.py:720
+#: quantum/agent/dhcp_agent.py:722
 #, python-format
 msgid "Message representation: %s"
 msgstr "訊息表示法：%s"
 
-#: quantum/agent/dhcp_agent.py:722
+#: quantum/agent/dhcp_agent.py:724
 msgid "Unable update lease. Exception"
 msgstr "無法更新租賃。異常狀況"
 
-#: quantum/agent/dhcp_agent.py:761 quantum/agent/l3_agent.py:756
+#: quantum/agent/dhcp_agent.py:763 quantum/agent/l3_agent.py:761
 msgid ""
 "Quantum server does not support state report. State report for this agent"
 " will be disabled."
 msgstr "Quantum 伺服器不支援狀態報告。將停用此代理程式的狀態報告。"
 
-#: quantum/agent/dhcp_agent.py:767 quantum/agent/l3_agent.py:761
+#: quantum/agent/dhcp_agent.py:769 quantum/agent/l3_agent.py:766
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:228
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:184
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:214
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: quantum/agent/dhcp_agent.py:775 quantum/agent/l3_agent.py:766
+#: quantum/agent/dhcp_agent.py:777 quantum/agent/l3_agent.py:771
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated 是由伺服器端 %s 執行！"
 
-#: quantum/agent/l3_agent.py:146 quantum/debug/debug_agent.py:48
+#: quantum/agent/l3_agent.py:145 quantum/debug/debug_agent.py:48
 msgid "Name of bridge used for external network traffic."
 msgstr "用於外部網路資料流量的橋接器名稱。"
 
-#: quantum/agent/l3_agent.py:153
+#: quantum/agent/l3_agent.py:152
 msgid "TCP Port used by Quantum metadata namespace proxy."
 msgstr "Quantum meta 資料名稱空間 Proxy 所使用的 TCP 埠。"
 
-#: quantum/agent/l3_agent.py:157
+#: quantum/agent/l3_agent.py:156
 msgid ""
 "Send this many gratuitous ARPs for HA setup, set it below or equal to 0 "
 "to disable this feature."
 msgstr "給這個項目傳送了用於高可用性設定的許多無償 ARP，請將其設為小於或等於 0 以停用此功能。"
 
-#: quantum/agent/l3_agent.py:163
+#: quantum/agent/l3_agent.py:162
 #, fuzzy
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr "如果名稱空間已停用，則 L3 代理程式只能配置一個具有相符路由器 ID 的路由器。"
 
-#: quantum/agent/l3_agent.py:168
+#: quantum/agent/l3_agent.py:167
 msgid "Agent should implement routers with no gateway"
 msgstr "代理程式應該實作不含閘道的路由器"
 
-#: quantum/agent/l3_agent.py:170
+#: quantum/agent/l3_agent.py:169
 msgid "UUID of external network for routers implemented by the agents."
 msgstr "代理程式所實作路由器的外部網路 UUID。"
 
-#: quantum/agent/l3_agent.py:173
+#: quantum/agent/l3_agent.py:172
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:185
+#: quantum/agent/l3_agent.py:184
 msgid "An interface driver must be specified"
 msgstr "必須指定介面驅動程式"
 
-#: quantum/agent/l3_agent.py:219
+#: quantum/agent/l3_agent.py:218
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr "刪除名稱空間 '%s' 時失敗"
 
-#: quantum/agent/l3_agent.py:248
+#: quantum/agent/l3_agent.py:247
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Quantum has more than one external network."
 msgstr ""
 
-#: quantum/agent/l3_agent.py:316
+#: quantum/agent/l3_agent.py:315
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr "路由器埠 %s 沒有 IP 位址"
 
-#: quantum/agent/l3_agent.py:318 quantum/db/l3_db.py:918
+#: quantum/agent/l3_agent.py:317 quantum/db/l3_db.py:918
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: quantum/agent/l3_agent.py:444
+#: quantum/agent/l3_agent.py:449
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: quantum/agent/l3_agent.py:586
+#: quantum/agent/l3_agent.py:591
 #, python-format
 msgid "Failed dealing with router '%s' deletion RPC message"
 msgstr "處理路由器 '%s' 刪除 RPC 訊息時失敗"
 
-#: quantum/agent/l3_agent.py:599
+#: quantum/agent/l3_agent.py:604
 msgid "Failed dealing with routers update RPC message"
 msgstr "處理路由器更新 RPC 訊息時失敗"
 
-#: quantum/agent/l3_agent.py:612
+#: quantum/agent/l3_agent.py:617
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: quantum/agent/l3_agent.py:667
+#: quantum/agent/l3_agent.py:672
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: quantum/agent/l3_agent.py:671
+#: quantum/agent/l3_agent.py:676
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: quantum/agent/l3_agent.py:691
+#: quantum/agent/l3_agent.py:696
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: quantum/agent/l3_agent.py:699
+#: quantum/agent/l3_agent.py:704
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
@@ -927,45 +927,45 @@ msgstr "已嘗試移除不存在的規則：%(chain)r %(rule)r %(wrap)r %(top)r"
 msgid "IPTablesManager.apply completed with success"
 msgstr "已順利完成 IPTablesManager.apply"
 
-#: quantum/agent/linux/ovs_lib.py:70 quantum/agent/linux/ovs_lib.py:99
-#: quantum/agent/linux/ovs_lib.py:229
+#: quantum/agent/linux/ovs_lib.py:71 quantum/agent/linux/ovs_lib.py:100
+#: quantum/agent/linux/ovs_lib.py:230
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr "無法執行 %(cmd)s。異常狀況：%(exception)s"
 
-#: quantum/agent/linux/ovs_lib.py:126
+#: quantum/agent/linux/ovs_lib.py:127
 msgid "Cannot match priority on flow deletion"
 msgstr "無法符合流程刪除作業上的優先順序"
 
-#: quantum/agent/linux/ovs_lib.py:150
+#: quantum/agent/linux/ovs_lib.py:151
 msgid "Must specify one or more actions"
 msgstr "必須指定一個以上的動作"
 
-#: quantum/agent/linux/ovs_lib.py:284
+#: quantum/agent/linux/ovs_lib.py:293
 #, python-format
 msgid "Unable to parse regex results. Exception: %s"
 msgstr "無法剖析 Regex 結果。異常狀況：%s"
 
-#: quantum/agent/linux/ovs_lib.py:302
+#: quantum/agent/linux/ovs_lib.py:311
 #, fuzzy, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "嘗試 %s 次之後仍無法產生 MAC 位址"
 
-#: quantum/agent/linux/ovs_lib.py:311
+#: quantum/agent/linux/ovs_lib.py:320
 #, python-format
 msgid "Interface %s not found."
 msgstr ""
 
-#: quantum/agent/linux/ovs_lib.py:320
+#: quantum/agent/linux/ovs_lib.py:329
 #, python-format
 msgid "Unable to retrieve bridges. Exception: %s"
 msgstr "無法擷取橋接器。異常狀況：%s"
 
-#: quantum/agent/linux/ovs_lib.py:331
+#: quantum/agent/linux/ovs_lib.py:340
 msgid "Unable to retrieve OVS userspace version."
 msgstr ""
 
-#: quantum/agent/linux/ovs_lib.py:343
+#: quantum/agent/linux/ovs_lib.py:352
 msgid "Unable to retrieve OVS kernel module version."
 msgstr ""
 
@@ -2240,7 +2240,7 @@ msgid ""
 "assigning a floating IP"
 msgstr "埠 %s 具有多個固定 IP。指派浮動 IP 時必須提供特定 IP"
 
-#: quantum/db/l3_db.py:600 quantum/plugins/nicira/QuantumPlugin.py:1815
+#: quantum/db/l3_db.py:600 quantum/plugins/nicira/QuantumPlugin.py:1796
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "如果未指定 port_id，則無法指定 fixed_ip_address"
 
@@ -2669,6 +2669,10 @@ msgstr "埠安全必須加以啟用，而且埠必須具有 IP 位址，才能�
 #: quantum/extensions/portsecurity.py:35
 msgid "Port does not have port security binding."
 msgstr "埠沒有埠安全連結。"
+
+#: quantum/extensions/providernet.py:56
+msgid "plugin does not support updating provider attributes"
+msgstr "外掛程式不支援更新提供者屬性"
 
 #: quantum/extensions/quotasv2.py:85
 msgid "Non-admin is not authorised to access quotas for another tenant"
@@ -3649,170 +3653,174 @@ msgstr "ServerProxy：對所有伺服器 %(server)r 執行的 %(action)s 失敗"
 msgid "QuantumRestProxy: Starting plugin. Version=%s"
 msgstr "QuantumRestProxy：正在啟動外掛程式。版本 = %s"
 
-#: quantum/plugins/bigswitch/plugin.py:377
+#: quantum/plugins/bigswitch/plugin.py:379
 msgid "QuantumRestProxyV2: initialization done"
 msgstr "QuantumRestProxyV2：已完成起始設定"
 
-#: quantum/plugins/bigswitch/plugin.py:403
+#: quantum/plugins/bigswitch/plugin.py:405
 msgid "QuantumRestProxyV2: create_network() called"
 msgstr "QuantumRestProxyV2：已呼叫 create_network()"
 
-#: quantum/plugins/bigswitch/plugin.py:429
+#: quantum/plugins/bigswitch/plugin.py:431
 #, python-format
 msgid "QuantumRestProxyV2:Unable to create remote network: %s"
 msgstr "QuantumRestProxyV2：無法建立遠端網路：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:461
+#: quantum/plugins/bigswitch/plugin.py:463
 msgid "QuantumRestProxyV2.update_network() called"
 msgstr "已呼叫 QuantumRestProxyV2.update_network()"
 
-#: quantum/plugins/bigswitch/plugin.py:479
-#: quantum/plugins/bigswitch/plugin.py:527
-#: quantum/plugins/bigswitch/plugin.py:1301
+#: quantum/plugins/bigswitch/plugin.py:481
+#: quantum/plugins/bigswitch/plugin.py:529
+#: quantum/plugins/bigswitch/plugin.py:1303
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote network: %s"
 msgstr "QuantumRestProxyV2：無法更新遠端網路：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:500
+#: quantum/plugins/bigswitch/plugin.py:502
 msgid "QuantumRestProxyV2: delete_network() called"
 msgstr "QuantumRestProxyV2：已呼叫 delete_network()"
 
-#: quantum/plugins/bigswitch/plugin.py:578
+#: quantum/plugins/bigswitch/plugin.py:580
 msgid "QuantumRestProxyV2: create_port() called"
 msgstr "QuantumRestProxyV2：已呼叫 create_port()"
 
-#: quantum/plugins/bigswitch/plugin.py:613
-#: quantum/plugins/bigswitch/plugin.py:704
+#: quantum/plugins/bigswitch/plugin.py:615
+#: quantum/plugins/bigswitch/plugin.py:706
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote port: %s"
 msgstr "QuantumRestProxyV2：無法建立遠端埠：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:668
+#: quantum/plugins/bigswitch/plugin.py:670
 msgid "QuantumRestProxyV2: update_port() called"
 msgstr "QuantumRestProxyV2：已呼叫 update_port()"
 
-#: quantum/plugins/bigswitch/plugin.py:725
+#: quantum/plugins/bigswitch/plugin.py:727
 msgid "QuantumRestProxyV2: delete_port() called"
 msgstr "QuantumRestProxyV2：已呼叫 delete_port()"
 
-#: quantum/plugins/bigswitch/plugin.py:759
-#: quantum/plugins/bigswitch/plugin.py:817
+#: quantum/plugins/bigswitch/plugin.py:761
+#: quantum/plugins/bigswitch/plugin.py:819
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote port: %s"
 msgstr "QuantumRestProxyV2：無法更新遠端埠：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:776
+#: quantum/plugins/bigswitch/plugin.py:778
 msgid "QuantumRestProxyV2: _plug_interface() called"
 msgstr "QuantumRestProxyV2：已呼叫 _plug_interface()"
 
-#: quantum/plugins/bigswitch/plugin.py:794
+#: quantum/plugins/bigswitch/plugin.py:796
 #, python-format
 msgid "QuantumRestProxyV2:Unable to update remote network: %s"
 msgstr "QuantumRestProxyV2：無法更新遠端網路：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:808
+#: quantum/plugins/bigswitch/plugin.py:810
 msgid "QuantumRestProxyV2: _unplug_interface() called"
 msgstr "QuantumRestProxyV2：已呼叫 _unplug_interface()"
 
-#: quantum/plugins/bigswitch/plugin.py:821
+#: quantum/plugins/bigswitch/plugin.py:823
 msgid "QuantumRestProxyV2: create_subnet() called"
 msgstr "QuantumRestProxyV2：已呼叫 create_subnet()"
 
-#: quantum/plugins/bigswitch/plugin.py:842
+#: quantum/plugins/bigswitch/plugin.py:844
 msgid "QuantumRestProxyV2: update_subnet() called"
 msgstr "QuantumRestProxyV2：已呼叫 update_subnet()"
 
-#: quantum/plugins/bigswitch/plugin.py:865
+#: quantum/plugins/bigswitch/plugin.py:867
 msgid "QuantumRestProxyV2: delete_subnet() called"
 msgstr "QuantumRestProxyV2：已呼叫 delete_subnet()"
 
-#: quantum/plugins/bigswitch/plugin.py:906
+#: quantum/plugins/bigswitch/plugin.py:908
 msgid "QuantumRestProxyV2: create_router() called"
 msgstr "QuantumRestProxyV2：已呼叫 create_router()"
 
-#: quantum/plugins/bigswitch/plugin.py:931
+#: quantum/plugins/bigswitch/plugin.py:933
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote router: %s"
 msgstr "QuantumRestProxyV2：無法建立遠端路由器：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:942
+#: quantum/plugins/bigswitch/plugin.py:944
 msgid "QuantumRestProxyV2.update_router() called"
 msgstr "已呼叫 QuantumRestProxyV2.update_router()"
 
-#: quantum/plugins/bigswitch/plugin.py:964
+#: quantum/plugins/bigswitch/plugin.py:966
 #, python-format
 msgid "QuantumRestProxyV2: Unable to update remote router: %s"
 msgstr "QuantumRestProxyV2：無法更新遠端路由器：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:976
+#: quantum/plugins/bigswitch/plugin.py:978
 msgid "QuantumRestProxyV2: delete_router() called"
 msgstr "QuantumRestProxyV2：已呼叫 delete_router()"
 
-#: quantum/plugins/bigswitch/plugin.py:1007
+#: quantum/plugins/bigswitch/plugin.py:1009
 #, python-format
 msgid "QuantumRestProxyV2: Unable to delete remote router: %s"
 msgstr "QuantumRestProxyV2：無法刪除遠端路由器：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1013
+#: quantum/plugins/bigswitch/plugin.py:1015
 msgid "QuantumRestProxyV2: add_router_interface() called"
 msgstr "QuantumRestProxyV2：已呼叫 add_router_interface()"
 
-#: quantum/plugins/bigswitch/plugin.py:1041
+#: quantum/plugins/bigswitch/plugin.py:1043
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create interface: %s"
 msgstr "QuantumRestProxyV2：無法建立介面：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1052
+#: quantum/plugins/bigswitch/plugin.py:1054
 msgid "QuantumRestProxyV2: remove_router_interface() called"
 msgstr "QuantumRestProxyV2：已呼叫 remove_router_interface()"
 
-#: quantum/plugins/bigswitch/plugin.py:1085
+#: quantum/plugins/bigswitch/plugin.py:1087
 #, python-format
 msgid "QuantumRestProxyV2:Unable to delete remote intf: %s"
 msgstr "QuantumRestProxyV2：無法刪除遠端介面：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1093
+#: quantum/plugins/bigswitch/plugin.py:1095
 msgid "QuantumRestProxyV2: create_floatingip() called"
 msgstr "QuantumRestProxyV2：已呼叫 create_floatingip()"
 
-#: quantum/plugins/bigswitch/plugin.py:1106
+#: quantum/plugins/bigswitch/plugin.py:1108
 #, python-format
 msgid "QuantumRestProxyV2: Unable to create remote floatin IP: %s"
 msgstr "QuantumRestProxyV2：無法建立遠端浮動 IP：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1116
+#: quantum/plugins/bigswitch/plugin.py:1118
 msgid "QuantumRestProxyV2: update_floatingip() called"
 msgstr "QuantumRestProxyV2：已呼叫 update_floatingip()"
 
-#: quantum/plugins/bigswitch/plugin.py:1139
+#: quantum/plugins/bigswitch/plugin.py:1141
 msgid "QuantumRestProxyV2: delete_floatingip() called"
 msgstr "QuantumRestProxyV2：已呼叫 delete_floatingip()"
 
-#: quantum/plugins/bigswitch/plugin.py:1222
+#: quantum/plugins/bigswitch/plugin.py:1224
 #, python-format
 msgid "QuantumRestProxy: Unable to update remote topology: %s"
 msgstr "QuantumRestProxy：無法更新遠端拓蹼：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1318
+#: quantum/plugins/bigswitch/plugin.py:1320
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr "此外掛程式版本不支援設定 admin_state_up = False。正在忽略對資源的設定：%s"
 
-#: quantum/plugins/bigswitch/plugin.py:1324
+#: quantum/plugins/bigswitch/plugin.py:1326
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
 "status=%s."
 msgstr "作業狀態是由外掛程式在內部設定。正在忽略設定狀態 = %s。"
 
-#: quantum/plugins/bigswitch/plugin.py:1351
+#: quantum/plugins/bigswitch/plugin.py:1353
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
 
-#: quantum/plugins/bigswitch/db/porttracker_db.py:42
+#: quantum/plugins/bigswitch/db/porttracker_db.py:43
+msgid "No host_id in port request to track port location."
+msgstr ""
+
+#: quantum/plugins/bigswitch/db/porttracker_db.py:46
 #, python-format
 msgid "Received an empty port ID for host '%s'"
 msgstr ""
@@ -4539,15 +4547,11 @@ msgstr "不支援網路類型 %s"
 
 #: quantum/plugins/hyperv/hyperv_quantum_plugin.py:246
 #: quantum/plugins/metaplugin/meta_quantum_plugin.py:175
-#: quantum/plugins/mlnx/mlnx_plugin.py:287
-#: quantum/plugins/openvswitch/ovs_quantum_plugin.py:479
+#: quantum/plugins/mlnx/mlnx_plugin.py:272
+#: quantum/plugins/openvswitch/ovs_quantum_plugin.py:463
 #, python-format
 msgid "Created network: %s"
 msgstr "已建立網路：%s"
-
-#: quantum/plugins/hyperv/hyperv_quantum_plugin.py:269
-msgid "plugin does not support updating provider attributes"
-msgstr "外掛程式不支援更新提供者屬性"
 
 #: quantum/plugins/hyperv/rpc_callbacks.py:77
 #: quantum/plugins/linuxbridge/lb_quantum_plugin.py:116
@@ -4707,7 +4711,7 @@ msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:345
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:690
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:842
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:846
 msgid "Agent initialized successfully, now running... "
 msgstr "已順利地起始設定代理程式，現正在執行中..."
 
@@ -4851,12 +4855,6 @@ msgstr "不明的 provider:physical_network %s"
 #: quantum/plugins/openvswitch/ovs_quantum_plugin.py:418
 msgid "provider:physical_network required"
 msgstr "需要 provider:physical_network"
-
-#: quantum/plugins/linuxbridge/lb_quantum_plugin.py:374
-#: quantum/plugins/ml2/plugin.py:141 quantum/plugins/mlnx/mlnx_plugin.py:234
-#: quantum/plugins/openvswitch/ovs_quantum_plugin.py:436
-msgid "Plugin does not support updating provider attributes"
-msgstr "外掛程式不支援更新提供者屬性"
 
 #: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:89
 msgid "Invalid Network ID, will lead to incorrect bridgename"
@@ -5596,7 +5594,7 @@ msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr "已呼叫 MidonetPluginV2.update_network：ID = %(id)r，網路 = %(network)r"
 
 #: quantum/plugins/midonet/plugin.py:196
-#: quantum/plugins/nicira/QuantumPlugin.py:1040
+#: quantum/plugins/nicira/QuantumPlugin.py:1019
 msgid "admin_state_up=False networks are not supported."
 msgstr "不支援 admin_state_up = False 網路。"
 
@@ -5908,12 +5906,12 @@ msgstr "已完成外掛程式起始設定"
 msgid "network_type required if other provider attributes specified"
 msgstr ""
 
-#: quantum/plugins/ml2/plugin.py:148
+#: quantum/plugins/ml2/plugin.py:141
 #, fuzzy, python-format
 msgid "Network %s has no segments"
 msgstr "代理程式上未使用網路 %s。"
 
-#: quantum/plugins/ml2/plugin.py:180
+#: quantum/plugins/ml2/plugin.py:173
 #, fuzzy
 msgid ""
 "In _notify_port_updated() for port %(port_id), network %(network_id) has "
@@ -6100,19 +6098,19 @@ msgstr ""
 msgid "unknown provider:physical_network %s"
 msgstr ""
 
-#: quantum/plugins/mlnx/mlnx_plugin.py:248
+#: quantum/plugins/mlnx/mlnx_plugin.py:233
 msgid "invalid vnic_type on port_create"
 msgstr ""
 
-#: quantum/plugins/mlnx/mlnx_plugin.py:250
+#: quantum/plugins/mlnx/mlnx_plugin.py:235
 msgid "vnic_type is not defined in port profile"
 msgstr ""
 
-#: quantum/plugins/mlnx/mlnx_plugin.py:303
+#: quantum/plugins/mlnx/mlnx_plugin.py:288
 msgid "delete network"
 msgstr ""
 
-#: quantum/plugins/mlnx/mlnx_plugin.py:355
+#: quantum/plugins/mlnx/mlnx_plugin.py:340
 #, python-format
 msgid "create_port with %s"
 msgstr ""
@@ -6716,41 +6714,41 @@ msgstr "已禁止要求存取所參照的資源。"
 msgid "The request has timed out."
 msgstr "要求已逾時。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:237
+#: quantum/plugins/nicira/QuantumPlugin.py:228
 #, python-format
 msgid "Unable to process default l2 gw service:%s"
 msgstr "無法處理預設 l2 gw 服務：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:272
+#: quantum/plugins/nicira/QuantumPlugin.py:263
 #, python-format
 msgid "Created NVP router port:%s"
 msgstr "已建立 NVP 路由器埠：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:274
+#: quantum/plugins/nicira/QuantumPlugin.py:265
 #, python-format
 msgid "Unable to create port on NVP logical router %s"
 msgstr "無法在 NVP 邏輯路由器 %s 上建立埠"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:277
+#: quantum/plugins/nicira/QuantumPlugin.py:268
 #, python-format
 msgid ""
 "Unable to create logical router port for quantum port id %(port_id)s on "
 "router %(router_id)s"
 msgstr "無法給路由器 %(router_id)s 上的 Quantum 埠 ID %(port_id)s 建立邏輯路由器埠"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:299
+#: quantum/plugins/nicira/QuantumPlugin.py:291
 #, python-format
 msgid "Attached %(att)s to NVP router port %(port)s"
 msgstr "已將 %(att)s 連接至 NVP 路由器埠 %(port)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:305
+#: quantum/plugins/nicira/QuantumPlugin.py:297
 #, python-format
 msgid ""
 "Unable to plug attachment in NVP logical router port %(r_port_id)s, "
 "associated with Quantum %(q_port_id)s"
 msgstr "無法將連接裝置插入與 Quantum %(q_port_id)s 相關聯的 NVP 邏輯路由器埠 %(r_port_id)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:311
+#: quantum/plugins/nicira/QuantumPlugin.py:303
 #, python-format
 msgid ""
 "Unable to plug attachment in router port %(r_port_id)s for quantum port "
@@ -6759,80 +6757,76 @@ msgstr ""
 "無法將連接裝置插入路由器 %(router_id)s 上 Quantum 埠 ID %(q_port_id)s 的路由器埠 "
 "%(r_port_id)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:356
+#: quantum/plugins/nicira/QuantumPlugin.py:348
 msgid "An exception occured while selecting logical switch for the port"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:382
-#: quantum/plugins/nicira/QuantumPlugin.py:417
-#: quantum/plugins/nicira/QuantumPlugin.py:607
+#: quantum/plugins/nicira/QuantumPlugin.py:374
+#: quantum/plugins/nicira/QuantumPlugin.py:409
+#: quantum/plugins/nicira/QuantumPlugin.py:593
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
 "%s will be down."
 msgstr "NVP 外掛程式不支援外部網路上的一般 VIF 埠。埠 %s 將關閉。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:402
-#: quantum/plugins/nicira/QuantumPlugin.py:483
-#: quantum/plugins/nicira/QuantumPlugin.py:627
+#: quantum/plugins/nicira/QuantumPlugin.py:394
+#: quantum/plugins/nicira/QuantumPlugin.py:474
+#: quantum/plugins/nicira/QuantumPlugin.py:612
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
 "The new port id is %(id)s."
 msgstr "對網路 %(network_id)s 上埠 %(name)s 執行的 _nvp_create_port 已完成。新的埠 ID 為 %(id)s。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:406
+#: quantum/plugins/nicira/QuantumPlugin.py:398
 #, python-format
 msgid "An exception occured while plugging the interface into network:%s"
 msgstr "將介面插入網路時發生異常狀況：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:424
+#: quantum/plugins/nicira/QuantumPlugin.py:416
 #, python-format
 msgid "Port '%s' was already deleted on NVP platform"
 msgstr "已在 NVP 平台上刪除了埠 '%s'"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:433
+#: quantum/plugins/nicira/QuantumPlugin.py:425
 #, python-format
 msgid "_nvp_delete_port completed for port %(port_id)s on network %(net_id)s"
 msgstr "對網路 %(net_id)s 上埠 %(port_id)s 執行的 _nvp_delete_port 已完成"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:439
+#: quantum/plugins/nicira/QuantumPlugin.py:431
 #, python-format
 msgid "port %s not found in NVP"
 msgstr "在 NVP 中找不到埠 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:458
-#: quantum/plugins/nicira/QuantumPlugin.py:891
+#: quantum/plugins/nicira/QuantumPlugin.py:450
+#: quantum/plugins/nicira/QuantumPlugin.py:869
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
 "deleted."
 msgstr "正在忽略異常狀況，因為這意味著埠 '%s' 的同層級已刪除。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:470
+#: quantum/plugins/nicira/QuantumPlugin.py:462
 #, python-format
 msgid ""
 "It is not allowed to create router interface ports on external networks "
 "as '%s'"
 msgstr "不容許在外部網路上建立路由器介面埠來作為 '%s'"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:488
-msgid "An exception occured while plugging the interface"
-msgstr "將介面插入時發生異常狀況"
-
-#: quantum/plugins/nicira/QuantumPlugin.py:496
+#: quantum/plugins/nicira/QuantumPlugin.py:481
 #, python-format
 msgid ""
 "device_id field must be populated in order to create an external gateway "
 "port for network %s"
 msgstr "必須將資料移入 device_id 欄位，才能給網路 %s 建立外部閘道埠"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:504
+#: quantum/plugins/nicira/QuantumPlugin.py:489
 #, python-format
 msgid "The gateway port for the router %s was not found on the NVP backend"
 msgstr "在 NVP 後端找不到路由器 %s 的閘道埠"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:550
+#: quantum/plugins/nicira/QuantumPlugin.py:535
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
@@ -6841,287 +6835,278 @@ msgstr ""
 "已在路由器 %(router_id)s 所連接的外部網路 %(ext_net_id)s 上完成 "
 "_nvp_create_ext_gw_port。NVP 埠 ID 為 %(nvp_port_id)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:588
+#: quantum/plugins/nicira/QuantumPlugin.py:574
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr "在 NVP 平台上找不到邏輯路由器資源 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:592
-#: quantum/plugins/nicira/QuantumPlugin.py:1760
+#: quantum/plugins/nicira/QuantumPlugin.py:578
+#: quantum/plugins/nicira/QuantumPlugin.py:1741
 msgid "Unable to update logical routeron NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:594
+#: quantum/plugins/nicira/QuantumPlugin.py:580
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s"
 msgstr "已在路由器 %(router_id)s 所連接的外部網路 %(ext_net_id)s 上完成 _nvp_delete_ext_gw_port"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:632
-#, python-format
-msgid "An exception occured while plugging the gateway interface into network:%s"
-msgstr "將閘道介面插入網路時發生異常狀況：%s"
-
-#: quantum/plugins/nicira/QuantumPlugin.py:672
+#: quantum/plugins/nicira/QuantumPlugin.py:650
 #, python-format
 msgid "Unable to find NVP uuid for Quantum port %s"
 msgstr "找不到 Quantum 埠 %s 的 NVP UUID"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:701
+#: quantum/plugins/nicira/QuantumPlugin.py:679
 #, python-format
 msgid "%s required"
 msgstr "需要 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:705
+#: quantum/plugins/nicira/QuantumPlugin.py:683
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr "無法使用平面網路類型來指定分段 ID"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:709
+#: quantum/plugins/nicira/QuantumPlugin.py:687
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr "必須使用 VLAN 網路類型來指定分段 ID"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:713
-#: quantum/plugins/nicira/QuantumPlugin.py:728
+#: quantum/plugins/nicira/QuantumPlugin.py:691
+#: quantum/plugins/nicira/QuantumPlugin.py:706
 #, python-format
 msgid "%(segmentation_id)s out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:734
+#: quantum/plugins/nicira/QuantumPlugin.py:712
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr "不支援 %(net_type_param)s %(net_type_value)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:765
+#: quantum/plugins/nicira/QuantumPlugin.py:743
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr "交換器沒有可用的埠（已檢查 %d 個）"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:787
+#: quantum/plugins/nicira/QuantumPlugin.py:765
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr "已達到邏輯網路 %s 的邏輯埠數目上限"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:814
+#: quantum/plugins/nicira/QuantumPlugin.py:792
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
 "Ignoring setting for network %s"
 msgstr "此外掛程式尚不支援 admin_state_up = False 的網路。正在忽略對網路 %s 的設定"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:873
+#: quantum/plugins/nicira/QuantumPlugin.py:851
 #, python-format
 msgid "A nvp lport identifier was not found for quantum port '%s'"
 msgstr "找不到 Quantum 埠 '%s' 的 NVP lport ID"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:901
+#: quantum/plugins/nicira/QuantumPlugin.py:879
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr "已對 Tenant 完成 delete_network：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:904
+#: quantum/plugins/nicira/QuantumPlugin.py:882
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr "在 NVP 中找不到 lswitch %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:930
+#: quantum/plugins/nicira/QuantumPlugin.py:908
 #, python-format
 msgid ""
 "Current network status:%(nvp_net_status)s; Status in Quantum "
 "DB:%(quantum_status)s"
 msgstr "現行網路狀態：%(nvp_net_status)s；Quantum DB 中的狀態：%(quantum_status)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:940
-#: quantum/plugins/nicira/QuantumPlugin.py:990
+#: quantum/plugins/nicira/QuantumPlugin.py:918
+#: quantum/plugins/nicira/QuantumPlugin.py:968
 msgid "Unable to get logical switches"
 msgstr "無法取得邏輯交換器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1004
+#: quantum/plugins/nicira/QuantumPlugin.py:982
 #, python-format
 msgid "Logical Switch %s found in quantum database but not in NVP."
 msgstr "邏輯交換器 %s 位在 Quantum 資料庫中，但不在 NVP 中。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1019
+#: quantum/plugins/nicira/QuantumPlugin.py:997
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Quantum networks. Quantum and NVP "
 "are potentially out of sync"
 msgstr "發現有 %s 個邏輯交換器未連結至 Quantum 網路。Quantum 與 NVP 可能不同步"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1023
+#: quantum/plugins/nicira/QuantumPlugin.py:1001
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr "已對 Tenant %s 完成 get_networks()"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1107
+#: quantum/plugins/nicira/QuantumPlugin.py:1086
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr "在 NVP 中找不到 lswitch %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1116
+#: quantum/plugins/nicira/QuantumPlugin.py:1095
 msgid "Unable to get ports"
 msgstr "無法取得埠"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1143
+#: quantum/plugins/nicira/QuantumPlugin.py:1122
 #, python-format
 msgid "Quantum logical port %s was not found on NVP"
 msgstr "在 NVP 上找不到 Quantum 邏輯埠 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1150
+#: quantum/plugins/nicira/QuantumPlugin.py:1129
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Quantum ports. Quantum and NVP are "
 "potentially out of sync"
 msgstr "發現有 %s 個邏輯埠未連結至 Quantum 埠。Quantum 與 NVP 可能不同步"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1216
+#: quantum/plugins/nicira/QuantumPlugin.py:1195
 #, python-format
 msgid "Network %s was not found in NVP."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1224
+#: quantum/plugins/nicira/QuantumPlugin.py:1203
 msgid "Unable to create port or set port attachment in NVP."
 msgstr "無法在 NVP 中建立埠或設定埠連接裝置。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1228
+#: quantum/plugins/nicira/QuantumPlugin.py:1207
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr "已對 Tenant %(tenant_id)s 的 NVP 完成 create_port：(%(id)s)"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1303
+#: quantum/plugins/nicira/QuantumPlugin.py:1282
 #, python-format
 msgid "Update port request: %s"
 msgstr "更新埠要求：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1329
+#: quantum/plugins/nicira/QuantumPlugin.py:1308
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1453
-#: quantum/plugins/nicira/QuantumPlugin.py:1498
+#: quantum/plugins/nicira/QuantumPlugin.py:1432
+#: quantum/plugins/nicira/QuantumPlugin.py:1476
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr "網路 '%s' 不是有效的外部網路"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1466
+#: quantum/plugins/nicira/QuantumPlugin.py:1445
 msgid "Unable to create logical router on NVP Platform"
 msgstr "無法在 NVP 平台上建立邏輯路由器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1508
+#: quantum/plugins/nicira/QuantumPlugin.py:1494
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1511
+#: quantum/plugins/nicira/QuantumPlugin.py:1497
 msgid "Unable to update logical router on NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1531
+#: quantum/plugins/nicira/QuantumPlugin.py:1517
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 '%s'"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1535
+#: quantum/plugins/nicira/QuantumPlugin.py:1521
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr "無法在 NVP 平台上刪除邏輯路由器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1556
+#: quantum/plugins/nicira/QuantumPlugin.py:1541
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Quantum "
 "DB:%(db_router_status)s"
 msgstr "現行路由器狀態：%(router_status)s；Quantum DB 中的狀態：%(db_router_status)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1564
-msgid "Unable to get logical router"
-msgstr "無法取得邏輯路由器"
-
-#: quantum/plugins/nicira/QuantumPlugin.py:1587
+#: quantum/plugins/nicira/QuantumPlugin.py:1568
 msgid "Unable to get logical routers from NVP controller"
 msgstr "無法從 NVP 控制器取得邏輯路由器"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1609
+#: quantum/plugins/nicira/QuantumPlugin.py:1590
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Quantum routers. Quantum and NVP "
 "are potentially out of sync"
 msgstr "發現有 %s 個邏輯路由器未連結至 Quantum 路由器。Quantum 與 NVP 可能不同步"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1635
+#: quantum/plugins/nicira/QuantumPlugin.py:1616
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend."
 msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1670
+#: quantum/plugins/nicira/QuantumPlugin.py:1651
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr "已對子網路 %(subnet_id)s 及路由器 %(router_id)s 完成 Add_router_interface"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1715
+#: quantum/plugins/nicira/QuantumPlugin.py:1696
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1727
+#: quantum/plugins/nicira/QuantumPlugin.py:1708
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Quantum port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr "找不到 Quantum 埠 ID %s 的 NVP 邏輯路由器埠。此埠是否曾與邏輯路由器配對？"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1756
+#: quantum/plugins/nicira/QuantumPlugin.py:1737
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr "在 NVP 平台上找不到邏輯路由器埠資源 %s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1782
+#: quantum/plugins/nicira/QuantumPlugin.py:1763
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr "在 NVP 平台上移除浮動 IP 的 NAT 規則時發生錯誤：%s。"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1788
+#: quantum/plugins/nicira/QuantumPlugin.py:1769
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr "在 NVP 平台上找到的相符 NAT 規則數目不正確"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1854
+#: quantum/plugins/nicira/QuantumPlugin.py:1835
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr "NVP 邏輯路由器埠的位址清單：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1878
+#: quantum/plugins/nicira/QuantumPlugin.py:1859
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr "在 NVP 平台上給浮動 IP %(floating_ip)s（已對映到內部 IP %(internal_ip)s）建立 NAT 規則時發生錯誤"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1920
+#: quantum/plugins/nicira/QuantumPlugin.py:1902
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr "埠 '%s' 未與浮動 IP 產生關聯"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1923
+#: quantum/plugins/nicira/QuantumPlugin.py:1905
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1949
+#: quantum/plugins/nicira/QuantumPlugin.py:1931
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr "Create_l2_gw_service 未傳回所新建資源的 UUID：%s"
 
-#: quantum/plugins/nicira/QuantumPlugin.py:1971
+#: quantum/plugins/nicira/QuantumPlugin.py:1953
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -7253,296 +7238,134 @@ msgstr ""
 msgid "Attribute:%s is empty or null"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:149
+#: quantum/plugins/nicira/nvplib.py:133
 #, python-format
 msgid "Specified name:'%s' exceeds maximum length. It will be truncated on NVP"
 msgstr "所指定的名稱 '%s' 超出長度上限。將在 NVP 上截斷"
 
-#: quantum/plugins/nicira/nvplib.py:177
+#: quantum/plugins/nicira/nvplib.py:153
 #, python-format
 msgid "NVP controller cluster version: %s"
 msgstr "NVP 控制器叢集版本：%s"
 
-#: quantum/plugins/nicira/nvplib.py:217
-#, python-format
-msgid "Issuing request to cluster: %s"
-msgstr "正在對叢集發出要求：%s"
-
-#: quantum/plugins/nicira/nvplib.py:233
-#, python-format
-msgid "Looking for lswitch with port id '%(port_id)s' on: %(c)s"
-msgstr "正在 %(c)s 上尋找埠 ID 為 '%(port_id)s' 的 lSwitch"
-
-#: quantum/plugins/nicira/nvplib.py:239
-#, python-format
-msgid "get_port_cluster_and_url, exception: %s"
-msgstr "get_port_cluster_and_url，異常狀況：%s"
-
-#: quantum/plugins/nicira/nvplib.py:284
-#, python-format
-msgid "An error occured while fetching logical switches for Quantum network %s"
-msgstr "提取 Quantum 網路 %s 的邏輯交換器時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:327
+#: quantum/plugins/nicira/nvplib.py:236
 #, python-format
 msgid "Created logical switch: %s"
 msgstr "已建立邏輯交換器：%s"
 
-#: quantum/plugins/nicira/nvplib.py:343 quantum/plugins/nicira/nvplib.py:605
+#: quantum/plugins/nicira/nvplib.py:252 quantum/plugins/nicira/nvplib.py:414
 #, python-format
 msgid "Network not found, Error: %s"
 msgstr "找不到網路，錯誤：%s"
 
-#: quantum/plugins/nicira/nvplib.py:384
-#, python-format
-msgid "Unable to create L2 Gateway Service %(name)s for tenant %(id)s."
+#: quantum/plugins/nicira/nvplib.py:441
+msgid "Port or Network not found"
 msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:423
-#, python-format
-msgid "Unable to create Router %(name)s for tenant %(id)s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:437
-#, python-format
-msgid "Unable to delete Router Service %s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:450
-#, python-format
-msgid "Unable to delete L2 Gateway Service %s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:464
-#, python-format
-msgid "Unable to get Router Service %s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:477
-#, python-format
-msgid "Unable to get L2 Gateway Service %s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:525
-#, python-format
-msgid "Unable to update L2 Gateway Service %(id)s with name %(name)s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:552
-#, python-format
-msgid "Unable to update Router %(id)s with name %(name)s."
-msgstr ""
-
-#: quantum/plugins/nicira/nvplib.py:622
-#, python-format
-msgid "Logical switch: %s not found"
-msgstr "找不到邏輯交換器：%s"
-
-#: quantum/plugins/nicira/nvplib.py:625
-msgid "An error occurred while querying logical ports on the NVP platform"
-msgstr "在 NVP 平台上查詢邏輯埠時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:638
-#, python-format
-msgid "Logical router: %s not found"
-msgstr "找不到邏輯路由器：%s"
-
-#: quantum/plugins/nicira/nvplib.py:641
-msgid "An error occured while querying logical router ports on the NVP platfom"
-msgstr "在 NVP 平台上查詢邏輯路由器埠時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:652 quantum/plugins/nicira/nvplib.py:674
-#: quantum/plugins/nicira/nvplib.py:720 quantum/plugins/nicira/nvplib.py:773
-#, python-format
-msgid "Port or Network not found, Error: %s"
-msgstr "找不到埠或網路，錯誤：%s"
-
-#: quantum/plugins/nicira/nvplib.py:662
-#, python-format
-msgid "Looking for port with display_name '%(display_name)s' on: %(lswitch)s"
-msgstr "正在 %(lswitch)s 上尋找 display_name 為 '%(display_name)s' 的埠"
-
-#: quantum/plugins/nicira/nvplib.py:689
+#: quantum/plugins/nicira/nvplib.py:459
 #, python-format
 msgid ""
 "Looking for port with q_port_id tag '%(quantum_port_id)s' on: "
 "'%(lswitch_uuid)s'"
 msgstr "正在 '%(lswitch_uuid)s' 上尋找 q_port_id 標籤為 '%(quantum_port_id)s' 的埠"
 
-#: quantum/plugins/nicira/nvplib.py:696
-msgid "An exception occurred while querying NVP ports"
-msgstr "查詢 NVP 埠時發生異常狀況"
-
-#: quantum/plugins/nicira/nvplib.py:702
+#: quantum/plugins/nicira/nvplib.py:467
 #, python-format
 msgid ""
 "Found '%(num_ports)d' ports with q_port_id tag: '%(quantum_port_id)s'. "
 "Only 1 was expected."
 msgstr "找到 '%(num_ports)d' 個 q_port_id 標籤為 '%(quantum_port_id)s' 的埠。只需要 1 個。"
 
-#: quantum/plugins/nicira/nvplib.py:711
+#: quantum/plugins/nicira/nvplib.py:476
 #, python-format
 msgid "get_port() %(network)s %(port)s"
 msgstr "get_port() %(network)s %(port)s"
 
-#: quantum/plugins/nicira/nvplib.py:778
+#: quantum/plugins/nicira/nvplib.py:484 quantum/plugins/nicira/nvplib.py:538
 #, python-format
-msgid "Updated logical port %(result)s on logical swtich %(uuid)s"
-msgstr "已更新邏輯交換器 %(uuid)s 上的邏輯埠 %(result)s"
+msgid "Port or Network not found, Error: %s"
+msgstr "找不到埠或網路，錯誤：%s"
 
-#: quantum/plugins/nicira/nvplib.py:812
+#: quantum/plugins/nicira/nvplib.py:533
 #, python-format
-msgid "Logical switch not found, Error: %s"
-msgstr "找不到邏輯交換器，錯誤：%s"
+msgid "Updated logical port %(result)s on logical switch %(uuid)s"
+msgstr ""
 
-#: quantum/plugins/nicira/nvplib.py:816
+#: quantum/plugins/nicira/nvplib.py:569
 #, python-format
 msgid "Created logical port %(result)s on logical swtich %(uuid)s"
 msgstr "已在邏輯交換器 %(uuid)s 上建立了邏輯埠 %(result)s"
 
-#: quantum/plugins/nicira/nvplib.py:842 quantum/plugins/nicira/nvplib.py:895
-#, python-format
-msgid "Logical router not found, Error: %s"
-msgstr "找不到邏輯路由器，錯誤：%s"
-
-#: quantum/plugins/nicira/nvplib.py:846
+#: quantum/plugins/nicira/nvplib.py:593
 #, python-format
 msgid "Created logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr "已在邏輯路由器 %(lrouter_uuid)s 上建立了邏輯埠 %(lport_uuid)s"
 
-#: quantum/plugins/nicira/nvplib.py:878
-#, python-format
-msgid "Logical router or router port not found, Error: %s"
-msgstr "找不到邏輯路由器或路由器埠，錯誤：%s"
-
-#: quantum/plugins/nicira/nvplib.py:883
+#: quantum/plugins/nicira/nvplib.py:623
 #, python-format
 msgid "Updated logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr "已更新邏輯路由器 %(lrouter_uuid)s 上的邏輯埠 %(lport_uuid)s"
 
-#: quantum/plugins/nicira/nvplib.py:897
+#: quantum/plugins/nicira/nvplib.py:633
 #, python-format
 msgid ""
 "Delete logical router port %(lport_uuid)s on logical router "
 "%(lrouter_uuid)s"
 msgstr "刪除邏輯路由器 %(lrouter_uuid)s 上的邏輯路由器埠 %(lport_uuid)s"
 
-#: quantum/plugins/nicira/nvplib.py:915
-#, python-format
-msgid ""
-"Unable to fetch and delete peer logical router port for logical switch "
-"port:%s"
-msgstr "無法提取並刪除邏輯交換器埠的同層級邏輯路由器埠：%s "
-
-#: quantum/plugins/nicira/nvplib.py:957
+#: quantum/plugins/nicira/nvplib.py:688
 #, python-format
 msgid "Invalid NVP attachment type '%s'"
 msgstr "無效的 NVP 連接裝置類型 '%s'"
 
-#: quantum/plugins/nicira/nvplib.py:963
-#, python-format
-msgid "Router Port not found, Error: %s"
-msgstr "找不到路由器埠，錯誤：%s"
-
-#: quantum/plugins/nicira/nvplib.py:966
-msgid "Conflict while setting router port attachment"
-msgstr "設定路由器埠連接裝置時發生衝突"
-
-#: quantum/plugins/nicira/nvplib.py:969
-msgid "Unable to plug attachment into logical router port"
-msgstr "無法將連接裝置插入邏輯路由器埠"
-
-#: quantum/plugins/nicira/nvplib.py:983
+#: quantum/plugins/nicira/nvplib.py:700
 #, python-format
 msgid "Port not found, Error: %s"
 msgstr "找不到埠，錯誤：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1000
-#, python-format
-msgid ""
-"Exception while plugging an attachment:%(att)s into NVP port:%(port)s for"
-" NVP logical switch %(net)s"
-msgstr "將連接裝置 %(att)s 插入 NVP 邏輯交換器 %(net)s 的 NVP 埠 %(port)s 時發生異常狀況"
-
-#: quantum/plugins/nicira/nvplib.py:1120
+#: quantum/plugins/nicira/nvplib.py:819
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr "已建立安全設定檔：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1145
+#: quantum/plugins/nicira/nvplib.py:845
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr "已更新安全設定檔：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1163
+#: quantum/plugins/nicira/nvplib.py:864
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr "NAT 相符項的索引鍵無效：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1169
+#: quantum/plugins/nicira/nvplib.py:870
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr "正在建立 NAT 規則：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1175
-#, python-format
-msgid "NVP Logical Router %s not found"
-msgstr "找不到 NVP 邏輯路由器 %s"
-
-#: quantum/plugins/nicira/nvplib.py:1178
-msgid "An error occurred while creating the NAT rule on the NVP platform"
-msgstr "在 NVP 平台上建立 NAT 規則時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:1193
+#: quantum/plugins/nicira/nvplib.py:884
 msgid ""
 "No SNAT rules cannot be applied as they are not available in this version"
 " of the NVP platform"
 msgstr "無法套用 SNAT 規則，因為這些規則在此版本的 NVP 平台中無法使用"
 
-#: quantum/plugins/nicira/nvplib.py:1303
-#, python-format
-msgid ""
-"An error occurred while removing NAT rule '%(nat_rule_uuid)s' for logical"
-" router '%(lrouter_uuid)s'"
-msgstr "移除邏輯路由器 '%(lrouter_uuid)s' 的 NAT 規則 '%(nat_rule_uuid)s' 時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:1315
-#, python-format
-msgid "NAT rule %s not found"
-msgstr "找不到 NAT 規則 %s"
-
-#: quantum/plugins/nicira/nvplib.py:1318
-#, python-format
-msgid "An error occured while retrieving NAT rule '%s'from NVP platform"
-msgstr "從 NVP 平台擷取 NAT 規則 '%s' 時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:1331
-#, python-format
-msgid "NVP Logical Router '%s' not found"
-msgstr "找不到 NVP 邏輯路由器 '%s'"
-
-#: quantum/plugins/nicira/nvplib.py:1334
-#, python-format
-msgid "An error occured while retrieving NAT rules for NVP logical router '%s'"
-msgstr "擷取 NVP 邏輯路由器 '%s' 的 NAT 規則時發生錯誤"
-
-#: quantum/plugins/nicira/nvplib.py:1358
+#: quantum/plugins/nicira/nvplib.py:1019
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr "在路由器 %(lrouter_id)s 上找不到路由器埠 %(lport_id)s"
 
-#: quantum/plugins/nicira/nvplib.py:1363
+#: quantum/plugins/nicira/nvplib.py:1024
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr "更新路由器邏輯埠上的 IP 位址時發生異常狀況：%s"
 
-#: quantum/plugins/nicira/nvplib.py:1390
+#: quantum/plugins/nicira/nvplib.py:1052
 msgid "Failed to create logical queue"
 msgstr "無法建立邏輯佇列"
 
-#: quantum/plugins/nicira/nvplib.py:1402
+#: quantum/plugins/nicira/nvplib.py:1063
 msgid "Failed to delete logical queue"
 msgstr "無法刪除邏輯佇列"
 
@@ -8161,11 +7984,11 @@ msgstr ""
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "剖析 bridge_mappings 時失敗：%s。"
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:815
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:819
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:830
+#: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:834
 #, python-format
 msgid "%s Agent terminated!"
 msgstr "%s 已終止代理程式！"
@@ -8696,13 +8519,138 @@ msgstr ""
 msgid "Unexpected error code: %s"
 msgstr ""
 
-#: quantum/tests/unit/nicira/fake_nvpapiclient.py:358
+#: quantum/tests/unit/nicira/fake_nvpapiclient.py:375
 #, python-format
 msgid "lswitch:%s not found"
 msgstr "找不到 lswitch：%s"
 
-#: quantum/tests/unit/nicira/fake_nvpapiclient.py:367
+#: quantum/tests/unit/nicira/fake_nvpapiclient.py:384
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
+
+#~ msgid "Plugin does not support updating provider attributes"
+#~ msgstr "外掛程式不支援更新提供者屬性"
+
+#~ msgid "An exception occured while plugging the interface"
+#~ msgstr "將介面插入時發生異常狀況"
+
+#~ msgid ""
+#~ "An exception occured while plugging the"
+#~ " gateway interface into network:%s"
+#~ msgstr "將閘道介面插入網路時發生異常狀況：%s"
+
+#~ msgid "Unable to get logical router"
+#~ msgstr "無法取得邏輯路由器"
+
+#~ msgid "Issuing request to cluster: %s"
+#~ msgstr "正在對叢集發出要求：%s"
+
+#~ msgid "Looking for lswitch with port id '%(port_id)s' on: %(c)s"
+#~ msgstr "正在 %(c)s 上尋找埠 ID 為 '%(port_id)s' 的 lSwitch"
+
+#~ msgid "get_port_cluster_and_url, exception: %s"
+#~ msgstr "get_port_cluster_and_url，異常狀況：%s"
+
+#~ msgid "An error occured while fetching logical switches for Quantum network %s"
+#~ msgstr "提取 Quantum 網路 %s 的邏輯交換器時發生錯誤"
+
+#~ msgid "Unable to create L2 Gateway Service %(name)s for tenant %(id)s."
+#~ msgstr ""
+
+#~ msgid "Unable to create Router %(name)s for tenant %(id)s."
+#~ msgstr ""
+
+#~ msgid "Unable to delete Router Service %s."
+#~ msgstr ""
+
+#~ msgid "Unable to delete L2 Gateway Service %s."
+#~ msgstr ""
+
+#~ msgid "Unable to get Router Service %s."
+#~ msgstr ""
+
+#~ msgid "Unable to get L2 Gateway Service %s."
+#~ msgstr ""
+
+#~ msgid "Unable to update L2 Gateway Service %(id)s with name %(name)s."
+#~ msgstr ""
+
+#~ msgid "Unable to update Router %(id)s with name %(name)s."
+#~ msgstr ""
+
+#~ msgid "Logical switch: %s not found"
+#~ msgstr "找不到邏輯交換器：%s"
+
+#~ msgid "An error occurred while querying logical ports on the NVP platform"
+#~ msgstr "在 NVP 平台上查詢邏輯埠時發生錯誤"
+
+#~ msgid "Logical router: %s not found"
+#~ msgstr "找不到邏輯路由器：%s"
+
+#~ msgid "An error occured while querying logical router ports on the NVP platfom"
+#~ msgstr "在 NVP 平台上查詢邏輯路由器埠時發生錯誤"
+
+#~ msgid "Looking for port with display_name '%(display_name)s' on: %(lswitch)s"
+#~ msgstr "正在 %(lswitch)s 上尋找 display_name 為 '%(display_name)s' 的埠"
+
+#~ msgid "An exception occurred while querying NVP ports"
+#~ msgstr "查詢 NVP 埠時發生異常狀況"
+
+#~ msgid "Updated logical port %(result)s on logical swtich %(uuid)s"
+#~ msgstr "已更新邏輯交換器 %(uuid)s 上的邏輯埠 %(result)s"
+
+#~ msgid "Logical switch not found, Error: %s"
+#~ msgstr "找不到邏輯交換器，錯誤：%s"
+
+#~ msgid "Logical router not found, Error: %s"
+#~ msgstr "找不到邏輯路由器，錯誤：%s"
+
+#~ msgid "Logical router or router port not found, Error: %s"
+#~ msgstr "找不到邏輯路由器或路由器埠，錯誤：%s"
+
+#~ msgid ""
+#~ "Unable to fetch and delete peer "
+#~ "logical router port for logical switch"
+#~ " port:%s"
+#~ msgstr "無法提取並刪除邏輯交換器埠的同層級邏輯路由器埠：%s "
+
+#~ msgid "Router Port not found, Error: %s"
+#~ msgstr "找不到路由器埠，錯誤：%s"
+
+#~ msgid "Conflict while setting router port attachment"
+#~ msgstr "設定路由器埠連接裝置時發生衝突"
+
+#~ msgid "Unable to plug attachment into logical router port"
+#~ msgstr "無法將連接裝置插入邏輯路由器埠"
+
+#~ msgid ""
+#~ "Exception while plugging an attachment:%(att)s"
+#~ " into NVP port:%(port)s for NVP "
+#~ "logical switch %(net)s"
+#~ msgstr "將連接裝置 %(att)s 插入 NVP 邏輯交換器 %(net)s 的 NVP 埠 %(port)s 時發生異常狀況"
+
+#~ msgid "NVP Logical Router %s not found"
+#~ msgstr "找不到 NVP 邏輯路由器 %s"
+
+#~ msgid "An error occurred while creating the NAT rule on the NVP platform"
+#~ msgstr "在 NVP 平台上建立 NAT 規則時發生錯誤"
+
+#~ msgid ""
+#~ "An error occurred while removing NAT "
+#~ "rule '%(nat_rule_uuid)s' for logical router"
+#~ " '%(lrouter_uuid)s'"
+#~ msgstr "移除邏輯路由器 '%(lrouter_uuid)s' 的 NAT 規則 '%(nat_rule_uuid)s' 時發生錯誤"
+
+#~ msgid "NAT rule %s not found"
+#~ msgstr "找不到 NAT 規則 %s"
+
+#~ msgid "An error occured while retrieving NAT rule '%s'from NVP platform"
+#~ msgstr "從 NVP 平台擷取 NAT 規則 '%s' 時發生錯誤"
+
+#~ msgid "NVP Logical Router '%s' not found"
+#~ msgstr "找不到 NVP 邏輯路由器 '%s'"
+
+#~ msgid "An error occured while retrieving NAT rules for NVP logical router '%s'"
+#~ msgstr "擷取 NVP 邏輯路由器 '%s' 的 NAT 規則時發生錯誤"
 
