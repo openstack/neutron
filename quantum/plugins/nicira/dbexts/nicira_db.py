@@ -19,8 +19,8 @@ from sqlalchemy.orm import exc
 
 import quantum.db.api as db
 from quantum.openstack.common import log as logging
-from quantum.plugins.nicira import nicira_models
-from quantum.plugins.nicira import nicira_networkgw_db
+from quantum.plugins.nicira.dbexts import nicira_models
+from quantum.plugins.nicira.dbexts import nicira_networkgw_db
 
 LOG = logging.getLogger(__name__)
 

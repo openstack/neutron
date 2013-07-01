@@ -29,8 +29,8 @@ from quantum import context
 from quantum.db import api as db_api
 from quantum.db import db_base_plugin_v2
 from quantum import manager
+from quantum.plugins.nicira.dbexts import nicira_networkgw_db
 from quantum.plugins.nicira.extensions import nvp_networkgw as networkgw
-from quantum.plugins.nicira import nicira_networkgw_db
 from quantum.tests import base
 from quantum.tests.unit import test_api_v2
 from quantum.tests.unit import test_db_plugin

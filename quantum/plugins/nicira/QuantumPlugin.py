@@ -59,12 +59,12 @@ from quantum.plugins.nicira.common import exceptions as nvp_exc
 from quantum.plugins.nicira.common import metadata_access as nvp_meta
 from quantum.plugins.nicira.common import securitygroups as nvp_sec
 from quantum.plugins.nicira.dbexts import maclearning as mac_db
+from quantum.plugins.nicira.dbexts import nicira_db
+from quantum.plugins.nicira.dbexts import nicira_networkgw_db as networkgw_db
+from quantum.plugins.nicira.dbexts import nicira_qos_db as qos_db
 from quantum.plugins.nicira.extensions import maclearning as mac_ext
 from quantum.plugins.nicira.extensions import nvp_networkgw as networkgw
 from quantum.plugins.nicira.extensions import nvp_qos as ext_qos
-from quantum.plugins.nicira import nicira_db
-from quantum.plugins.nicira import nicira_networkgw_db as networkgw_db
-from quantum.plugins.nicira import nicira_qos_db as qos_db
 from quantum.plugins.nicira import nvp_cluster
 from quantum.plugins.nicira import NvpApiClient
 from quantum.plugins.nicira import nvplib
