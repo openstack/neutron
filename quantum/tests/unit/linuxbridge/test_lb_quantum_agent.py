@@ -265,14 +265,21 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                             ipdict, gwdict)
 
     def test_ensure_vlan_bridge(self):
-        with mock.patch.object(self.lbm, 'ensure_vlan') as ens_vl_fn:
+        with contextlib.nested(
+            mock.patch.object(self.lbm, 'ensure_vlan'),
+            mock.patch.object(self.lbm, 'ensure_bridge'),
+            mock.patch.object(self.lbm, 'get_interface_details'),
+        ) as (ens_vl_fn, ens, get_int_det_fn):
             ens_vl_fn.return_value = "eth0.1"
-            with mock.patch.object(self.lbm, 'ensure_bridge') as ens:
-                self.assertEqual(
-                    self.lbm.ensure_vlan_bridge("123", "eth0", "1"),
-                    "eth0.1"
-                )
-                ens.assert_called_once_with("brq123", "eth0.1")
+            get_int_det_fn.return_value = (None, None)
+            self.assertEqual(self.lbm.ensure_vlan_bridge("123", "eth0", "1"),
+                             "eth0.1")
+            ens.assert_called_with("brq123", "eth0.1", None, None)
+
+            get_int_det_fn.return_value = ("ips", "gateway")
+            self.assertEqual(self.lbm.ensure_vlan_bridge("123", "eth0", "1"),
+                             "eth0.1")
+            ens.assert_called_with("brq123", "eth0.1", "ips", "gateway")
 
     def test_ensure_local_bridge(self):
         with mock.patch.object(self.lbm, 'ensure_bridge') as ens_fn:
@@ -330,7 +337,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(self.lbm.ensure_bridge("br0", None), "br0")
             ie_fn.return_Value = False
             self.lbm.ensure_bridge("br0", "eth0")
-            self.assertTrue(upd_fn.called)
+            upd_fn.assert_called_with("br0", "eth0", None, None)
+            ie_fn.assert_called_with("br0", "eth0")
+
+            self.lbm.ensure_bridge("br0", "eth0", "ips", "gateway")
+            upd_fn.assert_called_with("br0", "eth0", "ips", "gateway")
             ie_fn.assert_called_with("br0", "eth0")
 
             exec_fn.side_effect = Exception()
