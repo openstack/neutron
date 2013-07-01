@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-30 12:11+0000\n"
+"POT-Creation-Date: 2013-07-01 12:11+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -630,7 +630,7 @@ msgstr ""
 "Netzbrücken erstellt wurden."
 
 #: quantum/agent/ovs_cleanup_util.py:73
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:427
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:428
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:249
 #, python-format
 msgid "Delete %s"
@@ -4886,7 +4886,7 @@ msgid "port_delete received"
 msgstr "'port_delete' erhalten"
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:130
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:431
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:432
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:168
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:258
 msgid "port_update received"
@@ -4969,14 +4969,14 @@ msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:310
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:639
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:640
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:352
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:717
 msgid "Agent out of sync with plugin!"
 msgstr "Agent nicht synchron mit Plug-in!"
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:318
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:651
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:652
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:359
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:730
 msgid "Agent loop has new devices!"
@@ -4996,7 +4996,7 @@ msgstr ""
 "%(elapsed)s) überschritten"
 
 #: quantum/plugins/hyperv/agent/hyperv_quantum_agent.py:345
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:690
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:691
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:846
 msgid "Agent initialized successfully, now running... "
 msgstr "Agent erfolgreich initialisiert, läuft jetzt... "
@@ -5158,7 +5158,7 @@ msgstr "Ungültige VLAN-ID, wird zu falschem Namen bei Teilschnittstelle führen
 msgid "Invalid Interface ID, will lead to incorrect tap device name"
 msgstr "Ungültige Schnittstellen-ID, wird zu falschem Namen bei TAP-Gerät führen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:170
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:171
 #, python-format
 msgid ""
 "Creating subinterface %(interface)s for VLAN %(vlan_id)s on interface "
@@ -5167,83 +5167,83 @@ msgstr ""
 "Erstellung von Teilschnittstelle %(interface)s für VLAN %(vlan_id)s auf "
 "Schnittstelle %(physical_interface)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:183
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:184
 #, python-format
 msgid "Done creating subinterface %s"
 msgstr "Erstellung von Teilschnittstelle %s abgeschlossen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:218
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:219
 #, python-format
 msgid "Starting bridge %(bridge_name)s for subinterface %(interface)s"
 msgstr "Starten von Brücke %(bridge_name)s für Teilschnittstelle %(interface)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:233
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:234
 #, python-format
 msgid "Done starting bridge %(bridge_name)s for subinterface %(interface)s"
 msgstr ""
 "Starten von Brücke %(bridge_name)s für Teilschnittstelle %(interface)s "
 "abgeschlossen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:249
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:250
 #, python-format
 msgid "Unable to add %(interface)s to %(bridge_name)s! Exception: %(e)s"
 msgstr ""
 "Hinzufügen von %(interface)s zu %(bridge_name)s nicht möglich! Ausnahme: "
 "%(e)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:262
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:263
 #, python-format
 msgid "No mapping for physical network %s"
 msgstr "Keine Zuordnung für physisches Netz %s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:271
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:272
 #, python-format
 msgid "Unknown network_type %(network_type)s for network %(network_id)s."
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:283
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:284
 #, python-format
 msgid "Tap device: %s does not exist on this host, skipped"
 msgstr "TAP-Gerät: %s ist auf diesem Host nicht vorhanden, wird übersprungen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:301
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:302
 #, python-format
 msgid "Adding device %(tap_device_name)s to bridge %(bridge_name)s"
 msgstr "Hinzufügen von Gerät %(tap_device_name)s zu Brücke %(bridge_name)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:310
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:311
 #, python-format
 msgid "%(tap_device_name)s already exists on bridge %(bridge_name)s"
 msgstr "%(tap_device_name)s ist auf Brücke %(bridge_name)s bereits vorhanden"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:339
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:340
 #, python-format
 msgid "Deleting bridge %s"
 msgstr "Löschen von Brücke %s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:346
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:347
 #, python-format
 msgid "Done deleting bridge %s"
 msgstr "Löschen von Brücke %s abgeschlossen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:349
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:350
 #, python-format
 msgid "Cannot delete bridge %s, does not exist"
 msgstr "Brücke %s kann nicht gelöscht werden, da nicht vorhanden"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:356
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:357
 #, python-format
 msgid "Removing device %(interface_name)s from bridge %(bridge_name)s"
 msgstr "Entfernen von Einheit %(interface_name)s von Brücke %(bridge_name)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:363
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:364
 #, python-format
 msgid "Done removing device %(interface_name)s from bridge %(bridge_name)s"
 msgstr ""
 "Entfernen von Einheit %(interface_name)s von Brücke %(bridge_name)s "
 "abgeschlossen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:369
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:370
 #, python-format
 msgid ""
 "Cannot remove device %(interface_name)s bridge %(bridge_name)s does not "
@@ -5252,58 +5252,58 @@ msgstr ""
 "Einheit %(interface_name)s kann nicht von Brücke %(bridge_name)s entfernt"
 " werden, da nicht vorhanden"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:377
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:378
 #, python-format
 msgid "Deleting subinterface %s for vlan"
 msgstr "Löschen von Teilschnittstelle %s für VLAN"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:384
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:385
 #, python-format
 msgid "Done deleting subinterface %s"
 msgstr "Löschen von Teilschnittstelle %s abgeschlossen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:424
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:425
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:159
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:247
 msgid "network_delete received"
 msgstr "'network_delete' erhalten"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:472
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:473
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:283
 #, python-format
 msgid "RPC timeout while updating port %s"
 msgstr ""
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:524
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:525
 msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr "Anfordern von MAC-Adresse für eindeutige ID nicht möglich. Agent beendet!"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:528
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:529
 #: quantum/plugins/nec/agent/nec_quantum_agent.py:145
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr "RPC-'agent_id': %s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:574
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:575
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:632
 #, python-format
 msgid "Port %s added"
 msgstr "Port %s hinzugefügt"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:580
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:581
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:638
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr "Abrufen von Portdetails für %(device)s nicht möglich: %(e)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:586
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:587
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:645
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "Port %(device)s aktualisiert. Details: %(details)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:607
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:627
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:608
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:628
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:339
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:654
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:677
@@ -5311,39 +5311,39 @@ msgstr "Port %(device)s aktualisiert. Details: %(details)s"
 msgid "Device %s not defined on plugin"
 msgstr "Gerät %s nicht für Plug-in definiert"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:614
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:615
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:663
 #, python-format
 msgid "Attachment %s removed"
 msgstr "Zusatzeinheit %s entfernt"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:620
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:621
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:669
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr "'port_removed' für %(device)s fehlgeschlagen: %(e)s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:624
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:625
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:336
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:674
 #, python-format
 msgid "Port %s updated."
 msgstr "Port %s aktualisiert."
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:634
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:635
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr "RPC-Dämon für Linux-Brückenagent gestartet!"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:646
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:647
 msgid "Update devices failed"
 msgstr "Aktualisierung der Geräte ist fehlgeschlagen"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:657
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:658
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr "Fehler bei Agentenschleife. Geräteinfo: %s"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:665
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:666
 #: quantum/plugins/openvswitch/agent/ovs_quantum_agent.py:745
 #: quantum/plugins/ryu/agent/ryu_quantum_agent.py:269
 #, python-format
@@ -5352,7 +5352,7 @@ msgstr ""
 "Schleifeniteration hat Intervall (%(polling_interval)s contra "
 "%(elapsed)s) überschritten!"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:680
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:681
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:386
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
@@ -5360,7 +5360,7 @@ msgstr ""
 "Analysieren von 'physical_interface_mappings' fehlgeschlagen: %s. Agent "
 "beendet!"
 
-#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:683
+#: quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py:684
 #: quantum/plugins/mlnx/agent/eswitch_quantum_agent.py:389
 #, python-format
 msgid "Interface mappings: %s"
@@ -9063,145 +9063,4 @@ msgstr "lSwitch: %s nicht gefunden"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "lRouter: %s nicht gefunden"
-
-#~ msgid "Plugin does not support updating provider attributes"
-#~ msgstr ""
-#~ "Aktualisieren von Provider-Attributen wird "
-#~ "von Plug-in nicht unterstützt"
-
-#~ msgid "An exception occured while plugging the interface"
-#~ msgstr "Beim Verbinden der Schnittstelle ist ein Fehler aufgetreten"
-
-#~ msgid ""
-#~ "An exception occured while plugging the"
-#~ " gateway interface into network:%s"
-#~ msgstr "Ausnahme bei Verbindung der Gateway-Schnittstelle mit Netz: %s"
-
-#~ msgid "Unable to get logical router"
-#~ msgstr "Abrufen des logischen Routers nicht möglich"
-
-#~ msgid "Issuing request to cluster: %s"
-#~ msgstr "Ausgabe von Anforderung an Cluster: %s"
-
-#~ msgid "Looking for lswitch with port id '%(port_id)s' on: %(c)s"
-#~ msgstr "Suche nach lSwitch mit Port-ID %(port_id)s' auf: %(c)s"
-
-#~ msgid "get_port_cluster_and_url, exception: %s"
-#~ msgstr "get_port_cluster_and_url, Ausnahme: %s"
-
-#~ msgid "An error occured while fetching logical switches for Quantum network %s"
-#~ msgstr "Fehler beim Abrufen von logischen Switches für Quantum-Netz %s"
-
-#~ msgid "Unable to create L2 Gateway Service %(name)s for tenant %(id)s."
-#~ msgstr ""
-
-#~ msgid "Unable to create Router %(name)s for tenant %(id)s."
-#~ msgstr ""
-
-#~ msgid "Unable to delete Router Service %s."
-#~ msgstr ""
-
-#~ msgid "Unable to delete L2 Gateway Service %s."
-#~ msgstr ""
-
-#~ msgid "Unable to get Router Service %s."
-#~ msgstr ""
-
-#~ msgid "Unable to get L2 Gateway Service %s."
-#~ msgstr ""
-
-#~ msgid "Unable to update L2 Gateway Service %(id)s with name %(name)s."
-#~ msgstr ""
-
-#~ msgid "Unable to update Router %(id)s with name %(name)s."
-#~ msgstr ""
-
-#~ msgid "Logical switch: %s not found"
-#~ msgstr "Logischer Switch: %s nicht gefunden"
-
-#~ msgid "An error occurred while querying logical ports on the NVP platform"
-#~ msgstr "Fehler bei der Abfrage logischer Ports auf der NVP-Plattform"
-
-#~ msgid "Logical router: %s not found"
-#~ msgstr "Logischer Router: %s nicht gefunden"
-
-#~ msgid "An error occured while querying logical router ports on the NVP platfom"
-#~ msgstr ""
-#~ "Fehler bei der Abfrage der Ports "
-#~ "vom logischen Router auf der NVP-"
-#~ "Plattform"
-
-#~ msgid "Looking for port with display_name '%(display_name)s' on: %(lswitch)s"
-#~ msgstr "Suche nach Port mit 'display_name' '%(display_name)s' auf: %(lswitch)s"
-
-#~ msgid "An exception occurred while querying NVP ports"
-#~ msgstr "Ausnahme beim Abfragen von NVP-Ports"
-
-#~ msgid "Updated logical port %(result)s on logical swtich %(uuid)s"
-#~ msgstr "Logischer Port %(result)s auf logischem Switch %(uuid)s aktualisiert"
-
-#~ msgid "Logical switch not found, Error: %s"
-#~ msgstr "Logischer Switch nicht gefunden. Fehler: %s"
-
-#~ msgid "Logical router not found, Error: %s"
-#~ msgstr "Logischer Router nicht gefunden, Fehler: %s"
-
-#~ msgid "Logical router or router port not found, Error: %s"
-#~ msgstr "Logischer Router oder Router-Port nicht gefunden, Fehler: %s"
-
-#~ msgid ""
-#~ "Unable to fetch and delete peer "
-#~ "logical router port for logical switch"
-#~ " port:%s"
-#~ msgstr ""
-#~ "Abrufen und Löschen vom Peer-Port "
-#~ "des logischen Routers für Port des "
-#~ "logischen Switchs nicht möglich: %s"
-
-#~ msgid "Router Port not found, Error: %s"
-#~ msgstr "Router-Port nicht gefunden, Fehler: %s"
-
-#~ msgid "Conflict while setting router port attachment"
-#~ msgstr "Konflikt beim Einrichten der Zusatzeinheit des Router-Ports"
-
-#~ msgid "Unable to plug attachment into logical router port"
-#~ msgstr ""
-#~ "Verbindung der Zusatzeinheit mit dem "
-#~ "Port des logischen Routers nicht möglich"
-
-#~ msgid ""
-#~ "Exception while plugging an attachment:%(att)s"
-#~ " into NVP port:%(port)s for NVP "
-#~ "logical switch %(net)s"
-#~ msgstr ""
-#~ "Ausnahme bei Verbindung von Zusatzeinheit: "
-#~ "%(att)s mit NVP-Port: %(port)s für "
-#~ "logischen Switch von NVP %(net)s"
-
-#~ msgid "NVP Logical Router %s not found"
-#~ msgstr "Logischer Router von NVP %s nicht gefunden"
-
-#~ msgid "An error occurred while creating the NAT rule on the NVP platform"
-#~ msgstr "Fehler beim Erstellen der NAT-Regel auf der NVP-Plattform"
-
-#~ msgid ""
-#~ "An error occurred while removing NAT "
-#~ "rule '%(nat_rule_uuid)s' for logical router"
-#~ " '%(lrouter_uuid)s'"
-#~ msgstr ""
-#~ "Fehler beim Entfernen der NAT-Regel "
-#~ "'%(nat_rule_uuid)s' für logischen Router "
-#~ "'%(lrouter_uuid)s'"
-
-#~ msgid "NAT rule %s not found"
-#~ msgstr "NAT-Regel %s nicht gefunden"
-
-#~ msgid "An error occured while retrieving NAT rule '%s'from NVP platform"
-#~ msgstr "Fehler beim Abrufen von NAT-Regel '%s' von NVP-Plattform"
-
-#~ msgid "NVP Logical Router '%s' not found"
-#~ msgstr "Logischer Router von NVP '%s' nicht gefunden"
-
-#~ msgid "An error occured while retrieving NAT rules for NVP logical router '%s'"
-#~ msgstr "Fehler beim Abrufen von NAT-Regeln für logischen Router von NVP '%s'"
 
