@@ -132,7 +132,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   qos_db.NVPQoSDbMixin,
                   nvp_sec.NVPSecurityGroups,
                   nvp_meta.NvpMetadataAccess,
-                  agentschedulers_db.AgentSchedulerDbMixin):
+                  agentschedulers_db.DhcpAgentSchedulerDbMixin):
     """L2 Virtual network plugin.
 
     NvpPluginV2 is a Neutron plugin that provides L2 Virtual Network

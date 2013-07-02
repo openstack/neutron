@@ -35,7 +35,7 @@ class DhcpRpcCallbackMixin(object):
         LOG.debug(_('Network list requested from %s'), host)
         plugin = manager.NeutronManager.get_plugin()
         if utils.is_extension_supported(
-            plugin, constants.AGENT_SCHEDULER_EXT_ALIAS):
+            plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.network_auto_schedule:
                 plugin.auto_schedule_networks(context, host)
             nets = plugin.list_active_networks_on_active_dhcp_agent(

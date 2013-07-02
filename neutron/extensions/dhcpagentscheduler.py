@@ -31,10 +31,6 @@ DHCP_NET = 'dhcp-network'
 DHCP_NETS = DHCP_NET + 's'
 DHCP_AGENT = 'dhcp-agent'
 DHCP_AGENTS = DHCP_AGENT + 's'
-L3_ROUTER = 'l3-router'
-L3_ROUTERS = L3_ROUTER + 's'
-L3_AGENT = 'l3-agent'
-L3_AGENTS = L3_AGENT + 's'
 
 
 class NetworkSchedulerController(wsgi.Controller):
@@ -63,34 +59,6 @@ class NetworkSchedulerController(wsgi.Controller):
             request.context, kwargs['agent_id'], id)
 
 
-class RouterSchedulerController(wsgi.Controller):
-    def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
-        policy.enforce(request.context,
-                       "get_%s" % L3_ROUTERS,
-                       {})
-        return plugin.list_routers_on_l3_agent(
-            request.context, kwargs['agent_id'])
-
-    def create(self, request, body, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
-        policy.enforce(request.context,
-                       "create_%s" % L3_ROUTER,
-                       {})
-        return plugin.add_router_to_l3_agent(
-            request.context,
-            kwargs['agent_id'],
-            body['router_id'])
-
-    def delete(self, request, id, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
-        policy.enforce(request.context,
-                       "delete_%s" % L3_ROUTER,
-                       {})
-        return plugin.remove_router_from_l3_agent(
-            request.context, kwargs['agent_id'], id)
-
-
 class DhcpAgentsHostingNetworkController(wsgi.Controller):
     def index(self, request, **kwargs):
         plugin = manager.NeutronManager.get_plugin()
@@ -101,39 +69,29 @@ class DhcpAgentsHostingNetworkController(wsgi.Controller):
             request.context, kwargs['network_id'])
 
 
-class L3AgentsHostingRouterController(wsgi.Controller):
-    def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
-        policy.enforce(request.context,
-                       "get_%s" % L3_AGENTS,
-                       {})
-        return plugin.list_l3_agents_hosting_router(
-            request.context, kwargs['router_id'])
-
-
-class Agentscheduler(extensions.ExtensionDescriptor):
-    """Extension class supporting agent scheduler.
+class Dhcpagentscheduler(extensions.ExtensionDescriptor):
+    """Extension class supporting dhcp agent scheduler.
     """
 
     @classmethod
     def get_name(cls):
-        return "Agent Schedulers"
+        return "DHCP Agent Scheduler"
 
     @classmethod
     def get_alias(cls):
-        return constants.AGENT_SCHEDULER_EXT_ALIAS
+        return constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS
 
     @classmethod
     def get_description(cls):
-        return "Schedule resources among agents"
+        return "Schedule networks among dhcp agents"
 
     @classmethod
     def get_namespace(cls):
-        return "http://docs.openstack.org/ext/agent_scheduler/api/v1.0"
+        return "http://docs.openstack.org/ext/dhcp_agent_scheduler/api/v1.0"
 
     @classmethod
     def get_updated(cls):
-        return "2013-02-03T10:00:00-00:00"
+        return "2013-02-07T10:00:00-00:00"
 
     @classmethod
     def get_resources(cls):
@@ -146,11 +104,6 @@ class Agentscheduler(extensions.ExtensionDescriptor):
         exts.append(extensions.ResourceExtension(
             DHCP_NETS, controller, parent))
 
-        controller = resource.Resource(RouterSchedulerController(),
-                                       base.FAULT_MAP)
-        exts.append(extensions.ResourceExtension(
-            L3_ROUTERS, controller, parent))
-
         parent = dict(member_name="network",
                       collection_name="networks")
 
@@ -158,14 +111,6 @@ class Agentscheduler(extensions.ExtensionDescriptor):
                                        base.FAULT_MAP)
         exts.append(extensions.ResourceExtension(
             DHCP_AGENTS, controller, parent))
-
-        parent = dict(member_name="router",
-                      collection_name="routers")
-
-        controller = resource.Resource(L3AgentsHostingRouterController(),
-                                       base.FAULT_MAP)
-        exts.append(extensions.ResourceExtension(
-            L3_AGENTS, controller, parent))
         return exts
 
     def get_extended_resources(self, version):
@@ -186,27 +131,8 @@ class NetworkNotHostedByDhcpAgent(exceptions.Conflict):
                 " by the DHCP agent %(agent_id)s.")
 
 
-class InvalidL3Agent(agent.AgentNotFound):
-    message = _("Agent %(id)s is not a L3 Agent or has been disabled")
-
-
-class RouterHostedByL3Agent(exceptions.Conflict):
-    message = _("The router %(router_id)s has been already hosted"
-                " by the L3 Agent %(agent_id)s.")
-
-
-class RouterSchedulingFailed(exceptions.Conflict):
-    message = _("Failed scheduling router %(router_id)s to"
-                " the L3 Agent %(agent_id)s.")
-
-
-class RouterNotHostedByL3Agent(exceptions.Conflict):
-    message = _("The router %(router_id)s is not hosted"
-                " by L3 agent %(agent_id)s.")
-
-
-class AgentSchedulerPluginBase(object):
-    """REST API to operate the agent scheduler.
+class DhcpAgentSchedulerPluginBase(object):
+    """REST API to operate the DHCP agent scheduler.
 
     All of method must be in an admin context.
     """
@@ -225,20 +151,4 @@ class AgentSchedulerPluginBase(object):
 
     @abstractmethod
     def list_dhcp_agents_hosting_network(self, context, network_id):
-        pass
-
-    @abstractmethod
-    def add_router_to_l3_agent(self, context, id, router_id):
-        pass
-
-    @abstractmethod
-    def remove_router_from_l3_agent(self, context, id, router_id):
-        pass
-
-    @abstractmethod
-    def list_routers_on_l3_agent(self, context, id):
-        pass
-
-    @abstractmethod
-    def list_l3_agents_hosting_router(self, context, router_id):
         pass

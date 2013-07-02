@@ -29,7 +29,8 @@ from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
 from neutron.extensions import agent
-from neutron.extensions import agentscheduler
+from neutron.extensions import dhcpagentscheduler
+from neutron.extensions import l3agentscheduler
 from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
@@ -89,7 +90,7 @@ class AgentSchedulerTestMixIn(object):
                                          expected_code=exc.HTTPOk.code,
                                          admin_context=True):
         path = "/agents/%s/%s.%s" % (agent_id,
-                                     agentscheduler.L3_ROUTERS,
+                                     l3agentscheduler.L3_ROUTERS,
                                      self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -98,7 +99,7 @@ class AgentSchedulerTestMixIn(object):
                                             expected_code=exc.HTTPOk.code,
                                             admin_context=True):
         path = "/agents/%s/%s.%s" % (agent_id,
-                                     agentscheduler.DHCP_NETS,
+                                     dhcpagentscheduler.DHCP_NETS,
                                      self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -107,7 +108,7 @@ class AgentSchedulerTestMixIn(object):
                                        expected_code=exc.HTTPOk.code,
                                        admin_context=True):
         path = "/routers/%s/%s.%s" % (router_id,
-                                      agentscheduler.L3_AGENTS,
+                                      l3agentscheduler.L3_AGENTS,
                                       self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -116,7 +117,7 @@ class AgentSchedulerTestMixIn(object):
                                           expected_code=exc.HTTPOk.code,
                                           admin_context=True):
         path = "/networks/%s/%s.%s" % (network_id,
-                                       agentscheduler.DHCP_AGENTS,
+                                       dhcpagentscheduler.DHCP_AGENTS,
                                        self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -125,7 +126,7 @@ class AgentSchedulerTestMixIn(object):
                                 expected_code=exc.HTTPCreated.code,
                                 admin_context=True):
         path = "/agents/%s/%s.%s" % (id,
-                                     agentscheduler.L3_ROUTERS,
+                                     l3agentscheduler.L3_ROUTERS,
                                      self.fmt)
         req = self._path_create_request(path,
                                         {'router_id': router_id},
@@ -137,7 +138,7 @@ class AgentSchedulerTestMixIn(object):
                                    expected_code=exc.HTTPCreated.code,
                                    admin_context=True):
         path = "/agents/%s/%s.%s" % (id,
-                                     agentscheduler.DHCP_NETS,
+                                     dhcpagentscheduler.DHCP_NETS,
                                      self.fmt)
         req = self._path_create_request(path,
                                         {'network_id': network_id},
@@ -149,7 +150,7 @@ class AgentSchedulerTestMixIn(object):
                                         expected_code=exc.HTTPNoContent.code,
                                         admin_context=True):
         path = "/agents/%s/%s/%s.%s" % (id,
-                                        agentscheduler.DHCP_NETS,
+                                        dhcpagentscheduler.DHCP_NETS,
                                         network_id,
                                         self.fmt)
         req = self._path_delete_request(path,
@@ -161,7 +162,7 @@ class AgentSchedulerTestMixIn(object):
                                      expected_code=exc.HTTPNoContent.code,
                                      admin_context=True):
         path = "/agents/%s/%s/%s.%s" % (id,
-                                        agentscheduler.L3_ROUTERS,
+                                        l3agentscheduler.L3_ROUTERS,
                                         router_id,
                                         self.fmt)
         req = self._path_delete_request(path, admin_context=admin_context)

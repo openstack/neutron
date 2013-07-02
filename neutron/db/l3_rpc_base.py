@@ -42,7 +42,7 @@ class L3RpcCallbackMixin(object):
         context = neutron_context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
         if utils.is_extension_supported(
-            plugin, constants.AGENT_SCHEDULER_EXT_ALIAS):
+            plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
                 plugin.auto_schedule_routers(context, host, router_id)
             routers = plugin.list_active_sync_routers_on_active_l3_agent(

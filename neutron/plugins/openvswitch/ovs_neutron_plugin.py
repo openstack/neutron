@@ -218,7 +218,8 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          l3_gwmode_db.L3_NAT_db_mixin,
                          sg_db_rpc.SecurityGroupServerRpcMixin,
-                         agentschedulers_db.AgentSchedulerDbMixin,
+                         agentschedulers_db.L3AgentSchedulerDbMixin,
+                         agentschedulers_db.DhcpAgentSchedulerDbMixin,
                          portbindings_db.PortBindingMixin):
 
     """Implement the Neutron abstractions using Open vSwitch.
@@ -247,7 +248,9 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     _supported_extension_aliases = ["provider", "router", "ext-gw-mode",
                                     "binding", "quotas", "security-group",
-                                    "agent", "extraroute", "agent_scheduler"]
+                                    "agent", "extraroute",
+                                    "l3_agent_scheduler",
+                                    "dhcp_agent_scheduler"]
 
     @property
     def supported_extension_aliases(self):

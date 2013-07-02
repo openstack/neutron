@@ -67,7 +67,7 @@ class L3AgentNotifyAPI(proxy.RpcProxy):
         """Notify all the agents that are hosting the routers."""
         plugin = manager.NeutronManager.get_plugin()
         if utils.is_extension_supported(
-            plugin, constants.AGENT_SCHEDULER_EXT_ALIAS):
+            plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             adminContext = (context.is_admin and
                             context or context.elevated())
             plugin.schedule_routers(adminContext, routers)

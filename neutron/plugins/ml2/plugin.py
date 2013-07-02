@@ -49,7 +49,8 @@ TYPE_MULTI_SEGMENT = 'multi-segment'
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 extraroute_db.ExtraRoute_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
-                agentschedulers_db.AgentSchedulerDbMixin,
+                agentschedulers_db.L3AgentSchedulerDbMixin,
+                agentschedulers_db.DhcpAgentSchedulerDbMixin,
                 portbindings_db.PortBindingMixin):
     """Implement the Neutron L2 abstractions using modules.
 
@@ -70,7 +71,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     # List of supported extensions
     _supported_extension_aliases = ["provider", "router", "extraroute",
                                     "binding", "quotas", "security-group",
-                                    "agent", "agent_scheduler"]
+                                    "agent", "l3_agent_scheduler",
+                                    "dhcp_agent_scheduler"]
 
     @property
     def supported_extension_aliases(self):
