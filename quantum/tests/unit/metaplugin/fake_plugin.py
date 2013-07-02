@@ -29,8 +29,7 @@ class Fake1(db_base_plugin_v2.QuantumDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             net = super(Fake1, self).create_network(context, network)
-            self._process_l3_create(context, network['network'], net['id'])
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_create(context, net, network['network'])
         return net
 
     def update_network(self, context, id, network):
@@ -38,8 +37,7 @@ class Fake1(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(Fake1, self).update_network(context, id,
                                                     network)
-            self._process_l3_update(context, network['network'], id)
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_update(context, net, network['network'])
         return net
 
     def delete_network(self, context, id):

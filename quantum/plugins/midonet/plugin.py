@@ -114,7 +114,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                     prefix)
 
             # For external network, link the bridge to the provider router.
-            self._extend_network_dict_l3(context, net)
             if net['router:external']:
                 gateway_ip = sn_entry['gateway_ip']
                 network_address, length = sn_entry['cidr'].split('/')
@@ -142,7 +141,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.client.delete_dhcp(bridge)
 
         # If the network is external, clean up routes, links, ports.
-        self._extend_network_dict_l3(context, net)
         if net['router:external']:
             self.client.unlink_bridge_from_provider_router(
                 bridge, self.provider_router)
@@ -176,8 +174,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             net = super(MidonetPluginV2, self).create_network(context, network)
 
             # to handle l3 related data in DB
-            self._process_l3_create(context, network['network'], net['id'])
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_create(context, net, network['network'])
         LOG.debug(_("MidonetPluginV2.create_network exiting: net=%r"), net)
         return net
 
@@ -203,7 +200,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 context, id, network)
             self.client.update_bridge(id, net['name'])
 
-        self._extend_network_dict_l3(context, net)
         LOG.debug(_("MidonetPluginV2.update_network exiting: net=%r"), net)
         return net
 
@@ -215,29 +211,11 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("MidonetPluginV2.get_network called: id=%(id)r, "
                     "fields=%(fields)r"), {'id': id, 'fields': fields})
 
-        # NOTE: Get network data with all fields (fields=None) for
-        #       _extend_network_dict_l3() method, which needs 'id' field
-        qnet = super(MidonetPluginV2, self).get_network(context, id, None)
+        qnet = super(MidonetPluginV2, self).get_network(context, id, fields)
         self.client.get_bridge(id)
 
-        self._extend_network_dict_l3(context, qnet)
         LOG.debug(_("MidonetPluginV2.get_network exiting: qnet=%r"), qnet)
-        return self._fields(qnet, fields)
-
-    def get_networks(self, context, filters=None, fields=None):
-        """List quantum networks and verify that all exist in MidoNet."""
-        LOG.debug(_("MidonetPluginV2.get_networks called: "
-                    "filters=%(filters)r, fields=%(fields)r"),
-                  {'filters': filters, 'fields': fields})
-
-        # NOTE: Get network data with all fields (fields=None) for
-        #       _extend_network_dict_l3() method, which needs 'id' field
-        qnets = super(MidonetPluginV2, self).get_networks(context, filters,
-                                                          None)
-        for n in qnets:
-            self._extend_network_dict_l3(context, n)
-
-        return [self._fields(net, fields) for net in qnets]
+        return qnet
 
     def delete_network(self, context, id):
         """Delete a network and its corresponding MidoNet bridge."""

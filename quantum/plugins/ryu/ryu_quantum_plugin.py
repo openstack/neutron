@@ -157,8 +157,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
             net = super(RyuQuantumPluginV2, self).create_network(context,
                                                                  network)
-            self._process_l3_create(context, network['network'], net['id'])
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_create(context, net, network['network'])
 
             tunnel_key = self.tunnel_key.allocate(session, net['id'])
             try:
@@ -174,8 +173,7 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(RyuQuantumPluginV2, self).update_network(context, id,
                                                                  network)
-            self._process_l3_update(context, network['network'], id)
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_update(context, net, network['network'])
         return net
 
     def delete_network(self, context, id):
@@ -184,19 +182,6 @@ class RyuQuantumPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             self.tunnel_key.delete(session, id)
             super(RyuQuantumPluginV2, self).delete_network(context, id)
-
-    def get_network(self, context, id, fields=None):
-        net = super(RyuQuantumPluginV2, self).get_network(context, id, None)
-        self._extend_network_dict_l3(context, net)
-        return self._fields(net, fields)
-
-    def get_networks(self, context, filters=None, fields=None):
-        nets = super(RyuQuantumPluginV2, self).get_networks(context, filters,
-                                                            None)
-        for net in nets:
-            self._extend_network_dict_l3(context, net)
-
-        return [self._fields(net, fields) for net in nets]
 
     def create_port(self, context, port):
         session = context.session

@@ -268,8 +268,7 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(TestL3NatPlugin, self).create_network(context,
                                                               network)
-            self._process_l3_create(context, network['network'], net['id'])
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_create(context, net, network['network'])
         return net
 
     def update_network(self, context, id, network):
@@ -278,29 +277,8 @@ class TestL3NatPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(TestL3NatPlugin, self).update_network(context, id,
                                                               network)
-            self._process_l3_update(context, network['network'], id)
-            self._extend_network_dict_l3(context, net)
+            self._process_l3_update(context, net, network['network'])
         return net
-
-    def delete_network(self, context, id):
-        session = context.session
-        with session.begin(subtransactions=True):
-            super(TestL3NatPlugin, self).delete_network(context, id)
-
-    def get_network(self, context, id, fields=None):
-        net = super(TestL3NatPlugin, self).get_network(context, id, None)
-        self._extend_network_dict_l3(context, net)
-        return self._fields(net, fields)
-
-    def get_networks(self, context, filters=None, fields=None,
-                     sorts=[], limit=None, marker=None,
-                     page_reverse=False):
-        nets = super(TestL3NatPlugin, self).get_networks(
-            context, filters=filters, fields=fields, sorts=sorts, limit=limit,
-            marker=marker, page_reverse=page_reverse)
-        for net in nets:
-            self._extend_network_dict_l3(context, net)
-        return [self._fields(net, fields) for net in nets]
 
     def delete_port(self, context, id, l3_port_check=True):
         if l3_port_check:

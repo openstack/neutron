@@ -64,6 +64,13 @@ class ExternalNetwork(model_base.BASEV2):
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
                            primary_key=True)
 
+    # Add a relationship to the Network model in order to instruct
+    # SQLAlchemy to eagerly load this association
+    network = orm.relationship(
+        models_v2.Network,
+        backref=orm.backref("external", lazy='joined',
+                            uselist=False, cascade='delete'))
+
 
 class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a floating IP address.
@@ -214,8 +221,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         # network_id attribute is required by API, so it must be present
         network_id = info['network_id'] if info else None
         if network_id:
-            self._get_network(context, network_id)
-            if not self._network_is_external(context, network_id):
+            network_db = self._get_network(context, network_id)
+            if not network_db.external:
                 msg = _("Network %s is not a valid external "
                         "network") % network_id
                 raise q_exc.BadRequest(resource='router', msg=msg)
@@ -786,12 +793,17 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         except exc.NoResultFound:
             return False
 
-    def _extend_network_dict_l3(self, context, network):
-        network[l3.EXTERNAL] = self._network_is_external(
-            context, network['id'])
+    def _extend_network_dict_l3(self, network_res, network_db):
+        # Comparing with None for converting uuid into bool
+        network_res[l3.EXTERNAL] = network_db.external is not None
+        return network_res
 
-    def _process_l3_create(self, context, net_data, net_id):
-        external = net_data.get(l3.EXTERNAL)
+    # Register dict extend functions for networks
+    db_base_plugin_v2.QuantumDbPluginV2.register_dict_extend_funcs(
+        attributes.NETWORKS, [_extend_network_dict_l3])
+
+    def _process_l3_create(self, context, net_data, req_data):
+        external = req_data.get(l3.EXTERNAL)
         external_set = attributes.is_attr_set(external)
 
         if not external_set:
@@ -799,33 +811,35 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         if external:
             # expects to be called within a plugin's session
-            context.session.add(ExternalNetwork(network_id=net_id))
+            context.session.add(ExternalNetwork(network_id=net_data['id']))
+        net_data[l3.EXTERNAL] = external
 
-    def _process_l3_update(self, context, net_data, net_id):
+    def _process_l3_update(self, context, net_data, req_data):
 
-        new_value = net_data.get(l3.EXTERNAL)
+        new_value = req_data.get(l3.EXTERNAL)
+        net_id = net_data['id']
         if not attributes.is_attr_set(new_value):
             return
 
-        existing_value = self._network_is_external(context, net_id)
-
-        if existing_value == new_value:
+        if net_data.get(l3.EXTERNAL) == new_value:
             return
 
         if new_value:
             context.session.add(ExternalNetwork(network_id=net_id))
+            net_data[l3.EXTERNAL] = True
         else:
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
             port = context.session.query(models_v2.Port).filter_by(
                 device_owner=DEVICE_OWNER_ROUTER_GW,
-                network_id=net_id).first()
+                network_id=net_data['id']).first()
             if port:
                 raise l3.ExternalNetworkInUse(net_id=net_id)
 
             context.session.query(ExternalNetwork).filter_by(
                 network_id=net_id).delete()
+            net_data[l3.EXTERNAL] = False
 
     def _filter_nets_l3(self, context, nets, filters):
         vals = filters and filters.get('router:external', [])

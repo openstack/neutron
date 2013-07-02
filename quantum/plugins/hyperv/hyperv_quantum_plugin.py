@@ -239,9 +239,8 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
                 session, net['id'], network_type,
                 physical_network, segmentation_id)
 
-            self._process_l3_create(context, network['network'], net['id'])
+            self._process_l3_create(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
 
             LOG.debug(_("Created network: %s"), net['id'])
             return net
@@ -260,9 +259,8 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(HyperVQuantumPlugin, self).update_network(context, id,
                                                                   network)
-            self._process_l3_update(context, network['network'], id)
+            self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
             return net
 
     def delete_network(self, context, id):
@@ -279,7 +277,6 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
     def get_network(self, context, id, fields=None):
         net = super(HyperVQuantumPlugin, self).get_network(context, id, None)
         self._extend_network_dict_provider(context, net)
-        self._extend_network_dict_l3(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None):
@@ -287,7 +284,6 @@ class HyperVQuantumPlugin(db_base_plugin_v2.QuantumDbPluginV2,
             context, filters, None)
         for net in nets:
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
 
         return [self._fields(net, fields) for net in nets]
 

@@ -813,7 +813,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # Process port security extension
             self._process_network_create_port_security(context, net_data)
             # DB Operations for setting the network as external
-            self._process_l3_create(context, net_data, new_net['id'])
+            self._process_l3_create(context, new_net, net_data)
             # Process QoS queue extension
             if network['network'].get(ext_qos.QUEUE):
                 new_net[ext_qos.QUEUE] = network['network'][ext_qos.QUEUE]
@@ -831,7 +831,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._extend_network_dict_provider(context, new_net,
                                                    net_binding)
             self._extend_network_port_security_dict(context, new_net)
-            self._extend_network_dict_l3(context, new_net)
         self.schedule_network(context, new_net)
         return new_net
 
@@ -886,7 +885,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # goto to the plugin DB and fetch the network
             network = self._get_network(context, id)
             # if the network is external, do not go to NVP
-            if not self._network_is_external(context, id):
+            if not network.external:
                 # verify the fabric status of the corresponding
                 # logical switch(es) in nvp
                 try:
@@ -923,7 +922,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             net_result = self._make_network_dict(network, None)
             self._extend_network_dict_provider(context, net_result)
             self._extend_network_port_security_dict(context, net_result)
-            self._extend_network_dict_l3(context, net_result)
             self._extend_network_qos_queue(context, net_result)
         return self._fields(net_result, fields)
 
@@ -936,7 +934,6 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             for net in quantum_lswitches:
                 self._extend_network_dict_provider(context, net)
                 self._extend_network_port_security_dict(context, net)
-                self._extend_network_dict_l3(context, net)
                 self._extend_network_qos_queue(context, net)
 
             tenant_ids = filters and filters.get('tenant_id') or None
@@ -1029,9 +1026,8 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._delete_network_queue_mapping(context, id)
                 self._process_network_queue_mapping(context, net)
             self._extend_network_port_security_dict(context, net)
-            self._process_l3_update(context, network['network'], id)
+            self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_dict_l3(context, net)
             self._extend_network_qos_queue(context, net)
         return net
 
@@ -1428,7 +1424,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                               else None)
                 if network_id:
                     ext_net = self._get_network(context, network_id)
-                    if not self._network_is_external(context, network_id):
+                    if not ext_net.external:
                         msg = (_("Network '%s' is not a valid external "
                                  "network") % network_id)
                         raise q_exc.BadRequest(resource='router', msg=msg)
@@ -1472,7 +1468,7 @@ class NvpPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                           else None)
             if network_id:
                 ext_net = self._get_network(context, network_id)
-                if not self._network_is_external(context, network_id):
+                if not ext_net.external:
                     msg = (_("Network '%s' is not a valid external "
                              "network") % network_id)
                     raise q_exc.BadRequest(resource='router', msg=msg)
