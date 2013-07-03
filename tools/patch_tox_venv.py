@@ -40,7 +40,7 @@ def main(argv):
         os.path.join(root, 'tools', 'test-requires'),
     ])
     py_version = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
-    project = 'quantum'
+    project = 'neutron'
     install = install_venv.InstallVenv(root, venv, pip_requires, test_requires,
                                        py_version, project)
     #NOTE(dprince): For Tox we only run post_process (which patches files, etc)

@@ -23,17 +23,17 @@ subnets.
 
 from oslo.config import cfg
 
-from quantum import context
-from quantum import manager
-from quantum.common import config
-from quantum.openstack.common.notifier import api as notifier_api
+from neutron import context
+from neutron import manager
+from neutron.common import config
+from neutron.openstack.common.notifier import api as notifier_api
 
 if __name__ == '__main__':
-    cfg.CONF(project='quantum')
+    cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
 
     context = context.get_admin_context()
-    plugin = manager.QuantumManager.get_plugin()
+    plugin = manager.NeutronManager.get_plugin()
     for network in plugin.get_networks(context):
         notifier_api.notify(context,
                             notifier_api.publisher_id('network'),

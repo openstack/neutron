@@ -20,7 +20,7 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
-from quantum.agent.ovs_cleanup_util import main
+from neutron.agent.ovs_cleanup_util import main
 
 
 main()

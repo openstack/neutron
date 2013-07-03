@@ -1,0 +1,8 @@
+[pipeline:extensions_app_with_filter]
+pipeline = extensions extensions_test_app
+
+[filter:extensions]
+paste.filter_factory = neutron.common.extensions:plugin_aware_extension_middleware_factory
+
+[app:extensions_test_app]
+paste.app_factory = neutron.tests.unit.test_extensions:app_factory

@@ -1,0 +1,12 @@
+{
+  "display_name": "%(display_name)s",
+  "admin_status_enabled": "%(admin_status_enabled)s",
+  "_href": "/ws.v1/lrouter/%(lr_uuid)s/lport/%(uuid)s",
+  "tags":
+    [{"scope": "q_port_id", "tag": "%(neutron_port_id)s"},
+     {"scope": "os_tid", "tag": "%(tenant_id)s"}],
+  "ip_addresses": %(ip_addresses_json)s,
+  "_schema": "/ws.v1/schema/LogicalRouterPortConfig",
+  "type": "LogicalRouterPortConfig",
+  "uuid": "%(uuid)s"
+}

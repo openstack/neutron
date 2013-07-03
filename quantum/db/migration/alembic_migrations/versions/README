@@ -1,5 +1,0 @@
-This directory contains the migration scripts for the Quantum project.  Please
-see the README in quantum/db/migration on how to use and generate new
-migrations.
-
-

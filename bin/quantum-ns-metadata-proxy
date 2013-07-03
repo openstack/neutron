@@ -16,5 +16,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.agent.metadata.namespace_proxy import main
+from neutron.agent.metadata.namespace_proxy import main
 main()

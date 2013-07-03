@@ -4,7 +4,7 @@ set -eu
 
 function usage {
   echo "Usage: $0 [OPTION]..."
-  echo "Run Quantum's test suite(s)"
+  echo "Run Neutron's test suite(s)"
   echo ""
   echo "  -V, --virtual-env           Always use virtualenv.  Install automatically if not present"
   echo "  -N, --no-virtual-env        Don't use virtualenv.  Run tests in local environment"
@@ -116,7 +116,7 @@ function run_tests {
     if [ "$testropts" = "" ] && [ "$testrargs" = "" ]; then
       # Default to running all tests if specific test is not
       # provided.
-      testrargs="discover ./quantum/tests"
+      testrargs="discover ./neutron/tests"
     fi
     ${wrapper} python -m testtools.run $testropts $testrargs
 
@@ -147,7 +147,7 @@ function run_tests {
     echo "Generating coverage report in covhtml/"
     # Don't compute coverage for common code, which is tested elsewhere
     ${wrapper} coverage combine
-    ${wrapper} coverage html --include='quantum/*' --omit='quantum/openstack/common/*' -d covhtml -i
+    ${wrapper} coverage html --include='neutron/*' --omit='neutron/openstack/common/*' -d covhtml -i
   fi
 
   return $RESULT

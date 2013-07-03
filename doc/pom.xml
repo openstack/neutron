@@ -92,28 +92,28 @@
                             <sectionLabelIncludesComponentLabel>0</sectionLabelIncludesComponentLabel>
                             <postProcess>
                                 <!-- Copies the figures to the correct location for webhelp -->
-                                <copy todir="${basedir}/target/docbkx/webhelp/quantum-api-1.0/figures">
-                                    <fileset dir="${basedir}/source/docbkx/quantum-api-1.0/figures">
+                                <copy todir="${basedir}/target/docbkx/webhelp/neutron-api-1.0/figures">
+                                    <fileset dir="${basedir}/source/docbkx/neutron-api-1.0/figures">
                                         <include name="**/*.png" />
                                     </fileset>
                                 </copy>
                                 
                                 <!-- New stuff -->
                                 <copy
-                                    todir="${basedir}/target/docbkx/webhelp/trunk/developer/quantum-api-1.0">
+                                    todir="${basedir}/target/docbkx/webhelp/trunk/developer/neutron-api-1.0">
                                     <fileset
-                                        dir="${basedir}/target/docbkx/webhelp/quantum-api-1.0/quantum-api-guide/">
+                                        dir="${basedir}/target/docbkx/webhelp/neutron-api-1.0/neutron-api-guide/">
                                         <include name="**/*" />
                                     </fileset>
                                 </copy>
                                 <!--Moves PDFs to the needed placement -->
                                 <move failonerror="false"
-                                    file="${basedir}/target/docbkx/pdf/quantum-api-1.0/quantum-api-guide.pdf"
-                                    tofile="${basedir}/target/docbkx/webhelp/trunk/developer/quantum-api-1.0/quantum-api-guide-trunk.pdf"/>
+                                    file="${basedir}/target/docbkx/pdf/neutron-api-1.0/neutron-api-guide.pdf"
+                                    tofile="${basedir}/target/docbkx/webhelp/trunk/developer/neutron-api-1.0/neutron-api-guide-trunk.pdf"/>
 
                                 <!--Deletes leftover uneeded directories -->
                                 <delete
-                                    dir="${basedir}/target/docbkx/webhelp/quantum-api-1.0"/>
+                                    dir="${basedir}/target/docbkx/webhelp/neutron-api-1.0"/>
                             </postProcess>
                         </configuration>
                     </execution>
@@ -123,7 +123,7 @@
                     <xincludeSupported>true</xincludeSupported>
                     <sourceDirectory>source/docbkx</sourceDirectory>
                     <includes>
-                        quantum-api-1.0/quantum-api-guide.xml
+                        neutron-api-1.0/neutron-api-guide.xml
                     </includes>
                     <profileSecurity>reviewer</profileSecurity>
                     <branding>openstack</branding>

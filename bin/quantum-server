@@ -22,6 +22,6 @@ eventlet.monkey_patch()
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from quantum.server import main as server
+from neutron.server import main as server
 
 server()

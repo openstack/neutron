@@ -1,0 +1,22 @@
+Neutron plugin for Ryu Network Operating System
+This directory includes neutron plugin for Ryu Network Operating System.
+
+# -- Installation
+
+For how to install/set up this plugin with Ryu and OpenStack, please refer to
+https://github.com/osrg/ryu/wiki/OpenStack
+
+# -- Ryu General
+
+For general Ryu stuff, please refer to
+http://www.osrg.net/ryu/
+
+Ryu is available at github
+git://github.com/osrg/ryu.git
+https://github.com/osrg/ryu
+
+The mailing is at
+ryu-devel@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/ryu-devel
+
+Enjoy!

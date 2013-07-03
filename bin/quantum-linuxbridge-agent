@@ -19,6 +19,6 @@
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from quantum.plugins.linuxbridge.agent.linuxbridge_quantum_agent import main
+from neutron.plugins.linuxbridge.agent.linuxbridge_neutron_agent import main
 
 main()

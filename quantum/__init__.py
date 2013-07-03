@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 OpenStack Foundation
+#
+# Copyright 2013 New Dream Network, LLC (DreamHost)
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,7 +15,4 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import gettext
-
-
-gettext.install('quantum', unicode=1)
+# @author Mark McClain (DreamHost)

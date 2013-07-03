@@ -1,0 +1,38 @@
+Debug Helper Script for Neutron
+
+- Configure
+export NEUTRON_TEST_CONFIG_FILE=/etc/neutron/debug.ini
+or
+export NEUTRON_TEST_CONFIG_FILE=/etc/neutron/l3_agent.ini
+
+you can also specify config file by --config-file option
+
+- Usage
+neutron-debug commands
+
+probe-create <net-id>
+  Create probe port - create port and interface, then plug it in.
+  This commands returns a port id of a probe port. A probe port is a port which is used to test.
+  The port id is probe id.
+  We can have multiple probe probes in a network, in order to check connectivity between ports.
+
+  neutron-debug probe-exec probe_id_1 'nc -l 192.168.100.3 22'
+  neutron-debug probe-exec probe_id_2 'nc -vz 192.168.100.4 22'
+
+  Note: You should use a user and a tenant who has permission to
+   modify network and subnet if you want to probe. For example, you need to be admin user if you
+   want to probe external network.
+
+probe-delete <port-id>  Delete probe - delete port then uplug
+probe-exec <port-id> 'command'    Exec commands on the namespace of the probe
+`probe-exec <port-id>` 'interactive command' Exec interactive command (eg, ssh)
+
+probe-list     List probes
+probe-clear    Clear All probes
+
+ping-all --id <network_id> --timeout 1 (optional)
+         ping-all is all-in-one command to ping all fixed ip's in all network or a specified network.
+         In the command probe is automatically created if needed.
+
+neutron-debug extends the shell of neutronclient,  so you can use all the commands of neutron
+

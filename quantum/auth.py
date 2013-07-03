@@ -1,6 +1,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-#    Copyright 2012 OpenStack Foundation
+#
+# Copyright 2013 New Dream Network, LLC (DreamHost)
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,50 +15,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo.config import cfg
-import webob.dec
-import webob.exc
+# @author Mark McClain (DreamHost)
 
-from quantum import context
-from quantum.openstack.common import log as logging
-from quantum import wsgi
+import warnings
 
-LOG = logging.getLogger(__name__)
+from neutron import auth
 
 
-class QuantumKeystoneContext(wsgi.Middleware):
-    """Make a request context from keystone headers."""
+warnings.warn(
+    _('You are using old configuration values for the api-paste config. '
+      'Please update for Neutron.')
+)
 
-    @webob.dec.wsgify
-    def __call__(self, req):
-        # Determine the user ID
-        user_id = req.headers.get('X_USER_ID', req.headers.get('X_USER'))
-        if not user_id:
-            LOG.debug(_("Neither X_USER_ID nor X_USER found in request"))
-            return webob.exc.HTTPUnauthorized()
-
-        # Determine the tenant
-        tenant_id = req.headers.get('X_TENANT_ID', req.headers.get('X_TENANT'))
-
-        # Suck out the roles
-        roles = [r.strip() for r in req.headers.get('X_ROLE', '').split(',')]
-
-        # Create a context with the authentication data
-        ctx = context.Context(user_id, tenant_id, roles=roles)
-
-        # Inject the context...
-        req.environ['quantum.context'] = ctx
-
-        return self.application
-
-
-def pipeline_factory(loader, global_conf, **local_conf):
-    """Create a paste pipeline based on the 'auth_strategy' config option."""
-    pipeline = local_conf[cfg.CONF.auth_strategy]
-    pipeline = pipeline.split()
-    filters = [loader.get_filter(n) for n in pipeline[:-1]]
-    app = loader.get_app(pipeline[-1])
-    filters.reverse()
-    for filter in filters:
-        app = filter(app)
-    return app
+# For compatibility with old configurations
+QuantumKeystoneContext = auth.NeutronKeystoneContext
+pipeline_factory = auth.pipeline_factory

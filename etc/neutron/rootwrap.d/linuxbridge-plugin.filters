@@ -1,0 +1,18 @@
+# neuton-rootwrap command filters for nodes on which neuton is
+# expected to control network
+#
+# This file should be owned by (and only-writeable by) the root user
+
+# format seems to be
+# cmd-name: filter-name, raw-command, user, args
+
+[Filters]
+
+# linuxbridge-agent
+# unclear whether both variants are necessary, but I'm transliterating
+# from the old mechanism
+brctl: CommandFilter, brctl, root
+
+# ip_lib
+ip: IpFilter, ip, root
+ip_exec: IpNetnsExecFilter, ip, root

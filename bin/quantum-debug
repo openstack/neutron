@@ -16,5 +16,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.debug.shell import main
+from neutron.debug.shell import main
 main()

@@ -20,7 +20,7 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
-from quantum.services.loadbalancer.drivers.haproxy.agent import main
+from neutron.services.loadbalancer.drivers.haproxy.agent import main
 
 
 main()

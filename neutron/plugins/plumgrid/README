@@ -1,0 +1,7 @@
+PLUMgrid Neutron Virtual Network Plugin
+
+This plugin implements Neutron v2 APIs and helps configure
+L2/L3 virtual networks consisting of PLUMgrid Platform.
+
+For more details on use please refer to:
+http://wiki.openstack.org/plumgrid-neutron

@@ -1,0 +1,24 @@
+Start the neutron-server with IP address of switch configured in brocade.ini:
+(for configuration instruction please see README.md in the above directory)
+
+nostest.py:
+This tests two things:
+     1. Creates port-profile on the physical switch when a neutron 'network' is created
+     2. Associates the MAC address with the created port-profile
+
+noscli.py:
+    CLI interface to create/delete/associate MAC/dissociate MAC
+    Commands:
+        % noscli.py create <network>
+          (after running check that PP is created on the switch)
+
+        % noscli.py delete <network>
+          (after running check that PP is deleted from the switch)
+
+        % noscli.py associate <network> <mac>
+          (after running check that MAC is associated with PP)
+
+        % noscli.py dissociate <network> <mac>
+          (after running check that MAC is dissociated from the PP)
+
+

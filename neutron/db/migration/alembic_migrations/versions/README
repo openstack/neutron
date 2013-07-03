@@ -1,0 +1,5 @@
+This directory contains the migration scripts for the Neutron project.  Please
+see the README in neutron/db/migration on how to use and generate new
+migrations.
+
+

@@ -3,10 +3,15 @@ quantum.egg-info
 quantum_tests.sqlite
 quantum.sqlite
 *.quantum-venv
+neutron.egg-info
+neutron_tests.sqlite
+neutron.sqlite
+*.neutron-venv
 .venv
 dist/
 ChangeLog
 *.pid
 *.log
+neutron/vcsversion.py
 quantum/vcsversion.py
 .ropeproject

@@ -1,7 +1,7 @@
 Plugin API
 ==========
 
-.. automodule:: quantum.quantum_plugin_base_v2
+.. automodule:: neutron.neutron_plugin_base_v2
 
-.. autoclass:: QuantumPluginBaseV2
+.. autoclass:: NeutronPluginBaseV2
     :members:

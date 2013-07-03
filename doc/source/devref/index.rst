@@ -18,6 +18,6 @@
 Developer Guide
 ===============
 
-The `Quantum Wiki`_ is a very good place to start.
+The `Neutron Wiki`_ is a very good place to start.
 
-.. _`Quantum wiki`: http://wiki.openstack.org/Quantum
+.. _`Neutron wiki`: http://wiki.openstack.org/Neutron

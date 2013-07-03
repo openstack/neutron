@@ -8,6 +8,9 @@ dist/
 doc/build
 *.DS_Store
 *.pyc
+neutron.egg-info/
+neutron/vcsversion.py
+neutron/versioninfo
 quantum.egg-info/
 quantum/vcsversion.py
 quantum/versioninfo

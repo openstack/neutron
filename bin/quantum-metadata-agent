@@ -16,5 +16,5 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from quantum.agent.metadata.agent import main
+from neutron.agent.metadata.agent import main
 main()

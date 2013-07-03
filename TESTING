@@ -1,11 +1,11 @@
-Testing Quantum
+Testing Neutron
 =============================================================
 
 Overview
 
     The unit tests are meant to cover as much code as possible and should
     be executed without the service running. They are designed to test
-    the various pieces of the quantum tree to make sure any new changes
+    the various pieces of the neutron tree to make sure any new changes
     don't break existing functionality.
 
 Running tests
@@ -30,17 +30,17 @@ Running individual tests
     class separating it from the module path with a colon.
 
     For example, the following would run only the JSONV2TestCase tests from
-    quantum/tests/unit/test_api_v2.py:
+    neutron/tests/unit/test_api_v2.py:
 
-      $ ./run_tests.sh quantum.tests.unit.test_api_v2:JSONV2TestCase
+      $ ./run_tests.sh neutron.tests.unit.test_api_v2:JSONV2TestCase
 
     or
 
-      $ ./tox quantum.tests.unit.test_api_v2:JSONV2TestCase
+      $ ./tox neutron.tests.unit.test_api_v2:JSONV2TestCase
 
 Adding more tests
 
-    Quantum has a fast growing code base and there is plenty of areas that
+    Neutron has a fast growing code base and there is plenty of areas that
     need to be covered by unit tests.
 
     To get a grasp of the areas where unit tests are needed, you can check

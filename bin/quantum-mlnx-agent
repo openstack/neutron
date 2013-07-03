@@ -19,7 +19,7 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
-from quantum.plugins.mlnx.agent.eswitch_quantum_agent import main
+from neutron.plugins.mlnx.agent.eswitch_neutron_agent import main
 
 
 main()

@@ -1,0 +1,13 @@
+Quantum NEC OpenFlow Plugin
+
+
+# -- What's this?
+
+http://wiki.openstack.org/Quantum-NEC-OpenFlow-Plugin
+
+
+# -- Installation
+
+Use QuickStart Script for this plugin.  This provides you auto installation and
+configuration of Nova, Neutron and Trema.
+https://github.com/nec-openstack/quantum-openflow-plugin/tree/folsom

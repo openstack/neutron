@@ -1,0 +1,19 @@
+{"display_name": "%(display_name)s",
+   "_relations":
+   {"LogicalPortStatus":
+      {"type": "LogicalSwitchPortStatus",
+       "admin_status_enabled": true,
+       "fabric_status_up": false,
+       "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s/status",
+       "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"}
+   },
+ "tags":
+   [{"scope": "q_port_id", "tag": "%(neutron_port_id)s"},
+    {"scope": "vm_id", "tag": "%(neutron_device_id)s"},
+    {"scope": "os_tid", "tag": "%(tenant_id)s"}],
+ "uuid": "%(uuid)s",
+ "admin_status_enabled": "%(admin_status_enabled)s",
+ "type": "LogicalSwitchPortConfig",
+ "_schema": "/ws.v1/schema/LogicalSwitchPortConfig",
+ "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s"
+ }

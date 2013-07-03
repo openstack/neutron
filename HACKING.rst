@@ -1,4 +1,4 @@
-Quantum Style Commandments
+Neutron Style Commandments
 ==========================
 
 - Step 1: Read http://www.python.org/dev/peps/pep-0008/
@@ -35,13 +35,13 @@ Example::
 
   The following imports,
 
-  from quantum.api import networks
-  from quantum import wsgi
+  from neutron.api import networks
+  from neutron import wsgi
 
   are considered equivalent for ordering purposes to
 
-  import quantum.api.networks
-  import quantum.wsgi
+  import neutron.api.networks
+  import neutron.wsgi
 
 - Organize your imports according to the following template
 
@@ -52,7 +52,7 @@ Example::
   \n
   {{third-party lib imports in human alphabetical order}}
   \n
-  {{quantum imports in human alphabetical order}}
+  {{neutron imports in human alphabetical order}}
   \n
   \n
   {{begin your code}}
@@ -71,13 +71,13 @@ Example::
   import testtools
   import webob.exc
 
-  import quantum.api.networks
-  from quantum.api import ports
-  from quantum.db import models
-  from quantum.extensions import multiport
-  from quantum.openstack.common import log as logging
-  import quantum.manager
-  from quantum import service
+  import neutron.api.networks
+  from neutron.api import ports
+  from neutron.db import models
+  from neutron.extensions import multiport
+  from neutron.openstack.common import log as logging
+  import neutron.manager
+  from neutron import service
 
 
 Docstrings
@@ -202,8 +202,8 @@ submitted bug fix does have a unit test, be sure to add a new one that fails
 without the patch and passes with the patch.
 
 All unittest classes must ultimately inherit from testtools.TestCase. In the
-Quantum test suite, this should be done by inheriting from
-quantum.tests.base.BaseTestCase.
+Neutron test suite, this should be done by inheriting from
+neutron.tests.base.BaseTestCase.
 
 All setUp and tearDown methods must upcall using the super() method.
 tearDown methods should be avoided and addCleanup calls should be preferred.

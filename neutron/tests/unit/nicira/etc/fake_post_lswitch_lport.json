@@ -1,0 +1,17 @@
+{
+ "display_name": "%(uuid)s",
+ "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s",
+ "security_profiles": [],
+ "tags":
+    [{"scope": "q_port_id", "tag": "%(neutron_port_id)s"},
+     {"scope": "vm_id", "tag": "%(neutron_device_id)s"},
+     {"scope": "os_tid", "tag": "%(tenant_id)s"}],
+ "portno": 1,
+ "queue_uuid": null,
+ "_schema": "/ws.v1/schema/LogicalSwitchPortConfig",
+ "mirror_targets": [],
+ "allowed_address_pairs": [],
+ "admin_status_enabled": true,
+ "type": "LogicalSwitchPortConfig",
+ "uuid": "%(uuid)s"
+}

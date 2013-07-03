@@ -22,19 +22,19 @@ import contextlib
 import os
 import sys
 
-# If ../quantum/__init__.py exists, add ../ to Python search path, so that
+# If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
                                    os.pardir,
                                    os.pardir))
-if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'quantum', '__init__.py')):
+if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'neutron', '__init__.py')):
     sys.path.insert(0, POSSIBLE_TOPDIR)
 
 from oslo.config import cfg
 
-from quantum.openstack.common import log as logging
-from quantum.openstack.common import rpc
-from quantum.openstack.common.rpc import impl_zmq
+from neutron.openstack.common import log as logging
+from neutron.openstack.common import rpc
+from neutron.openstack.common.rpc import impl_zmq
 
 CONF = cfg.CONF
 CONF.register_opts(rpc.rpc_opts)
@@ -42,8 +42,8 @@ CONF.register_opts(impl_zmq.zmq_opts)
 
 
 def main():
-    CONF(sys.argv[1:], project='quantum')
-    logging.setup("quantum")
+    CONF(sys.argv[1:], project='neutron')
+    logging.setup("neutron")
 
     with contextlib.closing(impl_zmq.ZmqProxy(CONF)) as reactor:
         reactor.consume_in_thread()

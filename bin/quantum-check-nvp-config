@@ -23,7 +23,7 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
-from quantum.plugins.nicira.check_nvp_config import main
+from neutron.plugins.nicira.check_nvp_config import main
 
 
 main(sys.argv)

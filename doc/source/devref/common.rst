@@ -19,7 +19,7 @@ Open Stack Common
 =================
 
 A number of modules used are from the openstack-common project.
-The imported files are in 'quantum/openstack-common.conf'.
+The imported files are in 'neutron/openstack-common.conf'.
 More information can be found at `OpenStack Common`_.
 
 .. _`OpenStack Common`: https://launchpad.net/openstack-common

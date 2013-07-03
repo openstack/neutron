@@ -17,7 +17,7 @@
 #    limitations under the License.
 
 
-"""Unittest runner for quantum
+"""Unittest runner for neutron
 
 To run all test::
     python run_tests.py
@@ -47,8 +47,8 @@ import sys
 from nose import config
 from nose import core
 
-from quantum.common.test_lib import run_tests
-import quantum.tests.unit
+from neutron.common.test_lib import run_tests
+import neutron.tests.unit
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
                       includeExe=True,
                       traverseNamespace=True,
                       plugins=core.DefaultPluginManager())
-    c.configureWhere(quantum.tests.unit.__path__)
+    c.configureWhere(neutron.tests.unit.__path__)
     sys.exit(run_tests(c))
 
 if __name__ == "__main__":

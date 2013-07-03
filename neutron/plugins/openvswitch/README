@@ -1,0 +1,6 @@
+The Open vSwitch (OVS) Neutron plugin is a simple plugin to manage OVS
+features using a local agent running on each hypervisor.
+
+For details on how to configure and use the plugin, see:
+
+http://openvswitch.org/openstack/documentation/

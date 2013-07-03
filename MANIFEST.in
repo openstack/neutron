@@ -2,11 +2,11 @@ include AUTHORS
 include README.rst
 include ChangeLog
 include LICENSE
-include quantum/db/migration/README
-include quantum/db/migration/alembic.ini
-include quantum/db/migration/alembic_migrations/script.py.mako
-include quantum/db/migration/alembic_migrations/versions/README
-recursive-include quantum/locale *
+include neutron/db/migration/README
+include neutron/db/migration/alembic.ini
+include neutron/db/migration/alembic_migrations/script.py.mako
+include neutron/db/migration/alembic_migrations/versions/README
+recursive-include neutron/locale *
 
 exclude .gitignore
 exclude .gitreview

@@ -1,0 +1,169 @@
+# -- Background
+
+The Neutron Linux Bridge plugin is a plugin that allows you to manage
+connectivity between VMs on hosts that are capable of running a Linux Bridge.
+
+The Neutron Linux Bridge plugin consists of three components:
+
+1) The plugin itself: The plugin uses a database backend (mysql for
+   now) to store configuration and mappings that are used by the
+   agent.  The mysql server runs on a central server (often the same
+   host as nova itself).
+
+2) The neutron service host which will be running neutron.  This can
+   be run on the server running nova.
+
+3) An agent which runs on the host and communicates with the host operating
+   system. The agent gathers the configuration and mappings from
+   the mysql database running on the neutron host.
+
+The sections below describe how to configure and run the neutron
+service with the Linux Bridge plugin.
+
+# -- Python library dependencies
+
+   Make sure you have the following package(s) installedi on neutron server
+   host as well as any hosts which run the agent:
+   python-configobj
+   bridge-utils
+   python-mysqldb
+   sqlite3
+
+# -- Nova configuration (controller node)
+
+1) Ensure that the neutron network manager is configured in the
+   nova.conf on the node that will be running nova-network.
+
+network_manager=nova.network.neutron.manager.NeutronManager
+
+# -- Nova configuration (compute node(s))
+
+1) Configure the vif driver, and libvirt/vif type
+
+connection_type=libvirt
+libvirt_type=qemu
+libvirt_vif_type=ethernet
+libvirt_vif_driver=nova.virt.libvirt.vif.NeutronLinuxBridgeVIFDriver
+linuxnet_interface_driver=nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver
+
+2) If you want a DHCP server to be run for the VMs to acquire IPs,
+   add the following flag to your nova.conf file:
+
+neutron_use_dhcp=true
+
+(Note: For more details on how to work with Neutron using Nova, i.e. how to create networks and such,
+ please refer to the top level Neutron README which points to the relevant documentation.)
+
+# -- Neutron configuration
+
+Make the Linux Bridge plugin the current neutron plugin
+
+- edit neutron.conf and change the core_plugin
+
+core_plugin = neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2
+
+# -- Database config.
+
+(Note: The plugin ships with a default SQLite in-memory database configuration,
+ and can be used to run tests without performing the suggested DB config below.)
+
+The Linux Bridge neutron plugin requires access to a mysql database in order
+to store configuration and mappings that will be used by the agent.  Here is
+how to set up the database on the host that you will be running the neutron
+service on.
+
+MySQL should be installed on the host, and all plugins and clients
+must be configured with access to the database.
+
+To prep mysql, run:
+
+$ mysql -u root -p -e "create database neutron_linux_bridge"
+
+# log in to mysql service
+$ mysql -u root -p
+# The Linux Bridge Neutron agent running on each compute node must be able to
+# make a mysql connection back to the main database server.
+mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
+# force update of authorization changes
+mysql> FLUSH PRIVILEGES;
+
+(Note: If the remote connection fails to MySQL, you might need to add the IP address,
+ and/or fully-qualified hostname, and/or unqualified hostname in the above GRANT sql
+ command. Also, you might need to specify "ALL" instead of "USAGE".)
+
+# -- Plugin configuration
+
+- Edit the configuration file:
+  etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini
+  Make sure it matches your mysql configuration.  This file must be updated
+  with the addresses and credentials to access the database.
+
+  Note: debug and logging information should be updated in etc/neutron.conf
+
+  Note: When running the tests, set the connection type to sqlite, and when
+  actually running the server set it to mysql. At any given time, only one
+  of these should be active in the conf file (you can comment out the other).
+
+- On the neutron server, network_vlan_ranges must be configured in
+  linuxbridge_conf.ini to specify the names of the physical networks
+  managed by the linuxbridge plugin, along with the ranges of VLAN IDs
+  available on each physical network for allocation to virtual
+  networks. An entry of the form
+  "<physical_network>:<vlan_min>:<vlan_max>" specifies a VLAN range on
+  the named physical network. An entry of the form
+  "<physical_network>" specifies a named network without making a
+  range of VLANs available for allocation. Networks specified using
+  either form are available for adminstrators to create provider flat
+  networks and provider VLANs. Multiple VLAN ranges can be specified
+  for the same physical network.
+
+  The following example linuxbridge_conf.ini entry shows three
+  physical networks that can be used to create provider networks, with
+  ranges of VLANs available for allocation on two of them:
+
+  [VLANS]
+  network_vlan_ranges = physnet1:1000:2999,physnet1:3000:3999,physnet2,physnet3:1:4094
+
+
+# -- Agent configuration
+
+- Edit the configuration file:
+  etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini
+
+- Copy neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py
+  and etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini
+  to the compute node.
+
+- Copy the neutron.conf file to the compute node
+
+  Note: debug and logging information should be updated in etc/neutron.conf
+
+- On each compute node, the network_interface_mappings must be
+  configured in linuxbridge_conf.ini to map each physical network name
+  to the physical interface connecting the node to that physical
+  network. Entries are of the form
+  "<physical_network>:<physical_interface>". For example, one compute
+  node may use the following physical_inteface_mappings entries:
+
+  [LINUX_BRIDGE]
+  physical_interface_mappings = physnet1:eth1,physnet2:eth2,physnet3:eth3
+
+  while another might use:
+
+  [LINUX_BRIDGE]
+  physical_interface_mappings = physnet1:em3,physnet2:em2,physnet3:em1
+
+
+$ Run the following:
+  python linuxbridge_neutron_agent.py --config-file neutron.conf
+                                      --config-file linuxbridge_conf.ini
+
+  Note that the the user running the agent must have sudo priviliges
+  to run various networking commands. Also, the agent can be
+  configured to use neutron-rootwrap, limiting what commands it can
+  run via sudo. See http://wiki.openstack.org/Packager/Rootwrap for
+  details on rootwrap.
+
+  As an alternative to coping the agent python file, if neutron is
+  installed on the compute node, the agent can be run as
+  bin/neutron-linuxbridge-agent.
