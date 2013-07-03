@@ -18,7 +18,6 @@
 
 from sqlalchemy.orm import exc
 
-from quantum.common import exceptions as q_exc
 from quantum.db import api as db
 from quantum.openstack.common import log as logging
 from quantum.plugins.cisco.common import cisco_exceptions as c_exc
@@ -124,73 +123,6 @@ def get_all_vlanids_used():
     session = db.get_session()
     return (session.query(network_models_v2.VlanID).
             filter_by(vlan_used=True).all())
-
-
-def get_all_vlan_bindings():
-    """Lists all the vlan to network associations."""
-    LOG.debug(_("get_all_vlan_bindings() called"))
-    session = db.get_session()
-    return session.query(network_models_v2.Vlan_Binding).all()
-
-
-def get_vlan_binding(netid):
-    """Lists the vlan given a network_id."""
-    LOG.debug(_("get_vlan_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(network_models_v2.Vlan_Binding).
-                   filter_by(network_id=netid).one())
-        return binding
-    except exc.NoResultFound:
-        raise q_exc.NetworkNotFound(net_id=netid)
-
-
-def add_vlan_binding(vlanid, vlanname, netid):
-    """Adds a vlan to network association."""
-    LOG.debug(_("add_vlan_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(network_models_v2.Vlan_Binding).
-                   filter_by(vlan_id=vlanid).one())
-        raise c_exc.NetworkVlanBindingAlreadyExists(vlan_id=vlanid,
-                                                    network_id=netid)
-    except exc.NoResultFound:
-        binding = network_models_v2.Vlan_Binding(vlanid, vlanname, netid)
-        session.add(binding)
-        session.flush()
-        return binding
-
-
-def remove_vlan_binding(netid):
-    """Removes a vlan to network association."""
-    LOG.debug(_("remove_vlan_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(network_models_v2.Vlan_Binding).
-                   filter_by(network_id=netid).one())
-        session.delete(binding)
-        session.flush()
-        return binding
-    except exc.NoResultFound:
-        pass
-
-
-def update_vlan_binding(netid, newvlanid=None, newvlanname=None):
-    """Updates a vlan to network association."""
-    LOG.debug(_("update_vlan_binding() called"))
-    session = db.get_session()
-    try:
-        binding = (session.query(network_models_v2.Vlan_Binding).
-                   filter_by(network_id=netid).one())
-        if newvlanid:
-            binding["vlan_id"] = newvlanid
-        if newvlanname:
-            binding["vlan_name"] = newvlanname
-        session.merge(binding)
-        session.flush()
-        return binding
-    except exc.NoResultFound:
-        raise q_exc.NetworkNotFound(net_id=netid)
 
 
 def get_all_qoss(tenant_id):

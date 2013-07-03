@@ -33,7 +33,6 @@ from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cisco_exc
 from quantum.plugins.cisco.common import config as conf
-from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco.db import nexus_db_v2 as nxos_db
 from quantum.plugins.cisco.l2device_plugin_base import L2DevicePluginBase
 
@@ -346,12 +345,6 @@ class NexusPlugin(L2DevicePluginBase):
         Delete if not required.
         """
         LOG.debug(_("NexusPlugin:unplug_interface() called"))
-
-    def _get_vlan_id_for_network(self, tenant_id, network_id, context,
-                                 base_plugin_ref):
-        """Obtain the VLAN ID given the Network ID."""
-        vlan = cdb.get_vlan_binding(network_id)
-        return vlan.vlan_id
 
     def _get_network(self, tenant_id, network_id, context, base_plugin_ref):
         """Get the Network ID."""

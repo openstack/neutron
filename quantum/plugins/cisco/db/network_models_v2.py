@@ -83,26 +83,6 @@ class VlanID(model_base.BASEV2, L2NetworkBase):
         return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
 
 
-class Vlan_Binding(model_base.BASEV2, L2NetworkBase):
-    """Represents a binding of vlan_id to network_id."""
-    __tablename__ = 'cisco_vlan_bindings'
-
-    vlan_id = Column(Integer, primary_key=True)
-    vlan_name = Column(String(255))
-    network_id = Column(String(255),
-                        nullable=False)
-
-    def __init__(self, vlan_id, vlan_name, network_id):
-        self.vlan_id = vlan_id
-        self.vlan_name = vlan_name
-        self.network_id = network_id
-
-    def __repr__(self):
-        return "<VlanBinding(%d,%s,%s)>" % (self.vlan_id,
-                                            self.vlan_name,
-                                            self.network_id)
-
-
 class QoS(model_base.BASEV2, L2NetworkBase):
     """Represents QoS for a tenant."""
 
