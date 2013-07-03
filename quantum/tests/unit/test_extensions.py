@@ -76,7 +76,7 @@ class ResourceExtensionTest(base.BaseTestCase):
             return {'data': {'id': id}}
 
         def notimplemented_function(self, request, id):
-            return webob.exc.HTTPClientError(NotImplementedError())
+            return webob.exc.HTTPNotImplemented()
 
         def custom_member_action(self, request, id):
             return {'member_action': 'value'}
@@ -114,8 +114,8 @@ class ResourceExtensionTest(base.BaseTestCase):
             test_app.get("/tweedles/some_id/notimplemented_function")
             # Shouldn't be reached
             self.assertTrue(False)
-        except webtest.AppError:
-            pass
+        except webtest.AppError as e:
+            self.assertTrue('501' in e.message)
 
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension(

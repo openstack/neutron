@@ -94,6 +94,17 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             e.body = serializer.serialize({'QuantumError': e})
             e.content_type = content_type
             raise
+        except NotImplementedError as e:
+            # NOTE(armando-migliaccio): from a client standpoint
+            # it makes sense to receive these errors, because
+            # extensions may or may not be implemented by
+            # the underlying plugin. So if something goes south,
+            # because a plugin does not implement a feature,
+            # returning 500 is definitely confusing.
+            body = serializer.serialize(
+                {'NotImplementedError': e.message})
+            kwargs = {'body': body, 'content_type': content_type}
+            raise webob.exc.HTTPNotImplemented(**kwargs)
         except Exception as e:
             # NOTE(jkoelker) Everyting else is 500
             LOG.exception(_('%s failed'), action)
