@@ -35,8 +35,9 @@ setattr(l3_db.Router, 'enable_snat',
 class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
     """Mixin class to add configurable gateway modes."""
 
-    def _make_router_dict(self, router, fields=None):
-        res = super(L3_NAT_db_mixin, self)._make_router_dict(router)
+    def _make_router_dict(self, router, fields=None, process_extensions=True):
+        res = super(L3_NAT_db_mixin, self)._make_router_dict(
+            router, process_extensions=process_extensions)
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
             res[EXTERNAL_GW_INFO] = {'network_id': nw_id,

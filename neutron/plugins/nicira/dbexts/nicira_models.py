@@ -16,8 +16,10 @@
 #    under the License.
 
 
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String
+from sqlalchemy import orm
 
+from neutron.db import l3_db
 from neutron.db.models_v2 import model_base
 
 
@@ -79,3 +81,17 @@ class MultiProviderNetworks(model_base.BASEV2):
 
     def __init__(self, network_id):
         self.network_id = network_id
+
+
+class NSXRouterExtAttributes(model_base.BASEV2):
+    """Router attributes managed by Nicira plugin extensions."""
+    router_id = Column(String(36),
+                       ForeignKey('routers.id', ondelete="CASCADE"),
+                       primary_key=True)
+    distributed = Column(Boolean, default=False, nullable=False)
+    # Add a relationship to the Router model in order to instruct
+    # SQLAlchemy to eagerly load this association
+    router = orm.relationship(
+        l3_db.Router,
+        backref=orm.backref("nsx_attributes", lazy='joined',
+                            uselist=False, cascade='delete'))

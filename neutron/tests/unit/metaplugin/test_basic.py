@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutron.common.test_lib import test_config
 from neutron.tests.unit.metaplugin.test_metaplugin import setup_metaplugin_conf
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_l3_plugin
@@ -24,11 +23,15 @@ class MetaPluginV2DBTestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = ('neutron.plugins.metaplugin.'
                     'meta_neutron_plugin.MetaPluginV2')
 
-    def setUp(self):
+    def setUp(self, plugin=None, ext_mgr=None):
+        # NOTE(salv-orlando): The plugin keyword argument is ignored,
+        # as this class will always invoke super with self._plugin_name.
+        # These keyword parameters ensure setUp methods always have the
+        # same signature.
         setup_metaplugin_conf()
-        ext_mgr = test_l3_plugin.L3TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(MetaPluginV2DBTestCase, self).setUp(self._plugin_name)
+        ext_mgr = ext_mgr or test_l3_plugin.L3TestExtensionManager()
+        super(MetaPluginV2DBTestCase, self).setUp(
+            plugin=self._plugin_name, ext_mgr=ext_mgr)
 
 
 class TestMetaBasicGet(test_plugin.TestBasicGet,

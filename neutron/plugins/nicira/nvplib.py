@@ -274,7 +274,8 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         json.dumps(gwservice_obj), cluster=cluster)
 
 
-def _prepare_lrouter_body(name, tenant_id, router_type, **kwargs):
+def _prepare_lrouter_body(name, tenant_id, router_type,
+                          distributed=None, **kwargs):
     body = {
         "display_name": _check_and_truncate_name(name),
         "tags": [{"tag": tenant_id, "scope": "os_tid"},
@@ -284,12 +285,34 @@ def _prepare_lrouter_body(name, tenant_id, router_type, **kwargs):
         },
         "type": "LogicalRouterConfig"
     }
+    # add the distributed key only if not None (ie: True or False)
+    if distributed is not None:
+        body['distributed'] = distributed
     if kwargs:
         body["routing_config"].update(kwargs)
     return body
 
 
-def create_implicit_routing_lrouter(cluster, tenant_id, display_name, nexthop):
+def _create_implicit_routing_lrouter(cluster, tenant_id,
+                                     display_name, nexthop,
+                                     distributed=None):
+    implicit_routing_config = {
+        "default_route_next_hop": {
+            "gateway_ip_address": nexthop,
+            "type": "RouterNextHop"
+        },
+    }
+    lrouter_obj = _prepare_lrouter_body(
+        display_name, tenant_id,
+        "SingleDefaultRouteImplicitRoutingConfig",
+        distributed=distributed,
+        **implicit_routing_config)
+    return do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
+                      json.dumps(lrouter_obj), cluster=cluster)
+
+
+def create_implicit_routing_lrouter(cluster, tenant_id,
+                                    display_name, nexthop):
     """Create a NVP logical router on the specified cluster.
 
         :param cluster: The target NVP cluster
@@ -300,24 +323,34 @@ def create_implicit_routing_lrouter(cluster, tenant_id, display_name, nexthop):
         :raise NvpApiException: if there is a problem while communicating
         with the NVP controller
     """
-    implicit_routing_config = {
-        "default_route_next_hop": {
-            "gateway_ip_address": nexthop,
-            "type": "RouterNextHop"
-        },
-    }
-    lrouter_obj = _prepare_lrouter_body(
-        display_name, tenant_id,
-        "SingleDefaultRouteImplicitRoutingConfig",
-        **implicit_routing_config)
-    return do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
-                      json.dumps(lrouter_obj), cluster=cluster)
+    return _create_implicit_routing_lrouter(
+        cluster, tenant_id, display_name, nexthop)
+
+
+def create_implicit_routing_lrouter_with_distribution(
+    cluster, tenant_id, display_name, nexthop, distributed=None):
+    """Create a NVP logical router on the specified cluster.
+
+    This function also allows for creating distributed lrouters
+    :param cluster: The target NVP cluster
+    :param tenant_id: Identifier of the Openstack tenant for which
+    the logical router is being created
+    :param display_name: Descriptive name of this logical router
+    :param nexthop: External gateway IP address for the logical router
+    :param distributed: True for distributed logical routers
+    :raise NvpApiException: if there is a problem while communicating
+    with the NVP controller
+    """
+    return _create_implicit_routing_lrouter(
+        cluster, tenant_id, display_name, nexthop, distributed)
 
 
 def create_explicit_routing_lrouter(cluster, tenant_id,
-                                    display_name, nexthop):
+                                    display_name, nexthop,
+                                    distributed=None):
     lrouter_obj = _prepare_lrouter_body(
-        display_name, tenant_id, "RoutingTableRoutingConfig")
+        display_name, tenant_id, "RoutingTableRoutingConfig",
+        distributed=distributed)
     router = do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
                         json.dumps(lrouter_obj), cluster=cluster)
     default_gw = {'prefix': '0.0.0.0/0', 'next_hop_ip': nexthop}
@@ -1191,6 +1224,7 @@ NVPLIB_FUNC_DICT = {
     'create_lrouter': {
         2: {DEFAULT: create_implicit_routing_lrouter, },
         3: {DEFAULT: create_implicit_routing_lrouter,
+            1: create_implicit_routing_lrouter_with_distribution,
             2: create_explicit_routing_lrouter, }, },
     'update_lrouter': {
         2: {DEFAULT: update_implicit_routing_lrouter, },

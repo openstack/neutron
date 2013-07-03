@@ -20,11 +20,13 @@ import netaddr
 from oslo.config import cfg
 import webob.exc
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as ntn_exc
 import neutron.common.test_lib as test_lib
 from neutron import context
 from neutron.extensions import l3
+from neutron.extensions import l3_ext_gw_mode
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
@@ -34,6 +36,7 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
+from neutron.plugins.nicira.extensions import distributedrouter as dist_router
 from neutron.plugins.nicira.extensions import nvp_networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira import NeutronPlugin
@@ -57,6 +60,10 @@ import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 from neutron.tests.unit import testlib_api
 
 
+from neutron.openstack.common import log
+LOG = log.getLogger(__name__)
+
+
 class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def _create_network(self, fmt, name, admin_state_up,
@@ -64,9 +71,9 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
                             'tenant_id': self._tenant_id}}
-        attributes = kwargs
+        attrs = kwargs
         if providernet_args:
-            attributes.update(providernet_args)
+            attrs.update(providernet_args)
         for arg in (('admin_state_up', 'tenant_id', 'shared') +
                     (arg_list or ())):
             # Arg must be present and not empty
@@ -79,20 +86,23 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                 '', kwargs['tenant_id'])
         return network_req.get_response(self.api)
 
-    def setUp(self):
+    def setUp(self, plugin=None, ext_mgr=None):
         test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
-        instance = self.mock_nvpapi.start()
+        self.mock_instance = self.mock_nvpapi.start()
 
         def _fake_request(*args, **kwargs):
             return self.fc.fake_request(*args, **kwargs)
 
         # Emulate tests against NVP 2.x
-        instance.return_value.get_nvp_version.return_value = NVPVersion("2.9")
-        instance.return_value.request.side_effect = _fake_request
-        super(NiciraPluginV2TestCase, self).setUp(plugin=PLUGIN_NAME)
+        self.mock_instance.return_value.get_nvp_version.return_value = (
+            NVPVersion("2.9"))
+        self.mock_instance.return_value.request.side_effect = _fake_request
+        plugin = plugin or PLUGIN_NAME
+        super(NiciraPluginV2TestCase, self).setUp(plugin=plugin,
+                                                  ext_mgr=ext_mgr)
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
@@ -361,8 +371,46 @@ class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
             self.assertEqual(sg['security_group']['name'], name)
 
 
+class TestNiciraL3ExtensionManager(object):
+
+    def get_resources(self):
+        # Simulate extension of L3 attribute map
+        # First apply attribute extensions
+        for key in l3.RESOURCE_ATTRIBUTE_MAP.keys():
+            l3.RESOURCE_ATTRIBUTE_MAP[key].update(
+                l3_ext_gw_mode.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
+            l3.RESOURCE_ATTRIBUTE_MAP[key].update(
+                dist_router.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
+        # Finally add l3 resources to the global attribute map
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+            l3.RESOURCE_ATTRIBUTE_MAP)
+        return l3.L3.get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
 class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                               NiciraPluginV2TestCase):
+
+    def _restore_l3_attribute_map(self):
+        l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
+
+    def setUp(self):
+        self._l3_attribute_map_bk = {}
+        for item in l3.RESOURCE_ATTRIBUTE_MAP:
+            self._l3_attribute_map_bk[item] = (
+                l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
+        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        self.addCleanup(self._restore_l3_attribute_map)
+        super(TestNiciraL3NatTestCase, self).setUp(
+            ext_mgr=TestNiciraL3ExtensionManager())
+
+    def tearDown(self):
+        super(TestNiciraL3NatTestCase, self).tearDown()
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
@@ -432,6 +480,33 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
     def test_router_create_with_gwinfo_and_l3_ext_net_with_vlan(self):
         self._test_router_create_with_gwinfo_and_l3_ext_net(444)
 
+    def _test_router_create_with_distributed(self, dist_input, dist_expected):
+        self.mock_instance.return_value.get_nvp_version.return_value = (
+            NvpApiClient.NVPVersion('3.1'))
+
+        data = {'tenant_id': 'whatever'}
+        data['name'] = 'router1'
+        data['distributed'] = dist_input
+        router_req = self.new_create_request(
+            'routers', {'router': data}, self.fmt)
+        try:
+            res = router_req.get_response(self.ext_api)
+            router = self.deserialize(self.fmt, res)
+            self.assertIn('distributed', router['router'])
+            self.assertEqual(dist_expected,
+                             router['router']['distributed'])
+        finally:
+            self._delete('routers', router['router']['id'])
+
+    def test_router_create_distributed(self):
+        self._test_router_create_with_distributed(True, True)
+
+    def test_router_create_not_distributed(self):
+        self._test_router_create_with_distributed(False, False)
+
+    def test_router_create_distributed_unspecified(self):
+        self._test_router_create_with_distributed(None, False)
+
     def test_router_create_nvp_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nvplib,
                                'create_router_lport',
@@ -446,6 +521,16 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                         'routers', data, self.fmt)
                     res = router_req.get_response(self.ext_api)
                     self.assertEqual(500, res.status_int)
+
+    def test_router_add_gateway_invalid_network_returns_404(self):
+        # NOTE(salv-orlando): This unit test has been overriden
+        # as the nicira plugin support the ext_gw_mode extension
+        # which mandates a uuid for the external network identifier
+        with self.router() as r:
+            self._add_external_gateway_to_router(
+                r['router']['id'],
+                uuidutils.generate_uuid(),
+                expected_code=webob.exc.HTTPNotFound.code)
 
     def _test_router_update_gateway_on_l3_ext_net(self, vlan_id=None):
         with self.router() as r:
@@ -1004,8 +1089,11 @@ class NiciraExtGwModeTestCase(NiciraPluginV2TestCase,
     pass
 
 
-class NiciraNeutronNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,
-                                NiciraPluginV2TestCase):
+class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
+                                test_l3_plugin.L3NatTestCaseBase):
+
+    def setUp(self):
+        super(NiciraNeutronNVPOutOfSync, self).setUp()
 
     def test_delete_network_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
